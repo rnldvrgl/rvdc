@@ -1,34 +1,34 @@
-type Token = {
-  access: string
-  refresh: string
-}
+export const getToken = (key: string) => {
+  if (typeof window === 'undefined') return null
 
-export const getToken = (): Token | null => {
-  let token: Token
   try {
-    token = JSON.parse(localStorage.getItem('token') || '')
+    const tokenStr = localStorage.getItem(key)
+    if (!tokenStr) return null
+
+    const token = JSON.parse(tokenStr)
     if (token) {
       return token
     }
+
     return null
   } catch (error) {
-    console.log('Error getting token')
+    console.error('Error getting token:', error)
     return null
   }
 }
 
-export const setToken = (token: string): void => {
-  try {
-    localStorage.setItem('token', JSON.stringify(token))
-  } catch (error) {
-    console.log('Error setting token ', error)
-  }
+export function setToken(key: string, value: string) {
+  if (typeof window === 'undefined') return
+
+  localStorage.setItem(key, JSON.stringify(value))
 }
 
-export const removeToken = () => {
+export const removeToken = (key: string) => {
+  if (typeof window === 'undefined') return
+
   try {
-    localStorage.removeItem('user')
+    localStorage.removeItem(key)
   } catch (error) {
-    console.log('Error removing token ', error)
+    console.error('Error removing token:', error)
   }
 }

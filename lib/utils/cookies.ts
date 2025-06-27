@@ -1,17 +1,27 @@
-import { cookies } from 'next/headers'
-import { getToken } from './tokens'
+'use server'
 
-export const getCookieToken = async (): Promise<any> => {
+import { cookies } from 'next/headers'
+
+export const getCookie = async (name: string | any) => {
   const cookieStore = await cookies()
-  const cookie = cookieStore.get('csrftoken')
+  const cookie = cookieStore.get(name)
 
   if (cookie) {
-    return cookie
+    return JSON.parse(cookie.value)
   } else return null
 }
 
-export async function setCookieToken() {
-  'use server'
+export async function setCookie(name: string, value: any) {
   const cookieStore = await cookies()
-  cookieStore.set('token', getToken()!.toString() || 'null')
+  cookieStore.set({
+    name: name,
+    value: JSON.stringify(value),
+    httpOnly: true,
+    sameSite: 'strict',
+  })
+}
+
+export const removeCookie = async (name: string = 'token') => {
+  const cookieStore = await cookies()
+  return cookieStore.delete(name)
 }
