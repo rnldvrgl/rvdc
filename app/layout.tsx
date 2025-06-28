@@ -1,11 +1,13 @@
+import { ThemeProvider } from '@/lib/providers/theme-provider'
 import type { Metadata } from 'next'
 import { Poppins } from 'next/font/google'
+import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
 const poppins = Poppins({
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-poppins',
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  display: 'swap',
 })
 
 export const metadata: Metadata = {
@@ -20,35 +22,6 @@ export const metadata: Metadata = {
     'home service',
     'appliance repair',
   ],
-  authors: [{ name: 'RVDC Services', url: 'https://rvdc.ph' }],
-  creator: 'RVDC Services',
-  icons: {
-    icon: '/favicon.ico',
-  },
-  openGraph: {
-    title: 'RVDC Ref and Aircon Repair Shop',
-    description:
-      'Trusted appliance repair shop for refrigerators and air conditioners.',
-    url: 'https://rvdc.ph',
-    siteName: 'RVDC Services',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'RVDC Repair Shop',
-      },
-    ],
-    locale: 'en_PH',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'RVDC Ref and Aircon Repair Shop',
-    description: 'Top-notch appliance repair services in the Philippines.',
-    images: ['/og-image.png'],
-    creator: '@rvdc_services',
-  },
 }
 
 export default function RootLayout({
@@ -59,12 +32,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className="scroll-smooth"
+      suppressHydrationWarning
     >
-      <body
-        className={`${poppins.variable} font-sans antialiased min-h-screen`}
-      >
-        {children}
+      <body className={`${poppins.className} antialiased p-0`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          disableTransitionOnChange
+        >
+          <Toaster position="bottom-right" />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )

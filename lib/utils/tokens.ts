@@ -32,3 +32,15 @@ export const removeToken = (key: string) => {
     console.error('Error removing token:', error)
   }
 }
+
+export const removeAllTokens = () => {
+  if (typeof window === 'undefined') return
+
+  try {
+    localStorage.removeItem('access')
+    localStorage.removeItem('refresh')
+    localStorage.removeItem('remember')
+  } catch (error) {
+    console.error('Error removing all tokens:', error)
+  }
+}

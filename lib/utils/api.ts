@@ -1,106 +1,78 @@
-// import { refreshToken } from '@/lib/utils/auth'
-// import { getToken } from '@/lib/utils/tokens'
-// import axios, { AxiosError, AxiosRequestConfig } from 'axios'
+import { refreshToken } from '@/lib/utils/auth'
+import { getToken, removeToken, setToken } from '@/lib/utils/tokens'
+import axios from 'axios'
 
-// const isServer = typeof window === 'undefined'
-// const baseURL = process.env.NEXT_PUBLIC_BASE_URL || ''
+const baseURL = process.env.NEXT_PUBLIC_BASE_URL || ''
+const api = axios.create({
+  baseURL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
 
-// const api = axios.create({
-//   baseURL,
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// })
+// Request Interceptor — Attach token
+api.interceptors.request.use(
+  async (config) => {
+    const access_token = await getToken('access')
+    if (access_token) {
+      config.headers['Authorization'] = `Bearer ${access_token}`
+    }
+    return config
+  },
+  (error) => {
+    console.error('Request error:', error)
+    return Promise.reject(error)
+  },
+)
 
-// let isRefreshing = false
-// let refreshSubscribers: ((token: string) => void)[] = []
+// Response Interceptor — Handle 401 + refresh logic
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config
 
-// // Request Interceptor — Attach token
-// api.interceptors.request.use(async (config) => {
-//   try {
-//     const access_token = await getToken('access_token')
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      error?.response?.data?.code === 'token_not_valid' &&
+      !originalRequest._retry
+    ) {
+      originalRequest._retry = true
 
-//     if (access_token) {
-//       config.headers['Authorization'] = `Bearer ${access_token}`
-//     }
-//   } catch (error) {
-//     console.error('Error getting access token:', error)
-//   }
+      const remember_me = await getToken('remember')
 
-//   return config
-// })
+      if (
+        error?.response?.data?.code === 'token_not_valid' &&
+        remember_me === 'true'
+      ) {
+        try {
+          // Try refresh
+          const newAccess = (await refreshToken()) as {
+            access: string
+            refresh: string
+          }
+          if (newAccess) {
+            setToken('access', newAccess.access)
+            setToken('refresh', newAccess.refresh)
+            originalRequest.headers[
+              'Authorization'
+            ] = `Bearer ${newAccess.access}`
+            return api(originalRequest)
+          }
+        } catch (refreshErr) {
+          console.error('Token refresh failed:', refreshErr)
+        }
+      }
 
-// // Response Interceptor — Handle 401 and refresh token
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error: AxiosError) => {
-//     const originalRequest = error.config as AxiosRequestConfig & {
-//       _retry?: boolean
-//     }
+      // If not remembered or refresh failed
+      removeToken('access')
+      removeToken('refresh')
+      removeToken('remember')
+      window.location.href = '/'
+    }
 
-//     // If not 401, just reject
-//     if (error.response?.status !== 401) {
-//       return Promise.reject(error)
-//     }
+    return Promise.reject(error)
+  },
+)
 
-//     // If we've already retried this request, fail
-//     if (originalRequest._retry) {
-//       return Promise.reject(error)
-//     }
-
-//     const keepMeLoggedIn =
-//       typeof window !== 'undefined' &&
-//       localStorage.getItem('remember_me') === 'true'
-
-//     if (!keepMeLoggedIn) {
-//       handleLogout()
-//       return Promise.reject(error)
-//     }
-
-//     if (!isRefreshing) {
-//       isRefreshing = true
-//       try {
-//         const res = await refreshToken()
-//         const newAccessToken = res?.data?.access_token
-//         if (newAccessToken) {
-//           onRefreshed(newAccessToken)
-//         }
-//       } catch (refreshErr) {
-//         console.error('Refresh failed:', refreshErr)
-//         handleLogout()
-//       } finally {
-//         isRefreshing = false
-//       }
-//     }
-
-//     originalRequest._retry = true
-
-//     return new Promise((resolve, reject) => {
-//       subscribeTokenRefresh((token: string) => {
-//         if (originalRequest.headers) {
-//           originalRequest.headers['Authorization'] = `Bearer ${token}`
-//         }
-//         resolve(api(originalRequest))
-//       })
-//     })
-//   },
-// )
-
-// function subscribeTokenRefresh(cb: (token: string) => void) {
-//   refreshSubscribers.push(cb)
-// }
-
-// function onRefreshed(token: string) {
-//   refreshSubscribers.forEach((cb) => cb(token))
-//   refreshSubscribers = []
-// }
-
-// function handleLogout() {
-//   removeTokens()
-//   removeCookie('access_token')
-//   removeCookie('refresh_token')
-//   localStorage.removeItem('remember_me')
-//   window.location.href = '/'
-// }
-
-// export default api
+export default api

@@ -1,3 +1,6 @@
+import { loginSchema } from '@/lib/constants/schema'
+import z from 'zod'
+
 export type TSidebarRoute = {
   icon: any
   label: string
@@ -5,7 +8,4 @@ export type TSidebarRoute = {
   routes?: { label: string; path: string }[]
 }
 
-export type TLoginForm = {
-  username: string
-  password: string
-}
+export type LoginFormValues = z.infer<typeof loginSchema>

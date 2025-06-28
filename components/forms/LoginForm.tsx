@@ -1,10 +1,14 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
-import { z } from 'zod'
+import toast from 'react-hot-toast'
 
+import { PasswordField } from '@/components/custom/password-input'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -13,100 +17,123 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-// import api from '@/lib/utils/api'
-import { useRouter } from 'next/navigation'
-
-const loginSchema = z.object({
-  username: z
-    .string()
-    .min(3, { message: 'Username must be at least 3 characters' }),
-  password: z
-    .string()
-    .min(6, { message: 'Password must be at least 6 characters' }),
-})
-
-type LoginFormValues = z.infer<typeof loginSchema>
+import { Separator } from '@/components/ui/separator'
+import { loginSchema } from '@/lib/constants/schema'
+import { LoginFormValues } from '@/lib/constants/types'
+import api from '@/lib/utils/api'
+import { setToken } from '@/lib/utils/tokens'
 
 export function LoginForm() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       username: '',
       password: '',
+      remember_me: false,
     },
   })
 
-  const onSubmit = async (values: LoginFormValues) => {
-    setIsLoading(true)
-    try {
-      // const response = await api.post('/auth/token/', values)
-      // setToken(response.data)
+  const { handleSubmit, control, formState, setError } = form
+  const { isSubmitting, errors } = formState
 
+  const onSubmit = async (values: LoginFormValues) => {
+    try {
+      const response = await api.post('/auth/token/', values)
+      setToken('access', response.data.access)
+      setToken('refresh', response.data.refresh)
+      setToken('remember', values.remember_me ? 'true' : 'false')
+      toast.success('Login successful!')
       router.push('/dashboard')
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setIsLoading(false)
+    } catch (err: any) {
+      setError('root', {
+        message:
+          err.response?.data?.detail || 'Login failed. Please try again.',
+      })
+      toast.error('Invalid username or password')
+      console.error(err)
     }
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 w-full max-w-sm mx-auto"
-      >
-        <h1 className="text-2xl font-semibold text-center">Login</h1>
+    <Card className="w-full max-w-md mx-auto rounded-3xl border border-border/40 bg-background/70 backdrop-blur-lg shadow-2xl">
+      <CardHeader className="flex flex-col items-center gap-1">
+        <h2 className="text-3xl font-bold tracking-tight">Welcome Back</h2>
+        <p className="text-center text-muted-foreground text-sm">
+          Sign in to continue to RVDC Ref & Aircon
+        </p>
+        <Separator className="w-10 mt-2" />
+      </CardHeader>
 
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input
-                  type="text"
-                  placeholder="Enter your username"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <CardContent>
+        <Form {...form}>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-6"
+          >
+            <FormField
+              control={control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter your username"
+                      autoFocus
+                      disabled={isSubmitting}
+                      className="focus-visible:ring-2 focus-visible:ring-primary"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <PasswordField
+              name="password"
+              placeholder="••••••••"
+              disabled={isSubmitting}
+              label="Password"
+            />
 
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Logging in...' : 'Login'}
-        </Button>
-      </form>
-    </Form>
+            <FormField
+              control={control}
+              name="remember_me"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isSubmitting}
+                      />
+                      <span className="text-sm leading-none">Remember Me</span>
+                    </div>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <Button
+              type="submit"
+              className="w-full rounded-xl"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Logging in...' : 'Sign In'}
+            </Button>
+
+            {errors.root && (
+              <div className="text-center text-sm text-destructive">
+                {errors.root.message}
+              </div>
+            )}
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   )
 }
