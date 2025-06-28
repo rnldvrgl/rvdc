@@ -1,4 +1,5 @@
 import { refreshToken } from '@/lib/utils/auth'
+import { removeCookie, setCookie } from '@/lib/utils/cookies'
 import { getToken, removeToken, setToken } from '@/lib/utils/tokens'
 import axios from 'axios'
 
@@ -54,6 +55,8 @@ api.interceptors.response.use(
           if (newAccess) {
             setToken('access', newAccess.access)
             setToken('refresh', newAccess.refresh)
+            setCookie('access', newAccess.access)
+            setCookie('refresh', newAccess.refresh)
             originalRequest.headers[
               'Authorization'
             ] = `Bearer ${newAccess.access}`
@@ -68,6 +71,8 @@ api.interceptors.response.use(
       removeToken('access')
       removeToken('refresh')
       removeToken('remember')
+      removeCookie('access')
+      removeCookie('refresh')
       window.location.href = '/'
     }
 

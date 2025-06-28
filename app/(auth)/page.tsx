@@ -17,6 +17,7 @@ export default function HomePage() {
           src="/bg.jpg"
           alt="Service Background"
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-foreground/60 flex items-center justify-center">

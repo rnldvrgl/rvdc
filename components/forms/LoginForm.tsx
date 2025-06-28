@@ -22,6 +22,7 @@ import { Separator } from '@/components/ui/separator'
 import { loginSchema } from '@/lib/constants/schema'
 import { LoginFormValues } from '@/lib/constants/types'
 import api from '@/lib/utils/api'
+import { setCookie } from '@/lib/utils/cookies'
 import { setToken } from '@/lib/utils/tokens'
 
 export function LoginForm() {
@@ -44,8 +45,10 @@ export function LoginForm() {
       setToken('access', response.data.access)
       setToken('refresh', response.data.refresh)
       setToken('remember', values.remember_me ? 'true' : 'false')
-      toast.success('Login successful!')
+      setCookie('access', response.data.access)
+      setCookie('refresh', response.data.refresh)
       router.push('/dashboard')
+      toast.success('Login successful!')
     } catch (err: any) {
       setError('root', {
         message:
