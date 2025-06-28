@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 
-import { PasswordField } from '@/components/custom/password-input'
+import { PasswordField } from '@/components/custom/inputs/password-input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -41,14 +41,14 @@ export function LoginForm() {
 
   const onSubmit = async (values: LoginFormValues) => {
     try {
-      const response = await api.post('/auth/token/', values)
+      const response = await api.post('/auth/login/', values)
       setToken('access', response.data.access)
       setToken('refresh', response.data.refresh)
       setToken('remember', values.remember_me ? 'true' : 'false')
       setCookie('access', response.data.access)
       setCookie('refresh', response.data.refresh)
       router.push('/dashboard')
-      toast.success('Login successful!')
+      toast.success(`Welcome back, ${response.data.first_name}!`)
     } catch (err: any) {
       setError('root', {
         message:

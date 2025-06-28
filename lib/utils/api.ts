@@ -73,7 +73,7 @@ api.interceptors.response.use(
       removeToken('remember')
       removeCookie('access')
       removeCookie('refresh')
-      window.location.href = '/'
+      // window.location.href = '/'
     }
 
     return Promise.reject(error)
