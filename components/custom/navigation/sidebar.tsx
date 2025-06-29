@@ -1,33 +1,13 @@
 'use client'
 
 import { UserProfileDesktop } from '@/components/custom/navigation/UserProfile'
-import { Button } from '@/components/ui/button'
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
 import { SHOP_INFO } from '@/lib/constants/meta'
+import { navigation, shortcuts } from '@/lib/constants/navigation'
 import useActivePath from '@/lib/hooks/useActivePath'
 import useUserStore from '@/lib/store/useUserStore'
-import { LayoutDashboard, Link2, ListChecks, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-
-const navigation = [
-  { name: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Details', href: '/details', icon: ListChecks },
-  { name: 'Settings', href: '/settings', icon: Settings },
-]
-
-const shortcuts = [
-  { name: 'Add new user', href: '#', icon: Link2 },
-  { name: 'Workspace usage', href: '#', icon: Link2 },
-  { name: 'Cost spend control', href: '#', icon: Link2 },
-  { name: 'Overview – Rows written', href: '#', icon: Link2 },
-]
 
 function getLinkClasses(active: boolean) {
   return `flex items-center gap-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
@@ -43,26 +23,35 @@ function NavList({
   items,
   activePath,
   close,
+  title,
 }: {
   items: { name: string; href: string; icon: any }[]
   activePath: string
   close?: () => void
+  title?: string
 }) {
   return (
-    <ul className="space-y-1">
-      {items.map((item) => (
-        <li key={item.name}>
-          <Link
-            href={item.href}
-            onClick={close}
-            className={getLinkClasses(activePath === item.href)}
-          >
-            <item.icon className="size-4" />
-            {item.name}
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <>
+      {title && (
+        <p className="mb-2 px-3 text-xs font-semibold text-muted-foreground">
+          {title}
+        </p>
+      )}
+      <ul className="space-y-1">
+        {items.map((item) => (
+          <li key={item.name}>
+            <Link
+              href={item.href}
+              onClick={close}
+              className={getLinkClasses(activePath === item.href)}
+            >
+              <item.icon className="size-4" />
+              {item.name}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }
 
@@ -72,86 +61,46 @@ export function Sidebar() {
   const [open, setOpen] = useState(false)
   const user = useUserStore((state) => state.user)
   const businessName = SHOP_INFO.name
+  const activePath = isActive ? pathname : ''
+
+  const renderNav = (close?: () => void) => (
+    <nav className="flex-1 flex flex-col space-y-6">
+      <NavList
+        items={navigation}
+        activePath={activePath}
+        close={close}
+      />
+      <NavList
+        title="Shortcuts"
+        items={shortcuts}
+        activePath={pathname}
+        close={close}
+      />
+    </nav>
+  )
 
   return (
     <>
       {/* Sidebar for large screens */}
       <aside className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:w-72 lg:flex-col border-r border-border bg-background p-4">
         <div className="flex flex-col gap-y-8 w-full">
-          <span className="text-xl font-bold">
-            Hello,{' '}
-            <span className="text-primary">{user?.first_name || 'Guest'}</span>
-          </span>
-
-          <nav className="flex-1 flex flex-col space-y-6">
-            <NavList
-              items={navigation}
-              activePath={isActive ? pathname : ''}
-            />
-            <div>
-              <p className="mb-2 px-3 text-xs font-semibold text-muted-foreground">
-                Shortcuts
-              </p>
-              <NavList
-                items={shortcuts}
-                activePath={pathname}
-              />
+          <div className="flex items-center gap-3 rounded-xl bg-muted p-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold">
+              {user?.first_name?.[0]?.toUpperCase() || 'G'}
             </div>
-          </nav>
+            <div>
+              <p className="text-sm text-muted-foreground">Welcome back</p>
+              <p className="text-base font-semibold text-foreground">
+                {user?.first_name || 'Guest'}
+              </p>
+            </div>
+          </div>
+          {renderNav()}
         </div>
         <div className="mt-auto">
           <UserProfileDesktop user={user} />
         </div>
       </aside>
-
-      {/* Top navbar for small screens */}
-      <div className="lg:hidden flex h-16 items-center justify-between border-b border-border bg-background px-4">
-        <span className="font-semibold">{businessName}</span>
-        <Sheet
-          open={open}
-          onOpenChange={setOpen}
-        >
-          <SheetTitle>
-            <span className="sr-only">Open Menu</span>
-          </SheetTitle>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-            >
-              <span className="sr-only">Open Menu</span>
-              <LayoutDashboard className="size-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="left"
-            className="w-72 p-4"
-          >
-            <div className="flex flex-col gap-y-8">
-              <nav className="flex-1 flex flex-col space-y-6">
-                <NavList
-                  items={navigation}
-                  activePath={isActive ? pathname : ''}
-                  close={() => setOpen(false)}
-                />
-                <div>
-                  <p className="mb-2 px-3 text-xs font-semibold text-muted-foreground">
-                    Shortcuts
-                  </p>
-                  <NavList
-                    items={shortcuts}
-                    activePath={pathname}
-                    close={() => setOpen(false)}
-                  />
-                </div>
-              </nav>
-              <div className="mt-auto">
-                <UserProfileDesktop user={user} />
-              </div>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
     </>
   )
 }
