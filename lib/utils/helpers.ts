@@ -30,6 +30,7 @@ export const removeItem = (key: string): void => {
     console.error(error)
   }
 }
+
 export const clearStorage = (): void => {
   try {
     window.localStorage.clear()
@@ -39,10 +40,18 @@ export const clearStorage = (): void => {
 }
 
 export const focusRing = [
-  // base
   'outline outline-offset-2 outline-0 focus-visible:outline-2',
-  // outline color
   'outline-indigo-500 dark:outline-indigo-500',
 ]
 
 export const concatString = (...args: string[]) => args.join(' ')
+
+export function getLinkClasses(active: boolean) {
+  return `flex items-center gap-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
+    ${
+      active
+        ? 'bg-muted text-primary'
+        : 'hover:bg-muted hover:text-primary text-muted-foreground'
+    }
+    focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2`
+}

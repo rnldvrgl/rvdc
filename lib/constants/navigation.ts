@@ -6,9 +6,7 @@ export const navigation = [
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
+// Now uses `action` instead of `href`
 export const shortcuts = [
-  { name: 'Add new user', href: '#', icon: Link2 },
-  { name: 'Workspace usage', href: '#', icon: Link2 },
-  { name: 'Cost spend control', href: '#', icon: Link2 },
-  { name: 'Overview – Rows written', href: '#', icon: Link2 },
+  { name: 'Add new client', action: 'addClient', icon: Link2 },
 ]

@@ -1,5 +1,6 @@
 import { ThemeProvider } from '@/lib/providers/theme-provider'
 
+import { QueryClientContextProvider } from '@/lib/providers/client-query-provider'
 import { Poppins } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
@@ -21,14 +22,16 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className={`${poppins.className} antialiased p-0`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          disableTransitionOnChange
-        >
-          <Toaster position="bottom-right" />
-          {children}
-        </ThemeProvider>
+        <QueryClientContextProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            disableTransitionOnChange
+          >
+            <Toaster position="bottom-right" />
+            {children}
+          </ThemeProvider>
+        </QueryClientContextProvider>
       </body>
     </html>
   )
