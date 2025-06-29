@@ -41,7 +41,7 @@ function NavList({
                   close?.()
                 }}
                 variant="ghost"
-                className="w-full justify-start"
+                className="w-full justify-start hover:bg-muted hover:text-primary text-muted-foreground "
               >
                 <item.icon className="size-4" />
                 {item.name}
