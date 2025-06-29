@@ -29,6 +29,43 @@ const shortcuts = [
   { name: 'Overview – Rows written', href: '#', icon: Link2 },
 ]
 
+function getLinkClasses(active: boolean) {
+  return `flex items-center gap-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
+    ${
+      active
+        ? 'bg-muted text-primary'
+        : 'hover:bg-muted hover:text-primary text-muted-foreground'
+    }
+    focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2`
+}
+
+function NavList({
+  items,
+  activePath,
+  close,
+}: {
+  items: { name: string; href: string; icon: any }[]
+  activePath: string
+  close?: () => void
+}) {
+  return (
+    <ul className="space-y-1">
+      {items.map((item) => (
+        <li key={item.name}>
+          <Link
+            href={item.href}
+            onClick={close}
+            className={getLinkClasses(activePath === item.href)}
+          >
+            <item.icon className="size-4" />
+            {item.name}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 export function Sidebar() {
   const pathname = usePathname()
   const isActive = useActivePath()
@@ -47,48 +84,18 @@ export function Sidebar() {
           </span>
 
           <nav className="flex-1 flex flex-col space-y-6">
-            <ul className="space-y-1">
-              {navigation.map((item) => (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={`flex items-center gap-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
-                      ${
-                        isActive
-                          ? 'bg-muted text-primary'
-                          : 'hover:bg-muted hover:text-primary text-muted-foreground'
-                      }
-                      focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2`}
-                  >
-                    <item.icon className="size-4" />
-                    {item.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <NavList
+              items={navigation}
+              activePath={isActive ? pathname : ''}
+            />
             <div>
               <p className="mb-2 px-3 text-xs font-semibold text-muted-foreground">
                 Shortcuts
               </p>
-              <ul className="space-y-1">
-                {shortcuts.map((item) => (
-                  <li key={item.name}>
-                    <Link
-                      href={item.href}
-                      className={`flex items-center gap-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
-                        ${
-                          pathname === item.href
-                            ? 'bg-muted text-primary'
-                            : 'hover:bg-muted hover:text-primary text-muted-foreground'
-                        }
-                        focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2`}
-                    >
-                      <item.icon className="size-4" />
-                      {item.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <NavList
+                items={shortcuts}
+                activePath={pathname}
+              />
             </div>
           </nav>
         </div>
@@ -122,50 +129,20 @@ export function Sidebar() {
           >
             <div className="flex flex-col gap-y-8">
               <nav className="flex-1 flex flex-col space-y-6">
-                <ul className="space-y-1">
-                  {navigation.map((item) => (
-                    <li key={item.name}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setOpen(false)}
-                        className={`flex items-center gap-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
-                          ${
-                            isActive
-                              ? 'bg-muted text-primary'
-                              : 'hover:bg-muted hover:text-primary text-muted-foreground'
-                          }
-                          focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2`}
-                      >
-                        <item.icon className="size-4" />
-                        {item.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <NavList
+                  items={navigation}
+                  activePath={isActive ? pathname : ''}
+                  close={() => setOpen(false)}
+                />
                 <div>
                   <p className="mb-2 px-3 text-xs font-semibold text-muted-foreground">
                     Shortcuts
                   </p>
-                  <ul className="space-y-1">
-                    {shortcuts.map((item) => (
-                      <li key={item.name}>
-                        <Link
-                          href={item.href}
-                          onClick={() => setOpen(false)}
-                          className={`flex items-center gap-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
-                            ${
-                              pathname === item.href
-                                ? 'bg-muted text-primary'
-                                : 'hover:bg-muted hover:text-primary text-muted-foreground'
-                            }
-                            focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2`}
-                        >
-                          <item.icon className="size-4" />
-                          {item.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  <NavList
+                    items={shortcuts}
+                    activePath={pathname}
+                    close={() => setOpen(false)}
+                  />
                 </div>
               </nav>
               <div className="mt-auto">
