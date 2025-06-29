@@ -1,9 +1,9 @@
-import { LayoutDashboard, Link2, ListChecks, Settings } from 'lucide-react'
+import { LayoutDashboard, Link2, User2, Users } from 'lucide-react'
 
 export const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Details', href: '/details', icon: ListChecks },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Clients', href: '/clients', icon: Users },
+  { name: 'Technicians', href: '/technicians', icon: User2 },
 ]
 
 // Now uses `action` instead of `href`

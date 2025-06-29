@@ -2,15 +2,20 @@ import { Sidebar } from '@/components/custom/navigation/Sidebar'
 
 export default function MainLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
-    <div className="relative">
-      <div className="min-h-screen p-4 sm:px-6 sm:pb-10 sm:pt-10 lg:px-10 lg:pt-7 flex flex-col lg:flex-row">
-        <Sidebar />
-        <section className="grid place-items-center w-full">{children}</section>
-      </div>
+    <div className="flex flex-col lg:flex-row min-h-screen bg-background">
+      {/* Sidebar */}
+      <Sidebar />
+
+      {/* Mobile sidebar could be a drawer; omit here for brevity */}
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        {children}
+      </main>
     </div>
   )
 }
