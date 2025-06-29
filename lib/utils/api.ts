@@ -2,6 +2,7 @@ import { refreshToken } from '@/lib/utils/auth'
 import { removeCookie, setCookie } from '@/lib/utils/cookies'
 import { getToken, removeToken, setToken } from '@/lib/utils/tokens'
 import axios from 'axios'
+import toast from 'react-hot-toast'
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL || ''
 const api = axios.create({
@@ -26,7 +27,7 @@ api.interceptors.request.use(
   },
 )
 
-// Response Interceptor — Handle 401 + refresh logic
+// Response Interceptor — Handle 401 + refresh
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -35,25 +36,28 @@ api.interceptors.response.use(
     if (
       error.response &&
       error.response.status === 401 &&
-      error?.response?.data?.code === 'token_not_valid' &&
       !originalRequest._retry
     ) {
       originalRequest._retry = true
-      console.log('Token not valid, trying to refresh...')
 
+      const errData = error?.response?.data
       const remember_me = await getToken('remember')
 
-      if (
-        error?.response?.data?.code === 'token_not_valid' &&
-        remember_me === 'true'
-      ) {
+      // Check typical DRF simplejwt responses
+      const tokenNotValid =
+        errData?.code === 'token_not_valid' ||
+        (typeof errData?.detail === 'string' &&
+          errData.detail.toLowerCase().includes('token not valid'))
+
+      if (tokenNotValid && remember_me === 'true') {
+        console.log('Access token expired. Trying to refresh...')
+
         try {
-          // Try refresh
           const newAccess = (await refreshToken()) as {
             access: string
             refresh: string
           }
-          if (newAccess) {
+          if (newAccess?.access) {
             setToken('access', newAccess.access)
             setToken('refresh', newAccess.refresh)
             setCookie('access', newAccess.access)
@@ -64,17 +68,21 @@ api.interceptors.response.use(
             return api(originalRequest)
           }
         } catch (refreshErr) {
+          console.log(refreshErr)
           console.error('Token refresh failed:', refreshErr)
         }
       }
 
-      // If not remembered or refresh failed
       removeToken('access')
       removeToken('refresh')
       removeToken('remember')
       removeCookie('access')
       removeCookie('refresh')
-      // window.location.href = '/'
+
+      window.location.href = '/'
+      toast.error('Your session has expired. Please login again.')
+
+      return new Promise(() => {})
     }
 
     return Promise.reject(error)

@@ -115,9 +115,9 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
           : 'Client created successfully.',
       )
       onClose()
-    } catch (error) {
+    } catch (error: any) {
       toast.error(
-        (error as any)?.response?.data?.detail ||
+        error?.response?.data?.detail ||
           'An error occurred while saving the client.',
       )
     }
