@@ -5,7 +5,7 @@ import {
   UserProfileDesktop,
   UserProfileMobile,
 } from '@/components/custom/navigation/UserProfile'
-import AddClientSheet from '@/components/sheets/AddClientSheet'
+import ClientSheet from '@/components/sheets/ClientSheet'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -65,7 +65,7 @@ export function Sidebar() {
               </p>
             </div>
           </div>
-          <AddClientSheet
+          <ClientSheet
             open={addClientOpen}
             onOpenChange={setAddClientOpen}
           />
@@ -85,7 +85,7 @@ export function Sidebar() {
           <span className="font-semibold">{user?.first_name || 'Guest'}</span>
         </div>
         <div className="flex items-center gap-2">
-          <AddClientSheet
+          <ClientSheet
             open={addClientOpen}
             onOpenChange={setAddClientOpen}
           />

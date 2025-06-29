@@ -39,6 +39,7 @@ api.interceptors.response.use(
       !originalRequest._retry
     ) {
       originalRequest._retry = true
+      console.log('Token not valid, trying to refresh...')
 
       const remember_me = await getToken('remember')
 

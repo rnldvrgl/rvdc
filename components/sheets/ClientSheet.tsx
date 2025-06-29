@@ -1,6 +1,6 @@
 'use client'
 
-import AddClientForm from '@/components/forms/AddClientForm'
+import ClientForm from '@/components/forms/ClientForm'
 import {
   Sheet,
   SheetContent,
@@ -8,26 +8,18 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { useEffect } from 'react'
 
-interface AddClientSheetProps {
+interface ClientSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  focusRef?: React.RefObject<HTMLElement>
+  client_data?: any
 }
 
-export default function AddClientSheet({
+export default function ClientSheet({
   open,
   onOpenChange,
-  focusRef,
-}: AddClientSheetProps) {
-  // On close, return focus to trigger
-  useEffect(() => {
-    if (!open && focusRef?.current) {
-      focusRef.current.focus()
-    }
-  }, [open, focusRef])
-
+  client_data,
+}: ClientSheetProps) {
   return (
     <Sheet
       open={open}
@@ -39,14 +31,17 @@ export default function AddClientSheet({
       >
         <SheetHeader className="mb-4 border-b border-border pb-4">
           <SheetTitle className="text-xl font-semibold">
-            Add New Client
+            {client_data ? 'Edit Client' : 'Add Client'}
           </SheetTitle>
           <SheetDescription>
-            Fill out the form below to add a new client to your records.
+            Fill out the form below to {client_data ? 'edit' : 'add'} a client.
           </SheetDescription>
         </SheetHeader>
 
-        <AddClientForm />
+        <ClientForm
+          onClose={() => onOpenChange(false)}
+          client={client_data ?? undefined}
+        />
       </SheetContent>
     </Sheet>
   )

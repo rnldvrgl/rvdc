@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 
-import { PasswordField } from '@/components/custom/inputs/password-input'
+import { PasswordField } from '@/components/custom/inputs/PasswordInput'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -50,6 +50,7 @@ export function LoginForm() {
       setCookie('access', response.data.access)
       setCookie('refresh', response.data.refresh)
       setUser(response.data)
+      console.log(response.data)
       router.push('/dashboard')
       toast.success(`Welcome back, ${response.data.first_name}!`)
     } catch (err: any) {

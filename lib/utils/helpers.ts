@@ -55,3 +55,25 @@ export function getLinkClasses(active: boolean) {
     }
     focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2`
 }
+
+export function getNameByCode<T extends { code: string; name: string }>(
+  list: T[],
+  code: string,
+): string {
+  return list.find((item) => item.code === code)?.name || ''
+}
+
+export function getCodeByName<T extends { code: string; name: string }>(
+  list: T[],
+  name: string,
+): string {
+  return list.find((item) => item.name === name)?.code || ''
+}
+
+export function prepareOptions<T extends { code?: string; name: string }>(
+  list: T[],
+): T[] {
+  return list
+    .filter((item) => item.code?.trim())
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
