@@ -1,7 +1,9 @@
 import { LoginForm } from '@/components/forms/LoginForm'
+import { SHOP_INFO } from '@/lib/constants/meta'
 import Image from 'next/image'
 
 export default function HomePage() {
+  const { name, description } = SHOP_INFO
   return (
     <main className="min-h-screen grid grid-cols-1 xl:grid-cols-2">
       {/* Right section with background image or color */}
@@ -22,11 +24,8 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 bg-foreground/60 flex items-center justify-center">
           <div className="text-center text-background px-8">
-            <h1 className="text-4xl font-bold mb-4">RVDC Ref & Aircon</h1>
-            <p className="text-lg max-w-md mx-auto">
-              Reliable refrigeration and air conditioning services for your home
-              and business.
-            </p>
+            <h1 className="text-4xl font-bold mb-4">{name}</h1>
+            <p className="text-lg max-w-md mx-auto">{description}</p>
           </div>
         </div>
       </div>

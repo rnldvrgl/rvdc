@@ -1,0 +1,71 @@
+'use client'
+
+import DropdownModeToggle from '@/components/custom/theme/DropdownModeToggle'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useMounted } from '@/lib/hooks/useMounted'
+import api from '@/lib/utils/api'
+import { removeCookie } from '@/lib/utils/cookies'
+import { getToken, removeToken } from '@/lib/utils/tokens'
+import { ArrowUpRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import * as React from 'react'
+import toast from 'react-hot-toast'
+
+export type DropdownUserProfileProps = {
+  children: React.ReactNode
+  align?: 'center' | 'start' | 'end'
+}
+
+export function DropdownUserProfile({
+  children,
+  align = 'start',
+}: DropdownUserProfileProps) {
+  const router = useRouter()
+  const mounted = useMounted()
+
+  if (!mounted) return null
+  const handleLogout = async () => {
+    try {
+      const response = await api.post('/auth/logout/', {
+        refresh: getToken('refresh'),
+      })
+      removeToken('access')
+      removeToken('refresh')
+      removeToken('remember')
+      removeCookie('access')
+      removeCookie('refresh')
+      toast.success(response.data.detail || 'Logout successful.')
+      router.push('/')
+    } catch (error) {
+      toast.error('Logout failed. Please try again.')
+    }
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+      <DropdownMenuContent
+        align={align}
+        className="w-56"
+      >
+        <DropdownModeToggle />
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={handleLogout}>
+            Signout
+            <ArrowUpRight className="ml-1 size-3 text-muted-foreground" />
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}

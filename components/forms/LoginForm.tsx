@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { loginSchema } from '@/lib/constants/schema'
 import { LoginFormValues } from '@/lib/constants/types'
+import useUserStore from '@/lib/store/useUserStore'
 import api from '@/lib/utils/api'
 import { setCookie } from '@/lib/utils/cookies'
 import { setToken } from '@/lib/utils/tokens'
@@ -38,6 +39,7 @@ export function LoginForm() {
 
   const { handleSubmit, control, formState, setError } = form
   const { isSubmitting, errors } = formState
+  const setUser = useUserStore((state) => state.setUser)
 
   const onSubmit = async (values: LoginFormValues) => {
     try {
@@ -47,6 +49,7 @@ export function LoginForm() {
       setToken('remember', values.remember_me ? 'true' : 'false')
       setCookie('access', response.data.access)
       setCookie('refresh', response.data.refresh)
+      setUser(response.data)
       router.push('/dashboard')
       toast.success(`Welcome back, ${response.data.first_name}!`)
     } catch (err: any) {
@@ -54,7 +57,9 @@ export function LoginForm() {
         message:
           err.response?.data?.detail || 'Login failed. Please try again.',
       })
-      toast.error('Invalid username or password')
+      toast.error(
+        err.response?.data?.detail || 'Login failed. Please try again.',
+      )
       console.error(err)
     }
   }
@@ -64,7 +69,7 @@ export function LoginForm() {
       <CardHeader className="flex flex-col items-center gap-1">
         <h2 className="text-3xl font-bold tracking-tight">Welcome Back</h2>
         <p className="text-center text-muted-foreground text-sm">
-          Sign in to continue to RVDC Ref & Aircon
+          Sign in to continue
         </p>
         <Separator className="w-10 mt-2" />
       </CardHeader>

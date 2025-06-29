@@ -9,3 +9,10 @@ export type TSidebarRoute = {
 }
 
 export type LoginFormValues = z.infer<typeof loginSchema>
+
+export interface ShopInfo {
+  name: string
+  description: string
+  address?: string
+  contactEmail?: string
+}

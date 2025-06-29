@@ -1,15 +1,17 @@
 import { Button } from '@/components/ui/button'
+import { SHOP_INFO } from '@/lib/constants/meta'
 import { ArrowRightToLine } from 'lucide-react'
 import Link from 'next/link'
 
 export default function NotFound() {
+  const { name } = SHOP_INFO
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4 text-center">
       <Link
         href="/"
         className="mb-2 text-lg font-semibold text-primary"
       >
-        RVDC Ref & Aircon Repair Shop
+        {name}
       </Link>
 
       <p className="text-6xl font-bold text-primary">404</p>

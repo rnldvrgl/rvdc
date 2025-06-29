@@ -1,5 +1,6 @@
 'use client'
 
+import { UserProfileDesktop } from '@/components/custom/navigation/UserProfile'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -7,7 +8,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { SHOP_INFO } from '@/lib/constants/meta'
 import useActivePath from '@/lib/hooks/useActivePath'
+import useUserStore from '@/lib/store/useUserStore'
 import { LayoutDashboard, Link2, ListChecks, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -30,6 +33,8 @@ export function Sidebar() {
   const pathname = usePathname()
   const isActive = useActivePath()
   const [open, setOpen] = useState(false)
+  const user = useUserStore((state) => state.user)
+  const businessName = SHOP_INFO.name
 
   return (
     <>
@@ -37,7 +42,8 @@ export function Sidebar() {
       <aside className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:w-72 lg:flex-col border-r border-border bg-background p-4">
         <div className="flex flex-col gap-y-8 w-full">
           <span className="text-xl font-bold">
-            Hello, <span className="text-primary">John Doe</span>
+            Hello,{' '}
+            <span className="text-primary">{user?.first_name || 'Guest'}</span>
           </span>
 
           <nav className="flex-1 flex flex-col space-y-6">
@@ -87,18 +93,13 @@ export function Sidebar() {
           </nav>
         </div>
         <div className="mt-auto">
-          <Button
-            variant="outline"
-            className="w-full"
-          >
-            Profile
-          </Button>
+          <UserProfileDesktop user={user} />
         </div>
       </aside>
 
       {/* Top navbar for small screens */}
       <div className="lg:hidden flex h-16 items-center justify-between border-b border-border bg-background px-4">
-        <span className="font-semibold">My App</span>
+        <span className="font-semibold">{businessName}</span>
         <Sheet
           open={open}
           onOpenChange={setOpen}
@@ -168,12 +169,7 @@ export function Sidebar() {
                 </div>
               </nav>
               <div className="mt-auto">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                >
-                  Profile
-                </Button>
+                <UserProfileDesktop user={user} />
               </div>
             </div>
           </SheetContent>
