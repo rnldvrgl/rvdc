@@ -10,12 +10,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useMounted } from '@/lib/hooks/useMounted'
+import useUserStore from '@/lib/store/useUserStore'
 import api from '@/lib/utils/api'
 import { removeCookie } from '@/lib/utils/cookies'
 import { getToken, removeToken } from '@/lib/utils/tokens'
 import { ArrowUpRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import * as React from 'react'
+import React from 'react'
 import toast from 'react-hot-toast'
 
 export type DropdownUserProfileProps = {
@@ -29,24 +30,31 @@ export function DropdownUserProfile({
 }: DropdownUserProfileProps) {
   const router = useRouter()
   const mounted = useMounted()
+  const clearUser = useUserStore((state) => state.clearUser)
 
-  if (!mounted) return null
   const handleLogout = async () => {
     try {
       const response = await api.post('/auth/logout/', {
         refresh: getToken('refresh'),
       })
+      // Clear local tokens + cookies
       removeToken('access')
       removeToken('refresh')
       removeToken('remember')
       removeCookie('access')
       removeCookie('refresh')
+
+      // Clear zustand user store
+      clearUser()
+
       toast.success(response.data.detail || 'Logout successful.')
       router.push('/')
     } catch (error) {
       toast.error('Logout failed. Please try again.')
     }
   }
+
+  if (!mounted) return null
 
   return (
     <DropdownMenu>
