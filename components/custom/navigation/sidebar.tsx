@@ -1,10 +1,7 @@
 'use client'
 
 import NavList from '@/components/custom/navigation/NavList'
-import {
-  UserProfileDesktop,
-  UserProfileMobile,
-} from '@/components/custom/navigation/UserProfile'
+import { UserProfile } from '@/components/custom/navigation/UserProfile'
 import ClientSheet from '@/components/sheets/ClientSheet'
 import { Button } from '@/components/ui/button'
 import {
@@ -72,7 +69,7 @@ export function Sidebar() {
           {renderNav()}
         </div>
         <div className="mt-auto">
-          <UserProfileDesktop user={user} />
+          <UserProfile user={user} />
         </div>
       </aside>
 
@@ -109,7 +106,7 @@ export function Sidebar() {
             >
               {renderNav(() => setSheetOpen(false))}
               <div className="mt-auto">
-                <UserProfileMobile user={user} />
+                <UserProfile user={user} />
               </div>
             </SheetContent>
           </Sheet>
