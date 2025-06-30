@@ -1,5 +1,6 @@
 import { ThemeProvider } from '@/lib/providers/theme-provider'
 
+import { SHOP_INFO } from '@/lib/constants/meta'
 import { QueryClientContextProvider } from '@/lib/providers/client-query-provider'
 import { Poppins } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
@@ -10,6 +11,11 @@ const poppins = Poppins({
   weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
   display: 'swap',
 })
+
+export const metadata = {
+  title: SHOP_INFO.name,
+  description: SHOP_INFO.description,
+}
 
 export default function RootLayout({
   children,
