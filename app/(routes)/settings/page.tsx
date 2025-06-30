@@ -19,11 +19,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useUserProfile } from '@/lib/queries/useUserProfile'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
+import api from '@/lib/utils/api'
+import toast from 'react-hot-toast'
 
 const formSchema = z.object({
   email: z.string().email(),
-  current_password: z.string().min(6),
-  new_password: z.string().min(6),
+  current_password: z.string().optional(),
+  new_password: z.string().optional(),
   username: z.string().min(2),
   first_name: z.string().min(2),
   last_name: z.string().min(2),
@@ -33,7 +35,7 @@ const formSchema = z.object({
 })
 
 export default function SettingsPage() {
-  const { data, isLoading } = useUserProfile()
+  const { data, isLoading, refetch } = useUserProfile()
   const setUserProfile = useUserProfileStore((state) => state.setUserProfile)
   const userProfile = useUserProfileStore((state) => state.userProfile)
 
@@ -41,8 +43,6 @@ export default function SettingsPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: '',
-      current_password: '',
-      new_password: '',
       username: '',
       first_name: '',
       last_name: '',
@@ -51,14 +51,10 @@ export default function SettingsPage() {
     },
   })
 
-  // on load or refetch, set to Zustand
   useEffect(() => {
-    if (data) {
-      setUserProfile(data)
-    }
+    if (data) setUserProfile(data)
   }, [data, setUserProfile])
 
-  // auto populate form when Zustand updated
   useEffect(() => {
     if (userProfile) {
       form.reset({
@@ -68,14 +64,43 @@ export default function SettingsPage() {
         last_name: userProfile.last_name || '',
         contact_number: userProfile.contact_number || '',
         birthday: userProfile.birthday || '',
-        current_password: '',
-        new_password: '',
       })
     }
   }, [userProfile, form])
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log('Submitted:', values)
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const payload = { ...values }
+    if (!payload.new_password) delete payload.new_password
+    if (!payload.current_password) delete payload.current_password
+
+    try {
+      // build FormData so we can send files + strings
+      const formData = new FormData()
+      Object.entries(values).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, value)
+        }
+      })
+
+      const response = await api.patch('/users/profile/', formData)
+
+      toast.success('Profile updated successfully.')
+
+      // update Zustand immediately
+      setUserProfile(response.data)
+
+      // refetch tanstack query to update global cache
+      await refetch()
+
+      // clear password fields after submit
+      form.setValue('current_password', undefined)
+      form.setValue('new_password', undefined)
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.detail ||
+          'An error occurred while saving your profile.',
+      )
+    }
   }
 
   return (

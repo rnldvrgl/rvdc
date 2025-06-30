@@ -5,6 +5,9 @@ export interface User {
   username: string
   email: string
   profile_image: string
+  birthday?: string
+  is_active?: boolean
+  contact_number?: string
 }
 export interface Client {
   id: number
