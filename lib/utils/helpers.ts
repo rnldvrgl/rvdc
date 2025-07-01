@@ -102,3 +102,9 @@ export function getDisplayImage(
 export function formatDateToYMD(date: Date): string {
   return date.toISOString().split('T')[0]
 }
+
+export function normalizeProfileImage(image?: string | null) {
+  if (!image) return ''
+  if (typeof image === 'string' && !image.startsWith('data:')) return ''
+  return image
+}

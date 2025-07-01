@@ -1,6 +1,20 @@
 import { loginSchema } from '@/lib/constants/schema'
+import { ChangeEvent } from 'react'
+import { Path, UseFormReturn } from 'react-hook-form'
 import z from 'zod'
 
+export type TUseFileUploadProps<TFormValues extends Record<string, any>> = {
+  form: UseFormReturn<TFormValues>
+  fieldName: Path<TFormValues>
+  initialImage?: string
+}
+
+export type TImageUploadProps = {
+  image: string
+  fieldName: string
+  handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void
+  handleFileRemove: () => void
+}
 export type TSidebarRoute = {
   icon: any
   label: string

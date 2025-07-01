@@ -1,12 +1,7 @@
+import { UseFileUploadProps } from '@/lib/constants/types'
 import { convertFileToBase64 } from '@/lib/utils/helpers'
 import { ChangeEvent, useEffect, useState } from 'react'
-import { Path, PathValue, UseFormReturn } from 'react-hook-form'
-
-type UseFileUploadProps<TFormValues extends Record<string, any>> = {
-  form: UseFormReturn<TFormValues>
-  fieldName: Path<TFormValues>
-  initialImage?: string
-}
+import { Path, PathValue } from 'react-hook-form'
 
 const useFileUpload = <TFormValues extends Record<string, any>>({
   form,
