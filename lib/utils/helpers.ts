@@ -1,4 +1,5 @@
 import { timeZone } from '@/lib/constants/general'
+import { Sorting } from '@/lib/constants/types'
 import { clsx, type ClassValue } from 'clsx'
 import { format } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
@@ -115,4 +116,10 @@ export function normalizeProfileImage(image?: string | null) {
 
 export function formatLocalDate(date: Date, formatStr = 'yyyy-MM-dd') {
   return format(toZonedTime(date, timeZone), formatStr)
+}
+
+export function toOrdering(sorting: Sorting): string | undefined {
+  if (!sorting.length) return undefined
+  const { id, desc } = sorting[0]
+  return `${desc ? '-' : ''}${id}`
 }

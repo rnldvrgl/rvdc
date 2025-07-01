@@ -1,56 +1,6 @@
-import { loginSchema } from '@/lib/constants/schema'
-import { ChangeEvent } from 'react'
-import { Path, UseFormReturn } from 'react-hook-form'
-import z from 'zod'
+export type Sorting = { id: string; desc: boolean }[]
 
-export type TUseFileUploadProps<TFormValues extends Record<string, any>> = {
-  form: UseFormReturn<TFormValues>
-  fieldName: Path<TFormValues>
-  initialImage?: string
-}
-
-export type TImageUploadProps = {
-  image: string
-  fieldName: string
-  handleFileChange: (e: ChangeEvent<HTMLInputElement>) => void
-  handleFileRemove: () => void
-}
-export type TSidebarRoute = {
-  icon: any
-  label: string
-  path?: string
-  routes?: { label: string; path: string }[]
-}
-
-export type LoginFormValues = z.infer<typeof loginSchema>
-
-export interface ShopInfo {
-  name: string
-  description: string
-  address?: string
-  contactEmail?: string
-}
-
-export type Province = {
-  code: string
-  legacyCode: string
-  name: string
-  incomeClassification: string
-  population: number
-  region: string
-}
-
-export type City = {
-  code: string
-  legacyCode: string
-  name: string
-  cityClass: string
-  incomeClassification: string
-  population: number
-  region: string
-}
-
-export type Barangay = {
+export type TBarangay = {
   code: string
   legacyCode: string
   name: string
@@ -59,4 +9,24 @@ export type Barangay = {
   population: number
   region: string
   city: string
+}
+
+export type TClient = {
+  id: number
+  full_name: string
+  contact_number: string
+  address: string
+  province: string
+  city: string
+  barangay: string
+  is_deleted: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type TPaginatedClients = {
+  count: number
+  next: string | null
+  previous: string | null
+  results: TClient[]
 }
