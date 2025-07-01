@@ -1,4 +1,8 @@
+import { timeZone } from '@/lib/constants/general'
 import { clsx, type ClassValue } from 'clsx'
+import { format } from 'date-fns'
+import { toZonedTime } from 'date-fns-tz'
+
 import { twMerge } from 'tailwind-merge'
 
 export function cn(...inputs: ClassValue[]) {
@@ -107,4 +111,8 @@ export function normalizeProfileImage(image?: string | null) {
   if (!image) return ''
   if (typeof image === 'string' && !image.startsWith('data:')) return ''
   return image
+}
+
+export function formatLocalDate(date: Date, formatStr = 'yyyy-MM-dd') {
+  return format(toZonedTime(date, timeZone), formatStr)
 }

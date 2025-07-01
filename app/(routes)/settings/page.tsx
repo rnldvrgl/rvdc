@@ -12,7 +12,7 @@ import useFileUpload from '@/lib/hooks/useFileUpload'
 import { useUserProfile } from '@/lib/queries/useUserProfile'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
-import { formatDateToYMD, normalizeProfileImage } from '@/lib/utils/helpers'
+import { formatLocalDate, normalizeProfileImage } from '@/lib/utils/helpers'
 import toast from 'react-hot-toast'
 
 export default function SettingsPage() {
@@ -64,13 +64,13 @@ export default function SettingsPage() {
   async function onSubmit(values: TUserProfile) {
     const payload: any = {
       ...values,
-      birthday: values.birthday ? formatDateToYMD(values.birthday) : undefined,
+      birthday: values.birthday ? formatLocalDate(values.birthday) : undefined,
       profile_image: normalizeProfileImage(values.profile_image),
     }
 
     if (!payload.new_password) delete payload.new_password
     if (!payload.current_password) delete payload.current_password
-
+    console.log(payload)
     try {
       const response = await api.patch('/users/profile/', payload)
       toast.success('Profile updated successfully.')

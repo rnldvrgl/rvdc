@@ -13,6 +13,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Loader } from 'lucide-react'
 
 const UserProfileForm = ({
   form,
@@ -172,7 +173,9 @@ const UserProfileForm = ({
               )}
             />
             <div className="flex justify-end pt-4">
-              <Button type="submit">Save settings</Button>
+              <Button type="submit">
+                {form.formState.isSubmitting ? <Loader /> : 'Save settings'}
+              </Button>
             </div>
           </div>
         </div>
