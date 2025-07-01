@@ -2,9 +2,14 @@
 
 import { Button } from '@/components/ui/button'
 import { User } from '@/lib/constants/interface'
-import { cn, concatString, focusRing } from '@/lib/utils/helpers'
-import { MoreVertical, User as UserIcon } from 'lucide-react'
-import Image from 'next/image'
+import {
+  cn,
+  concatString,
+  focusRing,
+  getDisplayImage,
+} from '@/lib/utils/helpers'
+import { MoreVertical } from 'lucide-react'
+import { default as Image } from 'next/image'
 import { DropdownUserProfile } from './DropdownUserProfile'
 
 type Props = {
@@ -12,6 +17,7 @@ type Props = {
 }
 
 export const UserProfile = ({ user }: Props) => {
+  const displayImage = getDisplayImage(user?.profile_image)
   return (
     <DropdownUserProfile>
       <Button
@@ -23,20 +29,14 @@ export const UserProfile = ({ user }: Props) => {
         )}
       >
         <span className="flex items-center gap-3">
-          {user?.profile_image ? (
-            <Image
-              className="flex size-8 shrink-0 items-center justify-center rounded-full border"
-              aria-hidden="true"
-              src={`${process.env.NEXT_PUBLIC_BASE_URL}${user.profile_image}`}
-              width={100}
-              height={100}
-              alt="user"
-            />
-          ) : (
-            <span className="flex size-8 items-center justify-center rounded-full border bg-muted text-muted-foreground">
-              <UserIcon className="size-4" />
-            </span>
-          )}
+          <Image
+            className="flex size-8 shrink-0 items-center justify-center rounded-full border"
+            aria-hidden="true"
+            src={`${displayImage}`}
+            width={100}
+            height={100}
+            alt="user"
+          />
           <span>
             {user ? concatString(user.first_name, user.last_name) : 'Guest'}
           </span>

@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { loginSchema } from '@/lib/constants/schema'
 import { LoginFormValues } from '@/lib/constants/types'
-import useUserStore from '@/lib/store/useUserStore'
+import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
 import { setCookie } from '@/lib/utils/cookies'
 import { setToken } from '@/lib/utils/tokens'
@@ -39,7 +39,7 @@ export function LoginForm() {
 
   const { handleSubmit, control, formState, setError } = form
   const { isSubmitting, errors } = formState
-  const setUser = useUserStore((state) => state.setUser)
+  const setUserProfile = useUserProfileStore((state) => state.setUserProfile)
 
   const onSubmit = async (values: LoginFormValues) => {
     try {
@@ -49,8 +49,8 @@ export function LoginForm() {
       setToken('remember', values.remember_me ? 'true' : 'false')
       setCookie('access', response.data.access)
       setCookie('refresh', response.data.refresh)
-      setUser(response.data)
-      console.log(response.data)
+      setUserProfile(response.data)
+
       router.push('/dashboard')
       toast.success(`Welcome back, ${response.data.first_name}!`)
     } catch (err: any) {

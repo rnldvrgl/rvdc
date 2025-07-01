@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/sheet'
 import { navigation, shortcuts } from '@/lib/constants/navigation'
 import useActivePath from '@/lib/hooks/useActivePath'
-import useUserStore from '@/lib/store/useUserStore'
+import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import { Menu } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
@@ -20,7 +20,7 @@ import { useState } from 'react'
 export function Sidebar() {
   const pathname = usePathname()
   const isActive = useActivePath()
-  const user = useUserStore((state) => state.user)
+  const user = useUserProfileStore((state) => state.userProfile)
   const activePath = isActive ? pathname : ''
   const [addClientOpen, setAddClientOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)

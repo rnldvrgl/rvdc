@@ -91,3 +91,10 @@ export const convertFileToBase64 = (file: File): Promise<string> => {
     reader.onerror = reject
   })
 }
+
+export function getDisplayImage(
+  image?: string,
+  fallback: string = '/default_image.jpg',
+) {
+  return image && image.trim() !== '' ? image : fallback
+}

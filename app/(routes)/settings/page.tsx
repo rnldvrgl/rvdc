@@ -255,7 +255,6 @@ export default function SettingsPage() {
                   </FormItem>
                 )}
               />
-
               <div className="flex justify-end pt-4">
                 <Button type="submit">Save settings</Button>
               </div>
