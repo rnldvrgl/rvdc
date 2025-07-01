@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/form'
 
 import Loader from '@/app/loading'
+import DatePicker from '@/components/custom/inputs/DatePicker'
 import ImageUpload from '@/components/custom/inputs/ImageUpload'
 import { PasswordField } from '@/components/custom/inputs/PasswordInput'
 import { Button } from '@/components/ui/button'
@@ -23,6 +24,7 @@ import useFileUpload from '@/lib/hooks/useFileUpload'
 import { useUserProfile } from '@/lib/queries/useUserProfile'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
+import { formatDateToYMD } from '@/lib/utils/helpers'
 import toast from 'react-hot-toast'
 
 const formSchema = z.object({
@@ -33,7 +35,13 @@ const formSchema = z.object({
   first_name: z.string().min(2),
   last_name: z.string().min(2),
   contact_number: z.string().min(7),
-  birthday: z.string(),
+  birthday: z
+    .preprocess((arg) => {
+      if (typeof arg === 'string' || arg instanceof Date)
+        return arg ? new Date(arg) : undefined
+      return undefined
+    }, z.date().optional())
+    .optional(),
   profile_image: z.any().optional(),
 })
 
@@ -42,15 +50,16 @@ export default function SettingsPage() {
   const setUserProfile = useUserProfileStore((state) => state.setUserProfile)
   const userProfile = useUserProfileStore((state) => state.userProfile)
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  type FormSchemaType = z.infer<typeof formSchema>
+  const form = useForm<FormSchemaType>({
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       email: '',
       username: '',
       first_name: '',
       last_name: '',
       contact_number: '',
-      birthday: '',
+      birthday: undefined,
       profile_image: '',
     },
   })
@@ -67,7 +76,9 @@ export default function SettingsPage() {
         first_name: userProfile.first_name ?? '',
         last_name: userProfile.last_name ?? '',
         contact_number: userProfile.contact_number ?? '',
-        birthday: userProfile.birthday ?? '',
+        birthday: userProfile.birthday
+          ? new Date(userProfile.birthday)
+          : undefined,
         profile_image:
           userProfile.profile_image != null ? userProfile.profile_image : '',
       })
@@ -83,12 +94,22 @@ export default function SettingsPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const payload = {
       ...values,
+      birthday: values.birthday ? formatDateToYMD(values.birthday) : undefined,
     }
+
+    if (
+      typeof values.profile_image === 'string' &&
+      !values.profile_image.startsWith('data:')
+    ) {
+      payload.profile_image == ''
+    }
+
     if (!payload.new_password) delete payload.new_password
     if (!payload.current_password) delete payload.current_password
 
     try {
       const response = await api.patch('/users/profile/', payload)
+      console.log('PAYLOAD', payload)
       toast.success('Profile updated successfully.')
       setUserProfile(response.data)
       await refetch()
@@ -225,11 +246,10 @@ export default function SettingsPage() {
                 name="birthday"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Birthday</FormLabel>
                     <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
+                      <DatePicker
+                        label="Birthday"
+                        field={field}
                       />
                     </FormControl>
                     <FormMessage />

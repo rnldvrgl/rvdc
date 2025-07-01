@@ -98,3 +98,7 @@ export function getDisplayImage(
 ) {
   return image && image.trim() !== '' ? image : fallback
 }
+
+export function formatDateToYMD(date: Date): string {
+  return date.toISOString().split('T')[0]
+}
