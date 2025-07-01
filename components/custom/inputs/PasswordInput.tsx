@@ -42,6 +42,7 @@ export function PasswordField({
               <Input
                 {...field}
                 disabled={disabled}
+                value={field.value ?? ''}
                 type={passwordVisibility ? 'text' : 'password'}
                 autoComplete="on"
                 placeholder={placeholder}

@@ -3,6 +3,7 @@ import { ThemeProvider } from '@/lib/providers/theme-provider'
 import { SHOP_INFO } from '@/lib/constants/meta'
 import { QueryClientContextProvider } from '@/lib/providers/client-query-provider'
 import { Poppins } from 'next/font/google'
+import NextTopLoader from 'nextjs-toploader'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
@@ -28,6 +29,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className={`${poppins.className} antialiased p-0`}>
+        <NextTopLoader />
         <QueryClientContextProvider>
           <ThemeProvider
             attribute="class"
