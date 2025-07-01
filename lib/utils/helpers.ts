@@ -77,3 +77,17 @@ export function prepareOptions<T extends { code?: string; name: string }>(
     .filter((item) => item.code?.trim())
     .sort((a, b) => a.name.localeCompare(b.name))
 }
+
+export const convertFileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => {
+      const result = reader.result as string
+      // Strip "data:image/png;base64," if you want
+      const base64 = result.split(',')[1]
+      resolve(base64)
+    }
+    reader.onerror = reject
+  })
+}

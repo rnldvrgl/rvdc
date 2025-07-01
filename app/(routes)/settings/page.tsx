@@ -14,9 +14,11 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 
+import ImageUpload from '@/components/custom/inputs/ImageUpload'
 import { PasswordField } from '@/components/custom/inputs/PasswordInput'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import useFileUpload from '@/lib/hooks/useFileUpload'
 import { useUserProfile } from '@/lib/queries/useUserProfile'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
@@ -48,6 +50,7 @@ export default function SettingsPage() {
       last_name: '',
       contact_number: '',
       birthday: '',
+      profile_image: '',
     },
   })
 
@@ -58,43 +61,38 @@ export default function SettingsPage() {
   useEffect(() => {
     if (userProfile) {
       form.reset({
-        email: userProfile.email || '',
-        username: userProfile.username || '',
-        first_name: userProfile.first_name || '',
-        last_name: userProfile.last_name || '',
-        contact_number: userProfile.contact_number || '',
-        birthday: userProfile.birthday || '',
+        email: userProfile.email ?? '',
+        username: userProfile.username ?? '',
+        first_name: userProfile.first_name ?? '',
+        last_name: userProfile.last_name ?? '',
+        contact_number: userProfile.contact_number ?? '',
+        birthday: userProfile.birthday ?? '',
+        profile_image: userProfile.profile_image ?? '',
       })
     }
   }, [userProfile, form])
 
+  const upload = useFileUpload({
+    form,
+    fieldName: 'profile_image',
+    initialImage: userProfile?.profile_image,
+  })
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const payload = { ...values }
+    const payload = {
+      ...values,
+    }
     if (!payload.new_password) delete payload.new_password
     if (!payload.current_password) delete payload.current_password
 
     try {
-      // build FormData so we can send files + strings
-      const formData = new FormData()
-      Object.entries(values).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          formData.append(key, value)
-        }
-      })
-
-      const response = await api.patch('/users/profile/', formData)
-
+      const response = await api.patch('/users/profile/', payload)
       toast.success('Profile updated successfully.')
-
-      // update Zustand immediately
       setUserProfile(response.data)
-
-      // refetch tanstack query to update global cache
       await refetch()
 
-      // clear password fields after submit
-      form.setValue('current_password', undefined)
-      form.setValue('new_password', undefined)
+      form.setValue('current_password', '')
+      form.setValue('new_password', '')
     } catch (error: any) {
       toast.error(
         error?.response?.data?.detail ||
@@ -214,7 +212,6 @@ export default function SettingsPage() {
                     placeholder="••••••••"
                     label="Current Password"
                   />
-
                   <PasswordField
                     name="new_password"
                     placeholder="••••••••"
@@ -246,9 +243,11 @@ export default function SettingsPage() {
                     <FormItem>
                       <FormLabel>Profile Image</FormLabel>
                       <FormControl>
-                        <Input
-                          type="file"
-                          onChange={(e) => field.onChange(e.target.files?.[0])}
+                        <ImageUpload
+                          fieldName={field.name}
+                          handleFileChange={upload.handleFileChange}
+                          handleFileRemove={upload.handleFileRemove}
+                          image={upload.image}
                         />
                       </FormControl>
                       <FormMessage />
