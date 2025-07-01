@@ -59,6 +59,7 @@ interface FormValues {
   province: string
   city: string
   barangay: string
+  is_deleted: boolean
 }
 
 interface ClientFormProps {
@@ -75,6 +76,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
       province: '',
       city: '',
       barangay: '',
+      is_deleted: false,
     },
   })
 
