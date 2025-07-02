@@ -1,15 +1,18 @@
+'use client'
+
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import React from 'react'
-
-import { ChevronUp } from 'lucide-react'
 
 import { DataTablePagination } from '@/components/custom/table/components/Pagination'
 import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -27,6 +30,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
   pageCount: number
   totalCount: number
+  isLoading: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -34,6 +38,7 @@ export function DataTable<TData, TValue>({
   data,
   pageCount,
   totalCount,
+  isLoading,
 }: DataTableProps<TData, TValue>) {
   const { page, limit: rawLimit, search, ordering } = useSearchParameters()
   const limit = Number(rawLimit) || 10
@@ -70,15 +75,24 @@ export function DataTable<TData, TValue>({
     manualPagination: true,
     manualSorting: true,
     state: {
-      pagination: { pageIndex: page - 1, pageSize: limit },
+      pagination: {
+        pageIndex: page - 1,
+        pageSize: limit,
+      },
       sorting: sortingState,
     },
     onPaginationChange: (updater) => {
-      const next =
+      const nextPage =
         typeof updater === 'function'
           ? updater({ pageIndex: page - 1, pageSize: limit }).pageIndex
           : updater.pageIndex
-      push({ page: next + 1, limit, ordering, search })
+
+      push({
+        page: nextPage + 1,
+        limit,
+        ordering,
+        search,
+      })
     },
     onSortingChange: (updater) => {
       const nextSorting =
@@ -92,20 +106,16 @@ export function DataTable<TData, TValue>({
           search,
         })
       } else {
-        push({ page: 1, limit, ordering: undefined, search })
+        push({
+          page: 1,
+          limit,
+          ordering: undefined,
+          search,
+        })
       }
     },
     getCoreRowModel: getCoreRowModel(),
   })
-
-  const getSortIcon = (sorted?: false | 'asc' | 'desc') => (
-    <ChevronUp
-      className={`h-4 w-4 transition-all duration-200 opacity-0 scale-75
-        ${sorted ? 'opacity-100 scale-100' : ''}
-      `}
-      style={{ transform: sorted === 'desc' ? 'rotate(180deg)' : undefined }}
-    />
-  )
 
   return (
     <div className="space-y-6">
@@ -127,60 +137,95 @@ export function DataTable<TData, TValue>({
       <div className="overflow-x-auto rounded-2xl border shadow-sm ring-1 ring-border/30">
         <Table className="min-w-full">
           <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="bg-muted/50"
-              >
-                {headerGroup.headers.map((header) => {
-                  const sorted = header.column.getIsSorted()
-                  return (
-                    <TableHead
-                      key={header.id}
-                      onClick={header.column.getToggleSortingHandler()}
-                      className="group px-4 py-3 text-sm font-semibold cursor-pointer select-none"
-                      title={`Click to sort by ${String(header.column.id)}`}
-                    >
-                      <div className="flex items-center gap-1">
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                        <span className="transition-all group-hover:opacity-80">
-                          {getSortIcon(sorted)}
-                        </span>
-                      </div>
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
+            <TableRow className="bg-muted/50">
+              {table.getHeaderGroups()[0]?.headers.map((header) => {
+                const sorted = header.column.getIsSorted()
+                return (
+                  <TableHead
+                    key={header.id}
+                    className="px-4 py-3 text-sm font-semibold cursor-pointer select-none"
+                    onClick={header.column.getToggleSortingHandler()}
+                  >
+                    <div className="flex items-center gap-1">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                      {sorted && (
+                        <motion.div
+                          className="flex items-center gap-0.5"
+                          animate={{ y: [-2, 0, -1, 0] }}
+                          transition={{ duration: 0.4 }}
+                        >
+                          <ChevronUp
+                            className={`h-4 w-4 ${
+                              sorted === 'asc'
+                                ? 'opacity-100 text-primary'
+                                : 'opacity-50'
+                            }`}
+                          />
+                          <ChevronDown
+                            className={`h-4 w-4 ${
+                              sorted === 'desc'
+                                ? 'opacity-100 text-primary'
+                                : 'opacity-50'
+                            }`}
+                          />
+                        </motion.div>
+                      )}
+                    </div>
+                  </TableHead>
+                )
+              })}
+            </TableRow>
           </TableHeader>
 
           <TableBody>
-            {table.getRowModel().rows.length ? (
-              table.getRowModel().rows.map((row, i) => (
+            {isLoading ? (
+              Array.from({ length: 8 }).map((_, i) => (
                 <TableRow
-                  key={row.id}
-                  className={
-                    i % 2 === 1
-                      ? 'bg-muted/20 hover:bg-muted/40 transition-colors'
-                      : 'hover:bg-muted/40 transition-colors'
-                  }
+                  key={`skeleton-${i}`}
+                  className={i % 2 === 1 ? 'bg-muted/20' : ''}
                 >
-                  {row.getVisibleCells().map((cell) => (
+                  {Array.from({ length: columns.length }).map((_, j) => (
                     <TableCell
-                      key={cell.id}
-                      className="px-4 py-3 text-sm"
+                      key={`skeleton-cell-${i}-${j}`}
+                      className="px-4 py-3"
                     >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                      <Skeleton className="h-5 w-full rounded" />
                     </TableCell>
                   ))}
                 </TableRow>
               ))
+            ) : table.getRowModel().rows.length ? (
+              <AnimatePresence initial={false}>
+                {table.getRowModel().rows.map((row, i) => (
+                  <motion.tr
+                    key={row.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.3, ease: 'easeOut' }}
+                    className={`${
+                      i % 2 === 1
+                        ? 'bg-muted/20 hover:bg-muted/40'
+                        : 'hover:bg-muted/40'
+                    } transition-colors`}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className="px-4 py-3 text-sm"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </motion.tr>
+                ))}
+              </AnimatePresence>
             ) : (
               <TableRow>
                 <TableCell

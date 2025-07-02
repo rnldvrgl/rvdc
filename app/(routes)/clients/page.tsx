@@ -1,7 +1,6 @@
 'use client'
 
 import { getClientColumns } from '@/app/(routes)/clients/columns'
-import Loader from '@/app/loading'
 import { DataTable } from '@/components/custom/table/DataTable'
 import ClientForm from '@/components/forms/ClientForm'
 import EntitySheet from '@/components/sheets/EntitySheet'
@@ -22,8 +21,6 @@ export default function ClientsPage() {
 
   const columns = getClientColumns(openSheet)
 
-  if (isLoading) return <Loader />
-
   return (
     <div className="container mx-auto">
       <EntitySheet
@@ -43,8 +40,8 @@ export default function ClientsPage() {
           />
         )}
       />
-
       <DataTable
+        isLoading={isLoading}
         columns={columns}
         data={data?.results ?? []}
         pageCount={data?.count ?? 1}
