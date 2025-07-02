@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useMounted } from '@/lib/hooks/useMounted'
-import useUserStore from '@/lib/store/useUserStore'
+import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
 import { removeCookie } from '@/lib/utils/cookies'
 import { getToken, removeToken } from '@/lib/utils/tokens'
@@ -30,7 +30,9 @@ export function DropdownUserProfile({
 }: DropdownUserProfileProps) {
   const router = useRouter()
   const mounted = useMounted()
-  const clearUser = useUserStore((state) => state.clearUser)
+  const clearUserProfile = useUserProfileStore(
+    (state) => state.clearUserProfile,
+  )
 
   const handleLogout = async () => {
     try {
@@ -45,7 +47,7 @@ export function DropdownUserProfile({
       removeCookie('refresh')
 
       // Clear zustand user store
-      clearUser()
+      clearUserProfile()
 
       toast.success(response.data.detail || 'Logout successful.')
       router.push('/')

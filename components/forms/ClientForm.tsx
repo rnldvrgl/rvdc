@@ -1,8 +1,8 @@
 'use client'
 
 import { usePsgcForm } from '@/lib/hooks/usePsgcForm'
+import { useClientMutations } from '@/lib/mutations/useClientMutations'
 import { SubmitHandler, useForm } from 'react-hook-form'
-import toast from 'react-hot-toast'
 
 import type { PsgcSelectProps } from '@/components/custom/inputs/PsgcSelect'
 import { PsgcSelect } from '@/components/custom/inputs/PsgcSelect'
@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { TClient } from '@/lib/constants/types'
-import api from '@/lib/utils/api'
 
 function LocationField({
   name,
@@ -59,7 +58,6 @@ interface FormValues {
   province: string
   city: string
   barangay: string
-  is_deleted: boolean
 }
 
 interface ClientFormProps {
@@ -70,13 +68,12 @@ interface ClientFormProps {
 export default function ClientForm({ client, onClose }: ClientFormProps) {
   const form = useForm<FormValues>({
     defaultValues: {
-      full_name: client?.full_name || '',
-      contact_number: client?.contact_number || '',
-      address: client?.address || '',
+      full_name: client?.full_name ?? '',
+      contact_number: client?.contact_number ?? '',
+      address: client?.address ?? '',
       province: '',
       city: '',
       barangay: '',
-      is_deleted: false,
     },
   })
 
@@ -98,30 +95,27 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
     handleBarangayChange,
   } = usePsgcForm<FormValues>({ form, defaultValues: client })
 
-  const submitData = async (data: FormValues) => {
-    data.province = provinceName
-    data.city = cityName
-    data.barangay = barangayName
+  const { addClient, updateClient } = useClientMutations()
 
-    return client
-      ? api.patch(`/clients/${client.id}/`, data)
-      : api.post('/clients/', data)
-  }
+  const handleSubmit: SubmitHandler<FormValues> = (data) => {
+    const payload = {
+      ...data,
+      province: provinceName,
+      city: cityName,
+      barangay: barangayName,
+    }
 
-  const handleSubmit: SubmitHandler<FormValues> = async (data) => {
-    try {
-      await submitData(data)
-      toast.success(
-        client
-          ? 'Client updated successfully.'
-          : 'Client created successfully.',
+    if (client?.id) {
+      updateClient.mutate(
+        { id: client.id, data: payload },
+        {
+          onSuccess: onClose,
+        },
       )
-      onClose()
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.detail ||
-          'An error occurred while saving the client.',
-      )
+    } else {
+      addClient.mutate(payload, {
+        onSuccess: onClose,
+      })
     }
   }
 

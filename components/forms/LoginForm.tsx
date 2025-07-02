@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { loginSchema } from '@/lib/constants/schema'
-import { LoginFormValues } from '@/lib/constants/types'
+import { TLoginFormValues } from '@/lib/constants/types'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
 import { setCookie } from '@/lib/utils/cookies'
@@ -28,7 +28,7 @@ import { setToken } from '@/lib/utils/tokens'
 
 export function LoginForm() {
   const router = useRouter()
-  const form = useForm<LoginFormValues>({
+  const form = useForm<TLoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       username: '',
@@ -41,7 +41,7 @@ export function LoginForm() {
   const { isSubmitting, errors } = formState
   const setUserProfile = useUserProfileStore((state) => state.setUserProfile)
 
-  const onSubmit = async (values: LoginFormValues) => {
+  const onSubmit = async (values: TLoginFormValues) => {
     try {
       const response = await api.post('/auth/login/', values)
       setToken('access', response.data.access)

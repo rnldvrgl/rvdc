@@ -7,11 +7,18 @@ import EntitySheet from '@/components/sheets/EntitySheet'
 import { TClient } from '@/lib/constants/types'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
+import { useClientMutations } from '@/lib/mutations/useClientMutations'
 import { useClients } from '@/lib/queries/useClients'
 
 export default function ClientsPage() {
   const { page, limit, search, ordering } = useSearchParameters()
-  const { data, isLoading } = useClients({ page, limit, search, ordering })
+  const { deleteClient } = useClientMutations()
+  const { data, isLoading } = useClients({
+    page,
+    limit,
+    search,
+    ordering,
+  })
 
   const {
     sheetState: { open, entity },
@@ -19,9 +26,16 @@ export default function ClientsPage() {
     closeSheet,
   } = useEntitySheet<TClient>()
 
-  const columns = getClientColumns(openSheet)
-  const totalCount: number = data?.count ?? 0
-  const pageCount: number = Math.max(1, Math.ceil(totalCount / (limit || 10)))
+  const handleDelete = (client: TClient) => {
+    if (client.id !== undefined) {
+      deleteClient.mutate(client.id)
+    }
+  }
+
+  const columns = getClientColumns({
+    onEdit: openSheet,
+    onDelete: handleDelete,
+  })
 
   return (
     <div className="container mx-auto">
@@ -46,10 +60,6 @@ export default function ClientsPage() {
         isLoading={isLoading}
         columns={columns}
         data={data?.results ?? []}
-        pageCount={pageCount}
-        totalCount={totalCount}
-        hasNextPage={!!data?.next}
-        hasPrevPage={!!data?.previous}
       />
     </div>
   )

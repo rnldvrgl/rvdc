@@ -1,5 +1,11 @@
 export type Sorting = { id: string; desc: boolean }[]
 
+export type TLoginFormValues = {
+  username: string
+  password: string
+  remember_me?: boolean
+}
+
 export type TBarangay = {
   code: string
   legacyCode: string

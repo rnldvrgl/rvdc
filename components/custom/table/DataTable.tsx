@@ -10,16 +10,10 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, Search } from 'lucide-react'
 import React from 'react'
 
+import { DataTablePagination } from '@/components/custom/table/components/DataTablePagination'
+import DataTableSelectionCount from '@/components/custom/table/components/DataTableSelectionCount'
 import { DataTableViewOptions } from '@/components/custom/table/components/DataTableViewOptions'
-import { DataTablePagination } from '@/components/custom/table/components/Pagination'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -33,28 +27,32 @@ import { useDebounce } from '@/lib/hooks/useDebounce'
 import { useNavigation } from '@/lib/hooks/useNavigation'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 
+interface DataMeta {
+  count?: number
+  next?: string | null
+  previous?: string | null
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-  pageCount: number
-  totalCount: number
+  data: TData[] & DataMeta
   isLoading: boolean
-  hasNextPage: boolean
-  hasPrevPage: boolean
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  pageCount,
-  totalCount,
   isLoading,
-  hasNextPage,
-  hasPrevPage,
 }: DataTableProps<TData, TValue>) {
   const { page, limit: rawLimit, search, ordering } = useSearchParameters()
   const limit = Number(rawLimit) || 10
   const { push } = useNavigation()
+
+  const totalCount = data?.count ?? data.length ?? 0
+  const pageCount = Math.max(1, Math.ceil(totalCount / (limit || 10)))
+
+  const hasNextPage = !!data?.next
+  const hasPrevPage = !!data?.previous
 
   const [localSearch, setLocalSearch] = React.useState(search || '')
   const debouncedSearch = useDebounce(localSearch, 500)
@@ -74,7 +72,7 @@ export function DataTable<TData, TValue>({
         search: debouncedSearch || undefined,
       })
     }
-  }, [debouncedSearch])
+  }, [debouncedSearch, search, limit, ordering, push])
 
   React.useEffect(() => {
     setLocalSearch(search || '')
@@ -131,7 +129,6 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-6">
-      {/* Header with search + view options */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <Input
           type="text"
@@ -240,37 +237,8 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-
-      {/* Pagination & page size below */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Rows per page</p>
-          <Select
-            value={`${limit}`}
-            onValueChange={(value) => {
-              push({
-                page: 1,
-                limit: Number(value),
-                ordering,
-                search,
-              })
-            }}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue placeholder={`${limit}`} />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[10, 20, 25, 30, 40, 50].map((pageSize) => (
-                <SelectItem
-                  key={pageSize}
-                  value={`${pageSize}`}
-                >
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <DataTableSelectionCount />
 
         <DataTablePagination
           hasPrevPage={hasPrevPage}

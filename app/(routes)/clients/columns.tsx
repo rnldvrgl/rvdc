@@ -1,14 +1,19 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { TClient } from '@/lib/constants/types'
 import { ColumnDef } from '@tanstack/react-table'
-import { Edit } from 'lucide-react'
+import { Edit, Trash2 } from 'lucide-react'
 
-export function getClientColumns(
-  onEdit: (client: TClient) => void,
-): ColumnDef<TClient>[] {
+interface GetClientColumnsProps {
+  onEdit: (client: TClient) => void
+  onDelete: (client: TClient) => void
+}
+
+export function getClientColumns({
+  onEdit,
+  onDelete,
+}: GetClientColumnsProps): ColumnDef<TClient>[] {
   return [
     {
       accessorKey: 'full_name',
@@ -35,28 +40,29 @@ export function getClientColumns(
       header: 'Province',
     },
     {
-      accessorKey: 'is_deleted',
-      header: 'Status',
-      cell: ({ getValue }) => {
-        const isDeleted = getValue() as boolean
-        return (
-          <Badge variant={isDeleted ? 'destructive' : 'success'}>
-            {isDeleted ? 'Deleted' : 'Active'}
-          </Badge>
-        )
-      },
-    },
-    {
       accessorKey: 'action',
       header: 'Action',
-      cell: ({ row }) => (
-        <Button
-          onClick={() => onEdit(row.original)}
-          size="icon"
-        >
-          <Edit />
-        </Button>
-      ),
+      cell: ({ row }) => {
+        const client = row.original
+        return (
+          <DataTableActions
+            items={[
+              {
+                label: 'Edit',
+                icon: <Edit className="size-4" />,
+                onClick: () => onEdit(client),
+              },
+              {
+                label: 'Delete',
+                icon: <Trash2 className="size-4 text-destructive" />,
+                onClick: () => onDelete(client),
+                destructive: true,
+                confirmText: `Delete ${client.full_name}?`,
+              },
+            ]}
+          />
+        )
+      },
     },
   ]
 }
