@@ -37,12 +37,14 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[] & DataMeta
   isLoading: boolean
+  headerActions?: React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   isLoading,
+  headerActions,
 }: DataTableProps<TData, TValue>) {
   const { page, limit: rawLimit, search, ordering } = useSearchParameters()
   const limit = Number(rawLimit) || 10
@@ -137,7 +139,10 @@ export function DataTable<TData, TValue>({
           placeholder="Search..."
           className="w-full sm:max-w-xs border-border focus-visible:ring-2 focus-visible:ring-primary/40"
         />
-        <DataTableViewOptions table={table} />
+        <div className="flex items-center gap-2">
+          {headerActions}
+          <DataTableViewOptions table={table} />
+        </div>
       </div>
 
       <div className="rounded-2xl border border-border bg-background shadow-sm ring-1 ring-border/30 overflow-x-auto">
