@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { navigation, shortcuts } from '@/lib/constants/navigation'
-import { TClient } from '@/lib/constants/types'
+import { Client } from '@/lib/constants/types'
 import useActivePath from '@/lib/hooks/useActivePath'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
@@ -34,7 +34,7 @@ export function Sidebar() {
     sheetState: { open },
     openSheet,
     closeSheet,
-  } = useEntitySheet<TClient>()
+  } = useEntitySheet<Client>()
 
   const renderNav = (close?: () => void) => (
     <nav className="flex-1 flex flex-col space-y-6">

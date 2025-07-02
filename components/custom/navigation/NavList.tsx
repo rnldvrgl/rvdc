@@ -29,7 +29,7 @@ function NavList({
               <Link
                 href={item.href}
                 onClick={close}
-                className={getLinkClasses(activePath === item.href)}
+                className={getLinkClasses(activePath.startsWith(item.href))}
               >
                 <item.icon className="size-4" />
                 {item.name}
@@ -41,7 +41,7 @@ function NavList({
                   close?.()
                 }}
                 variant="ghost"
-                className="w-full justify-start hover:bg-muted hover:text-primary text-muted-foreground "
+                className="w-full justify-start hover:bg-muted hover:text-primary text-muted-foreground"
               >
                 <item.icon className="size-4" />
                 {item.name}
