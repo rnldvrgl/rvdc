@@ -1,25 +1,17 @@
 // src/lib/mutations/useClientMutations.ts
 'use client'
 
+import { Client } from '@/lib/constants/types'
 import api from '@/lib/utils/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-
-interface ClientData {
-  full_name: string
-  contact_number: string
-  address: string
-  province: string
-  city: string
-  barangay: string
-}
 
 export function useClientMutations() {
   const queryClient = useQueryClient()
 
   // CREATE
   const addClient = useMutation({
-    mutationFn: (data: ClientData) => api.post('/clients/', data),
+    mutationFn: (data: Client) => api.post('/clients/', data),
     onSuccess: () => {
       toast.success('Client created successfully.')
       queryClient.invalidateQueries({ queryKey: ['clients'] })
@@ -30,7 +22,7 @@ export function useClientMutations() {
 
   // UPDATE
   const updateClient = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ClientData }) =>
+    mutationFn: ({ id, data }: { id: number; data: Client }) =>
       api.patch(`/clients/${id}/`, data),
     onSuccess: () => {
       toast.success('Client updated successfully.')

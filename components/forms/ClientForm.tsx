@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { TClient } from '@/lib/constants/types'
+import { Client } from '@/lib/constants/types'
 
 function LocationField({
   name,
@@ -61,7 +61,7 @@ interface FormValues {
 }
 
 interface ClientFormProps {
-  client?: TClient
+  client?: Client
   onClose: () => void
 }
 

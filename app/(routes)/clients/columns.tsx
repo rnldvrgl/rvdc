@@ -1,19 +1,19 @@
 'use client'
 
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
-import { TClient } from '@/lib/constants/types'
+import { Client } from '@/lib/constants/types'
 import { ColumnDef } from '@tanstack/react-table'
 import { Edit, Trash2 } from 'lucide-react'
 
 interface GetClientColumnsProps {
-  onEdit: (client: TClient) => void
-  onDelete: (client: TClient) => void
+  onEdit: (client: Client) => void
+  onDelete: (client: Client) => void
 }
 
 export function getClientColumns({
   onEdit,
   onDelete,
-}: GetClientColumnsProps): ColumnDef<TClient>[] {
+}: GetClientColumnsProps): ColumnDef<Client>[] {
   return [
     {
       accessorKey: 'full_name',
