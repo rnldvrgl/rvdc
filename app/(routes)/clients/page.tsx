@@ -20,10 +20,12 @@ export default function ClientsPage() {
   } = useEntitySheet<TClient>()
 
   const columns = getClientColumns(openSheet)
+  const totalCount: number = data?.count ?? 0
+  const pageCount: number = Math.max(1, Math.ceil(totalCount / (limit || 10)))
 
   return (
     <div className="container mx-auto">
-      <EntitySheet
+      <EntitySheet<TClient>
         open={open}
         onOpenChange={(isOpen) => !isOpen && closeSheet()}
         entity={entity}
@@ -44,8 +46,10 @@ export default function ClientsPage() {
         isLoading={isLoading}
         columns={columns}
         data={data?.results ?? []}
-        pageCount={data?.count ?? 1}
-        totalCount={data?.count ?? 0}
+        pageCount={pageCount}
+        totalCount={totalCount}
+        hasNextPage={!!data?.next}
+        hasPrevPage={!!data?.previous}
       />
     </div>
   )

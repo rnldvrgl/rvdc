@@ -7,11 +7,19 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, Search } from 'lucide-react'
 import React from 'react'
 
+import { DataTableViewOptions } from '@/components/custom/table/components/DataTableViewOptions'
 import { DataTablePagination } from '@/components/custom/table/components/Pagination'
 import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -31,6 +39,8 @@ interface DataTableProps<TData, TValue> {
   pageCount: number
   totalCount: number
   isLoading: boolean
+  hasNextPage: boolean
+  hasPrevPage: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -39,6 +49,8 @@ export function DataTable<TData, TValue>({
   pageCount,
   totalCount,
   isLoading,
+  hasNextPage,
+  hasPrevPage,
 }: DataTableProps<TData, TValue>) {
   const { page, limit: rawLimit, search, ordering } = useSearchParameters()
   const limit = Number(rawLimit) || 10
@@ -119,7 +131,8 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Header with search + view options */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <Input
           type="text"
           value={localSearch}
@@ -127,14 +140,10 @@ export function DataTable<TData, TValue>({
           placeholder="Search..."
           className="w-full sm:max-w-xs border-border focus-visible:ring-2 focus-visible:ring-primary/40"
         />
-        <DataTablePagination
-          hasPrevPage={page > 1}
-          hasNextPage={page < pageCount}
-          count={totalCount}
-        />
+        <DataTableViewOptions table={table} />
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border shadow-sm ring-1 ring-border/30">
+      <div className="rounded-2xl border border-border bg-background shadow-sm ring-1 ring-border/30 overflow-x-auto">
         <Table className="min-w-full">
           <TableHeader>
             <TableRow className="bg-muted/50">
@@ -143,7 +152,7 @@ export function DataTable<TData, TValue>({
                 return (
                   <TableHead
                     key={header.id}
-                    className="px-4 py-3 text-sm font-semibold cursor-pointer select-none"
+                    className="px-3 py-2 text-sm font-semibold cursor-pointer select-none"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center gap-1">
@@ -153,22 +162,13 @@ export function DataTable<TData, TValue>({
                       )}
                       {sorted && (
                         <motion.div
-                          className="flex items-center gap-0.5"
-                          animate={{ y: [-2, 0, -1, 0] }}
-                          transition={{ duration: 0.4 }}
+                          initial={false}
+                          animate={{ rotate: sorted === 'desc' ? 180 : 0 }}
+                          transition={{ duration: 0.3 }}
                         >
-                          <ChevronUp
-                            className={`h-4 w-4 ${
-                              sorted === 'asc'
-                                ? 'opacity-100 text-primary'
-                                : 'opacity-50'
-                            }`}
-                          />
                           <ChevronDown
                             className={`h-4 w-4 ${
-                              sorted === 'desc'
-                                ? 'opacity-100 text-primary'
-                                : 'opacity-50'
+                              sorted ? 'opacity-100 text-primary' : 'opacity-40'
                             }`}
                           />
                         </motion.div>
@@ -185,12 +185,12 @@ export function DataTable<TData, TValue>({
               Array.from({ length: 8 }).map((_, i) => (
                 <TableRow
                   key={`skeleton-${i}`}
-                  className={i % 2 === 1 ? 'bg-muted/20' : ''}
+                  className={`${i % 2 === 1 ? 'bg-muted/10' : ''}`}
                 >
                   {Array.from({ length: columns.length }).map((_, j) => (
                     <TableCell
                       key={`skeleton-cell-${i}-${j}`}
-                      className="px-4 py-3"
+                      className="px-3 py-2"
                     >
                       <Skeleton className="h-5 w-full rounded" />
                     </TableCell>
@@ -205,17 +205,15 @@ export function DataTable<TData, TValue>({
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                    className={`${
-                      i % 2 === 1
-                        ? 'bg-muted/20 hover:bg-muted/40'
-                        : 'hover:bg-muted/40'
-                    } transition-colors`}
+                    transition={{ duration: 0.3 }}
+                    className={`border-b border-border/40 ${
+                      i % 2 === 1 ? 'bg-muted/10' : ''
+                    } hover:bg-muted/20 transition-colors`}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="px-4 py-3 text-sm"
+                        className="px-3 py-2 text-sm"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -230,14 +228,55 @@ export function DataTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center text-muted-foreground"
+                  className="h-36 text-center text-muted-foreground"
                 >
-                  No results.
+                  <div className="flex flex-col items-center gap-2">
+                    <Search className="h-8 w-8" />
+                    <span>No results found</span>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Pagination & page size below */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center space-x-2">
+          <p className="text-sm font-medium">Rows per page</p>
+          <Select
+            value={`${limit}`}
+            onValueChange={(value) => {
+              push({
+                page: 1,
+                limit: Number(value),
+                ordering,
+                search,
+              })
+            }}
+          >
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={`${limit}`} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[10, 20, 25, 30, 40, 50].map((pageSize) => (
+                <SelectItem
+                  key={pageSize}
+                  value={`${pageSize}`}
+                >
+                  {pageSize}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <DataTablePagination
+          hasPrevPage={hasPrevPage}
+          hasNextPage={hasNextPage}
+          count={totalCount}
+        />
       </div>
     </div>
   )
