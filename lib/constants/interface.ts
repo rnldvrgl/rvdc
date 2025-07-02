@@ -1,3 +1,23 @@
+export interface EntitySheetProps<T> {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description?: string
+  entity?: T
+  renderForm: (props: { onClose: () => void; entity?: T }) => React.ReactNode
+}
+
+export interface EntitySheetState<T> {
+  open: boolean
+  entity: T | undefined
+}
+
+export interface UseEntitySheetReturn<T> {
+  sheetState: EntitySheetState<T>
+  openSheet: (entity?: T) => void
+  closeSheet: () => void
+  toggleSheet: () => void
+}
 export interface User {
   id: number
   first_name: string
@@ -8,14 +28,4 @@ export interface User {
   birthday?: string
   is_active?: boolean
   contact_number?: string
-}
-export interface Client {
-  id: number
-  full_name: string
-  contact_number: string
-  address: string
-  province: string
-  city: string
-  barangay: string
-  is_deleted: boolean
 }

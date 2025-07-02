@@ -2,7 +2,8 @@
 
 import NavList from '@/components/custom/navigation/NavList'
 import { UserProfile } from '@/components/custom/navigation/UserProfile'
-import ClientSheet from '@/components/sheets/ClientSheet'
+import ClientForm from '@/components/forms/ClientForm'
+import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -11,7 +12,9 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { navigation, shortcuts } from '@/lib/constants/navigation'
+import { TClient } from '@/lib/constants/types'
 import useActivePath from '@/lib/hooks/useActivePath'
+import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import { Menu } from 'lucide-react'
 import { usePathname } from 'next/navigation'
@@ -20,10 +23,16 @@ import { useState } from 'react'
 export function Sidebar() {
   const pathname = usePathname()
   const isActive = useActivePath()
-  const user = useUserProfileStore((state) => state.userProfile)
   const activePath = isActive ? pathname : ''
-  const [addClientOpen, setAddClientOpen] = useState(false)
+
+  const user = useUserProfileStore((state) => state.userProfile)
   const [sheetOpen, setSheetOpen] = useState(false)
+
+  const {
+    sheetState: { open },
+    openSheet,
+    closeSheet,
+  } = useEntitySheet<TClient>()
 
   const renderNav = (close?: () => void) => (
     <nav className="flex-1 flex flex-col space-y-6">
@@ -39,11 +48,25 @@ export function Sidebar() {
         close={close}
         onAction={(action) => {
           if (action === 'addClient') {
-            setAddClientOpen(true)
+            openSheet()
           }
         }}
       />
     </nav>
+  )
+
+  const renderUserHeader = () => (
+    <div className="flex items-center gap-3 rounded-xl bg-muted p-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold">
+        {user?.first_name?.[0]?.toUpperCase() || 'G'}
+      </div>
+      <div>
+        <p className="text-sm text-muted-foreground">Welcome back</p>
+        <p className="text-base font-semibold text-foreground">
+          {user?.first_name || 'Guest'}
+        </p>
+      </div>
+    </div>
   )
 
   return (
@@ -51,21 +74,16 @@ export function Sidebar() {
       {/* Sidebar for large screens */}
       <aside className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:w-72 lg:flex-col border-r border-border bg-background p-4">
         <div className="flex flex-col gap-y-8 w-full">
-          <div className="flex items-center gap-3 rounded-xl bg-muted p-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold">
-              {user?.first_name?.[0]?.toUpperCase() || 'G'}
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Welcome back</p>
-              <p className="text-base font-semibold text-foreground">
-                {user?.first_name || 'Guest'}
-              </p>
-            </div>
-          </div>
-          <ClientSheet
-            open={addClientOpen}
-            onOpenChange={setAddClientOpen}
+          {renderUserHeader()}
+
+          <EntitySheet
+            open={open}
+            onOpenChange={(isOpen) => !isOpen && closeSheet()}
+            title="Add Client"
+            description="Fill out the form below to add a new client."
+            renderForm={({ onClose }) => <ClientForm onClose={onClose} />}
           />
+
           {renderNav()}
         </div>
         <div className="mt-auto">
@@ -82,10 +100,14 @@ export function Sidebar() {
           <span className="font-semibold">{user?.first_name || 'Guest'}</span>
         </div>
         <div className="flex items-center gap-2">
-          <ClientSheet
-            open={addClientOpen}
-            onOpenChange={setAddClientOpen}
+          <EntitySheet
+            open={open}
+            onOpenChange={(isOpen) => !isOpen && closeSheet()}
+            title="Add Client"
+            description="Fill out the form below to add a new client."
+            renderForm={({ onClose }) => <ClientForm onClose={onClose} />}
           />
+
           <Sheet
             open={sheetOpen}
             onOpenChange={setSheetOpen}
