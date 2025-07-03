@@ -55,6 +55,10 @@ export type Client = BaseEntity & {
 
 // Technician
 export type Technician = BaseEntity & {
+  role?: string
+  is_active?: boolean
+  email?: string
+  birthday?: string
   first_name: string
   last_name: string
   contact_number: string
