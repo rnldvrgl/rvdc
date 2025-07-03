@@ -18,13 +18,13 @@ export const navigation = [
     name: 'Inventory',
     icon: Package,
     children: [
+      { name: 'Stocks', href: '/inventory/stocks', icon: Warehouse },
       { name: 'Items', href: '/inventory/items', icon: Boxes },
       {
         name: 'Item Categories',
         href: '/inventory/categories',
         icon: ListTree,
       },
-      { name: 'Stocks', href: '/inventory/stocks', icon: Warehouse },
     ],
   },
   {

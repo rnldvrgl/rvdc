@@ -34,6 +34,7 @@ export default function NavList({
 
   useEffect(() => {
     const newOpenMenus: Record<string, boolean> = {}
+
     const checkActive = (items: NavItem[]) => {
       for (const item of items) {
         if (
@@ -46,12 +47,22 @@ export default function NavList({
         if (item.children) checkActive(item.children)
       }
     }
+
     checkActive(items)
     setOpenMenus(newOpenMenus)
   }, [items, activePath])
 
   const toggleMenu = (name: string) => {
     setOpenMenus((prev) => ({ ...prev, [name]: !prev[name] }))
+  }
+
+  const isChildActive = (item: NavItem): boolean => {
+    if (!item.children) return false
+    return item.children.some(
+      (child) =>
+        (child.href && activePath.startsWith(child.href)) ||
+        isChildActive(child),
+    )
   }
 
   return (
@@ -65,20 +76,22 @@ export default function NavList({
         {items.map((item) => {
           const isOpen = openMenus[item.name]
           const isParent = !!item.children
-          const isActive = item.href ? activePath.startsWith(item.href) : false
+          const isActive =
+            (item.href && activePath.startsWith(item.href)) ||
+            isChildActive(item)
           const paddingLeft = `${level * 1.5 + 1}rem`
 
-          // --- Render link, action, or toggle parent
           let content
+
           if (item.href) {
             content = (
               <Link
                 href={item.href}
                 onClick={close}
+                style={{ paddingLeft }}
                 className={`${getLinkClasses(
                   isActive,
-                )} flex items-center w-full`}
-                style={{ paddingLeft }}
+                )} flex items-center w-full focus:outline-none focus:ring-0`}
               >
                 <item.icon className="size-4" />
                 <span className="ml-2">{item.name}</span>
@@ -92,8 +105,8 @@ export default function NavList({
                   close?.()
                 }}
                 variant="ghost"
-                className="w-full justify-start hover:bg-muted hover:text-primary text-muted-foreground"
                 style={{ paddingLeft }}
+                className="w-full justify-start hover:bg-muted hover:text-primary text-muted-foreground focus:outline-none focus:ring-0"
               >
                 <item.icon className="size-4" />
                 <span className="ml-2">{item.name}</span>
@@ -105,17 +118,18 @@ export default function NavList({
                 type="button"
                 variant="ghost"
                 onClick={() => toggleMenu(item.name)}
+                style={{ paddingLeft }}
                 className={`flex items-center w-full justify-between group
                   text-sm font-medium transition-colors
                   text-muted-foreground hover:bg-muted hover:text-primary
-                  ${isOpen ? 'text-primary font-semibold' : ''}
+                  ${isActive ? 'text-primary bg-muted' : ''}
+                  focus:outline-none focus:ring-0
                 `}
-                style={{ paddingLeft }}
               >
                 <div className="flex items-center gap-x-3">
                   <item.icon
                     className={`size-4 transition-colors 
-                      ${isOpen ? 'text-primary' : 'text-muted-foreground'} 
+                      ${isActive ? 'text-primary' : 'text-muted-foreground'}
                       group-hover:text-primary`}
                   />
                   <span className="ml-2">{item.name}</span>

@@ -59,7 +59,7 @@ export function getLinkClasses(active: boolean) {
         ? 'bg-muted text-primary'
         : 'hover:bg-muted hover:text-primary text-muted-foreground'
     }
-    focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2`
+`
 }
 
 export function getNameByCode<T extends { code: string; name: string }>(
