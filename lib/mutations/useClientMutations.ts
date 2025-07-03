@@ -24,9 +24,10 @@ export function useClientMutations() {
   const updateClient = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Client }) =>
       api.patch(`/clients/${id}/`, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success('Client updated successfully.')
       queryClient.invalidateQueries({ queryKey: ['clients'] })
+      queryClient.invalidateQueries({ queryKey: ['client', `${variables.id}`] })
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.detail || 'Failed to update client'),

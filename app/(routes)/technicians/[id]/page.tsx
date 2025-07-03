@@ -1,11 +1,25 @@
 'use client'
 
+import { Detail } from '@/components/custom/Detail'
 import { ErrorState } from '@/components/custom/ErrorState'
+import TechnicianForm from '@/components/forms/TechnicianForm'
+import EntitySheet from '@/components/sheets/EntitySheet'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Technician } from '@/lib/constants/types'
+import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import { useTechnician } from '@/lib/queries/useTechnician'
-import { Calendar, Home, IdCard, Mail, Phone, Wallet } from 'lucide-react'
+import {
+  Calendar,
+  Home,
+  IdCard,
+  Mail,
+  Pencil,
+  Phone,
+  Wallet,
+} from 'lucide-react'
 import Image from 'next/image'
 import { useParams } from 'next/navigation'
 
@@ -17,6 +31,12 @@ const TechnicianPage = () => {
     error,
     refetch,
   } = useTechnician(`${params.id}`)
+
+  const {
+    sheetState: { open },
+    openSheet,
+    closeSheet,
+  } = useEntitySheet<Technician>()
 
   if (isLoading) {
     return (
@@ -73,17 +93,26 @@ const TechnicianPage = () => {
   return (
     <div className="h-full py-8 px-4">
       <div className="max-w-5xl mx-auto space-y-8">
+        <div className="flex justify-end">
+          <Button onClick={() => openSheet(technician)}>
+            <Pencil className="size-4 mr-2" />
+            Edit Technician
+          </Button>
+        </div>
+
         {/* PROFILE HEADER */}
         <Card className="shadow-md">
           <CardHeader className="flex flex-row items-center gap-6">
             {technician.profile_image ? (
-              <Image
-                src={technician.profile_image}
-                alt={`${technician.first_name} ${technician.last_name}`}
-                width={100}
-                height={100}
-                className="rounded-full object-cover border-2 border-primary"
-              />
+              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary">
+                <Image
+                  src={technician.profile_image}
+                  alt={`${technician.first_name} ${technician.last_name}`}
+                  width={96}
+                  height={96}
+                  className="object-cover w-full h-full"
+                />
+              </div>
             ) : (
               <div className="h-24 w-24 rounded-full bg-primary/20 text-primary flex items-center justify-center text-3xl font-bold">
                 {technician.first_name?.[0]}
@@ -104,7 +133,7 @@ const TechnicianPage = () => {
           </CardHeader>
         </Card>
 
-        {/* CONTACT INFO */}
+        {/* CONTACT & EMPLOYMENT */}
         <div className="grid md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
@@ -141,7 +170,6 @@ const TechnicianPage = () => {
             </CardContent>
           </Card>
 
-          {/* PERSONAL INFO */}
           <Card>
             <CardHeader>
               <h2 className="text-lg font-semibold">Employment & Other Info</h2>
@@ -171,26 +199,23 @@ const TechnicianPage = () => {
           </Card>
         </div>
       </div>
+
+      {/* EDIT SHEET */}
+      <EntitySheet<Technician>
+        open={open}
+        onOpenChange={(isOpen) => !isOpen && closeSheet()}
+        entity={technician}
+        title="Edit Technician"
+        description="Update the technician details below."
+        renderForm={({ onClose, entity }) => (
+          <TechnicianForm
+            onClose={onClose}
+            technician={entity}
+          />
+        )}
+      />
     </div>
   )
 }
-
-const Detail = ({
-  label,
-  value,
-  icon,
-}: {
-  label: string
-  value: string
-  icon?: React.ReactNode
-}) => (
-  <div className="flex items-center gap-3">
-    {icon && <div className="text-muted-foreground">{icon}</div>}
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-base font-medium">{value}</p>
-    </div>
-  </div>
-)
 
 export default TechnicianPage

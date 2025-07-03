@@ -23,9 +23,12 @@ export function useTechnicianMutations() {
   const updateTechnician = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Technician }) =>
       api.patch(`/users/technicians/${id}/`, data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success('Technician updated successfully.')
       queryClient.invalidateQueries({ queryKey: ['technicians'] })
+      queryClient.invalidateQueries({
+        queryKey: ['technician', `${variables.id}`],
+      })
     },
     onError: (err: any) =>
       toast.error(err?.response?.data?.detail || 'Failed to update technician'),
