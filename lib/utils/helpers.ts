@@ -133,6 +133,16 @@ export function isPathActive(item: NavListItem, path: string): boolean {
   return false
 }
 
+export function formatCurrency(value: number | string) {
+  if (value == null) return 'N/A'
+  const num = typeof value === 'string' ? parseFloat(value) : value
+  if (isNaN(num)) return 'N/A'
+  return num.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+}
+
 export function safeCell(value: any) {
   if (value == null) return 'N/A'
   if (typeof value === 'string' && value.trim() === '') return 'N/A'

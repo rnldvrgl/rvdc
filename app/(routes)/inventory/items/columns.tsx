@@ -1,6 +1,6 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { GetColumnsProps, Item } from '@/lib/constants/interface'
-import { safeCell } from '@/lib/utils/helpers'
+import { formatCurrency, safeCell } from '@/lib/utils/helpers'
 import { ColumnDef } from '@tanstack/react-table'
 import { Edit, Trash2 } from 'lucide-react'
 
@@ -41,7 +41,7 @@ export function getItemColumns({
     {
       accessorKey: 'srp',
       header: 'SRP',
-      cell: ({ getValue }) => safeCell(getValue()),
+      cell: ({ getValue }) => formatCurrency(getValue() as number | string),
     },
     {
       accessorKey: 'action',
