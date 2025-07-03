@@ -31,8 +31,6 @@ export interface PsgcSelectProps<T extends FieldValues> {
 }
 
 export function PsgcSelect<T extends FieldValues>({
-  control,
-  name,
   label,
   value,
   options,
@@ -43,7 +41,7 @@ export function PsgcSelect<T extends FieldValues>({
 }: PsgcSelectProps<T>) {
   return (
     <FormItem>
-      <FormLabel>{label}</FormLabel>
+      <FormLabel required>{label}</FormLabel>
       <FormControl>
         <Select
           onValueChange={onChange}

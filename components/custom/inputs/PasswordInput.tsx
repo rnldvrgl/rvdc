@@ -36,7 +36,7 @@ export function PasswordField({
       name={name}
       render={({ field }) => (
         <FormItem>
-          {label && <FormLabel>{label}</FormLabel>}
+          {label && <FormLabel required>{label}</FormLabel>}
           <FormControl>
             <Box className="relative">
               <Input

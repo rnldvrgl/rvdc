@@ -35,6 +35,27 @@ export type Barangay = {
   city: string
 }
 
+export type City = {
+  code: string
+  legacyCode: string
+  name: string
+  isUrban: boolean
+  isRural: boolean
+  population: number
+  region: string
+  province: string
+}
+
+export type Province = {
+  code: string
+  legacyCode: string
+  name: string
+  isUrban: boolean
+  isRural: boolean
+  population: number
+  region: string
+}
+
 // Common entity fields
 export type BaseEntity = {
   id?: number

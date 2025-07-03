@@ -1,75 +1,72 @@
 'use client'
 
-import { getClientColumns } from '@/app/(routes)/clients/columns'
+import { getItemColumns } from '@/app/(routes)/inventory/items/columns'
 import { DataTable } from '@/components/custom/table/DataTable'
-import ClientForm from '@/components/forms/ClientForm'
+import ItemForm from '@/components/forms/inventory/ItemForm'
 import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
-import { Client } from '@/lib/constants/types'
+import { Item } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
-import { useClientMutations } from '@/lib/mutations/useClientMutations'
-import { useClients } from '@/lib/queries/clients/useClients'
+import { useItemMutations } from '@/lib/mutations/useItemMutations'
+import { useItems } from '@/lib/queries/inventory/useItems'
 import { Plus } from 'lucide-react'
 
-export default function ClientsPage() {
+export default function ItemsPage() {
   const { page, limit, search, ordering } = useSearchParameters()
-  const { deleteClient } = useClientMutations()
-  const { data, isLoading } = useClients({
+  const { deleteItem } = useItemMutations()
+  const { data, isLoading } = useItems({
     page,
     limit,
     search,
     ordering,
   })
 
-  // Separate sheets
   const {
     sheetState: { open: editOpen, entity },
     openSheet: openEditSheet,
     closeSheet: closeEditSheet,
-  } = useEntitySheet<Client>()
+  } = useEntitySheet<Item>()
 
   const {
     sheetState: { open: addOpen },
     openSheet: openAddSheet,
     closeSheet: closeAddSheet,
-  } = useEntitySheet<Client>()
+  } = useEntitySheet<Item>()
 
-  const handleDelete = (client: Client) => {
-    if (client.id !== undefined) {
-      deleteClient.mutate(client.id)
+  const handleDelete = (item: Item) => {
+    if (item.id !== undefined) {
+      deleteItem.mutate(item.id)
     }
   }
 
-  const columns = getClientColumns({
+  const columns = getItemColumns({
     onEdit: openEditSheet,
     onDelete: handleDelete,
   })
 
   return (
     <div className="container mx-auto">
-      {/* Edit Client Sheet */}
-      <EntitySheet<Client>
+      <EntitySheet<Item>
         open={editOpen}
         onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
         entity={entity}
-        title="Edit Client"
-        description="Update the client details below."
+        title="Edit Item"
+        description="Update the item details below."
         renderForm={({ onClose, entity }) => (
-          <ClientForm
+          <ItemForm
             onClose={onClose}
-            client={entity}
+            item={entity}
           />
         )}
       />
 
-      {/* Add Client Sheet */}
-      <EntitySheet<Client>
+      <EntitySheet<Item>
         open={addOpen}
         onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
-        title="Add Client"
-        description="Fill out the form below to add a new client."
-        renderForm={({ onClose }) => <ClientForm onClose={onClose} />}
+        title="Add Item"
+        description="Fill out the form below to add a new item."
+        renderForm={({ onClose }) => <ItemForm onClose={onClose} />}
       />
 
       <DataTable
@@ -79,7 +76,7 @@ export default function ClientsPage() {
         headerActions={
           <Button onClick={() => openAddSheet()}>
             <Plus className="size-4 mr-1" />
-            Add Client
+            Add Item
           </Button>
         }
       />

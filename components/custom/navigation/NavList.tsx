@@ -146,7 +146,10 @@ export default function NavList({
           }
 
           return (
-            <li key={item.name}>
+            <li
+              key={item.name}
+              className="mt-2"
+            >
               {content}
 
               {isParent && (

@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Technician } from '@/lib/constants/types'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
-import { useTechnician } from '@/lib/queries/useTechnician'
+import { useTechnician } from '@/lib/queries/useTechnicians'
 import {
   Calendar,
   Home,

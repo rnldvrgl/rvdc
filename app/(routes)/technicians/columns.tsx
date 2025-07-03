@@ -1,20 +1,16 @@
 'use client'
 
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
+import { GetColumnsProps } from '@/lib/constants/interface'
 import { Technician } from '@/lib/constants/types'
 import { ColumnDef } from '@tanstack/react-table'
 import { Edit, Eye, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-interface GetTechnicianColumnsProps {
-  onEdit: (technician: Technician) => void
-  onDelete: (technician: Technician) => void
-}
-
 export function getTechnicianColumns({
   onEdit,
   onDelete,
-}: GetTechnicianColumnsProps): ColumnDef<Technician>[] {
+}: GetColumnsProps<Technician>): ColumnDef<Technician>[] {
   const router = useRouter()
   return [
     {

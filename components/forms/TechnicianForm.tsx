@@ -160,7 +160,7 @@ export default function TechnicianForm({
             rules={{ required: 'First name is required' }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel required>First Name</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -178,7 +178,7 @@ export default function TechnicianForm({
             rules={{ required: 'Last name is required' }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Last Name</FormLabel>
+                <FormLabel required>Last Name</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -196,7 +196,7 @@ export default function TechnicianForm({
             rules={{ required: 'Contact number is required' }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Contact Number</FormLabel>
+                <FormLabel required>Contact Number</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -214,7 +214,7 @@ export default function TechnicianForm({
             rules={{ required: 'Address is required' }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Address</FormLabel>
+                <FormLabel required>Address</FormLabel>
                 <FormControl>
                   <Input
                     {...field}

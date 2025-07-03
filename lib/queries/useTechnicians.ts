@@ -3,30 +3,30 @@ import type {
   PaginatedResult,
   Technician,
 } from '@/lib/constants/types'
-import api from '@/lib/utils/api'
-import { useQuery } from '@tanstack/react-query'
+import { useApiQuery } from '@/lib/hooks/useApiQuery'
+
+export function useTechnician(id: string) {
+  return useApiQuery<Technician>(
+    ['technician', id],
+    `/users/technicians/${id}/`,
+    undefined,
+  )
+}
+
 export function useTechnicians({
   page = 1,
   limit = 10,
   search,
   ordering,
 }: PaginatedFilterProps) {
-  return useQuery<PaginatedResult<Technician>>({
-    queryKey: ['technicians', page, limit, search, ordering],
-    queryFn: async () => {
-      const res = await api.get<PaginatedResult<Technician>>(
-        '/users/technicians',
-        {
-          params: {
-            page,
-            limit,
-            search: search || undefined,
-            ordering: ordering || undefined,
-          },
-        },
-      )
-      return res.data
+  return useApiQuery<PaginatedResult<Technician>>(
+    ['technicians', page, limit, search, ordering],
+    '/users/technicians',
+    {
+      page,
+      limit,
+      search: search || undefined,
+      ordering: ordering || undefined,
     },
-    staleTime: 1000 * 60 * 5,
-  })
+  )
 }

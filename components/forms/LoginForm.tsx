@@ -20,7 +20,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { loginSchema } from '@/lib/constants/schema'
-import { TLoginFormValues } from '@/lib/constants/types'
+import { LoginFormValues } from '@/lib/constants/types'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
 import { setCookie } from '@/lib/utils/cookies'
@@ -28,7 +28,7 @@ import { setToken } from '@/lib/utils/tokens'
 
 export function LoginForm() {
   const router = useRouter()
-  const form = useForm<TLoginFormValues>({
+  const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       username: '',
@@ -41,7 +41,7 @@ export function LoginForm() {
   const { isSubmitting, errors } = formState
   const setUserProfile = useUserProfileStore((state) => state.setUserProfile)
 
-  const onSubmit = async (values: TLoginFormValues) => {
+  const onSubmit = async (values: LoginFormValues) => {
     try {
       const response = await api.post('/auth/login/', values)
       setToken('access', response.data.access)
@@ -86,7 +86,7 @@ export function LoginForm() {
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel required>Username</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="Enter your username"
@@ -116,6 +116,7 @@ export function LoginForm() {
                   <FormControl>
                     <div className="flex items-center gap-2">
                       <Checkbox
+                        defaultChecked
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isSubmitting}

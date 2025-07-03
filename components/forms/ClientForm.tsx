@@ -132,7 +132,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
             rules={{ required: 'Full name is required' }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Client Full Name</FormLabel>
+                <FormLabel required>Client Full Name</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -150,7 +150,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
             rules={{ required: 'Contact number is required' }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Contact Number</FormLabel>
+                <FormLabel required>Contact Number</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -168,7 +168,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
             rules={{ required: 'Address is required' }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Address</FormLabel>
+                <FormLabel required>Address</FormLabel>
                 <FormControl>
                   <Input
                     {...field}

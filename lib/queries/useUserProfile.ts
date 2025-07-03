@@ -1,13 +1,8 @@
-import api from '@/lib/utils/api'
-import { useQuery } from '@tanstack/react-query'
+import { User } from '@/lib/constants/interface'
+import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
 export function useUserProfile() {
-  return useQuery({
-    queryKey: ['user-profile'],
-    queryFn: async () => {
-      const res = await api.get(`/users/profile/`)
-      return res.data
-    },
+  return useApiQuery<User>(['user-profile'], '/users/profile/', undefined, {
     staleTime: 1000 * 60 * 60 * 24,
   })
 }

@@ -132,3 +132,9 @@ export function isPathActive(item: NavListItem, path: string): boolean {
   }
   return false
 }
+
+export function safeCell(value: any) {
+  if (value == null) return 'N/A'
+  if (typeof value === 'string' && value.trim() === '') return 'N/A'
+  return value
+}

@@ -1,48 +1,33 @@
-// src/lib/mutations/useClientMutations.ts
 'use client'
 
 import { Client } from '@/lib/constants/types'
+import { useApiMutation } from '@/lib/hooks/useApiMutation'
 import api from '@/lib/utils/api'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import toast from 'react-hot-toast'
+import { useQueryClient } from '@tanstack/react-query'
 
 export function useClientMutations() {
   const queryClient = useQueryClient()
 
-  // CREATE
-  const addClient = useMutation({
+  const addClient = useApiMutation({
     mutationFn: (data: Client) => api.post('/clients/', data),
-    onSuccess: () => {
-      toast.success('Client created successfully.')
-      queryClient.invalidateQueries({ queryKey: ['clients'] })
-    },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.detail || 'Failed to create client'),
+    successMessage: 'Client created successfully.',
+    invalidateQueries: [{ queryKey: ['clients'] }],
   })
 
-  // UPDATE
-  const updateClient = useMutation({
+  const updateClient = useApiMutation({
     mutationFn: ({ id, data }: { id: number; data: Client }) =>
       api.patch(`/clients/${id}/`, data),
+    successMessage: 'Client updated successfully.',
+    invalidateQueries: [{ queryKey: ['clients'] }],
     onSuccess: (_, variables) => {
-      toast.success('Client updated successfully.')
-      queryClient.invalidateQueries({ queryKey: ['clients'] })
       queryClient.invalidateQueries({ queryKey: ['client', `${variables.id}`] })
     },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.detail || 'Failed to update client'),
   })
 
-  // DELETE
-  const deleteClient = useMutation({
+  const deleteClient = useApiMutation({
     mutationFn: (id: number) => api.delete(`/clients/${id}/`),
-    onSuccess: () => {
-      toast.success('Client deleted successfully.')
-      queryClient.invalidateQueries({ queryKey: ['clients'] })
-    },
-    onError: () => {
-      toast.error('Failed to delete client')
-    },
+    successMessage: 'Client deleted successfully.',
+    invalidateQueries: [{ queryKey: ['clients'] }],
   })
 
   return { addClient, updateClient, deleteClient }
