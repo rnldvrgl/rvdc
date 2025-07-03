@@ -18,6 +18,15 @@ export interface UseEntitySheetReturn<T> {
   closeSheet: () => void
   toggleSheet: () => void
 }
+
+export interface NavListItem {
+  name: string
+  href?: string
+  icon: React.ElementType
+  action?: string
+  children?: NavListItem[]
+}
+
 export interface User {
   id: number
   first_name: string

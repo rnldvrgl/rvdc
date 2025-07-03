@@ -47,7 +47,7 @@ export default function ClientsPage() {
   })
 
   return (
-    <div className="container mx-auto space-y-4">
+    <div className="container mx-auto">
       {/* Edit Client Sheet */}
       <EntitySheet<Client>
         open={editOpen}

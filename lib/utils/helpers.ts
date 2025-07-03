@@ -1,4 +1,5 @@
 import { timeZone } from '@/lib/constants/general'
+import { NavListItem } from '@/lib/constants/interface'
 import { Sorting } from '@/lib/constants/types'
 import { clsx, type ClassValue } from 'clsx'
 import { format } from 'date-fns'
@@ -122,4 +123,12 @@ export function toOrdering(sorting: Sorting): string | undefined {
   if (!sorting.length) return undefined
   const { id, desc } = sorting[0]
   return `${desc ? '-' : ''}${id}`
+}
+
+export function isPathActive(item: NavListItem, path: string): boolean {
+  if (item.href && path.startsWith(item.href)) return true
+  if (item.children) {
+    return item.children.some((child) => isPathActive(child, path))
+  }
+  return false
 }

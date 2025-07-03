@@ -47,7 +47,7 @@ export default function TechniciansPage() {
   })
 
   return (
-    <div className="container mx-auto space-y-4">
+    <div className="container mx-auto">
       {/* Edit Technician Sheet */}
       <EntitySheet<Technician>
         open={editOpen}
