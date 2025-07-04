@@ -18,6 +18,7 @@ type Props = {
 
 export const UserProfile = ({ user }: Props) => {
   const displayImage = getDisplayImage(user?.profile_image)
+
   return (
     <DropdownUserProfile>
       <Button

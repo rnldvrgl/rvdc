@@ -70,7 +70,6 @@ export default function SettingsPage() {
 
     if (!payload.new_password) delete payload.new_password
     if (!payload.current_password) delete payload.current_password
-    console.log(payload)
     try {
       const response = await api.patch('/users/profile/', payload)
       toast.success('Profile updated successfully.')

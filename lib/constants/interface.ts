@@ -1,4 +1,5 @@
-export type UnitChoice = 'pcs' | 'ft' | 'kg' | 'roll' | 'box'
+import { Roles, UnitChoice } from '@/lib/constants/types'
+import { LucideIcon } from 'lucide-react'
 
 export interface GetColumnsProps<T> {
   onEdit: (item: T) => void
@@ -47,6 +48,7 @@ export interface User {
   birthday?: string
   is_active?: boolean
   contact_number?: string
+  role: Roles
 }
 
 // ---------------------
@@ -158,4 +160,27 @@ export interface StockTransferItem {
 export interface StockTransferPayload {
   stock: number
   quantity: number
+}
+
+export interface NavigationItemBase {
+  name: string
+  icon: LucideIcon
+  permission?: string
+}
+
+export interface ShortcutLink extends NavigationItemBase {
+  action: string
+}
+
+export interface NavigationLink extends NavigationItemBase {
+  href: string
+}
+
+export interface NavigationGroup extends NavigationItemBase {
+  children: NavigationLink[]
+}
+
+export interface BuildNavOptions {
+  role: 'admin' | 'manager' | string
+  permissions: string[]
 }

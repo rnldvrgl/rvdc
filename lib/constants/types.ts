@@ -1,5 +1,21 @@
+import {
+  NavigationGroup,
+  NavigationLink,
+  ShortcutLink,
+} from '@/lib/constants/interface'
+
 // Shared utility types
 export type Sorting = { id: string; desc: boolean }[]
+export type UnitChoice = 'pcs' | 'ft' | 'kg' | 'roll' | 'box'
+export type Roles = 'admin' | 'manager' | 'guest'
+export type NavigationEntry = NavigationLink | NavigationGroup
+export type ShortcutEntry = ShortcutLink
+export type ShopInfo = {
+  name: string
+  description: string
+  address: string
+  contactEmail: string
+}
 
 export type PaginatedFilterProps = {
   page?: number

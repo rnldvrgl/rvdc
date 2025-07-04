@@ -31,15 +31,6 @@ export function DataTablePagination({
   const safeCount = Number(count) || 0
   const totalPages = Math.max(1, Math.ceil(safeCount / safeLimit))
 
-  console.log(
-    'count:',
-    safeCount,
-    'limit:',
-    safeLimit,
-    'totalPages:',
-    totalPages,
-  )
-
   const goToPage = useCallback(
     (newPage: number) => {
       const clampedPage = Math.max(1, Math.min(newPage, totalPages))

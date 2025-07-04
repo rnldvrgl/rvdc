@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { loginSchema } from '@/lib/constants/schema'
 import { LoginFormValues } from '@/lib/constants/types'
+import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
 import { setCookie } from '@/lib/utils/cookies'
@@ -33,13 +34,14 @@ export function LoginForm() {
     defaultValues: {
       username: '',
       password: '',
-      remember_me: false,
+      remember_me: true,
     },
   })
 
-  const { handleSubmit, control, formState, setError } = form
+  const { handleSubmit, control, formState } = form
   const { isSubmitting, errors } = formState
   const setUserProfile = useUserProfileStore((state) => state.setUserProfile)
+  const { handleError } = useDRFToastError()
 
   const onSubmit = async (values: LoginFormValues) => {
     try {
@@ -54,14 +56,7 @@ export function LoginForm() {
       router.push('/dashboard')
       toast.success(`Welcome back, ${response.data.first_name}!`)
     } catch (err: any) {
-      setError('root', {
-        message:
-          err.response?.data?.detail || 'Login failed. Please try again.',
-      })
-      toast.error(
-        err.response?.data?.detail || 'Login failed. Please try again.',
-      )
-      console.error(err)
+      handleError(err)
     }
   }
 
@@ -116,7 +111,6 @@ export function LoginForm() {
                   <FormControl>
                     <div className="flex items-center gap-2">
                       <Checkbox
-                        defaultChecked
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isSubmitting}

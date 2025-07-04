@@ -50,8 +50,6 @@ api.interceptors.response.use(
           errData.detail.toLowerCase().includes('token not valid'))
 
       if (tokenNotValid && remember_me === 'true') {
-        console.log('Access token expired. Trying to refresh...')
-
         try {
           const newAccess = (await refreshToken()) as {
             access: string
@@ -68,7 +66,6 @@ api.interceptors.response.use(
             return api(originalRequest)
           }
         } catch (refreshErr) {
-          console.log(refreshErr)
           console.error('Token refresh failed:', refreshErr)
         }
       }
