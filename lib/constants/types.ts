@@ -22,6 +22,7 @@ export type PaginatedFilterProps = {
   limit?: number
   search?: string
   ordering?: string
+  filter?: Record<string, any>
 }
 
 // Generic paginated response

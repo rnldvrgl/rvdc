@@ -13,7 +13,7 @@ import { useStallStocks } from '@/lib/queries/inventory/useStocks'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 
 export default function StocksPage() {
-  const { page, limit, search, ordering } = useSearchParameters()
+  const { page, limit, search, ordering, filter } = useSearchParameters()
   const { softDeleteStallStock } = useStallStockMutations()
   const userProfile = useUserProfileStore((state) => state.userProfile)
   const role = userProfile?.role
@@ -22,6 +22,7 @@ export default function StocksPage() {
     limit,
     search,
     ordering,
+    filter,
   })
 
   const {

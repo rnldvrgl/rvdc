@@ -11,15 +11,17 @@ export function useItems({
   limit = 10,
   search,
   ordering,
+  filter = {},
 }: PaginatedFilterProps = {}) {
   return useApiQuery<PaginatedResult<Item>>(
-    ['items', page, limit, search, ordering],
+    ['items', page, limit, search, ordering, filter],
     url,
     {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
+      ...filter,
     },
   )
 }

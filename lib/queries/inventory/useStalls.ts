@@ -11,9 +11,10 @@ export function useStalls({
   limit = 10,
   search,
   ordering,
+  filter = {},
 }: PaginatedFilterProps = {}) {
   return useApiQuery<PaginatedResult<Stall>>(
-    ['stalls', page, limit, search, ordering],
+    ['stalls', page, limit, search, ordering, filter],
     url,
     {
       page,

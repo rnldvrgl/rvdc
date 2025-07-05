@@ -61,8 +61,10 @@ export function DataTable<TData, TValue>({
 
   const sortingState = React.useMemo(() => {
     if (!ordering) return []
-    const [id, dir] = ordering.split(':')
-    return [{ id, desc: dir === 'desc' }]
+    return ordering.split(',').map((part) => {
+      const [id, dir] = part.split(':')
+      return { id, desc: dir === 'desc' }
+    })
   }, [ordering])
 
   React.useEffect(() => {
@@ -86,6 +88,7 @@ export function DataTable<TData, TValue>({
     pageCount,
     manualPagination: true,
     manualSorting: true,
+    enableMultiSort: true,
     state: {
       pagination: {
         pageIndex: page - 1,
@@ -110,11 +113,13 @@ export function DataTable<TData, TValue>({
       const nextSorting =
         typeof updater === 'function' ? updater(sortingState) : updater
       if (nextSorting.length) {
-        const s = nextSorting[0]
+        const orderingString = nextSorting
+          .map((s) => `${s.id}:${s.desc ? 'desc' : 'asc'}`)
+          .join(',')
         push({
           page: 1,
           limit,
-          ordering: `${s.id}:${s.desc ? 'desc' : 'asc'}`,
+          ordering: orderingString,
           search,
         })
       } else {
@@ -144,6 +149,48 @@ export function DataTable<TData, TValue>({
           <DataTableViewOptions table={table} />
         </div>
       </div>
+
+      {sortingState.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mt-2">
+          {sortingState.map((sort, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-1 bg-muted text-sm px-2 py-1 rounded-full border border-border"
+            >
+              <span className="font-medium">{sort.id}</span>
+              <span className="text-muted-foreground">
+                {sort.desc ? '↓' : '↑'}
+              </span>
+              <button
+                onClick={() => {
+                  const next = [...sortingState]
+                  next.splice(index, 1)
+                  const orderingString = next
+                    .map((s) => `${s.id}:${s.desc ? 'desc' : 'asc'}`)
+                    .join(',')
+                  push({
+                    page: 1,
+                    limit,
+                    ordering: orderingString || undefined,
+                    search,
+                  })
+                }}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() =>
+              push({ page: 1, limit, ordering: undefined, search })
+            }
+            className="text-xs text-muted-foreground hover:text-destructive underline ml-2"
+          >
+            Clear sorting
+          </button>
+        </div>
+      )}
 
       <div className="rounded-2xl border border-border bg-background shadow-sm ring-1 ring-border/30 overflow-x-auto">
         <Table className="min-w-full">
@@ -242,9 +289,9 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <DataTableSelectionCount />
-
         <DataTablePagination
           hasPrevPage={hasPrevPage}
           hasNextPage={hasNextPage}
