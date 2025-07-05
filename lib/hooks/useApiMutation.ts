@@ -1,26 +1,10 @@
 'use client'
 
+import { UseApiMutationProps } from '@/lib/constants/interface'
 import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 
-interface UseApiMutationProps<TFn extends (...args: any[]) => any> {
-  mutationFn: TFn
-  successMessage?: string
-  invalidateQueries?: { queryKey: string[] }[]
-  onSuccess?: (
-    data: Awaited<ReturnType<TFn>>,
-    variables: Parameters<TFn>[0],
-  ) => void
-  onError?: (error: any) => void
-}
-
-/**
- * A generic wrapper around useMutation that handles:
- * ✅ DRF-style errors via useDRFToastError
- * ✅ Success toasts
- * ✅ Automatic query invalidation
- */
 export function useApiMutation<TFn extends (...args: any[]) => any>({
   mutationFn,
   successMessage,

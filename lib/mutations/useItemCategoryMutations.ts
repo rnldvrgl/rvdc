@@ -7,17 +7,17 @@ import { useQueryClient } from '@tanstack/react-query'
 
 export function useItemCategoryMutations() {
   const queryClient = useQueryClient()
+  const url = '/inventory/categories/'
 
   const addCategory = useApiMutation({
-    mutationFn: (data: ProductCategoryPayload) =>
-      api.post('/inventory/categories/', data),
+    mutationFn: (data: ProductCategoryPayload) => api.post(url, data),
     successMessage: 'Category created successfully.',
     invalidateQueries: [{ queryKey: ['categories'] }],
   })
 
   const updateCategory = useApiMutation({
     mutationFn: ({ id, data }: { id: number; data: ProductCategoryPayload }) =>
-      api.patch(`/inventory/categories/${id}/`, data),
+      api.patch(`${url}${id}/`, data),
     successMessage: 'Category updated successfully.',
     invalidateQueries: [{ queryKey: ['categories'] }],
     onSuccess: (_, variables) => {
@@ -28,7 +28,7 @@ export function useItemCategoryMutations() {
   })
 
   const deleteCategory = useApiMutation({
-    mutationFn: (id: number) => api.delete(`/inventory/categories/${id}/`),
+    mutationFn: (id: number) => api.delete(`${url}${id}/`),
     successMessage: 'Category deleted successfully.',
     invalidateQueries: [{ queryKey: ['categories'] }],
   })

@@ -7,15 +7,17 @@ import { useQueryClient } from '@tanstack/react-query'
 
 export function useTechnicianMutations() {
   const queryClient = useQueryClient()
+  const url = '/users/technicians/'
+
   const addTechnician = useApiMutation({
-    mutationFn: (data: Technician) => api.post('/users/technicians/', data),
+    mutationFn: (data: Technician) => api.post(url, data),
     successMessage: 'Technician created successfully.',
     invalidateQueries: [{ queryKey: ['technicians'] }],
   })
 
   const updateTechnician = useApiMutation({
     mutationFn: ({ id, data }: { id: number; data: Technician }) =>
-      api.patch(`/users/technicians/${id}/`, data),
+      api.patch(`${url}${id}/`, data),
     successMessage: 'Technician updated successfully.',
     invalidateQueries: [{ queryKey: ['technicians'] }],
     onSuccess: (_, variables) => {
@@ -26,7 +28,7 @@ export function useTechnicianMutations() {
   })
 
   const deleteTechnician = useApiMutation({
-    mutationFn: (id: number) => api.delete(`/users/technicians/${id}/`),
+    mutationFn: (id: number) => api.delete(`${url}${id}/`),
     successMessage: 'Technician deleted successfully.',
     invalidateQueries: [{ queryKey: ['technicians'] }],
   })

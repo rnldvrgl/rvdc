@@ -1,19 +1,22 @@
-import { Item } from '@/lib/constants/interface'
+'use client'
+
+import { StockTransfer } from '@/lib/constants/interface'
 import type {
   PaginatedFilterProps,
   PaginatedResult,
 } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
-const url = '/inventory/items/'
-export function useItems({
+const url = '/inventory/stocks/transfers/'
+
+export function useStockTransfers({
   page = 1,
   limit = 10,
   search,
   ordering,
 }: PaginatedFilterProps = {}) {
-  return useApiQuery<PaginatedResult<Item>>(
-    ['items', page, limit, search, ordering],
+  return useApiQuery<PaginatedResult<StockTransfer>>(
+    ['stock-transfers', page, limit, search, ordering],
     url,
     {
       page,
@@ -22,10 +25,4 @@ export function useItems({
       ordering: ordering || undefined,
     },
   )
-}
-
-export function useItem(id: number) {
-  return useApiQuery<Item>(['item', id], `${url}${id}/`, undefined, {
-    enabled: !!id,
-  })
 }

@@ -7,16 +7,17 @@ import { useQueryClient } from '@tanstack/react-query'
 
 export function useItemMutations() {
   const queryClient = useQueryClient()
+  const url = '/inventory/items/'
 
   const addItem = useApiMutation({
-    mutationFn: (data: ItemPayload) => api.post('/inventory/items/', data),
+    mutationFn: (data: ItemPayload) => api.post(url, data),
     successMessage: 'Item created successfully.',
     invalidateQueries: [{ queryKey: ['items'] }],
   })
 
   const updateItem = useApiMutation({
     mutationFn: ({ id, data }: { id: number; data: ItemPayload }) =>
-      api.patch(`/inventory/items/${id}/`, data),
+      api.patch(`${url}${id}/`, data),
     successMessage: 'Item updated successfully.',
     invalidateQueries: [{ queryKey: ['items'] }],
     onSuccess: (_, variables) => {
@@ -25,7 +26,7 @@ export function useItemMutations() {
   })
 
   const deleteItem = useApiMutation({
-    mutationFn: (id: number) => api.delete(`/inventory/items/${id}/`),
+    mutationFn: (id: number) => api.delete(`${url}${id}/`),
     successMessage: 'Item deleted successfully.',
     invalidateQueries: [{ queryKey: ['items'] }],
   })

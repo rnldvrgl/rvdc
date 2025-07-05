@@ -1,19 +1,19 @@
-import { Item } from '@/lib/constants/interface'
+import { Stall } from '@/lib/constants/interface'
 import type {
   PaginatedFilterProps,
   PaginatedResult,
 } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
-const url = '/inventory/items/'
-export function useItems({
+const url = '/inventory/stalls/'
+export function useStalls({
   page = 1,
   limit = 10,
   search,
   ordering,
 }: PaginatedFilterProps = {}) {
-  return useApiQuery<PaginatedResult<Item>>(
-    ['items', page, limit, search, ordering],
+  return useApiQuery<PaginatedResult<Stall>>(
+    ['stalls', page, limit, search, ordering],
     url,
     {
       page,
@@ -24,8 +24,8 @@ export function useItems({
   )
 }
 
-export function useItem(id: number) {
-  return useApiQuery<Item>(['item', id], `${url}${id}/`, undefined, {
+export function useStall(id: number) {
+  return useApiQuery<Stall>(['stall', id], `${url}${id}/`, undefined, {
     enabled: !!id,
   })
 }

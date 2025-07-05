@@ -1,9 +1,25 @@
 import { Roles, UnitChoice } from '@/lib/constants/types'
 import { LucideIcon } from 'lucide-react'
 
+// ---------------------
+// API Mutations & Sheets
+// ---------------------
+export interface UseApiMutationProps<TFn extends (...args: any[]) => any> {
+  mutationFn: TFn
+  successMessage?: string
+  invalidateQueries?: { queryKey: string[] }[]
+  onSuccess?: (
+    data: Awaited<ReturnType<TFn>>,
+    variables: Parameters<TFn>[0],
+  ) => void
+  onError?: (error: any) => void
+}
+
 export interface GetColumnsProps<T> {
   onEdit: (item: T) => void
   onDelete: (item: T) => void
+  onRestock?: (item: T) => void
+  role?: Roles
 }
 
 export interface EntitySheetProps<T> {
@@ -27,14 +43,6 @@ export interface UseEntitySheetReturn<T> {
   toggleSheet: () => void
 }
 
-export interface NavListItem {
-  name: string
-  href?: string
-  icon: React.ElementType
-  action?: string
-  children?: NavListItem[]
-}
-
 // ---------------------
 // User
 // ---------------------
@@ -46,13 +54,14 @@ export interface User {
   email: string
   profile_image: string
   birthday?: string
+  assigned_stall?: Stall
   is_active?: boolean
   contact_number?: string
   role: Roles
 }
 
 // ---------------------
-// Categories
+// Product Categories
 // ---------------------
 export interface ProductCategory {
   id: number
@@ -83,6 +92,7 @@ export interface Item {
   is_deleted: boolean
   created_at: string
   updated_at: string
+  display_name?: string
 }
 
 export interface ItemPayload {
@@ -106,35 +116,55 @@ export interface Stall {
   updated_at: string
 }
 
+export interface StallPayload {
+  name: string
+  location: string
+}
+
 // ---------------------
-// Stock & StockRoom
+// Stock (Stall Stocks)
 // ---------------------
 export interface Stock {
   id: number
   item: Item
-  stall: Stall
+  stall: Stall | null
   quantity: number
+  low_stock_threshold: number
+  status: string
+  type_display: string
+  is_deleted: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface StockPayload {
+  item_id: number
+  stall_id?: number | null
+  quantity: number
+  low_stock_threshold?: number
+}
+
+// ---------------------
+// StockRoom Stock
+// ---------------------
+export interface StockRoomStock {
+  id: number
+  item: Item
+  quantity: number
+  cost_price?: string
+  expiry_date?: string
   low_stock_threshold: number
   is_deleted: boolean
   created_at: string
   updated_at: string
 }
 
-export interface StockRoomStock {
-  id: number
-  item: Item
+export interface StockRoomStockPayload {
+  item_id: number
   quantity: number
-  low_stock_threshold: number
-  created_at: string
-  updated_at: string
-}
-
-export interface StockPayload {
-  item: number
-  quantity: number
-  cost_price: string
-  sale_price: string
-  expiry_date: string
+  cost_price?: string
+  expiry_date?: string
+  low_stock_threshold?: number
 }
 
 // ---------------------
@@ -144,7 +174,6 @@ export interface StockTransfer {
   id: number
   from_stall: Stall | null
   to_stall: Stall
-  technician: User | null
   transferred_by: User | null
   transfer_date: string
   items: StockTransferItem[]
@@ -157,11 +186,23 @@ export interface StockTransferItem {
   quantity: number
 }
 
+/**
+ * This payload is for creating a transfer.
+ * You can either transfer:
+ * - from stock room stock (via from_stock_room_stock)
+ * - or from another stall (via from_stall)
+ */
 export interface StockTransferPayload {
-  stock: number
+  from_stock_room_stock?: number
+  from_stall?: number
+  to_stall: number
+  item: number
   quantity: number
 }
 
+// ---------------------
+// Navigation
+// ---------------------
 export interface NavigationItemBase {
   name: string
   icon: LucideIcon

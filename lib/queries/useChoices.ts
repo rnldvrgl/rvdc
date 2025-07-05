@@ -1,15 +1,21 @@
-import { Item, ProductCategory } from '@/lib/constants/interface'
+import { Item, ProductCategory, Stall } from '@/lib/constants/interface'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
+const url = '/inventory/choices/'
+
 const useItemChoices = () => {
-  return useApiQuery<Item[]>(['item-choices'], '/inventory/choices/items/')
+  return useApiQuery<Item[]>(['item-choices'], `${url}items/`)
 }
 
 const useCategoryChoices = () => {
   return useApiQuery<ProductCategory[]>(
     ['category-choices'],
-    '/inventory/choices/categories/',
+    `${url}categories/`,
   )
 }
 
-export { useCategoryChoices, useItemChoices }
+const useStallChoices = () => {
+  return useApiQuery<Stall[]>(['stall-choices'], `${url}stalls/`)
+}
+
+export { useCategoryChoices, useItemChoices, useStallChoices }

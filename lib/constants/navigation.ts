@@ -34,10 +34,16 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Package,
     children: [
       {
-        name: 'Stocks (Stock Room)',
+        name: 'Stock Room',
         href: '/inventory/stocks/stockroom',
         icon: Warehouse,
         permission: 'view_stockroom',
+      },
+      {
+        name: 'Stall Stocks',
+        href: '/inventory/stocks/stall',
+        icon: Warehouse,
+        permission: 'view_stallstocks',
       },
       {
         name: 'Items',
@@ -52,6 +58,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: 'view_categories',
       },
     ],
+  },
+  stalls: {
+    name: 'Stalls',
+    href: '/stalls',
+    icon: ListTree,
+    permission: 'view_stalls',
   },
   settings: {
     name: 'Settings',

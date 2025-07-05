@@ -133,6 +133,10 @@ export function isPathActive(item: NavListItem, path: string): boolean {
   return false
 }
 
+export function formatDate(date: Date, formatStr = 'yyyy-MM-dd') {
+  return format(toZonedTime(date, timeZone), formatStr)
+}
+
 export function formatCurrency(value: number | string) {
   if (value == null) return 'N/A'
   const num = typeof value === 'string' ? parseFloat(value) : value

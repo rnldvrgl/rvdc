@@ -6,6 +6,8 @@ import type {
 } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
+const url = '/inventory/categories/'
+
 export function useItemCategories({
   page = 1,
   limit = 10,
@@ -14,7 +16,7 @@ export function useItemCategories({
 }: PaginatedFilterProps = {}) {
   return useApiQuery<PaginatedResult<ProductCategory>>(
     ['categories', page, limit, search, ordering],
-    '/inventory/categories/',
+    url,
     {
       page,
       limit,
@@ -27,7 +29,7 @@ export function useItemCategories({
 export function useItemCategory(id: number) {
   return useApiQuery<ProductCategory>(
     ['category', id],
-    `/inventory/categories/${id}/`,
+    `${url}${id}/`,
     undefined,
     {
       enabled: !!id,

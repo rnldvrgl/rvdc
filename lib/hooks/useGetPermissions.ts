@@ -10,7 +10,9 @@ export function useGetPermissions(role: Roles) {
         'view_stockroom',
         'view_items',
         'view_categories',
+        'view_stallstocks',
         'view_settings',
+        'view_stalls',
         'shortcut_add_client',
       ],
       manager: [
@@ -18,6 +20,7 @@ export function useGetPermissions(role: Roles) {
         'view_technicians',
         'view_items',
         'view_categories',
+        'view_stallstocks',
         'view_settings',
         'shortcut_add_client',
       ],
