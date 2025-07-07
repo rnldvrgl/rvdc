@@ -1,4 +1,5 @@
-import { Sidebar } from '@/components/custom/navigation/Sidebar'
+import { Sidebar } from '@/components/custom/navigation/sidebar'
+
 export default function MainLayout({
   children,
 }: {
