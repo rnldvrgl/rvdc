@@ -34,13 +34,7 @@ export default function RestockForm({ stock, onClose }: RestockFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null)
 
   const stallVariant = getStockBadgeVariant(stock.status)
-  const stockRoomStatus =
-    stock.stock_room_quantity === 0
-      ? 'no_stock'
-      : stock.stock_room_quantity <= 5
-      ? 'low_stock'
-      : 'high_stock'
-  const stockRoomVariant = getStockBadgeVariant(stockRoomStatus)
+  const stockRoomVariant = getStockBadgeVariant(stock.stock_room_status)
 
   const onSubmit = (data: FormValues) => {
     setSubmitError(null)
@@ -151,7 +145,7 @@ export default function RestockForm({ stock, onClose }: RestockFormProps) {
                 variant={stockRoomVariant}
                 className="capitalize"
               >
-                {stockRoomStatus.replace('_', ' ')}
+                {stock.stock_room_status.replace('_', ' ')}
               </Badge>
             </div>
           </CardContent>

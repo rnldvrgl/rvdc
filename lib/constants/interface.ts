@@ -134,6 +134,7 @@ export interface Stock {
   created_at: string
   updated_at: string
   stock_room_quantity: number
+  stock_room_status: string
 }
 
 export interface StockPayload {
