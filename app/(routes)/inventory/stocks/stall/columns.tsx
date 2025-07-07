@@ -19,12 +19,10 @@ export function getStallStockColumns({
     item_name: {
       accessorKey: 'item_name',
       header: 'Item',
-      cell: ({ row }) =>
-        safeCell(
-          row.original.item.display_name
-            ? row.original.item.display_name
-            : row.original.item.name,
-        ),
+      cell: ({ row }) => {
+        const { item } = row.original
+        return safeCell(item.display_name || item.name)
+      },
     },
     item_sku: {
       accessorKey: 'item_sku',
@@ -39,21 +37,27 @@ export function getStallStockColumns({
     quantity: {
       accessorKey: 'quantity',
       header: 'Quantity',
-      cell: ({ getValue }) => safeCell(getValue()),
+      cell: ({ row }) => {
+        const { quantity, item } = row.original
+        return safeCell(`${quantity} ${item.unit_of_measure}`)
+      },
     },
     low_stock_threshold: {
       accessorKey: 'low_stock_threshold',
       header: 'Low Threshold',
-      cell: ({ getValue }) => safeCell(getValue()),
+      cell: ({ row }) => {
+        const { low_stock_threshold, item } = row.original
+        return safeCell(`${low_stock_threshold} ${item.unit_of_measure}`)
+      },
     },
     stall_name: {
       accessorKey: 'stall_name',
       header: 'Stall',
       cell: ({ row }) => {
-        const stall_name = safeCell(row.original.stall?.name)
+        const stallName = safeCell(row.original.stall?.name)
         return (
-          <Badge className={getHashedStallBadgeClass(stall_name)}>
-            {stall_name}
+          <Badge className={getHashedStallBadgeClass(stallName)}>
+            {stallName}
           </Badge>
         )
       },
@@ -62,13 +66,14 @@ export function getStallStockColumns({
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const stock = row.original
-        const variant = getStockBadgeVariant(stock.status)
-
-        return <Badge variant={variant}>{stock.status.replace('_', ' ')}</Badge>
+        const { status } = row.original
+        return (
+          <Badge variant={getStockBadgeVariant(status)}>
+            {status.replace('_', ' ')}
+          </Badge>
+        )
       },
     },
-
     action: {
       accessorKey: 'action',
       header: 'Action',
@@ -87,7 +92,6 @@ export function getStallStockColumns({
                 icon: <Edit className="size-4" />,
                 onClick: () => onEdit(stock),
               },
-              // TODO: ADDING OF DEACTIVATION
               // {
               //   label: 'Deactivate',
               //   icon: <Trash2 className="size-4 text-destructive" />,
@@ -102,7 +106,7 @@ export function getStallStockColumns({
     },
   }
 
-  const roleColumns: Record<string, string[]> = {
+  const roleColumns: Record<string, Array<keyof typeof columnMap>> = {
     admin: [
       'item_name',
       'item_sku',
@@ -124,7 +128,5 @@ export function getStallStockColumns({
     ],
   }
 
-  // Build the columns array from the config
-  const selectedColumns = role && roleColumns[role] ? roleColumns[role] : []
-  return selectedColumns.map((key) => columnMap[key])
+  return (roleColumns[role ?? ''] ?? []).map((key) => columnMap[key])
 }

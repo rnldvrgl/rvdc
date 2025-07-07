@@ -14,12 +14,10 @@ export function getStockRoomStockColumns({
     {
       accessorKey: 'item_name',
       header: 'Item',
-      cell: ({ row }) =>
-        safeCell(
-          row.original.item.display_name
-            ? row.original.item.display_name
-            : row.original.item.name,
-        ),
+      cell: ({ row }) => {
+        const { item } = row.original
+        return safeCell(item.display_name ?? item.name)
+      },
     },
     {
       accessorKey: 'item_sku',
@@ -34,21 +32,29 @@ export function getStockRoomStockColumns({
     {
       accessorKey: 'quantity',
       header: 'Quantity',
-      cell: ({ row }) => safeCell(row.original.quantity),
+      cell: ({ row }) => {
+        const { quantity, item } = row.original
+        return safeCell(`${quantity} ${item.unit_of_measure}`)
+      },
     },
     {
       accessorKey: 'low_stock_threshold',
       header: 'Low Threshold',
-      cell: ({ getValue }) => safeCell(getValue()),
+      cell: ({ row }) => {
+        const { low_stock_threshold, item } = row.original
+        return safeCell(`${low_stock_threshold} ${item.unit_of_measure}`)
+      },
     },
     {
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const stock = row.original
-        const variant = getStockBadgeVariant(stock.status)
-
-        return <Badge variant={variant}>{stock.status.replace('_', ' ')}</Badge>
+        const { status } = row.original
+        return (
+          <Badge variant={getStockBadgeVariant(status)}>
+            {status.replace('_', ' ')}
+          </Badge>
+        )
       },
     },
     {
@@ -69,7 +75,6 @@ export function getStockRoomStockColumns({
                 icon: <Edit className="size-4" />,
                 onClick: () => onEdit(stock),
               },
-              // TODO: ADDING OF DEACTIVATION
               // {
               //   label: 'Deactivate',
               //   icon: <Trash2 className="size-4 text-destructive" />,
