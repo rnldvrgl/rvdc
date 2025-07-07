@@ -1,7 +1,11 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { Badge } from '@/components/ui/badge'
 import { GetColumnsProps, Stock } from '@/lib/constants/interface'
-import { getStockBadgeVariant, safeCell } from '@/lib/utils/helpers'
+import {
+  getHashedStallBadgeClass,
+  getStockBadgeVariant,
+  safeCell,
+} from '@/lib/utils/helpers'
 import { ColumnDef } from '@tanstack/react-table'
 import { Edit, PackagePlus } from 'lucide-react'
 
@@ -45,7 +49,14 @@ export function getStallStockColumns({
     stall_name: {
       accessorKey: 'stall_name',
       header: 'Stall',
-      cell: ({ row }) => safeCell(row.original.stall?.name),
+      cell: ({ row }) => {
+        const stall_name = safeCell(row.original.stall?.name)
+        return (
+          <Badge className={getHashedStallBadgeClass(stall_name)}>
+            {stall_name}
+          </Badge>
+        )
+      },
     },
     status: {
       accessorKey: 'status',

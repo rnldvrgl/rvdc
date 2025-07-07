@@ -166,3 +166,25 @@ export function getStockBadgeVariant(
   }
   return variantMap[status] || 'default'
 }
+
+export const getHashedStallBadgeClass = (stallName: string) => {
+  const colors = [
+    'border-transparent bg-green-500 text-white dark:bg-green-400 dark:text-white',
+    'border-transparent bg-yellow-400 text-black dark:bg-yellow-300 dark:text-black',
+    'border-transparent bg-blue-500 text-white dark:bg-blue-400 dark:text-white',
+    'border-transparent bg-pink-500 text-white dark:bg-pink-400 dark:text-white',
+    'border-transparent bg-purple-500 text-white dark:bg-purple-400 dark:text-white',
+    'border-transparent bg-teal-500 text-white dark:bg-teal-400 dark:text-white',
+    'border-transparent bg-rose-500 text-white dark:bg-rose-400 dark:text-white',
+    'border-transparent bg-orange-500 text-white dark:bg-orange-400 dark:text-white',
+  ]
+
+  let hash = 0
+  for (let i = 0; i < stallName.length; i++) {
+    hash = stallName.charCodeAt(i) + ((hash << 5) - hash)
+    hash = hash & hash // force 32-bit integer
+  }
+
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
