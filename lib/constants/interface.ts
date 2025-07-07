@@ -86,9 +86,8 @@ export interface Item {
   sku: string
   category: ProductCategory | null
   description?: string | null
-  size_or_spec?: string | null
   unit_of_measure: UnitChoice
-  srp: string
+  retail_price: string
   is_deleted: boolean
   created_at: string
   updated_at: string
@@ -97,10 +96,9 @@ export interface Item {
 
 export interface ItemPayload {
   name: string
-  srp: number
+  retail_price: number
   category_id: number | null
   description?: string
-  size_or_spec?: string
   unit_of_measure: UnitChoice
 }
 

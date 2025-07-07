@@ -25,9 +25,8 @@ import { SubmitHandler, useForm } from 'react-hook-form'
 interface FormValues {
   name: string
   category: string | null
-  size_or_spec: string
   unit_of_measure: 'pcs' | 'ft' | 'kg' | 'roll' | 'box'
-  srp: string
+  retail_price: string
   description: string
 }
 
@@ -41,9 +40,8 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
     defaultValues: {
       name: item?.name ?? '',
       category: item?.category?.id ? item.category.id.toString() : null,
-      size_or_spec: item?.size_or_spec ?? '',
       unit_of_measure: item?.unit_of_measure ?? 'pcs',
-      srp: item?.srp?.toString() ?? '',
+      retail_price: item?.retail_price?.toString() ?? '',
       description: item?.description ?? '',
     },
   })
@@ -60,8 +58,7 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
       category_id: data.category ? parseInt(data.category) : null,
       description: data.description,
       unit_of_measure: data.unit_of_measure,
-      size_or_spec: data.size_or_spec ? data.size_or_spec : undefined,
-      srp: parseFloat(data.srp) || 0,
+      retail_price: parseFloat(data.retail_price) || 0,
     }
 
     if (item?.id) {
@@ -135,23 +132,6 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
 
           <FormField
             control={form.control}
-            name="size_or_spec"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel required>Size / Specification</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="e.g. 3.5mm²"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="description"
             render={({ field }) => (
               <FormItem>
@@ -198,11 +178,11 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
 
           <FormField
             control={form.control}
-            name="srp"
-            rules={{ required: 'SRP is required' }}
+            name="retail_price"
+            rules={{ required: 'Retail Price is required' }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel required>SRP</FormLabel>
+                <FormLabel required>Retail Price</FormLabel>
                 <FormControl>
                   <Input
                     {...field}

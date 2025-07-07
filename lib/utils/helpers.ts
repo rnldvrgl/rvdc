@@ -1,6 +1,5 @@
 import { timeZone } from '@/lib/constants/general'
-import { NavListItem } from '@/lib/constants/interface'
-import { Sorting } from '@/lib/constants/types'
+import { NavListItem, Sorting } from '@/lib/constants/types'
 import { clsx, type ClassValue } from 'clsx'
 import { format } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
@@ -128,7 +127,9 @@ export function toOrdering(sorting: Sorting): string | undefined {
 export function isPathActive(item: NavListItem, path: string): boolean {
   if (item.href && path.startsWith(item.href)) return true
   if (item.children) {
-    return item.children.some((child) => isPathActive(child, path))
+    return item.children!.some((child: NavListItem) =>
+      isPathActive(child, path),
+    )
   }
   return false
 }
@@ -141,7 +142,9 @@ export function formatCurrency(value: number | string) {
   if (value == null) return 'N/A'
   const num = typeof value === 'string' ? parseFloat(value) : value
   if (isNaN(num)) return 'N/A'
-  return num.toLocaleString('en-US', {
+  return num.toLocaleString('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })

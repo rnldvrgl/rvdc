@@ -24,11 +24,6 @@ export function getItemColumns({
       cell: ({ row }) => safeCell(row.original.category?.name),
     },
     {
-      accessorKey: 'size_or_spec',
-      header: 'Size/Spec',
-      cell: ({ getValue }) => safeCell(getValue()),
-    },
-    {
       accessorKey: 'description',
       header: 'Description',
       cell: ({ getValue }) => safeCell(getValue()),
@@ -39,8 +34,8 @@ export function getItemColumns({
       cell: ({ getValue }) => safeCell(getValue()),
     },
     {
-      accessorKey: 'srp',
-      header: 'SRP',
+      accessorKey: 'retail_price',
+      header: 'Retail Price',
       cell: ({ getValue }) => formatCurrency(getValue() as number | string),
     },
     {
