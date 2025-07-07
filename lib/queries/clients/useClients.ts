@@ -11,9 +11,10 @@ export function useClients({
   limit = 10,
   search,
   ordering,
+  filter = {},
 }: PaginatedFilterProps) {
   return useQuery<PaginatedResult<Client>>({
-    queryKey: ['clients', page, limit, search, ordering],
+    queryKey: ['clients', page, limit, search, ordering, filter],
     queryFn: async () => {
       const res = await api.get<PaginatedResult<Client>>('/clients', {
         params: {
@@ -21,6 +22,7 @@ export function useClients({
           limit,
           search: search || undefined,
           ordering: ordering || undefined,
+          ...filter,
         },
       })
       return res.data

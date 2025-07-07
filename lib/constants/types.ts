@@ -22,6 +22,7 @@ export type PaginatedFilterProps = {
   limit?: number
   search?: string
   ordering?: string
+  filter?: Record<string, any>
 }
 
 // Generic paginated response
@@ -108,4 +109,25 @@ export type Technician = BaseEntity & {
   philhealth_number?: string
   basic_salary?: number
   profile_image?: string
+}
+
+// Navigation
+
+export type NavItem = {
+  name: string
+  href?: string
+  icon: any
+  action?: string
+  children?: NavItem[]
+}
+
+export type NavListItem = {
+  items: NavItem[]
+  activePath: string
+  close?: () => void
+  onAction?: (action: string) => void
+  title?: string
+  level?: number
+  href?: string
+  children?: NavListItem[]
 }

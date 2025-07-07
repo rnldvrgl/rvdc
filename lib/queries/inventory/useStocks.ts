@@ -1,26 +1,30 @@
-import { Stock } from '@/lib/constants/interface'
+import { Stock, StockRoomStock } from '@/lib/constants/interface'
 import type {
   PaginatedFilterProps,
   PaginatedResult,
 } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
-const url = '/inventory/stalls/stocks/'
+const stockUrl = '/inventory/stocks/'
+const stockRoomUrl = '/inventory/stockroom/stocks/'
+const transferUrl = '/inventory/stock-transfers/'
 
 export function useStallStocks({
   page = 1,
   limit = 10,
   search,
   ordering,
-}: PaginatedFilterProps = {}) {
+  filter = {},
+}: PaginatedFilterProps) {
   return useApiQuery<PaginatedResult<Stock>>(
-    ['stall-stocks', page, limit, search, ordering],
-    `${url}`,
+    ['stall-stocks', page, limit, search, ordering, filter],
+    stockUrl,
     {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
+      ...filter, // spread extra filters
     },
   )
 }
@@ -30,15 +34,17 @@ export function useStockRoomStocks({
   limit = 10,
   search,
   ordering,
-}: PaginatedFilterProps = {}) {
-  return useApiQuery<PaginatedResult<Stock>>(
-    ['stockroom-stocks', page, limit, search, ordering],
-    `${url}management/`,
+  filter = {},
+}: PaginatedFilterProps & { filter?: Record<string, any> } = {}) {
+  return useApiQuery<PaginatedResult<StockRoomStock>>(
+    ['stock-room-stocks', page, limit, search, ordering, filter],
+    stockRoomUrl,
     {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
+      ...filter,
     },
   )
 }
@@ -48,15 +54,17 @@ export function useStockTransfers({
   limit = 10,
   search,
   ordering,
-}: PaginatedFilterProps = {}) {
+  filter = {},
+}: PaginatedFilterProps) {
   return useApiQuery<PaginatedResult<Stock>>(
-    ['transfers', page, limit, search, ordering],
-    `${url}transfers/`,
+    ['transfers', page, limit, search, ordering, filter],
+    transferUrl,
     {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
+      ...filter,
     },
   )
 }

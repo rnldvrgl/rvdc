@@ -1,23 +1,20 @@
 'use client'
 
-import { getStallStockColumns } from '@/app/(routes)/inventory/stocks/stall/columns'
+import { getStockRoomStockColumns } from '@/app/(routes)/inventory/stocks/stockroom/columns'
 import { DataTable } from '@/components/custom/table/DataTable'
 import RestockForm from '@/components/forms/inventory/RestockForm'
 import StockThresholdForm from '@/components/forms/inventory/StockThresholdForm'
 import EntitySheet from '@/components/sheets/EntitySheet'
-import { Stock } from '@/lib/constants/interface'
+import { StockRoomStock } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
-import { useStallStockMutations } from '@/lib/mutations/useStallStockMutations'
-import { useStallStocks } from '@/lib/queries/inventory/useStocks'
-import useUserProfileStore from '@/lib/store/useUserProfileStore'
+import { useStockRoomStockMutations } from '@/lib/mutations/useStockRoomStockMutations'
+import { useStockRoomStocks } from '@/lib/queries/inventory/useStocks'
 
-export default function StocksPage() {
+export default function StockRoomStocksPage() {
   const { page, limit, search, ordering, filter } = useSearchParameters()
-  const { softDeleteStallStock } = useStallStockMutations()
-  const userProfile = useUserProfileStore((state) => state.userProfile)
-  const role = userProfile?.role
-  const { data, isLoading } = useStallStocks({
+  const { softDeleteStockRoomStock } = useStockRoomStockMutations()
+  const { data, isLoading } = useStockRoomStocks({
     page,
     limit,
     search,
@@ -29,30 +26,29 @@ export default function StocksPage() {
     sheetState: { open: editOpen, entity: editEntity },
     openSheet: openEditSheet,
     closeSheet: closeEditSheet,
-  } = useEntitySheet<Stock>()
+  } = useEntitySheet<StockRoomStock>()
 
   const {
     sheetState: { open: restockOpen, entity: restockEntity },
     openSheet: openRestockSheet,
     closeSheet: closeRestockSheet,
-  } = useEntitySheet<Stock>()
+  } = useEntitySheet<StockRoomStock>()
 
-  const handleDelete = (stock: Stock) => {
-    if (stock.id !== undefined && stock.stall && stock.stall.id !== undefined) {
-      softDeleteStallStock.mutate(stock.id)
+  const handleDelete = (stock: StockRoomStock) => {
+    if (stock.id !== undefined) {
+      softDeleteStockRoomStock.mutate(stock.id)
     }
   }
 
-  const columns = getStallStockColumns({
+  const columns = getStockRoomStockColumns({
     onEdit: openEditSheet,
     onDelete: handleDelete,
     onRestock: openRestockSheet,
-    role,
   })
 
   return (
     <div className="container mx-auto">
-      <EntitySheet<Stock>
+      <EntitySheet<StockRoomStock>
         open={editOpen}
         onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
         entity={editEntity}
@@ -61,7 +57,7 @@ export default function StocksPage() {
         renderForm={({ onClose, entity }) =>
           entity ? (
             <StockThresholdForm
-              type="stall"
+              type="stock_room"
               onClose={onClose}
               stock={entity}
             />
@@ -69,16 +65,16 @@ export default function StocksPage() {
         }
       />
 
-      <EntitySheet<Stock>
+      <EntitySheet<StockRoomStock>
         open={restockOpen}
         onOpenChange={(isOpen) => !isOpen && closeRestockSheet()}
         entity={restockEntity}
-        title="Restock Stall"
+        title="Restock Stock Room Stock"
         description="Add quantity to existing stock."
         renderForm={({ onClose, entity }) =>
           entity ? (
             <RestockForm
-              type="stall"
+              type="stock_room"
               onClose={onClose}
               stock={entity}
             />

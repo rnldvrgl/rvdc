@@ -86,9 +86,8 @@ export interface Item {
   sku: string
   category: ProductCategory | null
   description?: string | null
-  size_or_spec?: string | null
   unit_of_measure: UnitChoice
-  srp: string
+  retail_price: string
   is_deleted: boolean
   created_at: string
   updated_at: string
@@ -97,10 +96,9 @@ export interface Item {
 
 export interface ItemPayload {
   name: string
-  srp: number
+  retail_price: number
   category_id: number | null
   description?: string
-  size_or_spec?: string
   unit_of_measure: UnitChoice
 }
 
@@ -135,10 +133,11 @@ export interface Stock {
   is_deleted: boolean
   created_at: string
   updated_at: string
+  stock_room_quantity: number
+  stock_room_status: string
 }
 
 export interface StockPayload {
-  item_id: number
   stall_id?: number | null
   quantity: number
   low_stock_threshold?: number
@@ -151,19 +150,15 @@ export interface StockRoomStock {
   id: number
   item: Item
   quantity: number
-  cost_price?: string
-  expiry_date?: string
   low_stock_threshold: number
+  status: string
   is_deleted: boolean
   created_at: string
   updated_at: string
 }
 
 export interface StockRoomStockPayload {
-  item_id: number
   quantity: number
-  cost_price?: string
-  expiry_date?: string
   low_stock_threshold?: number
 }
 

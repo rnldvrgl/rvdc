@@ -16,15 +16,17 @@ export function useTechnicians({
   limit = 10,
   search,
   ordering,
+  filter = {},
 }: PaginatedFilterProps) {
   return useApiQuery<PaginatedResult<Technician>>(
-    ['technicians', page, limit, search, ordering],
+    ['technicians', page, limit, search, ordering, filter],
     url,
     {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
+      ...filter,
     },
   )
 }

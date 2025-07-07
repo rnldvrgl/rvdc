@@ -1,19 +1,12 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
+import { NavItem, NavListItem } from '@/lib/constants/types'
 import { getLinkClasses } from '@/lib/utils/helpers'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-
-type NavItem = {
-  name: string
-  href?: string
-  icon: any
-  action?: string
-  children?: NavItem[]
-}
 
 export default function NavList({
   items,
@@ -22,14 +15,7 @@ export default function NavList({
   onAction,
   title,
   level = 0,
-}: {
-  items: NavItem[]
-  activePath: string
-  close?: () => void
-  onAction?: (action: string) => void
-  title?: string
-  level?: number
-}) {
+}: NavListItem) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({})
 
   useEffect(() => {

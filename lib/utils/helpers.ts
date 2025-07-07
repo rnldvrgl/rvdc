@@ -1,6 +1,5 @@
 import { timeZone } from '@/lib/constants/general'
-import { NavListItem } from '@/lib/constants/interface'
-import { Sorting } from '@/lib/constants/types'
+import { NavListItem, Sorting } from '@/lib/constants/types'
 import { clsx, type ClassValue } from 'clsx'
 import { format } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
@@ -128,7 +127,9 @@ export function toOrdering(sorting: Sorting): string | undefined {
 export function isPathActive(item: NavListItem, path: string): boolean {
   if (item.href && path.startsWith(item.href)) return true
   if (item.children) {
-    return item.children.some((child) => isPathActive(child, path))
+    return item.children!.some((child: NavListItem) =>
+      isPathActive(child, path),
+    )
   }
   return false
 }
@@ -141,7 +142,9 @@ export function formatCurrency(value: number | string) {
   if (value == null) return 'N/A'
   const num = typeof value === 'string' ? parseFloat(value) : value
   if (isNaN(num)) return 'N/A'
-  return num.toLocaleString('en-US', {
+  return num.toLocaleString('en-PH', {
+    style: 'currency',
+    currency: 'PHP',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
@@ -151,4 +154,37 @@ export function safeCell(value: any) {
   if (value == null) return 'N/A'
   if (typeof value === 'string' && value.trim() === '') return 'N/A'
   return value
+}
+
+export function getStockBadgeVariant(
+  status: string,
+): 'success' | 'warning' | 'destructive' {
+  const variantMap: Record<string, 'success' | 'warning' | 'destructive'> = {
+    high_stock: 'success',
+    low_stock: 'warning',
+    no_stock: 'destructive',
+  }
+  return variantMap[status] || 'default'
+}
+
+export const getHashedStallBadgeClass = (stallName: string) => {
+  const colors = [
+    'border-transparent bg-green-500 text-white dark:bg-green-400 dark:text-white',
+    'border-transparent bg-yellow-400 text-black dark:bg-yellow-300 dark:text-black',
+    'border-transparent bg-blue-500 text-white dark:bg-blue-400 dark:text-white',
+    'border-transparent bg-pink-500 text-white dark:bg-pink-400 dark:text-white',
+    'border-transparent bg-purple-500 text-white dark:bg-purple-400 dark:text-white',
+    'border-transparent bg-teal-500 text-white dark:bg-teal-400 dark:text-white',
+    'border-transparent bg-rose-500 text-white dark:bg-rose-400 dark:text-white',
+    'border-transparent bg-orange-500 text-white dark:bg-orange-400 dark:text-white',
+  ]
+
+  let hash = 0
+  for (let i = 0; i < stallName.length; i++) {
+    hash = stallName.charCodeAt(i) + ((hash << 5) - hash)
+    hash = hash & hash // force 32-bit integer
+  }
+
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
 }

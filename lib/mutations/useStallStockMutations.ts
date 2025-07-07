@@ -10,14 +10,12 @@ export function useStallStockMutations() {
 
   const updateStallStock = useApiMutation({
     mutationFn: ({
-      stall_id,
       stock_id,
       data,
     }: {
-      stall_id: number
       stock_id: number
       data: StockPayload
-    }) => api.patch(`/inventory/stalls/${stall_id}/stocks/${stock_id}/`, data),
+    }) => api.patch(`/inventory/stocks/${stock_id}/`, data),
     successMessage: 'Stall stock updated successfully.',
     invalidateQueries: [{ queryKey: ['stall-stocks'] }],
     onSuccess: (_, variables) => {
@@ -28,27 +26,28 @@ export function useStallStockMutations() {
   })
 
   const softDeleteStallStock = useApiMutation({
-    mutationFn: ({ stall_id, stock_id }) =>
-      api.patch(`/inventory/stalls/${stall_id}/stocks/${stock_id}/`, {
+    mutationFn: (stock_id: number) =>
+      api.patch(`/inventory/stocks/${stock_id}/`, {
         is_deleted: true,
       }),
   })
 
   const restockStallStock = useApiMutation({
     mutationFn: ({
-      stall_id,
       stock_id,
       quantity,
     }: {
-      stall_id: number
       stock_id: number
       quantity: number
     }) =>
-      api.post(`/inventory/stalls/${stall_id}/stocks/${stock_id}/restock/`, {
+      api.post(`/inventory/stocks/${stock_id}/restock/`, {
         quantity,
       }),
     successMessage: 'Stock restocked successfully.',
-    invalidateQueries: [{ queryKey: ['stall-stocks'] }],
+    invalidateQueries: [
+      { queryKey: ['stall-stocks'] },
+      { queryKey: ['stock-room-stocks'] },
+    ],
 
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

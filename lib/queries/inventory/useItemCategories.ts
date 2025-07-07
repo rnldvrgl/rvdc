@@ -13,6 +13,7 @@ export function useItemCategories({
   limit = 10,
   search,
   ordering,
+  filter = {},
 }: PaginatedFilterProps = {}) {
   return useApiQuery<PaginatedResult<ProductCategory>>(
     ['categories', page, limit, search, ordering],
@@ -22,6 +23,7 @@ export function useItemCategories({
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
+      ...filter,
     },
   )
 }
