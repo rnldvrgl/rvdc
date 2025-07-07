@@ -39,10 +39,7 @@ export default function StocksPage() {
 
   const handleDelete = (stock: Stock) => {
     if (stock.id !== undefined && stock.stall && stock.stall.id !== undefined) {
-      softDeleteStallStock.mutate({
-        stall_id: stock.stall.id,
-        stock_id: stock.id,
-      })
+      softDeleteStallStock.mutate(stock.id)
     }
   }
 

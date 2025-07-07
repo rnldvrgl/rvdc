@@ -133,6 +133,7 @@ export interface Stock {
   is_deleted: boolean
   created_at: string
   updated_at: string
+  stock_room_quantity: number
 }
 
 export interface StockPayload {

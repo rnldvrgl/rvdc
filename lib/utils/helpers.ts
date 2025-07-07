@@ -155,3 +155,14 @@ export function safeCell(value: any) {
   if (typeof value === 'string' && value.trim() === '') return 'N/A'
   return value
 }
+
+export function getStockBadgeVariant(
+  status: string,
+): 'success' | 'warning' | 'destructive' {
+  const variantMap: Record<string, 'success' | 'warning' | 'destructive'> = {
+    high_stock: 'success',
+    low_stock: 'warning',
+    no_stock: 'destructive',
+  }
+  return variantMap[status] || 'default'
+}

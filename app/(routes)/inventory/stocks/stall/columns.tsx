@@ -1,9 +1,9 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { Badge } from '@/components/ui/badge'
 import { GetColumnsProps, Stock } from '@/lib/constants/interface'
-import { safeCell } from '@/lib/utils/helpers'
+import { getStockBadgeVariant, safeCell } from '@/lib/utils/helpers'
 import { ColumnDef } from '@tanstack/react-table'
-import { Edit, PackagePlus, Trash2 } from 'lucide-react'
+import { Edit, PackagePlus } from 'lucide-react'
 
 export function getStallStockColumns({
   onEdit,
@@ -51,24 +51,15 @@ export function getStallStockColumns({
       accessorKey: 'status',
       header: 'Status',
       cell: ({ row }) => {
-        const statusVariantMap: Record<
-          string,
-          'warning' | 'destructive' | 'success'
-        > = {
-          low_stock: 'warning',
-          no_stock: 'destructive',
-          high_stock: 'success',
-        }
-
-        const status = row.original.status as keyof typeof statusVariantMap
-        const variant = statusVariantMap[status] || 'default'
+        const stock = row.original
+        const variant = getStockBadgeVariant(stock.status)
 
         return (
           <Badge
             variant={variant}
             className="capitalize"
           >
-            {row.original.status.replace('_', ' ')}
+            {stock.status.replace('_', ' ')}
           </Badge>
         )
       },
@@ -92,13 +83,14 @@ export function getStallStockColumns({
                 icon: <Edit className="size-4" />,
                 onClick: () => onEdit(stock),
               },
-              {
-                label: 'Deactivate',
-                icon: <Trash2 className="size-4 text-destructive" />,
-                onClick: () => onDelete(stock),
-                destructive: true,
-                confirmText: `Deactivate stock of ${stock.item.name}?`,
-              },
+              // TODO: ADDING OF DEACTIVATION
+              // {
+              //   label: 'Deactivate',
+              //   icon: <Trash2 className="size-4 text-destructive" />,
+              //   onClick: () => onDelete(stock),
+              //   destructive: true,
+              //   confirmText: `Deactivate stock of ${stock.item.name}?`,
+              // },
             ]}
           />
         )
