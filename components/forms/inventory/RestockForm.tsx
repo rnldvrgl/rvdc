@@ -1,6 +1,6 @@
 'use client'
 
-import { Badge } from '@/components/ui/badge'
+import { Badge, BadgeVariant } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -12,8 +12,9 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Stock } from '@/lib/constants/interface'
+import { Stock, StockRoomStock } from '@/lib/constants/interface'
 import { useStallStockMutations } from '@/lib/mutations/useStallStockMutations'
+import { useStockRoomStockMutations } from '@/lib/mutations/useStockRoomStockMutations'
 import { formatCurrency, getStockBadgeVariant } from '@/lib/utils/helpers'
 import { Package, Store, Warehouse } from 'lucide-react'
 import { useState } from 'react'
@@ -24,17 +25,31 @@ interface FormValues {
 }
 
 interface RestockFormProps {
-  stock: Stock
+  stock: Stock | StockRoomStock
+  type: 'stall' | 'stock_room'
   onClose: () => void
 }
 
-export default function RestockForm({ stock, onClose }: RestockFormProps) {
+export default function RestockForm({
+  stock,
+  type,
+  onClose,
+}: RestockFormProps) {
   const form = useForm<FormValues>({ defaultValues: { quantity: '' } })
   const { restockStallStock } = useStallStockMutations()
+  const { restockStockRoomStock } = useStockRoomStockMutations()
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const stallVariant = getStockBadgeVariant(stock.status)
-  const stockRoomVariant = getStockBadgeVariant(stock.stock_room_status)
+  // determine badge variants safely
+  let stallVariant = ''
+  let stockRoomVariant = ''
+
+  if (type === 'stall' && 'status' in stock) {
+    stallVariant = getStockBadgeVariant(stock.status)
+  }
+  if ('stock_room_status' in stock) {
+    stockRoomVariant = getStockBadgeVariant(stock.stock_room_status)
+  }
 
   const onSubmit = (data: FormValues) => {
     setSubmitError(null)
@@ -46,32 +61,49 @@ export default function RestockForm({ stock, onClose }: RestockFormProps) {
       })
       return
     }
-    if (quantity > stock.stock_room_quantity) {
-      form.setError('quantity', {
-        type: 'manual',
-        message: `Cannot exceed stock room available: ${stock.stock_room_quantity}`,
-      })
-      return
-    }
-    if (!stock.stall?.id) {
-      form.setError('quantity', {
-        type: 'manual',
-        message: 'Stall information is missing.',
-      })
-      return
-    }
-    restockStallStock.mutate(
-      { stock_id: stock.id, quantity },
-      {
-        onSuccess: onClose,
-        onError: (err: any) => {
-          setSubmitError(
-            err?.response?.data?.non_field_errors?.join(', ') ||
-              'Restock failed. Please try again.',
-          )
+
+    if (type === 'stall' && 'stall' in stock) {
+      if (quantity > stock.stock_room_quantity) {
+        form.setError('quantity', {
+          type: 'manual',
+          message: `Cannot exceed stock room available: ${stock.stock_room_quantity}`,
+        })
+        return
+      }
+      if (!stock.stall?.id) {
+        form.setError('quantity', {
+          type: 'manual',
+          message: 'Stall information is missing.',
+        })
+        return
+      }
+
+      restockStallStock.mutate(
+        { stock_id: stock.id, quantity },
+        {
+          onSuccess: onClose,
+          onError: (err: any) => {
+            setSubmitError(
+              err?.response?.data?.non_field_errors?.join(', ') ||
+                'Restock failed. Please try again.',
+            )
+          },
         },
-      },
-    )
+      )
+    } else if (type === 'stock_room') {
+      restockStockRoomStock.mutate(
+        { stock_id: stock.id, quantity },
+        {
+          onSuccess: onClose,
+          onError: (err: any) => {
+            setSubmitError(
+              err?.response?.data?.non_field_errors?.join(', ') ||
+                'Restock failed. Please try again.',
+            )
+          },
+        },
+      )
+    }
   }
 
   return (
@@ -106,50 +138,54 @@ export default function RestockForm({ stock, onClose }: RestockFormProps) {
         </Card>
 
         {/* Stall */}
-        <Card>
-          <CardContent className="px-6 space-y-1">
-            <div className="flex items-center gap-1 font-semibold text-primary text-base">
-              <Store size={16} /> Stall Stock
-            </div>
-            <div className="text-sm">
-              <span className="text-muted-foreground">Stall:</span>{' '}
-              {stock.stall?.name ?? 'N/A'}
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-muted-foreground">Quantity:</span>{' '}
-              {stock.quantity}
-              <Badge
-                variant={stallVariant}
-                className="capitalize"
-              >
-                {stock.status.replace('_', ' ')}
-              </Badge>
-            </div>
-            <div className="text-sm">
-              <span className="text-muted-foreground">Low Threshold:</span>{' '}
-              {stock.low_stock_threshold}
-            </div>
-          </CardContent>
-        </Card>
+        {type === 'stall' && 'stall' in stock && (
+          <Card>
+            <CardContent className="px-6 space-y-1">
+              <div className="flex items-center gap-1 font-semibold text-primary text-base">
+                <Store size={16} /> Stall Stock
+              </div>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Stall:</span>{' '}
+                {stock.stall?.name ?? 'N/A'}
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="text-muted-foreground">Quantity:</span>{' '}
+                {stock.quantity}
+                <Badge
+                  variant={stallVariant as BadgeVariant}
+                  className="capitalize"
+                >
+                  {stock.status.replace('_', ' ')}
+                </Badge>
+              </div>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Low Threshold:</span>{' '}
+                {stock.low_stock_threshold}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stock room */}
-        <Card>
-          <CardContent className="px-6 space-y-1">
-            <div className="flex items-center gap-1 font-semibold text-primary text-base">
-              <Warehouse size={16} /> Stock Room
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <span className="text-muted-foreground">Available:</span>{' '}
-              {stock.stock_room_quantity}
-              <Badge
-                variant={stockRoomVariant}
-                className="capitalize"
-              >
-                {stock.stock_room_status.replace('_', ' ')}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+        {'stock_room_quantity' in stock && (
+          <Card>
+            <CardContent className="px-6 space-y-1">
+              <div className="flex items-center gap-1 font-semibold text-primary text-base">
+                <Warehouse size={16} /> Stock Room
+              </div>
+              <div className="flex items-center gap-3 text-sm">
+                <span className="text-muted-foreground">Available:</span>{' '}
+                {stock.stock_room_quantity}
+                <Badge
+                  variant={stockRoomVariant as BadgeVariant}
+                  className="capitalize"
+                >
+                  {stock.stock_room_status.replace('_', ' ')}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quantity input */}
         <div className="space-y-2">
@@ -173,7 +209,7 @@ export default function RestockForm({ stock, onClose }: RestockFormProps) {
             )}
           />
           {submitError && (
-            <div className="text-red-500 text-sm">{submitError}</div>
+            <div className="text-destructive text-sm">{submitError}</div>
           )}
         </div>
 

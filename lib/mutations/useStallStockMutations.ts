@@ -44,7 +44,10 @@ export function useStallStockMutations() {
         quantity,
       }),
     successMessage: 'Stock restocked successfully.',
-    invalidateQueries: [{ queryKey: ['stall-stocks'] }],
+    invalidateQueries: [
+      { queryKey: ['stall-stocks'] },
+      { queryKey: ['stock-room-stocks'] },
+    ],
 
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({

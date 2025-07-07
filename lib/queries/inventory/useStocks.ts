@@ -1,4 +1,4 @@
-import { Stock } from '@/lib/constants/interface'
+import { Stock, StockRoomStock } from '@/lib/constants/interface'
 import type {
   PaginatedFilterProps,
   PaginatedResult,
@@ -6,7 +6,7 @@ import type {
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
 const stockUrl = '/inventory/stocks/'
-const stockRoomUrl = '/inventory/stockroom-stocks/'
+const stockRoomUrl = '/inventory/stockroom/stocks/'
 const transferUrl = '/inventory/stock-transfers/'
 
 export function useStallStocks({
@@ -36,8 +36,8 @@ export function useStockRoomStocks({
   ordering,
   filter = {},
 }: PaginatedFilterProps & { filter?: Record<string, any> } = {}) {
-  return useApiQuery<PaginatedResult<Stock>>(
-    ['stockroom-stocks', page, limit, search, ordering, filter],
+  return useApiQuery<PaginatedResult<StockRoomStock>>(
+    ['stock-room-stocks', page, limit, search, ordering, filter],
     stockRoomUrl,
     {
       page,

@@ -138,7 +138,6 @@ export interface Stock {
 }
 
 export interface StockPayload {
-  item_id: number
   stall_id?: number | null
   quantity: number
   low_stock_threshold?: number
@@ -151,19 +150,15 @@ export interface StockRoomStock {
   id: number
   item: Item
   quantity: number
-  cost_price?: string
-  expiry_date?: string
   low_stock_threshold: number
+  status: string
   is_deleted: boolean
   created_at: string
   updated_at: string
 }
 
 export interface StockRoomStockPayload {
-  item_id: number
   quantity: number
-  cost_price?: string
-  expiry_date?: string
   low_stock_threshold?: number
 }
 
