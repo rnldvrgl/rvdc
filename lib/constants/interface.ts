@@ -222,6 +222,7 @@ export interface BuildNavOptions {
 }
 
 export interface Notification {
+  id: number
   user: User
   type: string
   data: any
