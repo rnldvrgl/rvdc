@@ -75,7 +75,7 @@ export type Province = {
 
 // Common entity fields
 export type BaseEntity = {
-  id?: number
+  id: number
   is_deleted?: boolean
   created_at?: string
   updated_at?: string

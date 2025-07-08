@@ -15,7 +15,11 @@ export function useApiMutation<TFn extends (...args: any[]) => any>({
   const queryClient = useQueryClient()
   const { handleError } = useDRFToastError()
 
-  return useMutation<Awaited<ReturnType<TFn>>, unknown, Parameters<TFn>[0]>({
+  const mutation = useMutation<
+    Awaited<ReturnType<TFn>>,
+    unknown,
+    Parameters<TFn>[0]
+  >({
     mutationFn,
     onSuccess: (data, variables) => {
       if (successMessage) {
@@ -33,4 +37,9 @@ export function useApiMutation<TFn extends (...args: any[]) => any>({
       onError?.(error)
     },
   })
+
+  return {
+    ...mutation,
+    isPending: mutation.isPending,
+  }
 }

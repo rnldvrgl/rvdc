@@ -5,24 +5,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Notification } from '@/lib/constants/interface'
+import { useMergedCursorResults } from '@/lib/hooks/useMergedCursorResults'
 import {
   useNotifications,
   useUnreadNotificationCount,
 } from '@/lib/queries/useNotifications'
-import { mergeResults } from '@/lib/utils/helpers'
 import { Bell } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 
 const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
-  const { data, fetchNextPage, isFetchingNextPage, hasNextPage } =
-    useNotifications()
-  const notifications = mergeResults<Notification>(data)
-  const { data: unreadCountData } = useUnreadNotificationCount()
+  const {
+    mergedResults: notifications,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
+  } = useMergedCursorResults(useNotifications())
 
+  const { data: unreadCountData } = useUnreadNotificationCount()
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
-  // Intersection Observer to auto-fetch more when bottom becomes visible
   useEffect(() => {
     if (!hasNextPage || isFetchingNextPage) return
 
@@ -35,12 +36,11 @@ const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
       { root: null, rootMargin: '0px', threshold: 1.0 },
     )
 
-    if (loadMoreRef.current) {
-      observer.observe(loadMoreRef.current)
-    }
+    const current = loadMoreRef.current
+    if (current) observer.observe(current)
 
     return () => {
-      if (loadMoreRef.current) observer.unobserve(loadMoreRef.current)
+      if (current) observer.unobserve(current)
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
@@ -53,7 +53,7 @@ const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
           className="relative"
         >
           <Bell className="size-5 text-foreground" />
-          {unreadCountData && unreadCountData.unread_count > 0 && (
+          {unreadCountData && unreadCountData?.unread_count > 0 && (
             <span className="absolute top-0 right-0 inline-flex size-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
               {unreadCountData.unread_count}
             </span>
@@ -69,7 +69,7 @@ const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
           <>
             {notifications.map((n) => (
               <DropdownMenuItem
-                key={n.id}
+                key={n.id ?? `${n.summary}-${n.created_at}`}
                 className={`flex flex-col items-start space-y-0 ${
                   !n.is_read ? 'bg-muted/50' : ''
                 }`}

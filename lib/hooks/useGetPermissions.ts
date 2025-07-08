@@ -14,6 +14,7 @@ export function useGetPermissions(role: Roles) {
         'view_settings',
         'view_stalls',
         'shortcut_add_client',
+        'manage_stock_transfer',
       ],
       manager: [
         'view_clients',
@@ -23,6 +24,7 @@ export function useGetPermissions(role: Roles) {
         'view_stallstocks',
         'view_settings',
         'shortcut_add_client',
+        'manage_stock_transfer',
       ],
       guest: [],
     }

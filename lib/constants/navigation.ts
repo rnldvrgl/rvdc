@@ -9,6 +9,7 @@ import {
   PlusCircle,
   Settings,
   Store,
+  Truck,
   UserCog,
   Warehouse,
 } from 'lucide-react'
@@ -46,6 +47,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         href: '/inventory/stocks/stall',
         icon: Store,
         permission: 'view_stallstocks',
+      },
+      {
+        name: 'Stock Transfer',
+        href: '/inventory/stocks/transfer',
+        icon: Truck,
+        permission: 'manage_stock_transfer',
       },
       {
         name: 'Items',
