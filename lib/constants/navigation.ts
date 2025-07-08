@@ -1,13 +1,15 @@
 import { NavigationEntry, ShortcutEntry } from '@/lib/constants/types'
 import {
   Boxes,
+  Building2,
+  Handshake,
+  Layers,
   LayoutDashboard,
-  ListTree,
-  Package,
+  PackageCheck,
   PlusCircle,
   Settings,
-  User2,
-  Users,
+  Store,
+  UserCog,
   Warehouse,
 } from 'lucide-react'
 
@@ -20,18 +22,18 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   clients: {
     name: 'Clients',
     href: '/clients',
-    icon: Users,
+    icon: Handshake,
     permission: 'view_clients',
   },
   technicians: {
     name: 'Technicians',
     href: '/technicians',
-    icon: User2,
+    icon: UserCog,
     permission: 'view_technicians',
   },
   inventory: {
     name: 'Inventory',
-    icon: Package,
+    icon: Boxes,
     children: [
       {
         name: 'Stock Room',
@@ -42,19 +44,19 @@ export const baseNavigation: Record<string, NavigationEntry> = {
       {
         name: 'Stall Stocks',
         href: '/inventory/stocks/stall',
-        icon: Warehouse,
+        icon: Store,
         permission: 'view_stallstocks',
       },
       {
         name: 'Items',
         href: '/inventory/items',
-        icon: Boxes,
+        icon: PackageCheck,
         permission: 'view_items',
       },
       {
         name: 'Item Categories',
         href: '/inventory/categories',
-        icon: ListTree,
+        icon: Layers,
         permission: 'view_categories',
       },
     ],
@@ -62,7 +64,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   stalls: {
     name: 'Stalls',
     href: '/stalls',
-    icon: ListTree,
+    icon: Building2,
     permission: 'view_stalls',
   },
   settings: {
