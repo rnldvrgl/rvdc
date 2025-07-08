@@ -220,3 +220,14 @@ export interface BuildNavOptions {
   role: 'admin' | 'manager' | string
   permissions: string[]
 }
+
+export interface Notification {
+  user: User
+  type: string
+  data: any
+  message: string
+  is_read: boolean
+  created_at: string
+  relative_time: string
+  summary: string
+}

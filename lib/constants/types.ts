@@ -131,3 +131,9 @@ export type NavListItem = {
   href?: string
   children?: NavListItem[]
 }
+
+export type CursorPaginatedResponse<TItem> = {
+  results: TItem[]
+  next: string | null
+  previous: string | null
+}

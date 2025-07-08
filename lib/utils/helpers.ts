@@ -1,5 +1,9 @@
 import { timeZone } from '@/lib/constants/general'
-import { NavListItem, Sorting } from '@/lib/constants/types'
+import {
+  CursorPaginatedResponse,
+  NavListItem,
+  Sorting,
+} from '@/lib/constants/types'
 import { clsx, type ClassValue } from 'clsx'
 import { format } from 'date-fns'
 import { toZonedTime } from 'date-fns-tz'
@@ -187,4 +191,8 @@ export const getHashedStallBadgeClass = (stallName: string) => {
 
   const index = Math.abs(hash) % colors.length
   return colors[index]
+}
+
+export function mergeResults<T>(data?: CursorPaginatedResponse<T>): T[] {
+  return data?.results ?? []
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import NavList from '@/components/custom/navigation/NavList'
+import NotificationArea from '@/components/custom/navigation/NotificationArea'
 import { UserProfile } from '@/components/custom/navigation/UserProfile'
 import { Button } from '@/components/ui/button'
 import {
@@ -39,7 +40,7 @@ export default function SidebarNav({
   const [sheetOpen, setSheetOpen] = useState(false)
 
   const renderUserHeader = () => (
-    <div className="flex items-center gap-3 rounded-xl bg-muted p-4">
+    <div className="flex items-center justify-between rounded-xl bg-muted p-4">
       <AnimatePresence>
         {user ? (
           <motion.div
@@ -70,6 +71,9 @@ export default function SidebarNav({
           </div>
         )}
       </AnimatePresence>
+
+      {/* Notifications dropdown */}
+      <NotificationArea align="start" />
     </div>
   )
 
@@ -129,6 +133,7 @@ export default function SidebarNav({
         </div>
 
         <div className="flex items-center gap-2">
+          <NotificationArea align="end" />
           <Sheet
             open={sheetOpen}
             onOpenChange={setSheetOpen}
