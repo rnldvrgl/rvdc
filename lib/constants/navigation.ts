@@ -2,15 +2,17 @@ import { NavigationEntry, ShortcutEntry } from '@/lib/constants/types'
 import {
   Boxes,
   Building2,
-  Handshake,
+  Coins,
+  FilePlus,
   Layers,
   LayoutDashboard,
-  PackageCheck,
-  PlusCircle,
+  Package,
+  Receipt,
   Settings,
   Store,
   Truck,
   UserCog,
+  Users,
   Warehouse,
 } from 'lucide-react'
 
@@ -23,7 +25,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   clients: {
     name: 'Clients',
     href: '/clients',
-    icon: Handshake,
+    icon: Users,
     permission: 'view_clients',
   },
   technicians: {
@@ -35,7 +37,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   expenses: {
     name: 'Expenses',
     href: '/expenses',
-    icon: Handshake,
+    icon: Receipt,
     permission: 'view_expenses',
   },
   inventory: {
@@ -63,7 +65,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
       {
         name: 'Items',
         href: '/inventory/items',
-        icon: PackageCheck,
+        icon: Package,
         permission: 'view_items',
       },
       {
@@ -90,9 +92,21 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 
 export const baseShortcuts: ShortcutEntry[] = [
   {
-    name: 'Add new client',
+    name: 'Add Client',
     action: 'addClient',
-    icon: PlusCircle,
+    icon: FilePlus,
     permission: 'shortcut_add_client',
+  },
+  {
+    name: 'Add Expense',
+    action: 'addExpense',
+    icon: Coins,
+    permission: 'shortcut_add_expense',
+  },
+  {
+    name: 'Add Transfer',
+    action: 'addTransfer',
+    icon: Truck,
+    permission: 'shortcut_add_transfer',
   },
 ]

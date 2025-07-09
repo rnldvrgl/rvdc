@@ -26,6 +26,8 @@ export function useGetPermissions(role: Roles) {
         'shortcut_add_client',
         'manage_stock_transfer',
         'view_expenses',
+        'shortcut_add_expense',
+        'shortcut_add_transfer',
       ],
       guest: [],
     }
