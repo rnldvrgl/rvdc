@@ -2,6 +2,8 @@ import { NavigationEntry, ShortcutEntry } from '@/lib/constants/types'
 import {
   Boxes,
   Building2,
+  CalendarClock,
+  Clock,
   Coins,
   FilePlus,
   Layers,
@@ -9,11 +11,13 @@ import {
   Package,
   Receipt,
   Settings,
+  ShoppingCart,
   Store,
   Truck,
   UserCog,
   Users,
   Warehouse,
+  Wrench,
 } from 'lucide-react'
 
 export const baseNavigation: Record<string, NavigationEntry> = {
@@ -22,23 +26,29 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     href: '/dashboard',
     icon: LayoutDashboard,
   },
-  clients: {
-    name: 'Clients',
-    href: '/clients',
-    icon: Users,
-    permission: 'view_clients',
-  },
-  technicians: {
-    name: 'Technicians',
-    href: '/technicians',
-    icon: UserCog,
-    permission: 'view_technicians',
-  },
   expenses: {
     name: 'Expenses',
     href: '/expenses',
     icon: Receipt,
     permission: 'view_expenses',
+  },
+  sales: {
+    name: 'POS Sales',
+    href: '/sales',
+    icon: ShoppingCart,
+    permission: 'view_sales',
+  },
+  repairs: {
+    name: 'Repair Orders',
+    href: '/repairs',
+    icon: Wrench,
+    permission: 'view_repairs',
+  },
+  scheduling: {
+    name: 'Service Appointments',
+    href: '/scheduling',
+    icon: CalendarClock,
+    permission: 'view_scheduling',
   },
   inventory: {
     name: 'Inventory',
@@ -75,6 +85,24 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: 'view_categories',
       },
     ],
+  },
+  clients: {
+    name: 'Clients',
+    href: '/clients',
+    icon: Users,
+    permission: 'view_clients',
+  },
+  attendance: {
+    name: 'Attendance',
+    href: '/attendance',
+    icon: Clock,
+    permission: 'view_attendance',
+  },
+  technicians: {
+    name: 'Technicians',
+    href: '/technicians',
+    icon: UserCog,
+    permission: 'view_technicians',
   },
   stalls: {
     name: 'Stalls',
