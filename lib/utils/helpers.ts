@@ -155,8 +155,8 @@ export function formatCurrency(value: number | string) {
 }
 
 export function safeCell(value: any) {
-  if (value == null) return 'N/A'
-  if (typeof value === 'string' && value.trim() === '') return 'N/A'
+  if (value == null) return '—'
+  if (typeof value === 'string' && value.trim() === '') return '—'
   return value
 }
 
@@ -169,6 +169,12 @@ export function getStockBadgeVariant(
     no_stock: 'destructive',
   }
   return variantMap[status] || 'default'
+}
+
+export function getTransferBadgeVariant(
+  status: boolean,
+): 'success' | 'destructive' {
+  return status ? 'success' : 'destructive'
 }
 
 export const getHashedStallBadgeClass = (stallName: string) => {
@@ -193,6 +199,8 @@ export const getHashedStallBadgeClass = (stallName: string) => {
   return colors[index]
 }
 
-export function mergeResults<T>(data?: CursorPaginatedResponse<T>): T[] {
-  return data?.results ?? []
+export function mergeResults<T>(data?: {
+  pages: CursorPaginatedResponse<T>[]
+}): T[] {
+  return data?.pages.flatMap((page) => page.results ?? []) ?? []
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { Client } from '@/lib/constants/types'
+import { ClientPayload } from '@/lib/constants/types'
 import { useApiMutation } from '@/lib/hooks/useApiMutation'
 import api from '@/lib/utils/api'
 import { useQueryClient } from '@tanstack/react-query'
@@ -10,13 +10,13 @@ export function useClientMutations() {
   const url = '/clients/'
 
   const addClient = useApiMutation({
-    mutationFn: (data: Client) => api.post(url, data),
+    mutationFn: (data: ClientPayload) => api.post(url, data),
     successMessage: 'Client created successfully.',
     invalidateQueries: [{ queryKey: ['clients'] }],
   })
 
   const updateClient = useApiMutation({
-    mutationFn: ({ id, data }: { id: number; data: Client }) =>
+    mutationFn: ({ id, data }: { id: number; data: ClientPayload }) =>
       api.patch(`${url}${id}/`, data),
     successMessage: 'Client updated successfully.',
     invalidateQueries: [{ queryKey: ['clients'] }],

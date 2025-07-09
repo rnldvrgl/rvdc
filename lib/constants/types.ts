@@ -75,7 +75,7 @@ export type Province = {
 
 // Common entity fields
 export type BaseEntity = {
-  id?: number
+  id: number
   is_deleted?: boolean
   created_at?: string
   updated_at?: string
@@ -90,6 +90,8 @@ export type Client = BaseEntity & {
   city: string
   barangay: string
 }
+
+export type ClientPayload = Omit<Client, keyof BaseEntity>
 
 // Technician
 export type Technician = BaseEntity & {

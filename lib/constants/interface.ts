@@ -165,20 +165,27 @@ export interface StockRoomStockPayload {
 // ---------------------
 // Stock Transfer
 // ---------------------
-export interface StockTransfer {
-  id: number
-  from_stall: Stall | null
-  to_stall: Stall
-  transferred_by: User | null
-  transfer_date: string
-  items: StockTransferItem[]
-}
-
 export interface StockTransferItem {
   id: number
   transfer: number
   item: Item
   quantity: number
+}
+
+export interface StockTransfer {
+  id: number
+  from_stall: Stall | null
+  to_stall: Stall
+  transferred_by: User | null
+  technician: User | null
+  transfer_date: string
+  is_finalized: boolean
+  finalized_at: string | null
+  items: StockTransferItem[]
+  is_paid: boolean
+  paid_at: string | null
+  total_price: string | number
+  used_for: string
 }
 
 /**
