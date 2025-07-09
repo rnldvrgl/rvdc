@@ -1,13 +1,19 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { GetColumnsProps, Item } from '@/lib/constants/interface'
+import { Roles } from '@/lib/constants/types'
 import { formatCurrency, safeCell } from '@/lib/utils/helpers'
-import { ColumnDef } from '@tanstack/react-table'
+import { CellContext, ColumnDef } from '@tanstack/react-table'
 import { Edit, Trash2 } from 'lucide-react'
+
+interface GetItemColumnsProps extends GetColumnsProps<Item> {
+  role: Roles
+}
 
 export function getItemColumns({
   onEdit,
   onDelete,
-}: GetColumnsProps<Item>): ColumnDef<Item>[] {
+  role,
+}: GetItemColumnsProps): ColumnDef<Item>[] {
   return [
     {
       accessorKey: 'name',
@@ -21,7 +27,8 @@ export function getItemColumns({
     {
       accessorKey: 'category.name',
       header: 'Category',
-      cell: ({ row }) => safeCell(row.original.category?.name),
+      cell: ({ row }: CellContext<Item, unknown>) =>
+        safeCell(row.original.category?.name),
     },
     {
       accessorKey: 'description',
@@ -38,30 +45,34 @@ export function getItemColumns({
       header: 'Retail Price',
       cell: ({ getValue }) => formatCurrency(getValue() as number | string),
     },
-    {
-      accessorKey: 'action',
-      header: 'Action',
-      cell: ({ row }) => {
-        const item = row.original
-        return (
-          <DataTableActions
-            items={[
-              {
-                label: 'Edit',
-                icon: <Edit className="size-4" />,
-                onClick: () => onEdit(item),
-              },
-              {
-                label: 'Delete',
-                icon: <Trash2 className="size-4 text-destructive" />,
-                onClick: () => onDelete(item),
-                destructive: true,
-                confirmText: `Delete ${item.name}?`,
-              },
-            ]}
-          />
-        )
-      },
-    },
+    ...(role === 'admin'
+      ? [
+          {
+            accessorKey: 'action',
+            header: 'Action',
+            cell: ({ row }: CellContext<Item, unknown>) => {
+              const item = row.original
+              return (
+                <DataTableActions
+                  items={[
+                    {
+                      label: 'Edit',
+                      icon: <Edit className="size-4" />,
+                      onClick: () => onEdit(item),
+                    },
+                    {
+                      label: 'Delete',
+                      icon: <Trash2 className="size-4 text-destructive" />,
+                      onClick: () => onDelete(item),
+                      destructive: true,
+                      confirmText: `Delete ${item.name}?`,
+                    },
+                  ]}
+                />
+              )
+            },
+          },
+        ]
+      : []),
   ]
 }

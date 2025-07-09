@@ -20,7 +20,6 @@ export function useGetPermissions(role: Roles) {
         'view_clients',
         'view_technicians',
         'view_items',
-        'view_categories',
         'view_stallstocks',
         'view_settings',
         'shortcut_add_client',
