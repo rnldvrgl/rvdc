@@ -1,7 +1,7 @@
 'use client'
 
-import { StockTransferDetails } from '@/components/custom/StockTransferDetails'
 import { DataTable } from '@/components/custom/table/DataTable'
+import { StockTransferDetails } from '@/components/details/StockTransferDetails'
 import StockTransferForm from '@/components/forms/inventory/StockTransferForm'
 import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'

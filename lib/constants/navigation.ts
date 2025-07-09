@@ -32,6 +32,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: UserCog,
     permission: 'view_technicians',
   },
+  expenses: {
+    name: 'Expenses',
+    href: '/expenses',
+    icon: Handshake,
+    permission: 'view_expenses',
+  },
   inventory: {
     name: 'Inventory',
     icon: Boxes,

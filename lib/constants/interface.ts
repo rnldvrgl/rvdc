@@ -16,6 +16,7 @@ export interface UseApiMutationProps<TFn extends (...args: any[]) => any> {
 }
 
 export interface GetColumnsProps<T> {
+  onView?: (item: T) => void
   onEdit: (item: T) => void
   onDelete: (item: T) => void
   onRestock?: (item: T) => void
@@ -238,4 +239,18 @@ export interface Notification {
   created_at: string
   relative_time: string
   summary: string
+}
+
+export interface Expense {
+  id: number
+  stall: { id: number; name: string }
+  total_price: string | number
+  paid_amount: string | number
+  is_paid: boolean
+  description: string
+  source: 'manual' | 'transfer'
+  created_by: { id: number; name: string }
+  created_at: string
+  paid_at?: string
+  transfer?: StockTransfer
 }

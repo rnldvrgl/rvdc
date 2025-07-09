@@ -171,6 +171,19 @@ export function getStockBadgeVariant(
   return variantMap[status] || 'default'
 }
 
+export function getSourceBadgeVariant(
+  source: string,
+): 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' {
+  switch (source) {
+    case 'manual':
+      return 'secondary'
+    case 'transfer':
+      return 'default'
+    default:
+      return 'warning'
+  }
+}
+
 export function getTransferBadgeVariant(
   status: boolean,
 ): 'success' | 'destructive' {

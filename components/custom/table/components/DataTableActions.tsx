@@ -65,43 +65,47 @@ export function DataTableActions({
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{label}</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {items.map((item, idx) => (
-            <DropdownMenuItem
-              key={idx}
-              onSelect={(e) => {
-                if (item.destructive) {
-                  e.preventDefault()
-                  setConfirmItem(item)
-                } else {
-                  item.onClick()
-                }
-              }}
-              className={clsx(
-                'flex items-center group',
-                item.destructive &&
-                  'text-destructive/90 hover:bg-destructive/10',
-              )}
-            >
-              {item.icon && (
+          {items.length > 0 ? (
+            items.map((item, idx) => (
+              <DropdownMenuItem
+                key={idx}
+                onSelect={(e) => {
+                  if (item.destructive) {
+                    e.preventDefault()
+                    setConfirmItem(item)
+                  } else {
+                    item.onClick()
+                  }
+                }}
+                className={clsx(
+                  'flex items-center group',
+                  item.destructive &&
+                    'text-destructive/90 hover:bg-destructive/10',
+                )}
+              >
+                {item.icon && (
+                  <span
+                    className={clsx(
+                      'mr-2 transition-colors',
+                      item.destructive && 'group-hover:text-destructive',
+                    )}
+                  >
+                    {item.icon}
+                  </span>
+                )}
                 <span
                   className={clsx(
-                    'mr-2 transition-colors',
+                    'transition-colors',
                     item.destructive && 'group-hover:text-destructive',
                   )}
                 >
-                  {item.icon}
+                  {item.label}
                 </span>
-              )}
-              <span
-                className={clsx(
-                  'transition-colors',
-                  item.destructive && 'group-hover:text-destructive',
-                )}
-              >
-                {item.label}
-              </span>
-            </DropdownMenuItem>
-          ))}
+              </DropdownMenuItem>
+            ))
+          ) : (
+            <DropdownMenuItem disabled>No actions available</DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

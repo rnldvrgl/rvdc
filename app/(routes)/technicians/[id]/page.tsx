@@ -1,7 +1,7 @@
 'use client'
 
-import { Detail } from '@/components/custom/Detail'
 import { ErrorState } from '@/components/custom/ErrorState'
+import { Detail } from '@/components/details/Detail'
 import TechnicianForm from '@/components/forms/TechnicianForm'
 import EntitySheet from '@/components/sheets/EntitySheet'
 import { Badge } from '@/components/ui/badge'

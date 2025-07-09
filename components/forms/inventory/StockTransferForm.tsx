@@ -27,6 +27,7 @@ import {
 } from '@/lib/queries/useChoices'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import { formatDate } from '@/lib/utils/helpers'
+import { CheckCircle, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 
@@ -128,28 +129,41 @@ export default function StockTransferForm({
         >
           {/* Header dates & finalize */}
           <div className="flex justify-between items-center">
-            <div className="space-y-1 text-xs text-muted-foreground">
-              {initialData?.transfer_date && (
+            <div className="space-y-1">
+              <h4 className="text-sm font-semibold text-foreground mb-1">
+                Transfer Details
+              </h4>
+              <div className="text-sm text-muted-foreground space-y-0.5">
                 <p>
-                  Created: {formatDate(new Date(initialData.transfer_date))}
+                  Created:{' '}
+                  <span className="font-medium">
+                    {initialData?.transfer_date
+                      ? formatDate(new Date(initialData.transfer_date))
+                      : '–'}
+                  </span>
                 </p>
-              )}
-              {initialData?.is_finalized && initialData?.finalized_at && (
                 <p>
-                  Finalized: {formatDate(new Date(initialData.finalized_at))}
+                  Finalized:{' '}
+                  <span className="font-medium">
+                    {initialData?.is_finalized && initialData?.finalized_at
+                      ? formatDate(new Date(initialData.finalized_at))
+                      : '–'}
+                  </span>
                 </p>
-              )}
+              </div>
             </div>
 
             <div className="flex gap-2">
               {initialData && !initialData.is_finalized && (
                 <Button
                   type="button"
+                  variant="success"
                   size="sm"
-                  variant="secondary"
                   onClick={handleFinalize}
                   disabled={finalizeStockTransfer.isPending}
+                  className="flex items-center gap-2"
                 >
+                  <CheckCircle className="size-4 " />
                   {finalizeStockTransfer.isPending
                     ? 'Finalizing...'
                     : 'Finalize'}
@@ -264,7 +278,9 @@ export default function StockTransferForm({
                   setItems([...items, { item: allItems[0], quantity: 1 }])
                 }
                 disabled={isFinalized}
+                className="flex items-center gap-1"
               >
+                <Plus className="size-4" />
                 Add
               </Button>
             </div>
@@ -342,14 +358,15 @@ export default function StockTransferForm({
 
                   <Button
                     type="button"
-                    variant="destructive"
+                    variant="ghost"
                     size="icon"
+                    className="group"
                     onClick={() =>
                       setItems((prev) => prev.filter((_, ix) => ix !== idx))
                     }
                     disabled={isFinalized}
                   >
-                    ×
+                    <Trash2 className="size-4 text-destructive group-hover:scale-105 transition-all " />
                   </Button>
                 </div>
               ))}
@@ -361,11 +378,12 @@ export default function StockTransferForm({
             <Button
               type="submit"
               size="sm"
-              className="w-full"
+              className="w-full flex items-center justify-center gap-2"
               disabled={
                 isFinalized || !form.formState.isValid || items.length === 0
               }
             >
+              <CheckCircle className="h-4 w-4" />
               {initialData ? 'Save Changes' : 'Submit Transfer'}
             </Button>
           </div>

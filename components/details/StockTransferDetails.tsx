@@ -3,13 +3,7 @@ import { Button } from '@/components/ui/button'
 import { StockTransfer } from '@/lib/constants/interface'
 import { formatDate, getTransferBadgeVariant } from '@/lib/utils/helpers'
 
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string
-  value: React.ReactNode
-}) {
+function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="space-y-1">
       <span className="text-sm text-muted-foreground">{label}</span>
@@ -45,11 +39,11 @@ export function StockTransferDetails({
       <div>
         <h3 className="text-lg font-semibold mb-4">General Information</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <DetailRow
+          <Detail
             label="To Stall"
             value={entity?.to_stall?.name ?? 'N/A'}
           />
-          <DetailRow
+          <Detail
             label="Technician"
             value={
               entity?.technician
@@ -57,7 +51,7 @@ export function StockTransferDetails({
                 : 'N/A'
             }
           />
-          <DetailRow
+          <Detail
             label="Date"
             value={
               entity?.transfer_date
@@ -65,11 +59,11 @@ export function StockTransferDetails({
                 : 'N/A'
             }
           />
-          <DetailRow
+          <Detail
             label="Used For"
             value={entity?.used_for ?? 'N/A'}
           />
-          <DetailRow
+          <Detail
             label="Total Price"
             value={`₱ ${entity?.total_price?.toLocaleString() ?? 0}`}
           />
@@ -103,16 +97,10 @@ export function StockTransferDetails({
 
       {/* Action buttons */}
       <div className="flex justify-between pt-4 border-t mt-6">
-        <Button
-          variant="outline"
-          onClick={onClose}
-        >
-          Close
-        </Button>
-
         {entity?.is_finalized && !entity.is_paid && (
           <Button
             type="button"
+            className="w-full"
             variant="success"
             onClick={onMarkAsPaid}
             disabled={markAsPaidPending}
@@ -120,6 +108,13 @@ export function StockTransferDetails({
             {markAsPaidPending ? 'Marking...' : 'Mark Paid'}
           </Button>
         )}
+        <Button
+          className="w-full"
+          variant="outline"
+          onClick={onClose}
+        >
+          Close
+        </Button>
       </div>
     </div>
   )
