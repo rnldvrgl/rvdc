@@ -66,6 +66,10 @@ export function StockTransferDetails({
             }
           />
           <DetailRow
+            label="Used For"
+            value={entity?.used_for ?? 'N/A'}
+          />
+          <DetailRow
             label="Total Price"
             value={`₱ ${entity?.total_price?.toLocaleString() ?? 0}`}
           />

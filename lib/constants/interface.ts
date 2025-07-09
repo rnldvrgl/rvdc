@@ -185,6 +185,7 @@ export interface StockTransfer {
   is_paid: boolean
   paid_at: string | null
   total_price: string | number
+  used_for: string
 }
 
 /**

@@ -2,7 +2,7 @@
 
 import { StockTransferDetails } from '@/components/custom/StockTransferDetails'
 import { DataTable } from '@/components/custom/table/DataTable'
-import StockTransferWizardForm from '@/components/forms/inventory/StockTransferWizardForm'
+import StockTransferForm from '@/components/forms/inventory/StockTransferForm'
 import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { StockTransfer } from '@/lib/constants/interface'
@@ -67,9 +67,7 @@ export default function StockTransfersPage() {
         onOpenChange={(isOpen) => !isOpen && closeCreate()}
         title="New Stock Transfer"
         description="Create a new stock transfer by selecting technician, destination stall, and items."
-        renderForm={({ onClose }) => (
-          <StockTransferWizardForm onClose={onClose} />
-        )}
+        renderForm={({ onClose }) => <StockTransferForm onClose={onClose} />}
       />
 
       {/* Edit transfer sheet */}
@@ -80,7 +78,7 @@ export default function StockTransfersPage() {
         title="Edit Stock Transfer"
         description="Update the details of this stock transfer."
         renderForm={({ onClose, entity }) => (
-          <StockTransferWizardForm
+          <StockTransferForm
             onClose={onClose}
             initialData={entity}
           />

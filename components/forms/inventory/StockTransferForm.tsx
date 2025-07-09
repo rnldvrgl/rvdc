@@ -33,6 +33,7 @@ import { FormProvider, useForm } from 'react-hook-form'
 interface FormValues {
   to_stall: string | null
   technician: string | null
+  used_for: string
 }
 
 export default function StockTransferForm({
@@ -47,6 +48,7 @@ export default function StockTransferForm({
     defaultValues: {
       to_stall: initialData?.to_stall?.id?.toString() ?? null,
       technician: initialData?.technician?.id?.toString() ?? null,
+      used_for: initialData?.used_for ?? '',
     },
   })
 
@@ -94,6 +96,7 @@ export default function StockTransferForm({
       from_stall: user?.assigned_stall?.id,
       to_stall: parseInt(values.to_stall ?? '0'),
       technician: parseInt(values.technician ?? '0'),
+      used_for: values.used_for,
       items: items.map((itm) => ({
         item: itm.item.id,
         quantity: itm.quantity,
@@ -225,6 +228,24 @@ export default function StockTransferForm({
                         ))}
                       </SelectContent>
                     </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="used_for"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm">Used For</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      className="w-full"
+                      placeholder="Enter used for"
+                      disabled={isFinalized}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
