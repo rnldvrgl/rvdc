@@ -2,6 +2,11 @@ import { Item, ProductCategory, Stall } from '@/lib/constants/interface'
 import { Technician } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
+interface UseStallChoicesOptions {
+  excludeAssignedStall?: boolean
+  assignedStallId?: number | string
+}
+
 const InventoryUrl = '/inventory/choices/'
 const UsersUrl = '/users/choices/'
 
@@ -16,8 +21,23 @@ const useCategoryChoices = () => {
   )
 }
 
-const useStallChoices = () => {
-  return useApiQuery<Stall[]>(['stall-choices'], `${InventoryUrl}stalls/`)
+const useStallChoices = ({
+  excludeAssignedStall,
+  assignedStallId,
+}: UseStallChoicesOptions) => {
+  return useApiQuery<Stall[]>(
+    ['stall-choices', { excludeAssignedStall, assignedStallId }],
+    `${InventoryUrl}stalls/`,
+    undefined,
+    {
+      select: (data) => {
+        if (excludeAssignedStall && assignedStallId != null) {
+          return data.filter((stall) => stall.id !== assignedStallId)
+        }
+        return data
+      },
+    },
+  )
 }
 
 const useTechnicianChoices = () => {

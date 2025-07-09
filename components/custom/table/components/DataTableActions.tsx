@@ -69,8 +69,12 @@ export function DataTableActions({
             <DropdownMenuItem
               key={idx}
               onSelect={(e) => {
-                e.preventDefault()
-                item.destructive ? setConfirmItem(item) : item.onClick()
+                if (item.destructive) {
+                  e.preventDefault()
+                  setConfirmItem(item)
+                } else {
+                  item.onClick()
+                }
               }}
               className={clsx(
                 'flex items-center group',

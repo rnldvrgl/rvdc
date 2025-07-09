@@ -91,6 +91,8 @@ export type Client = BaseEntity & {
   barangay: string
 }
 
+export type ClientPayload = Omit<Client, keyof BaseEntity>
+
 // Technician
 export type Technician = BaseEntity & {
   role?: string

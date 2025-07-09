@@ -42,6 +42,7 @@ export default function StockTransferForm({
   onClose: () => void
   initialData?: StockTransfer
 }) {
+  const user = useUserProfileStore((state) => state.userProfile)
   const form = useForm<FormValues>({
     defaultValues: {
       to_stall: initialData?.to_stall?.id?.toString() ?? null,
@@ -49,10 +50,13 @@ export default function StockTransferForm({
     },
   })
 
-  const { data: stallsData } = useStallChoices()
+  const { data: stallsData } = useStallChoices({
+    excludeAssignedStall: true,
+    assignedStallId: user?.assigned_stall?.id ?? undefined,
+  })
+
   const { data: techniciansData } = useTechnicianChoices()
   const { data: allItemsData } = useItemChoices()
-  const user = useUserProfileStore((state) => state.userProfile)
 
   const stalls: Stall[] = stallsData ?? []
   const technicians: Technician[] = techniciansData ?? []
@@ -62,6 +66,8 @@ export default function StockTransferForm({
 
   const { addStockTransfer, updateStockTransfer, finalizeStockTransfer } =
     useStockTransferMutations()
+
+  const isFinalized = !!initialData?.is_finalized
 
   useEffect(() => {
     if (initialData) {
@@ -120,8 +126,12 @@ export default function StockTransferForm({
                   <Select
                     value={field.value ?? ''}
                     onValueChange={field.onChange}
+                    disabled={isFinalized}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger
+                      className="w-full"
+                      disabled={isFinalized}
+                    >
                       <SelectValue placeholder="Select Stall" />
                     </SelectTrigger>
                     <SelectContent>
@@ -153,8 +163,12 @@ export default function StockTransferForm({
                   <Select
                     value={field.value ?? ''}
                     onValueChange={field.onChange}
+                    disabled={isFinalized}
                   >
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger
+                      className="w-full"
+                      disabled={isFinalized}
+                    >
                       <SelectValue placeholder="Select Technician" />
                     </SelectTrigger>
                     <SelectContent>
@@ -184,6 +198,7 @@ export default function StockTransferForm({
                 onClick={() =>
                   setItems([...items, { item: allItems[0], quantity: 1 }])
                 }
+                disabled={isFinalized}
               >
                 Add Item
               </Button>
@@ -217,10 +232,11 @@ export default function StockTransferForm({
                         ),
                       )
                     }
+                    disabled={isFinalized}
                   >
                     <SelectTrigger
-                      className="w-full flex-1 truncate"
-                      style={{ width: '100%' }}
+                      className="w-full"
+                      disabled={isFinalized}
                     >
                       <SelectValue placeholder="Select Item" />
                     </SelectTrigger>
@@ -251,6 +267,7 @@ export default function StockTransferForm({
                     )
                   }
                   className="w-full"
+                  disabled={isFinalized}
                 />
 
                 <Button
@@ -261,6 +278,7 @@ export default function StockTransferForm({
                   onClick={() =>
                     setItems((prev) => prev.filter((_, ix) => ix !== idx))
                   }
+                  disabled={isFinalized}
                 >
                   ×
                 </Button>
@@ -284,12 +302,14 @@ export default function StockTransferForm({
             </div>
           )}
 
-          {/* Submit & Finalize Buttons */}
+          {/* Submit & Finalize */}
           <div className="flex justify-between gap-2 pt-4">
             <Button
               type="submit"
               size="sm"
-              disabled={!form.formState.isValid || items.length === 0}
+              disabled={
+                isFinalized || !form.formState.isValid || items.length === 0
+              }
             >
               {initialData ? 'Save Changes' : 'Submit Transfer'}
             </Button>
