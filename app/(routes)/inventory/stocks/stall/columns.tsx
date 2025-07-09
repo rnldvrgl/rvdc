@@ -1,6 +1,7 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { Badge } from '@/components/ui/badge'
 import { GetColumnsProps, Stock } from '@/lib/constants/interface'
+import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import {
   getHashedStallBadgeClass,
   getStockBadgeVariant,
@@ -78,15 +79,21 @@ export function getStallStockColumns({
       accessorKey: 'action',
       header: 'Action',
       cell: ({ row }) => {
+        const userProfile = useUserProfileStore((state) => state.userProfile)
+        const role = userProfile?.role
         const stock = row.original
         return (
           <DataTableActions
             items={[
-              {
-                label: 'Restock',
-                icon: <PackagePlus className="size-4" />,
-                onClick: () => onRestock?.(stock),
-              },
+              ...(role === 'admin'
+                ? [
+                    {
+                      label: 'Restock',
+                      icon: <PackagePlus className="size-4" />,
+                      onClick: () => onRestock?.(stock),
+                    },
+                  ]
+                : []),
               {
                 label: 'Edit',
                 icon: <Edit className="size-4" />,
