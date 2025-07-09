@@ -1,6 +1,7 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { StockTransfer } from '@/lib/constants/interface'
 import {
+  formatCurrency,
   formatDate,
   getTransferBadgeVariant,
   safeCell,
@@ -42,6 +43,14 @@ export function getStockTransferColumns({
         safeCell(getValue() ? formatDate(getValue() as Date) : null),
     },
     {
+      accessorKey: 'total_price',
+      header: 'Total Price',
+      cell: ({ getValue }) =>
+        safeCell(
+          getValue() ? formatCurrency(getValue() as number | string) : null,
+        ),
+    },
+    {
       accessorKey: 'is_finalized',
       header: 'Finalized',
       cell: ({ getValue }) => (
@@ -76,11 +85,15 @@ export function getStockTransferColumns({
               icon: <Eye className="size-4" />,
               onClick: () => onView(row.original),
             },
-            {
-              label: 'Edit',
-              icon: <Edit className="size-4" />,
-              onClick: () => onEdit(row.original),
-            },
+            ...(!row.original.is_finalized
+              ? [
+                  {
+                    label: 'Edit',
+                    icon: <Edit className="size-4" />,
+                    onClick: () => onEdit(row.original),
+                  },
+                ]
+              : []),
             {
               label: 'Delete',
               icon: <Trash2 className="size-4 text-destructive" />,

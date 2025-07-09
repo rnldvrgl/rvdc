@@ -17,8 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Item, Stall, StockTransfer } from '@/lib/constants/interface'
-import { Technician } from '@/lib/constants/types'
+import type { Item, Stall, StockTransfer } from '@/lib/constants/interface'
+import type { Technician } from '@/lib/constants/types'
 import { useStockTransferMutations } from '@/lib/mutations/useStockTransferMutations'
 import {
   useItemChoices,
@@ -50,36 +50,45 @@ export default function StockTransferForm({
     },
   })
 
+  const isFinalized = !!initialData?.is_finalized
+  const [items, setItems] = useState<{ item: Item; quantity: number }[]>([])
+  const { data: allItemsData } = useItemChoices()
   const { data: stallsData } = useStallChoices({
     excludeAssignedStall: true,
     assignedStallId: user?.assigned_stall?.id ?? undefined,
   })
-
   const { data: techniciansData } = useTechnicianChoices()
-  const { data: allItemsData } = useItemChoices()
 
   const stalls: Stall[] = stallsData ?? []
   const technicians: Technician[] = techniciansData ?? []
   const allItems: Item[] = allItemsData ?? []
 
-  const [items, setItems] = useState<{ item: Item; quantity: number }[]>([])
-
   const { addStockTransfer, updateStockTransfer, finalizeStockTransfer } =
     useStockTransferMutations()
 
-  const isFinalized = !!initialData?.is_finalized
-
   useEffect(() => {
-    if (initialData) {
-      setItems(
-        initialData.items?.map((i) => ({
-          item: i.item ?? null,
-          quantity: i.quantity ?? 0,
-        })) ?? [],
-      )
-    }
+    if (!initialData) return
+
+    // Only when initialData changes, we prepare items with nulls first
+    setItems(
+      initialData.items?.map((i) => ({
+        item: i.item ?? null,
+        quantity: i.quantity ?? 0,
+      })) ?? [],
+    )
   }, [initialData])
 
+  // Then, after allItems is loaded, fill in missing
+  useEffect(() => {
+    if (allItems.length === 0) return
+
+    setItems((prevItems) =>
+      prevItems.map((i) => ({
+        item: i.item ?? allItems[0],
+        quantity: i.quantity,
+      })),
+    )
+  }, [allItems])
   const handleSubmit = (values: FormValues) => {
     const payload = {
       from_stall: user?.assigned_stall?.id,
@@ -112,84 +121,119 @@ export default function StockTransferForm({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-4 max-w-sm mx-auto"
+          className="space-y-4 max-w-full"
         >
-          {/* To Stall */}
-          <FormField
-            control={form.control}
-            name="to_stall"
-            rules={{ required: 'Destination stall is required' }}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm">To Stall</FormLabel>
-                <FormControl>
-                  <Select
-                    value={field.value ?? ''}
-                    onValueChange={field.onChange}
-                    disabled={isFinalized}
-                  >
-                    <SelectTrigger
-                      className="w-full"
-                      disabled={isFinalized}
-                    >
-                      <SelectValue placeholder="Select Stall" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {stalls.map((stall) => (
-                        <SelectItem
-                          key={stall.id}
-                          value={stall.id.toString()}
-                        >
-                          {stall.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {/* Header dates & finalize */}
+          <div className="flex justify-between items-center">
+            <div className="space-y-1 text-xs text-muted-foreground">
+              {initialData?.transfer_date && (
+                <p>
+                  Created: {formatDate(new Date(initialData.transfer_date))}
+                </p>
+              )}
+              {initialData?.is_finalized && initialData?.finalized_at && (
+                <p>
+                  Finalized: {formatDate(new Date(initialData.finalized_at))}
+                </p>
+              )}
+            </div>
 
-          {/* Technician */}
-          <FormField
-            control={form.control}
-            name="technician"
-            rules={{ required: 'Technician is required' }}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm">Technician</FormLabel>
-                <FormControl>
-                  <Select
-                    value={field.value ?? ''}
-                    onValueChange={field.onChange}
-                    disabled={isFinalized}
-                  >
-                    <SelectTrigger
-                      className="w-full"
+            <div className="flex gap-2">
+              {initialData && !initialData.is_finalized && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleFinalize}
+                  disabled={finalizeStockTransfer.isPending}
+                >
+                  {finalizeStockTransfer.isPending
+                    ? 'Finalizing...'
+                    : 'Finalize'}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Form fields */}
+          <div className="space-y-3">
+            <FormField
+              control={form.control}
+              name="to_stall"
+              rules={{ required: 'Destination stall is required' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm">To Stall</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value ?? ''}
+                      onValueChange={field.onChange}
                       disabled={isFinalized}
                     >
-                      <SelectValue placeholder="Select Technician" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {technicians.map((tech) => (
-                        <SelectItem
-                          key={tech.id}
-                          value={tech.id.toString()}
-                        >
-                          {tech.first_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                      <SelectTrigger
+                        className="w-full"
+                        disabled={isFinalized}
+                        size="sm"
+                      >
+                        <SelectValue placeholder="Select Stall" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stalls.map((stall) => (
+                          <SelectItem
+                            key={stall.id}
+                            value={stall.id.toString()}
+                          >
+                            {stall.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="technician"
+              rules={{ required: 'Technician is required' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm">Technician</FormLabel>
+                  <FormControl>
+                    <Select
+                      value={field.value ?? ''}
+                      onValueChange={field.onChange}
+                      disabled={isFinalized}
+                    >
+                      <SelectTrigger
+                        className="w-full"
+                        disabled={isFinalized}
+                        size="sm"
+                      >
+                        <SelectValue placeholder="Select Technician" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {technicians.map((tech) => (
+                          <SelectItem
+                            key={tech.id}
+                            value={tech.id.toString()}
+                          >
+                            {tech.first_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           {/* Items */}
-          <div className="space-y-2 pt-2">
+          <div className="pt-4 border-t space-y-2">
             <div className="flex justify-between items-center">
               <span className="font-semibold text-sm">Items</span>
               <Button
@@ -200,133 +244,109 @@ export default function StockTransferForm({
                 }
                 disabled={isFinalized}
               >
-                Add Item
+                Add
               </Button>
             </div>
 
             {items.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No items added yet. Click "Add Item" to start.
+              <p className="text-xs text-muted-foreground">
+                No items added yet.
               </p>
             )}
 
-            {items.map((itm, idx) => (
-              <div
-                key={idx}
-                className="grid grid-cols-[1fr_70px_auto] gap-2 items-center w-full"
-              >
-                <div className="flex w-full">
-                  <Select
-                    value={itm.item.id.toString()}
-                    onValueChange={(val) =>
-                      setItems((prev) =>
-                        prev.map((i, ix) =>
-                          ix === idx
-                            ? {
-                                ...i,
-                                item: allItems.find(
-                                  (itm) => itm.id === parseInt(val),
-                                )!,
-                              }
-                            : i,
-                        ),
-                      )
+            <div className="space-y-2">
+              {items.map((itm, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center gap-2"
+                >
+                  <div className="flex-1 min-w-[8rem]">
+                    <Select
+                      value={itm.item.id.toString()}
+                      onValueChange={(val) =>
+                        setItems((prev) =>
+                          prev.map((i, ix) =>
+                            ix === idx
+                              ? {
+                                  ...i,
+                                  item: allItems.find(
+                                    (itm) => itm.id === parseInt(val),
+                                  )!,
+                                }
+                              : i,
+                          ),
+                        )
+                      }
+                      disabled={isFinalized}
+                    >
+                      <SelectTrigger
+                        disabled={isFinalized}
+                        className="w-full"
+                      >
+                        <SelectValue placeholder="Select Item" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allItems.map((item) => (
+                          <SelectItem
+                            key={item.id}
+                            value={item.id.toString()}
+                          >
+                            {item.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="w-20">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={itm.quantity}
+                      onChange={(e) =>
+                        setItems((prev) =>
+                          prev.map((i, ix) =>
+                            ix === idx
+                              ? {
+                                  ...i,
+                                  quantity: parseInt(e.target.value) || 1,
+                                }
+                              : i,
+                          ),
+                        )
+                      }
+                      disabled={isFinalized}
+                    />
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={() =>
+                      setItems((prev) => prev.filter((_, ix) => ix !== idx))
                     }
                     disabled={isFinalized}
                   >
-                    <SelectTrigger
-                      className="w-full"
-                      disabled={isFinalized}
-                    >
-                      <SelectValue placeholder="Select Item" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allItems.map((item) => (
-                        <SelectItem
-                          key={item.id}
-                          value={item.id.toString()}
-                        >
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    ×
+                  </Button>
                 </div>
-
-                <Input
-                  type="number"
-                  min={1}
-                  value={itm.quantity}
-                  onChange={(e) =>
-                    setItems((prev) =>
-                      prev.map((i, ix) =>
-                        ix === idx
-                          ? { ...i, quantity: parseInt(e.target.value) || 1 }
-                          : i,
-                      ),
-                    )
-                  }
-                  className="w-full"
-                  disabled={isFinalized}
-                />
-
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="!size-5"
-                  size="icon"
-                  onClick={() =>
-                    setItems((prev) => prev.filter((_, ix) => ix !== idx))
-                  }
-                  disabled={isFinalized}
-                >
-                  ×
-                </Button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          {/* Transfer Info */}
-          {initialData && (
-            <div className="text-xs text-muted-foreground pt-2">
-              <p>
-                Created on:{' '}
-                {initialData.transfer_date &&
-                  formatDate(new Date(initialData.transfer_date))}
-              </p>
-              {initialData.is_finalized && initialData.finalized_at && (
-                <p>
-                  Finalized at: {formatDate(new Date(initialData.finalized_at))}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Submit & Finalize */}
-          <div className="flex justify-between gap-2 pt-4">
+          {/* Submit */}
+          <div className="pt-4">
             <Button
               type="submit"
               size="sm"
+              className="w-full"
               disabled={
                 isFinalized || !form.formState.isValid || items.length === 0
               }
             >
               {initialData ? 'Save Changes' : 'Submit Transfer'}
             </Button>
-
-            {initialData && !initialData.is_finalized && (
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                onClick={handleFinalize}
-                disabled={finalizeStockTransfer.isPending}
-              >
-                {finalizeStockTransfer.isPending
-                  ? 'Finalizing...'
-                  : 'Finalize Transfer'}
-              </Button>
-            )}
           </div>
         </form>
       </Form>
