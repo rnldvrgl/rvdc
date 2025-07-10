@@ -225,7 +225,7 @@ export interface NavigationGroup extends NavigationItemBase {
 }
 
 export interface BuildNavOptions {
-  role: 'admin' | 'manager' | string
+  role: 'admin' | 'manager' | 'clerk' | string
   permissions: string[]
 }
 
