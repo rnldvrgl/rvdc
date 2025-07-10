@@ -1,9 +1,9 @@
 'use client'
 
 import { getStallColumns } from '@/app/(routes)/stalls/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import StallForm from '@/components/forms/inventory/StallForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { Stall } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -16,15 +16,15 @@ export default function StallsPage() {
   const { deleteStall } = useStallMutations()
 
   const {
-    sheetState: { open: editOpen, entity },
-    openSheet: openEditSheet,
-    closeSheet: closeEditSheet,
+    entityState: { open: editOpen, entity },
+    openEntity: openEditSheet,
+    closeEntity: closeEditSheet,
   } = useEntitySheet<Stall>()
 
   const {
-    sheetState: { open: addOpen },
-    openSheet: openAddSheet,
-    closeSheet: closeAddSheet,
+    entityState: { open: addOpen },
+    openEntity: openAddSheet,
+    closeEntity: closeAddSheet,
   } = useEntitySheet<Stall>()
 
   const handleDelete = (stall: Stall) => {

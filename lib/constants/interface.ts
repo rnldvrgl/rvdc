@@ -1,4 +1,4 @@
-import { Roles, UnitChoice } from '@/lib/constants/types'
+import { Client, Roles, UnitChoice } from '@/lib/constants/types'
 import { LucideIcon } from 'lucide-react'
 
 // ---------------------
@@ -32,16 +32,37 @@ export interface EntitySheetProps<T> {
   renderForm: (props: { onClose: () => void; entity?: T }) => React.ReactNode
 }
 
-export interface EntitySheetState<T> {
+export interface EntityState<T> {
   open: boolean
   entity: T | undefined
 }
 
-export interface UseEntitySheetReturn<T> {
-  sheetState: EntitySheetState<T>
-  openSheet: (entity?: T) => void
-  closeSheet: () => void
-  toggleSheet: () => void
+export interface useEntitySheetReturn<T> {
+  entityState: EntityState<T>
+  openEntity: (entity?: T) => void
+  closeEntity: () => void
+  toggleEntity: () => void
+}
+
+export interface EntityDialogProps<T> {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description?: string
+  entity?: T
+  renderForm: (props: { onClose: () => void; entity?: T }) => React.ReactNode
+}
+
+export interface EntityDialogState<T> {
+  open: boolean
+  entity: T | undefined
+}
+
+export interface useEntitySheetReturn<T> {
+  entityState: EntityDialogState<T>
+  openEntity: (entity?: T) => void
+  closeEntity: () => void
+  toggleEntity: () => void
 }
 
 // ---------------------
@@ -253,4 +274,57 @@ export interface Expense {
   created_at: string
   paid_at?: string
   transfer?: StockTransfer
+}
+
+// Payment enums
+export type PaymentType = 'cash' | 'gcash' | 'credit' | 'debit' | 'cheque'
+export type PaymentStatus = 'unpaid' | 'partial' | 'paid'
+
+// Payment
+export interface SalesPayment {
+  id: number
+  payment_type: PaymentType
+  amount: string // because Django DecimalField usually comes as string
+  payment_date: string // ISO datetime
+}
+
+// Sales Item
+export interface SalesItem {
+  id: number
+  item?: Item
+  description: string
+  quantity: number
+  final_price_per_unit: string
+  line_total: string
+}
+
+// Sales Transaction
+export interface SalesTransaction {
+  id: number
+  stall: Stall
+  client?: Client
+
+  manual_receipt_number?: string | null
+  system_receipt_number: string // UUID
+
+  payment_status: PaymentStatus
+
+  voided: boolean
+  voided_at?: string | null
+  void_reason?: string | null
+
+  is_deleted: boolean
+  deleted_at?: string | null
+
+  created_at: string
+  updated_at: string
+
+  // Related items & payments
+  items: SalesItem[]
+  payments: SalesPayment[]
+
+  // Computed props if you send them from serializer
+  computed_total?: string
+  total_items?: number
+  total_paid?: string
 }

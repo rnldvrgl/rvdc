@@ -32,7 +32,7 @@ export default function EntitySheet<T>({
     >
       <SheetContent
         side="right"
-        className="max-w-md w-full px-6 py-8 overflow-y-auto"
+        className="!max-w-3xl w-auto px-6 py-8 overflow-y-auto"
       >
         <SheetHeader className="mb-4 border-b border-border pb-4">
           <SheetTitle className="text-xl font-semibold">{title}</SheetTitle>

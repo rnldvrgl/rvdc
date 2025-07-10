@@ -1,31 +1,28 @@
 'use client'
 
-import {
-  EntitySheetState,
-  UseEntitySheetReturn,
-} from '@/lib/constants/interface'
+import { EntityState, useEntitySheetReturn } from '@/lib/constants/interface'
 import { useState } from 'react'
 
-export function useEntitySheet<T>(): UseEntitySheetReturn<T> {
-  const [sheetState, setSheetState] = useState<EntitySheetState<T>>({
+export function useEntitySheet<T>(): useEntitySheetReturn<T> {
+  const [entityState, setEntityState] = useState<EntityState<T>>({
     open: false,
     entity: undefined,
   })
 
-  const openSheet = (entity?: T) => {
-    setSheetState({ open: true, entity })
+  const openEntity = (entity?: T) => {
+    setEntityState({ open: true, entity })
   }
 
-  const closeSheet = () => {
-    setSheetState({ open: false, entity: undefined })
+  const closeEntity = () => {
+    setEntityState({ open: false, entity: undefined })
   }
 
-  const toggleSheet = () => {
-    setSheetState((prev) => ({
+  const toggleEntity = () => {
+    setEntityState((prev) => ({
       open: !prev.open,
       entity: prev.open ? undefined : prev.entity,
     }))
   }
 
-  return { sheetState, openSheet, closeSheet, toggleSheet }
+  return { entityState, openEntity, closeEntity, toggleEntity }
 }

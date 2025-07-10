@@ -1,9 +1,9 @@
 'use client'
 
 import { getItemColumns } from '@/app/(routes)/inventory/items/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import ItemForm from '@/components/forms/inventory/ItemForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { Item } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -26,15 +26,15 @@ export default function ItemsPage() {
   const role = userProfile?.role || 'guest'
 
   const {
-    sheetState: { open: editOpen, entity },
-    openSheet: openEditSheet,
-    closeSheet: closeEditSheet,
+    entityState: { open: editOpen, entity },
+    openEntity: openEditSheet,
+    closeEntity: closeEditSheet,
   } = useEntitySheet<Item>()
 
   const {
-    sheetState: { open: addOpen },
-    openSheet: openAddSheet,
-    closeSheet: closeAddSheet,
+    entityState: { open: addOpen },
+    openEntity: openAddSheet,
+    closeEntity: closeAddSheet,
   } = useEntitySheet<Item>()
 
   const handleDelete = (item: Item) => {

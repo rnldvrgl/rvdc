@@ -1,12 +1,11 @@
 'use client'
 
 import { getTechnicianColumns } from '@/app/(routes)/technicians/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import TechnicianForm from '@/components/forms/TechnicianForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { Technician } from '@/lib/constants/types'
-import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useTechnicianMutations } from '@/lib/mutations/useTechnicianMutations'
 import { useTechnicians } from '@/lib/queries/useTechnicians'
@@ -24,15 +23,15 @@ export default function TechniciansPage() {
 
   // Separate sheets
   const {
-    sheetState: { open: editOpen, entity },
-    openSheet: openEditSheet,
-    closeSheet: closeEditSheet,
+    entityState: { open: editOpen, entity },
+    openEntity: openEditSheet,
+    closeEntity: closeEditSheet,
   } = useEntitySheet<Technician>()
 
   const {
-    sheetState: { open: addOpen },
-    openSheet: openAddSheet,
-    closeSheet: closeAddSheet,
+    entityState: { open: addOpen },
+    openEntity: openAddSheet,
+    closeEntity: closeAddSheet,
   } = useEntitySheet<Technician>()
 
   const handleDelete = (Technician: Technician) => {

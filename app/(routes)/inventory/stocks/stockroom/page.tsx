@@ -1,10 +1,10 @@
 'use client'
 
 import { getStockRoomStockColumns } from '@/app/(routes)/inventory/stocks/stockroom/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import RestockForm from '@/components/forms/inventory/RestockForm'
 import StockThresholdForm from '@/components/forms/inventory/StockThresholdForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { StockRoomStock } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
@@ -23,15 +23,15 @@ export default function StockRoomStocksPage() {
   })
 
   const {
-    sheetState: { open: editOpen, entity: editEntity },
-    openSheet: openEditSheet,
-    closeSheet: closeEditSheet,
+    entityState: { open: editOpen, entity: editEntity },
+    openEntity: openEditSheet,
+    closeEntity: closeEditSheet,
   } = useEntitySheet<StockRoomStock>()
 
   const {
-    sheetState: { open: restockOpen, entity: restockEntity },
-    openSheet: openRestockSheet,
-    closeSheet: closeRestockSheet,
+    entityState: { open: restockOpen, entity: restockEntity },
+    openEntity: openRestockSheet,
+    closeEntity: closeRestockSheet,
   } = useEntitySheet<StockRoomStock>()
 
   const handleDelete = (stock: StockRoomStock) => {

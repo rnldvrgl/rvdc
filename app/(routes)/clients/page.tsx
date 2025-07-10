@@ -1,9 +1,9 @@
 'use client'
 
 import { getClientColumns } from '@/app/(routes)/clients/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import ClientForm from '@/components/forms/ClientForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { Client } from '@/lib/constants/types'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -24,15 +24,15 @@ export default function ClientsPage() {
 
   // Separate sheets
   const {
-    sheetState: { open: editOpen, entity },
-    openSheet: openEditSheet,
-    closeSheet: closeEditSheet,
+    entityState: { open: editOpen, entity },
+    openEntity: openEditSheet,
+    closeEntity: closeEditSheet,
   } = useEntitySheet<Client>()
 
   const {
-    sheetState: { open: addOpen },
-    openSheet: openAddSheet,
-    closeSheet: closeAddSheet,
+    entityState: { open: addOpen },
+    openEntity: openAddSheet,
+    closeEntity: closeAddSheet,
   } = useEntitySheet<Client>()
 
   const handleDelete = (client: Client) => {

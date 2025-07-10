@@ -1,10 +1,10 @@
 'use client'
 
 import { getExpenseColumns } from '@/app/(routes)/expenses/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import { ExpenseDetails } from '@/components/details/ExpenseDetails'
 import ExpenseForm from '@/components/forms/ExpenseForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { Expense } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -24,25 +24,21 @@ export default function ExpensesPage() {
   })
 
   const {
-    sheetState: viewSheet,
-    openSheet: openView,
-    closeSheet: closeView,
-  } = useEntitySheet<Expense>()
-  const {
-    sheetState: createSheet,
-    openSheet: openCreate,
-    closeSheet: closeCreate,
-  } = useEntitySheet<Expense>()
-  const {
-    sheetState: editSheet,
-    openSheet: openEdit,
-    closeSheet: closeEdit,
+    entityState: viewSheet,
+    openEntity: openView,
+    closeEntity: closeView,
   } = useEntitySheet<Expense>()
 
   const {
-    sheetState: { open: addOpen },
-    openSheet: openAddSheet,
-    closeSheet: closeAddSheet,
+    entityState: editSheet,
+    openEntity: openEdit,
+    closeEntity: closeEdit,
+  } = useEntitySheet<Expense>()
+
+  const {
+    entityState: { open: addOpen },
+    openEntity: openAddSheet,
+    closeEntity: closeAddSheet,
   } = useEntitySheet<Expense>()
 
   const handleDelete = (expense: Expense) => {

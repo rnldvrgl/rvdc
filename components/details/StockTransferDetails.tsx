@@ -1,16 +1,8 @@
+import { Detail } from '@/components/details/Detail'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { StockTransfer } from '@/lib/constants/interface'
 import { formatDate, getTransferBadgeVariant } from '@/lib/utils/helpers'
-
-function Detail({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <div className="font-semibold">{value}</div>
-    </div>
-  )
-}
 
 export function StockTransferDetails({
   entity,

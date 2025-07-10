@@ -37,6 +37,11 @@ export function getStockTransferColumns({
         ),
     },
     {
+      accessorKey: 'used_for',
+      header: 'Used For',
+      cell: ({ getValue }) => safeCell(getValue()),
+    },
+    {
       accessorKey: 'transfer_date',
       header: 'Date',
       cell: ({ getValue }) =>

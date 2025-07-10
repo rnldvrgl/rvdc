@@ -1,9 +1,9 @@
 'use client'
 
 import { ErrorState } from '@/components/custom/ErrorState'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { Detail } from '@/components/details/Detail'
 import TechnicianForm from '@/components/forms/TechnicianForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -33,9 +33,9 @@ const TechnicianPage = () => {
   } = useTechnician(`${params.id}`)
 
   const {
-    sheetState: { open },
-    openSheet,
-    closeSheet,
+    entityState: { open },
+    openEntity,
+    closeEntity,
   } = useEntitySheet<Technician>()
 
   if (isLoading) {
@@ -94,7 +94,7 @@ const TechnicianPage = () => {
     <div className="h-full py-8 px-4">
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex justify-end">
-          <Button onClick={() => openSheet(technician)}>
+          <Button onClick={() => openEntity(technician)}>
             <Pencil className="size-4 mr-2" />
             Edit Technician
           </Button>
@@ -203,7 +203,7 @@ const TechnicianPage = () => {
       {/* EDIT SHEET */}
       <EntitySheet<Technician>
         open={open}
-        onOpenChange={(isOpen) => !isOpen && closeSheet()}
+        onOpenChange={(isOpen) => !isOpen && closeEntity()}
         entity={technician}
         title="Edit Technician"
         description="Update the technician details below."

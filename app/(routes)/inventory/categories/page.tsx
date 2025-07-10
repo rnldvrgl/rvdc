@@ -1,9 +1,9 @@
 'use client'
 
 import { getCategoryColumns } from '@/app/(routes)/inventory/categories/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import ItemCategoryForm from '@/components/forms/inventory/ItemCategoryForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { ProductCategory } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -23,15 +23,15 @@ export default function ItemCategoriesPage() {
   })
 
   const {
-    sheetState: { open: editOpen, entity },
-    openSheet: openEditSheet,
-    closeSheet: closeEditSheet,
+    entityState: { open: editOpen, entity },
+    openEntity: openEditSheet,
+    closeEntity: closeEditSheet,
   } = useEntitySheet<ProductCategory>()
 
   const {
-    sheetState: { open: addOpen },
-    openSheet: openAddSheet,
-    closeSheet: closeAddSheet,
+    entityState: { open: addOpen },
+    openEntity: openAddSheet,
+    closeEntity: closeAddSheet,
   } = useEntitySheet<ProductCategory>()
 
   const handleDelete = (category: ProductCategory) => {

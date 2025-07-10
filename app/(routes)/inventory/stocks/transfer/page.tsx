@@ -1,9 +1,9 @@
 'use client'
 
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import { StockTransferDetails } from '@/components/details/StockTransferDetails'
 import StockTransferForm from '@/components/forms/inventory/StockTransferForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { StockTransfer } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -38,19 +38,19 @@ export default function StockTransfersPage() {
 
   // Sheets
   const {
-    sheetState: viewSheet,
-    openSheet: openView,
-    closeSheet: closeView,
+    entityState: viewSheet,
+    openEntity: openView,
+    closeEntity: closeView,
   } = useEntitySheet<StockTransfer>()
   const {
-    sheetState: createSheet,
-    openSheet: openCreate,
-    closeSheet: closeCreate,
+    entityState: createSheet,
+    openEntity: openCreate,
+    closeEntity: closeCreate,
   } = useEntitySheet<StockTransfer>()
   const {
-    sheetState: editSheet,
-    openSheet: openEdit,
-    closeSheet: closeEdit,
+    entityState: editSheet,
+    openEntity: openEdit,
+    closeEntity: closeEdit,
   } = useEntitySheet<StockTransfer>()
 
   const columns = getStockTransferColumns({
