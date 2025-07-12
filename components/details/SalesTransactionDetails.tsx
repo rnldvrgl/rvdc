@@ -4,7 +4,7 @@ import { Detail } from '@/components/details/Detail'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SalesTransaction } from '@/lib/constants/interface'
-import { formatDate } from '@/lib/utils/helpers'
+import { formatCurrency, formatDate } from '@/lib/utils/helpers'
 
 export function SalesTransactionDetails({
   entity,
@@ -135,7 +135,7 @@ export function SalesTransactionDetails({
                 <Detail
                   horizontal
                   label="Payment"
-                  value={`₱ ${parseFloat(payment.amount).toLocaleString()}`}
+                  value={formatCurrency(payment.amount)}
                 />
                 <div className="text-sm text-muted-foreground">
                   {payment.payment_type} •{' '}

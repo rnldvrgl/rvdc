@@ -15,17 +15,21 @@ export function ConfirmDialog({
   onCancel,
   title = 'Discard changes?',
   description = 'You have unsaved changes. They will be lost.',
+  confirmText = 'Discard',
+  cancelText = 'Cancel',
 }: {
   open: boolean
   onConfirm: () => void
   onCancel: () => void
   title?: string
   description?: string
+  confirmText?: string
+  cancelText?: string
 }) {
   return (
     <AlertDialog
       open={open}
-      onOpenChange={onCancel}
+      onOpenChange={(isOpen) => !isOpen && onCancel()}
     >
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -33,8 +37,10 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Discard</AlertDialogAction>
+          <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            {confirmText}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

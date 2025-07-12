@@ -1,8 +1,10 @@
 'use client'
 
 import { ComboBox } from '@/components/custom/inputs/ComboBox'
+import { ConfirmDialog } from '@/components/custom/shared/ConfirmDialog'
 import ItemQuantitySelector from '@/components/custom/shared/ItemQuantitySelector'
 import PaymentMethodSelector from '@/components/custom/shared/PaymentMethodSelector'
+import { SalesTransactionPrintContent } from '@/components/custom/shared/SalesTransactionPrintContent '
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -17,11 +19,13 @@ import { Item, ItemEntry, SalesTransaction } from '@/lib/constants/interface'
 import { Client } from '@/lib/constants/types'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useItemSelection } from '@/lib/hooks/useItemSelection'
+import { useSalesTransactionMutations } from '@/lib/mutations/useSalesTransactionMutations'
 import { useClientChoices, useItemChoices } from '@/lib/queries/useChoices'
 import { formatCurrency } from '@/lib/utils/helpers'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
+import { useReactToPrint } from 'react-to-print'
 import * as z from 'zod'
 
 export const formSchema = z.object({
@@ -60,11 +64,21 @@ export default function SalesTransactionForm({
   initialData,
   onClose,
 }: SalesTransactionFormProps) {
+  const [showPrintDialog, setShowPrintDialog] = useState(false)
+  const [createdTransaction, setCreatedTransaction] =
+    useState<SalesTransaction | null>(null)
   const { assigned_stall } = useCurrentUser()
   const { data: allItemsData } = useItemChoices()
   const { data: clientsData } = useClientChoices()
   const allItems: Item[] = allItemsData ?? []
   const clients: Client[] = clientsData ?? []
+  const { addTransaction, updateTransaction } = useSalesTransactionMutations()
+  const componentRef = useRef<HTMLDivElement>(null)
+
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+    onPrintError: (e) => console.error(e),
+  })
 
   const form = useForm<FormValues>({
     resolver,
@@ -134,8 +148,26 @@ export default function SalesTransactionForm({
     }
 
     console.log('Payload:', payload)
-    // TODO: send payload to API
-    onClose()
+
+    if (initialData) {
+      updateTransaction.mutate(
+        { id: initialData.id, data: payload },
+        {
+          onSuccess: (data) => {
+            console.log(data)
+            setCreatedTransaction(data.data)
+            setShowPrintDialog(true)
+          },
+        },
+      )
+    } else {
+      addTransaction.mutate(payload, {
+        onSuccess: (data) => {
+          setCreatedTransaction(data.data)
+          setShowPrintDialog(true)
+        },
+      })
+    }
   }
 
   const { items, setItems } = useItemSelection<
@@ -153,119 +185,147 @@ export default function SalesTransactionForm({
   })
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-6"
-      >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <FormField
-            control={form.control}
-            name="manual_receipt_number"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Manual Receipt #</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="e.g. 001245"
-                    className="rounded-md"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+    <>
+      <div className="hidden">
+        <SalesTransactionPrintContent
+          ref={componentRef}
+          entity={createdTransaction}
+        />
+      </div>
 
-          <FormField
-            name="client_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel required>Client</FormLabel>
-                <ComboBox
-                  options={clients.map((c) => ({
-                    value: c.id,
-                    label: `${c.full_name} (${c.contact_number})`,
-                  }))}
-                  value={field.value ? Number(field.value) : null}
-                  onChange={(val) => field.onChange(val ?? null)}
-                  placeholder="Select client"
-                />
-
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid gap-3">
-          <ItemQuantitySelector
-            required
-            items={items}
-            allItems={allItems}
-            onChange={(updatedItems) => {
-              form.setValue(
-                'items',
-                updatedItems.map((i) => ({
-                  item_id: i.item?.id ?? 0,
-                  quantity: i.quantity,
-                  final_price_per_unit:
-                    i.final_price_per_unit ?? Number(i.item?.retail_price) ?? 0,
-                })),
-              )
-              setItems(updatedItems)
-            }}
-            allowPriceChange
-          />
-          <FormMessage>{form.formState.errors.items?.message}</FormMessage>
-        </div>
-
-        <div className="grid gap-3">
-          <PaymentMethodSelector
-            control={form.control}
-            fields={fields}
-            append={append}
-            remove={remove}
-          />
-
-          <FormMessage>{form.formState.errors.payments?.message}</FormMessage>
-        </div>
-
-        <div className="border-t pt-6 space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Total Items:</span>
-            <span className="font-semibold text-base">
-              {formatCurrency(totalItemsAmount)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Payments:</span>
-            <span className="font-semibold text-base text-primary">
-              {formatCurrency(totalPayments)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Change / Due:</span>
-            <span
-              className={`font-semibold text-base ${
-                changeDue >= 0
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : 'text-destructive'
-              }`}
-            >
-              {formatCurrency(changeDue)}
-            </span>
-          </div>
-        </div>
-
-        <Button
-          type="submit"
-          className="w-full mt-2"
-          disabled={!form.formState.isDirty || form.formState.isSubmitting}
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="space-y-6"
         >
-          {initialData ? 'Update Transaction' : 'Create Transaction'}
-        </Button>
-      </form>
-    </Form>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <FormField
+              control={form.control}
+              name="manual_receipt_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Manual Receipt #</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="e.g. 001245"
+                      className="rounded-md"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              name="client_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel required>Client</FormLabel>
+                  <ComboBox
+                    options={clients.map((c) => ({
+                      value: c.id,
+                      label: `${c.full_name} (${c.contact_number})`,
+                    }))}
+                    value={field.value ? Number(field.value) : null}
+                    onChange={(val) => field.onChange(val ?? null)}
+                    placeholder="Select client"
+                  />
+
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="grid gap-3">
+            <ItemQuantitySelector
+              required
+              items={items}
+              allItems={allItems}
+              onChange={(updatedItems) => {
+                form.setValue(
+                  'items',
+                  updatedItems.map((i) => ({
+                    item_id: i.item?.id ?? 0,
+                    quantity: i.quantity,
+                    final_price_per_unit:
+                      i.final_price_per_unit ??
+                      Number(i.item?.retail_price) ??
+                      0,
+                  })),
+                )
+                setItems(updatedItems)
+              }}
+              allowPriceChange
+            />
+            <FormMessage>{form.formState.errors.items?.message}</FormMessage>
+          </div>
+
+          <div className="grid gap-3">
+            <PaymentMethodSelector
+              control={form.control}
+              fields={fields}
+              append={append}
+              remove={remove}
+            />
+
+            <FormMessage>{form.formState.errors.payments?.message}</FormMessage>
+          </div>
+
+          <div className="border-t pt-6 space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total Items:</span>
+              <span className="font-semibold text-base">
+                {formatCurrency(totalItemsAmount)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Payments:</span>
+              <span className="font-semibold text-base text-primary">
+                {formatCurrency(totalPayments)}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Change / Due:</span>
+              <span
+                className={`font-semibold text-base ${
+                  changeDue >= 0
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-destructive'
+                }`}
+              >
+                {formatCurrency(changeDue)}
+              </span>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full mt-2"
+            disabled={!form.formState.isDirty || form.formState.isSubmitting}
+          >
+            {initialData ? 'Update Transaction' : 'Create Transaction'}
+          </Button>
+
+          <ConfirmDialog
+            open={showPrintDialog}
+            onConfirm={() => {
+              handlePrint()
+              setShowPrintDialog(false)
+              onClose()
+            }}
+            onCancel={() => {
+              setShowPrintDialog(false)
+              onClose()
+            }}
+            title="Print Receipt?"
+            description="Transaction created successfully. Would you like to print the receipt now?"
+            confirmText="Print"
+            cancelText="No, thanks"
+          />
+        </form>
+      </Form>
+    </>
   )
 }
