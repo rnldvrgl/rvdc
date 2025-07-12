@@ -291,8 +291,8 @@ export type PaymentStatus = 'unpaid' | 'partial' | 'paid'
 export interface SalesPayment {
   id: number
   payment_type: PaymentType
-  amount: string // because Django DecimalField usually comes as string
-  payment_date: string // ISO datetime
+  amount: number
+  payment_date: string
 }
 
 // Sales Item

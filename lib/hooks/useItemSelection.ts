@@ -15,7 +15,6 @@ export function useItemSelection<
 }) {
   const [items, setItems] = useState<Entry[]>([])
 
-  // Init from initialData ONCE
   useEffect(() => {
     if (initialData) {
       const initial = getInitialItems(initialData)
@@ -23,7 +22,6 @@ export function useItemSelection<
     }
   }, [initialData])
 
-  // Fill any missing items with first available item
   useEffect(() => {
     if (allItems.length === 0) return
     setItems((prevItems) =>

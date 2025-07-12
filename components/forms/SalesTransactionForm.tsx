@@ -26,16 +26,17 @@ import * as z from 'zod'
 
 export const formSchema = z.object({
   stall: z.number().nullable(),
-  client_id: z.number().nullable(),
+  client_id: z.number(),
   manual_receipt_number: z.string().optional(),
 
-  payments: z.array(
-    z.object({
-      payment_type: z.string().min(1, 'Payment type is required'),
-      amount: z.number().min(0, 'Amount must be a positive number'),
-    }),
-  ),
-
+  payments: z
+    .array(
+      z.object({
+        payment_type: z.string().min(1, 'Payment type is required'),
+        amount: z.number().min(0, 'Amount must be a positive number'),
+      }),
+    )
+    .min(1, 'at least one payment is required'),
   items: z
     .array(
       z.object({
@@ -44,7 +45,7 @@ export const formSchema = z.object({
         final_price_per_unit: z.number().min(0),
       }),
     )
-    .min(1, 'At least one item is required'),
+    .min(1, 'at least one item is required'),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -69,9 +70,13 @@ export default function SalesTransactionForm({
     resolver,
     defaultValues: {
       stall: initialData?.stall?.id ?? assigned_stall?.id ?? null,
-      client_id: initialData?.client?.id ?? null,
+      client_id: initialData?.client?.id,
       manual_receipt_number: initialData?.manual_receipt_number ?? '',
-      payments: [{ payment_type: '', amount: 0 }],
+      payments:
+        initialData?.payments?.map((i) => ({
+          payment_type: i.payment_type,
+          amount: i.amount ?? 0,
+        })) ?? [],
       items:
         initialData?.items?.map((i) => ({
           item_id: i.item?.id ?? 0,
@@ -146,9 +151,6 @@ export default function SalesTransactionForm({
         quantity: i.quantity ?? 0,
       })) ?? [],
   })
-  useEffect(() => {
-    console.log('Current items:', watchedItems)
-  }, [watchedItems])
 
   return (
     <Form {...form}>
@@ -189,6 +191,7 @@ export default function SalesTransactionForm({
                   onChange={(val) => field.onChange(val ?? null)}
                   placeholder="Select client"
                 />
+
                 <FormMessage />
               </FormItem>
             )}
