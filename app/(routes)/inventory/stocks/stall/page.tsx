@@ -6,17 +6,16 @@ import { DataTable } from '@/components/custom/table/DataTable'
 import RestockForm from '@/components/forms/inventory/RestockForm'
 import StockThresholdForm from '@/components/forms/inventory/StockThresholdForm'
 import { Stock } from '@/lib/constants/interface'
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useStallStockMutations } from '@/lib/mutations/useStallStockMutations'
 import { useStallStocks } from '@/lib/queries/inventory/useStocks'
-import useUserProfileStore from '@/lib/store/useUserProfileStore'
 
 export default function StocksPage() {
   const { page, limit, search, ordering, filter } = useSearchParameters()
   const { softDeleteStallStock } = useStallStockMutations()
-  const userProfile = useUserProfileStore((state) => state.userProfile)
-  const role = userProfile?.role
+  const { role } = useCurrentUser()
   const { data, isLoading } = useStallStocks({
     page,
     limit,
@@ -54,15 +53,16 @@ export default function StocksPage() {
     <div className="container mx-auto">
       <EntitySheet<Stock>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={editEntity}
         title="Edit Stall Stock"
         description="Update the stall stock details below."
-        renderForm={({ onClose, entity }) =>
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) =>
           entity ? (
             <StockThresholdForm
               type="stall"
-              onClose={onClose}
+              onClose={forceClose}
               stock={entity}
             />
           ) : null
@@ -71,15 +71,16 @@ export default function StocksPage() {
 
       <EntitySheet<Stock>
         open={restockOpen}
-        onOpenChange={(isOpen) => !isOpen && closeRestockSheet()}
+        onClose={closeRestockSheet}
         entity={restockEntity}
         title="Restock Stall"
         description="Add quantity to existing stock."
-        renderForm={({ onClose, entity }) =>
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) =>
           entity ? (
             <RestockForm
               type="stall"
-              onClose={onClose}
+              onClose={forceClose}
               stock={entity}
             />
           ) : null

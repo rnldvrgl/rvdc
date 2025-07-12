@@ -58,7 +58,7 @@ export default function ExpensesPage() {
       {/* View transfer sheet */}
       <EntitySheet<Expense>
         open={viewSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeView()}
+        onClose={closeView}
         entity={viewSheet.entity}
         title="Transfer Details"
         description="Review the details of this stock transfer."
@@ -74,23 +74,25 @@ export default function ExpensesPage() {
 
       <EntitySheet<Expense>
         open={editSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeEdit()}
+        onClose={closeEdit}
         entity={editSheet.entity}
         title="Edit Expense"
         description="Update the expense details below."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <ExpenseForm
-            onClose={onClose}
+            onClose={forceClose}
             expense={entity}
           />
         )}
       />
       <EntitySheet<Expense>
         open={addOpen}
-        onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
+        onClose={closeAddSheet}
         title="Add Expense"
         description="Fill out the form below to add a new expense."
-        renderForm={({ onClose }) => <ExpenseForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ forceClose }) => <ExpenseForm onClose={forceClose} />}
       />
       <DataTable
         isLoading={isLoading}

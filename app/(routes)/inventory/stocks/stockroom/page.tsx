@@ -50,15 +50,16 @@ export default function StockRoomStocksPage() {
     <div className="container mx-auto">
       <EntitySheet<StockRoomStock>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={editEntity}
         title="Edit Stall Stock"
         description="Update the stall stock details below."
-        renderForm={({ onClose, entity }) =>
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) =>
           entity ? (
             <StockThresholdForm
               type="stock_room"
-              onClose={onClose}
+              onClose={forceClose}
               stock={entity}
             />
           ) : null
@@ -67,15 +68,16 @@ export default function StockRoomStocksPage() {
 
       <EntitySheet<StockRoomStock>
         open={restockOpen}
-        onOpenChange={(isOpen) => !isOpen && closeRestockSheet()}
+        onClose={closeRestockSheet}
         entity={restockEntity}
         title="Restock Stock Room Stock"
         description="Add quantity to existing stock."
-        renderForm={({ onClose, entity }) =>
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) =>
           entity ? (
             <RestockForm
               type="stock_room"
-              onClose={onClose}
+              onClose={forceClose}
               stock={entity}
             />
           ) : null

@@ -1,35 +1,37 @@
 import { useEffect, useState } from 'react'
 
-export function useItemSelection<Item, TData>({
+export function useItemSelection<
+  Item,
+  Entry extends { item: Item | null },
+  TData,
+>({
   initialData,
   allItems,
   getInitialItems,
 }: {
   initialData?: TData
   allItems: Item[]
-  getInitialItems: (data: TData) => { item: Item | null; quantity: number }[]
+  getInitialItems: (data: TData) => Entry[]
 }) {
-  const [items, setItems] = useState<{ item: Item; quantity: number }[]>([])
+  const [items, setItems] = useState<Entry[]>([])
 
+  // Init from initialData ONCE
   useEffect(() => {
-    if (!initialData) return
-    const initial = getInitialItems(initialData).map((i) => ({
-      item: i.item ?? allItems[0],
-      quantity: i.quantity,
-    }))
-    setItems(initial)
+    if (initialData) {
+      const initial = getInitialItems(initialData)
+      setItems(initial)
+    }
   }, [initialData])
 
+  // Fill any missing items with first available item
   useEffect(() => {
     if (allItems.length === 0) return
-    setItems((prevItems) => {
-      const needsUpdate = prevItems.some((i) => i.item == null)
-      if (!needsUpdate) return prevItems
-      return prevItems.map((i) => ({
+    setItems((prevItems) =>
+      prevItems.map((i) => ({
+        ...i,
         item: i.item ?? allItems[0],
-        quantity: i.quantity,
-      }))
-    })
+      })),
+    )
   }, [allItems])
 
   return { items, setItems }

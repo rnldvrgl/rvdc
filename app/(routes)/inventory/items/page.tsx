@@ -53,13 +53,14 @@ export default function ItemsPage() {
     <div className="container mx-auto">
       <EntitySheet<Item>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={entity}
         title="Edit Item"
         description="Update the item details below."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <ItemForm
-            onClose={onClose}
+            onClose={forceClose}
             item={entity}
           />
         )}
@@ -67,10 +68,11 @@ export default function ItemsPage() {
 
       <EntitySheet<Item>
         open={addOpen}
-        onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
+        onClose={closeAddSheet}
         title="Add Item"
         description="Fill out the form below to add a new item."
-        renderForm={({ onClose }) => <ItemForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ forceClose }) => <ItemForm onClose={forceClose} />}
       />
 
       <DataTable

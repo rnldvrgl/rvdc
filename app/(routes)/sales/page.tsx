@@ -55,23 +55,28 @@ export default function SalesTransactionsPage() {
     <div className="container mx-auto">
       {/* Create sheet */}
       <EntitySheet<SalesTransaction>
+        className="min-w-2xl"
         open={createSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeCreate()}
+        onClose={closeCreate}
         title="New Sale"
         description="Record a new sales transaction."
-        renderForm={({ onClose }) => <SalesTransactionForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ forceClose }) => (
+          <SalesTransactionForm onClose={forceClose} />
+        )}
       />
 
       {/* Edit sheet */}
       <EntitySheet<SalesTransaction>
         open={editSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeEdit()}
+        onClose={closeEdit}
         entity={editSheet.entity}
         title="Edit Sale"
         description="Update the sales transaction details."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <SalesTransactionForm
-            onClose={onClose}
+            onClose={forceClose}
             initialData={entity}
           />
         )}
@@ -80,10 +85,10 @@ export default function SalesTransactionsPage() {
       {/* View sheet */}
       <EntitySheet<SalesTransaction>
         open={viewSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeView()}
+        onClose={closeView}
         entity={viewSheet.entity}
-        title="Sale Details"
-        description="Review details of this sales transaction."
+        title="View Transaction"
+        description="This is read-only"
         renderForm={({ onClose, entity }) =>
           entity ? (
             <SalesTransactionDetails

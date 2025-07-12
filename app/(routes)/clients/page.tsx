@@ -51,13 +51,14 @@ export default function ClientsPage() {
       {/* Edit Client Sheet */}
       <EntitySheet<Client>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={entity}
         title="Edit Client"
         description="Update the client details below."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <ClientForm
-            onClose={onClose}
+            onClose={forceClose}
             client={entity}
           />
         )}
@@ -66,10 +67,11 @@ export default function ClientsPage() {
       {/* Add Client Sheet */}
       <EntitySheet<Client>
         open={addOpen}
-        onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
+        onClose={closeAddSheet}
         title="Add Client"
         description="Fill out the form below to add a new client."
-        renderForm={({ onClose }) => <ClientForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ forceClose }) => <ClientForm onClose={forceClose} />}
       />
 
       <DataTable

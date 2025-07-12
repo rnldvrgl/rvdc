@@ -1,5 +1,5 @@
 import { Item, ProductCategory, Stall } from '@/lib/constants/interface'
-import { Technician } from '@/lib/constants/types'
+import { Client, Technician } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
 interface UseStallChoicesOptions {
@@ -7,17 +7,16 @@ interface UseStallChoicesOptions {
   assignedStallId?: number | string
 }
 
-const InventoryUrl = '/inventory/choices/'
-const UsersUrl = '/users/choices/'
+const url = 'choices/'
 
 const useItemChoices = () => {
-  return useApiQuery<Item[]>(['item-choices'], `${InventoryUrl}items/`)
+  return useApiQuery<Item[]>(['item-choices'], `${url}items/`)
 }
 
 const useCategoryChoices = () => {
   return useApiQuery<ProductCategory[]>(
     ['category-choices'],
-    `${InventoryUrl}categories/`,
+    `${url}categories/`,
   )
 }
 
@@ -27,7 +26,7 @@ const useStallChoices = ({
 }: UseStallChoicesOptions) => {
   return useApiQuery<Stall[]>(
     ['stall-choices', { excludeAssignedStall, assignedStallId }],
-    `${InventoryUrl}stalls/`,
+    `${url}stalls/`,
     undefined,
     {
       select: (data) => {
@@ -41,13 +40,15 @@ const useStallChoices = ({
 }
 
 const useTechnicianChoices = () => {
-  return useApiQuery<Technician[]>(
-    ['technician-choices'],
-    `${UsersUrl}technicians/`,
-  )
+  return useApiQuery<Technician[]>(['technician-choices'], `${url}technicians/`)
+}
+
+const useClientChoices = () => {
+  return useApiQuery<Client[]>(['client-choices'], `${url}clients/`)
 }
 export {
   useCategoryChoices,
+  useClientChoices,
   useItemChoices,
   useStallChoices,
   useTechnicianChoices,

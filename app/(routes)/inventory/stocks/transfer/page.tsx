@@ -64,22 +64,26 @@ export default function StockTransfersPage() {
       {/* Create transfer sheet */}
       <EntitySheet<StockTransfer>
         open={createSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeCreate()}
+        onClose={closeCreate}
         title="New Stock Transfer"
         description="Create a new stock transfer by selecting technician, destination stall, and items."
-        renderForm={({ onClose }) => <StockTransferForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ forceClose }) => (
+          <StockTransferForm onClose={forceClose} />
+        )}
       />
 
       {/* Edit transfer sheet */}
       <EntitySheet<StockTransfer>
         open={editSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeEdit()}
+        onClose={closeEdit}
         entity={editSheet.entity}
         title="Edit Stock Transfer"
         description="Update the details of this stock transfer."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <StockTransferForm
-            onClose={onClose}
+            onClose={forceClose}
             initialData={entity}
           />
         )}
@@ -88,10 +92,11 @@ export default function StockTransfersPage() {
       {/* View transfer sheet */}
       <EntitySheet<StockTransfer>
         open={viewSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeView()}
+        onClose={closeView}
         entity={viewSheet.entity}
         title="Transfer Details"
         description="Review the details of this stock transfer."
+        withCloseConfirmation={false}
         renderForm={({ onClose, entity }) =>
           entity ? (
             <StockTransferDetails

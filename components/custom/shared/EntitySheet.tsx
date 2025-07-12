@@ -1,5 +1,6 @@
 'use client'
 
+import { ConfirmDialog } from '@/components/custom/shared/ConfirmDialog'
 import {
   Sheet,
   SheetContent,
@@ -7,43 +8,67 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
+import { useConfirmClose } from '@/lib/hooks/useConfirmClose'
+import { cn } from '@/lib/utils/helpers'
 
 interface EntitySheetProps<T> {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onClose: () => void
   entity?: T
   title: string
   description: string
-  renderForm: (props: { entity?: T; onClose: () => void }) => React.ReactNode
+  renderForm: (props: {
+    entity?: T
+    onClose: () => void
+    forceClose: () => void
+  }) => React.ReactNode
+  withCloseConfirmation?: boolean
+  className?: string
 }
 
 export default function EntitySheet<T>({
   open,
-  onOpenChange,
+  onClose,
   entity,
   title,
   description,
   renderForm,
+  withCloseConfirmation = false,
+  className,
 }: EntitySheetProps<T>) {
-  return (
-    <Sheet
-      open={open}
-      onOpenChange={onOpenChange}
-    >
-      <SheetContent
-        side="right"
-        className="!max-w-3xl w-auto px-6 py-8 overflow-y-auto"
-      >
-        <SheetHeader className="mb-4 border-b border-border pb-4">
-          <SheetTitle className="text-xl font-semibold">{title}</SheetTitle>
-          <SheetDescription>{description}</SheetDescription>
-        </SheetHeader>
+  const { tryClose, confirmOpen, setConfirmOpen, confirmClose } =
+    useConfirmClose({
+      shouldConfirm: withCloseConfirmation,
+      onClose,
+    })
 
-        {renderForm({
-          entity,
-          onClose: () => onOpenChange(false),
-        })}
-      </SheetContent>
-    </Sheet>
+  return (
+    <>
+      <Sheet
+        open={open}
+        onOpenChange={(next) => !next && tryClose()}
+      >
+        <SheetContent
+          side="right"
+          className={cn(
+            '!max-w-4xl w-auto px-6 py-8 overflow-y-auto',
+            className,
+          )}
+        >
+          <SheetHeader className="mb-4 border-b border-border pb-4">
+            <SheetTitle className="text-xl font-semibold">{title}</SheetTitle>
+            <SheetDescription>{description}</SheetDescription>
+          </SheetHeader>
+
+          {renderForm({ entity, onClose: tryClose, forceClose: onClose })}
+        </SheetContent>
+      </Sheet>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={confirmClose}
+      />
+    </>
   )
 }

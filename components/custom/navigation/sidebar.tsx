@@ -71,11 +71,11 @@ export function Sidebar() {
         }
         renderForm={({ onClose }) => {
           if (currentEntity === 'client')
-            return <ClientForm onClose={onClose} />
+            return <ClientForm onClose={forceClose} />
           if (currentEntity === 'expense')
-            return <ExpenseForm onClose={onClose} />
+            return <ExpenseForm onClose={forceClose} />
           if (currentEntity === 'transfer')
-            return <StockTransferForm onClose={onClose} />
+            return <StockTransferForm onClose={forceClose} />
           return null
         }}
       />

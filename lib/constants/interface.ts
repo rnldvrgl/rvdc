@@ -42,6 +42,7 @@ export interface useEntitySheetReturn<T> {
   openEntity: (entity?: T) => void
   closeEntity: () => void
   toggleEntity: () => void
+  confirmClose?: () => void
 }
 
 export interface EntityDialogProps<T> {
@@ -102,6 +103,12 @@ export interface ProductCategoryPayload {
 // ---------------------
 // Item
 // ---------------------
+export interface ItemEntry {
+  item: Item
+  quantity: number
+  final_price_per_unit?: number
+}
+
 export interface Item {
   id: number
   name: string
@@ -291,7 +298,7 @@ export interface SalesPayment {
 // Sales Item
 export interface SalesItem {
   id: number
-  item?: Item
+  item: Item
   description: string
   quantity: number
   final_price_per_unit: string

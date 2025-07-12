@@ -207,9 +207,9 @@ const TechnicianPage = () => {
         entity={technician}
         title="Edit Technician"
         description="Update the technician details below."
-        renderForm={({ onClose, entity }) => (
+        renderForm={({ forceClose, entity }) => (
           <TechnicianForm
-            onClose={onClose}
+            onClose={forceClose}
             technician={entity}
           />
         )}

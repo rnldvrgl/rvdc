@@ -50,13 +50,14 @@ export default function ItemCategoriesPage() {
       {/* Edit Category Sheet */}
       <EntitySheet<ProductCategory>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={entity}
         title="Edit Item Category"
         description="Update the item category details below."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <ItemCategoryForm
-            onClose={onClose}
+            onClose={forceClose}
             category={entity}
           />
         )}
@@ -65,10 +66,13 @@ export default function ItemCategoriesPage() {
       {/* Add Category Sheet */}
       <EntitySheet<ProductCategory>
         open={addOpen}
-        onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
+        onClose={closeAddSheet}
         title="Add Item Category"
         description="Fill out the form below to add a new item category."
-        renderForm={({ onClose }) => <ItemCategoryForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ forceClose }) => (
+          <ItemCategoryForm onClose={forceClose} />
+        )}
       />
 
       <DataTable

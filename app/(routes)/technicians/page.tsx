@@ -6,6 +6,7 @@ import { DataTable } from '@/components/custom/table/DataTable'
 import TechnicianForm from '@/components/forms/TechnicianForm'
 import { Button } from '@/components/ui/button'
 import { Technician } from '@/lib/constants/types'
+import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useTechnicianMutations } from '@/lib/mutations/useTechnicianMutations'
 import { useTechnicians } from '@/lib/queries/useTechnicians'
@@ -50,13 +51,14 @@ export default function TechniciansPage() {
       {/* Edit Technician Sheet */}
       <EntitySheet<Technician>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={entity}
         title="Edit Technician"
         description="Update the Technician details below."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <TechnicianForm
-            onClose={onClose}
+            onClose={forceClose}
             technician={entity}
           />
         )}
@@ -65,10 +67,11 @@ export default function TechniciansPage() {
       {/* Add Technician Sheet */}
       <EntitySheet<Technician>
         open={addOpen}
-        onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
+        onClose={closeAddSheet}
         title="Add Technician"
         description="Fill out the form below to add a new Technician."
-        renderForm={({ onClose }) => <TechnicianForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ onClose }) => <TechnicianForm onClose={forceClose} />}
       />
 
       <DataTable

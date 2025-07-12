@@ -42,13 +42,14 @@ export default function StallsPage() {
     <div className="container mx-auto">
       <EntitySheet<Stall>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={entity}
         title="Edit Stall"
         description="Update the stall details below."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <StallForm
-            onClose={onClose}
+            onClose={forceClose}
             stall={entity}
           />
         )}
@@ -56,10 +57,11 @@ export default function StallsPage() {
 
       <EntitySheet<Stall>
         open={addOpen}
-        onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
+        onClose={closeAddSheet}
         title="Add Stall"
         description="Fill out the form below to add a new stall."
-        renderForm={({ onClose }) => <StallForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ onClose }) => <StallForm onClose={forceClose} />}
       />
 
       <DataTable

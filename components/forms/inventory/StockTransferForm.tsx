@@ -18,7 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Item, Stall, StockTransfer } from '@/lib/constants/interface'
+import type {
+  Item,
+  ItemEntry,
+  Stall,
+  StockTransfer,
+} from '@/lib/constants/interface'
 import type { Technician } from '@/lib/constants/types'
 import { useItemSelection } from '@/lib/hooks/useItemSelection'
 import { useStockTransferMutations } from '@/lib/mutations/useStockTransferMutations'
@@ -69,7 +74,7 @@ export default function StockTransferForm({
   const { addStockTransfer, updateStockTransfer, finalizeStockTransfer } =
     useStockTransferMutations()
 
-  const { items, setItems } = useItemSelection<Item, StockTransfer>({
+  const { items, setItems } = useItemSelection<Item, ItemEntry, StockTransfer>({
     initialData,
     allItems,
     getInitialItems: (data) =>
