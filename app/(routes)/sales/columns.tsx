@@ -4,7 +4,7 @@ import { SalesTransaction } from '@/lib/constants/interface'
 import {
   formatCurrency,
   formatDate,
-  getTransferBadgeVariant,
+  getBadgeVariant,
   safeCell,
 } from '@/lib/utils/helpers'
 import { ColumnDef, Row } from '@tanstack/react-table'
@@ -38,28 +38,50 @@ export function getSalesTransactionColumns({
       cell: ({ row }) => safeCell(row.original.manual_receipt_number),
     },
     {
-      accessorKey: 'client.name',
+      accessorKey: 'client.full_name',
       header: 'Client',
-      cell: ({ row }) => safeCell(row.original.client?.full_name),
+      cell: ({ row }) =>
+        safeCell(
+          `${row.original.client?.full_name} (${row.original.client?.contact_number})`,
+        ),
     },
     {
       accessorKey: 'created_at',
       header: 'Date',
       cell: ({ getValue }) =>
-        safeCell(getValue() ? formatDate(getValue() as Date) : null),
+        safeCell(
+          getValue()
+            ? formatDate(getValue() as Date, 'EEE, MMM dd yyyy • hh:mm a')
+            : null,
+        ),
     },
     {
-      accessorKey: 'total_amount',
-      header: 'Total',
+      accessorKey: 'computed_total',
+      header: 'Total Amount',
       cell: ({ getValue }) =>
         safeCell(getValue() ? formatCurrency(getValue() as number) : null),
     },
     {
-      accessorKey: 'is_paid',
+      accessorKey: 'total_paid',
+      header: 'Total Payment',
+      cell: ({ getValue }) =>
+        safeCell(getValue() ? formatCurrency(getValue() as number) : null),
+    },
+    {
+      accessorKey: 'balance',
+      header: 'Balance',
+      cell: ({ row }) => {
+        const balance =
+          Number(row.original.computed_total) - Number(row.original.total_paid)
+        return safeCell(balance > 0 ? formatCurrency(balance) : 0)
+      },
+    },
+    {
+      accessorKey: 'payment_status',
       header: 'Paid',
       cell: ({ getValue }) => (
-        <Badge variant={getTransferBadgeVariant(getValue() as boolean)}>
-          {(getValue() as boolean) ? 'Yes' : 'No'}
+        <Badge variant={getBadgeVariant(getValue() as string)}>
+          {safeCell(getValue())}
         </Badge>
       ),
     },

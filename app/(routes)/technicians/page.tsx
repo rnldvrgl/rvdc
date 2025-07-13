@@ -71,7 +71,7 @@ export default function TechniciansPage() {
         title="Add Technician"
         description="Fill out the form below to add a new Technician."
         withCloseConfirmation
-        renderForm={({ onClose }) => <TechnicianForm onClose={forceClose} />}
+        renderForm={({ forceClose }) => <TechnicianForm onClose={forceClose} />}
       />
 
       <DataTable

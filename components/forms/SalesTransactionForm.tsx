@@ -25,6 +25,7 @@ import { formatCurrency } from '@/lib/utils/helpers'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
+import toast from 'react-hot-toast'
 import { useReactToPrint } from 'react-to-print'
 import * as z from 'zod'
 
@@ -40,7 +41,8 @@ export const formSchema = z.object({
         amount: z.number().min(0, 'Amount must be a positive number'),
       }),
     )
-    .min(1, 'at least one payment is required'),
+    .min(1, 'At least one payment is required'),
+
   items: z
     .array(
       z.object({
@@ -77,7 +79,9 @@ export default function SalesTransactionForm({
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
-    onPrintError: (e) => console.error(e),
+    onPrintError: (errorLocation, error) => {
+      toast.error(`Print error at ${errorLocation}: ${error.message}`)
+    },
   })
 
   const form = useForm<FormValues>({
@@ -131,6 +135,7 @@ export default function SalesTransactionForm({
     }
   }, [allItemsData, initialData, form])
 
+  console.log('Errors:', form.formState.errors)
   const handleSubmit = (data: FormValues) => {
     const payload = {
       stall: assigned_stall?.id ?? null,
@@ -147,18 +152,10 @@ export default function SalesTransactionForm({
       })),
     }
 
-    console.log('Payload:', payload)
-
     if (initialData) {
       updateTransaction.mutate(
         { id: initialData.id, data: payload },
-        {
-          onSuccess: (data) => {
-            console.log(data)
-            setCreatedTransaction(data.data)
-            setShowPrintDialog(true)
-          },
-        },
+        { onSuccess: onClose },
       )
     } else {
       addTransaction.mutate(payload, {
@@ -259,7 +256,11 @@ export default function SalesTransactionForm({
               }}
               allowPriceChange
             />
-            <FormMessage>{form.formState.errors.items?.message}</FormMessage>
+            {form.formState.errors.items && (
+              <p className="text-sm font-medium text-destructive">
+                {form.formState.errors.items.message}
+              </p>
+            )}
           </div>
 
           <div className="grid gap-3">
@@ -269,8 +270,11 @@ export default function SalesTransactionForm({
               append={append}
               remove={remove}
             />
-
-            <FormMessage>{form.formState.errors.payments?.message}</FormMessage>
+            {form.formState.errors.payments && (
+              <p className="text-sm font-medium text-destructive">
+                {form.formState.errors.payments?.root?.message}
+              </p>
+            )}
           </div>
 
           <div className="border-t pt-6 space-y-2 text-sm">

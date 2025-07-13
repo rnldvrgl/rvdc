@@ -1,7 +1,7 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { Badge } from '@/components/ui/badge'
 import { GetColumnsProps, StockRoomStock } from '@/lib/constants/interface'
-import { getStockBadgeVariant, safeCell } from '@/lib/utils/helpers'
+import { getBadgeVariant, safeCell } from '@/lib/utils/helpers'
 import { ColumnDef } from '@tanstack/react-table'
 import { Edit, PackagePlus } from 'lucide-react'
 
@@ -51,7 +51,7 @@ export function getStockRoomStockColumns({
       cell: ({ row }) => {
         const { status } = row.original
         return (
-          <Badge variant={getStockBadgeVariant(status)}>
+          <Badge variant={getBadgeVariant(status)}>
             {status.replace('_', ' ')}
           </Badge>
         )

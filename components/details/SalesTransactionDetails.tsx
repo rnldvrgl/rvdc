@@ -4,7 +4,11 @@ import { Detail } from '@/components/details/Detail'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SalesTransaction } from '@/lib/constants/interface'
-import { formatCurrency, formatDate } from '@/lib/utils/helpers'
+import {
+  formatCurrency,
+  formatDate,
+  getBadgeVariant,
+} from '@/lib/utils/helpers'
 
 export function SalesTransactionDetails({
   entity,
@@ -25,12 +29,10 @@ export function SalesTransactionDetails({
     <div className="space-y-8">
       {/* Status badges */}
       <div className="flex items-center gap-4">
-        <Badge variant={entity.voided ? 'destructive' : 'secondary'}>
+        <Badge variant={entity.voided ? 'destructive' : 'success'}>
           {entity.voided ? 'Voided' : 'Active'}
         </Badge>
-        <Badge
-          variant={entity.payment_status === 'paid' ? 'success' : 'outline'}
-        >
+        <Badge variant={getBadgeVariant(entity.payment_status)}>
           {entity.payment_status.toUpperCase()}
         </Badge>
       </div>
@@ -51,7 +53,10 @@ export function SalesTransactionDetails({
             label="Date"
             value={
               entity.created_at
-                ? formatDate(new Date(entity.created_at))
+                ? formatDate(
+                    new Date(entity.created_at),
+                    'EEE, MMM dd yyyy • hh:mm a',
+                  )
                 : 'N/A'
             }
           />
@@ -151,18 +156,6 @@ export function SalesTransactionDetails({
 
       {/* Actions */}
       <div className="flex flex-col gap-4 pt-4 border-t mt-6">
-        {!entity.voided && entity.payment_status !== 'paid' && (
-          <Button
-            type="button"
-            className="w-full"
-            variant="success"
-            onClick={onMarkAsPaid}
-            disabled={markAsPaidPending}
-          >
-            {markAsPaidPending ? 'Marking...' : 'Mark Paid'}
-          </Button>
-        )}
-
         {!entity.voided && (
           <Button
             type="button"

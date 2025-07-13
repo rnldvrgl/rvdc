@@ -45,12 +45,8 @@ export function Sidebar() {
     <>
       <EntitySheet
         open={open}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            closeEntity()
-            setCurrentEntity(null)
-          }
-        }}
+        onClose={closeEntity}
+        withCloseConfirmation
         title={
           currentEntity === 'client'
             ? 'Add Client'
@@ -69,7 +65,7 @@ export function Sidebar() {
             ? 'Fill out the form below to add a new transfer.'
             : ''
         }
-        renderForm={({ onClose }) => {
+        renderForm={({ forceClose }) => {
           if (currentEntity === 'client')
             return <ClientForm onClose={forceClose} />
           if (currentEntity === 'expense')

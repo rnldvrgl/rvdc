@@ -203,7 +203,7 @@ const TechnicianPage = () => {
       {/* EDIT SHEET */}
       <EntitySheet<Technician>
         open={open}
-        onOpenChange={(isOpen) => !isOpen && closeEntity()}
+        onClose={closeEntity}
         entity={technician}
         title="Edit Technician"
         description="Update the technician details below."

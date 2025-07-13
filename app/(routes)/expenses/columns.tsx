@@ -4,7 +4,7 @@ import { Expense, GetColumnsProps } from '@/lib/constants/interface'
 import {
   formatCurrency,
   formatDate,
-  getSourceBadgeVariant,
+  getBadgeVariant,
   getTransferBadgeVariant,
   safeCell,
 } from '@/lib/utils/helpers'
@@ -28,7 +28,7 @@ export function getExpenseColumns({
       accessorKey: 'source',
       header: 'Source',
       cell: ({ getValue }) => (
-        <Badge variant={getSourceBadgeVariant(getValue() as string)}>
+        <Badge variant={getBadgeVariant(getValue() as string)}>
           {safeCell(getValue())}
         </Badge>
       ),

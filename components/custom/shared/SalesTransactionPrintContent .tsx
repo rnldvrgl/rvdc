@@ -8,65 +8,82 @@ export const SalesTransactionPrintContent = React.forwardRef<
   HTMLDivElement,
   { entity: SalesTransaction | null }
 >(({ entity }, ref) => {
-  // console.log(entity)
+  const createdAt = new Date(entity?.created_at ?? Date.now())
+
+  const LineBreaker = () => <div>--------------------------------</div>
+
   return (
     <div
       ref={ref}
-      className="p-4 text-sm font-mono"
+      className="w-full text-[11px] font-mono space-y-1"
     >
-      <h2 className="text-lg font-bold mb-2">SALES RECEIPT</h2>
-      <div>Date: {formatDate(new Date(entity?.created_at ?? Date.now()))}</div>
-      <div>Client: {entity?.client?.full_name ?? 'N/A'}</div>
-      <div>Stall: {entity?.stall?.name ?? 'N/A'}</div>
-      <div>
-        Receipt #:{' '}
-        {entity?.manual_receipt_number || entity?.system_receipt_number}
+      {/* HEADER */}
+      <div className="text-center font-bold space-y-0.5">
+        <div>RVDC REF & AIRCON REPAIR SHOP</div>
+        <div>SALES RECEIPT</div>
       </div>
+
+      {/* DETAILS */}
       <div>
-        Status:{' '}
-        {entity?.voided ? 'VOIDED' : entity?.payment_status.toUpperCase()}
+        <div>Date: {formatDate(createdAt, 'MM-dd-yyyy, hh:mm a')}</div>
+        <div>Client: {entity?.client?.full_name ?? 'N/A'}</div>
+        <div>
+          Receipt #:{' '}
+          {entity?.manual_receipt_number || entity?.system_receipt_number}
+        </div>
       </div>
-      {entity?.voided && <div>Reason: {entity.void_reason ?? 'N/A'}</div>}
 
-      <hr className="my-2" />
+      <LineBreaker />
 
+      {/* ITEMS */}
       <div>
-        <strong>Items:</strong>
+        <div className="font-bold">Items</div>
         {entity?.items.map((item, idx) => (
           <div
             key={idx}
             className="flex justify-between"
           >
-            <span>
+            <div>
               {item.item?.name ?? 'Unnamed'} x {item.quantity}
-            </span>
-            <span>₱ {parseFloat(item.line_total).toLocaleString()}</span>
+            </div>
+            <div>{formatCurrency(item.line_total)}</div>
           </div>
         ))}
       </div>
 
-      <hr className="my-2" />
+      <LineBreaker />
 
-      <div className="flex justify-between">
-        <strong>Total:</strong>
-        <strong>{formatCurrency(Number(entity?.computed_total))}</strong>
+      {/* TOTAL */}
+      <div className="flex justify-between font-bold">
+        <span>Total:</span>
+        <span>{formatCurrency(Number(entity?.computed_total))}</span>
       </div>
 
-      <div>
-        <strong>Payments:</strong>
+      {/* TODO: ADD PAYMENTS */}
+      {/* PAYMENTS */}
+      {/* <div>
+        <div className="font-bold">Payments</div>
         {entity?.payments?.length ? (
           entity.payments.map((payment, idx) => (
-            <div key={idx}>
-              {formatCurrency(payment.amount)} • {payment.payment_type} •{' '}
-              {formatDate(new Date(payment.payment_date))}
+            <div
+              key={idx}
+              className="border border-dashed border-gray-400 p-1 my-1"
+            >
+              <div className="flex justify-between">
+                <span>{formatCurrency(payment.amount)}</span>
+                <span>{payment.payment_type}</span>
+              </div>
+              <div className="text-xs">
+                {formatDate(new Date(payment.payment_date))}
+              </div>
             </div>
           ))
         ) : (
           <div>No payments recorded</div>
         )}
-      </div>
+      </div> */}
 
-      <div className="mt-4">--- THANK YOU! ---</div>
+      <div className="mt-1 text-center">---- THANK YOU! ----</div>
     </div>
   )
 })
