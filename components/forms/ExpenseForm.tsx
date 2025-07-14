@@ -14,15 +14,29 @@ import { Textarea } from '@/components/ui/textarea'
 import { Expense } from '@/lib/constants/interface'
 import { useExpenseMutations } from '@/lib/mutations/useExpenseMutations'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
-import { SubmitHandler, useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import z from 'zod'
 
 interface ExpenseFormProps {
   expense?: Expense
   onClose: () => void
 }
 
+const formSchema = z.object({
+  description: z.string().min(1, {
+    message: 'Description is required',
+  }),
+  total_price: z.number().min(1, {
+    message: 'Total price must be at least 1',
+  }),
+})
+
+type FormValues = z.infer<typeof formSchema>
+
 export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
-  const form = useForm<Partial<Expense>>({
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
       description: expense?.description ?? '',
       total_price: expense?.total_price ?? 0,
@@ -32,7 +46,7 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
   const userProfile = useUserProfileStore((state) => state.userProfile)
   const { addExpense, updateExpense } = useExpenseMutations()
 
-  const onSubmit: SubmitHandler<Partial<Expense>> = (data) => {
+  const onSubmit = (data: FormValues) => {
     const payload = {
       ...data,
       stall: userProfile?.assigned_stall?.id,
@@ -60,7 +74,6 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
           <FormField
             control={form.control}
             name="description"
-            rules={{ required: 'Description is required' }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Description</FormLabel>
@@ -80,7 +93,6 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
           <FormField
             control={form.control}
             name="total_price"
-            rules={{ required: 'Total price is required' }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Total Price</FormLabel>
@@ -88,8 +100,12 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
                   <Input
                     type="number"
                     {...field}
-                    placeholder="0.00"
-                    min={1}
+                    value={field.value ?? ''}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === '' ? '' : +e.target.value,
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />

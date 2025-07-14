@@ -272,8 +272,8 @@ export interface Notification {
 export interface Expense {
   id: number
   stall: { id: number; name: string }
-  total_price: string | number
-  paid_amount: string | number
+  total_price: number
+  paid_amount: number
   is_paid: boolean
   description: string
   source: 'manual' | 'transfer'
