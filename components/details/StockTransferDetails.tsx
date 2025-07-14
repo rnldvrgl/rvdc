@@ -2,7 +2,7 @@ import { Detail } from '@/components/details/Detail'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { StockTransfer } from '@/lib/constants/interface'
-import { formatDate, getTransferBadgeVariant } from '@/lib/utils/helpers'
+import { formatDate, getBoolBadgeVariant } from '@/lib/utils/helpers'
 
 export function StockTransferDetails({
   entity,
@@ -19,10 +19,14 @@ export function StockTransferDetails({
     <div className="space-y-8">
       {/* Status badges */}
       <div className="flex items-center gap-4">
-        <Badge variant={getTransferBadgeVariant(entity?.is_finalized ?? false)}>
+        <Badge
+          variant={getBoolBadgeVariant({
+            status: entity?.is_finalized,
+          })}
+        >
           {entity?.is_finalized ? 'Finalized' : 'Not Finalized'}
         </Badge>
-        <Badge variant={getTransferBadgeVariant(entity?.is_paid ?? false)}>
+        <Badge variant={getBoolBadgeVariant({ status: entity?.is_paid })}>
           {entity?.is_paid ? 'Paid' : 'Unpaid'}
         </Badge>
       </div>

@@ -3,7 +3,7 @@ import { StockTransfer } from '@/lib/constants/interface'
 import {
   formatCurrency,
   formatDate,
-  getTransferBadgeVariant,
+  getBoolBadgeVariant,
   safeCell,
 } from '@/lib/utils/helpers'
 import { ColumnDef } from '@tanstack/react-table'
@@ -59,7 +59,7 @@ export function getStockTransferColumns({
       accessorKey: 'is_finalized',
       header: 'Finalized',
       cell: ({ getValue }) => (
-        <Badge variant={getTransferBadgeVariant(getValue() as boolean)}>
+        <Badge variant={getBoolBadgeVariant({ status: getValue() as boolean })}>
           {(getValue() as boolean) ? 'Yes' : 'No'}
         </Badge>
       ),
@@ -68,7 +68,7 @@ export function getStockTransferColumns({
       accessorKey: 'is_paid',
       header: 'Paid',
       cell: ({ getValue }) => (
-        <Badge variant={getTransferBadgeVariant(getValue() as boolean)}>
+        <Badge variant={getBoolBadgeVariant({ status: getValue() as boolean })}>
           {(getValue() as boolean) ? 'Yes' : 'No'}
         </Badge>
       ),

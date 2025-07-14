@@ -128,6 +128,7 @@ export default function ItemQuantitySelector({
                       >
                         <TableCell>
                           <ComboBox
+                            disabled={disabled}
                             onChange={(val) => {
                               const found = allItems.find(
                                 (c) => c.id.toString() === val,

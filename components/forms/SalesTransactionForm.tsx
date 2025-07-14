@@ -2,9 +2,11 @@
 
 import { ComboBox } from '@/components/custom/inputs/ComboBox'
 import { ConfirmDialog } from '@/components/custom/shared/ConfirmDialog'
+import EntityDialog from '@/components/custom/shared/EntityDialog'
 import ItemQuantitySelector from '@/components/custom/shared/ItemQuantitySelector'
 import PaymentMethodSelector from '@/components/custom/shared/PaymentMethodSelector'
 import { SalesTransactionPrintContent } from '@/components/custom/shared/SalesTransactionPrintContent '
+import SaleTransactionVoidingForm from '@/components/forms/SaleTransactionVoidingForm'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -18,11 +20,13 @@ import { Input } from '@/components/ui/input'
 import { Item, ItemEntry, SalesTransaction } from '@/lib/constants/interface'
 import { Client } from '@/lib/constants/types'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
+import { useEntitySheetDialog } from '@/lib/hooks/useEntityDialog'
 import { useItemSelection } from '@/lib/hooks/useItemSelection'
 import { useSalesTransactionMutations } from '@/lib/mutations/useSalesTransactionMutations'
 import { useClientChoices, useItemChoices } from '@/lib/queries/useChoices'
 import { formatCurrency } from '@/lib/utils/helpers'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Printer, RotateCcw, Save, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
@@ -76,6 +80,13 @@ export default function SalesTransactionForm({
   const clients: Client[] = clientsData ?? []
   const { addTransaction, updateTransaction } = useSalesTransactionMutations()
   const componentRef = useRef<HTMLDivElement>(null)
+  const isVoided = initialData?.voided
+
+  const {
+    entityState: voidingState,
+    openEntity: openVoiding,
+    closeEntity: closeVoiding,
+  } = useEntitySheetDialog<SalesTransaction>()
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
@@ -135,7 +146,6 @@ export default function SalesTransactionForm({
     }
   }, [allItemsData, initialData, form])
 
-  console.log('Errors:', form.formState.errors)
   const handleSubmit = (data: FormValues) => {
     const payload = {
       stall: assigned_stall?.id ?? null,
@@ -190,6 +200,26 @@ export default function SalesTransactionForm({
         />
       </div>
 
+      {initialData && (
+        <div className="w-full flex justify-end mb-4">
+          <Button
+            type="button"
+            variant={isVoided ? 'secondary' : 'destructive'}
+            onClick={() => openVoiding()}
+          >
+            {isVoided ? (
+              <>
+                <RotateCcw className="mr-2 h-4 w-4" /> Reactivate
+              </>
+            ) : (
+              <>
+                <Trash2 className="mr-2 h-4 w-4" /> Void Transaction
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
@@ -204,6 +234,7 @@ export default function SalesTransactionForm({
                   <FormLabel>Manual Receipt #</FormLabel>
                   <FormControl>
                     <Input
+                      disabled={form.formState.isSubmitting || isVoided}
                       {...field}
                       placeholder="e.g. 001245"
                       className="rounded-md"
@@ -220,6 +251,7 @@ export default function SalesTransactionForm({
                 <FormItem>
                   <FormLabel required>Client</FormLabel>
                   <ComboBox
+                    disabled={form.formState.isSubmitting || isVoided}
                     options={clients.map((c) => ({
                       value: c.id,
                       label: `${c.full_name} (${c.contact_number})`,
@@ -237,6 +269,7 @@ export default function SalesTransactionForm({
 
           <div className="grid gap-3">
             <ItemQuantitySelector
+              disabled={form.formState.isSubmitting || isVoided}
               required
               items={items}
               allItems={allItems}
@@ -269,6 +302,7 @@ export default function SalesTransactionForm({
               fields={fields}
               append={append}
               remove={remove}
+              disabled={form.formState.isSubmitting || isVoided}
             />
             {form.formState.errors.payments && (
               <p className="text-sm font-medium text-destructive">
@@ -277,7 +311,7 @@ export default function SalesTransactionForm({
             )}
           </div>
 
-          <div className="border-t pt-6 space-y-2 text-sm">
+          <div className="border-t pt-6 space-y-3 text-[15px]">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total Items:</span>
               <span className="font-semibold text-base">
@@ -304,32 +338,52 @@ export default function SalesTransactionForm({
             </div>
           </div>
 
-          <Button
-            type="submit"
-            className="w-full mt-2"
-            disabled={!form.formState.isDirty || form.formState.isSubmitting}
-          >
-            {initialData ? 'Update Transaction' : 'Create Transaction'}
-          </Button>
-
-          <ConfirmDialog
-            open={showPrintDialog}
-            onConfirm={() => {
-              handlePrint()
-              setShowPrintDialog(false)
-              onClose()
-            }}
-            onCancel={() => {
-              setShowPrintDialog(false)
-              onClose()
-            }}
-            title="Print Receipt?"
-            description="Transaction created successfully. Would you like to print the receipt now?"
-            confirmText="Print"
-            cancelText="No, thanks"
-          />
+          {!isVoided && (
+            <Button
+              type="submit"
+              className="w-full mt-6"
+              disabled={!form.formState.isDirty || form.formState.isSubmitting}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {initialData ? 'Update Transaction' : 'Create Transaction'}
+            </Button>
+          )}
         </form>
       </Form>
+      <ConfirmDialog
+        open={showPrintDialog}
+        onConfirm={() => {
+          handlePrint()
+          setShowPrintDialog(false)
+          onClose()
+        }}
+        onCancel={() => {
+          setShowPrintDialog(false)
+          onClose()
+        }}
+        title="Print Receipt?"
+        description="Transaction created successfully. Would you like to print the receipt now?"
+        Icon={Printer}
+        confirmText="Print"
+        cancelText="No, thanks"
+      />
+
+      <EntityDialog<SalesTransaction>
+        open={voidingState.open}
+        onClose={() => {
+          closeVoiding()
+          onClose()
+        }}
+        title="Void Transaction"
+        description="Are you sure you want to void this transaction?"
+        withCloseConfirmation
+        renderForm={({ forceClose }) => (
+          <SaleTransactionVoidingForm
+            onClose={forceClose}
+            entity={initialData}
+          />
+        )}
+      />
     </>
   )
 }

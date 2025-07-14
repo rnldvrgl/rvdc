@@ -5,6 +5,7 @@ import {
   formatCurrency,
   formatDate,
   getBadgeVariant,
+  getBoolBadgeVariant,
   safeCell,
 } from '@/lib/utils/helpers'
 import { ColumnDef, Row } from '@tanstack/react-table'
@@ -82,6 +83,20 @@ export function getSalesTransactionColumns({
       cell: ({ getValue }) => (
         <Badge variant={getBadgeVariant(getValue() as string)}>
           {safeCell(getValue())}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'voided',
+      header: 'Voided',
+      cell: ({ getValue }) => (
+        <Badge
+          variant={getBoolBadgeVariant({
+            status: getValue() as boolean,
+            reverse: true,
+          })}
+        >
+          {safeCell(getValue()) ? 'Yes' : 'No'}
         </Badge>
       ),
     },

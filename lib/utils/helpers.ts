@@ -183,9 +183,14 @@ export function getBadgeVariant(source: string): badgeVariants {
   return variants[source] ?? 'outline'
 }
 
-export function getTransferBadgeVariant(
-  status: boolean,
-): 'success' | 'destructive' {
+export function getBoolBadgeVariant({
+  status,
+  reverse = false,
+}: {
+  status: boolean
+  reverse?: boolean
+}): 'success' | 'destructive' {
+  if (reverse) return status ? 'destructive' : 'success'
   return status ? 'success' : 'destructive'
 }
 

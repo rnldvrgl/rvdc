@@ -31,6 +31,7 @@ interface ComboBoxProps {
   placeholder?: string
   searchPlaceholder?: string
   className?: string
+  disabled?: boolean
 }
 
 export function ComboBox({
@@ -40,6 +41,7 @@ export function ComboBox({
   placeholder = 'Select option...',
   searchPlaceholder = 'Search...',
   className,
+  disabled,
 }: ComboBoxProps) {
   const [open, setOpen] = React.useState(false)
   const [triggerWidth, setTriggerWidth] = React.useState<number>()
@@ -61,6 +63,7 @@ export function ComboBox({
     >
       <PopoverTrigger asChild>
         <Button
+          disabled={disabled}
           ref={triggerRef}
           variant="outline"
           role="combobox"

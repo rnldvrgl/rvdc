@@ -94,10 +94,6 @@ export default function SalesTransactionsPage() {
             <SalesTransactionDetails
               entity={entity}
               onClose={onClose}
-              onMarkAsPaid={() => {}}
-              markAsPaidPending={false}
-              onVoid={() => {}}
-              voidPending={false}
             />
           ) : null
         }

@@ -5,7 +5,7 @@ import { Expense } from '@/lib/constants/interface'
 import {
   formatCurrency,
   formatDate,
-  getTransferBadgeVariant,
+  getBoolBadgeVariant,
 } from '@/lib/utils/helpers'
 import {
   Calendar,
@@ -30,7 +30,9 @@ export function ExpenseDetails({
     <div className="space-y-8">
       {/* Status badges */}
       <div className="flex items-center gap-4">
-        <Badge variant={getTransferBadgeVariant(entity?.is_paid ?? false)}>
+        <Badge
+          variant={getBoolBadgeVariant({ status: entity?.is_paid ?? false })}
+        >
           {entity?.is_paid ? 'Paid' : 'Unpaid'}
         </Badge>
         {entity?.source && (

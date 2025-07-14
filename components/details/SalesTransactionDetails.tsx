@@ -3,6 +3,14 @@
 import { Detail } from '@/components/details/Detail'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { SalesTransaction } from '@/lib/constants/interface'
 import {
   formatCurrency,
@@ -13,17 +21,9 @@ import {
 export function SalesTransactionDetails({
   entity,
   onClose,
-  onMarkAsPaid,
-  markAsPaidPending,
-  onVoid,
-  voidPending,
 }: {
   entity: SalesTransaction
   onClose: () => void
-  onMarkAsPaid: () => void
-  markAsPaidPending: boolean
-  onVoid: () => void
-  voidPending: boolean
 }) {
   return (
     <div className="space-y-8">
@@ -95,32 +95,41 @@ export function SalesTransactionDetails({
       <div>
         <h3 className="text-lg font-semibold mb-4">Line Items</h3>
         {entity.items?.length ? (
-          <div className="grid grid-cols-1 gap-4">
-            {entity.items.map((item, idx) => (
-              <div
-                key={idx}
-                className="flex justify-between items-center rounded-xl border p-4 hover:shadow-sm transition"
-              >
-                <div>
-                  <div className="font-semibold">
-                    {item.item?.name ?? 'Unnamed'}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    SKU: {item.item?.sku ?? 'N/A'}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Unit Price: ₱{' '}
-                    {parseFloat(item.final_price_per_unit).toLocaleString()}
-                  </div>
-                </div>
-                <div className="flex flex-col items-end">
-                  <Badge variant="secondary">Qty: {item.quantity}</Badge>
-                  <span className="text-sm font-semibold mt-1">
-                    ₱ {parseFloat(item.line_total).toLocaleString()}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <div className="border rounded-xl overflow-x-auto shadow-sm">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted">
+                  <TableHead className="w-1/2">Item</TableHead>
+                  <TableHead className="w-1/6">Unit Price</TableHead>
+                  <TableHead className="w-1/6">Quantity</TableHead>
+                  <TableHead className="w-1/6 text-right">Line Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {entity.items.map((item, idx) => (
+                  <TableRow
+                    key={idx}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <TableCell>
+                      <div className="font-semibold">
+                        {item.item?.name ?? 'Unnamed'}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        SKU: {item.item?.sku ?? 'N/A'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      ₱ {parseFloat(item.final_price_per_unit).toLocaleString()}
+                    </TableCell>
+                    <TableCell>{item.quantity}</TableCell>
+                    <TableCell className="text-right font-semibold">
+                      ₱ {parseFloat(item.line_total).toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No items listed.</p>
@@ -128,54 +137,50 @@ export function SalesTransactionDetails({
       </div>
 
       {/* Payments */}
-      <div>
+      <div className="mt-8">
         <h3 className="text-lg font-semibold mb-4">Payments</h3>
         {entity.payments?.length ? (
-          <div className="grid grid-cols-1 gap-4">
-            {entity.payments.map((payment, idx) => (
-              <div
-                key={idx}
-                className="flex justify-between items-center rounded-xl border p-4"
-              >
-                <Detail
-                  horizontal
-                  label="Payment"
-                  value={formatCurrency(payment.amount)}
-                />
-                <div className="text-sm text-muted-foreground">
-                  {payment.payment_type} •{' '}
-                  {formatDate(new Date(payment.payment_date))}
-                </div>
-              </div>
-            ))}
+          <div className="border rounded-xl overflow-x-auto shadow-sm ">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted">
+                  <TableHead>Type</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {entity.payments.map((payment, idx) => (
+                  <TableRow
+                    key={idx}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <TableCell className="capitalize">
+                      {payment.payment_type}
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(new Date(payment.payment_date))}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {formatCurrency(payment.amount)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No payments recorded.</p>
         )}
       </div>
 
-      {/* Actions */}
-      <div className="flex flex-col gap-4 pt-4 border-t mt-6">
-        {!entity.voided && (
-          <Button
-            type="button"
-            className="w-full"
-            variant="destructive"
-            onClick={onVoid}
-            disabled={voidPending}
-          >
-            {voidPending ? 'Voiding...' : 'Void Transaction'}
-          </Button>
-        )}
-
-        <Button
-          className="w-full"
-          variant="outline"
-          onClick={onClose}
-        >
-          Close
-        </Button>
-      </div>
+      <Button
+        className="w-full"
+        variant="outline"
+        onClick={onClose}
+      >
+        Close
+      </Button>
     </div>
   )
 }
