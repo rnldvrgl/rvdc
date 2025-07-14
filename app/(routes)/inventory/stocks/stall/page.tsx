@@ -48,6 +48,7 @@ export default function StocksPage() {
     onRestock: openRestockSheet,
     role,
   })
+  console.log(data)
 
   return (
     <div className="container mx-auto">

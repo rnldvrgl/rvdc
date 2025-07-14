@@ -133,6 +133,15 @@ export function getStallStockColumns({
       'status',
       'action',
     ],
+    clerk: [
+      'item_name',
+      'item_sku',
+      'category_name',
+      'quantity',
+      'low_stock_threshold',
+      'status',
+      'action',
+    ],
   }
 
   return (roleColumns[role ?? ''] ?? []).map((key) => columnMap[key])

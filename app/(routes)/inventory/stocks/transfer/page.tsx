@@ -9,7 +9,7 @@ import { StockTransfer } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useStockTransferMutations } from '@/lib/mutations/useStockTransferMutations'
-import { useStockTransfers } from '@/lib/queries/inventory/useStockTransfers'
+import { useStockTransfers } from '@/lib/queries/inventory/useStocks'
 import { Plus } from 'lucide-react'
 import { getStockTransferColumns } from './columns'
 

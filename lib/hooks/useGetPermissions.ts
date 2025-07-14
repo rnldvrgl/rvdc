@@ -41,6 +41,7 @@ export function useGetPermissions(role: Roles) {
         'view_technicians',
         'view_items',
         'view_stallstocks',
+        'manage_stock_transfer',
         'shortcut_add_client',
         'shortcut_add_transfer',
         'view_expenses',

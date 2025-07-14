@@ -1,4 +1,4 @@
-import { Stock, StockRoomStock } from '@/lib/constants/interface'
+import { Stock, StockRoomStock, StockTransfer } from '@/lib/constants/interface'
 import type {
   PaginatedFilterProps,
   PaginatedResult,
@@ -56,8 +56,8 @@ export function useStockTransfers({
   ordering,
   filter = {},
 }: PaginatedFilterProps) {
-  return useApiQuery<PaginatedResult<Stock>>(
-    ['transfers', page, limit, search, ordering, filter],
+  return useApiQuery<PaginatedResult<StockTransfer>>(
+    ['stock-transfers', page, limit, search, ordering, filter],
     transferUrl,
     {
       page,
