@@ -10,7 +10,7 @@ export function useProvinces() {
       const res = await axios.get(`${API_BASE}/provinces/`)
       return res.data
     },
-    staleTime: 1000 * 60 * 60 * 24,
+    staleTime: Infinity,
   })
 }
 
@@ -25,7 +25,7 @@ export function useCities(provinceCode: string | null) {
       return res.data
     },
     enabled: !!provinceCode,
-    staleTime: 1000 * 60 * 60 * 24,
+    staleTime: Infinity,
   })
 }
 
@@ -40,6 +40,6 @@ export function useBarangays(cityCode: string | null) {
       return res.data
     },
     enabled: !!cityCode,
-    staleTime: 1000 * 60 * 60 * 24,
+    staleTime: Infinity,
   })
 }

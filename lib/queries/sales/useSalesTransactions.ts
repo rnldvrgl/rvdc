@@ -14,15 +14,15 @@ export function useSalesTransactions({
   ordering,
   filter = {},
 }: PaginatedFilterProps & { filter?: Record<string, any> } = {}) {
-  return useApiQuery<PaginatedResult<SalesTransaction>>(
-    ['sales-transactions', page, limit, search, ordering, filter],
-    salesTransactionsUrl,
-    {
+  return useApiQuery<PaginatedResult<SalesTransaction>>({
+    queryKey: ['sales-transactions', page, limit, search, ordering, filter],
+    url: salesTransactionsUrl,
+    params: {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
       ...filter,
     },
-  )
+  })
 }

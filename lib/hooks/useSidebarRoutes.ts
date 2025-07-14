@@ -1,9 +1,15 @@
-import { TSidebarRoute } from '@/lib/constants/types'
 import { UsersIcon } from 'lucide-react'
 import { useMemo } from 'react'
 
-const useSidebarRoutes = (): TSidebarRoute[] => {
-  const sidebarRoutes: TSidebarRoute[] = useMemo(
+type SidebarRoute = {
+  icon: any
+  label: string
+  path?: string
+  routes?: Omit<SidebarRoute, 'icon'>[]
+}
+
+const useSidebarRoutes = (): SidebarRoute[] => {
+  const sidebarRoutes: SidebarRoute[] = useMemo(
     () => [
       {
         icon: UsersIcon,

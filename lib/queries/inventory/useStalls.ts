@@ -13,20 +13,25 @@ export function useStalls({
   ordering,
   filter = {},
 }: PaginatedFilterProps = {}) {
-  return useApiQuery<PaginatedResult<Stall>>(
-    ['stalls', page, limit, search, ordering, filter],
+  return useApiQuery<PaginatedResult<Stall>>({
+    queryKey: ['stalls', page, limit, search, ordering, filter],
     url,
-    {
+    params: {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
+      ...filter,
     },
-  )
+  })
 }
 
 export function useStall(id: number) {
-  return useApiQuery<Stall>(['stall', id], `${url}${id}/`, undefined, {
-    enabled: !!id,
+  return useApiQuery<Stall>({
+    queryKey: ['stall', id],
+    url: `${url}${id}/`,
+    options: {
+      enabled: !!id,
+    },
   })
 }

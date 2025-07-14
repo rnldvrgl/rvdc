@@ -9,26 +9,28 @@ interface UseStallChoicesOptions {
 
 const url = 'choices/'
 
-const useItemChoices = () => {
-  return useApiQuery<Item[]>(['item-choices'], `${url}items/`)
+export const useItemChoices = () => {
+  return useApiQuery<Item[]>({
+    queryKey: ['item-choices'],
+    url: `${url}items/`,
+  })
 }
 
-const useCategoryChoices = () => {
-  return useApiQuery<ProductCategory[]>(
-    ['category-choices'],
-    `${url}categories/`,
-  )
+export const useCategoryChoices = () => {
+  return useApiQuery<ProductCategory[]>({
+    queryKey: ['category-choices'],
+    url: `${url}categories/`,
+  })
 }
 
-const useStallChoices = ({
+export const useStallChoices = ({
   excludeAssignedStall,
   assignedStallId,
 }: UseStallChoicesOptions) => {
-  return useApiQuery<Stall[]>(
-    ['stall-choices', { excludeAssignedStall, assignedStallId }],
-    `${url}stalls/`,
-    undefined,
-    {
+  return useApiQuery<Stall[]>({
+    queryKey: ['stall-choices', { excludeAssignedStall, assignedStallId }],
+    url: `${url}stalls/`,
+    options: {
       select: (data) => {
         if (excludeAssignedStall && assignedStallId != null) {
           return data.filter((stall) => stall.id !== assignedStallId)
@@ -36,20 +38,19 @@ const useStallChoices = ({
         return data
       },
     },
-  )
+  })
 }
 
-const useTechnicianChoices = () => {
-  return useApiQuery<Technician[]>(['technician-choices'], `${url}technicians/`)
+export const useTechnicianChoices = () => {
+  return useApiQuery<Technician[]>({
+    queryKey: ['technician-choices'],
+    url: `${url}technicians/`,
+  })
 }
 
-const useClientChoices = () => {
-  return useApiQuery<Client[]>(['client-choices'], `${url}clients/`)
-}
-export {
-  useCategoryChoices,
-  useClientChoices,
-  useItemChoices,
-  useStallChoices,
-  useTechnicianChoices,
+export const useClientChoices = () => {
+  return useApiQuery<Client[]>({
+    queryKey: ['client-choices'],
+    url: `${url}clients/`,
+  })
 }

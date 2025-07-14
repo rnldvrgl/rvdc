@@ -7,8 +7,8 @@ const url = '/notifications/'
 export const useNotifications = () =>
   useFlattenedCursorInfiniteQuery<Notification>(['notifications'], url, {})
 export const useUnreadNotificationCount = () => {
-  return useApiQuery<{ unread_count: number }>(
-    ['unread-notification-count'],
-    `${url}count_unread/`,
-  )
+  return useApiQuery<{ unread_count: number }>({
+    queryKey: ['unread-notification-count'],
+    url: `${url}count_unread/`,
+  })
 }

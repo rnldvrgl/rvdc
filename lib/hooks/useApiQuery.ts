@@ -5,13 +5,19 @@ import {
   UseQueryResult,
 } from '@tanstack/react-query'
 
-export function useApiQuery<T>(
-  queryKey: any[],
-  url: string,
-  params?: Record<string, any>,
-  options?: Partial<UseQueryOptions<T, Error, T, readonly unknown[]>>,
-  staleTime?: number,
-): UseQueryResult<T> {
+export function useApiQuery<T>({
+  queryKey,
+  url,
+  params,
+  options,
+  staleTime,
+}: {
+  queryKey: any[]
+  url: string
+  params?: Record<string, any>
+  options?: Partial<UseQueryOptions<T, Error, T, readonly unknown[]>>
+  staleTime?: number
+}): UseQueryResult<T> {
   return useQuery<T, Error, T>({
     queryKey,
     queryFn: async (): Promise<T> => {

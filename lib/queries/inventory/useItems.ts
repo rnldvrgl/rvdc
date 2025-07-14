@@ -13,21 +13,25 @@ export function useItems({
   ordering,
   filter = {},
 }: PaginatedFilterProps = {}) {
-  return useApiQuery<PaginatedResult<Item>>(
-    ['items', page, limit, search, ordering, filter],
+  return useApiQuery<PaginatedResult<Item>>({
+    queryKey: ['items', page, limit, search, ordering, filter],
     url,
-    {
+    params: {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
       ...filter,
     },
-  )
+  })
 }
 
 export function useItem(id: number) {
-  return useApiQuery<Item>(['item', id], `${url}${id}/`, undefined, {
-    enabled: !!id,
+  return useApiQuery<Item>({
+    queryKey: ['item', id],
+    url: `${url}${id}/`,
+    options: {
+      enabled: !!id,
+    },
   })
 }

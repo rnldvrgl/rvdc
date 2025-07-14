@@ -8,7 +8,10 @@ import { useApiQuery } from '@/lib/hooks/useApiQuery'
 const url = '/expenses/'
 
 export function useExpense(id: string) {
-  return useApiQuery<Expense>(['expense', id], `${url}${id}/`, undefined)
+  return useApiQuery<Expense>({
+    queryKey: ['expense', id],
+    url: `${url}${id}/`,
+  })
 }
 
 export function useExpenses({
@@ -17,14 +20,14 @@ export function useExpenses({
   search,
   ordering,
 }: PaginatedFilterProps) {
-  return useApiQuery<PaginatedResult<Expense>>(
-    ['expenses', page, limit, search, ordering],
+  return useApiQuery<PaginatedResult<Expense>>({
+    queryKey: ['expenses', page, limit, search, ordering],
     url,
-    {
+    params: {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
     },
-  )
+  })
 }
