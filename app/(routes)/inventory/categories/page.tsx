@@ -78,7 +78,7 @@ export default function ItemCategoriesPage() {
       <DataTable
         isLoading={isLoading}
         columns={columns}
-        data={data?.results ?? []}
+        data={data || { count: 0, next: null, previous: null, results: [] }}
         headerActions={
           <Button onClick={() => openAddSheet()}>
             <Plus className="size-4 mr-1" />

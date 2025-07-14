@@ -116,7 +116,7 @@ export default function StockTransfersPage() {
       <DataTable
         isLoading={isLoading}
         columns={columns}
-        data={data?.results ?? []}
+        data={data || { count: 0, next: null, previous: null, results: [] }}
         headerActions={
           <Button onClick={() => openCreate()}>
             <Plus className="size-4 mr-1" />

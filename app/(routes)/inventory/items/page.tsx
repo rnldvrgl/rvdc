@@ -78,7 +78,7 @@ export default function ItemsPage() {
       <DataTable
         isLoading={isLoading}
         columns={columns}
-        data={data?.results ?? []}
+        data={data || { count: 0, next: null, previous: null, results: [] }}
         headerActions={
           role === 'admin' && (
             <Button onClick={() => openAddSheet()}>
