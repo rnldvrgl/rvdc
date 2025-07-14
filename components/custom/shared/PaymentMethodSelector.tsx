@@ -127,7 +127,7 @@ export default function PaymentMethodSelector({
                               type="number"
                               min="0"
                               step="0.01"
-                              value={field.value ?? ''}
+                              value={Number(field.value) ?? ''}
                               onChange={(e) =>
                                 field.onChange(parseFloat(e.target.value) || 0)
                               }

@@ -93,7 +93,7 @@ export default function SalesTransactionForm({
       payments:
         initialData?.payments?.map((i) => ({
           payment_type: i.payment_type,
-          amount: i.amount ?? 0,
+          amount: Number(i.amount) ?? 0,
         })) ?? [],
       items:
         initialData?.items?.map((i) => ({
