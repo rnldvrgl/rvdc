@@ -3,17 +3,23 @@
 import { Button } from '@/components/ui/button'
 import { FormItem } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { TImageUploadProps } from '@/lib/constants/types'
 import { getDisplayImage } from '@/lib/utils/helpers'
 import { Trash } from 'lucide-react'
 import Image from 'next/image'
+
+interface ImageUploadProps {
+  image: string
+  fieldName: string
+  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  handleFileRemove: () => void
+}
 
 const ImageUpload = ({
   image,
   fieldName,
   handleFileChange,
   handleFileRemove,
-}: TImageUploadProps) => {
+}: ImageUploadProps) => {
   const displayImage = getDisplayImage(image)
 
   return (

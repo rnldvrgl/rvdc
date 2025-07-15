@@ -44,7 +44,7 @@ const UserProfileForm = ({
                 name="first_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel required>First Name</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Juan"
@@ -60,7 +60,7 @@ const UserProfileForm = ({
                 name="last_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel required>Last Name</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Dela Cruz"
@@ -78,7 +78,7 @@ const UserProfileForm = ({
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel required>Username</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="juandelacruz"

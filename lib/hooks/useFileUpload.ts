@@ -1,7 +1,12 @@
-import { UseFileUploadProps } from '@/lib/constants/types'
 import { convertFileToBase64 } from '@/lib/utils/helpers'
 import { ChangeEvent, useEffect, useState } from 'react'
 import { Path, PathValue } from 'react-hook-form'
+
+interface UseFileUploadProps<TFormValues> {
+  form: any
+  fieldName: Path<TFormValues>
+  initialImage?: string
+}
 
 const useFileUpload = <TFormValues extends Record<string, any>>({
   form,
@@ -29,10 +34,10 @@ const useFileUpload = <TFormValues extends Record<string, any>>({
       return
     }
 
-    if (file.size > 2_000_000) {
+    if (file.size > 3_000_000) {
       form.setError(fieldName, {
         type: 'manual',
-        message: 'File too large. Max size is 2MB.',
+        message: 'File too large. Max size is 3MB.',
       })
       return
     }

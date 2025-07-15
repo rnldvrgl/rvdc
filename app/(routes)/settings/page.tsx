@@ -24,13 +24,15 @@ export default function SettingsPage() {
   const form = useForm<TUserProfile>({
     resolver: zodResolver(userProfileSchema) as any,
     defaultValues: {
-      email: '',
-      username: '',
-      first_name: '',
-      last_name: '',
-      contact_number: '',
-      birthday: undefined,
-      profile_image: '',
+      email: userProfile?.email ?? '',
+      username: userProfile?.username ?? '',
+      first_name: userProfile?.first_name ?? '',
+      last_name: userProfile?.last_name ?? '',
+      contact_number: userProfile?.contact_number ?? '',
+      birthday: userProfile?.birthday
+        ? new Date(userProfile.birthday)
+        : undefined,
+      profile_image: userProfile?.profile_image ?? '',
     },
   })
 

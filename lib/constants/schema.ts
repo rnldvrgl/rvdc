@@ -7,13 +7,17 @@ export const loginSchema = z.object({
 })
 
 export const userProfileSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email('Invalid email format').or(z.literal('')).optional(),
   current_password: z.string().optional(),
   new_password: z.string().optional(),
   username: z.string().min(2),
   first_name: z.string().min(2),
   last_name: z.string().min(2),
-  contact_number: z.string().min(7),
+  contact_number: z
+    .string()
+    .regex(/^\d{11}$/, 'Contact number must be exactly 11 digits')
+    .or(z.literal(''))
+    .optional(),
   birthday: z
     .preprocess((arg) => {
       if (typeof arg === 'string' || arg instanceof Date)
