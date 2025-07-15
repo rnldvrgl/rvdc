@@ -95,7 +95,7 @@ export default function SidebarNav({
   return (
     <>
       {/* Large screens */}
-      <aside className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:w-72 lg:flex-col border-r border-border bg-background p-4">
+      <aside className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:w-72 lg:flex-col border-r border-border p-4">
         <div className="flex flex-col gap-y-8 w-full">
           {renderUserHeader()}
           {renderNav()}
@@ -106,7 +106,7 @@ export default function SidebarNav({
       </aside>
 
       {/* Small screens */}
-      <div className="lg:hidden flex h-16 items-center justify-between border-b border-border bg-background px-4">
+      <div className="lg:hidden flex h-16 items-center justify-between border-b border-border  px-4">
         <div className="flex items-center gap-3">
           <AnimatePresence>
             {user ? (

@@ -35,7 +35,7 @@ type Payment = {
 type FormValues = {
   client_id: number
   items: { item_id: number; quantity: number; final_price_per_unit: number }[]
-  stall: number | null
+  stall?: number | null
   payments: Payment[]
   manual_receipt_number?: string
 }

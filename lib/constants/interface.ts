@@ -302,7 +302,7 @@ export interface SalesItem {
   description: string
   quantity: number
   final_price_per_unit: string
-  line_total: string
+  line_total: number
 }
 
 // Sales Transaction
@@ -333,5 +333,5 @@ export interface SalesTransaction {
   // Computed props if you send them from serializer
   computed_total?: string
   total_items?: number
-  total_paid?: string
+  total_paid?: number
 }

@@ -17,13 +17,22 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Item, ItemEntry, SalesTransaction } from '@/lib/constants/interface'
+import {
+  Item,
+  ItemEntry,
+  SalesTransaction,
+  Stall,
+} from '@/lib/constants/interface'
 import { Client } from '@/lib/constants/types'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useEntitySheetDialog } from '@/lib/hooks/useEntityDialog'
 import { useItemSelection } from '@/lib/hooks/useItemSelection'
 import { useSalesTransactionMutations } from '@/lib/mutations/useSalesTransactionMutations'
-import { useClientChoices, useItemChoices } from '@/lib/queries/useChoices'
+import {
+  useClientChoices,
+  useItemChoices,
+  useStallChoices,
+} from '@/lib/queries/useChoices'
 import { formatCurrency } from '@/lib/utils/helpers'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Printer, RotateCcw, Save, Trash2 } from 'lucide-react'
@@ -33,34 +42,6 @@ import toast from 'react-hot-toast'
 import { useReactToPrint } from 'react-to-print'
 import * as z from 'zod'
 
-export const formSchema = z.object({
-  stall: z.number().nullable(),
-  client_id: z.number(),
-  manual_receipt_number: z.string().optional(),
-
-  payments: z
-    .array(
-      z.object({
-        payment_type: z.string().min(1, 'Payment type is required'),
-        amount: z.number().min(0, 'Amount must be a positive number'),
-      }),
-    )
-    .min(1, 'At least one payment is required'),
-
-  items: z
-    .array(
-      z.object({
-        item_id: z.number(),
-        quantity: z.number().min(1, 'Quantity must be at least 1'),
-        final_price_per_unit: z.number().min(0),
-      }),
-    )
-    .min(1, 'at least one item is required'),
-})
-
-type FormValues = z.infer<typeof formSchema>
-
-const resolver = zodResolver(formSchema)
 interface SalesTransactionFormProps {
   initialData?: SalesTransaction
   onClose: () => void
@@ -70,10 +51,12 @@ export default function SalesTransactionForm({
   initialData,
   onClose,
 }: SalesTransactionFormProps) {
+  const { assigned_stall, role } = useCurrentUser()
+  const [stall, setStall] = useState<Stall | null>(null)
+  const { data: stalls } = useStallChoices({})
   const [showPrintDialog, setShowPrintDialog] = useState(false)
   const [createdTransaction, setCreatedTransaction] =
     useState<SalesTransaction | null>(null)
-  const { assigned_stall } = useCurrentUser()
   const { data: allItemsData } = useItemChoices()
   const { data: clientsData } = useClientChoices()
   const allItems: Item[] = allItemsData ?? []
@@ -81,6 +64,42 @@ export default function SalesTransactionForm({
   const { addTransaction, updateTransaction } = useSalesTransactionMutations()
   const componentRef = useRef<HTMLDivElement>(null)
   const isVoided = initialData?.voided
+
+  const formSchema = z.object({
+    stall:
+      role === 'admin'
+        ? z.number({
+            required_error: 'Stall is required',
+            invalid_type_error: 'Stall is required',
+          })
+        : z.number().nullable().optional(),
+    client_id: z.number({
+      required_error: 'Client is required',
+    }),
+    manual_receipt_number: z.string().optional(),
+    payments: z
+      .array(
+        z.object({
+          payment_type: z.string().min(1, 'Payment type is required'),
+          amount: z.number().min(0, 'Amount must be a positive number'),
+        }),
+      )
+      .min(1, 'At least one payment is required'),
+
+    items: z
+      .array(
+        z.object({
+          item_id: z.number(),
+          quantity: z.number().min(1, 'Quantity must be at least 1'),
+          final_price_per_unit: z.number().min(0),
+        }),
+      )
+      .min(1, 'at least one item is required'),
+  })
+
+  type FormValues = z.infer<typeof formSchema>
+
+  const resolver = zodResolver(formSchema)
 
   const {
     entityState: voidingState,
@@ -98,7 +117,7 @@ export default function SalesTransactionForm({
   const form = useForm<FormValues>({
     resolver,
     defaultValues: {
-      stall: initialData?.stall?.id ?? assigned_stall?.id ?? null,
+      stall: initialData?.stall?.id ?? initialData?.stall?.id ?? null,
       client_id: initialData?.client?.id,
       manual_receipt_number: initialData?.manual_receipt_number ?? '',
       payments:
@@ -146,9 +165,23 @@ export default function SalesTransactionForm({
     }
   }, [allItemsData, initialData, form])
 
+  useEffect(() => {
+    if (!role) return
+
+    if (role === 'admin') {
+      if (stalls && initialData?.stall) {
+        const found = stalls.find((s) => s.id === initialData.stall.id)
+        setStall(found ?? null)
+      }
+    } else if (assigned_stall) {
+      setStall(assigned_stall)
+    }
+  }, [stalls, initialData, role, assigned_stall])
+
   const handleSubmit = (data: FormValues) => {
+    console.log(data)
     const payload = {
-      stall: assigned_stall?.id ?? null,
+      stall: role == 'admin' ? data.stall : assigned_stall?.id,
       client: data.client_id ?? null,
       manual_receipt_number: data.manual_receipt_number ?? null,
       items: data.items.map((i) => ({
@@ -197,6 +230,7 @@ export default function SalesTransactionForm({
         <SalesTransactionPrintContent
           ref={componentRef}
           entity={createdTransaction}
+          stall={stall}
         />
       </div>
 
@@ -223,9 +257,35 @@ export default function SalesTransactionForm({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-6"
+          className="space-y-3"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 space-y-3">
+            {role && role === 'admin' && (
+              <FormField
+                name="stall"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Stall</FormLabel>
+                    <ComboBox
+                      disabled={form.formState.isSubmitting || isVoided}
+                      options={
+                        stalls?.map((s) => ({
+                          value: s.id,
+                          label: s.name,
+                        })) ?? []
+                      }
+                      value={field.value ? Number(field.value) : null}
+                      onChange={(val) => {
+                        field.onChange(val ?? null)
+                        setStall(stalls?.find((s) => s.id === val) ?? null)
+                      }}
+                      placeholder="Select stall"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             <FormField
               control={form.control}
               name="manual_receipt_number"
