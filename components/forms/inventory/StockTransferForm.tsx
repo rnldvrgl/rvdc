@@ -1,5 +1,6 @@
 'use client'
 
+import ItemQuantitySelector from '@/components/custom/shared/ItemQuantitySelector'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -17,8 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Item, Stall, StockTransfer } from '@/lib/constants/interface'
+import type {
+  Item,
+  ItemEntry,
+  Stall,
+  StockTransfer,
+} from '@/lib/constants/interface'
 import type { Technician } from '@/lib/constants/types'
+import { useItemSelection } from '@/lib/hooks/useItemSelection'
 import { useStockTransferMutations } from '@/lib/mutations/useStockTransferMutations'
 import {
   useItemChoices,
@@ -27,8 +34,7 @@ import {
 } from '@/lib/queries/useChoices'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import { formatDate } from '@/lib/utils/helpers'
-import { CheckCircle, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { CheckCircle } from 'lucide-react'
 import { FormProvider, useForm } from 'react-hook-form'
 
 interface FormValues {
@@ -54,7 +60,6 @@ export default function StockTransferForm({
   })
 
   const isFinalized = !!initialData?.is_finalized
-  const [items, setItems] = useState<{ item: Item; quantity: number }[]>([])
   const { data: allItemsData } = useItemChoices()
   const { data: stallsData } = useStallChoices({
     excludeAssignedStall: true,
@@ -69,29 +74,16 @@ export default function StockTransferForm({
   const { addStockTransfer, updateStockTransfer, finalizeStockTransfer } =
     useStockTransferMutations()
 
-  useEffect(() => {
-    if (!initialData) return
-
-    // Only when initialData changes, we prepare items with nulls first
-    setItems(
-      initialData.items?.map((i) => ({
+  const { items, setItems } = useItemSelection<Item, ItemEntry, StockTransfer>({
+    initialData,
+    allItems,
+    getInitialItems: (data) =>
+      data.items?.map((i) => ({
         item: i.item ?? null,
         quantity: i.quantity ?? 0,
       })) ?? [],
-    )
-  }, [initialData])
+  })
 
-  // Then, after allItems is loaded, fill in missing
-  useEffect(() => {
-    if (allItems.length === 0) return
-
-    setItems((prevItems) =>
-      prevItems.map((i) => ({
-        item: i.item ?? allItems[0],
-        quantity: i.quantity,
-      })),
-    )
-  }, [allItems])
   const handleSubmit = (values: FormValues) => {
     const payload = {
       from_stall: user?.assigned_stall?.id,
@@ -99,7 +91,7 @@ export default function StockTransferForm({
       technician: parseInt(values.technician ?? '0'),
       used_for: values.used_for,
       items: items.map((itm) => ({
-        item: itm.item.id,
+        item: itm.item?.id,
         quantity: itm.quantity,
       })),
     }
@@ -269,108 +261,11 @@ export default function StockTransferForm({
 
           {/* Items */}
           <div className="pt-4 border-t space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-sm">Items</span>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() =>
-                  setItems([...items, { item: allItems[0], quantity: 1 }])
-                }
-                disabled={isFinalized}
-                className="flex items-center gap-1"
-              >
-                <Plus className="size-4" />
-                Add
-              </Button>
-            </div>
-
-            {items.length === 0 && (
-              <p className="text-xs text-muted-foreground">
-                No items added yet.
-              </p>
-            )}
-
-            <div className="space-y-2">
-              {items.map((itm, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-2"
-                >
-                  <div className="flex-1 min-w-[8rem]">
-                    <Select
-                      value={itm.item.id.toString()}
-                      onValueChange={(val) =>
-                        setItems((prev) =>
-                          prev.map((i, ix) =>
-                            ix === idx
-                              ? {
-                                  ...i,
-                                  item: allItems.find(
-                                    (itm) => itm.id === parseInt(val),
-                                  )!,
-                                }
-                              : i,
-                          ),
-                        )
-                      }
-                      disabled={isFinalized}
-                    >
-                      <SelectTrigger
-                        disabled={isFinalized}
-                        className="w-full"
-                      >
-                        <SelectValue placeholder="Select Item" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {allItems.map((item) => (
-                          <SelectItem
-                            key={item.id}
-                            value={item.id.toString()}
-                          >
-                            {item.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="w-20">
-                    <Input
-                      type="number"
-                      min={1}
-                      value={itm.quantity}
-                      onChange={(e) =>
-                        setItems((prev) =>
-                          prev.map((i, ix) =>
-                            ix === idx
-                              ? {
-                                  ...i,
-                                  quantity: parseInt(e.target.value) || 1,
-                                }
-                              : i,
-                          ),
-                        )
-                      }
-                      disabled={isFinalized}
-                    />
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="group"
-                    onClick={() =>
-                      setItems((prev) => prev.filter((_, ix) => ix !== idx))
-                    }
-                    disabled={isFinalized}
-                  >
-                    <Trash2 className="size-4 text-destructive group-hover:scale-105 transition-all " />
-                  </Button>
-                </div>
-              ))}
-            </div>
+            <ItemQuantitySelector
+              items={items}
+              allItems={allItems}
+              onChange={setItems}
+            />
           </div>
 
           {/* Submit */}

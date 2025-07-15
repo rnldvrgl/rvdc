@@ -1,9 +1,9 @@
 'use client'
 
 import { getCategoryColumns } from '@/app/(routes)/inventory/categories/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import ItemCategoryForm from '@/components/forms/inventory/ItemCategoryForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { ProductCategory } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -23,15 +23,15 @@ export default function ItemCategoriesPage() {
   })
 
   const {
-    sheetState: { open: editOpen, entity },
-    openSheet: openEditSheet,
-    closeSheet: closeEditSheet,
+    entityState: { open: editOpen, entity },
+    openEntity: openEditSheet,
+    closeEntity: closeEditSheet,
   } = useEntitySheet<ProductCategory>()
 
   const {
-    sheetState: { open: addOpen },
-    openSheet: openAddSheet,
-    closeSheet: closeAddSheet,
+    entityState: { open: addOpen },
+    openEntity: openAddSheet,
+    closeEntity: closeAddSheet,
   } = useEntitySheet<ProductCategory>()
 
   const handleDelete = (category: ProductCategory) => {
@@ -50,13 +50,14 @@ export default function ItemCategoriesPage() {
       {/* Edit Category Sheet */}
       <EntitySheet<ProductCategory>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={entity}
         title="Edit Item Category"
         description="Update the item category details below."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <ItemCategoryForm
-            onClose={onClose}
+            onClose={forceClose}
             category={entity}
           />
         )}
@@ -65,16 +66,19 @@ export default function ItemCategoriesPage() {
       {/* Add Category Sheet */}
       <EntitySheet<ProductCategory>
         open={addOpen}
-        onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
+        onClose={closeAddSheet}
         title="Add Item Category"
         description="Fill out the form below to add a new item category."
-        renderForm={({ onClose }) => <ItemCategoryForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ forceClose }) => (
+          <ItemCategoryForm onClose={forceClose} />
+        )}
       />
 
       <DataTable
         isLoading={isLoading}
         columns={columns}
-        data={data?.results ?? []}
+        data={data || { count: 0, next: null, previous: null, results: [] }}
         headerActions={
           <Button onClick={() => openAddSheet()}>
             <Plus className="size-4 mr-1" />

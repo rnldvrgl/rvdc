@@ -4,8 +4,8 @@ import { Expense, GetColumnsProps } from '@/lib/constants/interface'
 import {
   formatCurrency,
   formatDate,
-  getSourceBadgeVariant,
-  getTransferBadgeVariant,
+  getBadgeVariant,
+  getBoolBadgeVariant,
   safeCell,
 } from '@/lib/utils/helpers'
 import { ColumnDef } from '@tanstack/react-table'
@@ -28,7 +28,7 @@ export function getExpenseColumns({
       accessorKey: 'source',
       header: 'Source',
       cell: ({ getValue }) => (
-        <Badge variant={getSourceBadgeVariant(getValue() as string)}>
+        <Badge variant={getBadgeVariant(getValue() as string)}>
           {safeCell(getValue())}
         </Badge>
       ),
@@ -47,7 +47,7 @@ export function getExpenseColumns({
       accessorKey: 'is_paid',
       header: 'Paid',
       cell: ({ getValue }) => (
-        <Badge variant={getTransferBadgeVariant(getValue() as boolean)}>
+        <Badge variant={getBoolBadgeVariant({ status: getValue() as boolean })}>
           {(getValue() as boolean) ? 'Yes' : 'No'}
         </Badge>
       ),

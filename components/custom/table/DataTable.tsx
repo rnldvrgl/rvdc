@@ -23,19 +23,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { PaginatedResult } from '@/lib/constants/types'
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { useNavigation } from '@/lib/hooks/useNavigation'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 
-interface DataMeta {
-  count?: number
-  next?: string | null
-  previous?: string | null
-}
-
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
-  data: TData[] & DataMeta
+  data: PaginatedResult<TData>
   isLoading: boolean
   headerActions?: React.ReactNode
 }
@@ -50,7 +45,7 @@ export function DataTable<TData, TValue>({
   const limit = Number(rawLimit) || 10
   const { push } = useNavigation()
 
-  const totalCount = data?.count ?? data.length ?? 0
+  const totalCount = data?.count ?? 0
   const pageCount = Math.max(1, Math.ceil(totalCount / (limit || 10)))
 
   const hasNextPage = !!data?.next
@@ -83,7 +78,7 @@ export function DataTable<TData, TValue>({
   }, [search])
 
   const table = useReactTable({
-    data,
+    data: data.results ?? [],
     columns,
     pageCount,
     manualPagination: true,

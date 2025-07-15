@@ -36,6 +36,20 @@ export function useGetPermissions(role: Roles) {
         'view_repairs',
         'view_attendance',
       ],
+      clerk: [
+        'view_clients',
+        'view_technicians',
+        'view_items',
+        'view_stallstocks',
+        'manage_stock_transfer',
+        'shortcut_add_client',
+        'shortcut_add_transfer',
+        'view_expenses',
+        'shortcut_add_expense',
+        'shortcut_add_transfer',
+        'view_sales',
+        'view_sales',
+      ],
       guest: [],
     }
     return permissionsMap[role] || []

@@ -3,8 +3,8 @@ import { Badge } from '@/components/ui/badge'
 import { GetColumnsProps, Stock } from '@/lib/constants/interface'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import {
+  getBadgeVariant,
   getHashedStallBadgeClass,
-  getStockBadgeVariant,
   safeCell,
 } from '@/lib/utils/helpers'
 import { ColumnDef } from '@tanstack/react-table'
@@ -69,7 +69,7 @@ export function getStallStockColumns({
       cell: ({ row }) => {
         const { status } = row.original
         return (
-          <Badge variant={getStockBadgeVariant(status)}>
+          <Badge variant={getBadgeVariant(status)}>
             {status.replace('_', ' ')}
           </Badge>
         )
@@ -125,6 +125,15 @@ export function getStallStockColumns({
       'action',
     ],
     manager: [
+      'item_name',
+      'item_sku',
+      'category_name',
+      'quantity',
+      'low_stock_threshold',
+      'status',
+      'action',
+    ],
+    clerk: [
       'item_name',
       'item_sku',
       'category_name',

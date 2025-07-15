@@ -1,9 +1,9 @@
 'use client'
 
 import { getStallColumns } from '@/app/(routes)/stalls/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import StallForm from '@/components/forms/inventory/StallForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { Stall } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -16,15 +16,15 @@ export default function StallsPage() {
   const { deleteStall } = useStallMutations()
 
   const {
-    sheetState: { open: editOpen, entity },
-    openSheet: openEditSheet,
-    closeSheet: closeEditSheet,
+    entityState: { open: editOpen, entity },
+    openEntity: openEditSheet,
+    closeEntity: closeEditSheet,
   } = useEntitySheet<Stall>()
 
   const {
-    sheetState: { open: addOpen },
-    openSheet: openAddSheet,
-    closeSheet: closeAddSheet,
+    entityState: { open: addOpen },
+    openEntity: openAddSheet,
+    closeEntity: closeAddSheet,
   } = useEntitySheet<Stall>()
 
   const handleDelete = (stall: Stall) => {
@@ -42,13 +42,14 @@ export default function StallsPage() {
     <div className="container mx-auto">
       <EntitySheet<Stall>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={entity}
         title="Edit Stall"
         description="Update the stall details below."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <StallForm
-            onClose={onClose}
+            onClose={forceClose}
             stall={entity}
           />
         )}
@@ -56,16 +57,17 @@ export default function StallsPage() {
 
       <EntitySheet<Stall>
         open={addOpen}
-        onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
+        onClose={closeAddSheet}
         title="Add Stall"
         description="Fill out the form below to add a new stall."
-        renderForm={({ onClose }) => <StallForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ onClose }) => <StallForm onClose={forceClose} />}
       />
 
       <DataTable
         isLoading={isLoading}
         columns={columns}
-        data={data?.results ?? []}
+        data={data || { count: 0, next: null, previous: null, results: [] }}
         headerActions={
           <Button onClick={() => openAddSheet()}>
             <Plus className="size-4 mr-1" />

@@ -1,9 +1,9 @@
 'use client'
 
 import { getClientColumns } from '@/app/(routes)/clients/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import ClientForm from '@/components/forms/ClientForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { Client } from '@/lib/constants/types'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -24,15 +24,15 @@ export default function ClientsPage() {
 
   // Separate sheets
   const {
-    sheetState: { open: editOpen, entity },
-    openSheet: openEditSheet,
-    closeSheet: closeEditSheet,
+    entityState: { open: editOpen, entity },
+    openEntity: openEditSheet,
+    closeEntity: closeEditSheet,
   } = useEntitySheet<Client>()
 
   const {
-    sheetState: { open: addOpen },
-    openSheet: openAddSheet,
-    closeSheet: closeAddSheet,
+    entityState: { open: addOpen },
+    openEntity: openAddSheet,
+    closeEntity: closeAddSheet,
   } = useEntitySheet<Client>()
 
   const handleDelete = (client: Client) => {
@@ -51,13 +51,14 @@ export default function ClientsPage() {
       {/* Edit Client Sheet */}
       <EntitySheet<Client>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={entity}
         title="Edit Client"
         description="Update the client details below."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <ClientForm
-            onClose={onClose}
+            onClose={forceClose}
             client={entity}
           />
         )}
@@ -66,16 +67,17 @@ export default function ClientsPage() {
       {/* Add Client Sheet */}
       <EntitySheet<Client>
         open={addOpen}
-        onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
+        onClose={closeAddSheet}
         title="Add Client"
         description="Fill out the form below to add a new client."
-        renderForm={({ onClose }) => <ClientForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ forceClose }) => <ClientForm onClose={forceClose} />}
       />
 
       <DataTable
         isLoading={isLoading}
         columns={columns}
-        data={data?.results ?? []}
+        data={data || { count: 0, next: null, previous: null, results: [] }}
         headerActions={
           <Button onClick={() => openAddSheet()}>
             <Plus className="size-4 mr-1" />

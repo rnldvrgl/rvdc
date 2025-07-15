@@ -1,31 +1,44 @@
-'use client'
-
-import {
-  EntitySheetState,
-  UseEntitySheetReturn,
-} from '@/lib/constants/interface'
 import { useState } from 'react'
 
-export function useEntitySheet<T>(): UseEntitySheetReturn<T> {
-  const [sheetState, setSheetState] = useState<EntitySheetState<T>>({
+type EntityState<T> = {
+  open: boolean
+  entity?: T
+}
+
+type useEntitySheetReturn<T> = {
+  entityState: EntityState<T>
+  openEntity: (entity?: T) => void
+  closeEntity: () => Promise<void>
+  toggleEntity: (entity?: T) => void
+}
+
+export function useEntitySheet<T>(
+  beforeClose?: () => boolean | Promise<boolean>,
+): useEntitySheetReturn<T> {
+  const [entityState, setEntityState] = useState<EntityState<T>>({
     open: false,
     entity: undefined,
   })
 
-  const openSheet = (entity?: T) => {
-    setSheetState({ open: true, entity })
+  const openEntity = (entity?: T) => {
+    setEntityState({ open: true, entity })
   }
 
-  const closeSheet = () => {
-    setSheetState({ open: false, entity: undefined })
+  const closeEntity = async () => {
+    if (beforeClose) {
+      const result = await beforeClose()
+      if (!result) return
+    }
+    setEntityState({ open: false, entity: undefined })
   }
 
-  const toggleSheet = () => {
-    setSheetState((prev) => ({
-      open: !prev.open,
-      entity: prev.open ? undefined : prev.entity,
-    }))
+  const toggleEntity = (entity?: T) => {
+    if (entityState.open) {
+      void closeEntity()
+    } else {
+      openEntity(entity)
+    }
   }
 
-  return { sheetState, openSheet, closeSheet, toggleSheet }
+  return { entityState, openEntity, closeEntity, toggleEntity }
 }

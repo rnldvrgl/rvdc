@@ -15,26 +15,25 @@ export function useItemCategories({
   ordering,
   filter = {},
 }: PaginatedFilterProps = {}) {
-  return useApiQuery<PaginatedResult<ProductCategory>>(
-    ['categories', page, limit, search, ordering],
+  return useApiQuery<PaginatedResult<ProductCategory>>({
+    queryKey: ['categories', page, limit, search, ordering, filter],
     url,
-    {
+    params: {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
       ...filter,
     },
-  )
+  })
 }
 
 export function useItemCategory(id: number) {
-  return useApiQuery<ProductCategory>(
-    ['category', id],
-    `${url}${id}/`,
-    undefined,
-    {
+  return useApiQuery<ProductCategory>({
+    queryKey: ['category', id],
+    url: `${url}${id}/`,
+    options: {
       enabled: !!id,
     },
-  )
+  })
 }

@@ -1,15 +1,15 @@
 'use client'
 
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import { StockTransferDetails } from '@/components/details/StockTransferDetails'
 import StockTransferForm from '@/components/forms/inventory/StockTransferForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { StockTransfer } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useStockTransferMutations } from '@/lib/mutations/useStockTransferMutations'
-import { useStockTransfers } from '@/lib/queries/inventory/useStockTransfers'
+import { useStockTransfers } from '@/lib/queries/inventory/useStocks'
 import { Plus } from 'lucide-react'
 import { getStockTransferColumns } from './columns'
 
@@ -38,19 +38,19 @@ export default function StockTransfersPage() {
 
   // Sheets
   const {
-    sheetState: viewSheet,
-    openSheet: openView,
-    closeSheet: closeView,
+    entityState: viewSheet,
+    openEntity: openView,
+    closeEntity: closeView,
   } = useEntitySheet<StockTransfer>()
   const {
-    sheetState: createSheet,
-    openSheet: openCreate,
-    closeSheet: closeCreate,
+    entityState: createSheet,
+    openEntity: openCreate,
+    closeEntity: closeCreate,
   } = useEntitySheet<StockTransfer>()
   const {
-    sheetState: editSheet,
-    openSheet: openEdit,
-    closeSheet: closeEdit,
+    entityState: editSheet,
+    openEntity: openEdit,
+    closeEntity: closeEdit,
   } = useEntitySheet<StockTransfer>()
 
   const columns = getStockTransferColumns({
@@ -64,22 +64,26 @@ export default function StockTransfersPage() {
       {/* Create transfer sheet */}
       <EntitySheet<StockTransfer>
         open={createSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeCreate()}
+        onClose={closeCreate}
         title="New Stock Transfer"
         description="Create a new stock transfer by selecting technician, destination stall, and items."
-        renderForm={({ onClose }) => <StockTransferForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ forceClose }) => (
+          <StockTransferForm onClose={forceClose} />
+        )}
       />
 
       {/* Edit transfer sheet */}
       <EntitySheet<StockTransfer>
         open={editSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeEdit()}
+        onClose={closeEdit}
         entity={editSheet.entity}
         title="Edit Stock Transfer"
         description="Update the details of this stock transfer."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <StockTransferForm
-            onClose={onClose}
+            onClose={forceClose}
             initialData={entity}
           />
         )}
@@ -88,10 +92,11 @@ export default function StockTransfersPage() {
       {/* View transfer sheet */}
       <EntitySheet<StockTransfer>
         open={viewSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeView()}
+        onClose={closeView}
         entity={viewSheet.entity}
         title="Transfer Details"
         description="Review the details of this stock transfer."
+        withCloseConfirmation={false}
         renderForm={({ onClose, entity }) =>
           entity ? (
             <StockTransferDetails
@@ -111,7 +116,7 @@ export default function StockTransfersPage() {
       <DataTable
         isLoading={isLoading}
         columns={columns}
-        data={data?.results ?? []}
+        data={data || { count: 0, next: null, previous: null, results: [] }}
         headerActions={
           <Button onClick={() => openCreate()}>
             <Plus className="size-4 mr-1" />

@@ -6,10 +6,10 @@ import { useQueryClient } from '@tanstack/react-query'
 
 export function useStockTransferMutations() {
   const queryClient = useQueryClient()
-  const url = 'inventory/stocks/transfers/'
+  const url = '/inventory/stock-transfers/'
 
   const addStockTransfer = useApiMutation({
-    mutationFn: (data: any) => api.post('inventory/stocks/transfer/', data),
+    mutationFn: (data: any) => api.post(url, data),
     successMessage: 'Stock transfer created successfully.',
     invalidateQueries: [
       { queryKey: ['stock-transfers'] },

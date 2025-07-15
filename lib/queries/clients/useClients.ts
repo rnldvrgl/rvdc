@@ -3,8 +3,7 @@ import type {
   PaginatedFilterProps,
   PaginatedResult,
 } from '@/lib/constants/types'
-import api from '@/lib/utils/api'
-import { useQuery } from '@tanstack/react-query'
+import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
 export function useClients({
   page = 1,
@@ -13,20 +12,15 @@ export function useClients({
   ordering,
   filter = {},
 }: PaginatedFilterProps) {
-  return useQuery<PaginatedResult<Client>>({
+  return useApiQuery<PaginatedResult<Client>>({
     queryKey: ['clients', page, limit, search, ordering, filter],
-    queryFn: async () => {
-      const res = await api.get<PaginatedResult<Client>>('/clients', {
-        params: {
-          page,
-          limit,
-          search: search || undefined,
-          ordering: ordering || undefined,
-          ...filter,
-        },
-      })
-      return res.data
+    url: '/clients',
+    params: {
+      page,
+      limit,
+      search: search || undefined,
+      ordering: ordering || undefined,
+      ...filter,
     },
-    staleTime: 1000 * 60 * 5,
   })
 }

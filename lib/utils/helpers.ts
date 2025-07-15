@@ -10,6 +10,14 @@ import { toZonedTime } from 'date-fns-tz'
 
 import { twMerge } from 'tailwind-merge'
 
+type badgeVariants =
+  | 'default'
+  | 'secondary'
+  | 'destructive'
+  | 'outline'
+  | 'success'
+  | 'warning'
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
@@ -160,33 +168,29 @@ export function safeCell(value: any) {
   return value
 }
 
-export function getStockBadgeVariant(
-  status: string,
-): 'success' | 'warning' | 'destructive' {
-  const variantMap: Record<string, 'success' | 'warning' | 'destructive'> = {
+export function getBadgeVariant(source: string): badgeVariants {
+  const variants: Record<string, badgeVariants> = {
+    paid: 'success',
     high_stock: 'success',
+    manual: 'secondary',
+    transfer: 'default',
+    partial: 'warning',
     low_stock: 'warning',
     no_stock: 'destructive',
+    unpaid: 'destructive',
   }
-  return variantMap[status] || 'default'
+
+  return variants[source] ?? 'outline'
 }
 
-export function getSourceBadgeVariant(
-  source: string,
-): 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' {
-  switch (source) {
-    case 'manual':
-      return 'secondary'
-    case 'transfer':
-      return 'default'
-    default:
-      return 'warning'
-  }
-}
-
-export function getTransferBadgeVariant(
-  status: boolean,
-): 'success' | 'destructive' {
+export function getBoolBadgeVariant({
+  status,
+  reverse = false,
+}: {
+  status: boolean
+  reverse?: boolean
+}): 'success' | 'destructive' {
+  if (reverse) return status ? 'destructive' : 'success'
   return status ? 'success' : 'destructive'
 }
 

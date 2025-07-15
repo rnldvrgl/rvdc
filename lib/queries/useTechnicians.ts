@@ -8,7 +8,10 @@ import { useApiQuery } from '@/lib/hooks/useApiQuery'
 const url = '/users/technicians/'
 
 export function useTechnician(id: string) {
-  return useApiQuery<Technician>(['technician', id], `${url}${id}/`, undefined)
+  return useApiQuery<Technician>({
+    queryKey: ['technician', id],
+    url: `${url}${id}/`,
+  })
 }
 
 export function useTechnicians({
@@ -18,15 +21,15 @@ export function useTechnicians({
   ordering,
   filter = {},
 }: PaginatedFilterProps) {
-  return useApiQuery<PaginatedResult<Technician>>(
-    ['technicians', page, limit, search, ordering, filter],
+  return useApiQuery<PaginatedResult<Technician>>({
+    queryKey: ['technicians', page, limit, search, ordering, filter],
     url,
-    {
+    params: {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
       ...filter,
     },
-  )
+  })
 }

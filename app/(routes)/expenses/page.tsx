@@ -1,10 +1,10 @@
 'use client'
 
 import { getExpenseColumns } from '@/app/(routes)/expenses/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import { ExpenseDetails } from '@/components/details/ExpenseDetails'
 import ExpenseForm from '@/components/forms/ExpenseForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { Button } from '@/components/ui/button'
 import { Expense } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -24,25 +24,21 @@ export default function ExpensesPage() {
   })
 
   const {
-    sheetState: viewSheet,
-    openSheet: openView,
-    closeSheet: closeView,
-  } = useEntitySheet<Expense>()
-  const {
-    sheetState: createSheet,
-    openSheet: openCreate,
-    closeSheet: closeCreate,
-  } = useEntitySheet<Expense>()
-  const {
-    sheetState: editSheet,
-    openSheet: openEdit,
-    closeSheet: closeEdit,
+    entityState: viewSheet,
+    openEntity: openView,
+    closeEntity: closeView,
   } = useEntitySheet<Expense>()
 
   const {
-    sheetState: { open: addOpen },
-    openSheet: openAddSheet,
-    closeSheet: closeAddSheet,
+    entityState: editSheet,
+    openEntity: openEdit,
+    closeEntity: closeEdit,
+  } = useEntitySheet<Expense>()
+
+  const {
+    entityState: { open: addOpen },
+    openEntity: openAddSheet,
+    closeEntity: closeAddSheet,
   } = useEntitySheet<Expense>()
 
   const handleDelete = (expense: Expense) => {
@@ -62,7 +58,7 @@ export default function ExpensesPage() {
       {/* View transfer sheet */}
       <EntitySheet<Expense>
         open={viewSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeView()}
+        onClose={closeView}
         entity={viewSheet.entity}
         title="Transfer Details"
         description="Review the details of this stock transfer."
@@ -78,28 +74,30 @@ export default function ExpensesPage() {
 
       <EntitySheet<Expense>
         open={editSheet.open}
-        onOpenChange={(isOpen) => !isOpen && closeEdit()}
+        onClose={closeEdit}
         entity={editSheet.entity}
         title="Edit Expense"
         description="Update the expense details below."
-        renderForm={({ onClose, entity }) => (
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) => (
           <ExpenseForm
-            onClose={onClose}
+            onClose={forceClose}
             expense={entity}
           />
         )}
       />
       <EntitySheet<Expense>
         open={addOpen}
-        onOpenChange={(isOpen) => !isOpen && closeAddSheet()}
+        onClose={closeAddSheet}
         title="Add Expense"
         description="Fill out the form below to add a new expense."
-        renderForm={({ onClose }) => <ExpenseForm onClose={onClose} />}
+        withCloseConfirmation
+        renderForm={({ forceClose }) => <ExpenseForm onClose={forceClose} />}
       />
       <DataTable
         isLoading={isLoading}
         columns={columns}
-        data={data?.results ?? []}
+        data={data || { count: 0, next: null, previous: null, results: [] }}
         headerActions={
           <Button onClick={() => openAddSheet()}>
             <Plus className="size-4 mr-1" />

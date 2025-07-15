@@ -1,10 +1,10 @@
 'use client'
 
 import { getStockRoomStockColumns } from '@/app/(routes)/inventory/stocks/stockroom/columns'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
 import RestockForm from '@/components/forms/inventory/RestockForm'
 import StockThresholdForm from '@/components/forms/inventory/StockThresholdForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import { StockRoomStock } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
@@ -23,15 +23,15 @@ export default function StockRoomStocksPage() {
   })
 
   const {
-    sheetState: { open: editOpen, entity: editEntity },
-    openSheet: openEditSheet,
-    closeSheet: closeEditSheet,
+    entityState: { open: editOpen, entity: editEntity },
+    openEntity: openEditSheet,
+    closeEntity: closeEditSheet,
   } = useEntitySheet<StockRoomStock>()
 
   const {
-    sheetState: { open: restockOpen, entity: restockEntity },
-    openSheet: openRestockSheet,
-    closeSheet: closeRestockSheet,
+    entityState: { open: restockOpen, entity: restockEntity },
+    openEntity: openRestockSheet,
+    closeEntity: closeRestockSheet,
   } = useEntitySheet<StockRoomStock>()
 
   const handleDelete = (stock: StockRoomStock) => {
@@ -50,15 +50,16 @@ export default function StockRoomStocksPage() {
     <div className="container mx-auto">
       <EntitySheet<StockRoomStock>
         open={editOpen}
-        onOpenChange={(isOpen) => !isOpen && closeEditSheet()}
+        onClose={closeEditSheet}
         entity={editEntity}
         title="Edit Stall Stock"
         description="Update the stall stock details below."
-        renderForm={({ onClose, entity }) =>
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) =>
           entity ? (
             <StockThresholdForm
               type="stock_room"
-              onClose={onClose}
+              onClose={forceClose}
               stock={entity}
             />
           ) : null
@@ -67,15 +68,16 @@ export default function StockRoomStocksPage() {
 
       <EntitySheet<StockRoomStock>
         open={restockOpen}
-        onOpenChange={(isOpen) => !isOpen && closeRestockSheet()}
+        onClose={closeRestockSheet}
         entity={restockEntity}
         title="Restock Stock Room Stock"
         description="Add quantity to existing stock."
-        renderForm={({ onClose, entity }) =>
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) =>
           entity ? (
             <RestockForm
               type="stock_room"
-              onClose={onClose}
+              onClose={forceClose}
               stock={entity}
             />
           ) : null
@@ -85,7 +87,7 @@ export default function StockRoomStocksPage() {
       <DataTable
         isLoading={isLoading}
         columns={columns}
-        data={data?.results ?? []}
+        data={data || { count: 0, next: null, previous: null, results: [] }}
       />
     </div>
   )

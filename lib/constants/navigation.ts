@@ -32,10 +32,16 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Receipt,
     permission: 'view_expenses',
   },
-  sales: {
-    name: 'POS Sales',
-    href: '/sales',
+  pos: {
+    name: 'POS Terminal',
+    href: '/pos',
     icon: ShoppingCart,
+    permission: 'use_pos',
+  },
+  sales: {
+    name: 'Sales Records',
+    href: '/sales',
+    icon: Receipt,
     permission: 'view_sales',
   },
   repairs: {
@@ -120,16 +126,22 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 
 export const baseShortcuts: ShortcutEntry[] = [
   {
-    name: 'Add Client',
-    action: 'addClient',
-    icon: FilePlus,
-    permission: 'shortcut_add_client',
+    name: 'Add Sale',
+    action: 'addSale',
+    icon: ShoppingCart,
+    permission: 'shortcut_add_sale',
   },
   {
     name: 'Add Expense',
     action: 'addExpense',
     icon: Coins,
     permission: 'shortcut_add_expense',
+  },
+  {
+    name: 'Add Client',
+    action: 'addClient',
+    icon: FilePlus,
+    permission: 'shortcut_add_client',
   },
   {
     name: 'Add Transfer',

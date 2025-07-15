@@ -103,7 +103,10 @@ function FormLabel({
     <LabelPrimitive.Root
       data-slot="form-label"
       data-error={!!error}
-      className={cn('data-[error=true]:text-destructive', className)}
+      className={cn(
+        'data-[error=true]:text-destructive font-semibold text-sm uppercase tracking-wider',
+        className,
+      )}
       htmlFor={formItemId}
       {...props}
     >
@@ -147,20 +150,17 @@ function FormDescription({ className, ...props }: React.ComponentProps<'p'>) {
 function FormMessage({ className, ...props }: React.ComponentProps<'p'>) {
   const { error, formMessageId } = useFormField()
   const body = error ? String(error?.message ?? '') : props.children
-
-  if (!body) {
-    return null
-  }
-
   return (
-    <p
-      data-slot="form-message"
-      id={formMessageId}
-      className={cn('text-destructive text-sm', className)}
-      {...props}
-    >
-      {body}
-    </p>
+    <div className="min-h-[1.25rem]">
+      <p
+        data-slot="form-message"
+        id={formMessageId}
+        className={cn('text-destructive text-sm', className)}
+        {...props}
+      >
+        {body}
+      </p>
+    </div>
   )
 }
 

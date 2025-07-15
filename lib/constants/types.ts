@@ -7,7 +7,7 @@ import {
 // Shared utility types
 export type Sorting = { id: string; desc: boolean }[]
 export type UnitChoice = 'pcs' | 'ft' | 'kg' | 'roll' | 'box'
-export type Roles = 'admin' | 'manager' | 'guest'
+export type Roles = 'admin' | 'manager' | 'clerk' | 'guest'
 export type NavigationEntry = NavigationLink | NavigationGroup
 export type ShortcutEntry = ShortcutLink
 export type ShopInfo = {

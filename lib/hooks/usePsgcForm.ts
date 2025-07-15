@@ -1,5 +1,5 @@
 import { Barangay, City, Province } from '@/lib/constants/types'
-import { useBarangays, useCities, useProvinces } from '@/lib/hooks/usePsgc'
+import { useBarangays, useCities, useProvinces } from '@/lib/queries/usePsgc'
 import {
   getCodeByName,
   getNameByCode,

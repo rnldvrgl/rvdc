@@ -1,10 +1,10 @@
 'use client'
 
 import SidebarNav from '@/components/custom/navigation/SidebarNav'
+import EntitySheet from '@/components/custom/shared/EntitySheet'
 import ClientForm from '@/components/forms/ClientForm'
 import ExpenseForm from '@/components/forms/ExpenseForm'
 import StockTransferForm from '@/components/forms/inventory/StockTransferForm'
-import EntitySheet from '@/components/sheets/EntitySheet'
 import useActivePath from '@/lib/hooks/useActivePath'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import { useGetPermissions } from '@/lib/hooks/useGetPermissions'
@@ -27,30 +27,26 @@ export function Sidebar() {
   })
 
   const {
-    sheetState: { open },
-    openSheet,
-    closeSheet,
+    entityState: { open },
+    openEntity,
+    closeEntity,
   } = useEntitySheet()
 
   const [currentEntity, setCurrentEntity] = useState<
     'client' | 'expense' | 'transfer' | null
   >(null)
 
-  const handleOpenSheet = (entity: 'client' | 'expense' | 'transfer') => {
+  const handleopenEntity = (entity: 'client' | 'expense' | 'transfer') => {
     setCurrentEntity(entity)
-    openSheet()
+    openEntity()
   }
 
   return (
     <>
       <EntitySheet
         open={open}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            closeSheet()
-            setCurrentEntity(null)
-          }
-        }}
+        onClose={closeEntity}
+        withCloseConfirmation
         title={
           currentEntity === 'client'
             ? 'Add Client'
@@ -69,13 +65,13 @@ export function Sidebar() {
             ? 'Fill out the form below to add a new transfer.'
             : ''
         }
-        renderForm={({ onClose }) => {
+        renderForm={({ forceClose }) => {
           if (currentEntity === 'client')
-            return <ClientForm onClose={onClose} />
+            return <ClientForm onClose={forceClose} />
           if (currentEntity === 'expense')
-            return <ExpenseForm onClose={onClose} />
+            return <ExpenseForm onClose={forceClose} />
           if (currentEntity === 'transfer')
-            return <StockTransferForm onClose={onClose} />
+            return <StockTransferForm onClose={forceClose} />
           return null
         }}
       />
@@ -87,9 +83,9 @@ export function Sidebar() {
         ]}
         activePath={activePath}
         onAction={(action) => {
-          if (action === 'addClient') handleOpenSheet('client')
-          else if (action === 'addExpense') handleOpenSheet('expense')
-          else if (action === 'addTransfer') handleOpenSheet('transfer')
+          if (action === 'addClient') handleopenEntity('client')
+          else if (action === 'addExpense') handleopenEntity('expense')
+          else if (action === 'addTransfer') handleopenEntity('transfer')
         }}
         user={user}
       />

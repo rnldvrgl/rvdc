@@ -1,5 +1,5 @@
 import { Item, ProductCategory, Stall } from '@/lib/constants/interface'
-import { Technician } from '@/lib/constants/types'
+import { Client, Technician } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
 interface UseStallChoicesOptions {
@@ -7,29 +7,30 @@ interface UseStallChoicesOptions {
   assignedStallId?: number | string
 }
 
-const InventoryUrl = '/inventory/choices/'
-const UsersUrl = '/users/choices/'
+const url = 'choices/'
 
-const useItemChoices = () => {
-  return useApiQuery<Item[]>(['item-choices'], `${InventoryUrl}items/`)
+export const useItemChoices = () => {
+  return useApiQuery<Item[]>({
+    queryKey: ['item-choices'],
+    url: `${url}items/`,
+  })
 }
 
-const useCategoryChoices = () => {
-  return useApiQuery<ProductCategory[]>(
-    ['category-choices'],
-    `${InventoryUrl}categories/`,
-  )
+export const useCategoryChoices = () => {
+  return useApiQuery<ProductCategory[]>({
+    queryKey: ['category-choices'],
+    url: `${url}categories/`,
+  })
 }
 
-const useStallChoices = ({
+export const useStallChoices = ({
   excludeAssignedStall,
   assignedStallId,
 }: UseStallChoicesOptions) => {
-  return useApiQuery<Stall[]>(
-    ['stall-choices', { excludeAssignedStall, assignedStallId }],
-    `${InventoryUrl}stalls/`,
-    undefined,
-    {
+  return useApiQuery<Stall[]>({
+    queryKey: ['stall-choices', { excludeAssignedStall, assignedStallId }],
+    url: `${url}stalls/`,
+    options: {
       select: (data) => {
         if (excludeAssignedStall && assignedStallId != null) {
           return data.filter((stall) => stall.id !== assignedStallId)
@@ -37,18 +38,19 @@ const useStallChoices = ({
         return data
       },
     },
-  )
+  })
 }
 
-const useTechnicianChoices = () => {
-  return useApiQuery<Technician[]>(
-    ['technician-choices'],
-    `${UsersUrl}technicians/`,
-  )
+export const useTechnicianChoices = () => {
+  return useApiQuery<Technician[]>({
+    queryKey: ['technician-choices'],
+    url: `${url}technicians/`,
+  })
 }
-export {
-  useCategoryChoices,
-  useItemChoices,
-  useStallChoices,
-  useTechnicianChoices,
+
+export const useClientChoices = () => {
+  return useApiQuery<Client[]>({
+    queryKey: ['client-choices'],
+    url: `${url}clients/`,
+  })
 }

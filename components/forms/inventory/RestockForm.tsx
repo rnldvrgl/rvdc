@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Stock, StockRoomStock } from '@/lib/constants/interface'
 import { useStallStockMutations } from '@/lib/mutations/useStallStockMutations'
 import { useStockRoomStockMutations } from '@/lib/mutations/useStockRoomStockMutations'
-import { formatCurrency, getStockBadgeVariant } from '@/lib/utils/helpers'
+import { formatCurrency, getBadgeVariant } from '@/lib/utils/helpers'
 import { Package, Store, Warehouse } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -45,10 +45,10 @@ export default function RestockForm({
   let stockRoomVariant = ''
 
   if (type === 'stall' && 'status' in stock) {
-    stallVariant = getStockBadgeVariant(stock.status)
+    stallVariant = getBadgeVariant(stock.status)
   }
   if ('stock_room_status' in stock) {
-    stockRoomVariant = getStockBadgeVariant(stock.stock_room_status)
+    stockRoomVariant = getBadgeVariant(stock.stock_room_status)
   }
 
   const onSubmit = (data: FormValues) => {
