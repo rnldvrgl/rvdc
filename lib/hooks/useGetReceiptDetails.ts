@@ -12,7 +12,7 @@ const useGetReceiptDetails = (stall_name: string) => {
       return {
         address:
           'A-03 MRL Building, Mc. Arthur Hiway, Mabiga, Mabalacat City, Pampanga, 2010',
-        shop_name: 'RVDC APPLIANCES PARTS & ACCESORIES TRADING',
+        shop_name: 'RVDC APPLIANCES PARTS & ACCESSORIES TRADING',
         tin_id: '470-330-326-00000',
       }
 
