@@ -133,5 +133,3 @@ export const SalesTransactionPrintContent = React.forwardRef<
     </div>
   )
 })
-
-SalesTransactionPrintContent.displayName = 'SalesTransactionPrintContent'
