@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 
 import { PasswordField } from '@/components/custom/inputs/PasswordInput'
 import { Spinner } from '@/components/custom/shared/Spinner'
+import { ModeToggle } from '@/components/custom/theme/ModeToggle'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -19,7 +20,6 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
 import { loginSchema } from '@/lib/constants/schema'
 import { LoginFormValues } from '@/lib/constants/types'
 import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
@@ -64,7 +64,7 @@ export function LoginForm() {
   return (
     <Card
       className="
-        w-full max-w-md mx-auto 
+         w-full max-w-md mx-auto 
         rounded-3xl 
         ring-1 dark:ring-foreground/10 
         border border-border/40 
@@ -74,22 +74,20 @@ export function LoginForm() {
         hover:shadow-[0_12px_36px_rgba(0,0,0,0.3)] 
         dark:shadow-[0_10px_30px_rgba(255,255,255,0.08)] 
         dark:hover:shadow-[0_12px_36px_rgba(255,255,255,0.1)] 
-        transition-shadow
+        transition-shadow 
       "
     >
-      <CardHeader className="flex flex-col items-center gap-0">
+      <CardHeader className=" text-center space-y-1">
+        <ModeToggle className="rounded-full absolute top-3 right-3 hover:scale-110 transition-transform" />
         <h2 className="text-3xl font-bold tracking-tight">Welcome Back</h2>
-        <p className="text-center text-muted-foreground text-sm">
-          Sign in to continue
-        </p>
-        <Separator className="w-10 mt-2" />
+        <p className="text-muted-foreground text-sm">Sign in to continue</p>
       </CardHeader>
 
       <CardContent>
         <Form {...form}>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-4"
+            className="space-y-5"
           >
             <FormField
               control={control}
@@ -139,7 +137,7 @@ export function LoginForm() {
 
             <Button
               type="submit"
-              className="w-full rounded-xl mt-3"
+              className="w-full rounded-xl mt-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? <Spinner /> : 'Sign In'}
