@@ -37,13 +37,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body
-        className={`${poppins.variable} ${roboto.variable} antialiased p-0 font-[roboto_mono]`}
+        className={`${poppins.variable} ${roboto.variable} antialiased p-0 font-poppins`}
       >
         <NextTopLoader />
         <QueryClientContextProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="light"
+            defaultTheme="dark"
             disableTransitionOnChange
           >
             <Toaster position="bottom-right" />

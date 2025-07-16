@@ -18,7 +18,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="w-full max-w-[90%] font-[roboto_mono] my-6"
+      className="w-full max-w-[90%] font-roboto my-6"
     >
       {/* HEADER */}
       <div className="text-center text-sm">
