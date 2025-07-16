@@ -19,6 +19,7 @@ type PasswordFieldProps = {
   description?: string | React.ReactNode
   disabled?: boolean
   label?: string
+  required?: boolean
 }
 
 export function PasswordField({
@@ -27,6 +28,7 @@ export function PasswordField({
   description,
   disabled,
   label,
+  required,
 }: PasswordFieldProps) {
   const { control, getFieldState } = useFormContext()
   const [passwordVisibility, setPasswordVisibility] = useState(false)
@@ -37,7 +39,7 @@ export function PasswordField({
       name={name}
       render={({ field }) => (
         <FormItem>
-          {label && <FormLabel required>{label}</FormLabel>}
+          {label && <FormLabel required={required}>{label}</FormLabel>}
           <FormControl>
             <Box className="relative">
               <Input

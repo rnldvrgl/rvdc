@@ -61,7 +61,7 @@ export default function StallsPage() {
         title="Add Stall"
         description="Fill out the form below to add a new stall."
         withCloseConfirmation
-        renderForm={({ onClose }) => <StallForm onClose={forceClose} />}
+        renderForm={({ forceClose }) => <StallForm onClose={forceClose} />}
       />
 
       <DataTable

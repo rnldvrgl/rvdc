@@ -3,11 +3,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import * as z from 'zod'
 
 import Loader from '@/app/loading'
 import UserProfileForm from '@/components/forms/UserProfileForm'
 import { userProfileSchema } from '@/lib/constants/schema'
+import { TUserProfile } from '@/lib/constants/types'
+import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import useFileUpload from '@/lib/hooks/useFileUpload'
 import { useUserProfile } from '@/lib/queries/useUserProfile'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
@@ -17,18 +18,21 @@ import toast from 'react-hot-toast'
 
 export default function SettingsPage() {
   const { data, isLoading, refetch } = useUserProfile()
+  const { handleError } = useDRFToastError()
   const setUserProfile = useUserProfileStore((state) => state.setUserProfile)
   const userProfile = useUserProfileStore((state) => state.userProfile)
 
-  type TUserProfile = z.infer<typeof userProfileSchema>
   const form = useForm<TUserProfile>({
     resolver: zodResolver(userProfileSchema) as any,
+    mode: 'onChange',
     defaultValues: {
       email: userProfile?.email ?? '',
       username: userProfile?.username ?? '',
       first_name: userProfile?.first_name ?? '',
       last_name: userProfile?.last_name ?? '',
       contact_number: userProfile?.contact_number ?? '',
+      new_password: '',
+      current_password: '',
       birthday: userProfile?.birthday
         ? new Date(userProfile.birthday)
         : undefined,
@@ -48,6 +52,8 @@ export default function SettingsPage() {
         first_name: userProfile.first_name ?? '',
         last_name: userProfile.last_name ?? '',
         contact_number: userProfile.contact_number ?? '',
+        new_password: '',
+        current_password: '',
         birthday: userProfile.birthday
           ? new Date(userProfile.birthday)
           : undefined,
@@ -64,14 +70,37 @@ export default function SettingsPage() {
   })
 
   async function onSubmit(values: TUserProfile) {
-    const payload: any = {
-      ...values,
-      birthday: values.birthday ? formatLocalDate(values.birthday) : undefined,
-      profile_image: normalizeProfileImage(values.profile_image),
+    const payload: any = {}
+
+    if (values.first_name !== userProfile?.first_name)
+      payload.first_name = values.first_name
+    if (values.last_name !== userProfile?.last_name)
+      payload.last_name = values.last_name
+    if (values.username !== userProfile?.username)
+      payload.username = values.username
+    if (values.email !== userProfile?.email) payload.email = values.email
+    if (values.contact_number !== userProfile?.contact_number)
+      payload.contact_number = values.contact_number
+
+    if (values.birthday) {
+      const formattedBirthday = formatLocalDate(values.birthday)
+      if (formattedBirthday !== userProfile?.birthday) {
+        payload.birthday = formattedBirthday
+      }
     }
 
-    if (!payload.new_password) delete payload.new_password
-    if (!payload.current_password) delete payload.current_password
+    const normalizedImage = normalizeProfileImage(values.profile_image)
+    if (
+      (normalizedImage === '' && userProfile?.profile_image) ||
+      (normalizedImage && normalizedImage !== userProfile?.profile_image)
+    ) {
+      payload.profile_image = normalizedImage
+    }
+
+    if (values.new_password) payload.new_password = values.new_password
+    if (values.current_password)
+      payload.current_password = values.current_password
+
     try {
       const response = await api.patch('/users/profile/', payload)
       toast.success('Profile updated successfully.')
@@ -80,10 +109,7 @@ export default function SettingsPage() {
       form.setValue('current_password', '')
       form.setValue('new_password', '')
     } catch (error: any) {
-      toast.error(
-        error?.response?.data?.detail ||
-          'An error occurred while saving your profile.',
-      )
+      handleError(error)
     }
   }
 

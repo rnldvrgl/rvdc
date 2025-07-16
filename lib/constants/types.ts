@@ -3,6 +3,8 @@ import {
   NavigationLink,
   ShortcutLink,
 } from '@/lib/constants/interface'
+import { userProfileSchema } from '@/lib/constants/schema'
+import z from 'zod'
 
 // Shared utility types
 export type Sorting = { id: string; desc: boolean }[]
@@ -139,3 +141,5 @@ export type CursorPaginatedResponse<TItem> = {
   next: string | null
   previous: string | null
 }
+
+export type TUserProfile = z.infer<typeof userProfileSchema>

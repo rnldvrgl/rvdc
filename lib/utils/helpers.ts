@@ -121,8 +121,8 @@ export function formatDateToYMD(date: Date): string {
 }
 
 export function normalizeProfileImage(image?: string | null) {
-  if (!image) return ''
-  if (typeof image === 'string' && !image.startsWith('data:')) return ''
+  if (image === '') return ''
+  if (!image) return undefined
   return image
 }
 
