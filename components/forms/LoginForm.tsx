@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 
 import { PasswordField } from '@/components/custom/inputs/PasswordInput'
+import { Spinner } from '@/components/custom/shared/Spinner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -39,7 +40,7 @@ export function LoginForm() {
   })
 
   const { handleSubmit, control, formState } = form
-  const { isSubmitting, errors } = formState
+  const { isSubmitting } = formState
   const setUserProfile = useUserProfileStore((state) => state.setUserProfile)
   const { handleError } = useDRFToastError()
 
@@ -61,8 +62,22 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto rounded-3xl border border-border/40 bg-background/70 backdrop-blur-lg shadow-2xl">
-      <CardHeader className="flex flex-col items-center gap-1">
+    <Card
+      className="
+        w-full max-w-md mx-auto 
+        rounded-3xl 
+        ring-1 dark:ring-foreground/10 
+        border border-border/40 
+        bg-gradient-to-br from-background/80 to-background/60 
+        backdrop-blur-lg 
+        shadow-[0_10px_30px_rgba(0,0,0,0.25)] 
+        hover:shadow-[0_12px_36px_rgba(0,0,0,0.3)] 
+        dark:shadow-[0_10px_30px_rgba(255,255,255,0.08)] 
+        dark:hover:shadow-[0_12px_36px_rgba(255,255,255,0.1)] 
+        transition-shadow
+      "
+    >
+      <CardHeader className="flex flex-col items-center gap-0">
         <h2 className="text-3xl font-bold tracking-tight">Welcome Back</h2>
         <p className="text-center text-muted-foreground text-sm">
           Sign in to continue
@@ -74,7 +89,7 @@ export function LoginForm() {
         <Form {...form}>
           <form
             onSubmit={handleSubmit(onSubmit)}
-            className="space-y-6"
+            className="space-y-4"
           >
             <FormField
               control={control}
@@ -124,17 +139,11 @@ export function LoginForm() {
 
             <Button
               type="submit"
-              className="w-full rounded-xl"
+              className="w-full rounded-xl mt-3"
               disabled={isSubmitting}
             >
-              {isSubmitting ? 'Logging in...' : 'Sign In'}
+              {isSubmitting ? <Spinner /> : 'Sign In'}
             </Button>
-
-            {errors.root && (
-              <div className="text-center text-sm text-destructive">
-                {errors.root.message}
-              </div>
-            )}
           </form>
         </Form>
       </CardContent>

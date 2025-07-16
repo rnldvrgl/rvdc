@@ -1,4 +1,5 @@
 import { Box } from '@/components/ui/box'
+import { Button } from '@/components/ui/button'
 import {
   FormControl,
   FormDescription,
@@ -46,18 +47,20 @@ export function PasswordField({
                 type={passwordVisibility ? 'text' : 'password'}
                 autoComplete="on"
                 placeholder={placeholder}
-                className={`pr-12 ${
-                  getFieldState(name).error && 'text-destructive'
-                }`}
+                aria-invalid={!!getFieldState(name).error || undefined}
+                className="pr-12"
               />
-              <Box
-                className="absolute inset-y-0 right-0 flex cursor-pointer items-center p-3 text-muted-foreground"
+              <Button
+                disabled={disabled}
+                type="button"
+                variant="plain"
+                className="absolute inset-y-0 right-0 flex items-center p-3 text-muted-foreground"
                 onClick={() => setPasswordVisibility(!passwordVisibility)}
               >
                 {createElement(passwordVisibility ? EyeOffIcon : EyeIcon, {
                   className: 'size-6',
                 })}
-              </Box>
+              </Button>
             </Box>
           </FormControl>
           <FormMessage />
