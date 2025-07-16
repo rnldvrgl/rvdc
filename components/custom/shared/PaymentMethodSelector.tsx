@@ -33,7 +33,7 @@ type Payment = {
 }
 
 type FormValues = {
-  client_id: number
+  client_id: number | null
   items: { item_id: number; quantity: number; final_price_per_unit: number }[]
   stall?: number | null
   payments: Payment[]
@@ -46,6 +46,7 @@ type PaymentMethodSelectorProps = {
   append: UseFieldArrayAppend<FormValues, 'payments'>
   remove: UseFieldArrayRemove
   disabled?: boolean
+  required?: boolean
 }
 
 export default function PaymentMethodSelector({
@@ -54,15 +55,16 @@ export default function PaymentMethodSelector({
   remove,
   append,
   disabled,
+  required,
 }: PaymentMethodSelectorProps) {
   const handleAdd = () => {
-    append({ payment_type: '', amount: 0 })
+    append({ payment_type: 'cash', amount: 0 })
   }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-3">
-        <FormLabel>Payments</FormLabel>
+        <FormLabel required={required}>Payments</FormLabel>
         <Button
           type="button"
           size="sm"
@@ -126,11 +128,14 @@ export default function PaymentMethodSelector({
                             <Input
                               type="number"
                               min="0"
-                              step="0.01"
-                              value={Number(field.value) ?? ''}
-                              onChange={(e) =>
-                                field.onChange(parseFloat(e.target.value) || 0)
-                              }
+                              step="1"
+                              value={field.value ?? ''}
+                              onChange={(e) => {
+                                const val = e.target.value
+                                field.onChange(
+                                  val === '' ? null : parseFloat(val),
+                                )
+                              }}
                               disabled={disabled}
                               className="w-full"
                             />
@@ -204,9 +209,12 @@ export default function PaymentMethodSelector({
                     <Input
                       type="number"
                       min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                      {...field}
+                      step="1"
+                      value={field.value ?? ''}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        field.onChange(val === '' ? null : parseFloat(val))
+                      }}
                       disabled={disabled}
                       className="w-full"
                     />

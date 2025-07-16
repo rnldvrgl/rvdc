@@ -60,15 +60,17 @@ export default function SalesTransactionForm({
             invalid_type_error: 'Stall is required',
           })
         : z.number().nullable().optional(),
-    client_id: z.number({
-      required_error: 'Client is required',
-    }),
+    client_id: z
+      .number({
+        required_error: 'Client is required',
+      })
+      .nullable(),
     manual_receipt_number: z.string().optional(),
     payments: z
       .array(
         z.object({
           payment_type: z.string().min(1, 'Payment type is required'),
-          amount: z.z.number().min(0, 'Amount must be a positive number'),
+          amount: z.number().min(1, 'Amount must be a positive number'),
         }),
       )
       .min(1, 'At least one payment is required'),
@@ -152,32 +154,52 @@ export default function SalesTransactionForm({
   const changeDue = totalPayments - totalItemsAmount
 
   useEffect(() => {
-    if (allItemsData && initialData?.items) {
-      form.setValue(
-        'items',
-        initialData.items.map((i) => ({
-          item_id: i.item?.id ?? 0,
-          quantity: i.quantity ?? 0,
-          final_price_per_unit: Number.isFinite(Number(i.final_price_per_unit))
-            ? Number(i.final_price_per_unit)
-            : Number(i.item?.retail_price) ?? 0,
-        })),
-      )
-    }
-  }, [allItemsData, initialData, form])
+    if (!initialData) return
 
-  useEffect(() => {
-    if (!role) return
+    // Ensure choices are loaded before setting
+    if (!allItemsData || (role === 'admin' && !stalls)) return
 
+    // Stall setup
     if (role === 'admin') {
-      if (stalls && initialData?.stall) {
-        const found = stalls.find((s) => s.id === initialData.stall.id)
-        setStall(found ?? null)
-      }
+      const found = stalls?.find((s) => s.id === initialData.stall?.id) ?? null
+      setStall(found)
+      form.setValue('stall', found?.id ?? null)
     } else if (assigned_stall) {
       setStall(assigned_stall)
+      form.setValue('stall', assigned_stall.id)
     }
-  }, [stalls, initialData, role, assigned_stall])
+
+    // Items setup
+    const initialItems =
+      initialData.items?.map((i) => ({
+        item_id: i.item?.id ?? 0,
+        quantity: i.quantity ?? 0,
+        final_price_per_unit:
+          Number(i.final_price_per_unit) ?? Number(i.item?.retail_price) ?? 0,
+      })) ?? []
+    form.setValue('items', initialItems)
+
+    setItems(
+      initialData.items?.map((i) => ({
+        item: i.item ?? null,
+        quantity: i.quantity ?? 0,
+      })) ?? [],
+    )
+
+    // Payments, client, receipt
+    form.setValue('client_id', initialData.client?.id ?? null)
+    form.setValue(
+      'manual_receipt_number',
+      initialData.manual_receipt_number ?? '',
+    )
+    form.setValue(
+      'payments',
+      initialData.payments?.map((p) => ({
+        payment_type: p.payment_type,
+        amount: Number(p.amount) ?? 0,
+      })) ?? [],
+    )
+  }, [initialData, allItemsData, stalls, assigned_stall, role, form.setValue])
 
   const handleSubmit = (data: FormValues) => {
     const payload = {
@@ -363,6 +385,7 @@ export default function SalesTransactionForm({
               append={append}
               remove={remove}
               disabled={isDisabled}
+              required
             />
             {form.formState.errors.payments && (
               <p className="text-sm font-medium text-destructive">
