@@ -52,19 +52,6 @@ export default function SalesTransactionForm({
   onClose,
 }: SalesTransactionFormProps) {
   const { assigned_stall, role } = useCurrentUser()
-  const [stall, setStall] = useState<Stall | null>(null)
-  const { data: stalls } = useStallChoices({})
-  const [showPrintDialog, setShowPrintDialog] = useState(false)
-  const [createdTransaction, setCreatedTransaction] =
-    useState<SalesTransaction | null>(null)
-  const { data: allItemsData } = useItemChoices()
-  const { data: clientsData } = useClientChoices()
-  const allItems: Item[] = allItemsData ?? []
-  const clients: Client[] = clientsData ?? []
-  const { addTransaction, updateTransaction } = useSalesTransactionMutations()
-  const componentRef = useRef<HTMLDivElement>(null)
-  const isVoided = initialData?.voided
-
   const formSchema = z.object({
     stall:
       role === 'admin'
@@ -81,7 +68,7 @@ export default function SalesTransactionForm({
       .array(
         z.object({
           payment_type: z.string().min(1, 'Payment type is required'),
-          amount: z.number().min(0, 'Amount must be a positive number'),
+          amount: z.z.number().min(0, 'Amount must be a positive number'),
         }),
       )
       .min(1, 'At least one payment is required'),
@@ -100,24 +87,10 @@ export default function SalesTransactionForm({
   type FormValues = z.infer<typeof formSchema>
 
   const resolver = zodResolver(formSchema)
-
-  const {
-    entityState: voidingState,
-    openEntity: openVoiding,
-    closeEntity: closeVoiding,
-  } = useEntitySheetDialog<SalesTransaction>()
-
-  const handlePrint = useReactToPrint({
-    contentRef: componentRef,
-    onPrintError: (errorLocation, error) => {
-      toast.error(`Print error at ${errorLocation}: ${error.message}`)
-    },
-  })
-
   const form = useForm<FormValues>({
     resolver,
     defaultValues: {
-      stall: initialData?.stall?.id ?? initialData?.stall?.id ?? null,
+      stall: initialData?.stall?.id ?? null,
       client_id: initialData?.client?.id,
       manual_receipt_number: initialData?.manual_receipt_number ?? '',
       payments:
@@ -134,6 +107,33 @@ export default function SalesTransactionForm({
         })) ?? [],
     },
     mode: 'onChange',
+  })
+
+  const [stall, setStall] = useState<Stall | null>(null)
+  const { data: stalls } = useStallChoices({})
+  const [showPrintDialog, setShowPrintDialog] = useState(false)
+  const [createdTransaction, setCreatedTransaction] =
+    useState<SalesTransaction | null>(null)
+  const { data: allItemsData } = useItemChoices()
+  const { data: clientsData } = useClientChoices()
+  const allItems: Item[] = allItemsData ?? []
+  const clients: Client[] = clientsData ?? []
+  const { addTransaction, updateTransaction } = useSalesTransactionMutations()
+  const componentRef = useRef<HTMLDivElement>(null)
+  const isVoided = initialData?.voided
+  const isDisabled = form.formState.isSubmitting || isVoided
+
+  const {
+    entityState: voidingState,
+    openEntity: openVoiding,
+    closeEntity: closeVoiding,
+  } = useEntitySheetDialog<SalesTransaction>()
+
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+    onPrintError: (errorLocation, error) => {
+      toast.error(`Print error at ${errorLocation}: ${error.message}`)
+    },
   })
 
   const { fields, append, remove } = useFieldArray<FormValues, 'payments'>({
@@ -158,8 +158,9 @@ export default function SalesTransactionForm({
         initialData.items.map((i) => ({
           item_id: i.item?.id ?? 0,
           quantity: i.quantity ?? 0,
-          final_price_per_unit:
-            Number(i.final_price_per_unit) ?? Number(i.item?.retail_price) ?? 0,
+          final_price_per_unit: Number.isFinite(Number(i.final_price_per_unit))
+            ? Number(i.final_price_per_unit)
+            : Number(i.item?.retail_price) ?? 0,
         })),
       )
     }
@@ -179,9 +180,8 @@ export default function SalesTransactionForm({
   }, [stalls, initialData, role, assigned_stall])
 
   const handleSubmit = (data: FormValues) => {
-    console.log(data)
     const payload = {
-      stall: role == 'admin' ? data.stall : assigned_stall?.id,
+      stall: role == 'admin' ? data.stall : assigned_stall?.id ?? null,
       client: data.client_id ?? null,
       manual_receipt_number: data.manual_receipt_number ?? null,
       items: data.items.map((i) => ({
@@ -267,7 +267,7 @@ export default function SalesTransactionForm({
                   <FormItem>
                     <FormLabel required>Stall</FormLabel>
                     <ComboBox
-                      disabled={form.formState.isSubmitting || isVoided}
+                      disabled={isDisabled}
                       options={
                         stalls?.map((s) => ({
                           value: s.id,
@@ -294,7 +294,7 @@ export default function SalesTransactionForm({
                   <FormLabel>Manual Receipt #</FormLabel>
                   <FormControl>
                     <Input
-                      disabled={form.formState.isSubmitting || isVoided}
+                      disabled={isDisabled}
                       {...field}
                       placeholder="e.g. 001245"
                       className="rounded-md"
@@ -311,7 +311,7 @@ export default function SalesTransactionForm({
                 <FormItem>
                   <FormLabel required>Client</FormLabel>
                   <ComboBox
-                    disabled={form.formState.isSubmitting || isVoided}
+                    disabled={isDisabled}
                     options={clients.map((c) => ({
                       value: c.id,
                       label: `${c.full_name} (${c.contact_number})`,
@@ -329,7 +329,7 @@ export default function SalesTransactionForm({
 
           <div className="grid gap-3">
             <ItemQuantitySelector
-              disabled={form.formState.isSubmitting || isVoided}
+              disabled={isDisabled}
               required
               items={items}
               allItems={allItems}
@@ -362,7 +362,7 @@ export default function SalesTransactionForm({
               fields={fields}
               append={append}
               remove={remove}
-              disabled={form.formState.isSubmitting || isVoided}
+              disabled={isDisabled}
             />
             {form.formState.errors.payments && (
               <p className="text-sm font-medium text-destructive">
@@ -402,7 +402,11 @@ export default function SalesTransactionForm({
             <Button
               type="submit"
               className="w-full mt-6"
-              disabled={!form.formState.isDirty || form.formState.isSubmitting}
+              disabled={
+                !form.formState.isDirty ||
+                form.formState.isSubmitting ||
+                !form.formState.isValid
+              }
             >
               <Save className="mr-2 h-4 w-4" />
               {initialData ? 'Update Transaction' : 'Create Transaction'}
