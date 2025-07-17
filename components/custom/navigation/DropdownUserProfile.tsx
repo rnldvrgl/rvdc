@@ -46,7 +46,6 @@ export function DropdownUserProfile({
       removeToken('refresh')
       removeToken('remember')
       deleteCookie()
-
       // Clear zustand user store
       clearUserProfile()
 
