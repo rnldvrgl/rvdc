@@ -9,17 +9,19 @@ import {
   safeCell,
 } from '@/lib/utils/helpers'
 import { ColumnDef, Row } from '@tanstack/react-table'
-import { Edit, Eye, Trash2 } from 'lucide-react'
+import { Edit, Eye, Printer, Trash2 } from 'lucide-react'
 
 export function getSalesTransactionColumns({
   role,
   onView,
   onEdit,
+  onPrint,
   onDelete,
 }: {
   onView: (tx: SalesTransaction) => void
   onEdit: (tx: SalesTransaction) => void
   onDelete: (tx: SalesTransaction) => void
+  onPrint: (tx: SalesTransaction) => void
   role: string
 }): ColumnDef<SalesTransaction>[] {
   const columns: ColumnDef<SalesTransaction>[] = [
@@ -115,6 +117,11 @@ export function getSalesTransactionColumns({
               label: 'Edit',
               icon: <Edit className="size-4" />,
               onClick: () => onEdit(row.original),
+            },
+            {
+              label: 'Print Receipt',
+              icon: <Printer className="size-4" />,
+              onClick: () => onPrint(row.original),
             },
             {
               label: 'Delete',

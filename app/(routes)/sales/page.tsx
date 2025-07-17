@@ -2,6 +2,7 @@
 
 import { getSalesTransactionColumns } from '@/app/(routes)/sales/columns'
 import EntitySheet from '@/components/custom/shared/EntitySheet'
+import { SalesTransactionPrintContent } from '@/components/custom/shared/SalesTransactionPrintContent '
 import { DataTable } from '@/components/custom/table/DataTable'
 import { SalesTransactionDetails } from '@/components/details/SalesTransactionDetails'
 import SalesTransactionForm from '@/components/forms/SalesTransactionForm'
@@ -9,13 +10,14 @@ import { Button } from '@/components/ui/button'
 import { SalesTransaction } from '@/lib/constants/interface'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
+import { usePrint } from '@/lib/hooks/usePrint'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useSalesTransactionMutations } from '@/lib/mutations/useSalesTransactionMutations'
 import { useSalesTransactions } from '@/lib/queries/sales/useSalesTransactions'
 import { Plus } from 'lucide-react'
 
 export default function SalesTransactionsPage() {
-  const { role } = useCurrentUser()
+  const { role, assigned_stall } = useCurrentUser()
   const { page, limit, search, ordering } = useSearchParameters()
   const { data, isLoading } = useSalesTransactions({
     page,
@@ -42,9 +44,14 @@ export default function SalesTransactionsPage() {
     closeEntity: closeEdit,
   } = useEntitySheet<SalesTransaction>()
 
+  const { printRef, handlePrint, printData } = usePrint<SalesTransaction>({
+    documentTitle: 'Receipt',
+  })
+
   const columns = getSalesTransactionColumns({
     onView: openView,
     onEdit: openEdit,
+    onPrint: handlePrint,
     onDelete: (tx) => {
       if (tx?.id) deleteTransaction.mutate(tx.id)
     },
@@ -53,6 +60,16 @@ export default function SalesTransactionsPage() {
 
   return (
     <div className="container mx-auto">
+      {printData && (
+        <div className="hidden">
+          <SalesTransactionPrintContent
+            ref={printRef}
+            entity={printData as SalesTransaction}
+            stall={printData.stall}
+          />
+        </div>
+      )}
+
       {/* Create sheet */}
       <EntitySheet<SalesTransaction>
         className="min-w-2xl"

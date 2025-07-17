@@ -27,6 +27,7 @@ import { Client } from '@/lib/constants/types'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useEntitySheetDialog } from '@/lib/hooks/useEntityDialog'
 import { useItemSelection } from '@/lib/hooks/useItemSelection'
+import { usePrint } from '@/lib/hooks/usePrint'
 import { useSalesTransactionMutations } from '@/lib/mutations/useSalesTransactionMutations'
 import {
   useClientChoices,
@@ -36,10 +37,8 @@ import {
 import { formatCurrency } from '@/lib/utils/helpers'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Printer, RotateCcw, Save, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
-import toast from 'react-hot-toast'
-import { useReactToPrint } from 'react-to-print'
 import * as z from 'zod'
 
 interface SalesTransactionFormProps {
@@ -113,7 +112,7 @@ export default function SalesTransactionForm({
 
   const [stall, setStall] = useState<Stall | null>(null)
   const { data: stalls } = useStallChoices({})
-  const [showPrintDialog, setShowPrintDialog] = useState(false)
+
   const [createdTransaction, setCreatedTransaction] =
     useState<SalesTransaction | null>(null)
   const { data: allItemsData } = useItemChoices()
@@ -121,7 +120,6 @@ export default function SalesTransactionForm({
   const allItems: Item[] = allItemsData ?? []
   const clients: Client[] = clientsData ?? []
   const { addTransaction, updateTransaction } = useSalesTransactionMutations()
-  const componentRef = useRef<HTMLDivElement>(null)
   const isVoided = initialData?.voided
   const isDisabled = form.formState.isSubmitting || isVoided
 
@@ -131,11 +129,15 @@ export default function SalesTransactionForm({
     closeEntity: closeVoiding,
   } = useEntitySheetDialog<SalesTransaction>()
 
-  const handlePrint = useReactToPrint({
-    contentRef: componentRef,
-    onPrintError: (errorLocation, error) => {
-      toast.error(`Print error at ${errorLocation}: ${error.message}`)
-    },
+  const {
+    printRef,
+    showPrintDialog,
+    confirmPrint,
+    cancelPrint,
+    setShowPrintDialog,
+  } = usePrint({
+    documentTitle: 'Receipt',
+    requireConfirmation: true,
   })
 
   const { fields, append, remove } = useFieldArray<FormValues, 'payments'>({
@@ -250,7 +252,7 @@ export default function SalesTransactionForm({
     <>
       <div className="hidden">
         <SalesTransactionPrintContent
-          ref={componentRef}
+          ref={printRef}
           entity={createdTransaction}
           stall={stall}
         />
@@ -440,12 +442,11 @@ export default function SalesTransactionForm({
       <ConfirmDialog
         open={showPrintDialog}
         onConfirm={() => {
-          handlePrint()
-          setShowPrintDialog(false)
+          confirmPrint()
           onClose()
         }}
         onCancel={() => {
-          setShowPrintDialog(false)
+          cancelPrint()
           onClose()
         }}
         title="Print Receipt?"
