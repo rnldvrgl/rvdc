@@ -23,7 +23,7 @@ export default function SettingsPage() {
   const userProfile = useUserProfileStore((state) => state.userProfile)
 
   const form = useForm<TUserProfile>({
-    resolver: zodResolver(userProfileSchema) as any,
+    resolver: zodResolver(userProfileSchema),
     mode: 'onChange',
     defaultValues: {
       email: userProfile?.email ?? '',
@@ -70,7 +70,7 @@ export default function SettingsPage() {
   })
 
   async function onSubmit(values: TUserProfile) {
-    const payload: any = {}
+    const payload: Partial<TUserProfile> = {}
 
     if (values.first_name !== userProfile?.first_name)
       payload.first_name = values.first_name
@@ -85,7 +85,7 @@ export default function SettingsPage() {
     if (values.birthday) {
       const formattedBirthday = formatLocalDate(values.birthday)
       if (formattedBirthday !== userProfile?.birthday) {
-        payload.birthday = formattedBirthday
+        payload.birthday = new Date(formattedBirthday)
       }
     }
 
@@ -108,7 +108,7 @@ export default function SettingsPage() {
       await refetch()
       form.setValue('current_password', '')
       form.setValue('new_password', '')
-    } catch (error: any) {
+    } catch (error: unknown) {
       handleError(error)
     }
   }

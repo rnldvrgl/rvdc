@@ -70,22 +70,28 @@ const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
 
   const handleNotificationClick = (notif: Notification) => {
     switch (notif.type) {
-      case 'expense_created':
-        if (notif.data?.expense_id) {
-          setSheet({ type: 'expense_created', id: notif.data.expense_id })
+      case 'expense_created': {
+        const expenseId = notif.data?.expense_id
+        if (typeof expenseId === 'number') {
+          setSheet({ type: 'expense_created', id: expenseId })
         } else {
-          console.error('Missing expense_id', notif)
+          console.error('Missing or invalid expense_id', notif)
         }
         break
-      case 'transfer_created':
-        if (notif.data?.transfer_id) {
-          setSheet({ type: 'transfer_created', id: notif.data.transfer_id })
+      }
+
+      case 'transfer_created': {
+        const transferId = notif.data?.transfer_id
+        if (typeof transferId === 'number') {
+          setSheet({ type: 'transfer_created', id: transferId })
         } else {
-          console.error('Missing transfer_id', notif)
+          console.error('Missing or invalid transfer_id', notif)
         }
         break
+      }
+
       default:
-        console.log('Unhandled type:', notif.type)
+        console.warn('Unhandled notification type:', notif.type)
     }
   }
 

@@ -74,7 +74,7 @@ export function SalesTransactionDetails({
               entity.computed_total
                 ? parseFloat(entity.computed_total).toLocaleString()
                 : entity.items
-                    .reduce((sum, item) => sum + parseFloat(item.line_total), 0)
+                    .reduce((sum, item) => sum + item.line_total, 0)
                     .toLocaleString()
             }`}
           />
@@ -120,11 +120,11 @@ export function SalesTransactionDetails({
                       </div>
                     </TableCell>
                     <TableCell>
-                      ₱ {parseFloat(item.final_price_per_unit).toLocaleString()}
+                      {formatCurrency(item.final_price_per_unit)}
                     </TableCell>
                     <TableCell>{item.quantity}</TableCell>
                     <TableCell className="text-right font-semibold">
-                      ₱ {parseFloat(item.line_total).toLocaleString()}
+                      {formatCurrency(item.line_total)}
                     </TableCell>
                   </TableRow>
                 ))}

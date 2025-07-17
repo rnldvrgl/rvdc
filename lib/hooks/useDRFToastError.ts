@@ -2,7 +2,14 @@ import { AxiosError } from 'axios'
 import { useCallback } from 'react'
 import toast from 'react-hot-toast'
 
-function extractDRFErrorMessages(errorData: any): string {
+type DRFErrorData =
+  | string
+  | string[]
+  | Record<string, string | string[] | undefined>
+  | null
+  | undefined
+
+function extractDRFErrorMessages(errorData: DRFErrorData): string {
   if (!errorData) return 'An unknown error occurred.'
 
   if (typeof errorData === 'string') {
@@ -14,7 +21,7 @@ function extractDRFErrorMessages(errorData: any): string {
   }
 
   if (typeof errorData === 'object') {
-    if (errorData.non_field_errors) {
+    if (Array.isArray(errorData.non_field_errors)) {
       return errorData.non_field_errors.join(', ')
     }
 
@@ -33,8 +40,9 @@ function extractDRFErrorMessages(errorData: any): string {
 
 export function useDRFToastError() {
   const handleError = useCallback(
-    (err: AxiosError<any> | any, fallback = 'Something went wrong.') => {
-      const msg = extractDRFErrorMessages(err?.response?.data) || fallback
+    (err: unknown, fallback = 'Something went wrong.') => {
+      const axiosErr = err as AxiosError<DRFErrorData>
+      const msg = extractDRFErrorMessages(axiosErr?.response?.data) || fallback
       toast.error(msg)
     },
     [],

@@ -1,5 +1,5 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
-import { StockTransfer } from '@/lib/constants/interface'
+import { GetColumnsProps, StockTransfer } from '@/lib/constants/interface'
 import {
   formatCurrency,
   formatDate,
@@ -15,11 +15,7 @@ export function getStockTransferColumns({
   onView,
   onEdit,
   onDelete,
-}: {
-  onView: (transfer: StockTransfer) => void
-  onEdit: (transfer: StockTransfer) => void
-  onDelete: (transfer: StockTransfer) => void
-}): ColumnDef<StockTransfer>[] {
+}: GetColumnsProps<StockTransfer>): ColumnDef<StockTransfer>[] {
   return [
     {
       accessorKey: 'to_stall.name',
@@ -88,7 +84,7 @@ export function getStockTransferColumns({
             {
               label: 'View Details',
               icon: <Eye className="size-4" />,
-              onClick: () => onView(row.original),
+              onClick: () => onView?.(row.original),
             },
             ...(!row.original.is_finalized
               ? [

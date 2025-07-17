@@ -44,6 +44,9 @@ export default function TechniciansPage() {
   const columns = getTechnicianColumns({
     onEdit: openEditSheet,
     onDelete: handleDelete,
+    onView: () => {
+      console.log('view technician')
+    },
   })
 
   return (

@@ -1,7 +1,6 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { Badge } from '@/components/ui/badge'
 import { GetColumnsProps, Stock } from '@/lib/constants/interface'
-import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import {
   getBadgeVariant,
   getHashedStallBadgeClass,
@@ -12,7 +11,6 @@ import { Edit, PackagePlus } from 'lucide-react'
 
 export function getStallStockColumns({
   onEdit,
-  onDelete,
   onRestock,
   role,
 }: GetColumnsProps<Stock>): ColumnDef<Stock>[] {
@@ -79,8 +77,6 @@ export function getStallStockColumns({
       accessorKey: 'action',
       header: 'Action',
       cell: ({ row }) => {
-        const userProfile = useUserProfileStore((state) => state.userProfile)
-        const role = userProfile?.role
         const stock = row.original
         return (
           <DataTableActions
@@ -99,13 +95,6 @@ export function getStallStockColumns({
                 icon: <Edit className="size-4" />,
                 onClick: () => onEdit(stock),
               },
-              // {
-              //   label: 'Deactivate',
-              //   icon: <Trash2 className="size-4 text-destructive" />,
-              //   onClick: () => onDelete(stock),
-              //   destructive: true,
-              //   confirmText: `Deactivate stock of ${stock.item.name}?`,
-              // },
             ]}
           />
         )

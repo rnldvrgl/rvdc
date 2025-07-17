@@ -9,9 +9,9 @@ function extractCursorFromUrl(url: string | null): string | null {
 }
 
 export function useFlattenedCursorInfiniteQuery<T>(
-  queryKey: any[],
+  queryKey: readonly unknown[],
   url: string,
-  params: Record<string, any> = {},
+  params: Record<string, unknown> = {},
 ) {
   const query = useInfiniteQuery<CursorPaginatedResponse<T>, Error>({
     queryKey,

@@ -7,7 +7,6 @@ import { Edit, PackagePlus } from 'lucide-react'
 
 export function getStockRoomStockColumns({
   onEdit,
-  onDelete,
   onRestock,
 }: GetColumnsProps<StockRoomStock>): ColumnDef<StockRoomStock>[] {
   return [
@@ -75,13 +74,6 @@ export function getStockRoomStockColumns({
                 icon: <Edit className="size-4" />,
                 onClick: () => onEdit(stock),
               },
-              // {
-              //   label: 'Deactivate',
-              //   icon: <Trash2 className="size-4 text-destructive" />,
-              //   onClick: () => onDelete(stock),
-              //   destructive: true,
-              //   confirmText: `Deactivate stock of ${stock.item.name}?`,
-              // },
             ]}
           />
         )

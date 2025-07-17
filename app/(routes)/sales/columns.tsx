@@ -1,6 +1,6 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { Badge } from '@/components/ui/badge'
-import { SalesTransaction } from '@/lib/constants/interface'
+import { GetColumnsProps, SalesTransaction } from '@/lib/constants/interface'
 import {
   formatCurrency,
   formatDate,
@@ -17,13 +17,7 @@ export function getSalesTransactionColumns({
   onEdit,
   onPrint,
   onDelete,
-}: {
-  onView: (tx: SalesTransaction) => void
-  onEdit: (tx: SalesTransaction) => void
-  onDelete: (tx: SalesTransaction) => void
-  onPrint: (tx: SalesTransaction) => void
-  role: string
-}): ColumnDef<SalesTransaction>[] {
+}: GetColumnsProps<SalesTransaction>): ColumnDef<SalesTransaction>[] {
   const columns: ColumnDef<SalesTransaction>[] = [
     ...(role === 'admin'
       ? [
@@ -111,22 +105,22 @@ export function getSalesTransactionColumns({
             {
               label: 'View',
               icon: <Eye className="size-4" />,
-              onClick: () => onView(row.original),
+              onClick: () => onView?.(row.original),
             },
             {
               label: 'Edit',
               icon: <Edit className="size-4" />,
-              onClick: () => onEdit(row.original),
+              onClick: () => onEdit?.(row.original),
             },
             {
               label: 'Print Receipt',
               icon: <Printer className="size-4" />,
-              onClick: () => onPrint(row.original),
+              onClick: () => onPrint?.(row.original),
             },
             {
               label: 'Delete',
               icon: <Trash2 className="size-4 text-destructive" />,
-              onClick: () => onDelete(row.original),
+              onClick: () => onDelete?.(row.original),
               destructive: true,
               confirmText: `Delete sale transaction from ${row.original.client?.full_name}?`,
             },

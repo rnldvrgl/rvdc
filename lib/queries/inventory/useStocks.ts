@@ -35,7 +35,7 @@ export function useStockRoomStocks({
   search,
   ordering,
   filter = {},
-}: PaginatedFilterProps & { filter?: Record<string, any> } = {}) {
+}: PaginatedFilterProps & { filter?: Record<string, unknown> } = {}) {
   return useApiQuery<PaginatedResult<StockRoomStock>>({
     queryKey: ['stock-room-stocks', page, limit, search, ordering, filter],
     url: stockRoomUrl,
