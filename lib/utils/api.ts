@@ -1,5 +1,5 @@
 import { refreshToken } from '@/lib/utils/auth'
-import { removeCookie, setCookie } from '@/lib/utils/cookies'
+import { deleteCookie, setCookie } from '@/lib/utils/cookies'
 import { getToken, removeToken, setToken } from '@/lib/utils/tokens'
 import axios from 'axios'
 import toast from 'react-hot-toast'
@@ -58,8 +58,8 @@ api.interceptors.response.use(
           if (newAccess?.access) {
             setToken('access', newAccess.access)
             setToken('refresh', newAccess.refresh)
-            setCookie('access', newAccess.access)
-            setCookie('refresh', newAccess.refresh)
+            const { access, refresh } = newAccess
+            setCookie({ access, refresh })
             originalRequest.headers[
               'Authorization'
             ] = `Bearer ${newAccess.access}`
@@ -73,8 +73,7 @@ api.interceptors.response.use(
       removeToken('access')
       removeToken('refresh')
       removeToken('remember')
-      removeCookie('access')
-      removeCookie('refresh')
+      deleteCookie()
 
       window.location.href = '/'
       toast.error('Your session has expired. Please login again.')

@@ -162,10 +162,10 @@ export function formatCurrency(value: number | string) {
   })
 }
 
-export function safeCell(value: any) {
-  if (value == null) return '—'
-  if (typeof value === 'string' && value.trim() === '') return '—'
-  return value
+export function safeCell(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (value == null) return ''
+  return String(value)
 }
 
 export function getBadgeVariant(source: string): badgeVariants {

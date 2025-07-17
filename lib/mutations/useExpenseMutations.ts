@@ -1,5 +1,6 @@
 'use client'
 
+import { Expense, ExpensePayload } from '@/lib/constants/interface'
 import { useApiMutation } from '@/lib/hooks/useApiMutation'
 import api from '@/lib/utils/api'
 import { useQueryClient } from '@tanstack/react-query'
@@ -9,13 +10,13 @@ export function useExpenseMutations() {
   const url = 'expenses/'
 
   const addExpense = useApiMutation({
-    mutationFn: (data: any) => api.post(url, data),
+    mutationFn: (data: ExpensePayload) => api.post(url, data),
     successMessage: 'Expense created successfully.',
     invalidateQueries: [{ queryKey: ['expenses'] }],
   })
 
   const updateExpense = useApiMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
+    mutationFn: ({ id, data }: { id: number; data: ExpensePayload }) =>
       api.patch(`${url}${id}/`, data),
     successMessage: 'Expense updated successfully.',
     invalidateQueries: [{ queryKey: ['expenses'] }],
@@ -33,7 +34,7 @@ export function useExpenseMutations() {
   })
 
   const payExpense = useApiMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
+    mutationFn: ({ id, data }: { id: number; data: Expense }) =>
       api.patch(`${url}${id}/pay/`, data),
     successMessage: 'Expense payment recorded.',
     invalidateQueries: [{ queryKey: ['expenses'] }],

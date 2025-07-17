@@ -12,13 +12,10 @@ export const refreshToken = async () => {
     const res = await axios.post(`${baseURL}/auth/token/refresh/`, { refresh })
     const { access, refresh: newRefresh } = res.data
 
-    if (access) {
+    if (access && newRefresh) {
       setToken('access', access)
-      setCookie('access', access)
-    }
-    if (newRefresh) {
       setToken('refresh', newRefresh)
-      setCookie('refresh', newRefresh)
+      setCookie({ access, refresh: newRefresh })
     }
 
     return { access, refresh: newRefresh }

@@ -4,6 +4,7 @@ import {
   ShortcutLink,
 } from '@/lib/constants/interface'
 import { userProfileSchema } from '@/lib/constants/schema'
+import { LucideIcon } from 'lucide-react'
 import z from 'zod'
 
 // Shared utility types
@@ -12,6 +13,12 @@ export type UnitChoice = 'pcs' | 'ft' | 'kg' | 'roll' | 'box'
 export type Roles = 'admin' | 'manager' | 'clerk' | 'guest'
 export type NavigationEntry = NavigationLink | NavigationGroup
 export type ShortcutEntry = ShortcutLink
+
+export type Token = {
+  access: string
+  refresh: string
+}
+
 export type ShopInfo = {
   name: string
   description: string
@@ -24,7 +31,7 @@ export type PaginatedFilterProps = {
   limit?: number
   search?: string
   ordering?: string
-  filter?: Record<string, any>
+  filter?: Record<string, unknown>
 }
 
 // Generic paginated response
@@ -120,7 +127,7 @@ export type Technician = BaseEntity & {
 export type NavItem = {
   name: string
   href?: string
-  icon: any
+  icon: LucideIcon
   action?: string
   children?: NavItem[]
 }

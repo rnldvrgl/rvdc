@@ -18,19 +18,11 @@ const NotificationSheet = ({ type, id, onClose }: NotificationSheetProps) => {
       />
     )
   }
-  //   if (type === 'transfer_created') {
-  //     return (
-  //       <TransferSheet
-  //         id={id}
-  //         onClose={onClose}
-  //       />
-  //     )
-  //   }
   return null
 }
 
 const ExpenseSheet = ({ id, onClose }: { id: number; onClose: () => void }) => {
-  const { data, isLoading } = useExpense(id.toString())
+  const { data } = useExpense(id.toString())
 
   return (
     <EntitySheet<Expense>

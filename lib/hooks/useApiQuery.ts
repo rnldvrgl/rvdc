@@ -12,9 +12,9 @@ export function useApiQuery<T>({
   options,
   staleTime,
 }: {
-  queryKey: any[]
+  queryKey: readonly unknown[]
   url: string
-  params?: Record<string, any>
+  params?: Record<string, unknown>
   options?: Partial<UseQueryOptions<T, Error, T, readonly unknown[]>>
   staleTime?: number
 }): UseQueryResult<T> {

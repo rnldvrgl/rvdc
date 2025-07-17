@@ -1,27 +1,28 @@
 import { convertFileToBase64 } from '@/lib/utils/helpers'
 import { ChangeEvent, useEffect, useState } from 'react'
-import { Path, PathValue } from 'react-hook-form'
+import { Path, PathValue, UseFormReturn } from 'react-hook-form'
 
-interface UseFileUploadProps<TFormValues> {
-  form: any
+interface UseFileUploadProps<TFormValues extends Record<string, unknown>> {
+  form: UseFormReturn<TFormValues>
   fieldName: Path<TFormValues>
   initialImage?: string
 }
 
-const useFileUpload = <TFormValues extends Record<string, any>>({
+const useFileUpload = <TFormValues extends Record<string, unknown>>({
   form,
   fieldName,
   initialImage = '',
 }: UseFileUploadProps<TFormValues>) => {
-  const [image, setImage] = useState(initialImage || '')
+  const [image, setImage] = useState(initialImage)
 
   useEffect(() => {
-    setImage(initialImage || '')
+    setImage(initialImage)
     form.setValue(
       fieldName,
-      (initialImage || '') as PathValue<TFormValues, Path<TFormValues>>,
+      initialImage as PathValue<TFormValues, Path<TFormValues>>,
     )
   }, [initialImage, fieldName, form])
+
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -43,8 +44,10 @@ const useFileUpload = <TFormValues extends Record<string, any>>({
     }
 
     form.clearErrors(fieldName)
+
     const base64Image = await convertFileToBase64(file)
     const finalImage = `data:${file.type};base64,${base64Image}`
+
     setImage(finalImage)
     form.setValue(
       fieldName,

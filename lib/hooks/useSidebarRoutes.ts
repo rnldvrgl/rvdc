@@ -1,8 +1,8 @@
-import { UsersIcon } from 'lucide-react'
+import { LucideIcon, UsersIcon } from 'lucide-react'
 import { useMemo } from 'react'
 
 type SidebarRoute = {
-  icon: any
+  icon: LucideIcon
   label: string
   path?: string
   routes?: Omit<SidebarRoute, 'icon'>[]

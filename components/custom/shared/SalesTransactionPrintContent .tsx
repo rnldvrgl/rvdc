@@ -27,7 +27,7 @@ const Divider = () => (
 
 export const SalesTransactionPrintContent = React.forwardRef<
   HTMLDivElement,
-  { entity: SalesTransaction | undefined; stall?: Stall }
+  { entity: SalesTransaction | null; stall: Stall | null }
 >(({ entity, stall }, ref) => {
   const createdAt = new Date(entity?.created_at ?? Date.now())
   const paymentsTotal =
@@ -133,3 +133,5 @@ export const SalesTransactionPrintContent = React.forwardRef<
     </div>
   )
 })
+
+SalesTransactionPrintContent.displayName = 'SalesTransactionPrintContent'

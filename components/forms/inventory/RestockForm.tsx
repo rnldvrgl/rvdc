@@ -13,11 +13,11 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Stock, StockRoomStock } from '@/lib/constants/interface'
+import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import { useStallStockMutations } from '@/lib/mutations/useStallStockMutations'
 import { useStockRoomStockMutations } from '@/lib/mutations/useStockRoomStockMutations'
 import { formatCurrency, getBadgeVariant } from '@/lib/utils/helpers'
 import { Package, Store, Warehouse } from 'lucide-react'
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 interface FormValues {
@@ -38,7 +38,7 @@ export default function RestockForm({
   const form = useForm<FormValues>({ defaultValues: { quantity: '' } })
   const { restockStallStock } = useStallStockMutations()
   const { restockStockRoomStock } = useStockRoomStockMutations()
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  const { handleError } = useDRFToastError()
 
   // determine badge variants safely
   let stallVariant = ''
@@ -52,7 +52,6 @@ export default function RestockForm({
   }
 
   const onSubmit = (data: FormValues) => {
-    setSubmitError(null)
     const quantity = parseInt(data.quantity)
     if (isNaN(quantity) || quantity <= 0) {
       form.setError('quantity', {
@@ -82,11 +81,8 @@ export default function RestockForm({
         { stock_id: stock.id, quantity },
         {
           onSuccess: onClose,
-          onError: (err: any) => {
-            setSubmitError(
-              err?.response?.data?.non_field_errors?.join(', ') ||
-                'Restock failed. Please try again.',
-            )
+          onError: (err: unknown) => {
+            handleError(err)
           },
         },
       )
@@ -95,11 +91,8 @@ export default function RestockForm({
         { stock_id: stock.id, quantity },
         {
           onSuccess: onClose,
-          onError: (err: any) => {
-            setSubmitError(
-              err?.response?.data?.non_field_errors?.join(', ') ||
-                'Restock failed. Please try again.',
-            )
+          onError: (err: unknown) => {
+            handleError(err)
           },
         },
       )
@@ -208,9 +201,6 @@ export default function RestockForm({
               </FormItem>
             )}
           />
-          {submitError && (
-            <div className="text-destructive text-sm">{submitError}</div>
-          )}
         </div>
 
         <div className="flex justify-end pt-1">

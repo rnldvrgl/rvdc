@@ -11,19 +11,22 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
+import { User } from '@/lib/constants/interface'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Menu } from 'lucide-react'
+import { LucideIcon, Menu } from 'lucide-react'
 import { useState } from 'react'
+
+type SidebarItem = {
+  name: string
+  href?: string
+  icon: LucideIcon
+  action?: string
+  children?: SidebarItem[]
+}
 
 type SidebarSection = {
   title?: string
-  items: {
-    name: string
-    href?: string
-    icon: any
-    action?: string
-    children?: any[]
-  }[]
+  items: SidebarItem[]
 }
 
 export default function SidebarNav({
@@ -35,7 +38,7 @@ export default function SidebarNav({
   sections: SidebarSection[]
   activePath: string
   onAction?: (action: string) => void
-  user: any
+  user: User | null
 }) {
   const [sheetOpen, setSheetOpen] = useState(false)
 

@@ -1,5 +1,9 @@
 'use client'
 
+import {
+  SalesTransactionPayload,
+  SalesTransactionVoidingPayload,
+} from '@/lib/constants/interface'
 import { useApiMutation } from '@/lib/hooks/useApiMutation'
 import api from '@/lib/utils/api'
 import { useQueryClient } from '@tanstack/react-query'
@@ -9,7 +13,7 @@ export function useSalesTransactionMutations() {
   const url = 'sales/transactions/'
 
   const addTransaction = useApiMutation({
-    mutationFn: (data: any) => api.post(url, data),
+    mutationFn: (data: SalesTransactionPayload) => api.post(url, data),
     successMessage: 'Sales transaction created successfully.',
     invalidateQueries: [
       { queryKey: ['sales-transactions'] },
@@ -18,7 +22,7 @@ export function useSalesTransactionMutations() {
   })
 
   const updateTransaction = useApiMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
+    mutationFn: ({ id, data }: { id: number; data: SalesTransactionPayload }) =>
       api.patch(`${url}${id}/`, data),
     successMessage: 'Sales transaction updated successfully.',
     invalidateQueries: [
@@ -42,8 +46,13 @@ export function useSalesTransactionMutations() {
   })
 
   const voidTransaction = useApiMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) =>
-      api.post(`${url}${id}/void/`, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number
+      data: SalesTransactionVoidingPayload
+    }) => api.post(`${url}${id}/void/`, data),
     successMessage: 'Sales transaction voided.',
     invalidateQueries: [
       { queryKey: ['sales-transactions'] },

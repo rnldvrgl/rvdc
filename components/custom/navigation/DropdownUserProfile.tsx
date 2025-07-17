@@ -9,10 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import { useMounted } from '@/lib/hooks/useMounted'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
-import { removeCookie } from '@/lib/utils/cookies'
+import { deleteCookie } from '@/lib/utils/cookies'
 import { getToken, removeToken } from '@/lib/utils/tokens'
 import { ArrowUpRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -30,6 +31,7 @@ export function DropdownUserProfile({
 }: DropdownUserProfileProps) {
   const router = useRouter()
   const mounted = useMounted()
+  const { handleError } = useDRFToastError()
   const clearUserProfile = useUserProfileStore(
     (state) => state.clearUserProfile,
   )
@@ -43,16 +45,14 @@ export function DropdownUserProfile({
       removeToken('access')
       removeToken('refresh')
       removeToken('remember')
-      removeCookie('access')
-      removeCookie('refresh')
-
+      deleteCookie()
       // Clear zustand user store
       clearUserProfile()
 
       toast.success(response.data.detail || 'Logout successful.')
       router.push('/')
     } catch (error) {
-      toast.error('Logout failed. Please try again.')
+      handleError(error)
     }
   }
 

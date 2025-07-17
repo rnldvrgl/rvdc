@@ -5,21 +5,17 @@ import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 
-export function useApiMutation<TFn extends (...args: any[]) => any>({
+export function useApiMutation<TVariables, TData>({
   mutationFn,
   successMessage,
   invalidateQueries = [],
   onSuccess,
   onError,
-}: UseApiMutationProps<TFn>) {
+}: UseApiMutationProps<TVariables, TData>) {
   const queryClient = useQueryClient()
   const { handleError } = useDRFToastError()
 
-  const mutation = useMutation<
-    Awaited<ReturnType<TFn>>,
-    unknown,
-    Parameters<TFn>[0]
-  >({
+  const mutation = useMutation<TData, unknown, TVariables>({
     mutationFn,
     onSuccess: (data, variables) => {
       if (successMessage) {

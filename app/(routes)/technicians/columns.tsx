@@ -5,13 +5,12 @@ import { GetColumnsProps } from '@/lib/constants/interface'
 import { Technician } from '@/lib/constants/types'
 import { ColumnDef } from '@tanstack/react-table'
 import { Edit, Eye, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 
 export function getTechnicianColumns({
   onEdit,
   onDelete,
+  onView,
 }: GetColumnsProps<Technician>): ColumnDef<Technician>[] {
-  const router = useRouter()
   return [
     {
       accessorKey: 'first_name',
@@ -57,11 +56,15 @@ export function getTechnicianColumns({
         return (
           <DataTableActions
             items={[
-              {
-                label: 'View',
-                icon: <Eye className="size-4" />,
-                onClick: () => router.push(`/technicians/${technician.id}`),
-              },
+              ...(onView
+                ? [
+                    {
+                      label: 'View',
+                      icon: <Eye className="size-4" />,
+                      onClick: () => onView(technician),
+                    },
+                  ]
+                : []),
               {
                 label: 'Edit',
                 icon: <Edit className="size-4" />,

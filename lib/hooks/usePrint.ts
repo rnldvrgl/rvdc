@@ -1,10 +1,11 @@
+import { showPrintDelayToast } from '@/components/custom/shared/PrintDelayToast'
 import { useCallback, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { useReactToPrint } from 'react-to-print'
 
 interface UsePrintOptions<T> {
   documentTitle?: string
-  onBeforePrint?: () => Promise<void>
+  onBeforePrint?: (data: T | null) => Promise<void>
   onAfterPrint?: () => void
   onPrintError?: (location: string, error: Error) => void
   requireConfirmation?: boolean
@@ -17,10 +18,16 @@ export function usePrint<TData, TRef extends HTMLDivElement = HTMLDivElement>(
   const [showPrintDialog, setShowPrintDialog] = useState(false)
   const [printData, setPrintData] = useState<TData | null>(null)
 
+  const cancelledRef = useRef(false)
+
   const reactToPrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: options?.documentTitle ?? 'Document',
-    onBeforePrint: options?.onBeforePrint,
+    onBeforePrint: async () => {
+      if (options?.onBeforePrint) {
+        await options.onBeforePrint(printData)
+      }
+    },
     onAfterPrint: options?.onAfterPrint,
     onPrintError:
       options?.onPrintError ??
@@ -29,11 +36,25 @@ export function usePrint<TData, TRef extends HTMLDivElement = HTMLDivElement>(
 
   const handlePrint = useCallback(
     (data?: TData) => {
+      cancelledRef.current = false
+
       if (data) setPrintData(data)
+
+      const toastId = showPrintDelayToast(3000, () => {
+        cancelledRef.current = true
+        toast.dismiss(toastId)
+        toast.success('Print cancelled.')
+      })
+
       if (options?.requireConfirmation) {
         setShowPrintDialog(true)
       } else {
-        reactToPrint()
+        setTimeout(() => {
+          if (!cancelledRef.current) {
+            toast.dismiss(toastId)
+            reactToPrint?.()
+          }
+        }, 3000)
       }
     },
     [reactToPrint, options?.requireConfirmation],

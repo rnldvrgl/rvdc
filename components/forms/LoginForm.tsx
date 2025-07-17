@@ -25,7 +25,6 @@ import { LoginFormValues } from '@/lib/constants/types'
 import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
-import { setCookie } from '@/lib/utils/cookies'
 import { setToken } from '@/lib/utils/tokens'
 
 export function LoginForm() {
@@ -50,13 +49,23 @@ export function LoginForm() {
       setToken('access', response.data.access)
       setToken('refresh', response.data.refresh)
       setToken('remember', values.remember_me ? 'true' : 'false')
-      setCookie('access', response.data.access)
-      setCookie('refresh', response.data.refresh)
+      const { access, refresh } = response.data
+      console.log({ access, refresh })
+
+      await fetch('/api/set-cookie', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: { access, refresh } }),
+        credentials: 'include',
+      })
+
       setUserProfile(response.data)
 
       router.push('/dashboard')
       toast.success(`Welcome back, ${response.data.first_name}!`)
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleError(err)
     }
   }

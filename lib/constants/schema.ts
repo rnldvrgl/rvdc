@@ -38,16 +38,9 @@ export const userProfileSchema = z
       .or(z.literal(''))
       .optional(),
 
-    birthday: z
-      .preprocess((arg) => {
-        if (typeof arg === 'string' || arg instanceof Date) {
-          return arg ? new Date(arg) : undefined
-        }
-        return undefined
-      }, z.date().optional())
-      .optional(),
+    birthday: z.date().optional(),
 
-    profile_image: z.any().optional(),
+    profile_image: z.string().optional(),
   })
   .superRefine((data, ctx) => {
     const currentFilled =

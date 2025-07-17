@@ -24,7 +24,6 @@ export const useNavigation = () => {
       if (search) params.set('search', search)
       if (ordering) params.set('ordering', ordering)
 
-      // add any generic filters
       Object.entries(filter).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           params.set(key, String(value))

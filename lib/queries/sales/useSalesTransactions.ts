@@ -13,7 +13,7 @@ export function useSalesTransactions({
   search,
   ordering,
   filter = {},
-}: PaginatedFilterProps & { filter?: Record<string, any> } = {}) {
+}: PaginatedFilterProps & { filter?: Record<string, unknown> } = {}) {
   return useApiQuery<PaginatedResult<SalesTransaction>>({
     queryKey: ['sales-transactions', page, limit, search, ordering, filter],
     url: salesTransactionsUrl,

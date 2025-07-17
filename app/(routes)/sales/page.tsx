@@ -17,7 +17,7 @@ import { useSalesTransactions } from '@/lib/queries/sales/useSalesTransactions'
 import { Plus } from 'lucide-react'
 
 export default function SalesTransactionsPage() {
-  const { role, assigned_stall } = useCurrentUser()
+  const { role } = useCurrentUser()
   const { page, limit, search, ordering } = useSearchParameters()
   const { data, isLoading } = useSalesTransactions({
     page,

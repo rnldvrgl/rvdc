@@ -4,22 +4,20 @@ import { LucideIcon } from 'lucide-react'
 // ---------------------
 // API Mutations & Sheets
 // ---------------------
-export interface UseApiMutationProps<TFn extends (...args: any[]) => any> {
-  mutationFn: TFn
+export interface UseApiMutationProps<TVariables, TData> {
+  mutationFn: (variables: TVariables) => Promise<TData>
   successMessage?: string
   invalidateQueries?: { queryKey: string[] }[]
-  onSuccess?: (
-    data: Awaited<ReturnType<TFn>>,
-    variables: Parameters<TFn>[0],
-  ) => void
-  onError?: (error: any) => void
+  onSuccess?: (data: TData, variables: TVariables) => void
+  onError?: (error: unknown) => void
 }
 
 export interface GetColumnsProps<T> {
-  onView?: (item: T) => void
   onEdit: (item: T) => void
   onDelete: (item: T) => void
   onRestock?: (item: T) => void
+  onView?: (item: T) => void
+  onPrint?: (item: T) => void
   role?: Roles
 }
 
@@ -224,11 +222,14 @@ export interface StockTransfer {
  * - or from another stall (via from_stall)
  */
 export interface StockTransferPayload {
-  from_stock_room_stock?: number
-  from_stall?: number
+  from_stall: number | undefined
   to_stall: number
-  item: number
-  quantity: number
+  technician: number
+  used_for: string
+  items: {
+    item: number
+    quantity: number
+  }[]
 }
 
 // ---------------------
@@ -261,7 +262,7 @@ export interface Notification {
   id: number
   user: User
   type: string
-  data: any
+  data: Record<string, unknown>
   message: string
   is_read: boolean
   created_at: string
@@ -281,6 +282,12 @@ export interface Expense {
   created_at: string
   paid_at?: string
   transfer?: StockTransfer
+}
+
+export interface ExpensePayload {
+  stall?: number
+  total_price: number
+  description: string
 }
 
 // Payment enums
@@ -334,4 +341,23 @@ export interface SalesTransaction {
   computed_total?: string
   total_items?: number
   total_paid?: number
+}
+
+export interface SalesTransactionPayload {
+  stall: number | null | undefined
+  client: number | null
+  manual_receipt_number: string | null
+  items: {
+    item: number
+    quantity: number
+    final_price_per_unit: number
+  }[]
+  payments: {
+    payment_type: string
+    amount: number
+  }[]
+}
+
+export interface SalesTransactionVoidingPayload {
+  void_reason: string
 }
