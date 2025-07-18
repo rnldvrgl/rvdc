@@ -1,0 +1,14 @@
+[0;1;31m×[0m nginx.service - A high performance web server and a reverse proxy server
+     Loaded: loaded (]8;;file://ubuntu-s-1vcpu-1gb-sgp1-01/usr/lib/systemd/system/nginx.service/usr/lib/systemd/system/nginx.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;31mfailed[0m (Result: exit-code) since Fri 2025-07-18 17:37:04 UTC; 25s ago
+   Duration: 5min 53.988s
+       Docs: ]8;;man:nginx(8)man:nginx(8)]8;;
+    Process: 16939 ExecStartPre=/usr/sbin/nginx -t -q -g daemon on; master_process on; [0;1;31m(code=exited, status=1/FAILURE)[0m
+        CPU: 13ms
+
+Jul 18 17:37:04 ubuntu-s-1vcpu-1gb-sgp1-01 systemd[1]: Starting nginx.service - A high performance web server and a reverse proxy server...
+Jul 18 17:37:04 ubuntu-s-1vcpu-1gb-sgp1-01 nginx[16939]: 2025/07/18 17:37:04 [emerg] 16939#16939: "root" directive is duplicate in /etc/nginx/sites-enabled/default:43
+Jul 18 17:37:04 ubuntu-s-1vcpu-1gb-sgp1-01 nginx[16939]: nginx: configuration file /etc/nginx/nginx.conf test failed
+Jul 18 17:37:04 ubuntu-s-1vcpu-1gb-sgp1-01 systemd[1]: [0;1;39m[0;1;31m[0;1;39mnginx.service: Control process exited, code=exited, status=1/FAILURE[0m
+Jul 18 17:37:04 ubuntu-s-1vcpu-1gb-sgp1-01 systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mnginx.service: Failed with result 'exit-code'.[0m
+Jul 18 17:37:04 ubuntu-s-1vcpu-1gb-sgp1-01 systemd[1]: [0;1;31m[0;1;39m[0;1;31mFailed to start nginx.service - A high performance web server and a reverse proxy server.[0m
