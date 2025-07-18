@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { loginSchema } from '@/lib/constants/schema'
-import { LoginFormValues } from '@/lib/constants/types'
+import { LoginFormValues, Token } from '@/lib/constants/types'
 import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
@@ -50,14 +50,13 @@ export function LoginForm() {
       setToken('refresh', response.data.refresh)
       setToken('remember', values.remember_me ? 'true' : 'false')
       const { access, refresh } = response.data
-      console.log({ access, refresh })
 
       await fetch('/api/set-cookie', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ data: { access, refresh } }),
+        body: JSON.stringify({ access, refresh } as Token),
         credentials: 'include',
       })
 
