@@ -12,7 +12,6 @@ import React from 'react'
 
 import { DataTableDateRangeFilter } from '@/components/custom/table/components/DataTableDateRangeFilter'
 import { DataTablePagination } from '@/components/custom/table/components/DataTablePagination'
-import DataTableSelectionCount from '@/components/custom/table/components/DataTableSelectionCount'
 import DataTableSortingChips from '@/components/custom/table/components/DataTableSortingChips'
 import { DataTableViewOptions } from '@/components/custom/table/components/DataTableViewOptions'
 import { Input } from '@/components/ui/input'
@@ -288,8 +287,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <DataTableSelectionCount />
+      <div className="flex flex-col items-center justify-center sm:flex-row sm:items-center sm:justify-end gap-4">
         <DataTablePagination
           hasPrevPage={hasPrevPage}
           hasNextPage={hasNextPage}
