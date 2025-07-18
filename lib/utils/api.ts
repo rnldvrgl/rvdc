@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL || ''
 const api = axios.create({
+  withCredentials: true,
   baseURL,
   headers: {
     'Content-Type': 'application/json',
