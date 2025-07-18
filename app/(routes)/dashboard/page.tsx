@@ -1,7 +1,8 @@
 'use client'
 
 import DateRangePicker from '@/components/custom/inputs/DateRangePicker'
-import SummaryCards from '@/components/custom/shared/SummaryCards'
+import DashboardCharts from '@/components/custom/shared/charts/DashboardCharts'
+import SummaryCards from '@/components/custom/shared/charts/SummaryCards'
 import { FormProvider, useForm } from 'react-hook-form'
 
 type DashboardFormValues = {
@@ -31,6 +32,7 @@ const DashboardPage = () => {
           <DateRangePicker />
         </section>
         <SummaryCards />
+        <DashboardCharts />
       </div>
     </FormProvider>
   )

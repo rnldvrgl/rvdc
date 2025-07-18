@@ -25,7 +25,7 @@ export function Background() {
 
   return (
     <div
-      className="absolute inset-0 -z-50"
+      className="fixed inset-0 -z-50"
       style={style}
     />
   )

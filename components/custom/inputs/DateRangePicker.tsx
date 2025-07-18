@@ -53,11 +53,24 @@ export const DateRangePicker = ({
   )
 
   useEffect(() => {
-    if (date.from) {
-      setValue(name, date, { shouldDirty: true, shouldValidate: true })
-      if (onChange) onChange(date)
-    }
+    setValue(name, date, { shouldDirty: true, shouldValidate: true })
+    if (onChange) onChange(date)
   }, [date, name, onChange, setValue])
+
+  const handlePreset = (range: DateRange) => {
+    setDate(range)
+    onChange?.(range)
+    setOpen(false)
+  }
+
+  const handleClear = () => {
+    const emptyRange = { from: undefined, to: undefined }
+    setDate(emptyRange)
+    onChange?.(emptyRange)
+    setOpen(false)
+  }
+
+  const isClearDisabled = !date.from && !date.to
 
   return (
     <Popover
@@ -95,30 +108,41 @@ export const DateRangePicker = ({
               }
             }}
           />
-          <div className="w-[150px] space-y-2">
-            <p className="text-sm font-semibold text-muted-foreground">
-              Presets
-            </p>
-            {presets.map((preset) => (
-              <Button
-                key={preset.label}
-                variant="ghost"
-                className={cn(
-                  'w-full justify-start text-sm',
+          <div className="flex w-[150px] flex-col justify-between">
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-muted-foreground">
+                Presets
+              </p>
+              {presets.map((preset) => {
+                const isActive =
                   date.from?.toDateString() ===
                     preset.range.from?.toDateString() &&
-                    date.to?.toDateString() ===
-                      preset.range.to?.toDateString() &&
-                    'bg-muted',
-                )}
-                onClick={() => {
-                  setDate(preset.range)
-                  setOpen(false)
-                }}
-              >
-                {preset.label}
-              </Button>
-            ))}
+                  date.to?.toDateString() === preset.range.to?.toDateString()
+
+                return (
+                  <Button
+                    key={preset.label}
+                    variant="ghost"
+                    className={cn(
+                      'w-full justify-start text-sm',
+                      isActive && 'bg-secondary',
+                    )}
+                    onClick={() => handlePreset(preset.range)}
+                  >
+                    {preset.label}
+                  </Button>
+                )
+              })}
+            </div>
+
+            <Button
+              variant="link"
+              className="mt-4 text-sm"
+              disabled={isClearDisabled}
+              onClick={handleClear}
+            >
+              Clear Filter
+            </Button>
           </div>
         </div>
       </PopoverContent>

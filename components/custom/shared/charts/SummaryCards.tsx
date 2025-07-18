@@ -3,12 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AnalyticsSummary } from '@/lib/constants/interface'
+import { useDateParamsFromForm } from '@/lib/hooks/useDateParamsFromForm'
 import { useGetSummary } from '@/lib/queries/analytics/useGetAnalytics'
-import {
-  formatCurrency,
-  formatDateLocal,
-  formatNumber,
-} from '@/lib/utils/helpers'
+import { formatCurrency, formatNumber } from '@/lib/utils/helpers'
 import {
   AlertCircle,
   Ban,
@@ -19,7 +16,6 @@ import {
   Users,
 } from 'lucide-react'
 import { useMemo } from 'react'
-import { useFormContext, useWatch } from 'react-hook-form'
 
 interface CardProps {
   title: string
@@ -33,14 +29,6 @@ interface CardProps {
 type SummaryGroup = {
   title: string
   cards: CardProps[]
-}
-
-type FormValues = {
-  range?: {
-    from?: Date | null
-    to?: Date | null
-  }
-  stall?: number
 }
 
 function buildCard(
@@ -152,17 +140,6 @@ function getSummaryGroups(data: AnalyticsSummary): SummaryGroup[] {
       ],
     },
   ]
-}
-
-function useDateParamsFromForm() {
-  const { control } = useFormContext<FormValues>()
-  const [range, stall] = useWatch({ control, name: ['range', 'stall'] })
-
-  return {
-    start_date: formatDateLocal(range?.from),
-    end_date: formatDateLocal(range?.to),
-    stall: stall ?? undefined,
-  }
 }
 
 const SummaryCards = () => {

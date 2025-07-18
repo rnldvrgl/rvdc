@@ -376,6 +376,11 @@ export interface AnalyticsSummary {
   }
 }
 
+export type TopSellingItems = {
+  item: string
+  quantity: number
+}
+
 export interface SalesOvertime {
   date: string
   total_sales: number
@@ -384,4 +389,25 @@ export interface SalesOvertime {
 export interface ExpensesOvertime {
   date: string
   total_expense: number
+}
+
+export type CashFlow = {
+  date: string
+  income: number
+  expense: number
+}
+
+export type TopClients = {
+  client: string
+  total_spent: number
+}
+
+export type UnpaidSalesStatus = {
+  status: string
+  count: number
+}
+
+export type RestocksOvertime = {
+  date: string
+  restock_volume: number
 }
