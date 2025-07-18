@@ -19,15 +19,17 @@ export function useExpenses({
   limit = 10,
   search,
   ordering,
+  filter = {},
 }: PaginatedFilterProps) {
   return useApiQuery<PaginatedResult<Expense>>({
-    queryKey: ['expenses', page, limit, search, ordering],
+    queryKey: ['expenses', page, limit, search, ordering, filter],
     url,
     params: {
       page,
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
+      ...filter,
     },
   })
 }

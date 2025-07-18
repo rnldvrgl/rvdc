@@ -1,26 +1,10 @@
-import type {
-  Client,
-  PaginatedFilterProps,
-  PaginatedResult,
-} from '@/lib/constants/types'
-import { useApiQuery } from '@/lib/hooks/useApiQuery'
+import type { Client, PaginatedFilterProps } from '@/lib/constants/types'
+import { usePaginatedQuery } from '@/lib/hooks/usePaginatedQuery'
 
-export function useClients({
-  page = 1,
-  limit = 10,
-  search,
-  ordering,
-  filter = {},
-}: PaginatedFilterProps) {
-  return useApiQuery<PaginatedResult<Client>>({
-    queryKey: ['clients', page, limit, search, ordering, filter],
+export function useClients(props: PaginatedFilterProps) {
+  return usePaginatedQuery<Client>({
+    ...props,
     url: '/clients',
-    params: {
-      page,
-      limit,
-      search: search || undefined,
-      ordering: ordering || undefined,
-      ...filter,
-    },
+    queryKeyBase: 'clients',
   })
 }

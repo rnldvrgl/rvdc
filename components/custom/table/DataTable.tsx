@@ -10,6 +10,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, Search } from 'lucide-react'
 import React from 'react'
 
+import { DataTableDateRangeFilter } from '@/components/custom/table/components/DataTableDateRangeFilter'
 import { DataTablePagination } from '@/components/custom/table/components/DataTablePagination'
 import DataTableSelectionCount from '@/components/custom/table/components/DataTableSelectionCount'
 import { DataTableViewOptions } from '@/components/custom/table/components/DataTableViewOptions'
@@ -141,6 +142,7 @@ export function DataTable<TData, TValue>({
         />
         <div className="flex items-center gap-2">
           {headerActions}
+          <DataTableDateRangeFilter />
           <DataTableViewOptions table={table} />
         </div>
       </div>

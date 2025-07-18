@@ -13,13 +13,14 @@ import { useTechnicians } from '@/lib/queries/useTechnicians'
 import { Plus } from 'lucide-react'
 
 export default function TechniciansPage() {
-  const { page, limit, search, ordering } = useSearchParameters()
+  const { page, limit, search, ordering, filter } = useSearchParameters()
   const { deleteTechnician } = useTechnicianMutations()
   const { data, isLoading } = useTechnicians({
     page,
     limit,
     search,
     ordering,
+    filter,
   })
 
   // Separate sheets

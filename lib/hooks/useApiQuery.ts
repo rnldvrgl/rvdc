@@ -26,5 +26,6 @@ export function useApiQuery<T>({
     },
     staleTime: staleTime || 1000 * 60 * 5,
     ...options,
+    select: options?.select,
   })
 }

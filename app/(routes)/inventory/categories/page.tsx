@@ -13,13 +13,14 @@ import { useItemCategories } from '@/lib/queries/inventory/useItemCategories'
 import { Plus } from 'lucide-react'
 
 export default function ItemCategoriesPage() {
-  const { page, limit, search, ordering } = useSearchParameters()
+  const { page, limit, search, ordering, filter } = useSearchParameters()
   const { deleteCategory } = useItemCategoryMutations()
   const { data, isLoading } = useItemCategories({
     page,
     limit,
     search,
     ordering,
+    filter,
   })
 
   const {

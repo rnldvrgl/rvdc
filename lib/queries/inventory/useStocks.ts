@@ -1,70 +1,31 @@
 import { Stock, StockRoomStock, StockTransfer } from '@/lib/constants/interface'
-import type {
-  PaginatedFilterProps,
-  PaginatedResult,
-} from '@/lib/constants/types'
-import { useApiQuery } from '@/lib/hooks/useApiQuery'
+import type { PaginatedFilterProps } from '@/lib/constants/types'
+import { usePaginatedQuery } from '@/lib/hooks/usePaginatedQuery'
 
 const stockUrl = '/inventory/stocks/'
 const stockRoomUrl = '/inventory/stockroom/stocks/'
 const transferUrl = '/inventory/stock-transfers/'
 
-export function useStallStocks({
-  page = 1,
-  limit = 10,
-  search,
-  ordering,
-  filter = {},
-}: PaginatedFilterProps) {
-  return useApiQuery<PaginatedResult<Stock>>({
-    queryKey: ['stall-stocks', page, limit, search, ordering, filter],
+export function useStallStocks(props: PaginatedFilterProps = {}) {
+  return usePaginatedQuery<Stock>({
+    ...props,
     url: stockUrl,
-    params: {
-      page,
-      limit,
-      search: search || undefined,
-      ordering: ordering || undefined,
-      ...filter,
-    },
+    queryKeyBase: 'stall-stocks',
   })
 }
 
-export function useStockRoomStocks({
-  page = 1,
-  limit = 10,
-  search,
-  ordering,
-  filter = {},
-}: PaginatedFilterProps & { filter?: Record<string, unknown> } = {}) {
-  return useApiQuery<PaginatedResult<StockRoomStock>>({
-    queryKey: ['stock-room-stocks', page, limit, search, ordering, filter],
+export function useStockRoomStocks(props: PaginatedFilterProps = {}) {
+  return usePaginatedQuery<StockRoomStock>({
+    ...props,
     url: stockRoomUrl,
-    params: {
-      page,
-      limit,
-      search: search || undefined,
-      ordering: ordering || undefined,
-      ...filter,
-    },
+    queryKeyBase: 'stock-room-stocks',
   })
 }
 
-export function useStockTransfers({
-  page = 1,
-  limit = 10,
-  search,
-  ordering,
-  filter = {},
-}: PaginatedFilterProps) {
-  return useApiQuery<PaginatedResult<StockTransfer>>({
-    queryKey: ['stock-transfers', page, limit, search, ordering, filter],
+export function useStockTransfers(props: PaginatedFilterProps = {}) {
+  return usePaginatedQuery<StockTransfer>({
+    ...props,
     url: transferUrl,
-    params: {
-      page,
-      limit,
-      search: search || undefined,
-      ordering: ordering || undefined,
-      ...filter,
-    },
+    queryKeyBase: 'stock-transfers',
   })
 }

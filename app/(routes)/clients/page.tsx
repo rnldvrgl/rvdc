@@ -13,13 +13,14 @@ import { useClients } from '@/lib/queries/clients/useClients'
 import { Plus } from 'lucide-react'
 
 export default function ClientsPage() {
-  const { page, limit, search, ordering } = useSearchParameters()
+  const { page, limit, search, ordering, filter } = useSearchParameters()
   const { deleteClient } = useClientMutations()
   const { data, isLoading } = useClients({
     page,
     limit,
     search,
     ordering,
+    filter,
   })
 
   // Separate sheets

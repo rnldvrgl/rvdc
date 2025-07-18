@@ -361,3 +361,27 @@ export interface SalesTransactionPayload {
 export interface SalesTransactionVoidingPayload {
   void_reason: string
 }
+
+export interface AnalyticsSummary {
+  total_sales: number // revenue
+  total_clients: number // clients_count
+  low_stock_items: number // low_stock_count
+  no_stock_items: number // no_stock_count
+  total_expense: number // expense
+  net_income: number // average revenue per transaction
+  expense_count: number // number of expense records
+  top_selling_item: {
+    name: string | null // name of the top selling item (nullable)
+    quantity: number // quantity sold
+  }
+}
+
+export interface SalesOvertime {
+  date: string
+  total_sales: number
+}
+
+export interface ExpensesOvertime {
+  date: string
+  total_expense: number
+}

@@ -146,6 +146,11 @@ export function isPathActive(item: NavListItem, path: string): boolean {
   return false
 }
 
+export function formatDateLocal(date?: Date | null) {
+  if (!date) return undefined
+  return date.toLocaleDateString('sv-SE')
+}
+
 export function formatDate(date: Date, formatStr = 'yyyy-MM-dd') {
   return format(toZonedTime(date, timeZone), formatStr)
 }
@@ -220,4 +225,9 @@ export function mergeResults<T>(data?: {
   pages: CursorPaginatedResponse<T>[]
 }): T[] {
   return data?.pages.flatMap((page) => page.results ?? []) ?? []
+}
+
+export const formatNumber = (value: number | null | undefined): string => {
+  if (value == null || isNaN(value)) return '0'
+  return new Intl.NumberFormat('en-PH').format(value)
 }

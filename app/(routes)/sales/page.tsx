@@ -18,12 +18,13 @@ import { Plus } from 'lucide-react'
 
 export default function SalesTransactionsPage() {
   const { role } = useCurrentUser()
-  const { page, limit, search, ordering } = useSearchParameters()
+  const { page, limit, search, ordering, filter } = useSearchParameters()
   const { data, isLoading } = useSalesTransactions({
     page,
     limit,
     search,
     ordering,
+    filter,
   })
   const { deleteTransaction } = useSalesTransactionMutations()
 
