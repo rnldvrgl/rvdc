@@ -14,6 +14,7 @@ export function useGetPermissions(role: Roles) {
         'view_settings',
         'view_stalls',
         'shortcut_add_client',
+        'shortcut_add_expense',
         'view_expenses',
         'view_sales',
       ],
