@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export default function middleware(request: NextRequest) {
-  const { pathname, origin } = request.nextUrl
   const access = request.cookies.get('access')?.value
+  const { pathname, origin } = request.nextUrl
 
   const redirect = (path: string) => NextResponse.redirect(`${origin}${path}`)
 
@@ -18,5 +18,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/((?!api|_next|.*\\..*).*)'],
+  matcher: ['/((?!api|_next|favicon.ico|.*\\..*).*)'],
 }
