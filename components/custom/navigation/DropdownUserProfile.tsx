@@ -13,7 +13,6 @@ import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import { useMounted } from '@/lib/hooks/useMounted'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
-import { deleteCookie } from '@/lib/utils/cookies'
 import { getToken, removeToken } from '@/lib/utils/tokens'
 import { ArrowUpRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -45,7 +44,12 @@ export function DropdownUserProfile({
       removeToken('access')
       removeToken('refresh')
       removeToken('remember')
-      deleteCookie()
+
+      await fetch('/api/delete-cookie', {
+        method: 'POST',
+        credentials: 'include',
+      })
+
       // Clear zustand user store
       clearUserProfile()
 
