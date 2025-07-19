@@ -62,7 +62,7 @@ export function LoginForm() {
 
       setUserProfile(response.data)
 
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
       toast.success(`Welcome back, ${response.data.first_name}!`)
     } catch (err: unknown) {
       handleError(err)

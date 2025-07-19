@@ -54,7 +54,7 @@ export function DropdownUserProfile({
       clearUserProfile()
 
       toast.success(response.data.detail || 'Logout successful.')
-      router.push('/')
+      window.location.href = '/'
     } catch (error) {
       handleError(error)
     }
