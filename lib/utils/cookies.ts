@@ -26,5 +26,6 @@ export async function setCookie(name: string, token: string, expires?: number) {
 
 export async function deleteCookie() {
   const cookieStore = await cookies()
-  cookieStore.delete('tokens')
+  cookieStore.delete('access')
+  cookieStore.delete('refresh')
 }
