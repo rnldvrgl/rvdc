@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
   response.cookies.set('access', access, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     path: '/',
     sameSite: 'lax',
     maxAge: 60 * 60, // 1 hour
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
   response.cookies.set('refresh', refresh, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     path: '/',
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 1 week
