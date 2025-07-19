@@ -1,8 +1,13 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  env: {
-    baseURL: `${process.env.NEXT_PUBLIC_BASE_URL}`,
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://127.0.0.1:8000/api/:path*/',
+      },
+    ]
   },
   turbopack: {
     rules: {

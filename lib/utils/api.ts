@@ -4,7 +4,7 @@ import { getToken, removeToken, setToken } from '@/lib/utils/tokens'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || ''
+const baseURL = '/api'
 const api = axios.create({
   withCredentials: true,
   baseURL,

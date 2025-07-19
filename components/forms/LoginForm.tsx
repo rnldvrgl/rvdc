@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { loginSchema } from '@/lib/constants/schema'
-import { LoginFormValues, Token } from '@/lib/constants/types'
+import { LoginFormValues } from '@/lib/constants/types'
 import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
@@ -56,7 +56,7 @@ export function LoginForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ access, refresh } as Token),
+        body: JSON.stringify({ access, refresh }),
         credentials: 'include',
       })
 

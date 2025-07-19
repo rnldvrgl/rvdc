@@ -1,19 +1,27 @@
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request) {
-  const { access, refresh } = await req.json()
+  console.log('API: /api/set-cookie called')
 
-  const res = NextResponse.json({ message: 'Cookie set' })
+  try {
+    const { access, refresh } = await req.json()
+    console.log('RECEIVED TOKENS', { access, refresh })
 
-  res.cookies.set({
-    name: 'tokens',
-    value: JSON.stringify({ access, refresh }),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-  })
+    const res = NextResponse.json({ message: 'Cookie set' })
 
-  return res
+    res.cookies.set({
+      name: 'tokens',
+      value: JSON.stringify({ access, refresh }),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    })
+
+    return res
+  } catch (error) {
+    console.error('API ERROR in set-cookie:', error)
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+  }
 }

@@ -2,7 +2,7 @@ import axios from 'axios'
 import { setCookie } from './cookies'
 import { getToken, setToken } from './tokens'
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || ''
+const baseURL = '/api'
 
 export const refreshToken = async () => {
   const refresh = await getToken('refresh')
