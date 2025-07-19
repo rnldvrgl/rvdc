@@ -15,7 +15,6 @@ import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
 import { getToken, removeToken } from '@/lib/utils/tokens'
 import { ArrowUpRight } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import React from 'react'
 import toast from 'react-hot-toast'
 
@@ -28,7 +27,6 @@ export function DropdownUserProfile({
   children,
   align = 'start',
 }: DropdownUserProfileProps) {
-  const router = useRouter()
   const mounted = useMounted()
   const { handleError } = useDRFToastError()
   const clearUserProfile = useUserProfileStore(

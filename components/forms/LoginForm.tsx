@@ -1,7 +1,6 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 
@@ -28,7 +27,6 @@ import api from '@/lib/utils/api'
 import { setToken } from '@/lib/utils/tokens'
 
 export function LoginForm() {
-  const router = useRouter()
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
