@@ -15,6 +15,7 @@ import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
 import { getToken, removeToken } from '@/lib/utils/tokens'
 import { ArrowUpRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import React from 'react'
 import toast from 'react-hot-toast'
 
@@ -27,6 +28,7 @@ export function DropdownUserProfile({
   children,
   align = 'start',
 }: DropdownUserProfileProps) {
+  const router = useRouter()
   const mounted = useMounted()
   const { handleError } = useDRFToastError()
   const clearUserProfile = useUserProfileStore(
@@ -38,21 +40,32 @@ export function DropdownUserProfile({
       const response = await api.post('/auth/logout/', {
         refresh: getToken('refresh'),
       })
-      // Clear local tokens + cookies
+
+      // Clear localStorage/sessionStorage tokens
       removeToken('access')
       removeToken('refresh')
       removeToken('remember')
 
-      await fetch('/api/delete-cookie', {
+      // Tell the server to delete HTTP-only cookies
+      const res = await fetch('/api/delete-cookie', {
         method: 'POST',
         credentials: 'include',
       })
 
-      // Clear zustand user store
+      if (!res.ok) {
+        throw new Error('Failed to delete auth cookies')
+      }
+
+      // Wait to ensure cookies are gone before redirect
+      await new Promise((resolve) => setTimeout(resolve, 200))
+
+      // Clear client-side user state
       clearUserProfile()
 
       toast.success(response.data.detail || 'Logout successful.')
-      window.location.href = '/'
+
+      // Redirect
+      router.push('/')
     } catch (error) {
       handleError(error)
     }

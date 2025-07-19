@@ -25,8 +25,10 @@ import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
 import { setToken } from '@/lib/utils/tokens'
+import { useRouter } from 'next/navigation'
 
 export function LoginForm() {
+  const router = useRouter()
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -44,12 +46,16 @@ export function LoginForm() {
   const onSubmit = async (values: LoginFormValues) => {
     try {
       const response = await api.post('/auth/login/', values)
-      setToken('access', response.data.access)
-      setToken('refresh', response.data.refresh)
-      setToken('remember', values.remember_me ? 'true' : 'false')
+
       const { access, refresh } = response.data
 
-      await fetch('/api/set-cookie', {
+      // Save to client-side if you still need it (Zustand, etc.)
+      setToken('access', access)
+      setToken('refresh', refresh)
+      setToken('remember', values.remember_me ? 'true' : 'false')
+
+      // Set HTTP-only cookies
+      const cookieRes = await fetch('/api/set-cookie', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,9 +64,16 @@ export function LoginForm() {
         credentials: 'include',
       })
 
+      if (!cookieRes.ok) {
+        throw new Error('Failed to set auth cookies')
+      }
+
       setUserProfile(response.data)
 
-      window.location.href = '/dashboard'
+      await new Promise((res) => setTimeout(res, 200))
+
+      router.push('/dashboard')
+
       toast.success(`Welcome back, ${response.data.first_name}!`)
     } catch (err: unknown) {
       handleError(err)
