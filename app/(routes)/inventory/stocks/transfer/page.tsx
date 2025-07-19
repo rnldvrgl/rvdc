@@ -14,7 +14,7 @@ import { Plus } from 'lucide-react'
 import { getStockTransferColumns } from './columns'
 
 export default function StockTransfersPage() {
-  const { page, limit, search, ordering } = useSearchParameters()
+  const { page, limit, search, ordering, filter } = useSearchParameters()
   const { deleteStockTransfer, markTransferExpenseAsPaid } =
     useStockTransferMutations()
   const { data, isLoading } = useStockTransfers({
@@ -22,6 +22,7 @@ export default function StockTransfersPage() {
     limit,
     search,
     ordering,
+    filter,
   })
 
   const handleDelete = (stockTransfer: StockTransfer) => {

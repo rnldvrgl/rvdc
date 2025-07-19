@@ -7,6 +7,7 @@ import { ExpenseDetails } from '@/components/details/ExpenseDetails'
 import ExpenseForm from '@/components/forms/ExpenseForm'
 import { Button } from '@/components/ui/button'
 import { Expense } from '@/lib/constants/interface'
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useExpenseMutations } from '@/lib/mutations/useExpenseMutations'
@@ -14,13 +15,15 @@ import { useExpenses } from '@/lib/queries/useExpenses'
 import { Plus } from 'lucide-react'
 
 export default function ExpensesPage() {
-  const { page, limit, search, ordering } = useSearchParameters()
+  const { role } = useCurrentUser()
+  const { page, limit, search, filter, ordering } = useSearchParameters()
   const { deleteExpense } = useExpenseMutations()
   const { data, isLoading } = useExpenses({
     page,
     limit,
     search,
     ordering,
+    filter,
   })
 
   const {
@@ -51,6 +54,7 @@ export default function ExpensesPage() {
     onView: openView,
     onEdit: openEdit,
     onDelete: handleDelete,
+    role,
   })
 
   return (

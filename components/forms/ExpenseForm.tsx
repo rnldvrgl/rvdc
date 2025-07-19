@@ -1,5 +1,6 @@
 'use client'
 
+import { ComboBox } from '@/components/custom/inputs/ComboBox'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -12,7 +13,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Expense } from '@/lib/constants/interface'
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useExpenseMutations } from '@/lib/mutations/useExpenseMutations'
+import { useStallChoices } from '@/lib/queries/useChoices'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -23,21 +26,24 @@ interface ExpenseFormProps {
   onClose: () => void
 }
 
-const formSchema = z.object({
-  description: z.string().min(1, {
-    message: 'Description is required',
-  }),
-  total_price: z.number().min(1, {
-    message: 'Total price must be at least 1',
-  }),
-})
-
-type FormValues = z.infer<typeof formSchema>
-
 export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
+  const { role } = useCurrentUser()
+  const formSchema = z.object({
+    stall: z.number().optional(),
+    description: z.string().min(1, {
+      message: 'Description is required',
+    }),
+    total_price: z.number().min(1, {
+      message: 'Total price must be at least 1',
+    }),
+  })
+
+  type FormValues = z.infer<typeof formSchema>
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      stall: expense?.stall?.id,
       description: expense?.description ?? '',
       total_price: expense?.total_price ?? 0,
     },
@@ -45,11 +51,12 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
 
   const userProfile = useUserProfileStore((state) => state.userProfile)
   const { addExpense, updateExpense } = useExpenseMutations()
+  const { data: stalls } = useStallChoices({})
 
   const onSubmit = (data: FormValues) => {
     const payload = {
       ...data,
-      stall: userProfile?.assigned_stall?.id,
+      stall: role === 'admin' ? data.stall : userProfile?.assigned_stall?.id,
       created_by: userProfile?.id,
       updated_by: userProfile?.id,
     }
@@ -71,6 +78,30 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
         className="space-y-6 max-w-md"
       >
         <div className="space-y-4 grid">
+          {role && role === 'admin' && (
+            <FormField
+              name="stall"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel required>Stall</FormLabel>
+                  <ComboBox
+                    options={
+                      stalls?.map((s) => ({
+                        value: s.id,
+                        label: s.name,
+                      })) ?? []
+                    }
+                    value={field.value ? Number(field.value) : null}
+                    onChange={(val) => {
+                      field.onChange(val ?? null)
+                    }}
+                    placeholder="Select stall"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <FormField
             control={form.control}
             name="description"

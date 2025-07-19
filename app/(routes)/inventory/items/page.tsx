@@ -14,13 +14,14 @@ import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import { Plus } from 'lucide-react'
 
 export default function ItemsPage() {
-  const { page, limit, search, ordering } = useSearchParameters()
+  const { page, limit, search, ordering, filter } = useSearchParameters()
   const { deleteItem } = useItemMutations()
   const { data, isLoading } = useItems({
     page,
     limit,
     search,
     ordering,
+    filter,
   })
   const userProfile = useUserProfileStore((state) => state.userProfile)
   const role = userProfile?.role || 'guest'

@@ -1,28 +1,15 @@
 import { Item } from '@/lib/constants/interface'
-import type {
-  PaginatedFilterProps,
-  PaginatedResult,
-} from '@/lib/constants/types'
+import type { PaginatedFilterProps } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
+import { usePaginatedQuery } from '@/lib/hooks/usePaginatedQuery'
 
 const url = '/inventory/items/'
-export function useItems({
-  page = 1,
-  limit = 10,
-  search,
-  ordering,
-  filter = {},
-}: PaginatedFilterProps = {}) {
-  return useApiQuery<PaginatedResult<Item>>({
-    queryKey: ['items', page, limit, search, ordering, filter],
+
+export function useItems(props: PaginatedFilterProps = {}) {
+  return usePaginatedQuery<Item>({
+    ...props,
     url,
-    params: {
-      page,
-      limit,
-      search: search || undefined,
-      ordering: ordering || undefined,
-      ...filter,
-    },
+    queryKeyBase: 'items',
   })
 }
 

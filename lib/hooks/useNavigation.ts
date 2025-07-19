@@ -6,7 +6,9 @@ type NavigateOptions = {
   limit?: string | number
   search?: string
   ordering?: string
-  filter?: Record<string, string | number | boolean>
+  start_date?: string
+  end_date?: string
+  filter?: Record<string, string | number | boolean | undefined>
 }
 
 export const useNavigation = () => {
@@ -14,7 +16,15 @@ export const useNavigation = () => {
   const pathname = usePathname()
 
   const push = useCallback(
-    ({ page, limit, search, ordering, filter = {} }: NavigateOptions) => {
+    ({
+      page,
+      limit,
+      search,
+      ordering,
+      start_date,
+      end_date,
+      filter = {},
+    }: NavigateOptions) => {
       if (typeof window === 'undefined') return
 
       const params = new URLSearchParams()
@@ -23,6 +33,8 @@ export const useNavigation = () => {
       if (limit) params.set('limit', String(limit))
       if (search) params.set('search', search)
       if (ordering) params.set('ordering', ordering)
+      if (start_date) params.set('start_date', start_date)
+      if (end_date) params.set('end_date', end_date)
 
       Object.entries(filter).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {

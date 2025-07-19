@@ -26,6 +26,8 @@ export type PaginatedFilterProps = {
   limit?: number
   search?: string
   ordering?: string
+  start_date?: string
+  end_date?: string
   filter?: Record<string, unknown>
 }
 

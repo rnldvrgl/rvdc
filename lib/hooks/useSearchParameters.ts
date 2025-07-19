@@ -7,35 +7,36 @@ interface SearchParameters {
   limit: number
   search?: string
   ordering?: string
-  filter: Record<string, string>
+  filter?: Record<string, string>
 }
 
 const ALLOWED_LIMITS = [10, 20, 30, 40, 50]
+const RESERVED_KEYS = new Set(['page', 'limit', 'search', 'ordering'])
 
 const useSearchParameters = (): SearchParameters => {
   const searchParams = useSearchParams()
 
-  const getStringParam = (key: string): string | undefined => {
-    const value = searchParams.get(key)
-    return value && value.trim() !== '' ? value : undefined
+  const getString = (key: string): string | undefined => {
+    const val = searchParams.get(key)
+    return val?.trim() || undefined
   }
 
-  const getIntParam = (key: string, defaultValue: number): number => {
-    const raw = searchParams.get(key)
-    const value = parseInt(raw || '', 10)
-    return isNaN(value) || value < 1 ? defaultValue : value
+  const getInt = (key: string, fallback: number): number => {
+    const val = parseInt(searchParams.get(key) || '', 10)
+    return isNaN(val) || val < 1 ? fallback : val
   }
 
-  const page = getIntParam('page', 1)
-  const limitCandidate = getIntParam('limit', 10)
-  const limit = ALLOWED_LIMITS.includes(limitCandidate) ? limitCandidate : 10
-  const search = getStringParam('search')
-  const ordering = getStringParam('ordering')?.toLowerCase()
+  const page = getInt('page', 1)
 
-  // Build dynamic filter: exclude known parameters
+  const rawLimit = getInt('limit', 10)
+  const limit = ALLOWED_LIMITS.includes(rawLimit) ? rawLimit : 10
+
+  const search = getString('search')
+  const ordering = getString('ordering')?.toLowerCase()
+
   const filter: Record<string, string> = {}
   searchParams.forEach((value, key) => {
-    if (!['page', 'limit', 'search', 'ordering'].includes(key)) {
+    if (!RESERVED_KEYS.has(key)) {
       filter[key] = value
     }
   })

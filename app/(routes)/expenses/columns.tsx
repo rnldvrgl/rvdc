@@ -6,17 +6,35 @@ import {
   formatDate,
   getBadgeVariant,
   getBoolBadgeVariant,
+  getHashedStallBadgeClass,
   safeCell,
 } from '@/lib/utils/helpers'
-import { ColumnDef } from '@tanstack/react-table'
+import { ColumnDef, Row } from '@tanstack/react-table'
 import { Edit, Eye, Trash2 } from 'lucide-react'
 
 export function getExpenseColumns({
   onView,
   onEdit,
   onDelete,
+  role,
 }: GetColumnsProps<Expense>): ColumnDef<Expense>[] {
   return [
+    ...(role === 'admin'
+      ? [
+          {
+            accessorKey: 'stall.name',
+            header: 'Stall',
+            cell: ({ row }: { row: Row<Expense> }) => {
+              const stallName = safeCell(row.original.stall?.name)
+              return (
+                <Badge className={getHashedStallBadgeClass(stallName)}>
+                  {stallName}
+                </Badge>
+              )
+            },
+          },
+        ]
+      : []),
     {
       accessorKey: 'description',
       header: 'Description',
