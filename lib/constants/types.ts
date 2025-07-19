@@ -14,11 +14,6 @@ export type Roles = 'admin' | 'manager' | 'clerk' | 'guest'
 export type NavigationEntry = NavigationLink | NavigationGroup
 export type ShortcutEntry = ShortcutLink
 
-export type Token = {
-  access: string
-  refresh: string
-}
-
 export type ShopInfo = {
   name: string
   description: string

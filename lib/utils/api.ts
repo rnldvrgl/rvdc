@@ -60,7 +60,8 @@ api.interceptors.response.use(
             setToken('access', newAccess.access)
             setToken('refresh', newAccess.refresh)
             const { access, refresh } = newAccess
-            setCookie({ access, refresh })
+            setCookie('access', access)
+            setCookie('refresh', refresh)
             originalRequest.headers[
               'Authorization'
             ] = `Bearer ${newAccess.access}`

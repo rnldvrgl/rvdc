@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export default function middleware(request: NextRequest) {
   const { pathname, origin } = request.nextUrl
-  const token = request.cookies.get('tokens')?.value
+  const access = request.cookies.get('access')?.value
 
   const redirect = (path: string) => NextResponse.redirect(`${origin}${path}`)
 
-  if (!token && pathname !== '/') {
+  if (!access && pathname !== '/') {
     return redirect('/')
   }
 
-  if (token && pathname === '/') {
+  if (access && pathname === '/') {
     return redirect('/dashboard')
   }
 

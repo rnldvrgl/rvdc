@@ -15,7 +15,8 @@ export const refreshToken = async () => {
     if (access && newRefresh) {
       setToken('access', access)
       setToken('refresh', newRefresh)
-      setCookie({ access, refresh: newRefresh })
+      setCookie('access', access)
+      setCookie('refresh', newRefresh)
     }
 
     return { access, refresh: newRefresh }
