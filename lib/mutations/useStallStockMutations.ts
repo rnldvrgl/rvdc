@@ -20,7 +20,7 @@ export function useStallStockMutations() {
     invalidateQueries: [{ queryKey: ['stall-stocks'] }],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['stall-stock', variables.stock_id],
+        queryKey: ['stall-stocks', variables.stock_id],
       })
     },
   })
@@ -51,7 +51,7 @@ export function useStallStockMutations() {
 
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['stall-stock', variables.stock_id],
+        queryKey: ['stall-stocks', variables.stock_id],
       })
     },
   })

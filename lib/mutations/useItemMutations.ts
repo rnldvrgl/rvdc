@@ -13,8 +13,8 @@ export function useItemMutations() {
     successMessage: 'Item created successfully.',
     invalidateQueries: [
       { queryKey: ['items'] },
-      { queryKey: ['stall-stock'] },
-      { queryKey: ['stock-room-stock'] },
+      { queryKey: ['stall-stocks'] },
+      { queryKey: ['stock-room-stocks'] },
     ],
   })
 
@@ -24,8 +24,8 @@ export function useItemMutations() {
     successMessage: 'Item updated successfully.',
     invalidateQueries: [
       { queryKey: ['items'] },
-      { queryKey: ['stall-stock'] },
-      { queryKey: ['stock-room-stock'] },
+      { queryKey: ['stall-stocks'] },
+      { queryKey: ['stock-room-stocks'] },
     ],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['item', `${variables.id}`] })
@@ -37,8 +37,8 @@ export function useItemMutations() {
     successMessage: 'Item deleted successfully.',
     invalidateQueries: [
       { queryKey: ['items'] },
-      { queryKey: ['stall-stock'] },
-      { queryKey: ['stock-room-stock'] },
+      { queryKey: ['stall-stocks'] },
+      { queryKey: ['stock-room-stocks'] },
     ],
   })
 
