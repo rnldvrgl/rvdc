@@ -1,5 +1,5 @@
 'use client'
-import { Sidebar } from '@/components/custom/navigation/sidebar'
+import { Sidebar } from '@/components/custom/navigation/Sidebar'
 import { Background } from '@/components/custom/shared/Background'
 import React from 'react'
 
