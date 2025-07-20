@@ -9,28 +9,34 @@ export function useTechnicianMutations() {
   const queryClient = useQueryClient()
   const url = '/users/technicians/'
 
+  const sharedInvalidations = [
+    { queryKey: ['technicians'] },
+    { queryKey: ['technician-choices'] },
+  ]
+
   const addTechnician = useApiMutation({
     mutationFn: (data: Technician) => api.post(url, data),
     successMessage: 'Technician created successfully.',
-    invalidateQueries: [{ queryKey: ['technicians'] }],
+    invalidateQueries: sharedInvalidations,
   })
 
   const updateTechnician = useApiMutation({
     mutationFn: ({ id, data }: { id: number; data: Technician }) =>
       api.patch(`${url}${id}/`, data),
     successMessage: 'Technician updated successfully.',
-    invalidateQueries: [{ queryKey: ['technicians'] }],
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['technician', `${variables.id}`],
-      })
+    invalidateQueries: sharedInvalidations,
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['technician', `${id}`] })
     },
   })
 
   const deleteTechnician = useApiMutation({
     mutationFn: (id: number) => api.delete(`${url}${id}/`),
     successMessage: 'Technician deleted successfully.',
-    invalidateQueries: [{ queryKey: ['technicians'] }],
+    invalidateQueries: sharedInvalidations,
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['technician', `${id}`] })
+    },
   })
 
   return { addTechnician, updateTechnician, deleteTechnician }

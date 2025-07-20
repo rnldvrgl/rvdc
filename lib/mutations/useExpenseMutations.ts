@@ -9,17 +9,25 @@ export function useExpenseMutations() {
   const queryClient = useQueryClient()
   const url = 'expenses/'
 
+  const analyticsKeys = [['summary'], ['expenses_over_time'], ['cash_flow']]
+
   const addExpense = useApiMutation({
     mutationFn: (data: ExpensePayload) => api.post(url, data),
     successMessage: 'Expense created successfully.',
-    invalidateQueries: [{ queryKey: ['expenses'] }],
+    invalidateQueries: [
+      { queryKey: ['expenses'] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
   })
 
   const updateExpense = useApiMutation({
     mutationFn: ({ id, data }: { id: number; data: ExpensePayload }) =>
       api.patch(`${url}${id}/`, data),
     successMessage: 'Expense updated successfully.',
-    invalidateQueries: [{ queryKey: ['expenses'] }],
+    invalidateQueries: [
+      { queryKey: ['expenses'] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['expense', `${variables.id}`],
@@ -30,14 +38,20 @@ export function useExpenseMutations() {
   const deleteExpense = useApiMutation({
     mutationFn: (id: number) => api.delete(`${url}${id}/`),
     successMessage: 'Expense deleted successfully.',
-    invalidateQueries: [{ queryKey: ['expenses'] }],
+    invalidateQueries: [
+      { queryKey: ['expenses'] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
   })
 
   const payExpense = useApiMutation({
     mutationFn: ({ id, data }: { id: number; data: Expense }) =>
       api.patch(`${url}${id}/pay/`, data),
     successMessage: 'Expense payment recorded.',
-    invalidateQueries: [{ queryKey: ['expenses'] }],
+    invalidateQueries: [
+      { queryKey: ['expenses'] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['expense', `${variables.id}`],
@@ -48,11 +62,12 @@ export function useExpenseMutations() {
   const markExpenseAsPaid = useApiMutation({
     mutationFn: (id: number) => api.post(`${url}${id}/mark-as-paid/`),
     successMessage: 'Expense marked as paid.',
-    invalidateQueries: [{ queryKey: ['expenses'] }],
+    invalidateQueries: [
+      { queryKey: ['expenses'] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({
-        queryKey: ['expense', `${id}`],
-      })
+      queryClient.invalidateQueries({ queryKey: ['expense', `${id}`] })
     },
   })
 

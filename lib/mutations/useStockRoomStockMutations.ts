@@ -8,6 +8,13 @@ import { useQueryClient } from '@tanstack/react-query'
 export function useStockRoomStockMutations() {
   const queryClient = useQueryClient()
 
+  const analyticsKeys = [['summary'], ['restocks_over_time']]
+  const sharedInvalidations = [
+    { queryKey: ['stall-stocks'] },
+    { queryKey: ['stock-room-stocks'] },
+    ...analyticsKeys.map((key) => ({ queryKey: key })),
+  ]
+
   const updateStockRoomStock = useApiMutation({
     mutationFn: ({
       stock_id,
@@ -17,13 +24,10 @@ export function useStockRoomStockMutations() {
       data: StockRoomStockPayload
     }) => api.patch(`/inventory/stockroom/stocks/${stock_id}/`, data),
     successMessage: 'Stock Room stock updated successfully.',
-    invalidateQueries: [{ queryKey: ['stock-room-stocks'] }],
+    invalidateQueries: sharedInvalidations,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['stock-room-stocks', variables.stock_id],
-      })
-      queryClient.invalidateQueries({
-        queryKey: ['stall-stocks'],
       })
     },
   })
@@ -33,6 +37,13 @@ export function useStockRoomStockMutations() {
       api.patch(`/inventory/stockroom/stocks/${stock_id}/`, {
         is_deleted: true,
       }),
+    successMessage: 'Stock deleted successfully.',
+    invalidateQueries: sharedInvalidations,
+    onSuccess: (_, stock_id) => {
+      queryClient.invalidateQueries({
+        queryKey: ['stock-room-stocks', stock_id],
+      })
+    },
   })
 
   const restockStockRoomStock = useApiMutation({
@@ -47,11 +58,7 @@ export function useStockRoomStockMutations() {
         quantity,
       }),
     successMessage: 'Stock restocked successfully.',
-    invalidateQueries: [
-      { queryKey: ['stall-stocks'] },
-      { queryKey: ['stock-room-stocks'] },
-    ],
-
+    invalidateQueries: sharedInvalidations,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['stock-room-stocks', variables.stock_id],
