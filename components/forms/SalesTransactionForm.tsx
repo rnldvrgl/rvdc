@@ -50,7 +50,6 @@ export default function SalesTransactionForm({
   initialData,
   onClose,
 }: SalesTransactionFormProps) {
-  const [isFakePrint, setIsFakePrint] = useState(false)
   const { assigned_stall, role } = useCurrentUser()
   const formSchema = z.object({
     stall:
@@ -230,14 +229,6 @@ export default function SalesTransactionForm({
       addTransaction.mutate(payload, {
         onSuccess: (data: { data: SalesTransaction }) => {
           const formItems = form.getValues().items
-
-          const isFakePrint = formItems.some((item) => {
-            const finalPrice = Number(item?.final_price_per_unit ?? 0)
-            const printPrice = Number(item.print_price_per_unit ?? finalPrice)
-            return printPrice !== finalPrice
-          })
-
-          setIsFakePrint(isFakePrint)
 
           const printPrices = formItems.map((i) => i.print_price_per_unit)
 
