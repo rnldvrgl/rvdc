@@ -3,7 +3,6 @@ import { ThemeProvider } from '@/lib/providers/theme-provider'
 import { SHOP_INFO } from '@/lib/constants/meta'
 import { QueryClientContextProvider } from '@/lib/providers/client-query-provider'
 import { Poppins, Roboto_Mono } from 'next/font/google'
-import Head from 'next/head'
 import NextTopLoader from 'nextjs-toploader'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
@@ -37,12 +36,6 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
     >
-      <Head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1"
-        />
-      </Head>
       <body
         className={`${poppins.variable} ${roboto.variable} antialiased p-0 font-poppins`}
       >
