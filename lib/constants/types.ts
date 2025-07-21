@@ -147,3 +147,7 @@ export type CursorPaginatedResponse<TItem> = {
 }
 
 export type TUserProfile = z.infer<typeof userProfileSchema>
+
+export type UserProfilePayload = Omit<TUserProfile, 'birthday'> & {
+  birthday?: string
+}

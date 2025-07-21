@@ -7,13 +7,13 @@ import { useForm } from 'react-hook-form'
 import Loader from '@/app/loading'
 import UserProfileForm from '@/components/forms/UserProfileForm'
 import { userProfileSchema } from '@/lib/constants/schema'
-import { TUserProfile } from '@/lib/constants/types'
+import { TUserProfile, UserProfilePayload } from '@/lib/constants/types'
 import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
 import useFileUpload from '@/lib/hooks/useFileUpload'
 import { useUserProfile } from '@/lib/queries/useUserProfile'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
-import { formatLocalDate, normalizeProfileImage } from '@/lib/utils/helpers'
+import { formatDate, normalizeProfileImage } from '@/lib/utils/helpers'
 import toast from 'react-hot-toast'
 
 export default function SettingsPage() {
@@ -70,7 +70,7 @@ export default function SettingsPage() {
   })
 
   async function onSubmit(values: TUserProfile) {
-    const payload: Partial<TUserProfile> = {}
+    const payload: Partial<UserProfilePayload> = {}
 
     if (values.first_name !== userProfile?.first_name)
       payload.first_name = values.first_name
@@ -83,9 +83,9 @@ export default function SettingsPage() {
       payload.contact_number = values.contact_number
 
     if (values.birthday) {
-      const formattedBirthday = formatLocalDate(values.birthday)
+      const formattedBirthday = formatDate(values.birthday)
       if (formattedBirthday !== userProfile?.birthday) {
-        payload.birthday = new Date(formattedBirthday)
+        payload.birthday = formattedBirthday
       }
     }
 

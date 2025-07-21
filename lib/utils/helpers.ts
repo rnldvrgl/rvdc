@@ -1,12 +1,8 @@
 import { timeZone } from '@/lib/constants/general'
-import {
-  CursorPaginatedResponse,
-  NavListItem,
-  Sorting,
-} from '@/lib/constants/types'
+import { NavListItem } from '@/lib/constants/types'
 import { clsx, type ClassValue } from 'clsx'
 import { format } from 'date-fns'
-import { toZonedTime } from 'date-fns-tz'
+import { fromZonedTime, toZonedTime } from 'date-fns-tz'
 
 import { twMerge } from 'tailwind-merge'
 
@@ -130,12 +126,6 @@ export function formatLocalDate(date: Date, formatStr = 'yyyy-MM-dd') {
   return format(toZonedTime(date, timeZone), formatStr)
 }
 
-export function toOrdering(sorting: Sorting): string | undefined {
-  if (!sorting.length) return undefined
-  const { id, desc } = sorting[0]
-  return `${desc ? '-' : ''}${id}`
-}
-
 export function isPathActive(item: NavListItem, path: string): boolean {
   if (item.href && path.startsWith(item.href)) return true
   if (item.children) {
@@ -146,13 +136,12 @@ export function isPathActive(item: NavListItem, path: string): boolean {
   return false
 }
 
-export function formatDateLocal(date?: Date | null) {
-  if (!date) return undefined
-  return date.toLocaleDateString('sv-SE')
-}
-
 export function formatDate(date: Date, formatStr = 'yyyy-MM-dd') {
   return format(toZonedTime(date, timeZone), formatStr)
+}
+export function formatBackDate(date: Date, formatStr = 'yyyy-MM-dd') {
+  const utcDate = fromZonedTime(date, timeZone)
+  return format(utcDate, formatStr)
 }
 
 export function formatCurrency(value: number | string) {
@@ -219,12 +208,6 @@ export const getHashedStallBadgeClass = (stallName: string) => {
 
   const index = Math.abs(hash) % colors.length
   return colors[index]
-}
-
-export function mergeResults<T>(data?: {
-  pages: CursorPaginatedResponse<T>[]
-}): T[] {
-  return data?.pages.flatMap((page) => page.results ?? []) ?? []
 }
 
 export const formatNumber = (value: number | null | undefined): string => {

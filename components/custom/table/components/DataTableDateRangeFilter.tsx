@@ -3,7 +3,7 @@
 import DataTableDateRangePicker from '@/components/custom/table/components/DataTableDateRangePicker'
 import { useNavigation } from '@/lib/hooks/useNavigation'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
-import { formatDateLocal } from '@/lib/utils/helpers'
+import { formatBackDate } from '@/lib/utils/helpers'
 import { DateRange } from 'react-day-picker'
 
 export function DataTableDateRangeFilter() {
@@ -11,14 +11,19 @@ export function DataTableDateRangeFilter() {
   const { push } = useNavigation()
 
   const defaultRange: DateRange = {
-    from: filter?.start_date ? new Date(filter.start_date) : undefined,
-    to: filter?.end_date ? new Date(filter.end_date) : undefined,
+    from: filter?.start_date
+      ? new Date(formatBackDate(new Date(filter.start_date)))
+      : undefined,
+    to: filter?.end_date
+      ? new Date(formatBackDate(new Date(filter.end_date)))
+      : undefined,
   }
 
   const handleChange = (range?: DateRange) => {
-    const from = range?.from ? formatDateLocal(range.from) : undefined
-    const to = range?.to ? formatDateLocal(range.to) : undefined
+    const from = range?.from ? formatBackDate(range.from) : undefined
+    const to = range?.to ? formatBackDate(range.to) : undefined
 
+    console.log({ from, to })
     const updatedFilter = { ...filter }
 
     if (from) {

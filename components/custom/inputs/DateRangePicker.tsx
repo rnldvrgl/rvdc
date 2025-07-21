@@ -7,8 +7,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { cn } from '@/lib/utils/helpers'
-import { format, startOfToday, subDays } from 'date-fns'
+import { cn, formatBackDate } from '@/lib/utils/helpers'
+import { startOfToday, subDays } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { DateRange } from 'react-day-picker'
@@ -53,8 +53,17 @@ export const DateRangePicker = ({
   )
 
   useEffect(() => {
-    setValue(name, date, { shouldDirty: true, shouldValidate: true })
-    if (onChange) onChange(date)
+    const transformedRange = {
+      from: date.from
+        ? new Date(formatBackDate(date.from, 'yyyy-MM-dd'))
+        : undefined,
+      to: date.to ? new Date(formatBackDate(date.to, 'yyyy-MM-dd')) : undefined,
+    }
+    setValue(name, transformedRange, {
+      shouldDirty: true,
+      shouldValidate: true,
+    })
+    if (onChange) onChange(transformedRange)
   }, [date, name, onChange, setValue])
 
   const handlePreset = (range: DateRange) => {
@@ -85,7 +94,8 @@ export const DateRangePicker = ({
           <CalendarIcon className="mr-2 size-4" />
           {date.from && date.to ? (
             <>
-              {format(date.from, 'LLL dd, y')} – {format(date.to, 'LLL dd, y')}
+              {formatBackDate(date.from, 'LLL dd, y')} –{' '}
+              {formatBackDate(date.to, 'LLL dd, y')}
             </>
           ) : (
             <span>Pick a date range</span>
@@ -103,9 +113,7 @@ export const DateRangePicker = ({
             numberOfMonths={2}
             selected={date}
             onSelect={(range) => {
-              if (range?.from) {
-                setDate(range)
-              }
+              if (range?.from) setDate(range)
             }}
           />
           <div className="flex w-[150px] flex-col justify-between">
@@ -134,7 +142,6 @@ export const DateRangePicker = ({
                 )
               })}
             </div>
-
             <Button
               variant="link"
               className="mt-4 text-sm"

@@ -185,7 +185,6 @@ const UserProfileForm = ({ form, onSubmit, upload }: UserProfileFormProps) => {
                   className="w-full max-w-56"
                   disabled={
                     form.formState.isSubmitting ||
-                    !form.formState.isDirty ||
                     Object.keys(form.formState.errors).length > 0
                   }
                 >
