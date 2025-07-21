@@ -50,6 +50,7 @@ export default function SalesTransactionForm({
   initialData,
   onClose,
 }: SalesTransactionFormProps) {
+  const [isFakePrint, setIsFakePrint] = useState(false)
   const { assigned_stall, role } = useCurrentUser()
   const formSchema = z.object({
     stall:
@@ -73,13 +74,13 @@ export default function SalesTransactionForm({
         }),
       )
       .min(1, 'At least one payment is required'),
-
     items: z
       .array(
         z.object({
           item_id: z.number(),
           quantity: z.number().min(1, 'Quantity must be at least 1'),
           final_price_per_unit: z.number().min(0),
+          print_price_per_unit: z.number().min(0).optional(),
         }),
       )
       .min(1, 'at least one item is required'),
@@ -105,6 +106,7 @@ export default function SalesTransactionForm({
           quantity: i.quantity ?? 0,
           final_price_per_unit:
             Number(i.final_price_per_unit) ?? Number(i.item?.retail_price) ?? 0,
+          print_price_per_unit: Number(i.item?.retail_price) ?? 0,
         })) ?? [],
     },
     mode: 'onChange',
@@ -226,8 +228,31 @@ export default function SalesTransactionForm({
       )
     } else {
       addTransaction.mutate(payload, {
-        onSuccess: (data) => {
-          setCreatedTransaction(data.data)
+        onSuccess: (data: { data: SalesTransaction }) => {
+          const formItems = form.getValues().items
+
+          const isFakePrint = formItems.some((item) => {
+            const finalPrice = Number(item?.final_price_per_unit ?? 0)
+            const printPrice = Number(item.print_price_per_unit ?? finalPrice)
+            return printPrice !== finalPrice
+          })
+
+          setIsFakePrint(isFakePrint)
+
+          const printPrices = formItems.map((i) => i.print_price_per_unit)
+          console.log(printPrices)
+
+          const itemsWithPrintPrice = data.data.items.map((item, idx) => ({
+            ...item,
+            final_price_per_unit: item.final_price_per_unit,
+            print_price_per_unit: printPrices[idx],
+          }))
+
+          setCreatedTransaction({
+            ...data.data,
+            items: itemsWithPrintPrice,
+          })
+
           setShowPrintDialog(true)
         },
       })
@@ -364,6 +389,11 @@ export default function SalesTransactionForm({
                     item_id: i.item?.id ?? 0,
                     quantity: i.quantity,
                     final_price_per_unit:
+                      i.final_price_per_unit ??
+                      Number(i.item?.retail_price) ??
+                      0,
+                    print_price_per_unit:
+                      i.print_price_per_unit ??
                       i.final_price_per_unit ??
                       Number(i.item?.retail_price) ??
                       0,

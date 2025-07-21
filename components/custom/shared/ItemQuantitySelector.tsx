@@ -37,7 +37,10 @@ export default function ItemQuantitySelector({
       item: allItems[0],
       quantity: 1,
       ...(allowPriceChange
-        ? { final_price_per_unit: Number(allItems[0].retail_price) }
+        ? {
+            final_price_per_unit: Number(allItems[0].retail_price),
+            print_price_per_unit: Number(allItems[0].retail_price),
+          }
         : {}),
     }
     onChange([...items, newItem])
@@ -61,7 +64,10 @@ export default function ItemQuantitySelector({
               ...itm,
               item: newItem,
               ...(allowPriceChange
-                ? { final_price_per_unit: Number(newItem.retail_price) }
+                ? {
+                    final_price_per_unit: Number(newItem.retail_price),
+                    print_price_per_unit: Number(newItem.retail_price), // NEW
+                  }
                 : {}),
             }
           : itm,
@@ -112,13 +118,19 @@ export default function ItemQuantitySelector({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted">
-                <TableHead className="w-1/3">Item</TableHead>
+                <TableHead className="w-1/4">Item</TableHead>
                 <TableHead className="w-44">Qty</TableHead>
 
                 <TableHead
                   className={`w-44 ${!allowPriceChange ? 'hidden' : ''}`}
                 >
                   Discounted Price
+                </TableHead>
+
+                <TableHead
+                  className={`w-44 ${!allowPriceChange ? 'hidden' : ''}`}
+                >
+                  Print Price
                 </TableHead>
 
                 <TableHead className="w-44">Retail Price</TableHead>
@@ -184,22 +196,43 @@ export default function ItemQuantitySelector({
                           />
                         </TableCell>
                         {allowPriceChange && (
-                          <TableCell>
-                            <Input
-                              type="number"
-                              min={0}
-                              value={itm.final_price_per_unit ?? retail}
-                              onChange={(e) =>
-                                handleUpdate(
-                                  idx,
-                                  'final_price_per_unit',
-                                  parseFloat(e.target.value) || 0,
-                                )
-                              }
-                              disabled={disabled}
-                              placeholder="Price"
-                            />
-                          </TableCell>
+                          <>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                value={itm.final_price_per_unit ?? retail}
+                                onChange={(e) =>
+                                  handleUpdate(
+                                    idx,
+                                    'final_price_per_unit',
+                                    parseFloat(e.target.value) || 0,
+                                  )
+                                }
+                                disabled={disabled}
+                                placeholder="Price"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                value={
+                                  itm.print_price_per_unit ??
+                                  itm.item.retail_price
+                                }
+                                onChange={(e) =>
+                                  handleUpdate(
+                                    idx,
+                                    'print_price_per_unit',
+                                    parseFloat(e.target.value) || 0,
+                                  )
+                                }
+                                disabled={disabled}
+                                placeholder="Print Price"
+                              />
+                            </TableCell>
+                          </>
                         )}
                         <TableCell className="text-muted-foreground">
                           {formatCurrency(retail)}
@@ -233,7 +266,7 @@ export default function ItemQuantitySelector({
                   })}
                   <TableRow className="bg-muted/70 font-semibold">
                     <TableCell
-                      colSpan={tableColSpan - 2}
+                      colSpan={tableColSpan - 1}
                       className="text-right"
                     >
                       Grand Total:
@@ -247,7 +280,7 @@ export default function ItemQuantitySelector({
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={tableColSpan + 2}
+                    colSpan={tableColSpan + 1}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No items added
@@ -264,7 +297,8 @@ export default function ItemQuantitySelector({
         {items.length > 0 ? (
           <>
             {items.map((itm, idx) => {
-              const { retail, effective } = getPrices(itm)
+              const { retail, wholesale, technician, effective } =
+                getPrices(itm)
               const lineTotal = itm.quantity * effective
               return (
                 <div
@@ -285,7 +319,8 @@ export default function ItemQuantitySelector({
                     }))}
                     placeholder="Select item"
                   />
-                  <div className="flex gap-4">
+
+                  <div className="flex flex-col gap-2">
                     <Input
                       type="number"
                       min={1}
@@ -299,34 +334,61 @@ export default function ItemQuantitySelector({
                       }
                       disabled={disabled}
                       className="w-full"
+                      placeholder="Quantity"
                     />
+
                     {allowPriceChange && (
-                      <Input
-                        type="number"
-                        min={0}
-                        value={itm.final_price_per_unit ?? retail}
-                        onChange={(e) =>
-                          handleUpdate(
-                            idx,
-                            'final_price_per_unit',
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                        disabled={disabled}
-                        className="w-full"
-                        placeholder="Price"
-                      />
+                      <>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={itm.final_price_per_unit ?? retail}
+                          onChange={(e) =>
+                            handleUpdate(
+                              idx,
+                              'final_price_per_unit',
+                              parseFloat(e.target.value) || 0,
+                            )
+                          }
+                          disabled={disabled}
+                          className="w-full"
+                          placeholder="Discounted Price"
+                        />
+
+                        <Input
+                          type="number"
+                          min={0}
+                          value={itm.print_price_per_unit ?? retail}
+                          onChange={(e) =>
+                            handleUpdate(
+                              idx,
+                              'print_price_per_unit',
+                              parseFloat(e.target.value) || 0,
+                            )
+                          }
+                          disabled={disabled}
+                          className="w-full"
+                          placeholder="Print Price"
+                        />
+                      </>
                     )}
                   </div>
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Retail: {formatCurrency(retail)}</span>
-                    <span>
-                      Total:{' '}
-                      <span className="font-semibold text-foreground">
-                        {formatCurrency(lineTotal)}
-                      </span>
-                    </span>
+
+                  <div className="grid gap-1 text-sm text-muted-foreground">
+                    <div>Retail Price: {formatCurrency(retail)}</div>
+                    {allowPriceChange && (
+                      <>
+                        <div>Wholesale Price: {formatCurrency(wholesale)}</div>
+                        <div>
+                          Technician Price: {formatCurrency(technician)}
+                        </div>
+                      </>
+                    )}
+                    <div className="text-foreground font-semibold">
+                      Total: {formatCurrency(lineTotal)}
+                    </div>
                   </div>
+
                   <div className="flex justify-end">
                     <Button
                       type="button"

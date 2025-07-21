@@ -105,6 +105,7 @@ export interface ItemEntry {
   item: Item
   quantity: number
   final_price_per_unit?: number
+  print_price_per_unit?: number
 }
 
 export interface Item {
@@ -315,6 +316,7 @@ export interface SalesItem {
   description: string
   quantity: number
   final_price_per_unit: string
+  print_price_per_unit?: string | number
   line_total: number
 }
 

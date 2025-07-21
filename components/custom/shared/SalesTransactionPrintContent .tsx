@@ -27,14 +27,36 @@ const Divider = () => (
 
 export const SalesTransactionPrintContent = React.forwardRef<
   HTMLDivElement,
-  { entity: SalesTransaction | null; stall: Stall | null }
+  {
+    entity: SalesTransaction | null
+    stall: Stall | null
+  }
 >(({ entity, stall }, ref) => {
   const createdAt = new Date(entity?.created_at ?? Date.now())
-  const paymentsTotal =
-    entity?.payments?.reduce((acc, p) => acc + Number(p.amount), 0) ?? 0
-  const changeDue = paymentsTotal - Number(entity?.computed_total ?? 0)
+  const isFakePrint = !!entity?.items?.some((item) => {
+    const finalPrice = Number(
+      item.final_price_per_unit ?? item.item?.retail_price ?? 0,
+    )
+    const printPrice = Number(item.print_price_per_unit ?? finalPrice)
+    return printPrice !== finalPrice
+  })
 
   const { shop_name, address, tin_id } = useGetReceiptDetails(stall?.name ?? '')
+
+  const printTotal =
+    entity?.items?.reduce((acc, item) => {
+      const unitPrice = isFakePrint
+        ? Number(item.print_price_per_unit ?? 0)
+        : Number(item.final_price_per_unit ?? item.item?.retail_price ?? 0)
+
+      return acc + unitPrice * item.quantity
+    }, 0) ?? 0
+
+  const paymentsTotal = isFakePrint
+    ? printTotal
+    : entity?.payments?.reduce((acc, p) => acc + Number(p.amount), 0) ?? 0
+
+  const printChangeDue = paymentsTotal - printTotal
 
   return (
     <div
@@ -82,38 +104,52 @@ export const SalesTransactionPrintContent = React.forwardRef<
         <div className="w-20 text-right">Total</div>
       </div>
 
-      {entity?.items.map((item, idx) => (
-        <div
-          key={`${item.item?.id ?? idx}`}
-          className="flex text-sm space-x-1.5"
-        >
-          <div className="w-6">{item.quantity}</div>
-          <div className="flex-1">{item.item?.name ?? 'Unnamed'}</div>
-          <div className="w-20 text-right">
-            {formatCurrency(item.item?.retail_price ?? 0)}
+      {entity?.items.map((item, idx) => {
+        const unitPrice = isFakePrint
+          ? Number(item.print_price_per_unit ?? 0)
+          : Number(item.final_price_per_unit ?? item.item?.retail_price ?? 0)
+
+        const lineTotal = unitPrice * item.quantity
+
+        return (
+          <div
+            key={`${item.item?.id}-${idx}`}
+            className="flex text-sm space-x-1.5"
+          >
+            <div className="w-6">{item.quantity}</div>
+            <div className="flex-1">{item.item?.name ?? 'Unnamed'}</div>
+            <div className="w-20 text-right">{formatCurrency(unitPrice)}</div>
+            <div className="w-20 text-right">{formatCurrency(lineTotal)}</div>
           </div>
-          <div className="w-20 text-right">
-            {formatCurrency(item.line_total)}
-          </div>
-        </div>
-      ))}
+        )
+      })}
 
       <Divider />
 
       <PrintRow
         label="Gross:"
-        value={formatCurrency(Number(entity?.computed_total ?? 0))}
+        value={formatCurrency(printTotal)}
         bold
       />
 
-      {entity?.payments?.map((payment, idx) => (
+      {isFakePrint ? (
         <PrintRow
-          key={`${payment.payment_type}-${idx}`}
-          label={`${payment.payment_type.toUpperCase()}:`}
-          value={formatCurrency(Number(payment.amount))}
+          label="Cash:"
+          value={formatCurrency(printTotal)}
           bold
         />
-      ))}
+      ) : (
+        <>
+          {entity?.payments?.map((payment, idx) => (
+            <PrintRow
+              key={`${payment.payment_type}-${idx}`}
+              label={`${payment.payment_type.toUpperCase()}:`}
+              value={formatCurrency(Number(payment.amount))}
+              bold
+            />
+          ))}
+        </>
+      )}
 
       <PrintRow
         label="Total Payment:"
@@ -122,7 +158,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
       />
       <PrintRow
         label="Change:"
-        value={formatCurrency(changeDue)}
+        value={formatCurrency(printChangeDue)}
         bold
       />
 
