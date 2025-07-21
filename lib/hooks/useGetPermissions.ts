@@ -35,6 +35,7 @@ export function useGetPermissions(role: Roles) {
         'view_clients',
         'view_technicians',
         'view_items',
+        'view_settings',
         'view_stallstocks',
         'manage_stock_transfer',
         'shortcut_add_client',

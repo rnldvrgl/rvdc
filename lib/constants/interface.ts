@@ -115,6 +115,9 @@ export interface Item {
   description?: string | null
   unit_of_measure: UnitChoice
   retail_price: string
+  wholesale_price: string
+  technician_price: string
+  cost_price: string
   is_deleted: boolean
   created_at: string
   updated_at: string
@@ -124,6 +127,9 @@ export interface Item {
 export interface ItemPayload {
   name: string
   retail_price: number
+  wholesale_price: number
+  technician_price: number
+  cost_price: number
   category_id: number | null
   description?: string
   unit_of_measure: UnitChoice

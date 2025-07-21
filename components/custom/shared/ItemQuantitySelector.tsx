@@ -73,13 +73,22 @@ export default function ItemQuantitySelector({
     onChange(items.filter((_, i) => i !== idx))
   }
 
+  const getPrices = (itm: ItemEntry) => {
+    const retail = Number(itm.item.retail_price) || 0
+    const wholesale = Number(itm.item.wholesale_price) || 0
+    const technician = Number(itm.item.technician_price) || 0
+    const effective = allowPriceChange
+      ? itm.final_price_per_unit ?? retail
+      : retail
+    return { retail, wholesale, technician, effective }
+  }
+
   const grandTotal = items.reduce((sum, itm) => {
-    const retailPrice = Number(itm.item.retail_price) || 0
-    const effectivePrice = allowPriceChange
-      ? itm.final_price_per_unit ?? retailPrice
-      : retailPrice
-    return sum + itm.quantity * effectivePrice
+    const { effective } = getPrices(itm)
+    return sum + itm.quantity * effective
   }, 0)
+
+  const tableColSpan = allowPriceChange ? 8 : 5
 
   return (
     <div className="space-y-4">
@@ -97,33 +106,49 @@ export default function ItemQuantitySelector({
         </Button>
       </div>
 
+      {/* Desktop Table */}
       <div className="hidden md:block">
         <div className="border rounded-xl overflow-hidden shadow-sm">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted">
                 <TableHead className="w-1/3">Item</TableHead>
-                <TableHead className="w-20">Qty</TableHead>
-                {allowPriceChange && (
-                  <TableHead className="w-28">Discounted</TableHead>
-                )}
-                <TableHead className="w-24">Retail</TableHead>
-                <TableHead className="w-28 text-right">Total</TableHead>
-                <TableHead className="w-8"></TableHead>
+                <TableHead className="w-44">Qty</TableHead>
+
+                <TableHead
+                  className={`w-44 ${!allowPriceChange ? 'hidden' : ''}`}
+                >
+                  Discounted Price
+                </TableHead>
+
+                <TableHead className="w-44">Retail Price</TableHead>
+
+                <TableHead
+                  className={`w-44 ${!allowPriceChange ? 'hidden' : ''}`}
+                >
+                  Wholesale Price
+                </TableHead>
+
+                <TableHead
+                  className={`w-44 ${!allowPriceChange ? 'hidden' : ''}`}
+                >
+                  Technician Price
+                </TableHead>
+
+                <TableHead className="w-44 text-right">Total</TableHead>
+                <TableHead className="w-8" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {items.length > 0 ? (
                 <>
                   {items.map((itm, idx) => {
-                    const retailPrice = Number(itm.item.retail_price) || 0
-                    const effectivePrice = allowPriceChange
-                      ? itm.final_price_per_unit ?? retailPrice
-                      : retailPrice
-                    const lineTotal = itm.quantity * effectivePrice
+                    const { retail, wholesale, technician, effective } =
+                      getPrices(itm)
+                    const lineTotal = itm.quantity * effective
                     return (
                       <TableRow
-                        key={idx}
+                        key={itm.item.id + '-' + idx}
                         className="hover:bg-muted/50 transition-colors"
                       >
                         <TableCell>
@@ -156,7 +181,6 @@ export default function ItemQuantitySelector({
                               )
                             }
                             disabled={disabled}
-                            className="w-full"
                           />
                         </TableCell>
                         {allowPriceChange && (
@@ -164,7 +188,7 @@ export default function ItemQuantitySelector({
                             <Input
                               type="number"
                               min={0}
-                              value={itm.final_price_per_unit ?? retailPrice}
+                              value={itm.final_price_per_unit ?? retail}
                               onChange={(e) =>
                                 handleUpdate(
                                   idx,
@@ -173,14 +197,23 @@ export default function ItemQuantitySelector({
                                 )
                               }
                               disabled={disabled}
-                              className="w-full"
                               placeholder="Price"
                             />
                           </TableCell>
                         )}
                         <TableCell className="text-muted-foreground">
-                          {formatCurrency(retailPrice)}
+                          {formatCurrency(retail)}
                         </TableCell>
+                        {allowPriceChange && (
+                          <>
+                            <TableCell className="text-muted-foreground">
+                              {formatCurrency(wholesale)}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {formatCurrency(technician)}
+                            </TableCell>
+                          </>
+                        )}
                         <TableCell className="font-semibold text-right">
                           {formatCurrency(lineTotal)}
                         </TableCell>
@@ -200,7 +233,7 @@ export default function ItemQuantitySelector({
                   })}
                   <TableRow className="bg-muted/70 font-semibold">
                     <TableCell
-                      colSpan={allowPriceChange ? 4 : 3}
+                      colSpan={tableColSpan - 2}
                       className="text-right"
                     >
                       Grand Total:
@@ -208,13 +241,13 @@ export default function ItemQuantitySelector({
                     <TableCell className="text-right font-bold">
                       {formatCurrency(grandTotal)}
                     </TableCell>
-                    <TableCell></TableCell>
+                    <TableCell />
                   </TableRow>
                 </>
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={allowPriceChange ? 6 : 5}
+                    colSpan={tableColSpan + 2}
                     className="text-center py-8 text-muted-foreground"
                   >
                     No items added
@@ -226,18 +259,16 @@ export default function ItemQuantitySelector({
         </div>
       </div>
 
+      {/* Mobile Layout */}
       <div className="md:hidden space-y-4">
         {items.length > 0 ? (
           <>
             {items.map((itm, idx) => {
-              const retailPrice = Number(itm.item.retail_price) || 0
-              const effectivePrice = allowPriceChange
-                ? itm.final_price_per_unit ?? retailPrice
-                : retailPrice
-              const lineTotal = itm.quantity * effectivePrice
+              const { retail, effective } = getPrices(itm)
+              const lineTotal = itm.quantity * effective
               return (
                 <div
-                  key={idx}
+                  key={itm.item.id + '-' + idx}
                   className="rounded-xl border p-4 shadow-sm space-y-3"
                 >
                   <ComboBox
@@ -273,7 +304,7 @@ export default function ItemQuantitySelector({
                       <Input
                         type="number"
                         min={0}
-                        value={itm.final_price_per_unit ?? retailPrice}
+                        value={itm.final_price_per_unit ?? retail}
                         onChange={(e) =>
                           handleUpdate(
                             idx,
@@ -288,7 +319,7 @@ export default function ItemQuantitySelector({
                     )}
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Retail: {formatCurrency(retailPrice)}</span>
+                    <span>Retail: {formatCurrency(retail)}</span>
                     <span>
                       Total:{' '}
                       <span className="font-semibold text-foreground">

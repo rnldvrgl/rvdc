@@ -60,7 +60,7 @@ export function DataTable<TData, TValue>({
   const hasPrevPage = !!data?.previous
 
   const [localSearch, setLocalSearch] = React.useState(search || '')
-  const debouncedSearch = useDebounce(localSearch, 500)
+  const debouncedSearch = useDebounce(localSearch, 1000)
 
   const [sortingState, setSortingState] = React.useState(() => {
     if (!ordering) return []

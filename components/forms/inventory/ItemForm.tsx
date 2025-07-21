@@ -28,6 +28,9 @@ interface FormValues {
   unit_of_measure: 'pcs' | 'ft' | 'kg' | 'roll' | 'box'
   retail_price: string
   description: string
+  wholesale_price: string
+  technician_price: string
+  cost_price: string
 }
 
 interface ItemFormProps {
@@ -42,6 +45,9 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
       category: item?.category?.id ? item.category.id.toString() : null,
       unit_of_measure: item?.unit_of_measure ?? 'pcs',
       retail_price: item?.retail_price?.toString() ?? '',
+      wholesale_price: item?.wholesale_price?.toString() ?? '',
+      technician_price: item?.technician_price?.toString() ?? '',
+      cost_price: item?.cost_price?.toString() ?? '',
       description: item?.description ?? '',
     },
   })
@@ -59,6 +65,9 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
       description: data.description,
       unit_of_measure: data.unit_of_measure,
       retail_price: parseFloat(data.retail_price) || 0,
+      wholesale_price: parseFloat(data.wholesale_price) || 0,
+      technician_price: parseFloat(data.technician_price) || 0,
+      cost_price: parseFloat(data.cost_price) || 0,
     }
 
     if (item?.id) {
@@ -176,6 +185,29 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
             )}
           />
 
+          {/* Cost Price */}
+          <div className="space-y-4 grid">
+            <FormField
+              control={form.control}
+              name="cost_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel required>Cost Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="e.g. 100.00"
+                      type="number"
+                      step="0.01"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Retail Price */}
           <FormField
             control={form.control}
             name="retail_price"
@@ -187,6 +219,50 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
                   <Input
                     {...field}
                     placeholder="e.g. 150.00"
+                    type="number"
+                    step="0.01"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* WholeSale Price */}
+        <div className="space-y-4 grid">
+          <FormField
+            control={form.control}
+            name="wholesale_price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel required>Wholesale Price</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g. 100.00"
+                    type="number"
+                    step="0.01"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        {/* Technician Price */}
+        <div className="space-y-4 grid">
+          <FormField
+            control={form.control}
+            name="technician_price"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel required>Technician Price</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g. 100.00"
                     type="number"
                     step="0.01"
                   />

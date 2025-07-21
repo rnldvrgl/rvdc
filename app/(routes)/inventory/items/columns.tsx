@@ -45,6 +45,21 @@ export function getItemColumns({
       header: 'Retail Price',
       cell: ({ getValue }) => formatCurrency(getValue() as number | string),
     },
+    {
+      accessorKey: 'wholesale_price',
+      header: 'Wholesale Price',
+      cell: ({ getValue }) => formatCurrency(getValue() as number | string),
+    },
+    {
+      accessorKey: 'technician_price',
+      header: 'Technician Price',
+      cell: ({ getValue }) => formatCurrency(getValue() as number | string),
+    },
+    {
+      accessorKey: 'cost_price',
+      header: 'Cost Price',
+      cell: ({ getValue }) => formatCurrency(getValue() as number | string),
+    },
     ...(role === 'admin'
       ? [
           {
