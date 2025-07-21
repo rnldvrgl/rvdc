@@ -1,5 +1,6 @@
 'use client'
 
+import { ComboBox } from '@/components/custom/inputs/ComboBox'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -110,29 +111,18 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
               <FormItem>
                 <FormLabel required>Category</FormLabel>
                 <FormControl>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value ?? ''}
+                  <ComboBox
+                    options={categories.map((cat: ProductCategory) => ({
+                      label: cat.name,
+                      value: cat.id.toString(),
+                    }))}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder={
+                      loadingCategories ? 'Loading...' : 'Select Category'
+                    }
                     disabled={loadingCategories}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder={
-                          loadingCategories ? 'Loading...' : 'Select Category'
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat: ProductCategory) => (
-                        <SelectItem
-                          key={cat.id}
-                          value={cat.id.toString()}
-                        >
-                          {cat.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -198,7 +188,7 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
                       {...field}
                       placeholder="e.g. 100.00"
                       type="number"
-                      step="0.01"
+                      step="1"
                     />
                   </FormControl>
                   <FormMessage />
@@ -220,7 +210,7 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
                     {...field}
                     placeholder="e.g. 150.00"
                     type="number"
-                    step="0.01"
+                    step="1"
                   />
                 </FormControl>
                 <FormMessage />
@@ -242,7 +232,7 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
                     {...field}
                     placeholder="e.g. 100.00"
                     type="number"
-                    step="0.01"
+                    step="1"
                   />
                 </FormControl>
                 <FormMessage />
@@ -264,7 +254,7 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
                     {...field}
                     placeholder="e.g. 100.00"
                     type="number"
-                    step="0.01"
+                    step="1"
                   />
                 </FormControl>
                 <FormMessage />
