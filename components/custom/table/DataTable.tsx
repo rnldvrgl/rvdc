@@ -129,7 +129,7 @@ export function DataTable<TData, TValue>({
           placeholder="Search..."
           className="w-full sm:max-w-xs border-border focus-visible:ring-2 focus-visible:ring-primary/40"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {headerActions}
           <DataTableDateRangeFilter />
           <DataTableViewOptions table={table} />

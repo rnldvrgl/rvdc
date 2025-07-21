@@ -240,7 +240,6 @@ export default function SalesTransactionForm({
           setIsFakePrint(isFakePrint)
 
           const printPrices = formItems.map((i) => i.print_price_per_unit)
-          console.log(printPrices)
 
           const itemsWithPrintPrice = data.data.items.map((item, idx) => ({
             ...item,

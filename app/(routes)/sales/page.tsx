@@ -60,7 +60,7 @@ export default function SalesTransactionsPage() {
   })
 
   return (
-    <div className="container mx-auto">
+    <div className="mx-auto container">
       {printData && (
         <div className="hidden">
           <SalesTransactionPrintContent
@@ -73,7 +73,6 @@ export default function SalesTransactionsPage() {
 
       {/* Create sheet */}
       <EntitySheet<SalesTransaction>
-        className="min-w-2xl"
         open={createSheet.open}
         onClose={closeCreate}
         title="New Sale"

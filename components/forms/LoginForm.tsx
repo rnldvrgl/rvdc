@@ -83,6 +83,7 @@ export function LoginForm() {
   return (
     <Card
       className="
+      container
          w-full max-w-md mx-auto 
         rounded-3xl 
         ring-1 dark:ring-foreground/10 
@@ -96,13 +97,19 @@ export function LoginForm() {
         transition-shadow 
       "
     >
-      <CardHeader className=" text-center space-y-1">
+      <CardHeader className="text-center space-y-1">
         <ModeToggle className="rounded-full absolute top-3 right-3 hover:scale-110 transition-transform" />
-        <h2 className="text-3xl font-bold tracking-tight">Welcome Back</h2>
-        <p className="text-muted-foreground text-sm">Sign in to continue</p>
+
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          Welcome Back
+        </h2>
+
+        <p className="text-xs sm:text-sm text-muted-foreground">
+          Sign in to continue
+        </p>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="text-sm sm:text-base">
         <Form {...form}>
           <form
             onSubmit={handleSubmit(onSubmit)}
@@ -147,18 +154,16 @@ export function LoginForm() {
                         onCheckedChange={field.onChange}
                         disabled={isSubmitting}
                       />
-                      <span className="text-sm leading-none">Remember Me</span>
+                      <span className="text-xs sm:text-sm leading-none">
+                        Remember Me
+                      </span>
                     </div>
                   </FormControl>
                 </FormItem>
               )}
             />
 
-            <Button
-              type="submit"
-              className="w-full rounded-xl mt-2"
-              disabled={isSubmitting}
-            >
+            <Button className="w-full rounded-xl mt-2 text-sm sm:text-base">
               {isSubmitting ? <Spinner /> : 'Sign In'}
             </Button>
           </form>
