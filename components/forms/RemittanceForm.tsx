@@ -68,9 +68,17 @@ export default function RemittanceForm({
   const onSubmit = (data: FormValues) => {
     if (isRemitted) return // prevent updating if already remitted
 
+    const stallId =
+      role === 'admin' ? data.stall : userProfile?.assigned_stall?.id
+
+    if (!stallId) {
+      console.error('Missing stall ID')
+      return
+    }
+
     const payload: RemittancePayload = {
       ...data,
-      stall: role === 'admin' ? data.stall! : userProfile?.assigned_stall?.id!,
+      stall: stallId,
     }
 
     if (isEditing) {
