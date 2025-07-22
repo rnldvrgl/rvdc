@@ -1,20 +1,22 @@
 import { NavigationEntry, ShortcutEntry } from '@/lib/constants/types'
 import {
+  Banknote,
   Boxes,
   Building2,
-  CalendarClock,
-  Clock,
+  CalendarCheck2,
+  CalendarDays,
+  CircleDollarSign,
   Coins,
-  FilePlus,
+  FileText,
+  Hammer,
   Layers,
   LayoutDashboard,
+  MonitorSmartphone,
   Package,
-  Receipt,
+  Repeat,
   Settings,
-  ShoppingCart,
   Store,
-  Truck,
-  UserCog,
+  UserPlus,
   Users,
   Warehouse,
   Wrench,
@@ -26,23 +28,41 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     href: '/dashboard',
     icon: LayoutDashboard,
   },
-  expenses: {
-    name: 'Expenses',
-    href: '/expenses',
-    icon: Receipt,
-    permission: 'view_expenses',
-  },
   pos: {
     name: 'POS Terminal',
     href: '/pos',
-    icon: ShoppingCart,
+    icon: MonitorSmartphone,
     permission: 'use_pos',
   },
   sales: {
     name: 'Sales Records',
     href: '/sales',
-    icon: Receipt,
+    icon: FileText,
     permission: 'view_sales',
+  },
+  remittances: {
+    name: 'Remittances',
+    href: '/remittances',
+    icon: Banknote,
+    permission: 'view_remittances',
+  },
+  expenses: {
+    name: 'Expenses',
+    href: '/expenses',
+    icon: Coins,
+    permission: 'view_expenses',
+  },
+  clients: {
+    name: 'Clients',
+    href: '/clients',
+    icon: Users,
+    permission: 'view_clients',
+  },
+  attendance: {
+    name: 'Attendance',
+    href: '/attendance',
+    icon: CalendarDays,
+    permission: 'view_attendance',
   },
   repairs: {
     name: 'Repair Orders',
@@ -53,8 +73,20 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   scheduling: {
     name: 'Service Appointments',
     href: '/scheduling',
-    icon: CalendarClock,
+    icon: CalendarCheck2,
     permission: 'view_scheduling',
+  },
+  technicians: {
+    name: 'Technicians',
+    href: '/technicians',
+    icon: Hammer,
+    permission: 'view_technicians',
+  },
+  stalls: {
+    name: 'Stalls',
+    href: '/stalls',
+    icon: Building2,
+    permission: 'view_stalls',
   },
   inventory: {
     name: 'Inventory',
@@ -75,7 +107,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
       {
         name: 'Stock Transfer',
         href: '/inventory/stocks/transfer',
-        icon: Truck,
+        icon: Repeat,
         permission: 'manage_stock_transfer',
       },
       {
@@ -92,30 +124,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
       },
     ],
   },
-  clients: {
-    name: 'Clients',
-    href: '/clients',
-    icon: Users,
-    permission: 'view_clients',
-  },
-  attendance: {
-    name: 'Attendance',
-    href: '/attendance',
-    icon: Clock,
-    permission: 'view_attendance',
-  },
-  technicians: {
-    name: 'Technicians',
-    href: '/technicians',
-    icon: UserCog,
-    permission: 'view_technicians',
-  },
-  stalls: {
-    name: 'Stalls',
-    href: '/stalls',
-    icon: Building2,
-    permission: 'view_stalls',
-  },
   settings: {
     name: 'Settings',
     href: '/settings',
@@ -128,7 +136,7 @@ export const baseShortcuts: ShortcutEntry[] = [
   {
     name: 'Add Sale',
     action: 'addSale',
-    icon: ShoppingCart,
+    icon: CircleDollarSign,
     permission: 'shortcut_add_sale',
   },
   {
@@ -140,13 +148,13 @@ export const baseShortcuts: ShortcutEntry[] = [
   {
     name: 'Add Client',
     action: 'addClient',
-    icon: FilePlus,
+    icon: UserPlus,
     permission: 'shortcut_add_client',
   },
   {
     name: 'Add Transfer',
     action: 'addTransfer',
-    icon: Truck,
+    icon: Repeat,
     permission: 'shortcut_add_transfer',
   },
 ]
