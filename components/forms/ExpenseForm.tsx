@@ -16,7 +16,6 @@ import { Expense } from '@/lib/constants/interface'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useExpenseMutations } from '@/lib/mutations/useExpenseMutations'
 import { useStallChoices } from '@/lib/queries/useChoices'
-import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import z from 'zod'
@@ -43,23 +42,24 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      stall: expense?.stall?.id,
+      stall: expense?.stall_data?.id,
       description: expense?.description ?? '',
       total_price: expense?.total_price ?? 0,
     },
   })
 
-  const userProfile = useUserProfileStore((state) => state.userProfile)
+  const { user_id, assigned_stall } = useCurrentUser()
   const { addExpense, updateExpense } = useExpenseMutations()
   const { data: stalls } = useStallChoices({})
 
   const onSubmit = (data: FormValues) => {
     const payload = {
       ...data,
-      stall: role === 'admin' ? data.stall : userProfile?.assigned_stall?.id,
-      created_by: userProfile?.id,
-      updated_by: userProfile?.id,
+      stall: role === 'admin' ? data.stall : assigned_stall?.id,
+      created_by: user_id,
+      updated_by: user_id,
     }
+    console.log(payload)
 
     if (expense?.id) {
       updateExpense.mutate(

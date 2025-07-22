@@ -157,8 +157,15 @@ export function formatCurrency(value: number | string) {
 }
 
 export function safeCell(value: unknown): string {
-  if (typeof value === 'string') return value
-  if (value == null) return ''
+  const EMPTY_DASH = '—'
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed !== '' ? trimmed : EMPTY_DASH
+  }
+
+  if (value == null) return EMPTY_DASH
+
   return String(value)
 }
 

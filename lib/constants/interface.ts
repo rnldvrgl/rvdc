@@ -279,7 +279,8 @@ export interface Notification {
 
 export interface Expense {
   id: number
-  stall: { id: number; name: string }
+  stall: number | string
+  stall_data: Stall
   total_price: number
   paid_amount: number
   is_paid: boolean
@@ -418,4 +419,16 @@ export type UnpaidSalesStatus = {
 export type RestocksOvertime = {
   date: string
   restock_volume: number
+}
+
+export interface CashDenominationBreakdownPayload {
+  count_1000?: number
+  count_500?: number
+  count_100?: number
+  count_50?: number
+  count_20?: number
+  count_10?: number
+  count_5?: number
+  count_1?: number
+  coins_remitted: boolean
 }

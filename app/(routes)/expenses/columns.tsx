@@ -22,10 +22,10 @@ export function getExpenseColumns({
     ...(role === 'admin'
       ? [
           {
-            accessorKey: 'stall.name',
+            accessorKey: 'stall_data.name',
             header: 'Stall',
             cell: ({ row }: { row: Row<Expense> }) => {
-              const stallName = safeCell(row.original.stall?.name)
+              const stallName = safeCell(row.original.stall_data?.name)
               return (
                 <Badge className={getHashedStallBadgeClass(stallName)}>
                   {stallName}
@@ -118,7 +118,7 @@ export function getExpenseColumns({
                       icon: <Trash2 className="size-4 text-destructive" />,
                       onClick: () => onDelete(expense),
                       destructive: true,
-                      confirmText: `Delete expense for ${expense.stall?.name}?`,
+                      confirmText: `Delete expense for ${expense.stall_data?.name}?`,
                     },
                   ]
                 : []),
