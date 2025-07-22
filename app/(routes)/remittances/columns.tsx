@@ -142,13 +142,17 @@ export function getRemittanceColumns({
                   onClick: () => onEdit?.(row.original),
                 },
               ]),
-          {
-            label: 'Delete',
-            icon: <Trash2 className="size-4 text-destructive" />,
-            onClick: () => onDelete?.(row.original),
-            destructive: true,
-            confirmText: `Delete remittance record for ${row.original.stall_data?.name} (${row.original.date})?`,
-          },
+          ...(!row.original.is_remitted || role === 'admin'
+            ? [
+                {
+                  label: 'Delete',
+                  icon: <Trash2 className="size-4 text-destructive" />,
+                  onClick: () => onDelete?.(row.original),
+                  destructive: true,
+                  confirmText: `Delete remittance record for ${row.original.stall_data?.name} (${row.original.date})?`,
+                },
+              ]
+            : []),
         ]
         return <DataTableActions items={actions} />
       },
