@@ -119,35 +119,35 @@ export default function ItemQuantitySelector({
             <TableHeader>
               <TableRow className="bg-muted">
                 <TableHead className="w-1/4">Item</TableHead>
-                <TableHead className="w-44">Qty</TableHead>
+                <TableHead className="w-40">Qty</TableHead>
 
                 <TableHead
-                  className={`w-44 ${!allowPriceChange ? 'hidden' : ''}`}
+                  className={`w-40 ${!allowPriceChange ? 'hidden' : ''}`}
                 >
                   Discounted Price
                 </TableHead>
 
                 <TableHead
-                  className={`w-44 ${!allowPriceChange ? 'hidden' : ''}`}
+                  className={`w-40 ${!allowPriceChange ? 'hidden' : ''}`}
                 >
                   Print Price
                 </TableHead>
 
-                <TableHead className="w-44">Retail Price</TableHead>
+                <TableHead className="w-40">Retail Price</TableHead>
 
                 <TableHead
-                  className={`w-44 ${!allowPriceChange ? 'hidden' : ''}`}
+                  className={`w-40 ${!allowPriceChange ? 'hidden' : ''}`}
                 >
                   Wholesale Price
                 </TableHead>
 
                 <TableHead
-                  className={`w-44 ${!allowPriceChange ? 'hidden' : ''}`}
+                  className={`w-40 ${!allowPriceChange ? 'hidden' : ''}`}
                 >
                   Technician Price
                 </TableHead>
 
-                <TableHead className="w-44 text-right">Total</TableHead>
+                <TableHead className="w-40 text-right">Total</TableHead>
                 <TableHead className="w-8" />
               </TableRow>
             </TableHeader>
