@@ -2,7 +2,6 @@
 
 import EntitySheet from '@/components/custom/shared/EntitySheet'
 import { DataTable } from '@/components/custom/table/DataTable'
-// import { RemittanceDetails } from '@/components/details/RemittanceDetails'
 import { RemittanceDetails } from '@/components/details/RemittanceDetails'
 import RemittanceForm from '@/components/forms/RemittanceForm'
 import { Button } from '@/components/ui/button'

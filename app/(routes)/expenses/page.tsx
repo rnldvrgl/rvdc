@@ -108,6 +108,7 @@ export default function ExpensesPage() {
             Add Expense
           </Button>
         }
+        defaultRangePreset="Today"
       />
     </div>
   )

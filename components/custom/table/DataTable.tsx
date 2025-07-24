@@ -24,8 +24,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { PaginatedResult } from '@/lib/constants/types'
+import { DateRangePresetLabel, PaginatedResult } from '@/lib/constants/types'
 import { useDebounce } from '@/lib/hooks/useDebounce'
+import { useDefaultDateRange } from '@/lib/hooks/useDefaultRange'
 import { useNavigation } from '@/lib/hooks/useNavigation'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { cn } from '@/lib/utils/helpers'
@@ -35,6 +36,7 @@ interface DataTableProps<TData, TValue> {
   data: PaginatedResult<TData>
   isLoading: boolean
   headerActions?: React.ReactNode
+  defaultRangePreset?: DateRangePresetLabel
 }
 
 export function DataTable<TData, TValue>({
@@ -42,6 +44,7 @@ export function DataTable<TData, TValue>({
   data,
   isLoading,
   headerActions,
+  defaultRangePreset,
 }: DataTableProps<TData, TValue>) {
   const {
     page,
@@ -88,6 +91,10 @@ export function DataTable<TData, TValue>({
     setLocalSearch(search || '')
   }, [search])
 
+  const resolvedDefaultRange = defaultRangePreset
+    ? useDefaultDateRange(defaultRangePreset)
+    : undefined
+
   const table = useReactTable({
     data: data.results ?? [],
     columns,
@@ -131,7 +138,7 @@ export function DataTable<TData, TValue>({
         />
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           {headerActions}
-          <DataTableDateRangeFilter />
+          <DataTableDateRangeFilter defaultRangePreset={defaultRangePreset} />
           <DataTableViewOptions table={table} />
         </div>
       </div>

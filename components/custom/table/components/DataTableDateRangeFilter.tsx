@@ -1,29 +1,36 @@
 'use client'
 
 import DataTableDateRangePicker from '@/components/custom/table/components/DataTableDateRangePicker'
+import { DateRangePresetLabel } from '@/lib/constants/types'
+import { useDefaultDateRange } from '@/lib/hooks/useDefaultRange'
 import { useNavigation } from '@/lib/hooks/useNavigation'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { formatBackDate } from '@/lib/utils/helpers'
+import { useEffect } from 'react'
 import { DateRange } from 'react-day-picker'
 
-export function DataTableDateRangeFilter() {
+export function DataTableDateRangeFilter({
+  defaultRangePreset,
+}: {
+  defaultRangePreset?: DateRangePresetLabel
+}) {
   const { limit, search, ordering, filter } = useSearchParameters()
   const { push } = useNavigation()
 
-  const defaultRange: DateRange = {
-    from: filter?.start_date
-      ? new Date(formatBackDate(new Date(filter.start_date)))
-      : undefined,
-    to: filter?.end_date
-      ? new Date(formatBackDate(new Date(filter.end_date)))
-      : undefined,
-  }
+  const defaultRange = defaultRangePreset
+    ? useDefaultDateRange(defaultRangePreset)
+    : undefined
+
+  useEffect(() => {
+    if (defaultRange) {
+      handleChange(defaultRange)
+    }
+  }, [])
 
   const handleChange = (range?: DateRange) => {
     const from = range?.from ? formatBackDate(range.from) : undefined
     const to = range?.to ? formatBackDate(range.to) : undefined
 
-    console.log({ from, to })
     const updatedFilter = { ...filter }
 
     if (from) {

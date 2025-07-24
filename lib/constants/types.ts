@@ -1,3 +1,4 @@
+import { DATE_RANGE_PRESETS } from '@/lib/constants/general'
 import {
   NavigationGroup,
   NavigationLink,
@@ -151,3 +152,5 @@ export type TUserProfile = z.infer<typeof userProfileSchema>
 export type UserProfilePayload = Omit<TUserProfile, 'birthday'> & {
   birthday?: string
 }
+
+export type DateRangePresetLabel = (typeof DATE_RANGE_PRESETS)[number]['label']

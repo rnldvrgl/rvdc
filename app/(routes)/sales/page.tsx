@@ -127,6 +127,7 @@ export default function SalesTransactionsPage() {
             New Sale
           </Button>
         }
+        defaultRangePreset="Today"
       />
     </div>
   )
