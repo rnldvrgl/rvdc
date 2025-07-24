@@ -12,6 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { RemittanceRecord } from '@/lib/constants/infers'
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import {
   formatCurrency,
   formatDate,
@@ -53,6 +54,7 @@ export function RemittanceDetails({
   onMarkAsRemitted: () => void
   markAsRemittedPending: boolean
 }) {
+  const { role } = useCurrentUser()
   const remitStatus = (): { variant: BadgeVariant; value: string } => {
     const expected = Number(entity.expected_remittance ?? 0)
     const actual = Number(entity.remitted_amount ?? 0)
@@ -211,7 +213,7 @@ export function RemittanceDetails({
 
       {/* Actions */}
       <div className="flex flex-col sm:flex-row justify-end gap-4 border-t pt-6">
-        {!entity.is_remitted && (
+        {!entity.is_remitted && role === 'admin' && (
           <Button
             type="button"
             variant="success"
