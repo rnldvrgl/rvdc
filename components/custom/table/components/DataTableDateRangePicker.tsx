@@ -72,7 +72,7 @@ export const DataTableDateRangePicker = ({
     >
       <PopoverTrigger asChild>
         <Button
-          variant="secondary"
+          variant="outline"
           className="max-w-[260px] justify-start text-left"
         >
           <CalendarIcon className="mr-2 size-4" />

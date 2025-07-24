@@ -7,12 +7,14 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import React from 'react'
 
+import DataTableActiveFilters from '@/components/custom/table/components/DataTableActiveFilters'
 import { DataTableDateRangeFilter } from '@/components/custom/table/components/DataTableDateRangeFilter'
+import { DataTableFilterDropdown } from '@/components/custom/table/components/DataTableFilterDropdown'
 import { DataTablePagination } from '@/components/custom/table/components/DataTablePagination'
-import DataTableSortingChips from '@/components/custom/table/components/DataTableSortingChips'
+import { DataTableSortDropdown } from '@/components/custom/table/components/DataTableSortDropdown'
 import { DataTableViewOptions } from '@/components/custom/table/components/DataTableViewOptions'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -24,9 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { DateRangePresetLabel, PaginatedResult } from '@/lib/constants/types'
+import {
+  DateRangePresetLabel,
+  FilterDefinition,
+  PaginatedResult,
+  SortOption,
+} from '@/lib/constants/types'
 import { useDebounce } from '@/lib/hooks/useDebounce'
-import { useDefaultDateRange } from '@/lib/hooks/useDefaultRange'
 import { useNavigation } from '@/lib/hooks/useNavigation'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { cn } from '@/lib/utils/helpers'
@@ -37,6 +43,8 @@ interface DataTableProps<TData, TValue> {
   isLoading: boolean
   headerActions?: React.ReactNode
   defaultRangePreset?: DateRangePresetLabel
+  filters?: FilterDefinition[]
+  sortOptions?: SortOption[]
 }
 
 export function DataTable<TData, TValue>({
@@ -45,6 +53,8 @@ export function DataTable<TData, TValue>({
   isLoading,
   headerActions,
   defaultRangePreset,
+  filters,
+  sortOptions,
 }: DataTableProps<TData, TValue>) {
   const {
     page,
@@ -57,14 +67,14 @@ export function DataTable<TData, TValue>({
   const { push } = useNavigation()
 
   const totalCount = data?.count ?? 0
-  const pageCount = Math.max(1, Math.ceil(totalCount / (limit || 10)))
-
+  const pageCount = Math.max(1, Math.ceil(totalCount / limit))
   const hasNextPage = !!data?.next
   const hasPrevPage = !!data?.previous
 
   const [localSearch, setLocalSearch] = React.useState(search || '')
   const debouncedSearch = useDebounce(localSearch, 1000)
 
+  const [showSortPanel, setShowSortPanel] = React.useState(false)
   const [sortingState, setSortingState] = React.useState(() => {
     if (!ordering) return []
     return ordering
@@ -90,10 +100,6 @@ export function DataTable<TData, TValue>({
   React.useEffect(() => {
     setLocalSearch(search || '')
   }, [search])
-
-  const resolvedDefaultRange = defaultRangePreset
-    ? useDefaultDateRange(defaultRangePreset)
-    : undefined
 
   const table = useReactTable({
     data: data.results ?? [],
@@ -128,37 +134,40 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <Input
-          type="text"
-          value={localSearch}
-          onChange={(e) => setLocalSearch(e.target.value)}
-          placeholder="Search..."
-          className="w-full sm:max-w-xs border-border focus-visible:ring-2 focus-visible:ring-primary/40"
-        />
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          {headerActions}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {/* Left side: Search + Filters + Sort */}
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <Input
+            type="text"
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            placeholder="Search..."
+            className="w-full sm:w-64 border-border focus-visible:ring-2 focus-visible:ring-primary/40"
+          />
+
+          {sortOptions && (
+            <DataTableSortDropdown
+              options={sortOptions}
+              value={sortingState}
+              onChange={setSortingState}
+            />
+          )}
+
+          {filters && filters.length > 0 && (
+            <div className="flex gap-2 items-center">
+              <DataTableFilterDropdown filters={filters} />
+              <DataTableActiveFilters filters={filters} />
+            </div>
+          )}
+        </div>
+
+        {/* Right side: Date range + View + Custom actions */}
+        <div className="flex flex-wrap gap-3 items-center justify-end">
           <DataTableDateRangeFilter defaultRangePreset={defaultRangePreset} />
+          {headerActions}
           <DataTableViewOptions table={table} />
         </div>
       </div>
-
-      <DataTableSortingChips
-        sorting={sortingState}
-        onChange={(next) => {
-          setSortingState(next)
-          const orderingString = next
-            .map((s) => (s.desc ? `-${s.id}` : s.id))
-            .join(',')
-          push({
-            page: 1,
-            limit,
-            ordering: orderingString || undefined,
-            search,
-            filter,
-          })
-        }}
-      />
 
       <div className="rounded-2xl border border-border bg-background shadow-sm ring-1 ring-border/30 overflow-x-auto">
         <Table className="min-w-full">
@@ -166,65 +175,20 @@ export function DataTable<TData, TValue>({
             <TableRow className="bg-muted/50">
               {table.getHeaderGroups()[0]?.headers.map((header) => {
                 const colId = header.column.id
-                const existingSort = sortingState.find((s) => s.id === colId)
-                const isSorted = typeof existingSort?.desc === 'boolean'
-
                 return (
                   <TableHead
                     key={header.id}
                     className={cn(
-                      'px-3 py-2 text-sm font-semibold select-none',
+                      'px-3 py-2 text-sm font-semibold',
                       colId === 'action' || colId === 'actions'
                         ? 'cursor-default'
-                        : 'cursor-pointer',
+                        : '',
                     )}
-                    onClick={() => {
-                      if (colId === 'action' || colId === 'actions') return
-
-                      let newSorting
-
-                      if (!existingSort) {
-                        newSorting = [
-                          ...sortingState,
-                          { id: colId, desc: true },
-                        ]
-                      } else if (existingSort.desc) {
-                        newSorting = sortingState.map((s) =>
-                          s.id === colId ? { ...s, desc: false } : s,
-                        )
-                      } else {
-                        newSorting = sortingState.filter((s) => s.id !== colId)
-                      }
-
-                      setSortingState(newSorting)
-
-                      const orderingString = newSorting
-                        .map((s) => (s.desc ? `-${s.id}` : s.id))
-                        .join(',')
-
-                      push({
-                        page: 1,
-                        limit,
-                        ordering: orderingString || undefined,
-                        search,
-                        filter,
-                      })
-                    }}
                   >
                     <div className="flex items-center gap-1">
                       {flexRender(
                         header.column.columnDef.header,
                         header.getContext(),
-                      )}
-
-                      {colId !== 'actions' && isSorted && (
-                        <motion.div
-                          initial={false}
-                          animate={{ rotate: existingSort?.desc ? 180 : 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <ChevronDown className="h-4 w-4 text-primary" />
-                        </motion.div>
                       )}
                     </div>
                   </TableHead>
