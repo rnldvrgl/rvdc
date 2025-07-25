@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/popover'
 import { DATE_RANGE_PRESETS } from '@/lib/constants/general'
 import { cn } from '@/lib/utils/helpers'
-import { format, startOfToday, subDays } from 'date-fns'
+import { format } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
 import { useState } from 'react'
 import { DateRange } from 'react-day-picker'
@@ -20,7 +20,7 @@ interface DataTableDateRangePickerProps {
 }
 
 export const DataTableDateRangePicker = ({
-  defaultValue = { from: subDays(startOfToday(), 30), to: startOfToday() },
+  defaultValue = { from: undefined, to: undefined },
   onChange,
 }: DataTableDateRangePickerProps) => {
   const [open, setOpen] = useState(false)

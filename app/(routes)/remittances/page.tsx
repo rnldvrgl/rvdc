@@ -113,6 +113,7 @@ export default function RemittancesPage() {
             New Remittance
           </Button>
         }
+        defaultRangePreset="Last 30 Days"
       />
     </div>
   )

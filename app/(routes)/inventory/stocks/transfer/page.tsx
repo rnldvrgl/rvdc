@@ -128,6 +128,7 @@ export default function StockTransfersPage() {
             Transfer Stock
           </Button>
         }
+        defaultRangePreset="Last 30 Days"
         filters={filters}
         orderingOptions={orderingOptions}
       />
