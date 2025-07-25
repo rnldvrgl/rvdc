@@ -121,6 +121,9 @@ export function DataTableFilterDropdown({ filters }: Props) {
               {entries.length}
             </Badge>
           )}
+          {isDirty && (
+            <span className="ml-2 size-2 rounded-full bg-yellow-500" />
+          )}
         </Button>
       </PopoverTrigger>
 

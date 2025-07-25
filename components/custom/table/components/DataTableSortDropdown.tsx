@@ -135,6 +135,9 @@ export function DataTableSortDropdown({
               {value.length}
             </Badge>
           )}
+          {isDirty && (
+            <span className="ml-2 size-2 rounded-full bg-yellow-500" />
+          )}
         </Button>
       </PopoverTrigger>
 
