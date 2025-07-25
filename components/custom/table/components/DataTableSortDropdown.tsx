@@ -1,7 +1,7 @@
 'use client'
 
-import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowDownUp, Trash2 } from 'lucide-react'
+import { Reorder, motion } from 'framer-motion'
+import { ArrowDownUp, GripVertical, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
@@ -165,86 +165,90 @@ export function DataTableSortDropdown({
             </p>
           </div>
 
-          <ul className="flex max-h-[300px] flex-col gap-2 overflow-y-auto">
-            <AnimatePresence initial={false}>
-              {localSort.map((sort, index) => (
-                <motion.div
-                  key={sort.id}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  variants={transitionVariants}
-                  className="flex items-center gap-1"
+          <Reorder.Group
+            axis="y"
+            values={localSort}
+            onReorder={setLocalSort}
+            className="flex max-h-[300px] flex-col gap-2 overflow-y-auto"
+          >
+            {localSort.map((sort, index) => (
+              <Reorder.Item
+                key={`${sort.id}-${index}`}
+                value={sort}
+                className="flex items-center gap-1"
+              >
+                <div className="text-muted-foreground cursor-grab">
+                  <GripVertical className="w-4 h-4" />
+                </div>
+
+                <Select
+                  value={sort.id}
+                  onValueChange={(val) => handleFieldChange(index, val)}
                 >
-                  <Select
-                    value={sort.id}
-                    onValueChange={(val) => handleFieldChange(index, val)}
-                  >
-                    <SelectTrigger className="flex-1 min-w-0 h-8">
-                      <SelectValue placeholder="Field" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {options.map((opt) => {
-                        const isUsedElsewhere =
-                          localSort.findIndex(
-                            (v, i) => v.id === opt.value && i !== index,
-                          ) !== -1
-                        return (
-                          <SelectItem
-                            key={opt.value}
-                            value={opt.value}
-                            disabled={isUsedElsewhere}
-                          >
-                            {opt.label}
-                          </SelectItem>
-                        )
-                      })}
-                    </SelectContent>
-                  </Select>
-
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Select
-                          value={sort.desc ? 'desc' : 'asc'}
-                          onValueChange={(val) =>
-                            handleDirectionChange(index, val === 'desc')
-                          }
+                  <SelectTrigger className="flex-1 min-w-0 h-8">
+                    <SelectValue placeholder="Field" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {options.map((opt) => {
+                      const isUsedElsewhere =
+                        localSort.findIndex(
+                          (v, i) => v.id === opt.value && i !== index,
+                        ) !== -1
+                      return (
+                        <SelectItem
+                          key={opt.value}
+                          value={opt.value}
+                          disabled={isUsedElsewhere}
                         >
-                          <SelectTrigger className="w-[85px] h-8">
-                            <SelectValue placeholder="Dir" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="asc">Asc</SelectItem>
-                            <SelectItem value="desc">Desc</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TooltipTrigger>
-                      <TooltipContent>Sort Direction</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                          {opt.label}
+                        </SelectItem>
+                      )
+                    })}
+                  </SelectContent>
+                </Select>
 
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          size="icon"
-                          variant="plain"
-                          className="size-8 text-destructive"
-                          onClick={() => handleRemove(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Remove Sort</TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </ul>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Select
+                        value={sort.desc ? 'desc' : 'asc'}
+                        onValueChange={(val) =>
+                          handleDirectionChange(index, val === 'desc')
+                        }
+                      >
+                        <SelectTrigger className="w-[85px] h-8">
+                          <SelectValue placeholder="Dir" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="asc">Asc</SelectItem>
+                          <SelectItem value="desc">Desc</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TooltipTrigger>
+                    <TooltipContent>Sort Direction</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
-          <div className="flex w-full items-center gap-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="plain"
+                        className="size-8 text-destructive"
+                        onClick={() => handleRemove(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Remove Sort</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </Reorder.Item>
+            ))}
+          </Reorder.Group>
+
+          <div className="flex w-full items-center gap-2 pt-2">
             <Button
               size="sm"
               className="rounded"
