@@ -32,7 +32,6 @@ export function DataTableDateRangeFilter({
     (range?: DateRange) => {
       const from = range?.from ? formatBackDate(range.from) : undefined
       const to = range?.to ? formatBackDate(range.to) : undefined
-
       const updatedFilter = { ...filter }
 
       if (from) updatedFilter.start_date = from

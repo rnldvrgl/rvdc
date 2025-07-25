@@ -23,7 +23,13 @@ export function DataTablePagination({
   count,
   className,
 }: DataTablePaginationProps) {
-  const { page = 1, limit = 10, ordering, search } = useSearchParameters()
+  const {
+    page = 1,
+    limit = 10,
+    ordering,
+    search,
+    filter,
+  } = useSearchParameters()
   const { push } = useNavigation()
 
   const safePage = Number(page) || 1
@@ -34,9 +40,16 @@ export function DataTablePagination({
   const goToPage = useCallback(
     (newPage: number) => {
       const clampedPage = Math.max(1, Math.min(newPage, totalPages))
-      push({ page: clampedPage, limit, ordering, search })
+      const updatedFilter = { ...filter }
+      push({
+        page: clampedPage,
+        limit,
+        ordering,
+        search,
+        filter: updatedFilter,
+      })
     },
-    [push, limit, ordering, search, totalPages],
+    [push, limit, ordering, search, totalPages, filter],
   )
 
   const pageButtons = useMemo(() => {
