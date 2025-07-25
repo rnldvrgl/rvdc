@@ -128,40 +128,35 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col space-y-4 justify-center">
-        {/* Row 1: Search, View Options, Header Actions */}
+      <div className="flex flex-col space-y-4">
         <div className="flex flex-wrap justify-between items-end gap-4">
-          <div className="flex-1 min-w-0">
+          {/* Search, Sort, and Filter Block */}
+          <div className="flex flex-col sm:flex-row sm:items-end gap-3 flex-1 min-w-0">
             <Input
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
               placeholder="Search..."
               className="w-full sm:w-64 border-border focus-visible:ring-2 focus-visible:ring-primary/40"
             />
-          </div>
-          <div className="flex flex-wrap gap-3 items-end justify-end">
-            <DataTableViewOptions table={table} />
-            {headerActions}
-          </div>
-        </div>
 
-        {/* Row 2: Filters, Sort, Date Range */}
-        <div className="flex flex-wrap justify-between items-start gap-4">
-          <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
-            {orderingOptions && orderingOptions.length > 0 && (
+            {orderingOptions && orderingOptions?.length > 0 && (
               <DataTableSortDropdown
                 options={orderingOptions}
                 value={sortingState}
                 onChange={setSortingState}
               />
             )}
-            {filters && filters.length > 0 && (
+
+            {filters && filters?.length > 0 && (
               <DataTableFilterDropdown filters={filters} />
             )}
           </div>
 
-          <div className="shrink-0">
+          {/* Date, View Toggle, and Header Actions Block */}
+          <div className="flex flex-wrap items-end justify-end gap-3">
             <DataTableDateRangeFilter defaultRangePreset={defaultRangePreset} />
+            <DataTableViewOptions table={table} />
+            {headerActions}
           </div>
         </div>
       </div>

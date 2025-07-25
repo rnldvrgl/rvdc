@@ -9,7 +9,7 @@ import { Item } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useItemMutations } from '@/lib/mutations/useItemMutations'
-import { useItems } from '@/lib/queries/inventory/useItems'
+import { useItemFilters, useItems } from '@/lib/queries/inventory/useItems'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import { Plus } from 'lucide-react'
 
@@ -23,6 +23,7 @@ export default function ItemsPage() {
     ordering,
     filter,
   })
+  const { filters, orderingOptions } = useItemFilters()
   const userProfile = useUserProfileStore((state) => state.userProfile)
   const role = userProfile?.role || 'guest'
 
@@ -88,6 +89,8 @@ export default function ItemsPage() {
             </Button>
           )
         }
+        filters={filters}
+        orderingOptions={orderingOptions}
       />
     </div>
   )

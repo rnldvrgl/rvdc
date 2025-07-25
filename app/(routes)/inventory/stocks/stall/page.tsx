@@ -28,7 +28,7 @@ export default function StocksPage() {
     filter,
   })
 
-  const { filters, sortOptions } = useStockFilters()
+  const { filters, orderingOptions } = useStockFilters()
 
   const {
     entityState: { open: editOpen, entity: editEntity },
@@ -98,7 +98,7 @@ export default function StocksPage() {
         columns={columns}
         data={data || { count: 0, next: null, previous: null, results: [] }}
         filters={filters}
-        orderingOptions={sortOptions}
+        orderingOptions={orderingOptions}
       />
     </div>
   )

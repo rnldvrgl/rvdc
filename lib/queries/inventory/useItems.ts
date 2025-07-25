@@ -1,6 +1,7 @@
 import { Item } from '@/lib/constants/interface'
 import type { PaginatedFilterProps } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
+import { useFilters } from '@/lib/hooks/useFilters'
 import { usePaginatedQuery } from '@/lib/hooks/usePaginatedQuery'
 
 const url = '/inventory/items/'
@@ -21,4 +22,8 @@ export function useItem(id: number) {
       enabled: !!id,
     },
   })
+}
+
+export function useItemFilters() {
+  return useFilters('item-filters', `${url}filters/`)
 }

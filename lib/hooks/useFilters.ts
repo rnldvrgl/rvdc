@@ -16,7 +16,7 @@ function toFilterDefinitions(
   }))
 }
 
-function toSortOptions(ordering: LabeledOption[]): SortOption[] {
+function toOrderingOptions(ordering: LabeledOption[]): SortOption[] {
   return ordering.map((opt) => ({
     value: opt.value,
     label: opt.label,
@@ -27,11 +27,13 @@ export function useFilters(key: string, url: string) {
   const query = useApiQuery<FilterResponse>({ queryKey: [key], url })
 
   const filters = query.data ? toFilterDefinitions(query.data.filters) : []
-  const sortOptions = query.data ? toSortOptions(query.data.ordering) : []
+  const orderingOptions = query.data
+    ? toOrderingOptions(query.data.ordering)
+    : []
 
   return {
     ...query,
     filters,
-    sortOptions,
+    orderingOptions,
   }
 }
