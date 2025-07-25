@@ -274,7 +274,7 @@ export function DataTableSortDropdown({
 
             <Button
               size="sm"
-              variant="default"
+              variant="outline"
               className="ml-auto rounded"
               onClick={handleApply}
               disabled={!isDirty}

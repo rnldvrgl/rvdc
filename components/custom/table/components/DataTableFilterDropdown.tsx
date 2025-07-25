@@ -1,7 +1,7 @@
 'use client'
 
 import { Filter as FilterIcon, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -35,54 +35,74 @@ export function DataTableFilterDropdown({ filters }: Props) {
 
   const [open, setOpen] = useState(false)
   const [entries, setEntries] = useState<{ key: string; value: string }[]>([])
+  const [draft, setDraft] = useState<{ key: string; value: string }[]>([])
 
-  const triggerChange = (next: { key: string; value: string }[]) => {
-    const newFilters = Object.fromEntries(next.map((e) => [e.key, e.value]))
+  useEffect(() => {
+    const initial = Object.entries(filter)
+      .filter(([key]) => !EXCLUDED_KEYS.has(key))
+      .map(([key, value]) => ({ key, value }))
+
+    const initialJSON = JSON.stringify(initial)
+    const entriesJSON = JSON.stringify(entries)
+
+    if (initialJSON !== entriesJSON) {
+      setEntries(initial)
+      setDraft(initial)
+    }
+  }, [filter])
+
+  const applyFilters = () => {
+    const newFilters = Object.fromEntries(draft.map((e) => [e.key, e.value]))
     const preserved = Object.fromEntries(
       Object.entries(filter).filter(([key]) => EXCLUDED_KEYS.has(key)),
     )
     push({ ...rest, filter: { ...preserved, ...newFilters } })
-    setEntries(next)
+    setEntries(draft)
+    setOpen(false)
   }
 
   const handleKeyChange = (index: number, newKey: string) => {
-    const next = [...entries]
+    const next = [...draft]
     const defaultValue =
       filters.find((f) => f.key === newKey)?.options[0]?.value ?? ''
     next[index] = { key: newKey, value: defaultValue }
-    triggerChange(next)
+    setDraft(next)
   }
 
   const handleValueChange = (index: number, newValue: string) => {
-    const next = [...entries]
+    const next = [...draft]
     next[index] = { ...next[index], value: newValue }
-    triggerChange(next)
+    setDraft(next)
   }
 
   const handleRemove = (index: number) => {
-    const next = [...entries]
+    const next = [...draft]
     next.splice(index, 1)
-    triggerChange(next)
+    setDraft(next)
   }
 
   const handleAdd = () => {
-    const usedKeys = new Set(entries.map((e) => e.key))
+    const usedKeys = new Set(draft.map((e) => e.key))
     const firstUnused = filters.find((f) => !usedKeys.has(f.key))
     if (!firstUnused) return
     const newEntry = {
       key: firstUnused.key,
       value: firstUnused.options[0]?.value ?? '',
     }
-    triggerChange([...entries, newEntry])
+    setDraft([...draft, newEntry])
   }
 
   const handleReset = () => {
     const preserved = Object.fromEntries(
       Object.entries(filter).filter(([key]) => EXCLUDED_KEYS.has(key)),
     )
-    push({ ...rest, filter: preserved })
+    setDraft([])
     setEntries([])
+    push({ ...rest, filter: preserved })
+    setOpen(false)
   }
+
+  const isDirty = JSON.stringify(entries) !== JSON.stringify(draft)
 
   return (
     <Popover
@@ -110,22 +130,22 @@ export function DataTableFilterDropdown({ filters }: Props) {
       >
         <div className="flex flex-col gap-1">
           <h4 className="font-medium leading-none">
-            {entries.length > 0 ? 'Filter by' : 'No filters applied'}
+            {draft.length > 0 ? 'Filter by' : 'No filters applied'}
           </h4>
           <p
             className={cn(
               'text-muted-foreground text-sm',
-              entries.length > 0 && 'sr-only',
+              draft.length > 0 && 'sr-only',
             )}
           >
-            {entries.length > 0
+            {draft.length > 0
               ? 'Modify filters to narrow down results.'
               : 'Add filters to narrow down results.'}
           </p>
         </div>
 
         <ul className="flex max-h-[300px] flex-col gap-2 overflow-y-auto">
-          {entries.map((entry, index) => {
+          {draft.map((entry, index) => {
             const currentField = filters.find((f) => f.key === entry.key)
 
             return (
@@ -133,7 +153,6 @@ export function DataTableFilterDropdown({ filters }: Props) {
                 key={index}
                 className="flex items-center gap-1"
               >
-                {/* Field Selector */}
                 <Select
                   value={entry.key}
                   onValueChange={(val) => handleKeyChange(index, val)}
@@ -144,7 +163,7 @@ export function DataTableFilterDropdown({ filters }: Props) {
                   <SelectContent>
                     {filters.map((f) => {
                       const isUsedElsewhere =
-                        entries.findIndex(
+                        draft.findIndex(
                           (e, i) => e.key === f.key && i !== index,
                         ) !== -1
                       return (
@@ -160,7 +179,6 @@ export function DataTableFilterDropdown({ filters }: Props) {
                   </SelectContent>
                 </Select>
 
-                {/* Value Selector */}
                 <Select
                   value={entry.value}
                   onValueChange={(val) => handleValueChange(index, val)}
@@ -180,7 +198,6 @@ export function DataTableFilterDropdown({ filters }: Props) {
                   </SelectContent>
                 </Select>
 
-                {/* Remove Filter */}
                 <Button
                   size="icon"
                   variant="plain"
@@ -199,21 +216,30 @@ export function DataTableFilterDropdown({ filters }: Props) {
             size="sm"
             className="rounded"
             onClick={handleAdd}
-            disabled={entries.length >= filters.length}
+            disabled={draft.length >= filters.length}
           >
             Add Filter
           </Button>
 
-          {entries.length > 0 && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded"
-              onClick={handleReset}
-            >
-              Reset filters
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded"
+            onClick={handleReset}
+            disabled={draft.length === 0}
+          >
+            Reset filters
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            className="rounded ml-auto"
+            onClick={applyFilters}
+            disabled={!isDirty}
+          >
+            Apply
+          </Button>
         </div>
       </PopoverContent>
     </Popover>
