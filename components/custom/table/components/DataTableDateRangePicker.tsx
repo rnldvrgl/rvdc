@@ -7,6 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { DATE_RANGE_PRESETS } from '@/lib/constants/general'
 import { cn } from '@/lib/utils/helpers'
 import { format, startOfToday, subDays } from 'date-fns'
 import { CalendarIcon } from 'lucide-react'
@@ -17,25 +18,6 @@ interface DataTableDateRangePickerProps {
   defaultValue?: DateRange
   onChange?: (range: DateRange) => void
 }
-
-const presets: { label: string; range: DateRange }[] = [
-  {
-    label: 'Today',
-    range: { from: startOfToday(), to: startOfToday() },
-  },
-  {
-    label: 'Last 7 Days',
-    range: { from: subDays(startOfToday(), 6), to: startOfToday() },
-  },
-  {
-    label: 'Last 14 Days',
-    range: { from: subDays(startOfToday(), 13), to: startOfToday() },
-  },
-  {
-    label: 'Last 30 Days',
-    range: { from: subDays(startOfToday(), 29), to: startOfToday() },
-  },
-]
 
 export const DataTableDateRangePicker = ({
   defaultValue = { from: subDays(startOfToday(), 30), to: startOfToday() },
@@ -103,7 +85,7 @@ export const DataTableDateRangePicker = ({
               <p className="text-sm font-semibold text-muted-foreground">
                 Presets
               </p>
-              {presets.map((preset) => {
+              {DATE_RANGE_PRESETS.map((preset) => {
                 const isActive =
                   date.from?.toDateString() ===
                     preset.range.from?.toDateString() &&

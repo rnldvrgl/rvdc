@@ -8,6 +8,15 @@ export const ROLES = [
 
 export const timeZone = 'Asia/Manila'
 
+export const RESERVED_QUERY_KEYS = new Set([
+  'page',
+  'limit',
+  'search',
+  'ordering',
+  'start_date',
+  'end_date',
+])
+
 export const DATE_RANGE_PRESETS = [
   {
     label: 'Today',
