@@ -13,7 +13,10 @@ import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import { usePrint } from '@/lib/hooks/usePrint'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useSalesTransactionMutations } from '@/lib/mutations/useSalesTransactionMutations'
-import { useSalesTransactions } from '@/lib/queries/sales/useSalesTransactions'
+import {
+  useSalesTransactionFilters,
+  useSalesTransactions,
+} from '@/lib/queries/sales/useSalesTransactions'
 import { Plus } from 'lucide-react'
 
 export default function SalesTransactionsPage() {
@@ -26,6 +29,7 @@ export default function SalesTransactionsPage() {
     ordering,
     filter,
   })
+  const { filters, orderingOptions } = useSalesTransactionFilters()
   const { deleteTransaction } = useSalesTransactionMutations()
 
   // Sheets
@@ -128,6 +132,8 @@ export default function SalesTransactionsPage() {
           </Button>
         }
         defaultRangePreset="Today"
+        filters={filters}
+        orderingOptions={orderingOptions}
       />
     </div>
   )

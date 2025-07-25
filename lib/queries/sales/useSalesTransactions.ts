@@ -1,5 +1,6 @@
 import { SalesTransaction } from '@/lib/constants/interface'
 import type { PaginatedFilterProps } from '@/lib/constants/types'
+import { useFilters } from '@/lib/hooks/useFilters'
 import { usePaginatedQuery } from '@/lib/hooks/usePaginatedQuery'
 
 const salesTransactionsUrl = '/sales/transactions/'
@@ -10,4 +11,11 @@ export function useSalesTransactions(props: PaginatedFilterProps = {}) {
     url: salesTransactionsUrl,
     queryKeyBase: 'sales-transactions',
   })
+}
+
+export function useSalesTransactionFilters() {
+  return useFilters(
+    'sales-transaction-filters',
+    `${salesTransactionsUrl}filters/`,
+  )
 }
