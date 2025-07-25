@@ -38,3 +38,7 @@ export function useStockFilters() {
 export function useStockRoomFilters() {
   return useFilters('stock-room-filters', `${stockRoomUrl}filters/`)
 }
+
+export function useStockTransferFilters() {
+  return useFilters('stock-transfer-filters', `${transferUrl}filters/`)
+}

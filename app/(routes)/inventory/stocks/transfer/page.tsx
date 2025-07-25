@@ -9,7 +9,10 @@ import { StockTransfer } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useStockTransferMutations } from '@/lib/mutations/useStockTransferMutations'
-import { useStockTransfers } from '@/lib/queries/inventory/useStocks'
+import {
+  useStockTransferFilters,
+  useStockTransfers,
+} from '@/lib/queries/inventory/useStocks'
 import { Plus } from 'lucide-react'
 import { getStockTransferColumns } from './columns'
 
@@ -24,6 +27,7 @@ export default function StockTransfersPage() {
     ordering,
     filter,
   })
+  const { filters, orderingOptions } = useStockTransferFilters()
 
   const handleDelete = (stockTransfer: StockTransfer) => {
     if (stockTransfer.id !== undefined) {
@@ -124,6 +128,8 @@ export default function StockTransfersPage() {
             Transfer Stock
           </Button>
         }
+        filters={filters}
+        orderingOptions={orderingOptions}
       />
     </div>
   )
