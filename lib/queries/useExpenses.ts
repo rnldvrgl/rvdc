@@ -4,6 +4,7 @@ import type {
   PaginatedResult,
 } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
+import { useFilters } from '@/lib/hooks/useFilters'
 
 const url = '/expenses/'
 
@@ -32,4 +33,8 @@ export function useExpenses({
       ...filter,
     },
   })
+}
+
+export function useExpenseFilters() {
+  return useFilters('expense-filters', `${url}filters/`)
 }

@@ -11,7 +11,7 @@ import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useExpenseMutations } from '@/lib/mutations/useExpenseMutations'
-import { useExpenses } from '@/lib/queries/useExpenses'
+import { useExpenseFilters, useExpenses } from '@/lib/queries/useExpenses'
 import { Plus } from 'lucide-react'
 
 export default function ExpensesPage() {
@@ -25,6 +25,7 @@ export default function ExpensesPage() {
     ordering,
     filter,
   })
+  const { filters, orderingOptions } = useExpenseFilters()
 
   const {
     entityState: viewSheet,
@@ -109,6 +110,8 @@ export default function ExpensesPage() {
           </Button>
         }
         defaultRangePreset="Today"
+        filters={filters}
+        orderingOptions={orderingOptions}
       />
     </div>
   )
