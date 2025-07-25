@@ -9,7 +9,10 @@ import { StockRoomStock } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useStockRoomStockMutations } from '@/lib/mutations/useStockRoomStockMutations'
-import { useStockRoomStocks } from '@/lib/queries/inventory/useStocks'
+import {
+  useStockRoomFilters,
+  useStockRoomStocks,
+} from '@/lib/queries/inventory/useStocks'
 
 export default function StockRoomStocksPage() {
   const { page, limit, search, ordering, filter } = useSearchParameters()
@@ -21,6 +24,7 @@ export default function StockRoomStocksPage() {
     ordering,
     filter,
   })
+  const { filters, orderingOptions } = useStockRoomFilters()
 
   const {
     entityState: { open: editOpen, entity: editEntity },
@@ -88,6 +92,8 @@ export default function StockRoomStocksPage() {
         isLoading={isLoading}
         columns={columns}
         data={data || { count: 0, next: null, previous: null, results: [] }}
+        filters={filters}
+        orderingOptions={orderingOptions}
       />
     </div>
   )
