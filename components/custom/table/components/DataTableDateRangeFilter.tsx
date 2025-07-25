@@ -6,7 +6,7 @@ import { useDefaultDateRange } from '@/lib/hooks/useDefaultRange'
 import { useNavigation } from '@/lib/hooks/useNavigation'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { formatBackDate } from '@/lib/utils/helpers'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { DateRange } from 'react-day-picker'
 
 export function DataTableDateRangeFilter({
@@ -17,42 +17,48 @@ export function DataTableDateRangeFilter({
   const { limit, search, ordering, filter } = useSearchParameters()
   const { push } = useNavigation()
 
-  const defaultRange = defaultRangePreset
-    ? useDefaultDateRange(defaultRangePreset)
-    : undefined
+  const computedDefaultRange = useDefaultDateRange(
+    defaultRangePreset || 'Today',
+  )
 
+  const defaultRange = useMemo(
+    () => (defaultRangePreset ? computedDefaultRange : undefined),
+    [computedDefaultRange, defaultRangePreset],
+  )
+
+  const hasInitialized = useRef(false)
+
+  const handleChange = useCallback(
+    (range?: DateRange) => {
+      const from = range?.from ? formatBackDate(range.from) : undefined
+      const to = range?.to ? formatBackDate(range.to) : undefined
+
+      const updatedFilter = { ...filter }
+
+      if (from) updatedFilter.start_date = from
+      else delete updatedFilter.start_date
+
+      if (to) updatedFilter.end_date = to
+      else delete updatedFilter.end_date
+
+      push({
+        page: 1,
+        limit,
+        search,
+        ordering,
+        filter: updatedFilter,
+      })
+    },
+    [filter, limit, search, ordering, push],
+  )
+
+  // Only run on first mount if defaultRange exists
   useEffect(() => {
-    if (defaultRange) {
+    if (!hasInitialized.current && defaultRange) {
+      hasInitialized.current = true
       handleChange(defaultRange)
     }
-  }, [])
-
-  const handleChange = (range?: DateRange) => {
-    const from = range?.from ? formatBackDate(range.from) : undefined
-    const to = range?.to ? formatBackDate(range.to) : undefined
-
-    const updatedFilter = { ...filter }
-
-    if (from) {
-      updatedFilter.start_date = from
-    } else {
-      delete updatedFilter.start_date
-    }
-
-    if (to) {
-      updatedFilter.end_date = to
-    } else {
-      delete updatedFilter.end_date
-    }
-
-    push({
-      page: 1,
-      limit,
-      search,
-      ordering,
-      filter: updatedFilter,
-    })
-  }
+  }, [defaultRange, handleChange])
 
   return (
     <DataTableDateRangePicker
