@@ -432,3 +432,24 @@ export interface CashDenominationBreakdownPayload {
   count_1?: number
   coins_remitted: boolean
 }
+
+export interface LabeledOption {
+  label: string
+  value: string
+}
+
+export interface FilterDefinition {
+  key: string
+  label: string
+  options: LabeledOption[]
+}
+
+export interface SortOption {
+  label: string
+  value: string
+}
+
+export interface FilterResponse {
+  filters: Record<string, LabeledOption[]>
+  ordering: LabeledOption[]
+}

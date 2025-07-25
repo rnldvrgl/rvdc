@@ -1,5 +1,6 @@
 import { Stock, StockRoomStock, StockTransfer } from '@/lib/constants/interface'
 import type { PaginatedFilterProps } from '@/lib/constants/types'
+import { useFilters } from '@/lib/hooks/useFilters'
 import { usePaginatedQuery } from '@/lib/hooks/usePaginatedQuery'
 
 const stockUrl = '/inventory/stocks/'
@@ -28,4 +29,12 @@ export function useStockTransfers(props: PaginatedFilterProps = {}) {
     url: transferUrl,
     queryKeyBase: 'stock-transfers',
   })
+}
+
+export function useStockFilters() {
+  return useFilters('stock-filters', `${stockUrl}filters/`)
+}
+
+export function useStockRoomFilters() {
+  return useFilters('stock-room-filters', `${stockRoomUrl}filters/`)
 }

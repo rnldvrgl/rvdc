@@ -155,19 +155,6 @@ export type UserProfilePayload = Omit<TUserProfile, 'birthday'> & {
 
 export type DateRangePresetLabel = (typeof DATE_RANGE_PRESETS)[number]['label']
 
-export type FilterDefinition = {
-  key: string
-  label: string
-  icon: LucideIcon
-  options?: { label: string; value: string | number }[]
-}
-
-export type SortOption = {
-  key: string
-  label: string
-  value: string
-}
-
 export type SortState = {
   id: string
   desc: boolean

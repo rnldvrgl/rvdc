@@ -1,5 +1,9 @@
 'use client'
 
+import { ArrowDownUp, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Popover,
@@ -13,11 +17,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ArrowDownUp, Trash2 } from 'lucide-react'
-import { useId, useState } from 'react'
 
-import { Badge } from '@/components/ui/badge'
-import { SortOption, SortState } from '@/lib/constants/types'
+import { SortOption } from '@/lib/constants/interface'
+import { SortState } from '@/lib/constants/types'
 import { useNavigation } from '@/lib/hooks/useNavigation'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { cn } from '@/lib/utils/helpers'
@@ -34,10 +36,20 @@ export function DataTableSortDropdown({
   onChange,
 }: DataTableSortDropdownProps) {
   const [open, setOpen] = useState(false)
-  const labelId = useId()
-  const descriptionId = useId()
   const { push } = useNavigation()
   const { limit, search, filter } = useSearchParameters()
+
+  const triggerChange = (next: SortState[]) => {
+    onChange(next)
+    const ordering = next.map((s) => (s.desc ? `-${s.id}` : s.id)).join(',')
+    push({
+      page: 1,
+      limit,
+      ordering: ordering || undefined,
+      search,
+      filter,
+    })
+  }
 
   const handleFieldChange = (index: number, id: string) => {
     const next = [...value]
@@ -59,9 +71,9 @@ export function DataTableSortDropdown({
 
   const handleAdd = () => {
     const usedIds = new Set(value.map((v) => v.id))
-    const firstUnused = options.find((opt) => !usedIds.has(opt.key))
+    const firstUnused = options.find((opt) => !usedIds.has(opt.value))
     if (!firstUnused) return
-    onChange([...value, { id: firstUnused.key, desc: false }])
+    onChange([...value, { id: firstUnused.value, desc: false }])
   }
 
   const handleReset = () => {
@@ -75,18 +87,6 @@ export function DataTableSortDropdown({
     })
   }
 
-  const triggerChange = (next: SortState[]) => {
-    onChange(next)
-    const ordering = next.map((s) => (s.desc ? `-${s.id}` : s.id)).join(',')
-    push({
-      page: 1,
-      limit,
-      ordering: ordering || undefined,
-      search,
-      filter,
-    })
-  }
-
   return (
     <Popover
       open={open}
@@ -94,12 +94,12 @@ export function DataTableSortDropdown({
     >
       <PopoverTrigger asChild>
         <Button variant="outline">
-          <ArrowDownUp />
+          <ArrowDownUp className="mr-1.5 h-4 w-4" />
           Sort
           {value.length > 0 && (
             <Badge
               variant="secondary"
-              className="h-[18.24px] rounded-[3.2px] px-[5.12px] font-mono font-normal text-[10.4px]"
+              className="ml-2 h-[18px] rounded px-[6px] font-mono text-[10px]"
             >
               {value.length}
             </Badge>
@@ -112,14 +112,10 @@ export function DataTableSortDropdown({
         align="start"
       >
         <div className="flex flex-col gap-1">
-          <h4
-            id={labelId}
-            className="font-medium leading-none"
-          >
+          <h4 className="font-medium leading-none">
             {value.length > 0 ? 'Sort by' : 'No sorting applied'}
           </h4>
           <p
-            id={descriptionId}
             className={cn(
               'text-muted-foreground text-sm',
               value.length > 0 && 'sr-only',
@@ -130,6 +126,7 @@ export function DataTableSortDropdown({
               : 'Add sorting to organize your rows.'}
           </p>
         </div>
+
         <ul className="flex max-h-[300px] flex-col gap-2 overflow-y-auto">
           {value.map((sort, index) => (
             <div
@@ -148,12 +145,12 @@ export function DataTableSortDropdown({
                   {options.map((opt) => {
                     const isUsedElsewhere =
                       value.findIndex(
-                        (v, i) => v.id === opt.key && i !== index,
+                        (v, i) => v.id === opt.value && i !== index,
                       ) !== -1
                     return (
                       <SelectItem
-                        key={opt.key}
-                        value={opt.key}
+                        key={opt.value}
+                        value={opt.value}
                         disabled={isUsedElsewhere}
                       >
                         {opt.label}
@@ -170,7 +167,7 @@ export function DataTableSortDropdown({
                   handleDirectionChange(index, val === 'desc')
                 }
               >
-                <SelectTrigger className="w-[80px] h-8">
+                <SelectTrigger className="w-[85px] h-8">
                   <SelectValue placeholder="Dir" />
                 </SelectTrigger>
                 <SelectContent>

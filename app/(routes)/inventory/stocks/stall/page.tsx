@@ -10,12 +10,16 @@ import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useStallStockMutations } from '@/lib/mutations/useStallStockMutations'
-import { useStallStocks } from '@/lib/queries/inventory/useStocks'
+import {
+  useStallStocks,
+  useStockFilters,
+} from '@/lib/queries/inventory/useStocks'
 
 export default function StocksPage() {
   const { page, limit, search, ordering, filter } = useSearchParameters()
   const { softDeleteStallStock } = useStallStockMutations()
   const { role } = useCurrentUser()
+
   const { data, isLoading } = useStallStocks({
     page,
     limit,
@@ -23,6 +27,8 @@ export default function StocksPage() {
     ordering,
     filter,
   })
+
+  const { filters, sortOptions } = useStockFilters()
 
   const {
     entityState: { open: editOpen, entity: editEntity },
@@ -37,7 +43,7 @@ export default function StocksPage() {
   } = useEntitySheet<Stock>()
 
   const handleDelete = (stock: Stock) => {
-    if (stock.id !== undefined && stock.stall && stock.stall.id !== undefined) {
+    if (stock.id !== undefined && stock.stall?.id !== undefined) {
       softDeleteStallStock.mutate(stock.id)
     }
   }
@@ -91,6 +97,8 @@ export default function StocksPage() {
         isLoading={isLoading}
         columns={columns}
         data={data || { count: 0, next: null, previous: null, results: [] }}
+        filters={filters}
+        orderingOptions={sortOptions}
       />
     </div>
   )

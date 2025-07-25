@@ -7,7 +7,6 @@ import { DataTable } from '@/components/custom/table/DataTable'
 import { SalesTransactionDetails } from '@/components/details/SalesTransactionDetails'
 import SalesTransactionForm from '@/components/forms/SalesTransactionForm'
 import { Button } from '@/components/ui/button'
-import { salesFilters } from '@/lib/constants/filters'
 import { SalesTransaction } from '@/lib/constants/interface'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
@@ -129,12 +128,6 @@ export default function SalesTransactionsPage() {
           </Button>
         }
         defaultRangePreset="Today"
-        filters={salesFilters}
-        sortOptions={[
-          { label: 'Date Created', key: 'created_at', value: 'created_at' },
-          { label: 'Amount', key: 'amount', value: 'amount' },
-          { label: 'Client Name', key: 'client_name', value: 'client_name' },
-        ]}
       />
     </div>
   )

@@ -10,7 +10,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import React from 'react'
 
-import DataTableActiveFilters from '@/components/custom/table/components/DataTableActiveFilters'
 import { DataTableDateRangeFilter } from '@/components/custom/table/components/DataTableDateRangeFilter'
 import { DataTableFilterDropdown } from '@/components/custom/table/components/DataTableFilterDropdown'
 import { DataTablePagination } from '@/components/custom/table/components/DataTablePagination'
@@ -26,12 +25,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  DateRangePresetLabel,
-  FilterDefinition,
-  PaginatedResult,
-  SortOption,
-} from '@/lib/constants/types'
+import { FilterDefinition, SortOption } from '@/lib/constants/interface'
+import { DateRangePresetLabel, PaginatedResult } from '@/lib/constants/types'
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { useNavigation } from '@/lib/hooks/useNavigation'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
@@ -44,7 +39,7 @@ interface DataTableProps<TData, TValue> {
   headerActions?: React.ReactNode
   defaultRangePreset?: DateRangePresetLabel
   filters?: FilterDefinition[]
-  sortOptions?: SortOption[]
+  orderingOptions?: SortOption[]
 }
 
 export function DataTable<TData, TValue>({
@@ -54,7 +49,7 @@ export function DataTable<TData, TValue>({
   headerActions,
   defaultRangePreset,
   filters,
-  sortOptions,
+  orderingOptions,
 }: DataTableProps<TData, TValue>) {
   const {
     page,
@@ -74,7 +69,6 @@ export function DataTable<TData, TValue>({
   const [localSearch, setLocalSearch] = React.useState(search || '')
   const debouncedSearch = useDebounce(localSearch, 1000)
 
-  const [showSortPanel, setShowSortPanel] = React.useState(false)
   const [sortingState, setSortingState] = React.useState(() => {
     if (!ordering) return []
     return ordering
@@ -134,41 +128,45 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        {/* Left side: Search + Filters + Sort */}
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <Input
-            type="text"
-            value={localSearch}
-            onChange={(e) => setLocalSearch(e.target.value)}
-            placeholder="Search..."
-            className="w-full sm:w-64 border-border focus-visible:ring-2 focus-visible:ring-primary/40"
-          />
-
-          {sortOptions && (
-            <DataTableSortDropdown
-              options={sortOptions}
-              value={sortingState}
-              onChange={setSortingState}
+      <div className="flex flex-col space-y-4 justify-center">
+        {/* Row 1: Search, View Options, Header Actions */}
+        <div className="flex flex-wrap justify-between items-end gap-4">
+          <div className="flex-1 min-w-0">
+            <Input
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
+              placeholder="Search..."
+              className="w-full sm:w-64 border-border focus-visible:ring-2 focus-visible:ring-primary/40"
             />
-          )}
-
-          {filters && filters.length > 0 && (
-            <div className="flex gap-2 items-center">
-              <DataTableFilterDropdown filters={filters} />
-              <DataTableActiveFilters filters={filters} />
-            </div>
-          )}
+          </div>
+          <div className="flex flex-wrap gap-3 items-end justify-end">
+            <DataTableViewOptions table={table} />
+            {headerActions}
+          </div>
         </div>
 
-        {/* Right side: Date range + View + Custom actions */}
-        <div className="flex flex-wrap gap-3 items-center justify-end">
-          <DataTableDateRangeFilter defaultRangePreset={defaultRangePreset} />
-          {headerActions}
-          <DataTableViewOptions table={table} />
+        {/* Row 2: Filters, Sort, Date Range */}
+        <div className="flex flex-wrap justify-between items-start gap-4">
+          <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
+            {orderingOptions && orderingOptions.length > 0 && (
+              <DataTableSortDropdown
+                options={orderingOptions}
+                value={sortingState}
+                onChange={setSortingState}
+              />
+            )}
+            {filters && filters.length > 0 && (
+              <DataTableFilterDropdown filters={filters} />
+            )}
+          </div>
+
+          <div className="shrink-0">
+            <DataTableDateRangeFilter defaultRangePreset={defaultRangePreset} />
+          </div>
         </div>
       </div>
 
+      {/* Table */}
       <div className="rounded-2xl border border-border bg-background shadow-sm ring-1 ring-border/30 overflow-x-auto">
         <Table className="min-w-full">
           <TableHeader>
@@ -180,7 +178,7 @@ export function DataTable<TData, TValue>({
                     key={header.id}
                     className={cn(
                       'px-3 py-2 text-sm font-semibold',
-                      colId === 'action' || colId === 'actions'
+                      ['action', 'actions'].includes(colId)
                         ? 'cursor-default'
                         : '',
                     )}
@@ -202,9 +200,9 @@ export function DataTable<TData, TValue>({
               Array.from({ length: 8 }).map((_, i) => (
                 <TableRow
                   key={`skeleton-${i}`}
-                  className={`${i % 2 === 1 ? 'bg-muted/10' : ''}`}
+                  className={i % 2 === 1 ? 'bg-muted/10' : ''}
                 >
-                  {Array.from({ length: columns.length }).map((_, j) => (
+                  {columns.map((_, j) => (
                     <TableCell
                       key={`skeleton-cell-${i}-${j}`}
                       className="px-3 py-2"
@@ -223,9 +221,11 @@ export function DataTable<TData, TValue>({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
                     transition={{ duration: 0.3 }}
-                    className={`border-b border-border/40 ${
-                      i % 2 === 1 ? 'bg-muted/10' : ''
-                    } hover:bg-muted/20 transition-colors`}
+                    className={cn(
+                      'border-b border-border/40 transition-colors',
+                      i % 2 === 1 ? 'bg-muted/10' : '',
+                      'hover:bg-muted/20',
+                    )}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
