@@ -14,7 +14,11 @@ export function useGetPermissions(role: Roles) {
       'view_remittances',
     ]
 
-    const commonShortcuts = ['shortcut_add_client', 'shortcut_add_expense']
+    const commonShortcuts = [
+      'shortcut_add_client',
+      'shortcut_add_expense',
+      'shortcut_add_sale',
+    ]
 
     const permissionsMap: Record<Roles, string[]> = {
       admin: [
