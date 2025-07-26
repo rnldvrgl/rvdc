@@ -91,7 +91,7 @@ export function RemittanceDetails({
           />
           <Detail
             label="Date"
-            value={formatDate(new Date(entity.date), 'EEE, MMM dd yyyy')}
+            value={formatDate(new Date(entity.created_at), 'EEE, MMM dd yyyy')}
             icon={<Calendar size={18} />}
           />
           <Detail
