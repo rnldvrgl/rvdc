@@ -163,7 +163,10 @@ export function LoginForm() {
               )}
             />
 
-            <Button className="w-full rounded-xl mt-2 text-sm sm:text-base">
+            <Button
+              className="w-full rounded-xl mt-2 text-sm sm:text-base"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? <Spinner /> : 'Sign In'}
             </Button>
           </form>
