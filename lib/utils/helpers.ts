@@ -226,7 +226,7 @@ export const makeFormattedRange = (daysAgo: number) => {
   const from = subDays(startOfToday(), daysAgo)
   const to = startOfToday()
   return {
-    from: formatBackDate(from),
-    to: formatBackDate(to),
+    from: new Date(formatBackDate(from)),
+    to: new Date(formatBackDate(to)),
   }
 }
