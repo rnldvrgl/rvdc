@@ -1,4 +1,4 @@
-import { makeFormattedRange } from '@/lib/utils/helpers'
+import { makeFormattedRange } from '@/lib/utils/helpers/date'
 
 export const ROLES = [
   { label: 'Admin', value: 'admin' },
