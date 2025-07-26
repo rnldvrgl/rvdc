@@ -6,8 +6,6 @@ export const ROLES = [
   { label: 'Clerk', value: 'clerk' },
 ]
 
-export const timeZone = 'Asia/Manila'
-
 export const RESERVED_QUERY_KEYS = new Set([
   'page',
   'limit',

@@ -1,4 +1,4 @@
-import { timeZone } from '@/lib/constants/general'
+import { timeZone } from '@/lib/constants/date'
 import { format, startOfToday, subDays } from 'date-fns'
 import { fromZonedTime, toZonedTime } from 'date-fns-tz'
 
