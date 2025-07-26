@@ -37,7 +37,7 @@ export function getRemittanceColumns({
       : []),
 
     {
-      accessorKey: 'date',
+      accessorKey: 'created_at',
       header: 'Date',
       cell: ({ getValue }) =>
         safeCell(
