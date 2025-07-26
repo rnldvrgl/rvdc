@@ -19,7 +19,6 @@ import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useRemittanceMutations } from '@/lib/mutations/useRemittanceMutations'
 import { useStallChoices } from '@/lib/queries/useChoices'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
-import { formatBackDate } from '@/lib/utils/helpers'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -46,7 +45,6 @@ export default function RemittanceForm({
       stall:
         initialData?.stall ??
         (role === 'admin' ? undefined : userProfile?.assigned_stall?.id),
-      date: initialData?.date ?? formatBackDate(new Date(), 'yyyy-MM-dd'),
       notes: initialData?.notes ?? '',
       cash_breakdown: {
         count_1000: initialData?.cash_breakdown?.count_1000 ?? undefined,

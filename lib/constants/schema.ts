@@ -79,7 +79,6 @@ export const CashDenominationBreakdownPayloadSchema = z.object({
 export const RemittancePayloadSchema = z.object({
   id: z.number().optional(),
   stall: z.number(),
-  date: z.string(), // ISO date
   notes: z.string().optional(),
   is_remitted: z.boolean().default(false).optional(),
   cash_breakdown: CashDenominationBreakdownPayloadSchema.optional(),
@@ -101,7 +100,7 @@ export const RemittanceRecordSchema = z.object({
       name: z.string(),
     })
     .optional(),
-  date: z.string(),
+  created_at: z.string(),
   remitted_amount: z.string(),
   remitted_by: z.number().nullable(),
   notes: z.string(),
