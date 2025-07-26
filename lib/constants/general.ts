@@ -1,4 +1,4 @@
-import { startOfToday, subDays } from 'date-fns'
+import { makeFormattedRange } from '@/lib/utils/helpers'
 
 export const ROLES = [
   { label: 'Admin', value: 'admin' },
@@ -20,18 +20,18 @@ export const RESERVED_QUERY_KEYS = new Set([
 export const DATE_RANGE_PRESETS = [
   {
     label: 'Today',
-    range: { from: startOfToday(), to: startOfToday() },
+    range: makeFormattedRange(0),
   },
   {
     label: 'Last 7 Days',
-    range: { from: subDays(startOfToday(), 6), to: startOfToday() },
+    range: makeFormattedRange(6),
   },
   {
     label: 'Last 14 Days',
-    range: { from: subDays(startOfToday(), 13), to: startOfToday() },
+    range: makeFormattedRange(13),
   },
   {
     label: 'Last 30 Days',
-    range: { from: subDays(startOfToday(), 29), to: startOfToday() },
+    range: makeFormattedRange(29),
   },
 ] as const

@@ -1,7 +1,7 @@
 import { timeZone } from '@/lib/constants/general'
 import { NavListItem } from '@/lib/constants/types'
 import { clsx, type ClassValue } from 'clsx'
-import { format } from 'date-fns'
+import { format, startOfToday, subDays } from 'date-fns'
 import { fromZonedTime, toZonedTime } from 'date-fns-tz'
 
 import { twMerge } from 'tailwind-merge'
@@ -220,4 +220,13 @@ export const getHashedStallBadgeClass = (stallName: string) => {
 export const formatNumber = (value: number | null | undefined): string => {
   if (value == null || isNaN(value)) return '0'
   return new Intl.NumberFormat('en-PH').format(value)
+}
+
+export const makeFormattedRange = (daysAgo: number) => {
+  const from = subDays(startOfToday(), daysAgo)
+  const to = startOfToday()
+  return {
+    from: formatBackDate(from),
+    to: formatBackDate(to),
+  }
 }
