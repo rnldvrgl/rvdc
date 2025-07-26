@@ -1,8 +1,5 @@
-import { timeZone } from '@/lib/constants/general'
 import { NavListItem } from '@/lib/constants/types'
 import { clsx, type ClassValue } from 'clsx'
-import { format } from 'date-fns'
-import { fromZonedTime, toZonedTime } from 'date-fns-tz'
 
 import { twMerge } from 'tailwind-merge'
 
@@ -122,10 +119,6 @@ export function normalizeProfileImage(image?: string | null) {
   return image
 }
 
-export function formatLocalDate(date: Date, formatStr = 'yyyy-MM-dd') {
-  return format(toZonedTime(date, timeZone), formatStr)
-}
-
 export function isPathActive(item: NavListItem, path: string): boolean {
   if (item.href && path.startsWith(item.href)) return true
   if (item.children) {
@@ -134,14 +127,6 @@ export function isPathActive(item: NavListItem, path: string): boolean {
     )
   }
   return false
-}
-
-export function formatDate(date: Date, formatStr = 'yyyy-MM-dd') {
-  return format(toZonedTime(date, timeZone), formatStr)
-}
-export function formatBackDate(date: Date, formatStr = 'yyyy-MM-dd') {
-  const utcDate = fromZonedTime(date, timeZone)
-  return format(utcDate, formatStr)
 }
 
 export function formatCurrency(value: number | string) {

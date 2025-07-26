@@ -2,11 +2,8 @@ import { Detail } from '@/components/details/Detail'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Expense } from '@/lib/constants/interface'
-import {
-  formatCurrency,
-  formatDate,
-  getBoolBadgeVariant,
-} from '@/lib/utils/helpers'
+import { formatCurrency, getBoolBadgeVariant } from '@/lib/utils/helpers'
+import { formatDate } from '@/lib/utils/helpers/date'
 import {
   Calendar,
   ClipboardList,

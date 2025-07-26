@@ -2,7 +2,8 @@
 
 import { SalesTransaction, Stall } from '@/lib/constants/interface'
 import useGetReceiptDetails from '@/lib/hooks/useGetReceiptDetails'
-import { formatCurrency, formatDate } from '@/lib/utils/helpers'
+import { formatCurrency } from '@/lib/utils/helpers'
+import { formatDate } from '@/lib/utils/helpers/date'
 import React from 'react'
 
 type PrintRowProps = {

@@ -2,7 +2,8 @@
 
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { GetColumnsProps, Stall } from '@/lib/constants/interface'
-import { formatDate, safeCell } from '@/lib/utils/helpers'
+import { safeCell } from '@/lib/utils/helpers'
+import { formatDate } from '@/lib/utils/helpers/date'
 import { ColumnDef } from '@tanstack/react-table'
 import { Edit, Trash2 } from 'lucide-react'
 

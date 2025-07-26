@@ -13,11 +13,8 @@ import {
 } from '@/components/ui/table'
 import { RemittanceRecord } from '@/lib/constants/infers'
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
-import {
-  formatCurrency,
-  formatDate,
-  getBoolBadgeVariant,
-} from '@/lib/utils/helpers'
+import { formatCurrency, getBoolBadgeVariant } from '@/lib/utils/helpers'
+import { formatDate } from '@/lib/utils/helpers/date'
 import {
   AlertTriangle,
   Banknote,

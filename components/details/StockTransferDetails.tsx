@@ -2,7 +2,8 @@ import { Detail } from '@/components/details/Detail'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { StockTransfer } from '@/lib/constants/interface'
-import { formatDate, getBoolBadgeVariant } from '@/lib/utils/helpers'
+import { getBoolBadgeVariant } from '@/lib/utils/helpers'
+import { formatDate } from '@/lib/utils/helpers/date'
 
 export function StockTransferDetails({
   entity,

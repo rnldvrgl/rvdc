@@ -3,12 +3,12 @@ import { Badge } from '@/components/ui/badge'
 import { Expense, GetColumnsProps } from '@/lib/constants/interface'
 import {
   formatCurrency,
-  formatDate,
   getBadgeVariant,
   getBoolBadgeVariant,
   getHashedStallBadgeClass,
   safeCell,
 } from '@/lib/utils/helpers'
+import { formatDate } from '@/lib/utils/helpers/date'
 import { ColumnDef, Row } from '@tanstack/react-table'
 import { Edit, Eye, Trash2 } from 'lucide-react'
 

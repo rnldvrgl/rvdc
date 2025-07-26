@@ -33,7 +33,7 @@ import {
   useTechnicianChoices,
 } from '@/lib/queries/useChoices'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
-import { formatDate } from '@/lib/utils/helpers'
+import { formatDate } from '@/lib/utils/helpers/date'
 import { CheckCircle } from 'lucide-react'
 import { FormProvider, useForm } from 'react-hook-form'
 

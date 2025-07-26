@@ -12,11 +12,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { SalesTransaction } from '@/lib/constants/interface'
-import {
-  formatCurrency,
-  formatDate,
-  getBadgeVariant,
-} from '@/lib/utils/helpers'
+import { formatCurrency, getBadgeVariant } from '@/lib/utils/helpers'
+import { formatDate } from '@/lib/utils/helpers/date'
 
 export function SalesTransactionDetails({
   entity,

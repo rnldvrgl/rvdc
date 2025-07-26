@@ -2,7 +2,6 @@ import { DataTableActions } from '@/components/custom/table/components/DataTable
 import { GetColumnsProps, StockTransfer } from '@/lib/constants/interface'
 import {
   formatCurrency,
-  formatDate,
   getBoolBadgeVariant,
   safeCell,
 } from '@/lib/utils/helpers'
@@ -10,6 +9,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { Edit, Eye, Trash2 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
+import { formatDate } from '@/lib/utils/helpers/date'
 
 export function getStockTransferColumns({
   onView,

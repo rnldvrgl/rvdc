@@ -13,7 +13,8 @@ import useFileUpload from '@/lib/hooks/useFileUpload'
 import { useUserProfile } from '@/lib/queries/useUserProfile'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
 import api from '@/lib/utils/api'
-import { formatDate, normalizeProfileImage } from '@/lib/utils/helpers'
+import { normalizeProfileImage } from '@/lib/utils/helpers'
+import { formatDate } from '@/lib/utils/helpers/date'
 import toast from 'react-hot-toast'
 
 export default function SettingsPage() {

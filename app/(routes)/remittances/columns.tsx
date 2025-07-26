@@ -3,14 +3,13 @@ import { Badge } from '@/components/ui/badge'
 import { RemittanceRecord } from '@/lib/constants/infers'
 import { GetColumnsProps } from '@/lib/constants/interface'
 import {
-  formatBackDate,
   formatCurrency,
   getBoolBadgeVariant,
   getHashedStallBadgeClass,
   safeCell,
 } from '@/lib/utils/helpers'
+import { formatBackDate, formatDate } from '@/lib/utils/helpers/date'
 import { ColumnDef, Row } from '@tanstack/react-table'
-import { formatDate } from 'date-fns'
 import { Edit, Eye, Trash2 } from 'lucide-react'
 
 export function getRemittanceColumns({
