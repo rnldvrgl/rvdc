@@ -6,6 +6,7 @@ import {
   formatDate,
   getBadgeVariant,
   getBoolBadgeVariant,
+  getHashedStallBadgeClass,
   safeCell,
 } from '@/lib/utils/helpers'
 import { ColumnDef, Row } from '@tanstack/react-table'
@@ -24,8 +25,14 @@ export function getSalesTransactionColumns({
           {
             accessorKey: 'stall.name',
             header: 'Stall',
-            cell: ({ row }: { row: Row<SalesTransaction> }) =>
-              safeCell(row.original.stall?.name),
+            cell: ({ row }: { row: Row<SalesTransaction> }) => {
+              const stallName = safeCell(row.original.stall?.name)
+              return (
+                <Badge className={getHashedStallBadgeClass(stallName)}>
+                  {stallName}
+                </Badge>
+              )
+            },
           },
         ]
       : []),
@@ -39,7 +46,9 @@ export function getSalesTransactionColumns({
       header: 'Client',
       cell: ({ row }) =>
         safeCell(
-          `${row.original.client?.full_name} (${row.original.client?.contact_number})`,
+          `${row.original.client?.full_name ?? ''} (${
+            row.original.client?.contact_number ?? ''
+          })`,
         ),
     },
     {
@@ -48,7 +57,10 @@ export function getSalesTransactionColumns({
       cell: ({ getValue }) =>
         safeCell(
           getValue()
-            ? formatDate(getValue() as Date, 'EEE, MMM dd yyyy • hh:mm a')
+            ? formatDate(
+                new Date(getValue() as string),
+                'EEE, MMM dd yyyy • hh:mm a',
+              )
             : null,
         ),
     },
@@ -56,21 +68,24 @@ export function getSalesTransactionColumns({
       accessorKey: 'computed_total',
       header: 'Total Amount',
       cell: ({ getValue }) =>
-        safeCell(getValue() ? formatCurrency(getValue() as number) : null),
+        safeCell(getValue() ? formatCurrency(Number(getValue())) : null),
     },
     {
       accessorKey: 'total_paid',
       header: 'Total Payment',
       cell: ({ getValue }) =>
-        safeCell(getValue() ? formatCurrency(getValue() as number) : null),
+        safeCell(getValue() ? formatCurrency(Number(getValue())) : null),
     },
     {
       accessorKey: 'balance',
       header: 'Balance',
       cell: ({ row }) => {
-        const balance =
-          Number(row.original.computed_total) - Number(row.original.total_paid)
-        return safeCell(balance > 0 ? formatCurrency(balance) : 0)
+        const total = Number(row.original.computed_total || 0)
+        const paid = Number(row.original.total_paid || 0)
+        const balance = total - paid
+        return safeCell(
+          balance > 0 ? formatCurrency(balance) : formatCurrency(0),
+        )
       },
     },
     {
@@ -85,16 +100,19 @@ export function getSalesTransactionColumns({
     {
       accessorKey: 'voided',
       header: 'Voided',
-      cell: ({ getValue }) => (
-        <Badge
-          variant={getBoolBadgeVariant({
-            status: getValue() as boolean,
-            reverse: true,
-          })}
-        >
-          {safeCell(getValue()) ? 'No' : 'Yes'}
-        </Badge>
-      ),
+      cell: ({ getValue }) => {
+        const voided = Boolean(getValue())
+        return (
+          <Badge
+            variant={getBoolBadgeVariant({
+              status: voided,
+              reverse: true,
+            })}
+          >
+            {voided ? 'Yes' : 'No'}
+          </Badge>
+        )
+      },
     },
     {
       id: 'action',
@@ -122,7 +140,9 @@ export function getSalesTransactionColumns({
               icon: <Trash2 className="size-4 text-destructive" />,
               onClick: () => onDelete?.(row.original),
               destructive: true,
-              confirmText: `Delete sale transaction from ${row.original.client?.full_name}?`,
+              confirmText: `Delete sale transaction from ${
+                row.original.client?.full_name || 'this client'
+              }?`,
             },
           ]}
         />
