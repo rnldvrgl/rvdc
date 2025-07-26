@@ -92,7 +92,7 @@ export function getSalesTransactionColumns({
             reverse: true,
           })}
         >
-          {safeCell(getValue()) ? 'Yes' : 'No'}
+          {safeCell(getValue()) ? 'No' : 'Yes'}
         </Badge>
       ),
     },
