@@ -10,7 +10,10 @@ import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useRemittanceMutations } from '@/lib/mutations/useRemittanceMutations'
-import { useRemittancesRecords } from '@/lib/queries/useRemittancesRecords'
+import {
+  useRemittancesRecordFilters,
+  useRemittancesRecords,
+} from '@/lib/queries/useRemittancesRecords'
 import { Plus } from 'lucide-react'
 import { getRemittanceColumns } from './columns'
 
@@ -24,6 +27,7 @@ export default function RemittancesPage() {
     ordering,
     filter,
   })
+  const { filters, orderingOptions } = useRemittancesRecordFilters()
   const { deleteRemittance, markRemitted } = useRemittanceMutations()
 
   const {
@@ -114,6 +118,8 @@ export default function RemittancesPage() {
           </Button>
         }
         defaultRangePreset="Last 30 Days"
+        filters={filters}
+        orderingOptions={orderingOptions}
       />
     </div>
   )
