@@ -18,7 +18,3 @@ export function formatBackDate(date: Date, formatStr = 'yyyy-MM-dd') {
   const utcDate = fromZonedTime(date, timeZone)
   return format(utcDate, formatStr)
 }
-
-export function formatLocalDate(date: Date, formatStr = 'yyyy-MM-dd') {
-  return format(toZonedTime(date, timeZone), formatStr)
-}
