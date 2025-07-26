@@ -87,6 +87,7 @@ export function DataTable<TData, TValue>({
         limit,
         ordering,
         search: debouncedSearch || undefined,
+        filter,
       })
     }
   }, [debouncedSearch, search, limit, ordering, push])
