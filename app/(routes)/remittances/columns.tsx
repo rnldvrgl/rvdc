@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { RemittanceRecord } from '@/lib/constants/infers'
 import { GetColumnsProps } from '@/lib/constants/interface'
 import {
+  formatBackDate,
   formatCurrency,
   getBoolBadgeVariant,
   getHashedStallBadgeClass,
@@ -149,7 +150,9 @@ export function getRemittanceColumns({
                   icon: <Trash2 className="size-4 text-destructive" />,
                   onClick: () => onDelete?.(row.original),
                   destructive: true,
-                  confirmText: `Delete remittance record for ${row.original.stall_data?.name} (${row.original.date})?`,
+                  confirmText: `Delete remittance record for ${
+                    row.original.stall_data?.name
+                  } (${formatBackDate(new Date(row.original.created_at))})?`,
                 },
               ]
             : []),
