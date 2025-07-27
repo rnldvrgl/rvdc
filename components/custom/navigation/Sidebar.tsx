@@ -1,17 +1,52 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
+import { useState } from 'react'
+
 import SidebarNav from '@/components/custom/navigation/SidebarNav'
 import EntitySheet from '@/components/custom/shared/EntitySheet'
 import ClientForm from '@/components/forms/ClientForm'
 import ExpenseForm from '@/components/forms/ExpenseForm'
 import StockTransferForm from '@/components/forms/inventory/StockTransferForm'
+import RemittanceForm from '@/components/forms/RemittanceForm'
+
+import SalesTransactionForm from '@/components/forms/SalesTransactionForm'
 import useActivePath from '@/lib/hooks/useActivePath'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import { useGetPermissions } from '@/lib/hooks/useGetPermissions'
 import { useSidebarNavigation } from '@/lib/hooks/useSidebarNavigation'
 import useUserProfileStore from '@/lib/store/useUserProfileStore'
-import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+
+// Define supported entities and metadata
+const ENTITY_CONFIG = {
+  sale: {
+    title: 'Add Sale',
+    description: 'Fill out the form below to add a new sale.',
+    Form: SalesTransactionForm,
+  },
+  client: {
+    title: 'Add Client',
+    description: 'Fill out the form below to add a new client.',
+    Form: ClientForm,
+  },
+  expense: {
+    title: 'Add Expense',
+    description: 'Fill out the form below to add a new expense.',
+    Form: ExpenseForm,
+  },
+  transfer: {
+    title: 'Add Transfer',
+    description: 'Fill out the form below to add a new transfer.',
+    Form: StockTransferForm,
+  },
+  remittance: {
+    title: 'Add Remittance',
+    description: 'Fill out the form below to add a new remittance.',
+    Form: RemittanceForm,
+  },
+} as const
+
+type EntityType = keyof typeof ENTITY_CONFIG
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -32,14 +67,15 @@ export function Sidebar() {
     closeEntity,
   } = useEntitySheet()
 
-  const [currentEntity, setCurrentEntity] = useState<
-    'client' | 'expense' | 'transfer' | null
-  >(null)
+  const [currentEntity, setCurrentEntity] = useState<EntityType | null>(null)
 
-  const handleopenEntity = (entity: 'client' | 'expense' | 'transfer') => {
+  const handleOpenEntity = (entity: EntityType) => {
     setCurrentEntity(entity)
     openEntity()
   }
+
+  const entityConfig = currentEntity ? ENTITY_CONFIG[currentEntity] : null
+  const FormComponent = entityConfig?.Form
 
   return (
     <section className="h-full overflow-y-auto">
@@ -47,33 +83,11 @@ export function Sidebar() {
         open={open}
         onClose={closeEntity}
         withCloseConfirmation
-        title={
-          currentEntity === 'client'
-            ? 'Add Client'
-            : currentEntity === 'expense'
-            ? 'Add Expense'
-            : currentEntity === 'transfer'
-            ? 'Add Transfer'
-            : ''
+        title={entityConfig?.title || ''}
+        description={entityConfig?.description || ''}
+        renderForm={({ forceClose }) =>
+          FormComponent ? <FormComponent onClose={forceClose} /> : null
         }
-        description={
-          currentEntity === 'client'
-            ? 'Fill out the form below to add a new client.'
-            : currentEntity === 'expense'
-            ? 'Fill out the form below to add a new expense.'
-            : currentEntity === 'transfer'
-            ? 'Fill out the form below to add a new transfer.'
-            : ''
-        }
-        renderForm={({ forceClose }) => {
-          if (currentEntity === 'client')
-            return <ClientForm onClose={forceClose} />
-          if (currentEntity === 'expense')
-            return <ExpenseForm onClose={forceClose} />
-          if (currentEntity === 'transfer')
-            return <StockTransferForm onClose={forceClose} />
-          return null
-        }}
       />
 
       <SidebarNav
@@ -83,9 +97,23 @@ export function Sidebar() {
         ]}
         activePath={activePath}
         onAction={(action) => {
-          if (action === 'addClient') handleopenEntity('client')
-          else if (action === 'addExpense') handleopenEntity('expense')
-          else if (action === 'addTransfer') handleopenEntity('transfer')
+          switch (action) {
+            case 'addSale':
+              handleOpenEntity('sale')
+              break
+            case 'addClient':
+              handleOpenEntity('client')
+              break
+            case 'addExpense':
+              handleOpenEntity('expense')
+              break
+            case 'addTransfer':
+              handleOpenEntity('transfer')
+              break
+            case 'addRemittance':
+              handleOpenEntity('remittance')
+              break
+          }
         }}
         user={user}
       />

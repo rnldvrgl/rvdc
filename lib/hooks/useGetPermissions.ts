@@ -18,6 +18,7 @@ export function useGetPermissions(role: Roles) {
       'shortcut_add_client',
       'shortcut_add_expense',
       'shortcut_add_sale',
+      'shortcut_add_remittance',
     ]
 
     const permissionsMap: Record<Roles, string[]> = {

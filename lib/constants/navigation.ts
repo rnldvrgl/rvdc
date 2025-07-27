@@ -146,6 +146,12 @@ export const baseShortcuts: ShortcutEntry[] = [
     permission: 'shortcut_add_expense',
   },
   {
+    name: 'Add Remittance',
+    action: 'addRemittance',
+    icon: Banknote,
+    permission: 'shortcut_add_remittance',
+  },
+  {
     name: 'Add Client',
     action: 'addClient',
     icon: UserPlus,
