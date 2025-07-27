@@ -1,6 +1,6 @@
 'use client'
 
-import { RemittancePayload } from '@/lib/constants/infers'
+import { RemittanceRecordPayload } from '@/lib/constants/infers'
 import { useApiMutation } from '@/lib/hooks/useApiMutation'
 import api from '@/lib/utils/api'
 import { useQueryClient } from '@tanstack/react-query'
@@ -12,7 +12,7 @@ export function useRemittanceMutations() {
   const analyticsKeys = [['summary'], ['cash_flow'], ['remittances_over_time']]
 
   const addRemittance = useApiMutation({
-    mutationFn: (data: RemittancePayload) => api.post(url, data),
+    mutationFn: (data: RemittanceRecordPayload) => api.post(url, data),
     successMessage: 'Remittance recorded successfully.',
     invalidateQueries: [
       { queryKey: ['remittances'] },
@@ -26,7 +26,7 @@ export function useRemittanceMutations() {
       data,
     }: {
       id?: number
-      data: Partial<RemittancePayload>
+      data: Partial<RemittanceRecordPayload>
     }) => api.patch(`${url}${id}/`, data),
     successMessage: 'Remittance updated successfully.',
     invalidateQueries: [
