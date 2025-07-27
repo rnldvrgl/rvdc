@@ -67,55 +67,31 @@ export const userProfileSchema = z
 export const CashDenominationBreakdownPayloadSchema = z.object({
   count_1000: z.number().min(0).optional(),
   count_500: z.number().min(0).optional(),
+  count_200: z.number().min(0).optional(),
   count_100: z.number().min(0).optional(),
   count_50: z.number().min(0).optional(),
   count_20: z.number().min(0).optional(),
   count_10: z.number().min(0).optional(),
   count_5: z.number().min(0).optional(),
   count_1: z.number().min(0).optional(),
-  coins_remitted: z.boolean().default(false).optional(),
-})
 
-export const RemittancePayloadSchema = z.object({
-  id: z.number().optional(),
-  stall: z.number(),
-  notes: z.string().optional(),
-  is_remitted: z.boolean().default(false).optional(),
-  cash_breakdown: CashDenominationBreakdownPayloadSchema.optional(),
+  declared_count_1: z.number().min(0).optional(),
+  declared_count_5: z.number().min(0).optional(),
+  declared_count_10: z.number().min(0).optional(),
+  declared_count_20: z.number().min(0).optional(),
+  declared_count_50: z.number().min(0).optional(),
+  declared_count_100: z.number().min(0).optional(),
+  declared_count_200: z.number().min(0).optional(),
+  declared_count_500: z.number().min(0).optional(),
+  declared_count_1000: z.number().min(0).optional(),
 })
-
-export const CashDenominationBreakdownSchema =
-  CashDenominationBreakdownPayloadSchema.extend({
-    total_remitted_amount: z.number(),
-    cod_amount: z.number(),
-    total_cash_declared: z.number(),
-  })
 
 export const RemittanceRecordSchema = z.object({
-  id: z.number(),
+  id: z.number().optional(),
   stall: z.number(),
-  stall_data: z
-    .object({
-      id: z.number(),
-      name: z.string(),
-    })
-    .optional(),
-  created_at: z.string(),
-  remitted_amount: z.string(),
-  remitted_by: z.number().nullable(),
   notes: z.string(),
-  expected_remittance: z.string(),
-  total_collected: z.string(),
-  balance: z.string(),
 
-  total_sales_cash: z.string(),
-  total_sales_gcash: z.string(),
-  total_sales_credit: z.string(),
-  total_sales_debit: z.string(),
-  total_sales_cheque: z.string(),
-  total_expenses: z.string(),
+  cash_breakdown: CashDenominationBreakdownPayloadSchema.optional(),
 
-  cash_breakdown: CashDenominationBreakdownSchema.optional(),
-
-  is_remitted: z.boolean(),
+  is_remitted: z.boolean().optional(),
 })

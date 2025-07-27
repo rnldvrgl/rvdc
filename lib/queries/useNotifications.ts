@@ -10,5 +10,8 @@ export const useUnreadNotificationCount = () => {
   return useApiQuery<{ unread_count: number }>({
     queryKey: ['unread-notification-count'],
     url: `${url}count_unread/`,
+    options: {
+      refetchOnWindowFocus: true,
+    },
   })
 }

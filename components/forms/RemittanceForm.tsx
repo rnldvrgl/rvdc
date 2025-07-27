@@ -1,5 +1,15 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Info } from 'lucide-react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+
+import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
+import { useRemittanceMutations } from '@/lib/mutations/useRemittanceMutations'
+import { useStallChoices } from '@/lib/queries/useChoices'
+import useUserProfileStore from '@/lib/store/useUserProfileStore'
+
 import { ComboBox } from '@/components/custom/inputs/ComboBox'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -12,60 +22,102 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-import { RemittancePayload } from '@/lib/constants/infers'
-import { RemittancePayloadSchema } from '@/lib/constants/schema'
-import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
-import { useRemittanceMutations } from '@/lib/mutations/useRemittanceMutations'
-import { useStallChoices } from '@/lib/queries/useChoices'
-import useUserProfileStore from '@/lib/store/useUserProfileStore'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
-type FormValues = z.infer<typeof RemittancePayloadSchema>
+import { RemittanceRecordPayload } from '@/lib/constants/infers'
+import { RemittanceRecordSchema } from '@/lib/constants/schema'
 
-interface RemittanceFormProps {
+const DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5, 1] as const
+
+interface Props {
+  initialData?: RemittanceRecordPayload
   onClose: () => void
-  initialData?: FormValues
 }
 
-export default function RemittanceForm({
-  onClose,
-  initialData,
-}: RemittanceFormProps) {
+export default function RemittanceForm({ initialData, onClose }: Props) {
   const { role } = useCurrentUser()
   const userProfile = useUserProfileStore((s) => s.userProfile)
-  const { addRemittance, updateRemittance } = useRemittanceMutations()
   const { data: stalls } = useStallChoices({})
+  const { addRemittance, updateRemittance } = useRemittanceMutations()
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(RemittancePayloadSchema),
+  const isEditing = !!initialData
+  const isRemitted = initialData?.is_remitted ?? false
+  const disabled = isRemitted
+
+  // ✅ Compute syncStates based on whether declared == to_remit
+  const defaultSyncStates: Record<number, boolean> = Object.fromEntries(
+    DENOMINATIONS.map((denom) => {
+      const declared =
+        initialData?.cash_breakdown?.[`declared_count_${denom}`] ?? 0
+      const count = initialData?.cash_breakdown?.[`count_${denom}`] ?? 0
+      return [denom, declared === count]
+    }),
+  )
+
+  const [syncStates, setSyncStates] =
+    useState<Record<number, boolean>>(defaultSyncStates)
+
+  const form = useForm<RemittanceRecordPayload>({
+    resolver: zodResolver(RemittanceRecordSchema),
     defaultValues: {
       stall:
         initialData?.stall ??
         (role === 'admin' ? undefined : userProfile?.assigned_stall?.id),
       notes: initialData?.notes ?? '',
       cash_breakdown: {
-        count_1000: initialData?.cash_breakdown?.count_1000 ?? undefined,
-        count_500: initialData?.cash_breakdown?.count_500 ?? undefined,
-        count_100: initialData?.cash_breakdown?.count_100 ?? undefined,
-        count_50: initialData?.cash_breakdown?.count_50 ?? undefined,
-        count_20: initialData?.cash_breakdown?.count_20 ?? undefined,
-        count_10: initialData?.cash_breakdown?.count_10 ?? undefined,
-        count_5: initialData?.cash_breakdown?.count_5 ?? undefined,
-        count_1: initialData?.cash_breakdown?.count_1 ?? undefined,
-        coins_remitted: initialData?.cash_breakdown?.coins_remitted ?? false,
+        ...Object.fromEntries(
+          DENOMINATIONS.flatMap((d) => [
+            [`count_${d}`, initialData?.cash_breakdown?.[`count_${d}`] ?? 0],
+            [
+              `declared_count_${d}`,
+              initialData?.cash_breakdown?.[`declared_count_${d}`] ?? 0,
+            ],
+          ]),
+        ),
       },
     },
   })
 
-  const isEditing = !!initialData
-  const isRemitted = initialData?.is_remitted ?? false
-  const disabled = isRemitted
+  const { setValue, getValues, control, handleSubmit } = form
 
-  const onSubmit = (data: FormValues) => {
-    if (isRemitted) return // prevent updating if already remitted
+  const getCountField = (denom: number): keyof RemittanceRecordPayload =>
+    `cash_breakdown.count_${denom}` as keyof RemittanceRecordPayload
+
+  const getDeclaredField = (denom: number): keyof RemittanceRecordPayload =>
+    `cash_breakdown.declared_count_${denom}` as keyof RemittanceRecordPayload
+
+  const handleDeclaredChange = (denom: number, value: number) => {
+    setValue(getDeclaredField(denom), value)
+    if (syncStates[denom]) {
+      setValue(getCountField(denom), value)
+    }
+  }
+
+  const handleSyncToggle = (denom: number, checked: boolean) => {
+    setSyncStates((prev) => ({ ...prev, [denom]: checked }))
+    if (checked) {
+      const declared = getValues(getDeclaredField(denom))
+      setValue(getCountField(denom), declared)
+    } else {
+      setValue(getCountField(denom), 0)
+    }
+  }
+
+  const onSubmit = (data: RemittanceRecordPayload) => {
+    if (isRemitted) return
 
     const stallId =
       role === 'admin' ? data.stall : userProfile?.assigned_stall?.id
@@ -75,7 +127,7 @@ export default function RemittanceForm({
       return
     }
 
-    const payload: RemittancePayload = {
+    const payload: RemittanceRecordPayload = {
       ...data,
       stall: stallId,
     }
@@ -90,42 +142,20 @@ export default function RemittanceForm({
     }
   }
 
-  const denominations: {
-    label: string
-    name:
-      | 'count_1000'
-      | 'count_500'
-      | 'count_100'
-      | 'count_50'
-      | 'count_20'
-      | 'count_10'
-      | 'count_5'
-      | 'count_1'
-  }[] = [
-    { label: '₱1000', name: 'count_1000' },
-    { label: '₱500', name: 'count_500' },
-    { label: '₱100', name: 'count_100' },
-    { label: '₱50', name: 'count_50' },
-    { label: '₱20', name: 'count_20' },
-    { label: '₱10', name: 'count_10' },
-    { label: '₱5', name: 'count_5' },
-    { label: '₱1', name: 'count_1' },
-  ]
-
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6 max-w-xl"
+        onSubmit={handleSubmit(onSubmit)}
+        className="grid space-y-6 max-w-xl"
       >
-        <div className="grid gap-6">
-          {role === 'admin' && (
-            <FormField
-              control={form.control}
-              name="stall"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Stall</FormLabel>
+        {role === 'admin' && (
+          <FormField
+            control={control}
+            name="stall"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel required>Stall</FormLabel>
+                <FormControl>
                   <ComboBox
                     options={
                       stalls?.map((s) => ({ value: s.id, label: s.name })) ?? []
@@ -135,88 +165,171 @@ export default function RemittanceForm({
                     placeholder="Select stall"
                     disabled={disabled}
                   />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
-
-          <div className="border rounded-2xl p-4 shadow-sm space-y-4">
-            <h1 className="text-base font-semibold">Cash Breakdown</h1>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {denominations.map((denom) => (
-                <FormField
-                  key={denom.name}
-                  control={form.control}
-                  name={`cash_breakdown.${denom.name}` as const}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-sm">{denom.label}</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          step={1}
-                          disabled={disabled}
-                          value={
-                            field.value === undefined || field.value === null
-                              ? ''
-                              : field.value
-                          }
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value === ''
-                                ? undefined
-                                : e.target.valueAsNumber,
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-            </div>
-
-            <FormField
-              control={form.control}
-              name="cash_breakdown.coins_remitted"
-              render={({ field }) => (
-                <FormItem className="flex items-center space-x-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      disabled={disabled}
-                    />
-                  </FormControl>
-                  <FormLabel className="text-sm">Coins Remitted</FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="notes"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Notes</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="Optional notes..."
-                    {...field}
-                    disabled={disabled}
-                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
+        )}
+
+        <div className="space-y-4 rounded-xl border bg-background p-4 shadow-sm">
+          <FormLabel
+            className="text-lg"
+            required
+          >
+            Cash Breakdown
+          </FormLabel>
+
+          <div className="overflow-x-auto mt-2">
+            <Table className="w-full text-sm">
+              <TableHeader>
+                <TableRow className="text-sm text-muted-foreground">
+                  <TableHead className="w-1/6 text-right text-foreground font-semibold">
+                    Denomination
+                  </TableHead>
+                  <TableHead className="w-1/4 text-center text-foreground font-semibold">
+                    Declared
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="ml-1 inline h-4 w-4 cursor-pointer text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        Total number of bills or coins you counted for this
+                        denomination.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                  <TableHead className="w-1/4 text-center text-foreground font-semibold">
+                    To Remit
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="ml-1 inline h-4 w-4 cursor-pointer text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        Number of bills or coins you’re actually remitting.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                  <TableHead className="w-1/6 text-center text-foreground font-semibold">
+                    Same?
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="ml-1 inline h-4 w-4 cursor-pointer text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top">
+                        If checked, the "To Remit" count will automatically
+                        match the declared amount.
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {DENOMINATIONS.map((denom) => (
+                  <TableRow key={denom}>
+                    <TableCell className="text-right font-medium text-foreground">
+                      ₱{denom}
+                    </TableCell>
+
+                    {/* Declared */}
+                    <TableCell className="text-center">
+                      <FormField
+                        control={control}
+                        name={getDeclaredField(denom)}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                inputMode="numeric"
+                                className="w-20 text-center"
+                                disabled={disabled}
+                                min={0}
+                                value={
+                                  typeof field.value === 'number'
+                                    ? field.value
+                                    : 0
+                                }
+                                onChange={(e) => {
+                                  const val = parseInt(e.target.value || '0')
+                                  field.onChange(val)
+                                  handleDeclaredChange(denom, val)
+                                }}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </TableCell>
+
+                    {/* To Remit */}
+                    <TableCell className="text-center">
+                      <FormField
+                        control={control}
+                        name={getCountField(denom)}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                inputMode="numeric"
+                                min={0}
+                                className="w-20 text-center"
+                                disabled={disabled || syncStates[denom]}
+                                value={
+                                  typeof field.value === 'number'
+                                    ? field.value
+                                    : 0
+                                }
+                                onChange={(e) =>
+                                  field.onChange(
+                                    parseInt(e.target.value || '0'),
+                                  )
+                                }
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </TableCell>
+
+                    {/* Sync Checkbox */}
+                    <TableCell className="text-center">
+                      <Checkbox
+                        checked={syncStates[denom] ?? true}
+                        onCheckedChange={(v) =>
+                          handleSyncToggle(denom, Boolean(v))
+                        }
+                        className="cursor-pointer"
+                        disabled={disabled}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
+
+        {/* Notes */}
+        <FormField
+          control={control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  placeholder="Optional notes..."
+                  disabled={disabled}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <div className="flex justify-end pt-4">
           <Button

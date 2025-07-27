@@ -420,19 +420,6 @@ export type RestocksOvertime = {
   date: string
   restock_volume: number
 }
-
-export interface CashDenominationBreakdownPayload {
-  count_1000?: number
-  count_500?: number
-  count_100?: number
-  count_50?: number
-  count_20?: number
-  count_10?: number
-  count_5?: number
-  count_1?: number
-  coins_remitted: boolean
-}
-
 export interface LabeledOption {
   label: string
   value: string
@@ -452,4 +439,73 @@ export interface SortOption {
 export interface FilterResponse {
   filters: Record<string, LabeledOption[]>
   ordering: LabeledOption[]
+}
+
+export interface CashDenominationBreakdown {
+  total_remitted_amount: string
+  total_declared_amount: string
+  cod_amount: string
+  total_cash_declared: string
+
+  count_1000: number
+  count_500: number
+  count_200: number
+  count_100: number
+  count_50: number
+  count_20: number
+  count_10: number
+  count_5: number
+  count_1: number
+
+  declared_count_1000: number
+  declared_count_500: number
+  declared_count_200: number
+  declared_count_100: number
+  declared_count_50: number
+  declared_count_20: number
+  declared_count_10: number
+  declared_count_5: number
+  declared_count_1: number
+}
+
+export interface RemittanceRecord {
+  id: number
+  stall: number
+  stall_data?: {
+    id: number
+    name: string
+  }
+
+  created_at: string
+
+  total_sales_cash: string
+  total_sales_gcash: string
+  total_sales_credit: string
+  total_sales_debit: string
+  total_sales_cheque: string
+
+  total_collected: string
+  total_expenses: string
+  expected_remittance: string
+  declared_amount: string
+  remitted_amount: string
+  balance: string
+
+  is_remitted: boolean
+  notes: string
+
+  remitted_by: {
+    id: number
+    full_name: string
+  } | null
+
+  cash_breakdown?: CashDenominationBreakdown
+
+  cod_for_next_day: number | string
+  cod_for_today: {
+    cod_amount: number | string
+    cod_breakdown: unknown | null
+    source: string
+    date: string
+  }
 }
