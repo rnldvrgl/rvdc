@@ -1,4 +1,4 @@
-import { RemittanceRecord } from '@/lib/constants/infers'
+import { RemittanceRecord } from '@/lib/constants/interface'
 import type { PaginatedFilterProps } from '@/lib/constants/types'
 import { useFilters } from '@/lib/hooks/useFilters'
 import { usePaginatedQuery } from '@/lib/hooks/usePaginatedQuery'
