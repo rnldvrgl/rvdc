@@ -206,7 +206,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                         <Info className="ml-1 inline h-4 w-4 cursor-pointer text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        Number of bills or coins you’re actually remitting.
+                        Number of bills or coins you&quot;re actually remitting.
                       </TooltipContent>
                     </Tooltip>
                   </TableHead>
@@ -217,8 +217,8 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                         <Info className="ml-1 inline h-4 w-4 cursor-pointer text-muted-foreground" />
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        If checked, the "To Remit" count will automatically
-                        match the declared amount.
+                        If checked, the &quot;To Remit&quot; count will
+                        automatically match the declared amount.
                       </TooltipContent>
                     </Tooltip>
                   </TableHead>
