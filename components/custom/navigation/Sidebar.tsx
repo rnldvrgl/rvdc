@@ -11,6 +11,7 @@ import StockTransferForm from '@/components/forms/inventory/StockTransferForm'
 import RemittanceForm from '@/components/forms/RemittanceForm'
 
 import SalesTransactionForm from '@/components/forms/SalesTransactionForm'
+import ServiceForm from '@/components/forms/ServiceForm'
 import useActivePath from '@/lib/hooks/useActivePath'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import { useGetPermissions } from '@/lib/hooks/useGetPermissions'
@@ -43,6 +44,11 @@ const ENTITY_CONFIG = {
     title: 'Add Remittance',
     description: 'Fill out the form below to add a new remittance.',
     Form: RemittanceForm,
+  },
+  service: {
+    title: 'Add Service',
+    description: 'Fill out the form below to add a new service.',
+    Form: ServiceForm,
   },
 } as const
 
@@ -112,6 +118,8 @@ export function Sidebar() {
               break
             case 'addRemittance':
               handleOpenEntity('remittance')
+            case 'addService':
+              handleOpenEntity('service')
               break
           }
         }}

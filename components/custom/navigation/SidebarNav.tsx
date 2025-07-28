@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/sheet'
 import { Skeleton } from '@/components/ui/skeleton'
 import { User } from '@/lib/constants/interface'
+import { RemixiconComponentType } from '@remixicon/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { LucideIcon, Menu } from 'lucide-react'
 import { useState } from 'react'
@@ -19,7 +20,7 @@ import { useState } from 'react'
 type SidebarItem = {
   name: string
   href?: string
-  icon: LucideIcon
+  icon: LucideIcon | RemixiconComponentType
   action?: string
   children?: SidebarItem[]
 }
