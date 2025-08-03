@@ -21,6 +21,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-switch": "^1.2.5",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@remixicon/react": "^4.6.0",
     "@tanstack/react-query": "^5.81.4",
     "@tanstack/react-query-devtools": "^5.81.5",
     "@tanstack/react-table": "^8.21.3",

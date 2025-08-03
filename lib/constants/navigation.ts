@@ -2,25 +2,28 @@ import { NavigationEntry, ShortcutEntry } from '@/lib/constants/types'
 import {
   Banknote,
   Boxes,
-  Building2,
   CalendarCheck2,
   CalendarDays,
   CircleDollarSign,
   Coins,
-  FileText,
-  Hammer,
   Layers,
   LayoutDashboard,
-  MonitorSmartphone,
   Package,
   Repeat,
   Settings,
   Store,
-  UserPlus,
   Users,
   Warehouse,
   Wrench,
 } from 'lucide-react'
+
+import {
+  RiCheckLine,
+  RiCpuLine,
+  RiHistoryLine,
+  RiHomeGearLine,
+  RiSnowflakeLine,
+} from '@remixicon/react'
 
 export const baseNavigation: Record<string, NavigationEntry> = {
   dashboard: {
@@ -31,13 +34,13 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   pos: {
     name: 'POS Terminal',
     href: '/pos',
-    icon: MonitorSmartphone,
+    icon: CircleDollarSign,
     permission: 'use_pos',
   },
   sales: {
-    name: 'Sales Records',
+    name: 'Sales',
     href: '/sales',
-    icon: FileText,
+    icon: CircleDollarSign,
     permission: 'view_sales',
   },
   remittances: {
@@ -58,42 +61,67 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Users,
     permission: 'view_clients',
   },
+  technicians: {
+    name: 'Technicians',
+    href: '/technicians',
+    icon: RiHomeGearLine,
+    permission: 'view_technicians',
+  },
   attendance: {
     name: 'Attendance',
     href: '/attendance',
     icon: CalendarDays,
     permission: 'view_attendance',
   },
-  repairs: {
-    name: 'Repair Orders',
-    href: '/repairs',
+  services: {
+    name: 'Services',
     icon: Wrench,
-    permission: 'view_repairs',
-  },
-  scheduling: {
-    name: 'Service Appointments',
-    href: '/scheduling',
-    icon: CalendarCheck2,
-    permission: 'view_scheduling',
-  },
-  technicians: {
-    name: 'Technicians',
-    href: '/technicians',
-    icon: Hammer,
-    permission: 'view_technicians',
-  },
-  stalls: {
-    name: 'Stalls',
-    href: '/stalls',
-    icon: Building2,
-    permission: 'view_stalls',
+    permission: 'view_services',
+    children: [
+      {
+        name: 'Overview',
+        href: '/services',
+        icon: RiCheckLine,
+        permission: 'view_services',
+      },
+      {
+        name: 'Appliance Repairs',
+        href: '/services/appliances',
+        icon: RiCpuLine,
+        permission: 'view_service_appliances',
+      },
+      {
+        name: 'Aircon Installations',
+        href: '/services/aircon-installations',
+        icon: RiSnowflakeLine,
+        permission: 'view_aircon_installations',
+      },
+      {
+        name: 'Motor Rewinds',
+        href: '/services/motor-rewinds',
+        icon: Repeat,
+        permission: 'view_motor_rewinds',
+      },
+      {
+        name: 'Home Service Schedules',
+        href: '/services/home-schedules',
+        icon: CalendarCheck2,
+        permission: 'view_home_service_schedules',
+      },
+      {
+        name: 'Status Logs',
+        href: '/services/status-history',
+        icon: RiHistoryLine,
+        permission: 'view_service_status_history',
+      },
+    ],
   },
   inventory: {
     name: 'Inventory',
     icon: Boxes,
     children: [
       {
-        name: 'Stock Room',
+        name: 'Stockroom',
         href: '/inventory/stocks/stockroom',
         icon: Warehouse,
         permission: 'view_stockroom',
@@ -105,7 +133,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: 'view_stallstocks',
       },
       {
-        name: 'Stock Transfer',
+        name: 'Transfers',
         href: '/inventory/stocks/transfer',
         icon: Repeat,
         permission: 'manage_stock_transfer',
@@ -117,12 +145,18 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: 'view_items',
       },
       {
-        name: 'Item Categories',
+        name: 'Categories',
         href: '/inventory/categories',
         icon: Layers,
         permission: 'view_categories',
       },
     ],
+  },
+  stalls: {
+    name: 'Stalls',
+    href: '/stalls',
+    icon: Store,
+    permission: 'view_stalls',
   },
   settings: {
     name: 'Settings',
@@ -134,31 +168,43 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 
 export const baseShortcuts: ShortcutEntry[] = [
   {
-    name: 'Add Sale',
+    name: 'New Sale',
     action: 'addSale',
     icon: CircleDollarSign,
     permission: 'shortcut_add_sale',
   },
   {
-    name: 'Add Expense',
+    name: 'New Service',
+    action: 'addService',
+    icon: Wrench,
+    permission: 'shortcut_add_service',
+  },
+  {
+    name: 'Schedule Home Service',
+    action: 'addHomeSchedule',
+    icon: CalendarCheck2,
+    permission: 'shortcut_add_home_schedule',
+  },
+  {
+    name: 'Log Expense',
     action: 'addExpense',
     icon: Coins,
     permission: 'shortcut_add_expense',
   },
   {
-    name: 'Add Remittance',
+    name: 'Record Remittance',
     action: 'addRemittance',
     icon: Banknote,
     permission: 'shortcut_add_remittance',
   },
   {
-    name: 'Add Client',
+    name: 'New Client',
     action: 'addClient',
-    icon: UserPlus,
+    icon: Users,
     permission: 'shortcut_add_client',
   },
   {
-    name: 'Add Transfer',
+    name: 'New Stock Transfer',
     action: 'addTransfer',
     icon: Repeat,
     permission: 'shortcut_add_transfer',

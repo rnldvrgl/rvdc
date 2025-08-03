@@ -5,6 +5,7 @@ import {
   ShortcutLink,
 } from '@/lib/constants/interface'
 import { userProfileSchema } from '@/lib/constants/schema'
+import { RemixiconComponentType } from '@remixicon/react'
 import { LucideIcon } from 'lucide-react'
 import z from 'zod'
 
@@ -125,7 +126,7 @@ export type Technician = BaseEntity & {
 export type NavItem = {
   name: string
   href?: string
-  icon: LucideIcon
+  icon: LucideIcon | RemixiconComponentType
   action?: string
   children?: NavItem[]
 }

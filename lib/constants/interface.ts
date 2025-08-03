@@ -1,4 +1,5 @@
 import { Client, Roles, UnitChoice } from '@/lib/constants/types'
+import { RemixiconComponentType } from '@remixicon/react'
 import { LucideIcon } from 'lucide-react'
 
 // ---------------------
@@ -244,7 +245,7 @@ export interface StockTransferPayload {
 // ---------------------
 export interface NavigationItemBase {
   name: string
-  icon: LucideIcon
+  icon: LucideIcon | RemixiconComponentType
   permission?: string
 }
 
