@@ -49,7 +49,7 @@ const serviceSchema = z.object({
 export type FormValues = z.infer<typeof serviceSchema>
 
 interface ServiceFormProps {
-  initialData?: any // Replace with strong type
+  initialData?: FormValues
   onClose: () => void
 }
 
