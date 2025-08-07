@@ -50,7 +50,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     children: [
       {
         name: 'Remittances',
-        href: 'receivables/remittances',
+        href: '/receivables/remittances',
         icon: Banknote,
         permission: 'view_remittances',
       },
