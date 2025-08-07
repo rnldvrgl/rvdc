@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
+import { ChequeStatus } from '@/lib/constants/general'
 import { ChequeCollection } from '@/lib/constants/interface'
 import { ChequeCollectionSchema } from '@/lib/constants/schema'
 import { ChequeCollectionPayload } from '@/lib/constants/types'
@@ -74,7 +75,7 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
         ? new Date(initialData.cheque_date)
         : undefined,
       notes: initialData?.notes ?? '',
-      status: initialData?.status ?? 'pending',
+      status: initialData?.status ?? ChequeStatus.PENDING,
     },
   })
 
