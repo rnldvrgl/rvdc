@@ -17,22 +17,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import { ComboBoxProps } from '@/lib/constants/interface'
 import { cn } from '@/lib/utils/helpers'
-
-type ComboboxOption = {
-  value: string | number
-  label: string
-}
-
-interface ComboBoxProps {
-  options: ComboboxOption[]
-  value: string | number | null
-  onChange: (value: string | number | null) => void
-  placeholder?: string
-  searchPlaceholder?: string
-  className?: string
-  disabled?: boolean
-}
 
 export function ComboBox({
   options,

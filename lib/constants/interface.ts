@@ -1,4 +1,10 @@
-import { Client, Roles, UnitChoice } from '@/lib/constants/types'
+import { ChequeStatus } from '@/lib/constants/general'
+import {
+  Client,
+  ComboboxOption,
+  Roles,
+  UnitChoice,
+} from '@/lib/constants/types'
 import { RemixiconComponentType } from '@remixicon/react'
 import { LucideIcon } from 'lucide-react'
 
@@ -72,6 +78,7 @@ export interface User {
   id: number
   first_name: string
   last_name: string
+  full_name?: string
   username: string
   email: string
   profile_image: string
@@ -509,4 +516,50 @@ export interface RemittanceRecord {
     source: string
     date: string
   }
+}
+
+export interface ChequeCollection {
+  id: number
+  date_collected: string
+  client: number
+  client_name: string
+  issued_by: string
+  billing_amount: string
+  cheque_amount: string
+  cheque_number: string
+  cheque_date: string
+  bank_name: string
+  or_number?: string
+  sales_transaction?: number | null
+  collection_type: string
+  collected_by?: number
+  collected_by_name?: string
+  notes?: string
+  status: ChequeStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface ChequeCollectionRequest {
+  client: number
+  collected_by?: number
+  issued_by: string
+  billing_amount: string
+  cheque_amount: string
+  cheque_number: string
+  cheque_date: string
+  bank_name: string
+  or_number?: string
+  collection_type: string
+  notes?: string
+}
+
+export interface ComboBoxProps {
+  options: ComboboxOption[]
+  value: string | number | null
+  onChange: (value: string | number | null) => void
+  placeholder?: string
+  searchPlaceholder?: string
+  className?: string
+  disabled?: boolean
 }

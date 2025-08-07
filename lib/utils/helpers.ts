@@ -159,6 +159,8 @@ export function getBadgeVariant(source: string): badgeVariants {
     paid: 'success',
     high_stock: 'success',
     manual: 'secondary',
+    picked_up: 'default',
+    client_delivered: 'warning',
     transfer: 'default',
     partial: 'warning',
     low_stock: 'warning',

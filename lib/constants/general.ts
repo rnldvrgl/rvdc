@@ -33,3 +33,12 @@ export const DATE_RANGE_PRESETS = [
     range: makeFormattedRange(29),
   },
 ] as const
+
+export enum ChequeStatus {
+  PENDING = 'pending',
+  DEPOSITED = 'deposited',
+  ENCAHSED = 'encashed',
+  RETURNED = 'returned',
+  BOUNCED = 'bounced',
+  CANCELLED = 'cancelled',
+}

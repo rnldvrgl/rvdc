@@ -12,6 +12,7 @@ export function useGetPermissions(role: Roles) {
       'view_expenses',
       'view_sales',
       'view_remittances',
+      'view_cheque_collections',
     ]
 
     const commonShortcuts = [
@@ -19,6 +20,7 @@ export function useGetPermissions(role: Roles) {
       'shortcut_add_expense',
       'shortcut_add_sale',
       'shortcut_add_remittance',
+      'shortcut_add_cheque_collection',
     ]
 
     const permissionsMap: Record<Roles, string[]> = {

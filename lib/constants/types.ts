@@ -4,7 +4,10 @@ import {
   NavigationLink,
   ShortcutLink,
 } from '@/lib/constants/interface'
-import { userProfileSchema } from '@/lib/constants/schema'
+import {
+  ChequeCollectionSchema,
+  userProfileSchema,
+} from '@/lib/constants/schema'
 import { RemixiconComponentType } from '@remixicon/react'
 import { LucideIcon } from 'lucide-react'
 import z from 'zod'
@@ -159,4 +162,11 @@ export type DateRangePresetLabel = (typeof DATE_RANGE_PRESETS)[number]['label']
 export type SortState = {
   id: string
   desc: boolean
+}
+
+export type ChequeCollectionPayload = z.infer<typeof ChequeCollectionSchema>
+
+export type ComboboxOption = {
+  value: string | number
+  label: string
 }

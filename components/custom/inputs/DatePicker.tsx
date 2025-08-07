@@ -28,6 +28,9 @@ type DatePickerProps = {
   maxDate?: Date
   placeholder?: string
   className?: string
+  disabled?: boolean
+  withoutLabel?: boolean
+  required?: boolean
 }
 
 const DatePicker = ({
@@ -37,13 +40,15 @@ const DatePicker = ({
   minDate = new Date('1900-01-01'),
   maxDate = new Date(),
   placeholder = 'Pick a date',
+  disabled,
   className,
+  required,
 }: DatePickerProps) => {
   const [open, setOpen] = useState(false)
 
   return (
     <FormItem className={cn('flex flex-col', className)}>
-      {label && <FormLabel>{label}</FormLabel>}
+      {label && <FormLabel required={required}>{label}</FormLabel>}
       <Popover
         open={open}
         onOpenChange={setOpen}
@@ -51,9 +56,10 @@ const DatePicker = ({
         <PopoverTrigger asChild>
           <FormControl>
             <Button
+              disabled={disabled}
               variant="outline"
               className={cn(
-                'w-full pl-3 text-left font-normal bg-transparent',
+                'w-full pl-3 text-left font-normal',
                 !field.value && 'text-muted-foreground',
               )}
             >

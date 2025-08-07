@@ -1,5 +1,5 @@
-import { Item, ProductCategory, Stall } from '@/lib/constants/interface'
-import { Client, Technician } from '@/lib/constants/types'
+import { Item, ProductCategory, Stall, User } from '@/lib/constants/interface'
+import { Client, ComboboxOption, Technician } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
 interface UseStallChoicesOptions {
@@ -52,5 +52,19 @@ export const useClientChoices = () => {
   return useApiQuery<Client[]>({
     queryKey: ['client-choices'],
     url: `${url}clients/`,
+  })
+}
+
+export const useUsersChoices = () => {
+  return useApiQuery<User[]>({
+    queryKey: ['users-choices'],
+    url: `${url}users/`,
+  })
+}
+
+export const useBanksChoices = () => {
+  return useApiQuery<ComboboxOption[]>({
+    queryKey: ['banks-choices'],
+    url: `${url}banks/`,
   })
 }

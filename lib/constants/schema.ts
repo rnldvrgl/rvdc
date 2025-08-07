@@ -1,3 +1,4 @@
+import { ChequeStatus } from '@/lib/constants/general'
 import { z } from 'zod'
 
 export const loginSchema = z.object({
@@ -94,4 +95,41 @@ export const RemittanceRecordSchema = z.object({
   cash_breakdown: CashDenominationBreakdownPayloadSchema.optional(),
 
   is_remitted: z.boolean().optional(),
+})
+
+export const ChequeCollectionSchema = z.object({
+  client: z.number({ required_error: 'Client is required' }),
+  collected_by: z
+    .number({ required_error: 'Collector is required' })
+    .optional(),
+  issued_by: z.string({ required_error: 'Issued by is required' }).min(1, {
+    message: 'Issued by is required',
+  }),
+  bank_name: z
+    .string({ required_error: 'Bank is required' })
+    .min(1, { message: 'Bank is required' }),
+  cheque_number: z
+    .string({ required_error: 'Cheque number is required' })
+    .min(1, { message: 'Cheque number is required' }),
+  cheque_amount: z
+    .number({ required_error: 'Amount is required' })
+    .positive({ message: 'Amount must be greater than 0' }),
+  billing_amount: z
+    .number({ required_error: 'Billing amount is required' })
+    .positive({ message: 'Billing amount must be greater than 0' }),
+  or_number: z.string().optional(),
+  cheque_date: z.date({ required_error: 'Cheque date is required' }),
+  date_collected: z.date().optional(),
+  notes: z.string().optional(),
+  status: z.enum(
+    [
+      ChequeStatus.PENDING,
+      ChequeStatus.DEPOSITED,
+      ChequeStatus.ENCAHSED,
+      ChequeStatus.RETURNED,
+      ChequeStatus.BOUNCED,
+      ChequeStatus.CANCELLED,
+    ],
+    { required_error: 'Status is required' },
+  ),
 })

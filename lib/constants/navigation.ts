@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CircleDollarSign,
   Coins,
+  FileText,
   Layers,
   LayoutDashboard,
   Package,
@@ -43,11 +44,23 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: CircleDollarSign,
     permission: 'view_sales',
   },
-  remittances: {
-    name: 'Remittances',
-    href: '/remittances',
+  receivables: {
+    name: 'Receivables',
     icon: Banknote,
-    permission: 'view_remittances',
+    children: [
+      {
+        name: 'Remittances',
+        href: 'receivables/remittances',
+        icon: Banknote,
+        permission: 'view_remittances',
+      },
+      {
+        name: 'Cheque Collections',
+        href: '/receivables/cheques',
+        icon: FileText,
+        permission: 'view_cheque_collections',
+      },
+    ],
   },
   expenses: {
     name: 'Expenses',
@@ -196,6 +209,12 @@ export const baseShortcuts: ShortcutEntry[] = [
     action: 'addRemittance',
     icon: Banknote,
     permission: 'shortcut_add_remittance',
+  },
+  {
+    name: 'Record Cheque Collection',
+    action: 'addChequeCollection',
+    icon: FileText,
+    permission: 'shortcut_add_cheque_collection',
   },
   {
     name: 'New Client',
