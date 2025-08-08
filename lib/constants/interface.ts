@@ -529,6 +529,7 @@ export interface ChequeCollection {
   cheque_number: string
   cheque_date: string
   bank_name: string
+  deposit_bank?: string
   or_number?: string
   sales_transaction?: number | null
   collection_type: string
@@ -549,6 +550,7 @@ export interface ChequeCollectionRequest {
   cheque_number: string
   cheque_date: string
   bank_name: string
+  deposit_bank?: string
   or_number?: string
   collection_type: string
   notes?: string

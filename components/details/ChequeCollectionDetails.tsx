@@ -110,6 +110,11 @@ export function ChequeCollectionDetails({
             icon={<RiBankLine size={16} />}
           />
           <Detail
+            label="Deposit Bank Name"
+            value={entity.deposit_bank}
+            icon={<RiBankLine size={16} />}
+          />
+          <Detail
             label="Cheque Amount"
             value={formatCurrency(entity.cheque_amount)}
             icon={<RiMoneyDollarCircleLine size={16} />}
@@ -133,25 +138,6 @@ export function ChequeCollectionDetails({
               icon={<FileText size={16} />}
             />
           )}
-        </div>
-      </section>
-
-      {/* Metadata */}
-      <section>
-        <h3 className="text-base font-semibold text-muted-foreground mb-4">
-          Record Metadata
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <Detail
-            label="Created At"
-            value={formatDate(new Date(entity.created_at))}
-            icon={<Calendar size={16} />}
-          />
-          <Detail
-            label="Last Updated"
-            value={formatDate(new Date(entity.updated_at))}
-            icon={<Calendar size={16} />}
-          />
         </div>
       </section>
 
