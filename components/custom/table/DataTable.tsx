@@ -164,9 +164,12 @@ export function DataTable<TData, TValue>({
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {React.Children.map(headerActions, (action) =>
               React.isValidElement(action)
-                ? React.cloneElement(action as React.ReactElement<any>, {
-                    className: 'w-full sm:w-auto',
-                  })
+                ? React.cloneElement(
+                    action as React.ReactElement<Record<string, unknown>>,
+                    {
+                      className: 'w-full sm:w-auto',
+                    },
+                  )
                 : action,
             )}
           </div>
