@@ -56,7 +56,7 @@ export default function RemittancesPage() {
   })
 
   return (
-    <div className="mx-auto container">
+    <>
       <EntitySheet
         open={createSheet.open}
         onClose={closeCreate}
@@ -121,6 +121,6 @@ export default function RemittancesPage() {
         filters={filters}
         orderingOptions={orderingOptions}
       />
-    </div>
+    </>
   )
 }

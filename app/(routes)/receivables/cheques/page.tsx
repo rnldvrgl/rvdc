@@ -57,7 +57,7 @@ export default function ChequeCollectionsPage() {
   })
 
   return (
-    <div className="mx-auto container">
+    <>
       {/* Create */}
       <EntitySheet
         open={createSheet.open}
@@ -119,6 +119,6 @@ export default function ChequeCollectionsPage() {
         filters={filters}
         orderingOptions={orderingOptions}
       />
-    </div>
+    </>
   )
 }

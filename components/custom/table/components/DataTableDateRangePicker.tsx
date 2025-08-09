@@ -17,11 +17,13 @@ import { DateRange } from 'react-day-picker'
 interface DataTableDateRangePickerProps {
   defaultValue?: DateRange
   onChange?: (range: DateRange) => void
+  className?: string
 }
 
 export const DataTableDateRangePicker = ({
   defaultValue = { from: undefined, to: undefined },
   onChange,
+  className,
 }: DataTableDateRangePickerProps) => {
   const [open, setOpen] = useState(false)
   const [date, setDate] = useState<DateRange>(defaultValue)
@@ -55,7 +57,7 @@ export const DataTableDateRangePicker = ({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="max-w-[260px] justify-start text-left"
+          className={cn('max-w-[260px] justify-start text-left', className)}
         >
           <CalendarIcon className="mr-2 size-4" />
           {date.from && date.to ? (

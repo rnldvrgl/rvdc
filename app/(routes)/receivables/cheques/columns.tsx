@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge'
 import { ChequeCollection, GetColumnsProps } from '@/lib/constants/interface'
 import {
   formatCurrency,
-  getBadgeVariant,
   getHashedStallBadgeClass,
   safeCell,
 } from '@/lib/utils/helpers'
@@ -26,9 +25,7 @@ export function getChequeCollectionColumns({
       ),
       cell: ({ getValue }) =>
         safeCell(
-          getValue()
-            ? formatDate(getValue() as Date, 'EEE, MMM dd yyyy')
-            : null,
+          getValue() ? formatDate(getValue() as Date, 'MMM dd, yyyy') : null,
         ),
       enableSorting: true,
     },
@@ -37,30 +34,6 @@ export function getChequeCollectionColumns({
       header: withTooltipHeader('Client', 'Name of the client'),
       cell: ({ row }) => safeCell(row.original.client_name),
       enableSorting: true,
-    },
-    {
-      accessorKey: 'issued_by',
-      header: withTooltipHeader(
-        'Issued By',
-        'Entity or person who issued the cheque',
-      ),
-      cell: ({ getValue }) => safeCell(getValue()),
-    },
-    {
-      accessorKey: 'billing_amount',
-      header: withTooltipHeader(
-        'Billing Amount',
-        'Billed amount related to this cheque',
-      ),
-      cell: ({ getValue }) => formatCurrency(getValue() as number),
-    },
-    {
-      accessorKey: 'cheque_amount',
-      header: withTooltipHeader(
-        'Cheque Amount',
-        'Amount written on the cheque',
-      ),
-      cell: ({ getValue }) => formatCurrency(getValue() as number),
     },
     {
       accessorKey: 'cheque_number',
@@ -72,15 +45,22 @@ export function getChequeCollectionColumns({
       header: withTooltipHeader('Cheque Date', 'Date written on the cheque'),
       cell: ({ getValue }) =>
         safeCell(
-          getValue()
-            ? formatDate(getValue() as Date, 'EEE, MMM dd yyyy')
-            : null,
+          getValue() ? formatDate(getValue() as Date, 'MMM dd, yyyy') : null,
         ),
     },
     {
+      accessorKey: 'billing_amount',
+      header: withTooltipHeader('Billing', 'Billing Amount'),
+      cell: ({ getValue }) => formatCurrency(getValue() as number),
+    },
+    {
+      accessorKey: 'cheque_amount',
+      header: withTooltipHeader('Cheque', 'Cheque Amount'),
+      cell: ({ getValue }) => formatCurrency(getValue() as number),
+    },
+    {
       accessorKey: 'bank_name',
-      header: withTooltipHeader('Bank', 'Bank that issued the cheque'),
-
+      header: withTooltipHeader('Bank', 'Issuing Bank'),
       cell: ({ row }) => {
         const bankName = safeCell(row.original.bank_name)
         return (
@@ -91,33 +71,8 @@ export function getChequeCollectionColumns({
       },
     },
     {
-      accessorKey: 'or_number',
-      header: withTooltipHeader('OR #', 'Official receipt number, if any'),
-      cell: ({ getValue }) => safeCell(getValue()),
-    },
-    {
-      accessorKey: 'collection_type',
-      header: withTooltipHeader(
-        'Collection Type',
-        'How the cheque was collected',
-      ),
-      cell: ({ row }) => (
-        <Badge variant={getBadgeVariant(row.original.collection_type)}>
-          {safeCell(row.original.collection_type.trim().replace('_', ' '))}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: 'collected_by_name',
-      header: withTooltipHeader(
-        'Collected By',
-        'Staff who collected the cheque',
-      ),
-      cell: ({ row }) => safeCell(`${row.original.collected_by_name ?? ''}`),
-    },
-    {
       accessorKey: 'status',
-      header: withTooltipHeader('Status', 'Current status of the cheque'),
+      header: withTooltipHeader('Status', 'Current status'),
       cell: ({ getValue }) => {
         const value = getValue() as string
         let variant: 'success' | 'warning' | 'destructive' | 'default' =

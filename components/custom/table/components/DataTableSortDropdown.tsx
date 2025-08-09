@@ -35,6 +35,7 @@ interface DataTableSortDropdownProps {
   options: SortOption[]
   value: SortState[]
   onChange: (next: SortState[]) => void
+  className?: string
 }
 
 const transitionVariants = {
@@ -47,6 +48,7 @@ export function DataTableSortDropdown({
   options,
   value,
   onChange,
+  className,
 }: DataTableSortDropdownProps) {
   const [open, setOpen] = useState(false)
   const [localSort, setLocalSort] = useState<SortState[]>(value)
@@ -124,7 +126,10 @@ export function DataTableSortDropdown({
       onOpenChange={setOpen}
     >
       <PopoverTrigger asChild>
-        <Button variant="outline">
+        <Button
+          variant="outline"
+          className={cn(className)}
+        >
           <ArrowDownUp className="mr-1.5 h-4 w-4" />
           Sort
           {value.length > 0 && (
@@ -142,8 +147,8 @@ export function DataTableSortDropdown({
       </PopoverTrigger>
 
       <PopoverContent
-        className="flex w-full flex-col gap-3.5 p-4 sm:min-w-[380px]"
-        align="start"
+        className={cn('flex flex-col gap-3.5 p-4 sm:min-w-[380px]', className)}
+        align="center"
         asChild
       >
         <motion.div

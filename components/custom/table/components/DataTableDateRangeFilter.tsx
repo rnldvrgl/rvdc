@@ -11,8 +11,10 @@ import { DateRange } from 'react-day-picker'
 
 export function DataTableDateRangeFilter({
   defaultRangePreset,
+  className,
 }: {
   defaultRangePreset?: DateRangePresetLabel
+  className?: string
 }) {
   const { limit, search, ordering, filter } = useSearchParameters()
   const { push } = useNavigation()
@@ -63,6 +65,7 @@ export function DataTableDateRangeFilter({
     <DataTableDateRangePicker
       defaultValue={defaultRange}
       onChange={handleChange}
+      className={className}
     />
   )
 }

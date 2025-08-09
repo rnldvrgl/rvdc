@@ -1,7 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 
 import { ComboBox } from '@/components/custom/inputs/ComboBox'
@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 
+import { Checkbox } from '@/components/ui/checkbox'
 import { ChequeStatus } from '@/lib/constants/general'
 import { ChequeCollection } from '@/lib/constants/interface'
 import { ChequeCollectionSchema } from '@/lib/constants/schema'
@@ -36,6 +37,7 @@ interface Props {
 }
 
 export default function ChequeCollectionForm({ initialData, onClose }: Props) {
+  const [sameAsClient, setSameAsClient] = useState(true)
   const { addChequeCollection, updateChequeCollection } =
     useChequeCollectionMutations()
   const { data: clients, isLoading: clientsLoading } = useClientChoices()
@@ -51,31 +53,29 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
         typeof initialData?.client === 'number'
           ? initialData.client
           : undefined,
-      or_number: initialData?.or_number ?? '',
+      status: initialData?.status ?? ChequeStatus.PENDING,
       bank_name: initialData?.bank_name ?? '',
+      deposit_bank: initialData?.deposit_bank ?? '',
+      cheque_number: initialData?.cheque_number ?? '',
+      cheque_amount: initialData?.cheque_amount
+        ? Number(initialData.cheque_amount)
+        : undefined,
+      cheque_date: initialData?.cheque_date
+        ? new Date(initialData.cheque_date)
+        : undefined,
       issued_by: initialData?.issued_by ?? '',
+      billing_amount: initialData?.billing_amount
+        ? Number(initialData.billing_amount)
+        : undefined,
+      or_number: initialData?.or_number ?? '',
+      date_collected: initialData?.date_collected
+        ? new Date(initialData.date_collected)
+        : undefined,
       collected_by:
         typeof initialData?.collected_by === 'number'
           ? initialData.collected_by
           : undefined,
-      cheque_number: initialData?.cheque_number ?? '',
-      billing_amount: initialData?.billing_amount
-        ? Number(initialData.billing_amount)
-        : undefined,
-      date_collected: initialData?.date_collected
-        ? new Date(initialData?.date_collected)
-        : new Date(),
-      cheque_amount:
-        typeof initialData?.cheque_amount === 'number'
-          ? initialData.cheque_amount
-          : initialData?.cheque_amount
-          ? Number(initialData.cheque_amount)
-          : undefined,
-      cheque_date: initialData?.cheque_date
-        ? new Date(initialData.cheque_date)
-        : undefined,
       notes: initialData?.notes ?? '',
-      status: initialData?.status ?? ChequeStatus.PENDING,
     },
   })
 
@@ -92,12 +92,32 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
     return users?.map((u) => ({ value: u.id, label: u.full_name ?? '' })) ?? []
   }, [users, usersLoading])
 
+  const selectedClientId = form.watch('client')
+
+  // Auto-fill issued_by when sameAsClient is true
+  useEffect(() => {
+    if (sameAsClient && selectedClientId && clients) {
+      const clientName =
+        clients.find((c) => c.id === selectedClientId)?.full_name || ''
+      form.setValue('issued_by', clientName)
+    }
+  }, [sameAsClient, selectedClientId, clients, form])
+
+  const selectedStatus = form.watch('status')
+
+  useEffect(() => {
+    if (!['deposited', 'encashed'].includes(selectedStatus || '')) {
+      form.setValue('deposit_bank', '')
+    }
+  }, [selectedStatus, form])
+
   const onSubmit = (data: ChequeCollectionPayload) => {
     const payload = {
       ...data,
       cheque_date: new Date(formatBackDate(data.cheque_date)),
       date_collected: data.date_collected,
     }
+
     if (isEditing) {
       updateChequeCollection.mutate(
         { id: initialData!.id, data: payload },
@@ -112,13 +132,40 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-8 max-w-2xl"
+        className="space-y-8 "
       >
-        {/* --- Section 1: Client & Billing --- */}
+        {/* --- Section 1: Status & Client --- */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold border-b pb-1">
-            Client & Billing
+            Status & Client Info
           </h3>
+
+          <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel required>Status</FormLabel>
+                <FormControl>
+                  <ComboBox
+                    options={[
+                      { value: 'pending', label: 'Pending' },
+                      { value: 'deposited', label: 'Deposited' },
+                      { value: 'encashed', label: 'Encashed' },
+                      { value: 'returned', label: 'Returned' },
+                      { value: 'bounced', label: 'Bounced' },
+                      { value: 'cancelled', label: 'Cancelled' },
+                    ]}
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                    placeholder="Select status"
+                    disabled={mutationLoading}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
@@ -139,82 +186,29 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
               </FormItem>
             )}
           />
-          {isEditing && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold border-b pb-1">
-                Cheque Status
-              </h3>
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Status</FormLabel>
-                    <FormControl>
-                      <ComboBox
-                        options={[
-                          { value: 'pending', label: 'Pending' },
-                          { value: 'deposited', label: 'Deposited' },
-                          { value: 'encashed', label: 'Encashed' },
-                          { value: 'returned', label: 'Returned' },
-                          { value: 'bounced', label: 'Bounced' },
-                          { value: 'cancelled', label: 'Cancelled' },
-                        ]}
-                        value={field.value ?? null}
-                        onChange={field.onChange}
-                        placeholder="Select status"
-                        disabled={mutationLoading}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+
+          {/* Conditional Deposit Bank */}
+          {['deposited', 'encashed'].includes(selectedStatus || '') && (
+            <FormField
+              control={form.control}
+              name="deposit_bank"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel required>Deposit Bank</FormLabel>
+                  <FormControl>
+                    <ComboBox
+                      options={banks ?? []}
+                      value={field.value || null}
+                      onChange={field.onChange}
+                      placeholder="Select deposit bank"
+                      disabled={mutationLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           )}
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="billing_amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Billing Amount</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="1"
-                      value={field.value ?? ''}
-                      onChange={(e) =>
-                        field.onChange(e.target.valueAsNumber || undefined)
-                      }
-                      placeholder="Enter amount"
-                      disabled={mutationLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="or_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>OR Number</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Enter OR number"
-                      disabled={mutationLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
         </div>
 
         {/* --- Section 2: Cheque Details --- */}
@@ -229,7 +223,7 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
               name="bank_name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel required>Bank</FormLabel>
+                  <FormLabel required>Bank Name</FormLabel>
                   <FormControl>
                     <ComboBox
                       options={banks ?? []}
@@ -273,7 +267,6 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
                   <FormControl>
                     <Input
                       type="number"
-                      step="1"
                       value={field.value ?? ''}
                       onChange={(e) =>
                         field.onChange(e.target.valueAsNumber || undefined)
@@ -292,24 +285,37 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
               name="cheque_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormControl>
-                    <DatePicker
-                      field={field}
-                      placeholder="Pick a date"
-                      className="w-full"
-                      disabled={mutationLoading}
-                      required
-                      label="Cheque Date"
-                      maxDate={
-                        new Date(
-                          new Date().setFullYear(new Date().getFullYear() + 1),
-                        )
-                      }
-                    />
-                  </FormControl>
+                  <DatePicker
+                    field={field}
+                    placeholder="Pick a date"
+                    label="Cheque Date"
+                    disabled={mutationLoading}
+                    required
+                    maxDate={
+                      new Date(
+                        new Date().setFullYear(new Date().getFullYear() + 1),
+                      )
+                    }
+                  />
                 </FormItem>
               )}
             />
+          </div>
+
+          {/* Same as client checkbox */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="sameAsClient"
+              checked={sameAsClient}
+              onCheckedChange={(checked) => setSameAsClient(!!checked)}
+              disabled={mutationLoading}
+            />
+            <label
+              htmlFor="sameAsClient"
+              className="text-sm font-medium leading-none"
+            >
+              Issuer is same as Client
+            </label>
           </div>
 
           <FormField
@@ -322,7 +328,7 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
                   <Input
                     {...field}
                     placeholder="Enter issuer's name"
-                    disabled={mutationLoading}
+                    disabled={mutationLoading || sameAsClient}
                   />
                 </FormControl>
                 <FormMessage />
@@ -331,26 +337,69 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
           />
         </div>
 
-        {/* --- Section 3: Additional Info --- */}
+        {/* --- Section 3: Billing Info --- */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold border-b pb-1">Billing Info</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="billing_amount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel required>Billing Amount</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      value={field.value ?? ''}
+                      onChange={(e) =>
+                        field.onChange(e.target.valueAsNumber || undefined)
+                      }
+                      placeholder="Enter billing amount"
+                      disabled={mutationLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="or_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>OR Number</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Enter OR number"
+                      disabled={mutationLoading}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* --- Section 4: Collection Info --- */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold border-b pb-1">
-            Additional Info
+            Collection Info
           </h3>
+
           <FormField
             control={form.control}
             name="date_collected"
             render={({ field }) => (
               <FormItem>
-                <FormControl>
-                  <DatePicker
-                    field={field}
-                    label="Date Collected"
-                    placeholder="Pick a date"
-                    className="w-full"
-                    disabled={mutationLoading}
-                    required
-                  />
-                </FormControl>
+                <DatePicker
+                  field={field}
+                  label="Date Collected"
+                  placeholder="Pick a date"
+                  disabled={mutationLoading}
+                />
               </FormItem>
             )}
           />
@@ -377,7 +426,13 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
               </FormItem>
             )}
           />
+        </div>
 
+        {/* --- Section 5: Additional Info --- */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold border-b pb-1">
+            Additional Info
+          </h3>
           <FormField
             control={form.control}
             name="notes"

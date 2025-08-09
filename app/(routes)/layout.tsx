@@ -12,7 +12,7 @@ export default function MainLayout({
     <div className="min-h-screen">
       <Background />
 
-      <div className="fixed top-0 left-0 lg:h-full z-40  over-flow-y-auto w-full lg:w-auto">
+      <div className="fixed top-0 left-0 lg:h-full z-40  over-flow-y-auto w-full lg:w-auto bg-background xl:bg-background/60">
         <Sidebar />
       </div>
 

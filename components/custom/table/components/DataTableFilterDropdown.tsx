@@ -27,9 +27,10 @@ const EXCLUDED_KEYS = new Set(['start_date', 'end_date'])
 
 interface Props {
   filters: FilterDefinition[]
+  className?: string
 }
 
-export function DataTableFilterDropdown({ filters }: Props) {
+export function DataTableFilterDropdown({ filters, className }: Props) {
   const { push } = useNavigation()
   const { filter = {}, ...rest } = useSearchParameters()
 
@@ -110,7 +111,10 @@ export function DataTableFilterDropdown({ filters }: Props) {
       onOpenChange={setOpen}
     >
       <PopoverTrigger asChild>
-        <Button variant="outline">
+        <Button
+          variant="outline"
+          className={cn(className)}
+        >
           <FilterIcon className="mr-1.5 h-4 w-4" />
           Filter
           {entries.length > 0 && (

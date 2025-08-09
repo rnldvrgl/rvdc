@@ -38,22 +38,32 @@ export function ChequeCollectionDetails({
   const statusVariant = statusVariants[entity.status] ?? 'default'
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       {/* Status */}
       <div className="flex items-center justify-between">
-        <Badge variant={statusVariant}>{entity.status.toUpperCase()}</Badge>
+        <Badge
+          variant={statusVariant}
+          className="px-3 py-1 text-sm"
+        >
+          {entity.status.toUpperCase()}
+        </Badge>
       </div>
 
-      {/* General Info */}
+      {/* Core Info */}
       <section>
         <h3 className="text-base font-semibold text-muted-foreground mb-4">
-          General Information
+          General Info
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <Detail
             label="Client"
             value={entity.client_name}
             icon={<User2 size={16} />}
+          />
+          <Detail
+            label="Issued By"
+            value={entity.issued_by}
+            icon={<FileText size={16} />}
           />
           <Detail
             label="Date Collected"
@@ -73,11 +83,6 @@ export function ChequeCollectionDetails({
               icon={<User2 size={16} />}
             />
           )}
-          <Detail
-            label="Issued By"
-            value={entity.issued_by}
-            icon={<FileText size={16} />}
-          />
           {entity.notes && (
             <Detail
               label="Notes"
@@ -95,7 +100,7 @@ export function ChequeCollectionDetails({
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <Detail
-            label="Cheque Number"
+            label="Cheque #"
             value={entity.cheque_number}
             icon={<RiFileList2Line size={16} />}
           />
@@ -109,11 +114,13 @@ export function ChequeCollectionDetails({
             value={entity.bank_name}
             icon={<RiBankLine size={16} />}
           />
-          <Detail
-            label="Deposit Bank Name"
-            value={entity.deposit_bank}
-            icon={<RiBankLine size={16} />}
-          />
+          {entity.deposit_bank && (
+            <Detail
+              label="Deposit Bank"
+              value={entity.deposit_bank}
+              icon={<RiBankLine size={16} />}
+            />
+          )}
           <Detail
             label="Cheque Amount"
             value={formatCurrency(entity.cheque_amount)}

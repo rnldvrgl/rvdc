@@ -14,7 +14,6 @@ import { DataTableDateRangeFilter } from '@/components/custom/table/components/D
 import { DataTableFilterDropdown } from '@/components/custom/table/components/DataTableFilterDropdown'
 import { DataTablePagination } from '@/components/custom/table/components/DataTablePagination'
 import { DataTableSortDropdown } from '@/components/custom/table/components/DataTableSortDropdown'
-import { DataTableViewOptions } from '@/components/custom/table/components/DataTableViewOptions'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -129,35 +128,47 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col space-y-4">
-        <div className="flex flex-wrap justify-between items-end gap-4">
-          {/* Search, Sort, and Filter Block */}
-          <div className="flex flex-col sm:flex-row sm:items-end gap-3 flex-1 min-w-0">
-            <Input
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              placeholder="Search..."
-              className="w-full sm:w-64 border-border focus-visible:ring-2 focus-visible:ring-primary/40"
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        {/* Left side: Search, Sort, Filters */}
+        <div className="flex flex-wrap items-end gap-3 flex-1 min-w-0">
+          <Input
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            placeholder="Search..."
+            className="w-full sm:w-64 border-border focus-visible:ring-2 focus-visible:ring-primary/40"
+          />
+
+          {orderingOptions && orderingOptions?.length > 0 && (
+            <DataTableSortDropdown
+              options={orderingOptions}
+              value={sortingState}
+              onChange={setSortingState}
+              className="w-full sm:w-40 md:w-32"
             />
+          )}
 
-            {orderingOptions && orderingOptions?.length > 0 && (
-              <DataTableSortDropdown
-                options={orderingOptions}
-                value={sortingState}
-                onChange={setSortingState}
-              />
+          {filters && filters?.length > 0 && (
+            <DataTableFilterDropdown
+              filters={filters}
+              className="w-full sm:w-40 md:w-32"
+            />
+          )}
+        </div>
+
+        {/* Right side: Date, View, Actions */}
+        <div className="flex flex-col sm:flex-row sm:flex-wrap md:justify-end gap-3 w-full md:w-auto">
+          <DataTableDateRangeFilter
+            defaultRangePreset={defaultRangePreset}
+            className="w-full sm:w-64"
+          />
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            {React.Children.map(headerActions, (action) =>
+              React.isValidElement(action)
+                ? React.cloneElement(action as React.ReactElement<any>, {
+                    className: 'w-full sm:w-auto',
+                  })
+                : action,
             )}
-
-            {filters && filters?.length > 0 && (
-              <DataTableFilterDropdown filters={filters} />
-            )}
-          </div>
-
-          {/* Date, View Toggle, and Header Actions Block */}
-          <div className="flex flex-wrap items-end justify-end gap-3">
-            <DataTableDateRangeFilter defaultRangePreset={defaultRangePreset} />
-            <DataTableViewOptions table={table} />
-            {headerActions}
           </div>
         </div>
       </div>

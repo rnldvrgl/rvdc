@@ -64,7 +64,7 @@ export default function SalesTransactionsPage() {
   })
 
   return (
-    <div className="mx-auto container">
+    <>
       {printData && (
         <div className="hidden">
           <SalesTransactionPrintContent
@@ -135,6 +135,6 @@ export default function SalesTransactionsPage() {
         filters={filters}
         orderingOptions={orderingOptions}
       />
-    </div>
+    </>
   )
 }

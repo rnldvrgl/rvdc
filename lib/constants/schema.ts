@@ -105,24 +105,33 @@ export const ChequeCollectionSchema = z
       .optional(),
     issued_by: z
       .string({ required_error: 'Issued by is required' })
+      .trim()
       .min(1, { message: 'Issued by is required' }),
+
     bank_name: z
       .string({ required_error: 'Bank is required' })
+      .trim()
       .min(1, { message: 'Bank is required' }),
-    deposit_bank: z.string().optional(),
+    deposit_bank: z.string().trim().optional(),
     cheque_number: z
       .string({ required_error: 'Cheque number is required' })
+      .trim()
       .min(1, { message: 'Cheque number is required' }),
+
     cheque_amount: z
       .number({ required_error: 'Amount is required' })
       .positive({ message: 'Amount must be greater than 0' }),
     billing_amount: z
       .number({ required_error: 'Billing amount is required' })
       .positive({ message: 'Billing amount must be greater than 0' }),
-    or_number: z.string().optional(),
+
+    or_number: z.string().trim().optional(),
+
     cheque_date: z.date({ required_error: 'Cheque date is required' }),
     date_collected: z.date().optional(),
-    notes: z.string().optional(),
+
+    notes: z.string().trim().optional(),
+
     status: z.enum(
       [
         ChequeStatus.PENDING,
