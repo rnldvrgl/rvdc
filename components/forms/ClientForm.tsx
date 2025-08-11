@@ -137,6 +137,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
                 <FormLabel required>Client Full Name</FormLabel>
                 <FormControl>
                   <Input
+                    className="uppercase"
                     {...field}
                     placeholder="Juan Dela Cruz"
                   />
