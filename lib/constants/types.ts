@@ -100,6 +100,7 @@ export type Client = BaseEntity & {
   province: string
   city: string
   barangay: string
+  is_blocklisted: boolean
 }
 
 export type ClientPayload = Omit<Client, keyof BaseEntity>

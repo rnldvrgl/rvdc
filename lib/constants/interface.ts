@@ -23,6 +23,7 @@ export interface GetColumnsProps<T> {
   onEdit: (item: T) => void
   onDelete: (item: T) => void
   onRestock?: (item: T) => void
+  onCustomAction?: (item: T) => void
   onView?: (item: T) => void
   onPrint?: (item: T) => void
   role?: Roles

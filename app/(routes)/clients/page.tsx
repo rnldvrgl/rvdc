@@ -9,12 +9,12 @@ import { Client } from '@/lib/constants/types'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useClientMutations } from '@/lib/mutations/useClientMutations'
-import { useClients } from '@/lib/queries/clients/useClients'
+import { useClientFilters, useClients } from '@/lib/queries/clients/useClients'
 import { Plus } from 'lucide-react'
 
 export default function ClientsPage() {
   const { page, limit, search, ordering, filter } = useSearchParameters()
-  const { deleteClient } = useClientMutations()
+  const { deleteClient, updateClient } = useClientMutations()
   const { data, isLoading } = useClients({
     page,
     limit,
@@ -22,6 +22,7 @@ export default function ClientsPage() {
     ordering,
     filter,
   })
+  const { filters, orderingOptions } = useClientFilters()
 
   // Separate sheets
   const {
@@ -42,9 +43,22 @@ export default function ClientsPage() {
     }
   }
 
+  const handleToggleblocklisted = (client: Client) => {
+    if (client.id !== undefined) {
+      updateClient.mutate({
+        id: client.id,
+        data: {
+          ...client,
+          is_blocklisted: !client.is_blocklisted,
+        },
+      })
+    }
+  }
+
   const columns = getClientColumns({
     onEdit: openEditSheet,
     onDelete: handleDelete,
+    onCustomAction: handleToggleblocklisted,
   })
 
   return (
@@ -85,6 +99,8 @@ export default function ClientsPage() {
             Add Client
           </Button>
         }
+        filters={filters}
+        orderingOptions={orderingOptions}
       />
     </div>
   )

@@ -58,6 +58,7 @@ interface FormValues {
   province: string
   city: string
   barangay: string
+  is_blocklisted: boolean
 }
 
 interface ClientFormProps {
@@ -74,6 +75,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
       province: '',
       city: '',
       barangay: '',
+      is_blocklisted: client?.is_blocklisted ?? false,
     },
   })
 
