@@ -176,6 +176,7 @@ export interface Stock {
   is_deleted: boolean
   created_at: string
   updated_at: string
+  track_stock: boolean
   stock_room_quantity: number
   stock_room_status: string
 }
@@ -184,6 +185,7 @@ export interface StockPayload {
   stall_id?: number | null
   quantity: number
   low_stock_threshold?: number
+  track_stock?: boolean
 }
 
 // ---------------------

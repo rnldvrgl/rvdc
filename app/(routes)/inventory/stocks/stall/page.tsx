@@ -17,7 +17,7 @@ import {
 
 export default function StocksPage() {
   const { page, limit, search, ordering, filter } = useSearchParameters()
-  const { softDeleteStallStock } = useStallStockMutations()
+  const { softDeleteStallStock, updateStallStock } = useStallStockMutations()
   const { role } = useCurrentUser()
 
   const { data, isLoading } = useStallStocks({
@@ -48,10 +48,23 @@ export default function StocksPage() {
     }
   }
 
+  const handleTrackingStock = (stock: Stock) => {
+    if (stock.id !== undefined && stock.stall?.id !== undefined) {
+      updateStallStock.mutate({
+        stock_id: stock.id,
+        data: {
+          ...stock,
+          track_stock: !stock.track_stock,
+        },
+      })
+    }
+  }
+
   const columns = getStallStockColumns({
     onEdit: openEditSheet,
     onDelete: handleDelete,
     onRestock: openRestockSheet,
+    onCustomAction: handleTrackingStock,
     role,
   })
 
