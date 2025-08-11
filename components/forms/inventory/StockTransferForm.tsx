@@ -229,7 +229,7 @@ export default function StockTransferForm({
                             key={tech.id}
                             value={tech.id.toString()}
                           >
-                            {tech.first_name}
+                            {tech.first_name} {tech.last_name}
                           </SelectItem>
                         ))}
                       </SelectContent>

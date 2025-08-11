@@ -2,7 +2,6 @@ import {
   AnalyticsSummary,
   CashFlow,
   ExpensesOvertime,
-  RestocksOvertime,
   SalesOvertime,
   TopClients,
   TopSellingItems,
@@ -79,11 +78,4 @@ export const useUnpaidSalesStatus = (options: useGetAnalyticsOptions) =>
   useApiQuery<UnpaidSalesStatus[]>({
     queryKey: ['unpaid_sales_status', options],
     url: `${chartsUrl}unpaid-sales-status/${buildQueryString(options)}`,
-  })
-
-// Restocks Over Time
-export const useRestocksOverTime = (options: useGetAnalyticsOptions) =>
-  useApiQuery<RestocksOvertime[]>({
-    queryKey: ['restocks_over_time', options],
-    url: `${chartsUrl}restocks-over-time/${buildQueryString(options)}`,
   })

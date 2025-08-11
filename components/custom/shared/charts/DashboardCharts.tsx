@@ -9,7 +9,6 @@ import { useDateParamsFromForm } from '@/lib/hooks/useDateParamsFromForm'
 import {
   useCashFlow,
   useExpensesOverTime,
-  useRestocksOverTime,
   useSalesOverTime,
   useTopClients,
   useTopSellingItems,
@@ -56,8 +55,6 @@ export default function DashboardCharts() {
   })
   const { data: unpaidSalesStatus, isLoading: unpaidSalesStatusLoading } =
     useUnpaidSalesStatus({ start_date, end_date, stall })
-  const { data: restocksOvertime, isLoading: restocksOvertimeLoading } =
-    useRestocksOverTime({ start_date, end_date, stall })
 
   return (
     <div className="grid gap-6 xl:grid-cols-2">
@@ -94,22 +91,6 @@ export default function DashboardCharts() {
           lines={[
             { key: 'income', color: '#3b82f6', label: 'Income' },
             { key: 'expense', color: '#f97316', label: 'Expense' },
-          ]}
-        />
-      </ChartCard>
-
-      <ChartCard
-        title="Restocks Over Time"
-        isLoading={restocksOvertimeLoading}
-      >
-        <TimeSeriesAreaChart
-          data={restocksOvertime || []}
-          lines={[
-            {
-              key: 'restock_volume',
-              color: '#8b5cf6',
-              label: 'Restock Volume',
-            },
           ]}
         />
       </ChartCard>
