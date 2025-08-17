@@ -2,7 +2,6 @@ import { NavigationEntry, ShortcutEntry } from '@/lib/constants/types'
 import {
   Banknote,
   Boxes,
-  CalendarCheck2,
   CalendarDays,
   CircleDollarSign,
   Coins,
@@ -17,14 +16,6 @@ import {
   Warehouse,
   Wrench,
 } from 'lucide-react'
-
-import {
-  RiCheckLine,
-  RiCpuLine,
-  RiHistoryLine,
-  RiHomeGearLine,
-  RiSnowflakeLine,
-} from '@remixicon/react'
 
 export const baseNavigation: Record<string, NavigationEntry> = {
   dashboard: {
@@ -77,7 +68,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   technicians: {
     name: 'Technicians',
     href: '/technicians',
-    icon: RiHomeGearLine,
+    icon: Users,
     permission: 'view_technicians',
   },
   attendance: {
@@ -88,46 +79,9 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   },
   services: {
     name: 'Services',
+    href: '/services',
     icon: Wrench,
     permission: 'view_services',
-    children: [
-      {
-        name: 'Overview',
-        href: '/services',
-        icon: RiCheckLine,
-        permission: 'view_services',
-      },
-      {
-        name: 'Appliance Repairs',
-        href: '/services/appliances',
-        icon: RiCpuLine,
-        permission: 'view_service_appliances',
-      },
-      {
-        name: 'Aircon Installations',
-        href: '/services/aircon-installations',
-        icon: RiSnowflakeLine,
-        permission: 'view_aircon_installations',
-      },
-      {
-        name: 'Motor Rewinds',
-        href: '/services/motor-rewinds',
-        icon: Repeat,
-        permission: 'view_motor_rewinds',
-      },
-      {
-        name: 'Home Service Schedules',
-        href: '/services/home-schedules',
-        icon: CalendarCheck2,
-        permission: 'view_home_service_schedules',
-      },
-      {
-        name: 'Status Logs',
-        href: '/services/status-history',
-        icon: RiHistoryLine,
-        permission: 'view_service_status_history',
-      },
-    ],
   },
   inventory: {
     name: 'Inventory',
@@ -191,12 +145,6 @@ export const baseShortcuts: ShortcutEntry[] = [
     action: 'addService',
     icon: Wrench,
     permission: 'shortcut_add_service',
-  },
-  {
-    name: 'Schedule Home Service',
-    action: 'addHomeSchedule',
-    icon: CalendarCheck2,
-    permission: 'shortcut_add_home_schedule',
   },
   {
     name: 'Log Expense',
