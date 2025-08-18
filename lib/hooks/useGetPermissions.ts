@@ -38,6 +38,10 @@ export function useGetPermissions(role: Roles) {
         'view_service_status_history',
         'shortcut_add_home_schedule',
         'shortcut_add_service',
+        'view_aircon_brands',
+        'view_aircon_models',
+        'view_aircon_units',
+        'view_aircon_installations',
       ],
       manager: [
         ...commonViewPermissions,
@@ -52,6 +56,10 @@ export function useGetPermissions(role: Roles) {
         'view_service_status_history',
         'shortcut_add_home_schedule',
         'shortcut_add_service',
+        'view_aircon_brands',
+        'view_aircon_models',
+        'view_aircon_units',
+        'view_aircon_installations',
       ],
       clerk: [
         ...commonViewPermissions,

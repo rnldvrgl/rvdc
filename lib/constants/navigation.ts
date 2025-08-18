@@ -14,6 +14,7 @@ import {
   Store,
   Users,
   Warehouse,
+  Wind,
   Wrench,
 } from 'lucide-react'
 
@@ -22,12 +23,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     name: 'Dashboard',
     href: '/dashboard',
     icon: LayoutDashboard,
-  },
-  pos: {
-    name: 'POS Terminal',
-    href: '/pos',
-    icon: CircleDollarSign,
-    permission: 'use_pos',
   },
   sales: {
     name: 'Sales',
@@ -82,6 +77,36 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     href: '/services',
     icon: Wrench,
     permission: 'view_services',
+  },
+  aircons: {
+    name: 'Airconditioning',
+    icon: Wind,
+    children: [
+      {
+        name: 'Brands',
+        href: '/aircons/brands',
+        icon: Layers,
+        permission: 'view_aircon_brands',
+      },
+      {
+        name: 'Models',
+        href: '/aircons/models',
+        icon: Boxes,
+        permission: 'view_aircon_models',
+      },
+      {
+        name: 'Units',
+        href: '/aircons/units',
+        icon: Package,
+        permission: 'view_aircon_units',
+      },
+      {
+        name: 'Installations',
+        href: '/aircons/installations',
+        icon: Wrench,
+        permission: 'view_aircon_installations',
+      },
+    ],
   },
   inventory: {
     name: 'Inventory',
