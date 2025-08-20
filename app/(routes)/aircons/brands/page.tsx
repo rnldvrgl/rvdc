@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { AirconBrands } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
-import { useAirconBrandMutations } from '@/lib/mutations/useAirconBrandMutations'
+import { useAirconBrandMutations } from '@/lib/mutations/installations/useAirconBrandMutations'
 import { useAirconBrands } from '@/lib/queries/useAircons'
 import { Plus } from 'lucide-react'
 

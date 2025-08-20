@@ -1,4 +1,4 @@
-import { ChequeStatus } from '@/lib/constants/general'
+import { AirconTypes, ChequeStatus } from '@/lib/constants/general'
 import { z } from 'zod'
 
 export const loginSchema = z.object({
@@ -153,3 +153,16 @@ export const ChequeCollectionSchema = z
       path: ['deposit_bank'],
     },
   )
+
+export const DiscountOnlySchema = z.object({
+  discount_percentage: z.number().int().min(0).max(100).optional(),
+})
+
+export const AirconModelSchema = z.object({
+  brand_id: z.number().min(1, 'Brand is required'),
+  name: z.string().min(1, 'Model name is required'),
+  retail_price: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid price'),
+  discount_percentage: z.number().min(0).max(100).optional(),
+  aircon_type: z.nativeEnum(AirconTypes),
+  is_inverter: z.boolean(),
+})

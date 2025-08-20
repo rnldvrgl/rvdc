@@ -42,3 +42,12 @@ export enum ChequeStatus {
   BOUNCED = 'bounced',
   CANCELLED = 'cancelled',
 }
+
+export enum AirconTypes {
+  WINDOW = 'window',
+  SPLIT = 'split',
+  FLOOR_MOUNTED = 'floor_mounted',
+  CASSETTE = 'cassette',
+  PORTABLE = 'portable',
+  CENTRALIZED = 'centralized',
+}

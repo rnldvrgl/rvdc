@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { AirconBrands } from '@/lib/constants/interface'
-import { useAirconBrandMutations } from '@/lib/mutations/useAirconBrandMutations'
+import { useAirconBrandMutations } from '@/lib/mutations/installations/useAirconBrandMutations'
 import { SubmitHandler, useForm } from 'react-hook-form'
 
 interface FormValues {

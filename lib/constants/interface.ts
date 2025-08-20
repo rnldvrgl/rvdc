@@ -1,4 +1,4 @@
-import { ChequeStatus } from '@/lib/constants/general'
+import { AirconTypes, ChequeStatus } from '@/lib/constants/general'
 import {
   Client,
   ComboboxOption,
@@ -569,7 +569,24 @@ export interface ComboBoxProps {
   disabled?: boolean
 }
 
+export interface AirconType {
+  id: number
+  name: string
+}
+
 export interface AirconBrands {
   id: number
   name: string
+}
+
+export interface AirconModels {
+  id: number
+  brand?: AirconBrands
+  brand_id?: number
+  name: string
+  retail_price: string
+  discount_percentage?: string
+  aircon_type: AirconTypes
+  is_inverter: boolean
+  has_discount?: boolean
 }

@@ -57,7 +57,6 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
   const isRemitted = initialData?.is_remitted ?? false
   const disabled = isRemitted
 
-  // ✅ Compute syncStates based on whether declared == to_remit
   const defaultSyncStates: Record<number, boolean> = Object.fromEntries(
     DENOMINATIONS.map((denom) => {
       const declared =

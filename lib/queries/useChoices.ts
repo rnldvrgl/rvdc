@@ -1,4 +1,10 @@
-import { Item, ProductCategory, Stall, User } from '@/lib/constants/interface'
+import {
+  AirconBrands,
+  Item,
+  ProductCategory,
+  Stall,
+  User,
+} from '@/lib/constants/interface'
 import { Client, ComboboxOption, Technician } from '@/lib/constants/types'
 import { useApiQuery } from '@/lib/hooks/useApiQuery'
 
@@ -66,5 +72,19 @@ export const useBanksChoices = () => {
   return useApiQuery<ComboboxOption[]>({
     queryKey: ['banks-choices'],
     url: `${url}banks/`,
+  })
+}
+
+export const useAirconTypesChoices = () => {
+  return useApiQuery<ComboboxOption[]>({
+    queryKey: ['aircon-types-choices'],
+    url: `${url}aircon-types/`,
+  })
+}
+
+export const useAirconBrandsChoices = () => {
+  return useApiQuery<AirconBrands[]>({
+    queryKey: ['aircon-brands-choices'],
+    url: `${url}aircon-brands/`,
   })
 }
