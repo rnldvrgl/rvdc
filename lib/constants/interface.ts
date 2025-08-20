@@ -568,3 +568,8 @@ export interface ComboBoxProps {
   className?: string
   disabled?: boolean
 }
+
+export interface AirconBrands {
+  id: number
+  name: string
+}
