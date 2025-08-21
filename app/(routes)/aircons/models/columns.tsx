@@ -3,7 +3,13 @@
 import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
 import { Badge } from '@/components/ui/badge'
 import { AirconModels, GetColumnsProps } from '@/lib/constants/interface'
-import { formatCurrency, getBoolBadgeVariant } from '@/lib/utils/helpers'
+import {
+  capitalize,
+  formatCurrency,
+  getBadgeVariant,
+  getBoolBadgeVariant,
+  safeCell,
+} from '@/lib/utils/helpers'
 import { ColumnDef } from '@tanstack/react-table'
 import { Edit, Percent, Trash2 } from 'lucide-react'
 
@@ -24,12 +30,19 @@ export function getAirconModelColumns({
     {
       accessorKey: 'aircon_type',
       header: 'Type',
-      cell: ({ row }) => row.original.aircon_type.replace('_', ' '),
+      cell: ({ row }) => {
+        const type = row.original.aircon_type?.replace(/_/g, ' ') ?? ''
+
+        return capitalize(type)
+      },
     },
     {
       accessorKey: 'is_inverter',
-      header: 'Inverter',
-      cell: ({ row }) => (row.original.is_inverter ? 'Yes' : 'No'),
+      header: 'Category',
+      cell: ({ row }) => {
+        const category = row.original.is_inverter ? 'Inverter' : 'Non-Inverter'
+        return <Badge variant={getBadgeVariant(category)}>{category}</Badge>
+      },
     },
     {
       accessorKey: 'retail_price',
@@ -41,7 +54,7 @@ export function getAirconModelColumns({
       header: 'Discount %',
       cell: ({ row }) => {
         const discount = row.original.discount_percentage
-        return discount ? `${discount}%` : '—'
+        return safeCell(discount ? `${Number(discount).toFixed(0)}%` : '')
       },
     },
     {

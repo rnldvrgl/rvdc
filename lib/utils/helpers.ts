@@ -155,6 +155,7 @@ export function safeCell(value: unknown): string {
 }
 
 export function getBadgeVariant(source: string): badgeVariants {
+  source = source.toLocaleLowerCase()
   const variants: Record<string, badgeVariants> = {
     paid: 'success',
     high_stock: 'success',
@@ -166,6 +167,8 @@ export function getBadgeVariant(source: string): badgeVariants {
     low_stock: 'warning',
     no_stock: 'destructive',
     unpaid: 'destructive',
+    inverter: 'default',
+    'non-inverter': 'destructive',
   }
 
   return variants[source] ?? 'outline'
@@ -207,4 +210,12 @@ export const getHashedStallBadgeClass = (stallName: string) => {
 export const formatNumber = (value: number | null | undefined): string => {
   if (value == null || isNaN(value)) return '0'
   return new Intl.NumberFormat('en-PH').format(value)
+}
+
+export function capitalize(input: string): string {
+  return input
+    .toLowerCase()
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
 }

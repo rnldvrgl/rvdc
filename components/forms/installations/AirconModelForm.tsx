@@ -2,18 +2,18 @@
 
 import { ComboBox } from '@/components/custom/inputs/ComboBox'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
-  FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm, useWatch } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 
 import { AirconModelPayload } from '@/lib/constants/infers'
 import { AirconModels } from '@/lib/constants/interface'
@@ -23,6 +23,7 @@ import {
   useAirconBrandsChoices,
   useAirconTypesChoices,
 } from '@/lib/queries/useChoices'
+import { formatCurrency } from '@/lib/utils/helpers'
 
 interface Props {
   initialData?: AirconModels
@@ -30,6 +31,245 @@ interface Props {
   onClose: () => void
 }
 
+const clampDiscount = (value?: number | string) => {
+  const n =
+    value === '' || value === undefined ? undefined : Math.floor(Number(value))
+  if (n === undefined || Number.isNaN(n)) return undefined
+  return Math.min(Math.max(n, 0), 100)
+}
+
+/* ----------------- Discount Fields ----------------- */
+function DiscountFields({
+  control,
+  retailPrice,
+}: {
+  control: any
+  retailPrice: string | undefined
+}) {
+  const discount = useWatch({ control, name: 'discount_percentage' })
+  const promoPrice =
+    retailPrice && discount !== undefined
+      ? Number(retailPrice) * (1 - Number(discount) / 100)
+      : undefined
+
+  return (
+    <div className="grid gap-2">
+      <Controller
+        control={control}
+        name="discount_percentage"
+        render={({ field: { value, onChange, onBlur, ...rest } }) => (
+          <FormItem>
+            <FormLabel>Discount % (optional)</FormLabel>
+            <FormControl>
+              <Input
+                {...rest}
+                type="number"
+                step={1}
+                min={0}
+                max={100}
+                placeholder="Leave blank if no discount"
+                value={value ?? ''}
+                onChange={(e) => {
+                  const clamped = clampDiscount(e.target.value)
+                  e.target.value = clamped?.toString() ?? ''
+                  onChange(clamped)
+                }}
+                onBlur={(e) => {
+                  onBlur()
+                  const clamped = clampDiscount(e.target.value)
+                  e.target.value = clamped?.toString() ?? ''
+                  onChange(clamped)
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      {promoPrice !== undefined && (
+        <div className="flex items-center gap-2 rounded-md border border-green-300 px-3 py-2">
+          <span className="text-sm font-medium text-green-700">
+            Promo Price:
+          </span>
+          <span className="text-lg font-semibold text-green-700">
+            {formatCurrency(promoPrice.toFixed(2))}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ----------------- Full Model Fields ----------------- */
+function ModelFields({
+  control,
+  airconBrands,
+  airconTypes,
+  retailPrice,
+}: {
+  control: any
+  airconBrands?: { id: number; name: string }[]
+  airconTypes?: { value: string | number; label: string }[]
+  retailPrice: string | undefined
+}) {
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      {/* Left column */}
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Model Details</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <Controller
+              control={control}
+              name="brand_id"
+              render={({ field: { value, onChange, ...rest } }) => (
+                <FormItem>
+                  <FormLabel>Brand</FormLabel>
+                  <FormControl>
+                    <ComboBox
+                      value={
+                        value === undefined || typeof value === 'boolean'
+                          ? null
+                          : String(value)
+                      }
+                      onChange={onChange}
+                      options={
+                        airconBrands?.map((b) => ({
+                          value: String(b.id),
+                          label: b.name,
+                        })) ?? []
+                      }
+                      placeholder="Select brand"
+                      {...rest}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Model Name</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value ?? ''}
+                      placeholder="e.g., Split Type X123"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Controller
+              control={control}
+              name="aircon_type"
+              render={({ field: { value, onChange, ...rest } }) => (
+                <FormItem>
+                  <FormLabel>Aircon Type</FormLabel>
+                  <FormControl>
+                    <ComboBox
+                      value={
+                        value === undefined || typeof value === 'boolean'
+                          ? null
+                          : String(value)
+                      }
+                      onChange={onChange}
+                      options={
+                        airconTypes?.map((t) => ({
+                          value: String(t.value),
+                          label: t.label,
+                        })) ?? []
+                      }
+                      placeholder="Select type"
+                      {...rest}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Right column */}
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Pricing</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <Controller
+              control={control}
+              name="retail_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Retail Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      step={0.01}
+                      placeholder="0.00"
+                      value={field.value ?? ''}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DiscountFields
+              control={control}
+              retailPrice={retailPrice}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Specs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Controller
+              control={control}
+              name="is_inverter"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex items-center justify-between rounded-md border p-3">
+                    <div>
+                      <FormLabel>Inverter Model</FormLabel>
+                      <p className="text-sm text-muted-foreground">
+                        Mark this if the model uses inverter technology
+                      </p>
+                    </div>
+                    <FormControl>
+                      <Checkbox
+                        checked={!!field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+/* ----------------- Main Form ----------------- */
 export default function AirconModelForm({
   initialData,
   isAddingDiscount,
@@ -47,59 +287,38 @@ export default function AirconModelForm({
   const form = useForm<AirconModelPayload>({
     resolver: zodResolver(resolverSchema as any),
     defaultValues: {
-      brand_id: initialData?.brand?.id,
+      brand_id: initialData?.brand?.id
+        ? Number(initialData.brand.id)
+        : undefined,
       name: initialData?.name ?? '',
       retail_price: initialData?.retail_price ?? '',
       discount_percentage:
         initialData?.discount_percentage !== undefined
           ? parseInt(String(initialData.discount_percentage), 10)
           : undefined,
-      aircon_type: initialData?.aircon_type,
+      aircon_type: initialData?.aircon_type
+        ? initialData.aircon_type
+        : undefined,
       is_inverter: initialData?.is_inverter ?? false,
     },
     mode: 'onSubmit',
   })
 
   const { handleSubmit, control } = form
-
-  // Watch for dynamic promo price calculation
-  const discount = useWatch({ control, name: 'discount_percentage' })
   const retailPrice = useWatch({ control, name: 'retail_price' })
-  const promoPrice =
-    retailPrice && discount !== undefined
-      ? Number(retailPrice) * (1 - Number(discount) / 100)
-      : undefined
-
-  const clampDiscount = (value?: number | string) => {
-    if (value === '' || value === undefined) return undefined
-    const n = Math.floor(Number(value))
-    if (Number.isNaN(n)) return undefined
-    return Math.min(Math.max(n, 0), 100)
-  }
 
   const handleFormSubmit = (data: AirconModelPayload) => {
+    const payload: Partial<AirconModels> = {
+      ...data,
+      discount_percentage: data.discount_percentage?.toString(),
+    }
+
     if (isAddingDiscount && initialData) {
       updateModel.mutate(
-        {
-          id: initialData.id,
-          data: {
-            discount_percentage:
-              data.discount_percentage === undefined
-                ? undefined
-                : String(data.discount_percentage),
-          } as Partial<AirconModels>,
-        },
+        { id: initialData.id, data: payload },
         { onSuccess: onClose },
       )
       return
-    }
-
-    const payload: Omit<AirconModels, 'id'> = {
-      ...data,
-      discount_percentage:
-        data.discount_percentage === undefined
-          ? undefined
-          : String(data.discount_percentage),
     }
 
     if (isEditing && initialData) {
@@ -108,181 +327,34 @@ export default function AirconModelForm({
         { onSuccess: onClose },
       )
     } else {
-      addModel.mutate(payload, { onSuccess: onClose })
+      addModel.mutate(payload as Omit<AirconModels, 'id'>, {
+        onSuccess: onClose,
+      })
     }
   }
-
-  const renderDiscountField = () => (
-    <FormField
-      control={control}
-      name="discount_percentage"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Discount % (optional)</FormLabel>
-          <FormControl>
-            <Input
-              type="number"
-              step="1"
-              min={0}
-              max={100}
-              placeholder="Leave blank if no discount"
-              value={field.value ?? ''}
-              onChange={(e) => {
-                const value = e.target.value.trim()
-                if (value === '') {
-                  field.onChange(undefined)
-                } else {
-                  let n = parseInt(value, 10)
-                  if (!Number.isNaN(n)) {
-                    n = Math.min(Math.max(n, 0), 100) // clamp 0–100
-                    field.onChange(n)
-                  }
-                }
-              }}
-              onBlur={(e) => {
-                const value = e.target.value.trim()
-                if (value === '') {
-                  field.onChange(undefined)
-                } else {
-                  let n = Math.floor(Number(value))
-                  if (!Number.isNaN(n)) {
-                    n = Math.min(Math.max(n, 0), 100) // clamp 0–100
-                    field.onChange(n)
-                  }
-                }
-              }}
-            />
-          </FormControl>
-          {promoPrice !== undefined && (
-            <p className="mt-1 text-sm text-gray-500">
-              Promo Price: ${promoPrice.toFixed(2)}
-            </p>
-          )}
-          <p className="mt-1 text-sm text-gray-500">
-            Enter a value between 0% and 100%. Leave blank if no discount.
-          </p>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
-  )
 
   return (
     <Form {...form}>
       <form
         onSubmit={handleSubmit(handleFormSubmit)}
-        className="grid gap-6 max-w-xl"
+        className="space-y-6"
       >
         {isAddingDiscount ? (
-          renderDiscountField()
+          <DiscountFields
+            control={control}
+            retailPrice={retailPrice}
+          />
         ) : (
-          <>
-            {/* Brand */}
-            <FormField
-              control={control}
-              name="brand_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Brand</FormLabel>
-                  <FormControl>
-                    <ComboBox
-                      options={
-                        airconBrands?.map((b) => ({
-                          value: b.id,
-                          label: b.name,
-                        })) ?? []
-                      }
-                      value={field.value ?? null}
-                      onChange={field.onChange}
-                      placeholder="Select brand"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Model Name */}
-            <FormField
-              control={control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Model Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="e.g., Split Type X123"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Retail Price */}
-            <FormField
-              control={control}
-              name="retail_price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Retail Price</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      placeholder="0.00"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Discount */}
-            {renderDiscountField()}
-
-            {/* Aircon Type */}
-            <FormField
-              control={control}
-              name="aircon_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Aircon Type</FormLabel>
-                  <FormControl>
-                    <ComboBox
-                      options={airconTypes ?? []}
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder="Select type"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Inverter */}
-            <FormField
-              control={control}
-              name="is_inverter"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-2">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormLabel>Inverter Model</FormLabel>
-                </FormItem>
-              )}
-            />
-          </>
+          <ModelFields
+            control={control}
+            airconBrands={airconBrands}
+            airconTypes={airconTypes}
+            retailPrice={retailPrice}
+          />
         )}
 
-        <div className="flex justify-end pt-4">
+        {/* Sticky Footer */}
+        <div className="sticky bottom-0 flex justify-end border-t bg-background pt-4">
           <Button type="submit">
             {isAddingDiscount
               ? initialData?.discount_percentage
