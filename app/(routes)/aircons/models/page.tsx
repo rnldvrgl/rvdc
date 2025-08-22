@@ -9,11 +9,15 @@ import { AirconModels } from '@/lib/constants/interface'
 import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
 import useSearchParameters from '@/lib/hooks/useSearchParameters'
 import { useAirconModelMutations } from '@/lib/mutations/installations/useAirconModelMutations'
-import { useAirconModels } from '@/lib/queries/useAircons'
+import {
+  useAirconModelFilters,
+  useAirconModels,
+} from '@/lib/queries/useAircons'
 import { Plus } from 'lucide-react'
 
 export default function AirconModelsPage() {
   const { page, limit, search, ordering, filter } = useSearchParameters()
+  const { filters, orderingOptions } = useAirconModelFilters()
   const { deleteModel } = useAirconModelMutations()
   const { data, isLoading } = useAirconModels({
     page,
@@ -123,6 +127,8 @@ export default function AirconModelsPage() {
             Add Model
           </Button>
         }
+        filters={filters}
+        orderingOptions={orderingOptions}
       />
     </div>
   )

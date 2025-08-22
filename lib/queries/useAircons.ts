@@ -1,5 +1,6 @@
 import { AirconBrands, AirconModels } from '@/lib/constants/interface'
 import type { PaginatedFilterProps } from '@/lib/constants/types'
+import { useFilters } from '@/lib/hooks/useFilters'
 import { usePaginatedQuery } from '@/lib/hooks/usePaginatedQuery'
 
 const installationsUrl = '/installations/'
@@ -18,4 +19,12 @@ export function useAirconModels(props: PaginatedFilterProps = {}) {
     url: `${installationsUrl}aircon-models/`,
     queryKeyBase: 'aircon-models',
   })
+}
+
+// FILTERS
+export function useAirconModelFilters() {
+  return useFilters(
+    'aircon-model-filters',
+    `${installationsUrl}aircon-models/filters/`,
+  )
 }
