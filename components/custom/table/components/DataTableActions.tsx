@@ -23,6 +23,10 @@ import clsx from 'clsx'
 import { MoreVertical } from 'lucide-react'
 import { ReactNode, useCallback, useState } from 'react'
 
+interface DataTableActionsProps {
+  label?: string
+  items: ActionItem[]
+}
 interface ActionItem {
   label: string
   onClick: () => void
@@ -30,11 +34,7 @@ interface ActionItem {
   destructive?: boolean
   confirmText?: string
   confirmDescription?: string
-}
-
-interface DataTableActionsProps {
-  label?: string
-  items: ActionItem[]
+  disabled?: boolean
 }
 
 export function DataTableActions({
@@ -62,6 +62,7 @@ export function DataTableActions({
             <MoreVertical className="size-4" />
           </Button>
         </DropdownMenuTrigger>
+
         <DropdownMenuContent align="end">
           <DropdownMenuLabel>{label}</DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -69,7 +70,9 @@ export function DataTableActions({
             items.map((item, idx) => (
               <DropdownMenuItem
                 key={idx}
+                disabled={item.disabled} // ← new
                 onSelect={(e) => {
+                  if (item.disabled) return // prevent click if disabled
                   if (item.destructive) {
                     e.preventDefault()
                     setConfirmItem(item)
@@ -81,6 +84,7 @@ export function DataTableActions({
                   'flex items-center group',
                   item.destructive &&
                     'text-destructive/90 hover:bg-destructive/10',
+                  item.disabled && 'opacity-50 cursor-not-allowed',
                 )}
               >
                 {item.icon && (

@@ -166,3 +166,25 @@ export const AirconModelSchema = z.object({
   aircon_type: z.nativeEnum(AirconTypes),
   is_inverter: z.boolean(),
 })
+
+export const AirconUnitSchema = z.object({
+  serial_number: z
+    .string()
+    .min(1, 'Serial number is required')
+    .max(255, 'Serial number too long'),
+
+  // Always optional — backend decides if it's linked
+  model_id: z.number(),
+
+  // Required only when sold
+  sale: z.number().optional().nullable(),
+
+  // Required only when installed
+  installation: z.number().optional().nullable(),
+
+  // Reservation fields (optional, only needed if reserved)
+  reserved_by: z.number().optional().nullable(),
+
+  // Always present, default is false
+  free_cleaning_redeemed: z.boolean().optional(),
+})

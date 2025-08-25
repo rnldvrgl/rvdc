@@ -26,6 +26,12 @@ export interface GetColumnsProps<T> {
   onCustomAction?: (item: T) => void
   onView?: (item: T) => void
   onPrint?: (item: T) => void
+
+  // Status actions
+  onSold?: (item: T) => void
+  onInstall?: (item: T) => void
+  onReserve?: (item: T) => void
+  onRedeemCleaning?: (item: T) => void
   role?: Roles
 }
 
@@ -589,4 +595,34 @@ export interface AirconModels {
   aircon_type: AirconTypes
   is_inverter: boolean
   has_discount?: boolean
+}
+
+// Response type
+export interface AirconUnits {
+  id: number
+  model: AirconModels
+  serial_number: string
+  sale?: number | null
+  installation?: number | null
+  reserved_by?: Client | null
+  reserved_at?: string | null
+  warranty_start_date?: string | null
+  warranty_period_months?: number
+  free_cleaning_redeemed?: boolean
+  warranty_end_date?: string
+  warranty_status?: string
+  warranty_days_left?: number
+  is_reserved?: boolean
+  is_available_for_sale?: boolean
+  created_at?: string
+}
+
+// Request type
+export type AirconUnitPayload = {
+  serial_number: string
+  model_id: number
+  sale?: number | null
+  installation?: number | null
+  reserved_by?: number | null
+  free_cleaning_redeemed?: boolean
 }

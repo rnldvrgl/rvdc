@@ -1,5 +1,6 @@
 import {
   AirconBrands,
+  AirconModels,
   Item,
   ProductCategory,
   Stall,
@@ -86,5 +87,12 @@ export const useAirconBrandsChoices = () => {
   return useApiQuery<AirconBrands[]>({
     queryKey: ['aircon-brands-choices'],
     url: `${url}aircon-brands/`,
+  })
+}
+
+export const useAirconModelsChoices = () => {
+  return useApiQuery<AirconModels[]>({
+    queryKey: ['aircon-models-choices'],
+    url: `${url}aircon-models/`,
   })
 }
