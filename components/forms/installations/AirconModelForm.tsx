@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm, useWatch } from 'react-hook-form'
+import { Control, Resolver, useForm, useWatch } from 'react-hook-form'
 
 import { AirconModelPayload } from '@/lib/constants/infers'
 import { AirconModels } from '@/lib/constants/interface'
@@ -44,7 +44,7 @@ function DiscountFields({
   control,
   retailPrice,
 }: {
-  control: any
+  control: Control<AirconModelPayload> // 👈 unified type
   retailPrice: string | undefined
 }) {
   const discount = useWatch({ control, name: 'discount_percentage' })
@@ -107,7 +107,7 @@ function ModelFields({
   airconTypes,
   retailPrice,
 }: {
-  control: any
+  control: Control<AirconModelPayload> // 👈 unified type
   airconBrands?: { id: number; name: string }[]
   airconTypes?: { value: string | number; label: string }[]
   retailPrice: string | undefined
@@ -243,7 +243,7 @@ function ModelFields({
                     <FormControl>
                       <Checkbox
                         checked={!!field.value}
-                        onCheckedChange={(checked) => field.onChange(checked)}
+                        onCheckedChange={(checked) => field.onChange(!!checked)}
                       />
                     </FormControl>
                     <div className="flex flex-col">
@@ -277,12 +277,10 @@ export default function AirconModelForm({
   const { data: airconTypes } = useAirconTypesChoices()
   const { data: airconBrands } = useAirconBrandsChoices()
 
-  const resolverSchema = isAddingDiscount
-    ? DiscountOnlySchema
-    : AirconModelSchema
-
   const form = useForm<AirconModelPayload>({
-    resolver: zodResolver(resolverSchema as any),
+    resolver: zodResolver(
+      isAddingDiscount ? DiscountOnlySchema : AirconModelSchema,
+    ) as unknown as Resolver<AirconModelPayload>,
     defaultValues: {
       brand_id: initialData?.brand?.id ?? undefined,
       name: initialData?.name ?? '',
