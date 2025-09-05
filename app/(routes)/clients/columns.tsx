@@ -4,8 +4,9 @@ import { DataTableActions } from '@/components/custom/table/components/DataTable
 import { Badge } from '@/components/ui/badge'
 import { GetColumnsProps } from '@/lib/constants/interface'
 import { Client } from '@/lib/constants/types'
-import { ColumnDef } from '@tanstack/react-table'
-import { Ban, Edit, ShieldCheck, Trash2 } from 'lucide-react' // better icons
+import { safeCell } from '@/lib/utils/helpers'
+import { ColumnDef, Row } from '@tanstack/react-table'
+import { Ban, Edit, ShieldCheck, Trash2 } from 'lucide-react'
 
 export function getClientColumns({
   onEdit,
@@ -16,26 +17,32 @@ export function getClientColumns({
     {
       accessorKey: 'full_name',
       header: 'Name',
+      cell: ({ getValue }) => safeCell(getValue()),
     },
     {
       accessorKey: 'contact_number',
       header: 'Contact Number',
+      cell: ({ getValue }) => safeCell(getValue()),
     },
     {
       accessorKey: 'address',
       header: 'Address',
+      cell: ({ getValue }) => safeCell(getValue()),
     },
     {
       accessorKey: 'barangay',
       header: 'Barangay',
+      cell: ({ getValue }) => safeCell(getValue()),
     },
     {
       accessorKey: 'city',
       header: 'City',
+      cell: ({ getValue }) => safeCell(getValue()),
     },
     {
       accessorKey: 'province',
       header: 'Province',
+      cell: ({ getValue }) => safeCell(getValue()),
     },
     {
       accessorKey: 'is_blocklisted',
@@ -49,7 +56,7 @@ export function getClientColumns({
           >
             {is_blocklisted ? (
               <>
-                <Ban className="size-3" /> blocklisted
+                <Ban className="size-3" /> Blocklisted
               </>
             ) : (
               <>
@@ -63,7 +70,7 @@ export function getClientColumns({
     {
       accessorKey: 'action',
       header: 'Action',
-      cell: ({ row }) => {
+      cell: ({ row }: { row: Row<Client> }) => {
         const client = row.original
         const is_blocklisted = client.is_blocklisted
         return (
@@ -90,7 +97,7 @@ export function getClientColumns({
                 icon: <Trash2 className="size-4 text-destructive" />,
                 onClick: () => onDelete(client),
                 destructive: true,
-                confirmText: `Delete ${client.full_name}?`,
+                confirmText: `Delete ${safeCell(client.full_name)}?`,
               },
             ]}
           />

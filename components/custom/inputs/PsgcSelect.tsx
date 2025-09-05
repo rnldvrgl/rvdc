@@ -28,6 +28,7 @@ export interface PsgcSelectProps<T extends FieldValues> {
   placeholder: string
   loading?: boolean
   disabled?: boolean
+  required?: boolean
 }
 
 export function PsgcSelect<T extends FieldValues>({
@@ -38,10 +39,11 @@ export function PsgcSelect<T extends FieldValues>({
   placeholder,
   loading,
   disabled,
+  required = false,
 }: PsgcSelectProps<T>) {
   return (
     <FormItem>
-      <FormLabel required>{label}</FormLabel>
+      <FormLabel required={required}>{label}</FormLabel>
       <FormControl>
         <Select
           onValueChange={onChange}

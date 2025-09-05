@@ -16,6 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Switch } from '@/components/ui/switch'
 import { Client } from '@/lib/constants/types'
 
 function LocationField({
@@ -28,14 +29,16 @@ function LocationField({
   disabled,
   placeholder,
   control,
+  required,
 }: PsgcSelectProps<FormValues>) {
   return (
     <FormField
       control={control}
       name={name}
-      rules={{ required: `${label} is required` }}
+      rules={required ? { required: `${label} is required` } : {}}
       render={() => (
         <PsgcSelect
+          required={required}
           control={control}
           name={name}
           label={label}
@@ -53,11 +56,11 @@ function LocationField({
 
 interface FormValues {
   full_name: string
-  contact_number: string
-  address: string
+  contact_number?: string
+  address?: string
   province: string
   city: string
-  barangay: string
+  barangay?: string
   is_blocklisted: boolean
 }
 
@@ -72,9 +75,9 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
       full_name: client?.full_name ?? '',
       contact_number: client?.contact_number ?? '',
       address: client?.address ?? '',
-      province: '',
-      city: '',
-      barangay: '',
+      province: client?.province ?? '',
+      city: client?.city ?? '',
+      barangay: client?.barangay ?? '',
       is_blocklisted: client?.is_blocklisted ?? false,
     },
   })
@@ -105,6 +108,8 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
       province: provinceName,
       city: cityName,
       barangay: barangayName,
+      contact_number: data.contact_number?.trim() || null,
+      address: data.address?.trim() || null,
     }
 
     if (client?.id) {
@@ -150,10 +155,9 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
           <FormField
             control={form.control}
             name="contact_number"
-            rules={{ required: 'Contact number is required' }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel required>Contact Number</FormLabel>
+                <FormLabel>Contact Number</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -168,10 +172,9 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
           <FormField
             control={form.control}
             name="address"
-            rules={{ required: 'Address is required' }}
             render={({ field }) => (
               <FormItem>
-                <FormLabel required>Address</FormLabel>
+                <FormLabel>Address</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
@@ -186,6 +189,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
           <LocationField
             name="province"
             label="Province"
+            required
             value={selectedProvince ?? ''}
             options={sortedProvinces}
             onChange={handleProvinceChange}
@@ -197,6 +201,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
           <LocationField
             name="city"
             label="City / Municipality"
+            required
             value={selectedCity ?? ''}
             options={sortedCities}
             onChange={handleCityChange}
@@ -216,6 +221,22 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
             loading={loadingBarangays}
             disabled={!selectedCity}
             control={form.control}
+          />
+
+          <FormField
+            control={form.control}
+            name="is_blocklisted"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                <FormLabel required>Blocklisted</FormLabel>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
           />
         </div>
 

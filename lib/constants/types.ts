@@ -95,11 +95,11 @@ export type BaseEntity = {
 // Client
 export type Client = BaseEntity & {
   full_name: string
-  contact_number: string
-  address: string
+  contact_number?: string | null
+  address?: string | null
   province: string
   city: string
-  barangay: string
+  barangay?: string | null
   is_blocklisted: boolean
 }
 

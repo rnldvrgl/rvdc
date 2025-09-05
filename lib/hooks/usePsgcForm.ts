@@ -11,9 +11,9 @@ import { FieldValues, Path, PathValue, UseFormReturn } from 'react-hook-form'
 interface UsePsgcFormProps<T extends FieldValues> {
   form: UseFormReturn<T>
   defaultValues?: Partial<{
-    province: string
-    city: string
-    barangay: string
+    province: string | null
+    city: string | null
+    barangay: string | null
   }>
 }
 
