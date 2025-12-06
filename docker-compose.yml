@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+    frontend:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: rvdc-frontend-ssr:dev
+        ports:
+            - "3000:3000"
+        environment:
+            NODE_ENV: "production"
+            NEXT_PUBLIC_API_URL: "http://152.42.229.230:8000"
+        restart: unless-stopped
