@@ -1,14 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-	async rewrites() {
-		return [
-			{
-				source: "/api/:path*",
-				destination: `${process.env.NEXT_PUBLIC_BASE_URL}/api/:path*/`,
-			},
-		];
-	},
+	// async rewrites() {
+	// 	return [
+	// 		{
+	// 			source: "/api/:path*",
+	// 			destination: `${process.env.NEXT_PUBLIC_BASE_URL}/api/:path*/`,
+	// 		},
+	// 	];
+	// },
 	turbopack: {
 		rules: {
 			"*.svg": {

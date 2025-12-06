@@ -5,10 +5,10 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        image: rvdc-frontend-ssr:dev
+        image: ${IMAGE_NAME:-rvdc-frontend-ssr}:${IMAGE_TAG:-latest}
         ports:
-            - "3000:3000"
+            - "${FRONTEND_PORT:-3000}:3000"
         environment:
-            NODE_ENV: "production"
-            NEXT_PUBLIC_API_URL: "http://152.42.229.230:8000"
+            NODE_ENV: "${NODE_ENV:-production}"
+            NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-/api}"
         restart: unless-stopped
