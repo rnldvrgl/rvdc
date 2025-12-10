@@ -1,14 +1,11 @@
-version: "3.9"
-
 services:
     frontend:
         build:
-            context: .
-            dockerfile: Dockerfile
-        image: ${IMAGE_NAME:-rvdc-frontend-ssr}:${IMAGE_TAG:-latest}
+            context: ../rvdc
+        container_name: rvdc
         ports:
-            - "${FRONTEND_PORT:-3000}:3000"
+            - "3000:3000"
         environment:
-            NODE_ENV: "${NODE_ENV:-production}"
-            NEXT_PUBLIC_API_URL: "${NEXT_PUBLIC_API_URL:-/api}"
-        restart: unless-stopped
+            NODE_ENV: production
+        depends_on:
+            - web
