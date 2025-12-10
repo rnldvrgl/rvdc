@@ -2,8 +2,10 @@ services:
     rvdc:
         build:
             context: ../rvdc
+            args:
+                NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL}
         container_name: rvdc
         ports:
             - "3000:3000"
-        environment:
-            NODE_ENV: production
+        env_file:
+            - ../rvdc/.env.${ENVIRONMENT:-staging}
