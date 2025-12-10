@@ -1,5 +1,5 @@
 services:
-    frontend:
+    rvdc:
         build:
             context: ../rvdc
         container_name: rvdc
