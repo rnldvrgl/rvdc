@@ -1,0 +1,35 @@
+name: Frontend Deploy
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: |
+          npm ci
+          npm run build
+
+      - uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: "."
+          target: "/srv/rvdc"
+
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /srv/rvdc
+            npm ci --omit=dev
+            pm2 restart rvdc-frontend || pm2 start ecosystem.config.js
+            pm2 save
