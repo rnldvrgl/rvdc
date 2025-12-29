@@ -11,7 +11,8 @@ module.exports = {
 			max_memory_restart: "300M",
 			env: {
 				NODE_ENV: "production",
-				NEXT_PUBLIC_API_BASE_URL: "http://152.42.229.230:8000",
+				NEXT_PUBLIC_API_BASE_URL:
+					"https://api-rvdcrefandaircon.duckdns.org",
 			},
 		},
 	],
