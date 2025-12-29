@@ -1,35 +1,41 @@
-name: Frontend Deploy
+name: Build & Deploy Frontend
 
 on:
   push:
     branches: [ "master" ]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout repository
       - uses: actions/checkout@v4
 
+      # 2. Install Node.js (20.x)
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      # 3. Install dependencies and build
       - run: |
           npm ci
           npm run build
 
-      - run: |
-          sudo apt-get update
-          sudo apt-get install -y sshpass
+      # 4. Archive the build output
+      - run: tar -czf frontend-build.tar.gz .next public package.json package-lock.json
 
-      - run: |
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" \
-          scp -o StrictHostKeyChecking=no -r . \
-          ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:/srv/rvdc
+      # 5. Install sshpass
+      - run: sudo apt-get update && sudo apt-get install -y sshpass
 
+      # 6. Copy build to droplet and deploy
       - run: |
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" \
-          ssh -o StrictHostKeyChecking=no \
-          ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'EOF'
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no frontend-build.tar.gz root@${{ secrets.DROPLET_HOST }}:/srv/rvdc/
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_HOST }} << 'EOF'
             cd /srv/rvdc
-            npm ci --omit=dev
-            pm2 restart rvdc-frontend || pm2 start ecosystem.config.js
-            pm2 save
+            rm -rf .next public package.json package-lock.json
+            tar -xzf frontend-build.tar.gz
+            rm frontend-build.tar.gz
+            npm ci --production
+            pm2 restart rvdc|| pm2 start npm --name "rvdc" -- start
           EOF
