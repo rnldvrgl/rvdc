@@ -15,21 +15,21 @@ jobs:
           npm ci
           npm run build
 
-      - uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          source: "."
-          target: "/srv/rvdc"
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
 
-      - uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
+      - run: |
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" \
+          scp -o StrictHostKeyChecking=no -r . \
+          ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:/srv/rvdc
+
+      - run: |
+          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" \
+          ssh -o StrictHostKeyChecking=no \
+          ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'EOF'
             cd /srv/rvdc
             npm ci --omit=dev
             pm2 restart rvdc-frontend || pm2 start ecosystem.config.js
             pm2 save
+          EOF
