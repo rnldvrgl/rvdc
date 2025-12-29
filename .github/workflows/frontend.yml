@@ -1,4 +1,4 @@
-name: Build & Deploy Frontend
+name: Build & Deploy Frontend Docker
 
 on:
   push:
@@ -9,33 +9,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
       - uses: actions/checkout@v4
 
-      # 2. Install Node.js (20.x)
-      - uses: actions/setup-node@v3
+      # Docker login
+      - uses: docker/login-action@v3
         with:
-          node-version: 20
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3. Install dependencies and build
+      # Build and push image
       - run: |
-          npm ci
-          npm run build
+          docker build -t rnldvrgl/rvdc:latest .
+          docker push rnldvrgl/rvdc:latest
 
-      # 4. Archive the build output
-      - run: tar -czf frontend-build.tar.gz .next public package.json package-lock.json
-
-      # 5. Install sshpass
-      - run: sudo apt-get update && sudo apt-get install -y sshpass
-
-      # 6. Copy build to droplet and deploy
-      - run: |
-          sshpass -p "${{ secrets.DROPLET_PASSWORD }}" scp -o StrictHostKeyChecking=no frontend-build.tar.gz root@${{ secrets.DROPLET_HOST }}:/srv/rvdc/
+      # Deploy on droplet
+      - name: Deploy to droplet
+        run: |
           sshpass -p "${{ secrets.DROPLET_PASSWORD }}" ssh -o StrictHostKeyChecking=no root@${{ secrets.DROPLET_HOST }} << 'EOF'
-            cd /srv/rvdc
-            rm -rf .next public package.json package-lock.json
-            tar -xzf frontend-build.tar.gz
-            rm frontend-build.tar.gz
-            npm ci --production
-            pm2 restart rvdc|| pm2 start npm --name "rvdc" -- start
+            docker pull rnldvrgl/rvdc:latest
+            docker stop rvdc || true
+            docker rm rvdc || true
+            docker run -d --name rvdc -p 3000:3000 rnldvrgl/rvdc:latest
           EOF
