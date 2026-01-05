@@ -60,6 +60,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 		icon: Users,
 		permission: "view_clients",
 	},
+	payroll: {
+		name: "Payroll",
+		href: "/payroll",
+		icon: LayoutDashboard,
+		permission: "view_payroll",
+	},
 	technicians: {
 		name: "Technicians",
 		href: "/technicians",
