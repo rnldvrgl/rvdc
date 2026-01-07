@@ -1,48 +1,72 @@
 "use client";
 
 import React, { useMemo } from "react";
+
 import Link from "next/link";
+
 import { useParams, useRouter } from "next/navigation";
+
 import {
 	useWeeklyPayroll,
 	useTimeEntries,
 	useRecomputeWeeklyPayroll,
 } from "@/lib/queries/usePayroll";
 
-type ID = number;
-
 function formatCurrency(value: string | number | undefined) {
 	const num = Number(value ?? 0);
+
 	return `₱${num.toLocaleString(undefined, {
 		minimumFractionDigits: 2,
+
 		maximumFractionDigits: 2,
 	})}`;
 }
 
 function formatHours(value: string | number | undefined) {
 	const num = Number(value ?? 0);
+
 	return `${num.toFixed(2)} h`;
 }
 
 function parseISODateToDisplay(d?: string) {
 	if (!d) return "-";
+
 	const date = new Date(d);
+
 	return date.toLocaleDateString();
 }
 
 function getWeekEnd(weekStart?: string) {
 	if (!weekStart) return undefined;
+
 	const start = new Date(weekStart);
+
 	const end = new Date(start);
-	end.setDate(start.getDate() + 7); // exclusive end
+
+	end.setDate(start.getDate() + 6); // inclusive end (Saturday–Friday week)
+
+	return end.toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
+function getWeekEndExclusive(weekStart?: string) {
+	if (!weekStart) return undefined;
+
+	const start = new Date(weekStart);
+
+	const end = new Date(start);
+
+	end.setDate(start.getDate() + 7); // exclusive end for range filters
+
 	return end.toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
 export default function PayrollDetailPage() {
 	const params = useParams();
+
 	const router = useRouter();
 
 	const idParam = params?.id;
+
 	const id =
 		typeof idParam === "string"
 			? Number(idParam)
@@ -52,7 +76,9 @@ export default function PayrollDetailPage() {
 
 	const {
 		data: payroll,
+
 		isLoading: loadingPayroll,
+
 		refetch: refetchPayroll,
 	} = useWeeklyPayroll(isNaN(id) ? undefined : id);
 
@@ -65,14 +91,19 @@ export default function PayrollDetailPage() {
 
 	const {
 		data: entries,
+
 		isLoading: loadingEntries,
+
 		refetch: refetchEntries,
 	} = useTimeEntries(
 		payroll
 			? {
 					employee: payroll.employee,
+
 					start_date: payroll.week_start,
-					end_date: weekEnd,
+
+					end_date: getWeekEndExclusive(payroll.week_start),
+
 					page: 1,
 				}
 			: undefined,
@@ -80,14 +111,21 @@ export default function PayrollDetailPage() {
 
 	const handleRecompute = async () => {
 		if (!payroll?.id) return;
+
 		await recomputeMutation.mutateAsync({
 			include_unapproved: false,
+
 			// Example of passing custom allowances/deductions if needed:
+
 			// allowances: Number(payroll.allowances ?? 0),
+
 			// extra_flat_deductions: { 'Cash Advance': 500 },
+
 			// percent_deductions: { 'Tax': 0.12 },
 		});
+
 		await refetchPayroll();
+
 		await refetchEntries();
 	};
 
@@ -140,6 +178,7 @@ export default function PayrollDetailPage() {
 			</header>
 
 			{/* Summary */}
+
 			<section className="space-y-4">
 				{loadingPayroll ? (
 					<div className="text-sm">Loading payroll...</div>
@@ -153,6 +192,7 @@ export default function PayrollDetailPage() {
 									<span className="text-muted-foreground">
 										Payroll ID
 									</span>
+
 									<span className="font-mono">
 										{payroll.id}
 									</span>
@@ -162,6 +202,7 @@ export default function PayrollDetailPage() {
 									<span className="text-muted-foreground">
 										Employee
 									</span>
+
 									<span className="font-mono">
 										{payroll.employee}
 									</span>
@@ -171,6 +212,7 @@ export default function PayrollDetailPage() {
 									<span className="text-muted-foreground">
 										Week Start
 									</span>
+
 									<span>
 										{parseISODateToDisplay(
 											payroll.week_start,
@@ -182,6 +224,7 @@ export default function PayrollDetailPage() {
 									<span className="text-muted-foreground">
 										Week End
 									</span>
+
 									<span>
 										{parseISODateToDisplay(weekEnd)}
 									</span>
@@ -191,6 +234,7 @@ export default function PayrollDetailPage() {
 									<span className="text-muted-foreground">
 										Status
 									</span>
+
 									<span className="px-2 py-0.5 rounded-md border text-xs bg-muted/50">
 										{payroll.status}
 									</span>
@@ -200,6 +244,7 @@ export default function PayrollDetailPage() {
 									<span className="text-muted-foreground">
 										Hourly Rate
 									</span>
+
 									<span>
 										{formatCurrency(payroll.hourly_rate)}
 									</span>
@@ -209,6 +254,7 @@ export default function PayrollDetailPage() {
 									<span className="text-muted-foreground">
 										OT Threshold
 									</span>
+
 									<span>
 										{Number(
 											payroll.overtime_threshold ?? 0,
@@ -221,6 +267,7 @@ export default function PayrollDetailPage() {
 									<span className="text-muted-foreground">
 										OT Multiplier
 									</span>
+
 									<span>
 										{Number(
 											payroll.overtime_multiplier ?? 0,
@@ -254,6 +301,22 @@ export default function PayrollDetailPage() {
 								</div>
 
 								<div className="flex items-center justify-between">
+									<span>Night Diff Hours</span>
+
+									<span>
+										{formatHours(payroll.night_diff_hours)}
+									</span>
+								</div>
+
+								<div className="flex items-center justify-between">
+									<span>Approved OT Hours</span>
+
+									<span>
+										{formatHours(payroll.approved_ot_hours)}
+									</span>
+								</div>
+
+								<div className="flex items-center justify-between">
 									<span>Allowances</span>
 
 									<span>
@@ -267,6 +330,24 @@ export default function PayrollDetailPage() {
 									<span>
 										{formatCurrency(
 											payroll.additional_earnings_total,
+										)}
+									</span>
+								</div>
+
+								<div className="flex items-center justify-between">
+									<span>Night Diff Pay</span>
+
+									<span>
+										{formatCurrency(payroll.night_diff_pay)}
+									</span>
+								</div>
+
+								<div className="flex items-center justify-between">
+									<span>Approved OT Pay</span>
+
+									<span>
+										{formatCurrency(
+											payroll.approved_ot_pay,
 										)}
 									</span>
 								</div>
@@ -330,9 +411,11 @@ export default function PayrollDetailPage() {
 			</section>
 
 			{/* Time Entries */}
+
 			<section className="space-y-3">
 				<div className="flex items-center justify-between">
 					<h2 className="text-lg font-medium">Time Entries</h2>
+
 					<div className="text-xs text-muted-foreground">
 						{payroll ? (
 							<>
@@ -351,12 +434,17 @@ export default function PayrollDetailPage() {
 						<thead>
 							<tr className="text-left border-b">
 								<th className="py-2 pr-2">Clock In</th>
+
 								<th className="py-2 pr-2">Clock Out</th>
+
 								<th className="py-2 pr-2">Break (m)</th>
+
 								<th className="py-2 pr-2">Approved</th>
+
 								<th className="py-2 pr-2">Source</th>
 							</tr>
 						</thead>
+
 						<tbody>
 							{loadingEntries ? (
 								<tr>
@@ -374,6 +462,7 @@ export default function PayrollDetailPage() {
 													).toLocaleString()
 												: "-"}
 										</td>
+
 										<td className="py-2 pr-2">
 											{e.clock_out
 												? new Date(
@@ -381,14 +470,17 @@ export default function PayrollDetailPage() {
 													).toLocaleString()
 												: "-"}
 										</td>
+
 										<td className="py-2 pr-2">
 											{e.unpaid_break_minutes ?? 0}
 										</td>
+
 										<td className="py-2 pr-2">
 											<span className="px-2 py-0.5 rounded border text-xs">
 												{e.approved ? "Yes" : "No"}
 											</span>
 										</td>
+
 										<td className="py-2 pr-2">
 											<span className="px-2 py-0.5 rounded border text-xs">
 												{e.source}
@@ -408,6 +500,61 @@ export default function PayrollDetailPage() {
 				</div>
 			</section>
 
+			{/* Payout Checklist */}
+			<section className="space-y-3">
+				<h2 className="text-lg font-medium">Payout Checklist</h2>
+				<p className="text-xs text-muted-foreground">
+					Salary is given every Saturday. Review and mark items below
+					before payout.
+				</p>
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+					<div className="p-3 border rounded">
+						<div className="flex items-center justify-between">
+							<span>Time entries approved</span>
+							<span className="px-2 py-0.5 rounded border text-xs">
+								Pending
+							</span>
+						</div>
+						<div className="flex items-center justify-between mt-1">
+							<span>Sessions review cleared</span>
+							<span className="px-2 py-0.5 rounded border text-xs">
+								Pending
+							</span>
+						</div>
+						<div className="flex items-center justify-between mt-1">
+							<span>Additional earnings approved</span>
+							<span className="px-2 py-0.5 rounded border text-xs">
+								Pending
+							</span>
+						</div>
+					</div>
+					<div className="p-3 border rounded">
+						<div className="flex items-center justify-between">
+							<span>Deductions applied</span>
+							<span className="px-2 py-0.5 rounded border text-xs">
+								Pending
+							</span>
+						</div>
+						<div className="flex items-center justify-between mt-1">
+							<span>Weekly payroll recomputed</span>
+							<span className="px-2 py-0.5 rounded border text-xs">
+								Pending
+							</span>
+						</div>
+						<div className="flex items-center justify-between mt-1">
+							<span>Weekly payroll approved</span>
+							<span className="px-2 py-0.5 rounded border text-xs">
+								Pending
+							</span>
+						</div>
+					</div>
+				</div>
+				<div className="text-xs text-muted-foreground">
+					Note: Sundays may be half-day at the shop. Ensure Sunday
+					entries reflect reduced hours when applicable.
+				</div>
+			</section>
+
 			{/* Navigation */}
 			<section>
 				<div className="flex items-center gap-2">
@@ -417,6 +564,7 @@ export default function PayrollDetailPage() {
 					>
 						Back
 					</button>
+
 					<button
 						className="px-3 py-1.5 rounded border text-sm"
 						onClick={handleRecompute}

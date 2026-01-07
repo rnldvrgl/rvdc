@@ -245,9 +245,37 @@ export function formatDateDisplay(input?: string | Date): string {
 
 export function getWeekEnd(weekStart?: string): string | undefined {
 	if (!weekStart) return undefined;
+
+	const start = new Date(weekStart);
+
+	if (isNaN(start.getTime())) return undefined;
+
+	const end = new Date(start);
+
+	end.setDate(start.getDate() + 7); // exclusive end
+
+	return end.toISOString().split("T")[0];
+}
+
+// New helpers: explicit exclusive (+7) and inclusive (+6) week end calculators.
+
+/**
+ * Exclusive week end date: returns week_start + 7 days (YYYY-MM-DD).
+ * Use when building [start, end) ranges (end_date should be treated as exclusive).
+ */
+export function getWeekEndExclusive(weekStart?: string): string | undefined {
+	return getWeekEnd(weekStart);
+}
+
+/**
+ * Inclusive week end date: returns week_start + 6 days (YYYY-MM-DD).
+ * Use when you need a display-friendly inclusive end date.
+ */
+export function getWeekEndInclusive(weekStart?: string): string | undefined {
+	if (!weekStart) return undefined;
 	const start = new Date(weekStart);
 	if (isNaN(start.getTime())) return undefined;
 	const end = new Date(start);
-	end.setDate(start.getDate() + 7); // exclusive end
+	end.setDate(start.getDate() + 6); // inclusive end
 	return end.toISOString().split("T")[0];
 }

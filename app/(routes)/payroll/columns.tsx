@@ -10,7 +10,6 @@ import {
 } from "@/lib/utils/helpers";
 import { CellContext, ColumnDef } from "@tanstack/react-table";
 import { Edit, Eye, RefreshCcw, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { WeeklyPayroll } from "@/lib/queries/usePayroll";
 
 interface GetWeeklyPayrollColumnsProps extends GetColumnsProps<WeeklyPayroll> {
@@ -34,7 +33,6 @@ function StatusBadge({ status }: { status: WeeklyPayroll["status"] }) {
 export function getWeeklyPayrollColumns({
 	onEdit,
 	onDelete,
-	onView,
 	onRecompute,
 	role,
 }: GetWeeklyPayrollColumnsProps): ColumnDef<WeeklyPayroll>[] {
@@ -44,10 +42,13 @@ export function getWeeklyPayrollColumns({
 		{
 			accessorKey: "employee",
 			header: "Employee",
+
 			cell: ({ row, getValue }) => {
 				const id = getValue<number>();
-				const name = (row.original as any)?.employee_name;
+
+				const name = row.original.employee_name;
 				if (name) return name;
+
 				return id ? `#${id}` : safeCell(id);
 			},
 		},
@@ -61,11 +62,27 @@ export function getWeeklyPayrollColumns({
 			header: "Regular Hours",
 			cell: ({ getValue }) => formatHours(getValue() as number | string),
 		},
+
 		{
 			accessorKey: "overtime_hours",
+
 			header: "OT Hours",
+
 			cell: ({ getValue }) => formatHours(getValue() as number | string),
 		},
+
+		{
+			accessorKey: "night_diff_hours",
+			header: "ND Hours",
+			cell: ({ getValue }) => formatHours(getValue() as number | string),
+		},
+
+		{
+			accessorKey: "approved_ot_hours",
+			header: "Approved OT Hours",
+			cell: ({ getValue }) => formatHours(getValue() as number | string),
+		},
+
 		{
 			accessorKey: "allowances",
 			header: "Allowances",
@@ -79,11 +96,24 @@ export function getWeeklyPayrollColumns({
 				formatCurrency(getValue() as number | string),
 		},
 		{
+			accessorKey: "night_diff_pay",
+			header: "ND Pay",
+			cell: ({ getValue }) =>
+				formatCurrency(getValue() as number | string),
+		},
+		{
+			accessorKey: "approved_ot_pay",
+			header: "Approved OT Pay",
+			cell: ({ getValue }) =>
+				formatCurrency(getValue() as number | string),
+		},
+		{
 			accessorKey: "gross_pay",
 			header: "Gross",
 			cell: ({ getValue }) =>
 				formatCurrency(getValue() as number | string),
 		},
+
 		{
 			accessorKey: "total_deductions",
 			header: "Deductions",

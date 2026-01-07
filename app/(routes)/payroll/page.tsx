@@ -2,8 +2,6 @@
 
 import React, { useMemo, useState } from "react";
 
-import Link from "next/link";
-
 import {
 	useWeeklyPayrolls,
 	useWeeklyPayroll,
@@ -12,6 +10,7 @@ import {
 	useCreateTimeEntry,
 	useUpdateTimeEntry,
 	useDeleteTimeEntry,
+	useWeeklyPayrollFilters,
 } from "@/lib/queries/usePayroll";
 
 type ID = number;
@@ -30,17 +29,16 @@ import {
 	formatCurrency,
 	formatHours,
 	formatDateDisplay,
-	getWeekEnd,
+	getWeekEnd as getWeekEndInclusive,
+	getWeekEndExclusive,
 } from "@/lib/utils/helpers";
 
 export default function PayrollPage() {
-	// Query params/state
-
-	const { page, search } = useSearchParameters();
+	const { page, limit, search, ordering, filter } = useSearchParameters();
 
 	const [selectedId, setSelectedId] = useState<ID | null>(null);
 
-	const [searchTerm, setSearchTerm] = useState<string>(search ?? "");
+	const { filters, orderingOptions } = useWeeklyPayrollFilters();
 
 	// Weekly payrolls list
 
@@ -50,7 +48,10 @@ export default function PayrollPage() {
 		refetch: refetchWeeklyList,
 	} = useWeeklyPayrolls({
 		page,
-		search: searchTerm,
+		limit,
+		search,
+		ordering,
+		filter,
 	});
 
 	// Selected payroll detail
@@ -62,7 +63,10 @@ export default function PayrollPage() {
 
 	const { employee, week_start } = selectedPayroll ?? {};
 
-	const weekEnd = useMemo(() => getWeekEnd(week_start), [week_start]);
+	const weekEnd = useMemo(
+		() => getWeekEndInclusive(week_start),
+		[week_start],
+	);
 
 	// Time entries for selected employee within the selected week
 
@@ -75,7 +79,7 @@ export default function PayrollPage() {
 			? {
 					employee: employee,
 					start_date: week_start,
-					end_date: weekEnd,
+					end_date: getWeekEndExclusive(week_start),
 					page: 1,
 				}
 			: undefined,
@@ -178,8 +182,11 @@ export default function PayrollPage() {
 				</div>
 
 				<DataTable
+					withoutDateRangeFilter
 					isLoading={loadingWeeklyList}
 					columns={columns}
+					filters={filters}
+					orderingOptions={orderingOptions}
 					data={
 						weeklyList || {
 							count: 0,
@@ -472,7 +479,10 @@ export default function PayrollPage() {
 											setForm((f) => ({
 												...f,
 
-												source: e.target.value as any,
+												source: e.target.value as
+													| "manual"
+													| "schedule"
+													| "import",
 											}))
 										}
 									>
