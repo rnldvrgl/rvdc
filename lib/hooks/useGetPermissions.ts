@@ -43,6 +43,10 @@ export function useGetPermissions(role: Roles) {
 				"view_aircon_units",
 				"view_aircon_installations",
 				"view_payroll",
+
+				"manage_payroll_settings",
+				"manage_holidays",
+				"manage_attendance_admin",
 			],
 			manager: [
 				...commonViewPermissions,

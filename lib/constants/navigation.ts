@@ -60,12 +60,42 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 		icon: Users,
 		permission: "view_clients",
 	},
+
 	payroll: {
 		name: "Payroll",
-		href: "/payroll",
+
 		icon: LayoutDashboard,
-		permission: "view_payroll",
+
+		children: [
+			{
+				name: "Admin Settings",
+
+				href: "/payroll/settings",
+
+				icon: Settings,
+
+				permission: "manage_payroll_settings",
+			},
+
+			{
+				name: "Holidays",
+
+				href: "/payroll/holidays",
+
+				icon: FileText,
+
+				permission: "manage_holidays",
+			},
+
+			{
+				name: "Attendance Ops",
+				href: "/payroll/attendance",
+				icon: FileText,
+				permission: "manage_attendance_admin",
+			},
+		],
 	},
+
 	technicians: {
 		name: "Technicians",
 		href: "/technicians",

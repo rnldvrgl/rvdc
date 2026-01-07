@@ -470,3 +470,119 @@ export const useRecomputeWeeklyPayroll = (id: ID) => {
 export function useWeeklyPayrollFilters() {
 	return useFilters("weekly-payroll-filters", `${WEEKLY_PAYROLLS}filters/`);
 }
+
+/**
+ * Admin: Payroll Settings and Holidays
+ */
+
+// Settings
+const PAYROLL_SETTINGS = `${PAYROLL_BASE}/settings/`;
+
+export type PayrollSettings = {
+	id: ID;
+	shift_start: string;
+	shift_end: string;
+	grace_minutes: number;
+	auto_close_enabled: boolean;
+	holiday_day_hours: string | number;
+	holiday_regular_pct: string | number;
+	holiday_special_pct: string | number;
+	regular_holiday_no_work_pays: boolean;
+	special_holiday_no_work_pays: boolean;
+	overtime_multiplier: string | number;
+	night_diff_multiplier: string | number;
+	updated_at: string;
+};
+
+export const usePayrollSettings = () => {
+	return useApiQuery<PayrollSettings>({
+		queryKey: ["payroll", "settings"],
+		url: PAYROLL_SETTINGS,
+	});
+};
+
+export const useUpdatePayrollSettings = () => {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: Partial<PayrollSettings>) => {
+			const { data } = await api.put(PAYROLL_SETTINGS, payload);
+			return data as PayrollSettings;
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["payroll", "settings"] });
+		},
+	});
+};
+
+export const usePatchPayrollSettings = () => {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: Partial<PayrollSettings>) => {
+			const { data } = await api.patch(PAYROLL_SETTINGS, payload);
+			return data as PayrollSettings;
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["payroll", "settings"] });
+		},
+	});
+};
+
+export type Holiday = {
+	id: ID;
+
+	date: string; // YYYY-MM-DD
+
+	name: string;
+
+	kind: "regular" | "special";
+	is_deleted: boolean;
+};
+
+const HOLIDAYS = `${PAYROLL_BASE}/holidays/`;
+
+export const useHolidays = (params?: QueryParams) => {
+	return useApiQuery<PaginatedResponse<Holiday>>({
+		queryKey: ["payroll", "holidays", params],
+		url: HOLIDAYS,
+		params,
+	});
+};
+
+export const useCreateHoliday = () => {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: Omit<Holiday, "id" | "is_deleted">) => {
+			const { data } = await api.post(HOLIDAYS, payload);
+			return data as Holiday;
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["payroll", "holidays"] });
+		},
+	});
+};
+
+export const useUpdateHoliday = (id: ID) => {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (payload: Partial<Holiday>) => {
+			const { data } = await api.patch(`${HOLIDAYS}${id}/`, payload);
+			return data as Holiday;
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["payroll", "holidays"] });
+		},
+	});
+};
+
+export const useDeleteHoliday = (id: ID) => {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async () => {
+			await api.delete(`${HOLIDAYS}${id}/`);
+			return true;
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ["payroll", "holidays"] });
+		},
+	});
+};
