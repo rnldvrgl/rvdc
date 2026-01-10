@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions";
 import { GetColumnsProps } from "@/lib/constants/interface";
-import { Roles } from "@/lib/constants/types";
+import { Roles, WeeklyPayroll } from "@/lib/constants/types";
 import {
 	formatCurrency,
 	formatHours,
@@ -10,7 +10,6 @@ import {
 } from "@/lib/utils/helpers";
 import { CellContext, ColumnDef } from "@tanstack/react-table";
 import { Edit, Eye, RefreshCcw, Trash2 } from "lucide-react";
-import { WeeklyPayroll } from "@/lib/queries/usePayroll";
 
 interface GetWeeklyPayrollColumnsProps extends GetColumnsProps<WeeklyPayroll> {
 	role: Roles;
@@ -31,12 +30,11 @@ function StatusBadge({ status }: { status: WeeklyPayroll["status"] }) {
 }
 
 export function getWeeklyPayrollColumns({
-	onEdit,
 	onDelete,
 	onRecompute,
 	role,
 }: GetWeeklyPayrollColumnsProps): ColumnDef<WeeklyPayroll>[] {
-	const canManage = role === "admin" || role === "manager";
+	const canManage = role === "admin";
 
 	return [
 		{
@@ -118,7 +116,7 @@ export function getWeeklyPayrollColumns({
 			accessorKey: "total_deductions",
 			header: "Deductions",
 			cell: ({ getValue }) => (
-				<span className="text-red-500">
+				<span className="text-red-500c">
 					{formatCurrency(getValue() as number | string)}
 				</span>
 			),
@@ -153,10 +151,11 @@ export function getWeeklyPayrollColumns({
 									items={[
 										{
 											label: "Open Detail Page",
+
 											icon: <Eye className="size-4" />,
 
 											onClick: () => {
-												window.location.href = `/payroll/${payroll.id}`;
+												window.location.href = `/payroll/attendance/${payroll.id}`;
 											},
 										},
 
@@ -167,11 +166,17 @@ export function getWeeklyPayrollColumns({
 											),
 											onClick: () => onRecompute(payroll),
 										},
+
 										{
 											label: "Edit",
+
 											icon: <Edit className="size-4" />,
-											onClick: () => onEdit(payroll),
+
+											onClick: () => {
+												window.location.href = `/payroll/attendance/${payroll.id}`;
+											},
 										},
+
 										{
 											label: "Delete",
 											icon: (

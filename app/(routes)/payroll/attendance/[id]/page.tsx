@@ -6,11 +6,9 @@ import Link from "next/link";
 
 import { useParams, useRouter } from "next/navigation";
 
-import {
-	useWeeklyPayroll,
-	useTimeEntries,
-	useRecomputeWeeklyPayroll,
-} from "@/lib/queries/usePayroll";
+import { useWeeklyPayroll, useTimeEntries } from "@/lib/queries/usePayroll";
+import { useRecomputeWeeklyPayroll } from "@/lib/mutations/payroll/usePayrollMutations";
+import { TimeEntry } from "@/lib/constants/types";
 
 function formatCurrency(value: string | number | undefined) {
 	const num = Number(value ?? 0);
@@ -377,7 +375,7 @@ export default function PayrollDetailPage() {
 											<span>{name}</span>
 
 											<span className="text-red-600">
-												{formatCurrency(amt)}
+												{formatCurrency(Number(amt))}
 											</span>
 										</div>
 									),
@@ -453,7 +451,7 @@ export default function PayrollDetailPage() {
 									</td>
 								</tr>
 							) : entries?.results?.length ? (
-								entries.results.map((e) => (
+								entries.results.map((e: TimeEntry) => (
 									<tr key={e.id} className="border-b">
 										<td className="py-2 pr-2">
 											{e.clock_in
