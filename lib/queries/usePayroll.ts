@@ -159,7 +159,7 @@ export type Holiday = {
 	id: ID;
 	date: string; // YYYY-MM-DD
 	name: string;
-	kind: "regular" | "special";
+	kind: "regular" | "special_non_working";
 	is_deleted: boolean;
 };
 
