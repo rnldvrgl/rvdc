@@ -35,7 +35,6 @@ import {
 	SelectContent,
 	SelectItem,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import {
 	Plus,
 	RefreshCcw,
@@ -44,13 +43,16 @@ import {
 	CalendarDays,
 	Upload,
 	Search,
+	Calendar,
 } from "lucide-react";
 import { useNavigation } from "@/lib/hooks/useNavigation";
-import ConfirmAlert from "@/components/custom/shared/ConfirmAlert";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { DataTableDateRangeFilter } from "@/components/custom/table/components/DataTableDateRangeFilter";
 import { DataTableFilterDropdown } from "@/components/custom/table/components/DataTableFilterDropdown";
 import { Separator } from "@/components/ui/separator";
+import { ConfirmAlert } from "@/components/custom/shared/ConfirmAlert";
+import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog";
+import PageHeader from "@/components/custom/shared/PageHeader";
 
 type HolidayKind = "regular" | "special_non_working";
 
@@ -117,76 +119,79 @@ export default function HolidaysAdminPage() {
 		if (!isAdmin || !csvFile) return;
 		await uploadHolidaysCsv.mutateAsync(csvFile);
 		setCsvFile(null);
+		// Reset file input
+		const fileInput = document.getElementById(
+			"csv-upload",
+		) as HTMLInputElement;
+		if (fileInput) fileInput.value = "";
 		await refetch();
 	};
 
 	return (
 		<div className="container max-w-7xl mx-auto p-6 space-y-8">
-			{/* Header */}
-			<div className="flex items-start justify-between">
-				<div className="space-y-1">
-					<div className="flex items-center gap-3">
-						<div className="p-2 bg-primary/10 rounded-lg">
-							<CalendarDays className="size-6 text-primary" />
-						</div>
-						<div>
-							<h1 className="text-3xl font-bold tracking-tight">
-								Holidays
-							</h1>
-							<p className="text-muted-foreground mt-1">
-								Manage regular and special non-working holidays
-								for payroll
-							</p>
-						</div>
-					</div>
-				</div>
-				<Badge variant="secondary" className="text-xs font-medium">
-					Admin Access
-				</Badge>
-			</div>
-
+			<PageHeader
+				icon={Calendar}
+				title="Holiday Management"
+				description="Manage company holidays and special non-working days."
+				isAdminOnly
+			/>
 			{/* Add New Holiday Card */}
-			<Card className="border-dashed border-2">
-				<CardHeader>
-					<CardTitle className="text-lg flex items-center gap-2">
-						<Plus className="size-5" />
-						Add New Holiday
-					</CardTitle>
-					<CardDescription>
-						Create a new holiday entry for payroll calculations
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-						<div className="space-y-2">
-							<label className="text-sm font-medium">Date</label>
-							<Input
-								type="date"
-								placeholder="YYYY-MM-DD"
-								disabled={!isAdmin || addHoliday.isPending}
-								value={addForm.getValues("date") || ""}
-								onChange={(e) =>
-									addForm.setValue("date", e.target.value, {
-										shouldValidate: true,
-									})
-								}
-							/>
+			<Card className="border-2 border-dashed shadow-sm">
+				<CardContent className="p-4 sm:p-6">
+					<div className="space-y-4">
+						{/* Date and Name Row */}
+						<div className="grid grid-cols-2 gap-3">
+							{/* Date Input */}
+							<div className="space-y-2">
+								<label className="text-sm font-medium text-muted-foreground">
+									Date
+								</label>
+								<Input
+									type="date"
+									placeholder="YYYY-MM-DD"
+									disabled={!isAdmin || addHoliday.isPending}
+									value={addForm.getValues("date") || ""}
+									onChange={(e) =>
+										addForm.setValue(
+											"date",
+											e.target.value,
+											{
+												shouldValidate: true,
+											},
+										)
+									}
+									className="h-10 w-full"
+								/>
+							</div>
+
+							{/* Holiday Name Input */}
+							<div className="space-y-2">
+								<label className="text-sm font-medium text-muted-foreground">
+									Holiday Name
+								</label>
+								<Input
+									placeholder="e.g., Christmas Day"
+									disabled={!isAdmin || addHoliday.isPending}
+									value={addForm.getValues("name") || ""}
+									onChange={(e) =>
+										addForm.setValue(
+											"name",
+											e.target.value,
+											{
+												shouldValidate: true,
+											},
+										)
+									}
+									className="h-10"
+								/>
+							</div>
 						</div>
+
+						{/* Type Select */}
 						<div className="space-y-2">
-							<label className="text-sm font-medium">Name</label>
-							<Input
-								placeholder="Holiday name"
-								disabled={!isAdmin || addHoliday.isPending}
-								value={addForm.getValues("name") || ""}
-								onChange={(e) =>
-									addForm.setValue("name", e.target.value, {
-										shouldValidate: true,
-									})
-								}
-							/>
-						</div>
-						<div className="space-y-2">
-							<label className="text-sm font-medium">Type</label>
+							<label className="text-sm font-medium text-muted-foreground">
+								Type
+							</label>
 							<Select
 								disabled={!isAdmin || addHoliday.isPending}
 								value={addForm.getValues("kind") || "regular"}
@@ -198,7 +203,7 @@ export default function HolidaysAdminPage() {
 									)
 								}
 							>
-								<SelectTrigger>
+								<SelectTrigger className="h-10 w-full">
 									<SelectValue placeholder="Select type" />
 								</SelectTrigger>
 								<SelectContent>
@@ -211,60 +216,43 @@ export default function HolidaysAdminPage() {
 								</SelectContent>
 							</Select>
 						</div>
-						<div className="space-y-2">
-							<label className="text-sm font-medium opacity-0">
-								Action
-							</label>
-							<Button
-								onClick={addForm.handleSubmit(onAddSubmit)}
-								disabled={
-									!isAdmin ||
-									addHoliday.isPending ||
-									!addForm.getValues("date") ||
-									!addForm.getValues("name")
-								}
-								className="w-full"
-							>
-								<Plus className="size-4 mr-2" />
-								Add Holiday
-							</Button>
-						</div>
+
+						{/* Submit Button */}
+						<Button
+							onClick={addForm.handleSubmit(onAddSubmit)}
+							disabled={
+								!isAdmin ||
+								addHoliday.isPending ||
+								!addForm.getValues("date") ||
+								!addForm.getValues("name")
+							}
+							className="h-10 md:w-auto w-full"
+						>
+							<Plus className="size-4 mr-2" />
+							Add
+						</Button>
 					</div>
 				</CardContent>
 			</Card>
 
-			{/* Filters & Actions Card */}
+			{/* Holidays List Card */}
 			<Card>
-				<CardContent className="pt-6">
-					<div className="flex flex-col lg:flex-row gap-4">
-						{/* Left side - Search and Filters */}
-						<div className="flex-1 flex flex-wrap gap-3">
-							<div className="relative flex-1 min-w-[200px]">
-								<Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-								<Input
-									value={localSearch}
-									onChange={(e) =>
-										setLocalSearch(e.target.value)
-									}
-									placeholder="Search holidays..."
-									className="pl-9"
-								/>
+				<CardHeader className="pb-4">
+					<div className="flex flex-col gap-4">
+						<div className="flex items-center justify-between">
+							<div>
+								<CardTitle>Holiday List</CardTitle>
+								<CardDescription>
+									{data?.results?.length || 0} holidays in
+									total
+								</CardDescription>
 							</div>
-							<DataTableFilterDropdown
-								filters={filters}
-								className="w-[160px]"
-							/>
-							<DataTableDateRangeFilter className="w-[280px]" />
-						</div>
-
-						{/* Right side - Actions */}
-						<div className="flex gap-2">
 							<Button
 								type="button"
 								variant="outline"
+								size="sm"
 								onClick={handleRefresh}
 								disabled={isLoading}
-								size="default"
 							>
 								<RefreshCcw
 									className={cn(
@@ -274,48 +262,66 @@ export default function HolidaysAdminPage() {
 								/>
 								Refresh
 							</Button>
-
-							<div className="flex items-center gap-2">
-								<Input
-									type="file"
-									accept=".csv,text/csv"
-									disabled={
-										!isAdmin || uploadHolidaysCsv.isPending
-									}
-									onChange={(e) =>
-										setCsvFile(e.target.files?.[0] || null)
-									}
-									className="w-[180px]"
-								/>
-								<Button
-									type="button"
-									onClick={handleUploadCsv}
-									disabled={
-										!isAdmin ||
-										uploadHolidaysCsv.isPending ||
-										!csvFile
-									}
-								>
-									<Upload className="size-4 mr-2" />
-									{uploadHolidaysCsv.isPending
-										? "Uploading..."
-										: "Upload CSV"}
-								</Button>
-							</div>
 						</div>
-					</div>
-				</CardContent>
-			</Card>
 
-			{/* Holidays List Card */}
-			<Card>
-				<CardHeader>
-					<div className="flex items-center justify-between">
-						<div>
-							<CardTitle>Holiday List</CardTitle>
-							<CardDescription>
-								{data?.results?.length || 0} holidays in total
-							</CardDescription>
+						<Separator />
+
+						{/* Filters & CSV Upload */}
+						<div className="flex flex-col lg:flex-row gap-3">
+							<div className="flex-1 flex flex-wrap gap-2">
+								<div className="relative flex-1 min-w-[200px]">
+									<Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+									<Input
+										value={localSearch}
+										onChange={(e) =>
+											setLocalSearch(e.target.value)
+										}
+										placeholder="Search holidays..."
+										className="pl-9 h-9"
+									/>
+								</div>
+								<DataTableFilterDropdown
+									filters={filters}
+									className="w-[160px]"
+								/>
+								<DataTableDateRangeFilter className="w-[280px]" />
+							</div>
+
+							<Button
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={() =>
+									document
+										.getElementById("csv-upload")
+										?.click()
+								}
+								disabled={
+									!isAdmin || uploadHolidaysCsv.isPending
+								}
+								className="whitespace-nowrap"
+							>
+								<Upload className="size-4 mr-2" />
+								{uploadHolidaysCsv.isPending
+									? "Uploading..."
+									: "Import CSV"}
+							</Button>
+							<input
+								id="csv-upload"
+								type="file"
+								accept=".csv,text/csv"
+								className="hidden"
+								disabled={
+									!isAdmin || uploadHolidaysCsv.isPending
+								}
+								onChange={(e) => {
+									const file = e.target.files?.[0];
+									if (file) {
+										setCsvFile(file);
+										handleUploadCsv();
+									}
+								}}
+							/>
 						</div>
 					</div>
 				</CardHeader>
@@ -402,6 +408,10 @@ function HolidayRow({
 		onChanged?.();
 	};
 
+	const confirmDelete = useConfirmDialog({
+		onConfirm: remove,
+	});
+
 	return (
 		<div className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-lg hover:bg-accent/50 transition-colors">
 			<div className="flex items-center gap-4 flex-1 min-w-0">
@@ -438,7 +448,7 @@ function HolidayRow({
 							onValueChange={(v) => setKind(v as HolidayKind)}
 							disabled={!canManage || busy}
 						>
-							<SelectTrigger className="h-9">
+							<SelectTrigger className="h-9 w-full">
 								<SelectValue />
 							</SelectTrigger>
 							<SelectContent>
@@ -460,36 +470,38 @@ function HolidayRow({
 				</div>
 			</div>
 
-			<div className="flex items-center gap-2 md:ml-auto">
+			<div className="flex flex-col items-center gap-2 md:ml-auto">
 				<Button
 					onClick={save}
 					variant={isUnchanged ? "outline" : "default"}
 					disabled={!canManage || busy || isUnchanged}
 					size="sm"
+					className="w-full "
 				>
 					<Save className="size-4 mr-2" />
 					{updateMutation.isPending ? "Saving..." : "Save"}
 				</Button>
 
+				<Button
+					variant="destructive"
+					size="sm"
+					className="w-full"
+					disabled={!canManage || busy}
+					onClick={confirmDelete.openDialog}
+				>
+					<Trash2 className="size-4 mr-2" />
+					Delete
+				</Button>
+
 				<ConfirmAlert
-					trigger={
-						<Button
-							variant="destructive"
-							disabled={!canManage || busy}
-							size="sm"
-						>
-							<Trash2 className="size-4 mr-2" />
-							{deleteMutation.isPending
-								? "Deleting..."
-								: "Delete"}
-						</Button>
-					}
+					open={confirmDelete.open}
+					onOpenChange={confirmDelete.setOpen}
+					onConfirm={confirmDelete.handleConfirm}
+					isConfirming={confirmDelete.isConfirming}
 					title="Delete this holiday?"
 					description="This action cannot be undone."
 					confirmText="Delete"
 					confirmVariant="destructive"
-					isConfirming={deleteMutation.isPending}
-					onConfirm={remove}
 				/>
 			</div>
 		</div>
