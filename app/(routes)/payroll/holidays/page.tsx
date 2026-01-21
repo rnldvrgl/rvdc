@@ -53,6 +53,7 @@ import { HolidayKind } from "@/lib/constants/types";
 import EntitySheet from "@/components/custom/shared/EntitySheet";
 import HolidayForm from "@/components/forms/HolidayForm";
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet";
+import { Wrapper } from "@/components/custom/shared/Wrapper";
 
 export default function HolidaysAdminPage() {
 	const { search, limit, ordering, page, filter } = useSearchParameters();
@@ -111,13 +112,12 @@ export default function HolidaysAdminPage() {
 	};
 
 	return (
-		<div className="container max-w-7xl mx-auto p-6 space-y-8">
+		<Wrapper>
 			<PageHeader
 				icon={Calendar}
 				title="Holiday Management"
 				description="Manage company holidays and special non-working days."
 				isAdminOnly
-				theme="secondary"
 				actions={
 					<Button onClick={() => openView()}>
 						<Plus className="size-4 mr-1" />
@@ -264,7 +264,7 @@ export default function HolidaysAdminPage() {
 					)}
 				</CardContent>
 			</Card>
-		</div>
+		</Wrapper>
 	);
 }
 

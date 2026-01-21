@@ -1,5 +1,9 @@
-import { LucideIcon } from "lucide-react";
-import React, { useState } from "react";
+"use client";
+
+import { LucideIcon, ChevronRight } from "lucide-react";
+import React from "react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils/helpers";
 
 interface PageHeaderProps {
 	icon?: LucideIcon;
@@ -9,7 +13,8 @@ interface PageHeaderProps {
 	actions?: React.ReactNode;
 	breadcrumbs?: string[];
 	variant?: "default" | "compact" | "hero";
-	theme?: "primary" | "secondary" | "gradient" | "glass";
+	theme?: "default" | "primary" | "secondary" | "accent";
+	className?: string;
 }
 
 const PageHeader = ({
@@ -20,140 +25,169 @@ const PageHeader = ({
 	actions,
 	breadcrumbs,
 	variant = "default",
-	theme = "primary",
+	theme = "default",
+	className,
 }: PageHeaderProps) => {
-	const [isHovered, setIsHovered] = useState(false);
-
-	const themeClasses = {
-		primary:
-			"bg-gradient-to-br from-primary/50 via-primary/60 to-primary text-white border-primary/20",
-		secondary:
-			"bg-gradient-to-br from-slate-500 via-slate-600 to-slate-700 text-white border-slate-300/20",
-		gradient:
-			"bg-gradient-to-br from-primary via-red-500 to-secondary text-white border-white/10",
-		glass: "bg-white/10 dark:bg-black/10 backdrop-blur-xl border-white/20 dark:border-white/10 text-foreground shadow-2xl",
+	const themeStyles = {
+		default: {
+			container:
+				"bg-gradient-to-br from-background to-muted/50 border-border",
+			accent: "bg-primary/10 text-primary border-primary/20",
+			text: "text-foreground",
+			description: "text-muted-foreground",
+		},
+		primary: {
+			container:
+				"bg-gradient-to-br from-primary/90 to-primary border-primary/20 text-primary-foreground",
+			accent: "bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30",
+			text: "text-primary-foreground",
+			description: "text-primary-foreground/80",
+		},
+		secondary: {
+			container:
+				"bg-gradient-to-br from-secondary/90 to-secondary/70 border-secondary/20",
+			accent: "bg-secondary-foreground/20 text-secondary-foreground border-secondary-foreground/30",
+			text: "text-secondary-foreground",
+			description: "text-secondary-foreground/80",
+		},
+		accent: {
+			container:
+				"bg-gradient-to-br from-accent/90 to-accent/70 border-accent/20",
+			accent: "bg-accent-foreground/20 text-accent-foreground border-accent-foreground/30",
+			text: "text-accent-foreground",
+			description: "text-accent-foreground/80",
+		},
 	};
 
-	const variantClasses = {
-		default: "p-6 sm:p-8 lg:p-10",
-		compact: "p-4 sm:p-6 lg:p-8",
-		hero: "p-8 sm:p-12 lg:p-16",
+	const variantStyles = {
+		compact: {
+			padding: "p-4 sm:p-6",
+			titleSize: "text-xl sm:text-2xl",
+			iconSize: "size-6 sm:size-7",
+			iconPadding: "p-2.5",
+			gap: "gap-4",
+		},
+		default: {
+			padding: "p-6 sm:p-8",
+			titleSize: "text-2xl sm:text-3xl lg:text-4xl",
+			iconSize: "size-7 sm:size-8 lg:size-9",
+			iconPadding: "p-3 sm:p-3.5",
+			gap: "gap-6",
+		},
+		hero: {
+			padding: "p-8 sm:p-12 lg:p-16",
+			titleSize: "text-3xl sm:text-4xl lg:text-5xl xl:text-6xl",
+			iconSize: "size-8 sm:size-10 lg:size-12",
+			iconPadding: "p-4 sm:p-5",
+			gap: "gap-8",
+		},
 	};
 
-	const titleSizes = {
-		default: "text-2xl sm:text-3xl lg:text-4xl xl:text-5xl",
-		compact: "text-xl sm:text-2xl lg:text-3xl",
-		hero: "text-3xl sm:text-4xl lg:text-6xl xl:text-7xl",
-	};
-
-	const isGlassTheme = theme === "glass";
-	const textColor = isGlassTheme ? "text-foreground" : "text-white";
-	const mutedTextColor = isGlassTheme
-		? "text-muted-foreground"
-		: "text-white/90";
+	const currentTheme = themeStyles[theme];
+	const currentVariant = variantStyles[variant];
 
 	return (
-		<div
-			className={`relative overflow-hidden rounded-3xl ${themeClasses[theme]} ${variantClasses[variant]} shadow-2xl border transition-all duration-700 ease-out hover:shadow-3xl hover:scale-[1.02] group mb-8`}
-			onMouseEnter={() => setIsHovered(true)}
-			onMouseLeave={() => setIsHovered(false)}
-		>
-			{/* Animated mesh gradient background */}
-			{!isGlassTheme && (
-				<div className="absolute inset-0 opacity-30">
-					<div className="absolute top-0 -left-4 size-72 bg-white/20 rounded-full mix-blend-multiply filter blur-xl animate-blob"></div>
-					<div className="absolute top-0 -right-4 w-72 h-72 bg-white/20 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-2000"></div>
-					<div className="absolute -bottom-8 left-20 w-72 h-72 bg-white/20 rounded-full mix-blend-multiply filter blur-xl animate-blob animation-delay-4000"></div>
-				</div>
+		<header
+			className={cn(
+				"relative overflow-hidden rounded-2xl border shadow-sm transition-all duration-300 ease-out hover:shadow-md mb-6",
+				currentTheme.container,
+				currentVariant.padding,
+				className,
 			)}
-
-			{/* Geometric pattern overlay */}
-			<div className="absolute inset-0">
-				<div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_70%)] opacity-50"></div>
-				<div className="absolute top-0 right-0 w-96 h-96 bg-linear-to-br from-white/5 to-transparent rounded-full translate-x-48 -translate-y-48"></div>
-				<div className="absolute bottom-0 left-0 w-64 h-64 bg-linear-to-tr from-white/5 to-transparent rounded-full -translate-x-32 translate-y-32"></div>
+		>
+			{/* Subtle background pattern */}
+			<div className="absolute inset-0 opacity-40">
+				<div className="absolute inset-0 bg-linear-to-br from-transparent via-white/5 to-white/10" />
+				<div
+					className="absolute inset-0 opacity-30"
+					style={{
+						backgroundImage: `radial-gradient(circle at 25% 25%, currentColor 1px, transparent 1px)`,
+						backgroundSize: "24px 24px",
+					}}
+				/>
 			</div>
 
-			{/* Dynamic grid pattern */}
-			<div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[20px_20px] opacity-40 transition-opacity duration-500 group-hover:opacity-60"></div>
-
-			{/* Floating orbs */}
-			<div
-				className={`absolute top-8 right-8 w-24 h-24 bg-lieaner-to-br from-white/10 to-white/5 rounded-full blur-sm transition-all duration-1000 ${
-					isHovered
-						? "scale-125 opacity-80 rotate-12"
-						: "scale-100 opacity-60"
-				}`}
-			></div>
-			<div
-				className={`absolute bottom-8 left-8 w-16 h-16 bg-lienar-to-br from-white/10 to-white/5 rounded-full blur-sm transition-all duration-700 delay-150 ${
-					isHovered
-						? "scale-150 opacity-70 -rotate-12"
-						: "scale-100 opacity-50"
-				}`}
-			></div>
-
 			<div className="relative z-10">
-				{/* Modern breadcrumbs */}
+				{/* Breadcrumbs */}
 				{breadcrumbs &&
 					breadcrumbs.length > 0 &&
 					variant !== "compact" && (
-						<nav
-							className={`mb-6 sm:mb-8 ${variant === "hero" ? "lg:mb-10" : ""}`}
-							aria-label="Breadcrumb"
-						>
-							<div className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg">
+						<nav className="mb-4 sm:mb-6" aria-label="Breadcrumb">
+							<ol className="flex items-center gap-2 text-sm">
 								{breadcrumbs.map((crumb, index) => (
-									<React.Fragment key={index}>
+									<li
+										key={index}
+										className="flex items-center gap-2"
+									>
 										{index > 0 && (
-											<div className="mx-2 w-1.5 h-1.5 bg-current opacity-40 rounded-full"></div>
+											<ChevronRight className="size-3 opacity-60" />
 										)}
 										<span
-											className={`text-xs font-medium transition-all duration-300 ${
+											className={cn(
+												"transition-colors duration-200",
 												index === breadcrumbs.length - 1
-													? `${textColor} font-semibold`
-													: `${mutedTextColor} hover:text-current`
-											}`}
+													? cn(
+															"font-semibold",
+															currentTheme.text,
+														)
+													: cn(
+															"font-medium hover:opacity-80",
+															currentTheme.description,
+														),
+											)}
 										>
 											{crumb}
 										</span>
-									</React.Fragment>
+									</li>
 								))}
-							</div>
+							</ol>
 						</nav>
 					)}
 
-				<div
-					className={`flex flex-col ${variant === "compact" ? "gap-4" : "gap-6 sm:gap-8"}`}
-				>
-					{/* Main content area */}
-					<div className="flex flex-col sm:flex-row items-start gap-6 sm:gap-8">
-						{/* Icon and text content */}
-						<div className="flex items-start gap-4 sm:gap-6 flex-1 min-w-0">
+				<div className={cn("flex flex-col", currentVariant.gap)}>
+					{/* Main content */}
+					<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
+						{/* Title and icon section */}
+						<div className="flex items-start gap-4 min-w-0 flex-1">
+							{/* Icon */}
 							{Icon && (
-								<div className="group/icon relative">
-									<div className="p-3 sm:p-4 lg:p-5 bg-white/20 backdrop-blur-lg rounded-2xl sm:rounded-3xl shrink-0 border border-white/20 shadow-xl transition-all duration-500 hover:bg-white/30 hover:scale-110 hover:rotate-6 hover:shadow-2xl">
+								<div className="shrink-0 group">
+									<div
+										className={cn(
+											"rounded-xl transition-all duration-300 ease-out group-hover:scale-105",
+											currentTheme.accent,
+											currentVariant.iconPadding,
+										)}
+									>
 										<Icon
-											className={`size-7 sm:w-9 sm:h-9 lg:w-11 lg:h-11 ${textColor} transition-all duration-500 group-hover/icon:scale-110 group-hover/icon:rotate-12`}
+											className={cn(
+												"transition-transform duration-300 ease-out group-hover:scale-110",
+												currentVariant.iconSize,
+											)}
 										/>
 									</div>
-									{/* Icon halo effect */}
-									<div className="absolute inset-0 bg-white/10 rounded-2xl sm:rounded-3xl blur-md scale-150 opacity-0 group-hover/icon:opacity-100 transition-all duration-500"></div>
 								</div>
 							)}
-							<div className="min-w-0 flex-1 space-y-2 sm:space-y-3">
+
+							{/* Text content */}
+							<div className="min-w-0 flex-1 space-y-2">
 								{title && (
 									<h1
-										className={`${titleSizes[variant]} font-bold ${textColor} tracking-tight leading-tight`}
+										className={cn(
+											"font-bold tracking-tight leading-tight",
+											currentVariant.titleSize,
+											currentTheme.text,
+										)}
 									>
-										{/*<span className="bg-linear-to-r from-current via-current/95 to-current/90 bg-clip-text text-transparent drop-shadow-sm">*/}
 										{title}
-										{/*</span>*/}
 									</h1>
 								)}
 								{description && (
 									<p
-										className={`${mutedTextColor} text-base sm:text-lg lg:text-xl leading-relaxed max-w-3xl font-medium`}
+										className={cn(
+											"text-sm sm:text-base leading-relaxed max-w-3xl",
+											currentTheme.description,
+										)}
 									>
 										{description}
 									</p>
@@ -161,22 +195,21 @@ const PageHeader = ({
 							</div>
 						</div>
 
-						{/* Actions and badges container */}
-						<div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 shrink-0">
+						{/* Actions and badges */}
+						<div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
 							{/* Admin badge */}
 							{isAdminOnly && (
-								<div className="inline-flex items-center gap-3 px-4 sm:px-5 py-2 sm:py-2.5 bg-linear-to-r from-red-500/20 to-orange-500/20 backdrop-blur-lg rounded-2xl text-white text-sm sm:text-base font-semibold border border-red-300/30 shadow-lg transition-all duration-500 hover:from-red-500/30 hover:to-orange-500/30 hover:scale-105 hover:shadow-xl">
-									<div className="relative">
-										<div className="size-2 bg-red-400 rounded-full animate-pulse"></div>
-										<div className="absolute inset-0 size-2 bg-red-400 rounded-full animate-ping"></div>
-									</div>
-									<span>Admin Only</span>
-								</div>
+								<Badge
+									variant="destructive"
+									className="bg-destructive/90 hover:bg-destructive text-destructive-foreground border-destructive/20 shadow-sm"
+								>
+									Admin Only
+								</Badge>
 							)}
 
 							{/* Custom actions */}
 							{actions && (
-								<div className="flex items-center gap-3">
+								<div className="flex items-center gap-2">
 									{actions}
 								</div>
 							)}
@@ -185,19 +218,9 @@ const PageHeader = ({
 				</div>
 			</div>
 
-			{/* Bottom shine effect */}
-			<div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-white/30 to-transparent">
-				<div
-					className={`h-full bg-linear-to-r from-transparent via-white/60 to-transparent transition-all duration-1000 ${
-						isHovered ? "opacity-100" : "opacity-0"
-					}`}
-				></div>
-			</div>
-
-			{/* Corner highlights */}
-			<div className="absolute top-0 left-0 w-32 h-32 bg-linear-to-br from-white/10 via-white/5 to-transparent rounded-br-3xl"></div>
-			<div className="absolute bottom-0 right-0 w-24 h-24 bg-linear-to-tl from-white/10 via-white/5 to-transparent rounded-tl-3xl"></div>
-		</div>
+			{/* Bottom accent line */}
+			<div className="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-current/20 to-transparent opacity-50" />
+		</header>
 	);
 };
 
