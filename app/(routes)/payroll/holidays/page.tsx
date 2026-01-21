@@ -13,10 +13,6 @@ import { usePayrollAdminMutations } from "@/lib/mutations/usePayrollAdminMutatio
 
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { useForm } from "react-hook-form";
-
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -36,7 +32,6 @@ import {
 	SelectItem,
 } from "@/components/ui/select";
 import {
-	Plus,
 	RefreshCcw,
 	Save,
 	Trash2,
@@ -44,6 +39,7 @@ import {
 	Upload,
 	Search,
 	Calendar,
+	Plus,
 } from "lucide-react";
 import { useNavigation } from "@/lib/hooks/useNavigation";
 import { useDebounce } from "@/lib/hooks/useDebounce";
@@ -53,14 +49,10 @@ import { Separator } from "@/components/ui/separator";
 import { ConfirmAlert } from "@/components/custom/shared/ConfirmAlert";
 import { useConfirmDialog } from "@/lib/hooks/useConfirmDialog";
 import PageHeader from "@/components/custom/shared/PageHeader";
-
-type HolidayKind = "regular" | "special_non_working";
-
-const addHolidaySchema = z.object({
-	date: z.string().min(1, "Date is required"),
-	name: z.string().min(1, "Name is required"),
-	kind: z.enum(["regular", "special_non_working"]),
-});
+import { HolidayKind } from "@/lib/constants/types";
+import EntitySheet from "@/components/custom/shared/EntitySheet";
+import HolidayForm from "@/components/forms/HolidayForm";
+import { useEntitySheet } from "@/lib/hooks/useEntitySheet";
 
 export default function HolidaysAdminPage() {
 	const { search, limit, ordering, page, filter } = useSearchParameters();
@@ -70,6 +62,11 @@ export default function HolidaysAdminPage() {
 	const debouncedSearch = useDebounce(localSearch, 1000);
 	const { filters } = useHolidayFilters();
 
+	const {
+		entityState: viewSheet,
+		openEntity: openView,
+		closeEntity: closeView,
+	} = useEntitySheet<Holiday>();
 	// CSV upload state
 	const [csvFile, setCsvFile] = React.useState<File | null>(null);
 
@@ -95,22 +92,8 @@ export default function HolidaysAdminPage() {
 		filter,
 	});
 
-	const { addHoliday, updateHoliday, deleteHoliday, uploadHolidaysCsv } =
+	const { updateHoliday, deleteHoliday, uploadHolidaysCsv } =
 		usePayrollAdminMutations();
-
-	// Add holiday form
-	const addForm = useForm<z.infer<typeof addHolidaySchema>>({
-		resolver: zodResolver(addHolidaySchema),
-		defaultValues: { date: "", name: "", kind: "regular" },
-	});
-
-	const onAddSubmit = async (values: z.infer<typeof addHolidaySchema>) => {
-		if (!isAdmin) return;
-		await addHoliday.mutateAsync(values);
-		addForm.reset({ date: "", name: "", kind: "regular" });
-		await refetch();
-	};
-
 	const handleRefresh = async () => {
 		await refetch();
 	};
@@ -134,106 +117,24 @@ export default function HolidaysAdminPage() {
 				title="Holiday Management"
 				description="Manage company holidays and special non-working days."
 				isAdminOnly
+				theme="secondary"
+				actions={
+					<Button onClick={() => openView()}>
+						<Plus className="size-4 mr-1" />
+						Add Holiday
+					</Button>
+				}
 			/>
-			{/* Add New Holiday Card */}
-			<Card className="border-2 border-dashed shadow-sm">
-				<CardContent className="p-4 sm:p-6">
-					<div className="space-y-4">
-						{/* Date and Name Row */}
-						<div className="grid grid-cols-2 gap-3">
-							{/* Date Input */}
-							<div className="space-y-2">
-								<label className="text-sm font-medium text-muted-foreground">
-									Date
-								</label>
-								<Input
-									type="date"
-									placeholder="YYYY-MM-DD"
-									disabled={!isAdmin || addHoliday.isPending}
-									value={addForm.getValues("date") || ""}
-									onChange={(e) =>
-										addForm.setValue(
-											"date",
-											e.target.value,
-											{
-												shouldValidate: true,
-											},
-										)
-									}
-									className="h-10 w-full"
-								/>
-							</div>
-
-							{/* Holiday Name Input */}
-							<div className="space-y-2">
-								<label className="text-sm font-medium text-muted-foreground">
-									Holiday Name
-								</label>
-								<Input
-									placeholder="e.g., Christmas Day"
-									disabled={!isAdmin || addHoliday.isPending}
-									value={addForm.getValues("name") || ""}
-									onChange={(e) =>
-										addForm.setValue(
-											"name",
-											e.target.value,
-											{
-												shouldValidate: true,
-											},
-										)
-									}
-									className="h-10"
-								/>
-							</div>
-						</div>
-
-						{/* Type Select */}
-						<div className="space-y-2">
-							<label className="text-sm font-medium text-muted-foreground">
-								Type
-							</label>
-							<Select
-								disabled={!isAdmin || addHoliday.isPending}
-								value={addForm.getValues("kind") || "regular"}
-								onValueChange={(v) =>
-									addForm.setValue(
-										"kind",
-										v as "regular" | "special_non_working",
-										{ shouldValidate: true },
-									)
-								}
-							>
-								<SelectTrigger className="h-10 w-full">
-									<SelectValue placeholder="Select type" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="regular">
-										Regular Holiday
-									</SelectItem>
-									<SelectItem value="special_non_working">
-										Special Non-Working
-									</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-
-						{/* Submit Button */}
-						<Button
-							onClick={addForm.handleSubmit(onAddSubmit)}
-							disabled={
-								!isAdmin ||
-								addHoliday.isPending ||
-								!addForm.getValues("date") ||
-								!addForm.getValues("name")
-							}
-							className="h-10 md:w-auto w-full"
-						>
-							<Plus className="size-4 mr-2" />
-							Add
-						</Button>
-					</div>
-				</CardContent>
-			</Card>
+			<EntitySheet<Holiday>
+				open={viewSheet.open}
+				onClose={closeView}
+				title="Add Holiday"
+				description="Fill out the form below to add a new holiday."
+				withCloseConfirmation
+				renderForm={({ forceClose }) => (
+					<HolidayForm onClose={forceClose} />
+				)}
+			/>
 
 			{/* Holidays List Card */}
 			<Card>
@@ -282,7 +183,7 @@ export default function HolidaysAdminPage() {
 								</div>
 								<DataTableFilterDropdown
 									filters={filters}
-									className="w-[160px]"
+									className="w-40"
 								/>
 								<DataTableDateRangeFilter className="w-[280px]" />
 							</div>
@@ -415,7 +316,7 @@ function HolidayRow({
 	return (
 		<div className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-lg hover:bg-accent/50 transition-colors">
 			<div className="flex items-center gap-4 flex-1 min-w-0">
-				<div className="flex flex-col items-center justify-center bg-primary/10 rounded-lg p-3 min-w-[80px]">
+				<div className="flex flex-col items-center justify-center bg-primary/10 rounded-lg p-3 min-w-20">
 					<span className="text-2xl font-bold text-primary">
 						{new Date(holiday.date).getDate()}
 					</span>

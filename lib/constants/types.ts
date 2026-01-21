@@ -264,3 +264,5 @@ export type WeeklyPayroll = {
 	created_at: string;
 	updated_at: string;
 };
+
+export type HolidayKind = "regular" | "special_non_working";

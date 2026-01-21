@@ -65,6 +65,7 @@ export default function ExpensesPage() {
 				icon={Coins}
 				title="Expenses"
 				description="Manage and track all expenses related to your operations."
+				breadcrumbs={["Home", "Expenses", "Overview"]}
 			/>
 			{/* View transfer sheet */}
 			<EntitySheet<Expense>
