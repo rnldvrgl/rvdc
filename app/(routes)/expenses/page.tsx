@@ -3,10 +3,12 @@
 import { getExpenseColumns } from "@/app/(routes)/expenses/columns";
 import EntitySheet from "@/components/custom/shared/EntitySheet";
 import PageHeader from "@/components/custom/shared/PageHeader";
+import { Wrapper } from "@/components/custom/shared/Wrapper";
 import { DataTable } from "@/components/custom/table/DataTable";
 import { ExpenseDetails } from "@/components/details/ExpenseDetails";
 import ExpenseForm from "@/components/forms/ExpenseForm";
 import { Button } from "@/components/ui/button";
+
 import { Expense } from "@/lib/constants/interface";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet";
@@ -16,10 +18,10 @@ import { useExpenseFilters, useExpenses } from "@/lib/queries/useExpenses";
 import { Plus, Coins } from "lucide-react";
 
 export default function ExpensesPage() {
-	const { role } = useCurrentUser();
+	const { role, isAdmin } = useCurrentUser();
 	const { page, limit, search, filter, ordering } = useSearchParameters();
 	const { deleteExpense } = useExpenseMutations();
-	const { data, isLoading } = useExpenses({
+	const { data, isLoading, refetch } = useExpenses({
 		page,
 		limit,
 		search,
@@ -60,20 +62,31 @@ export default function ExpensesPage() {
 	});
 
 	return (
-		<div className="container mx-auto">
+		<Wrapper>
 			<PageHeader
 				icon={Coins}
-				title="Expenses"
-				description="Manage and track all expenses related to your operations."
-				breadcrumbs={["Home", "Expenses", "Overview"]}
+				title="Expense Management"
+				description="Track and manage all business expenses, monitor spending patterns, and maintain financial records."
+				variant="default"
+				theme="default"
+				breadcrumbs={["Dashboard", "Finance", "Expenses"]}
+				onRefresh={refetch}
+				actionButton={
+					isAdmin && (
+						<Button onClick={() => openAddSheet()}>
+							<Plus className="size-4 mr-2" />
+							Add Expense
+						</Button>
+					)
+				}
 			/>
-			{/* View transfer sheet */}
+			{/* View expense sheet */}
 			<EntitySheet<Expense>
 				open={viewSheet.open}
 				onClose={closeView}
 				entity={viewSheet.entity}
-				title="Transfer Details"
-				description="Review the details of this stock transfer."
+				title="Expense Details"
+				description="Review the details of this expense record."
 				renderForm={({ onClose, entity }) =>
 					entity ? (
 						<ExpenseDetails entity={entity} onClose={onClose} />
@@ -102,7 +115,10 @@ export default function ExpensesPage() {
 					<ExpenseForm onClose={forceClose} />
 				)}
 			/>
+			{/* Main Content */}
 			<DataTable
+				title="Expenses"
+				description="Track and manage all business expenses"
 				isLoading={isLoading}
 				columns={columns}
 				data={
@@ -113,16 +129,11 @@ export default function ExpensesPage() {
 						results: [],
 					}
 				}
-				headerActions={
-					<Button onClick={() => openAddSheet()}>
-						<Plus className="size-4 mr-1" />
-						Add Expense
-					</Button>
-				}
 				defaultRangePreset="Today"
 				filters={filters}
 				orderingOptions={orderingOptions}
+				onRefresh={refetch}
 			/>
-		</div>
+		</Wrapper>
 	);
 }

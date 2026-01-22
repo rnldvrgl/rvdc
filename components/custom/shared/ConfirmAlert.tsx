@@ -15,6 +15,7 @@ type ConfirmAlertProps = {
 	onOpenChange: (open: boolean) => void;
 	onConfirm: () => void;
 	isConfirming?: boolean;
+	disabled?: boolean;
 
 	title?: string;
 	description?: string;
@@ -34,6 +35,7 @@ export function ConfirmAlert({
 	onOpenChange,
 	onConfirm,
 	isConfirming = false,
+	disabled,
 	title = "Are you sure?",
 	description = "This action cannot be undone.",
 	confirmText = "Continue",
@@ -59,7 +61,7 @@ export function ConfirmAlert({
 						<Button
 							variant={confirmVariant}
 							onClick={onConfirm}
-							disabled={isConfirming}
+							disabled={isConfirming || disabled}
 						>
 							{isConfirming ? "Processing..." : confirmText}
 						</Button>

@@ -1,242 +1,244 @@
-import { AirconTypes, ChequeStatus } from '@/lib/constants/general'
+import { AirconTypes, ChequeStatus } from "@/lib/constants/general";
 import {
-  Client,
-  ComboboxOption,
-  Roles,
-  UnitChoice,
-} from '@/lib/constants/types'
-import { RemixiconComponentType } from '@remixicon/react'
-import { LucideIcon } from 'lucide-react'
+	Client,
+	ComboboxOption,
+	Roles,
+	UnitChoice,
+} from "@/lib/constants/types";
+import { RemixiconComponentType } from "@remixicon/react";
+import { LucideIcon } from "lucide-react";
 
 // ---------------------
 // API Mutations & Sheets
 // ---------------------
 export interface UseApiMutationProps<TVariables, TData> {
-  mutationFn: (variables: TVariables) => Promise<TData>
-  successMessage?: string
-  invalidateQueries?: { queryKey: string[] }[]
-  onSuccess?: (data: TData, variables: TVariables) => void
-  onError?: (error: unknown) => void
+	mutationFn: (variables: TVariables) => Promise<TData>;
+	successMessage?: string;
+	invalidateQueries?: { queryKey: string[] }[];
+	onSuccess?: (data: TData, variables: TVariables) => void;
+	onError?: (error: unknown) => void;
 }
 
 export interface GetColumnsProps<T> {
-  onEdit: (item: T) => void
-  onDelete: (item: T) => void
-  onRestock?: (item: T) => void
-  onCustomAction?: (item: T) => void
-  onView?: (item: T) => void
-  onPrint?: (item: T) => void
+	onEdit: (item: T) => void;
+	onDelete: (item: T) => void;
+	onRestock?: (item: T) => void;
+	onCustomAction?: (item: T) => void;
+	onView?: (item: T) => void;
+	onPrint?: (item: T) => void;
 
-  // Status actions
-  onSold?: (item: T) => void
-  onInstall?: (item: T) => void
-  onReserve?: (item: T) => void
-  onRedeemCleaning?: (item: T) => void
-  role?: Roles
+	// Status actions
+	onSold?: (item: T) => void;
+	onInstall?: (item: T) => void;
+	onReserve?: (item: T) => void;
+	onRedeemCleaning?: (item: T) => void;
+	role?: Roles;
 }
 
 export interface EntitySheetProps<T> {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description?: string
-  entity?: T
-  renderForm: (props: { onClose: () => void; entity?: T }) => React.ReactNode
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	title: string;
+	description?: string;
+	entity?: T;
+	renderForm: (props: { onClose: () => void; entity?: T }) => React.ReactNode;
 }
 
 export interface EntityState<T> {
-  open: boolean
-  entity: T | undefined
+	open: boolean;
+	entity: T | undefined;
 }
 
 export interface useEntitySheetReturn<T> {
-  entityState: EntityState<T>
-  openEntity: (entity?: T) => void
-  closeEntity: () => void
-  toggleEntity: () => void
-  confirmClose?: () => void
+	entityState: EntityState<T>;
+	openEntity: (entity?: T) => void;
+	closeEntity: () => void;
+	toggleEntity: () => void;
+	confirmClose?: () => void;
 }
 
 export interface EntityDialogProps<T> {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description?: string
-  entity?: T
-  renderForm: (props: { onClose: () => void; entity?: T }) => React.ReactNode
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	title: string;
+	description?: string;
+	entity?: T;
+	renderForm: (props: { onClose: () => void; entity?: T }) => React.ReactNode;
 }
 
 export interface EntityDialogState<T> {
-  open: boolean
-  entity: T | undefined
+	open: boolean;
+	entity: T | undefined;
 }
 
 export interface useEntitySheetReturn<T> {
-  entityState: EntityDialogState<T>
-  openEntity: (entity?: T) => void
-  closeEntity: () => void
-  toggleEntity: () => void
+	entityState: EntityDialogState<T>;
+	openEntity: (entity?: T) => void;
+	closeEntity: () => void;
+	toggleEntity: () => void;
 }
 
 // ---------------------
 // User
 // ---------------------
 export interface User {
-  id: number
-  first_name: string
-  last_name: string
-  full_name?: string
-  username: string
-  email: string
-  profile_image: string
-  birthday?: string
-  assigned_stall?: Stall
-  is_active?: boolean
-  contact_number?: string
-  role: Roles
+	id: number;
+	first_name: string;
+	last_name: string;
+	full_name?: string;
+	username: string;
+	email: string;
+	profile_image: string;
+	birthday?: string;
+	assigned_stall?: Stall;
+	is_active?: boolean;
+	contact_number?: string;
+	role: Roles;
 }
 
 // ---------------------
 // Product Categories
 // ---------------------
 export interface ProductCategory {
-  id: number
-  name: string
-  description?: string
-  is_deleted?: boolean
-  created_at: string
-  updated_at: string
+	id: number;
+	name: string;
+	description?: string;
+	is_deleted?: boolean;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface ProductCategoryPayload {
-  name: string
-  description?: string
+	name: string;
+	description?: string;
 }
 
 // ---------------------
 // Item
 // ---------------------
 export interface ItemEntry {
-  item: Item
-  quantity: number
-  final_price_per_unit?: number
-  print_price_per_unit?: number
+	item: Item;
+	quantity: number;
+	final_price_per_unit?: number;
+	print_price_per_unit?: number;
 }
 
 export interface Item {
-  id: number
-  name: string
-  sku: string
-  category: ProductCategory | null
-  description?: string | null
-  unit_of_measure: UnitChoice
-  retail_price: string
-  wholesale_price: string
-  technician_price: string
-  cost_price: string
-  is_deleted: boolean
-  created_at: string
-  updated_at: string
-  display_name?: string
+	id: number;
+	name: string;
+	sku: string;
+	category: ProductCategory | null;
+	description?: string | null;
+	unit_of_measure: UnitChoice;
+	retail_price: string;
+	wholesale_price: string;
+	technician_price: string;
+	cost_price: string;
+	is_deleted: boolean;
+	created_at: string;
+	updated_at: string;
+	display_name?: string;
 }
 
 export interface ItemPayload {
-  name: string
-  retail_price: number
-  wholesale_price: number
-  technician_price: number
-  cost_price: number
-  category_id: number | null
-  description?: string
-  unit_of_measure: UnitChoice
+	name: string;
+	retail_price: number;
+	wholesale_price: number;
+	technician_price: number;
+	cost_price: number;
+	category_id: number | null;
+	description?: string;
+	unit_of_measure: UnitChoice;
 }
 
 // ---------------------
 // Stall
 // ---------------------
 export interface Stall {
-  id: number
-  name: string
-  location: string
-  is_deleted: boolean
-  created_at: string
-  updated_at: string
+	id: number;
+	name: string;
+	location: string;
+	is_deleted: boolean;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface StallPayload {
-  name: string
-  location: string
+	name: string;
+	location: string;
 }
 
 // ---------------------
 // Stock (Stall Stocks)
 // ---------------------
 export interface Stock {
-  id: number
-  item: Item
-  stall: Stall | null
-  quantity: number
-  low_stock_threshold: number
-  status: string
-  type_display: string
-  is_deleted: boolean
-  created_at: string
-  updated_at: string
-  track_stock: boolean
-  stock_room_quantity: number
-  stock_room_status: string
+	id: number;
+	item: Item;
+	stall: Stall | null;
+	quantity: number;
+	low_stock_threshold: number;
+	status: string;
+	type_display: string;
+	is_deleted: boolean;
+	created_at: string;
+	updated_at: string;
+	track_stock: boolean;
+	stock_room_quantity: number;
+	stock_room_status: string;
+	min_threshold?: number;
+	max_threshold?: number;
 }
 
 export interface StockPayload {
-  stall_id?: number | null
-  quantity: number
-  low_stock_threshold?: number
-  track_stock?: boolean
+	stall_id?: number | null;
+	quantity: number;
+	low_stock_threshold?: number;
+	track_stock?: boolean;
 }
 
 // ---------------------
 // StockRoom Stock
 // ---------------------
 export interface StockRoomStock {
-  id: number
-  item: Item
-  quantity: number
-  low_stock_threshold: number
-  status: string
-  is_deleted: boolean
-  created_at: string
-  updated_at: string
+	id: number;
+	item: Item;
+	quantity: number;
+	low_stock_threshold: number;
+	status: string;
+	is_deleted: boolean;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface StockRoomStockPayload {
-  quantity: number
-  low_stock_threshold?: number
+	quantity: number;
+	low_stock_threshold?: number;
 }
 
 // ---------------------
 // Stock Transfer
 // ---------------------
 export interface StockTransferItem {
-  id: number
-  transfer: number
-  item: Item
-  quantity: number
+	id: number;
+	transfer: number;
+	item: Item;
+	quantity: number;
 }
 
 export interface StockTransfer {
-  id: number
-  from_stall: Stall | null
-  to_stall: Stall
-  transferred_by: User | null
-  technician: User | null
-  transfer_date: string
-  is_finalized: boolean
-  finalized_at: string | null
-  items: StockTransferItem[]
-  is_paid: boolean
-  paid_at: string | null
-  total_price: string | number
-  used_for: string
+	id: number;
+	from_stall: Stall | null;
+	to_stall: Stall;
+	transferred_by: User | null;
+	technician: User | null;
+	transfer_date: string;
+	is_finalized: boolean;
+	finalized_at: string | null;
+	items: StockTransferItem[];
+	is_paid: boolean;
+	paid_at: string | null;
+	total_price: string | number;
+	used_for: string;
 }
 
 /**
@@ -246,383 +248,383 @@ export interface StockTransfer {
  * - or from another stall (via from_stall)
  */
 export interface StockTransferPayload {
-  from_stall: number | undefined
-  to_stall: number
-  technician: number
-  used_for: string
-  items: {
-    item: number
-    quantity: number
-  }[]
+	from_stall: number | undefined;
+	to_stall: number;
+	technician: number;
+	used_for: string;
+	items: {
+		item: number;
+		quantity: number;
+	}[];
 }
 
 // ---------------------
 // Navigation
 // ---------------------
 export interface NavigationItemBase {
-  name: string
-  icon: LucideIcon | RemixiconComponentType
-  permission?: string
+	name: string;
+	icon: LucideIcon | RemixiconComponentType;
+	permission?: string;
 }
 
 export interface ShortcutLink extends NavigationItemBase {
-  action: string
+	action: string;
 }
 
 export interface NavigationLink extends NavigationItemBase {
-  href: string
+	href: string;
 }
 
 export interface NavigationGroup extends NavigationItemBase {
-  children: NavigationLink[]
+	children: NavigationLink[];
 }
 
 export interface BuildNavOptions {
-  role: 'admin' | 'manager' | 'clerk' | string
-  permissions: string[]
+	role: "admin" | "manager" | "clerk" | string;
+	permissions: string[];
 }
 
 export interface Notification {
-  id: number
-  user: User
-  type: string
-  data: Record<string, unknown>
-  message: string
-  is_read: boolean
-  created_at: string
-  relative_time: string
-  summary: string
+	id: number;
+	user: User;
+	type: string;
+	data: Record<string, unknown>;
+	message: string;
+	is_read: boolean;
+	created_at: string;
+	relative_time: string;
+	summary: string;
 }
 
 export interface Expense {
-  id: number
-  stall: number | string
-  stall_data: Stall
-  total_price: number
-  paid_amount: number
-  is_paid: boolean
-  description: string
-  source: 'manual' | 'transfer'
-  created_by: { id: number; name: string }
-  created_at: string
-  paid_at?: string
-  transfer?: StockTransfer
+	id: number;
+	stall: number | string;
+	stall_data: Stall;
+	total_price: number;
+	paid_amount: number;
+	is_paid: boolean;
+	description: string;
+	source: "manual" | "transfer";
+	created_by: { id: number; name: string };
+	created_at: string;
+	paid_at?: string;
+	transfer?: StockTransfer;
 }
 
 export interface ExpensePayload {
-  stall?: number
-  total_price: number
-  description: string
+	stall?: number;
+	total_price: number;
+	description: string;
 }
 
 // Payment enums
-export type PaymentType = 'cash' | 'gcash' | 'credit' | 'debit' | 'cheque'
-export type PaymentStatus = 'unpaid' | 'partial' | 'paid'
+export type PaymentType = "cash" | "gcash" | "credit" | "debit" | "cheque";
+export type PaymentStatus = "unpaid" | "partial" | "paid";
 
 // Payment
 export interface SalesPayment {
-  id: number
-  payment_type: PaymentType
-  amount: number
-  payment_date: string
+	id: number;
+	payment_type: PaymentType;
+	amount: number;
+	payment_date: string;
 }
 
 // Sales Item
 export interface SalesItem {
-  id: number
-  item: Item
-  description: string
-  quantity: number
-  final_price_per_unit: string
-  print_price_per_unit?: string | number
-  line_total: number
+	id: number;
+	item: Item;
+	description: string;
+	quantity: number;
+	final_price_per_unit: string;
+	print_price_per_unit?: string | number;
+	line_total: number;
 }
 
 // Sales Transaction
 export interface SalesTransaction {
-  id: number
-  stall: Stall
-  client?: Client
+	id: number;
+	stall: Stall;
+	client?: Client;
 
-  manual_receipt_number?: string | null
-  system_receipt_number: string // UUID
+	manual_receipt_number?: string | null;
+	system_receipt_number: string; // UUID
 
-  payment_status: PaymentStatus
+	payment_status: PaymentStatus;
 
-  voided: boolean
-  voided_at?: string | null
-  void_reason?: string | null
+	voided: boolean;
+	voided_at?: string | null;
+	void_reason?: string | null;
 
-  is_deleted: boolean
-  deleted_at?: string | null
+	is_deleted: boolean;
+	deleted_at?: string | null;
 
-  created_at: string
-  updated_at: string
+	created_at: string;
+	updated_at: string;
 
-  // Related items & payments
-  items: SalesItem[]
-  payments: SalesPayment[]
+	// Related items & payments
+	items: SalesItem[];
+	payments: SalesPayment[];
 
-  // Computed props if you send them from serializer
-  computed_total?: string
-  total_items?: number
-  total_paid?: number
+	// Computed props if you send them from serializer
+	computed_total?: string;
+	total_items?: number;
+	total_paid?: number;
 }
 
 export interface SalesTransactionPayload {
-  stall: number | null | undefined
-  client: number | null
-  manual_receipt_number: string | null
-  items: {
-    item: number
-    quantity: number
-    final_price_per_unit: number
-  }[]
-  payments: {
-    payment_type: string
-    amount: number
-  }[]
+	stall: number | null | undefined;
+	client: number | null;
+	manual_receipt_number: string | null;
+	items: {
+		item: number;
+		quantity: number;
+		final_price_per_unit: number;
+	}[];
+	payments: {
+		payment_type: string;
+		amount: number;
+	}[];
 }
 
 export interface SalesTransactionVoidingPayload {
-  void_reason: string
+	void_reason: string;
 }
 
 export interface AnalyticsSummary {
-  total_sales: number // revenue
-  total_clients: number // clients_count
-  low_stock_items: number // low_stock_count
-  no_stock_items: number // no_stock_count
-  total_expense: number // expense
-  net_income: number // average revenue per transaction
-  expense_count: number // number of expense records
-  top_selling_item: {
-    name: string | null // name of the top selling item (nullable)
-    quantity: number // quantity sold
-  }
+	total_sales: number; // revenue
+	total_clients: number; // clients_count
+	low_stock_items: number; // low_stock_count
+	no_stock_items: number; // no_stock_count
+	total_expense: number; // expense
+	net_income: number; // average revenue per transaction
+	expense_count: number; // number of expense records
+	top_selling_item: {
+		name: string | null; // name of the top selling item (nullable)
+		quantity: number; // quantity sold
+	};
 }
 
 export type TopSellingItems = {
-  item: string
-  quantity: number
-}
+	item: string;
+	quantity: number;
+};
 
 export interface SalesOvertime {
-  date: string
-  total_sales: number
+	date: string;
+	total_sales: number;
 }
 
 export interface ExpensesOvertime {
-  date: string
-  total_expense: number
+	date: string;
+	total_expense: number;
 }
 
 export type CashFlow = {
-  date: string
-  income: number
-  expense: number
-}
+	date: string;
+	income: number;
+	expense: number;
+};
 
 export type TopClients = {
-  client: string
-  total_spent: number
-}
+	client: string;
+	total_spent: number;
+};
 
 export type UnpaidSalesStatus = {
-  status: string
-  count: number
-}
+	status: string;
+	count: number;
+};
 
 export type RestocksOvertime = {
-  date: string
-  restock_volume: number
-}
+	date: string;
+	restock_volume: number;
+};
 export interface LabeledOption {
-  label: string
-  value: string
+	label: string;
+	value: string;
 }
 
 export interface FilterDefinition {
-  key: string
-  label: string
-  options: LabeledOption[]
+	key: string;
+	label: string;
+	options: LabeledOption[];
 }
 
 export interface SortOption {
-  label: string
-  value: string
+	label: string;
+	value: string;
 }
 
 export interface FilterResponse {
-  filters: Record<string, LabeledOption[]>
-  ordering: LabeledOption[]
+	filters: Record<string, LabeledOption[]>;
+	ordering: LabeledOption[];
 }
 
 export interface CashDenominationBreakdown {
-  total_remitted_amount: string
-  total_declared_amount: string
-  cod_amount: string
-  total_cash_declared: string
+	total_remitted_amount: string;
+	total_declared_amount: string;
+	cod_amount: string;
+	total_cash_declared: string;
 
-  count_1000: number
-  count_500: number
-  count_200: number
-  count_100: number
-  count_50: number
-  count_20: number
-  count_10: number
-  count_5: number
-  count_1: number
+	count_1000: number;
+	count_500: number;
+	count_200: number;
+	count_100: number;
+	count_50: number;
+	count_20: number;
+	count_10: number;
+	count_5: number;
+	count_1: number;
 
-  declared_count_1000: number
-  declared_count_500: number
-  declared_count_200: number
-  declared_count_100: number
-  declared_count_50: number
-  declared_count_20: number
-  declared_count_10: number
-  declared_count_5: number
-  declared_count_1: number
+	declared_count_1000: number;
+	declared_count_500: number;
+	declared_count_200: number;
+	declared_count_100: number;
+	declared_count_50: number;
+	declared_count_20: number;
+	declared_count_10: number;
+	declared_count_5: number;
+	declared_count_1: number;
 }
 
 export interface RemittanceRecord {
-  id: number
-  stall: number
-  stall_data?: {
-    id: number
-    name: string
-  }
+	id: number;
+	stall: number;
+	stall_data?: {
+		id: number;
+		name: string;
+	};
 
-  created_at: string
+	created_at: string;
 
-  total_sales_cash: string
-  total_sales_gcash: string
-  total_sales_credit: string
-  total_sales_debit: string
-  total_sales_cheque: string
+	total_sales_cash: string;
+	total_sales_gcash: string;
+	total_sales_credit: string;
+	total_sales_debit: string;
+	total_sales_cheque: string;
 
-  total_collected: string
-  total_expenses: string
-  expected_remittance: string
-  declared_amount: string
-  remitted_amount: string
-  balance: string
+	total_collected: string;
+	total_expenses: string;
+	expected_remittance: string;
+	declared_amount: string;
+	remitted_amount: string;
+	balance: string;
 
-  is_remitted: boolean
-  notes: string
+	is_remitted: boolean;
+	notes: string;
 
-  remitted_by: {
-    id: number
-    full_name: string
-  } | null
+	remitted_by: {
+		id: number;
+		full_name: string;
+	} | null;
 
-  cash_breakdown?: CashDenominationBreakdown
+	cash_breakdown?: CashDenominationBreakdown;
 
-  cod_for_next_day: number | string
-  cod_for_today: {
-    cod_amount: number | string
-    cod_breakdown: unknown | null
-    source: string
-    date: string
-  }
+	cod_for_next_day: number | string;
+	cod_for_today: {
+		cod_amount: number | string;
+		cod_breakdown: unknown | null;
+		source: string;
+		date: string;
+	};
 }
 
 export interface ChequeCollection {
-  id: number
-  date_collected: string
-  client: number
-  client_name: string
-  issued_by: string
-  billing_amount: string
-  cheque_amount: string
-  cheque_number: string
-  cheque_date: string
-  bank_name: string
-  deposit_bank?: string
-  or_number?: string
-  sales_transaction?: number | null
-  collection_type: string
-  collected_by?: number
-  collected_by_name?: string
-  notes?: string
-  status: ChequeStatus
-  created_at: string
-  updated_at: string
+	id: number;
+	date_collected: string;
+	client: number;
+	client_name: string;
+	issued_by: string;
+	billing_amount: string;
+	cheque_amount: string;
+	cheque_number: string;
+	cheque_date: string;
+	bank_name: string;
+	deposit_bank?: string;
+	or_number?: string;
+	sales_transaction?: number | null;
+	collection_type: string;
+	collected_by?: number;
+	collected_by_name?: string;
+	notes?: string;
+	status: ChequeStatus;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface ChequeCollectionRequest {
-  client: number
-  collected_by?: number
-  issued_by: string
-  billing_amount: string
-  cheque_amount: string
-  cheque_number: string
-  cheque_date: string
-  bank_name: string
-  deposit_bank?: string
-  or_number?: string
-  collection_type: string
-  notes?: string
+	client: number;
+	collected_by?: number;
+	issued_by: string;
+	billing_amount: string;
+	cheque_amount: string;
+	cheque_number: string;
+	cheque_date: string;
+	bank_name: string;
+	deposit_bank?: string;
+	or_number?: string;
+	collection_type: string;
+	notes?: string;
 }
 
 export interface ComboBoxProps {
-  options: ComboboxOption[]
-  value: string | number | null
-  onChange: (value: string | number | null) => void
-  placeholder?: string
-  searchPlaceholder?: string
-  className?: string
-  disabled?: boolean
+	options: ComboboxOption[];
+	value: string | number | null;
+	onChange: (value: string | number | null) => void;
+	placeholder?: string;
+	searchPlaceholder?: string;
+	className?: string;
+	disabled?: boolean;
 }
 
 export interface AirconType {
-  id: number
-  name: string
+	id: number;
+	name: string;
 }
 
 export interface AirconBrands {
-  id: number
-  name: string
+	id: number;
+	name: string;
 }
 
 export interface AirconModels {
-  id: number
-  brand?: AirconBrands
-  brand_id?: number
-  name: string
-  retail_price: string
-  discount_percentage?: string
-  aircon_type: AirconTypes
-  is_inverter: boolean
-  has_discount?: boolean
+	id: number;
+	brand?: AirconBrands;
+	brand_id?: number;
+	name: string;
+	retail_price: string;
+	discount_percentage?: string;
+	aircon_type: AirconTypes;
+	is_inverter: boolean;
+	has_discount?: boolean;
 }
 
 // Response type
 export interface AirconUnits {
-  id: number
-  model: AirconModels
-  serial_number: string
-  sale?: number | null
-  installation?: number | null
-  reserved_by?: Client | null
-  reserved_at?: string | null
-  warranty_start_date?: string | null
-  warranty_period_months?: number
-  free_cleaning_redeemed?: boolean
-  warranty_end_date?: string
-  warranty_status?: string
-  warranty_days_left?: number
-  is_reserved?: boolean
-  is_available_for_sale?: boolean
-  created_at?: string
+	id: number;
+	model: AirconModels;
+	serial_number: string;
+	sale?: number | null;
+	installation?: number | null;
+	reserved_by?: Client | null;
+	reserved_at?: string | null;
+	warranty_start_date?: string | null;
+	warranty_period_months?: number;
+	free_cleaning_redeemed?: boolean;
+	warranty_end_date?: string;
+	warranty_status?: string;
+	warranty_days_left?: number;
+	is_reserved?: boolean;
+	is_available_for_sale?: boolean;
+	created_at?: string;
 }
 
 // Request type
 export type AirconUnitPayload = {
-  serial_number: string
-  model_id: number
-  sale?: number | null
-  installation?: number | null
-  reserved_by?: number | null
-  free_cleaning_redeemed?: boolean
-}
+	serial_number: string;
+	model_id: number;
+	sale?: number | null;
+	installation?: number | null;
+	reserved_by?: number | null;
+	free_cleaning_redeemed?: boolean;
+};

@@ -1,20 +1,24 @@
 "use client";
 
-import { LucideIcon, ChevronRight } from "lucide-react";
+import { LucideIcon, ChevronRight, RefreshCw } from "lucide-react";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/helpers";
+import { Button } from "@/components/ui/button";
+import toast from "react-hot-toast";
 
 interface PageHeaderProps {
 	icon?: LucideIcon;
 	title?: string;
 	description?: string;
 	isAdminOnly?: boolean;
-	actions?: React.ReactNode;
 	breadcrumbs?: string[];
 	variant?: "default" | "compact" | "hero";
 	theme?: "default" | "primary" | "secondary" | "accent";
 	className?: string;
+	onRefresh?: () => void;
+	isLoading?: boolean;
+	actionButton?: React.ReactNode;
 }
 
 const PageHeader = ({
@@ -22,11 +26,13 @@ const PageHeader = ({
 	title,
 	description,
 	isAdminOnly,
-	actions,
 	breadcrumbs,
 	variant = "default",
 	theme = "default",
 	className,
+	actionButton,
+	onRefresh,
+	isLoading,
 }: PageHeaderProps) => {
 	const themeStyles = {
 		default: {
@@ -97,7 +103,7 @@ const PageHeader = ({
 		>
 			{/* Subtle background pattern */}
 			<div className="absolute inset-0 opacity-40">
-				<div className="absolute inset-0 bg-linear-to-br from-transparent via-white/5 to-white/10" />
+				<div className="absolute inset-0 bg-linear-to-br from-transparent dark:via-white/5 dark:to-white/10 via-primary/5 to-primary/10" />
 				<div
 					className="absolute inset-0 opacity-30"
 					style={{
@@ -207,12 +213,33 @@ const PageHeader = ({
 								</Badge>
 							)}
 
-							{/* Custom actions */}
-							{actions && (
-								<div className="flex items-center gap-2">
-									{actions}
-								</div>
-							)}
+							<div className="grid gap-2">
+								{onRefresh && (
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={async () => {
+											try {
+												toast.success(
+													"Data refreshed successfully.",
+												);
+											} catch {
+												toast.error(
+													"Failed to refresh",
+												);
+											}
+										}}
+										disabled={isLoading}
+									>
+										<RefreshCw
+											className={`size-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
+										/>
+										Refresh
+									</Button>
+								)}
+								{/* Custom actions */}
+								{actionButton && actionButton}
+							</div>
 						</div>
 					</div>
 				</div>

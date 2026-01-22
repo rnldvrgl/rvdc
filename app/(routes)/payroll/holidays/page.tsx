@@ -118,7 +118,7 @@ export default function HolidaysAdminPage() {
 				title="Holiday Management"
 				description="Manage company holidays and special non-working days."
 				isAdminOnly
-				actions={
+				actionButton={
 					<Button onClick={() => openView()}>
 						<Plus className="size-4 mr-1" />
 						Add Holiday
