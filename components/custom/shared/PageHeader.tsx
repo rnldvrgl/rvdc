@@ -118,7 +118,10 @@ const PageHeader = ({
 				{breadcrumbs &&
 					breadcrumbs.length > 0 &&
 					variant !== "compact" && (
-						<nav className="mb-4 sm:mb-6" aria-label="Breadcrumb">
+						<nav
+							className="mb-4 sm:mb-6 hidden sm:block"
+							aria-label="Breadcrumb"
+						>
 							<ol className="flex items-center gap-2 text-sm">
 								{breadcrumbs.map((crumb, index) => (
 									<li
@@ -154,7 +157,7 @@ const PageHeader = ({
 					{/* Main content */}
 					<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 sm:gap-6">
 						{/* Title and icon section */}
-						<div className="flex items-start gap-4 min-w-0 flex-1">
+						<div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 min-w-0 flex-1">
 							{/* Icon */}
 							{Icon && (
 								<div className="shrink-0 group">
@@ -176,7 +179,7 @@ const PageHeader = ({
 							)}
 
 							{/* Text content */}
-							<div className="min-w-0 flex-1 space-y-2">
+							<div className="min-w-0 flex-1 space-y-2 text-center sm:text-start">
 								{title && (
 									<h1
 										className={cn(
@@ -202,18 +205,18 @@ const PageHeader = ({
 						</div>
 
 						{/* Actions and badges */}
-						<div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
+						<div className="flex flex-col xl:flex-row items-start xl:items-center gap-3 shrink-0">
 							{/* Admin badge */}
 							{isAdminOnly && (
 								<Badge
 									variant="destructive"
-									className="bg-destructive/90 hover:bg-destructive text-destructive-foreground border-destructive/20 shadow-sm"
+									className="bg-destructive/90 hover:bg-destructive text-destructive-foreground border-destructive/20 shadow-sm w-full xl:w-auto"
 								>
 									Admin Only
 								</Badge>
 							)}
 
-							<div className="grid gap-2">
+							<div className="grid gap-2 w-full">
 								{onRefresh && (
 									<Button
 										variant="outline"

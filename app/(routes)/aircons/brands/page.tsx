@@ -67,8 +67,6 @@ export default function AirconBrandsPage() {
 				icon={Wind}
 				title="Aircon Brands"
 				description="Manage air conditioning equipment brands and manufacturer information for installation and service operations."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Aircons", "Brands"]}
 				isAdminOnly={!isAdmin}
 				onRefresh={refetch}

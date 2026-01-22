@@ -59,8 +59,6 @@ export default function StallsPage() {
 				icon={Store}
 				title="Stall Management"
 				description="Manage retail locations, track inventory distribution points, and monitor stall performance across your business network."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Inventory", "Stalls"]}
 				isAdminOnly={!isAdmin}
 				onRefresh={refetch}

@@ -91,8 +91,6 @@ export default function AirconUnitsPage() {
 				icon={Snowflake}
 				title="Aircon Units"
 				description="Manage individual air conditioning units, track installation status, and handle sales, reservations, and maintenance operations."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Aircons", "Units"]}
 				isAdminOnly={!isAdmin}
 				actionButton={

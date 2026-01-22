@@ -72,8 +72,6 @@ export default function ClientsPage() {
 				icon={Users}
 				title="Client Management"
 				description="Manage customer information, contact details, and account status for all your clients."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Clients"]}
 				onRefresh={refetch}
 				actionButton={

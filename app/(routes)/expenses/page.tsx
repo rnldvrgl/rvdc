@@ -67,8 +67,6 @@ export default function ExpensesPage() {
 				icon={Coins}
 				title="Expense Management"
 				description="Track and manage all business expenses, monitor spending patterns, and maintain financial records."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Finance", "Expenses"]}
 				onRefresh={refetch}
 				actionButton={

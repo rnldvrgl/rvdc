@@ -89,8 +89,6 @@ export default function StocksPage() {
 				icon={Package}
 				title="Stall Stock Management"
 				description="Monitor and manage inventory levels across all stall locations with real-time stock tracking and automated alerts."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Inventory", "Stocks", "Stalls"]}
 				isAdminOnly={!isAdmin}
 				onRefresh={refetch}

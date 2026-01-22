@@ -67,10 +67,8 @@ export default function ItemCategoriesPage() {
 				icon={FolderOpen}
 				title="Product Categories"
 				description="Organize your inventory with product categories to improve organization and searchability of items."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Inventory", "Categories"]}
-				isAdminOnly={!isAdmin}
+				isAdminOnly
 				onRefresh={refetch}
 				actionButton={
 					isAdmin && (

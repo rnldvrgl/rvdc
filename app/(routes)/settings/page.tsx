@@ -227,8 +227,6 @@ export default function SettingsPage() {
 				icon={Settings}
 				title="Account Settings"
 				description="Manage your personal information, security settings, and account preferences."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Settings"]}
 				isAdminOnly={!isAdmin}
 			/>

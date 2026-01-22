@@ -74,8 +74,6 @@ export default function StockTransfersPage() {
 				icon={ArrowRightLeft}
 				title="Stock Transfers"
 				description="Manage inventory transfers between stockroom and stalls with comprehensive tracking and expense management."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Inventory", "Stocks", "Transfers"]}
 				isAdminOnly={!isAdmin}
 				actions={

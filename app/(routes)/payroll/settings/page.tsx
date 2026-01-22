@@ -129,11 +129,6 @@ export default function PayrollSettingsPage() {
 
 	const resetLocal = () => setForm({});
 
-	const handleRefresh = async () => {
-		await refetch();
-		setForm({});
-	};
-
 	const effective: PayrollSettings | undefined = useMemo(() => {
 		if (!settings) return undefined;
 		return {
@@ -518,22 +513,9 @@ export default function PayrollSettingsPage() {
 						</div>
 
 						<div className="flex items-center gap-2">
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={handleRefresh}
-								disabled={busy}
-								className="gap-2"
-							>
-								<RefreshCw
-									className={`size-4 ${busy ? "animate-spin" : ""}`}
-								/>
-								Refresh
-							</Button>
-
 							{hasChanges && (
 								<Button
-									variant="ghost"
+									variant="destructive"
 									size="sm"
 									onClick={resetLocal}
 									disabled={busy}

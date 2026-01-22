@@ -35,8 +35,6 @@ const DashboardPage = () => {
 				icon={BarChart3}
 				title="Dashboard Overview"
 				description="Monitor your business performance with real-time analytics, sales metrics, and operational insights."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard"]}
 				onRefresh={refetch}
 			/>

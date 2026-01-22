@@ -64,8 +64,6 @@ export default function ChequeCollectionsPage() {
 				icon={Receipt}
 				title="Cheque Collections"
 				description="Manage and track cheque collections from clients with comprehensive payment monitoring and reconciliation."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Receivables", "Cheques"]}
 				isAdminOnly={!isAdmin}
 				actionButton={

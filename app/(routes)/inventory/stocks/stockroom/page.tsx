@@ -73,10 +73,8 @@ export default function StockRoomStocksPage() {
 				icon={Warehouse}
 				title="Stockroom Management"
 				description="Manage central warehouse inventory with comprehensive stock tracking, automated reordering, and threshold management."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Inventory", "Stocks", "Stockroom"]}
-				isAdminOnly={!isAdmin}
+				isAdminOnly
 				onRefresh={refetch}
 			/>
 

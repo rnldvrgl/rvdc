@@ -58,10 +58,8 @@ export default function ItemsPage() {
 				icon={Package}
 				title="Inventory Items"
 				description="Manage your product catalog, track item details, and monitor inventory levels across all categories."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Inventory", "Items"]}
-				isAdminOnly={!isAdmin}
+				isAdminOnly
 				actionButton={
 					isAdmin && (
 						<Button onClick={() => openAddSheet()}>

@@ -68,10 +68,8 @@ export default function TechniciansPage() {
 				icon={Users}
 				title="Technician Management"
 				description="Manage your technical staff, track their skills, certifications, and service assignments."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Staff", "Technicians"]}
-				isAdminOnly={!isAdmin}
+				isAdminOnly
 				onRefresh={refetch}
 				actionButton={
 					isAdmin && (

@@ -82,8 +82,6 @@ export default function SalesTransactionsPage() {
 				icon={ShoppingCart}
 				title="Sales Management"
 				description="Track sales transactions, manage customer orders, and monitor revenue performance across all stalls."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Sales", "Transactions"]}
 				actionButton={
 					<Button onClick={() => openCreate()}>

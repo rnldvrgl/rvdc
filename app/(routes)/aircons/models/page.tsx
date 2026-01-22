@@ -83,8 +83,6 @@ export default function AirconModelsPage() {
 				icon={Monitor}
 				title="Aircon Models"
 				description="Manage air conditioning unit models, specifications, pricing, and promotional discounts for your installation services."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Aircons", "Models"]}
 				isAdminOnly={!isAdmin}
 				actionButton={

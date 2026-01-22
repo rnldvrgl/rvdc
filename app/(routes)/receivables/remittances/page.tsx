@@ -63,8 +63,6 @@ export default function RemittancesPage() {
 				icon={DollarSign}
 				title="Remittance Management"
 				description="Track and manage daily cash remittances from all stall locations with comprehensive financial oversight."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Receivables", "Remittances"]}
 				isAdminOnly={!isAdmin}
 				actionButton={

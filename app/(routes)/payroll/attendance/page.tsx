@@ -203,8 +203,6 @@ export default function PayrollAttendancePage() {
 				icon={Clock}
 				title="Payroll & Attendance"
 				description="Manage weekly payroll summaries, track employee attendance, and review time entries for accurate payroll processing."
-				variant="default"
-				theme="default"
 				breadcrumbs={["Dashboard", "Payroll", "Attendance"]}
 				isAdminOnly={!isAdmin}
 				onRefresh={refetchWeeklyList}
