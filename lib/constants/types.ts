@@ -3,6 +3,7 @@ import {
 	NavigationGroup,
 	NavigationLink,
 	ShortcutLink,
+	Stall,
 } from "@/lib/constants/interface";
 import {
 	ChequeCollectionSchema,
@@ -15,7 +16,7 @@ import z from "zod";
 // Shared utility types
 export type Sorting = { id: string; desc: boolean }[];
 export type UnitChoice = "pcs" | "ft" | "kg" | "roll" | "box";
-export type Roles = "admin" | "manager" | "clerk" | "guest";
+export type Roles = "admin" | "manager" | "clerk" | "technician" | "guest";
 export type NavigationEntry = NavigationLink | NavigationGroup;
 export type ShortcutEntry = ShortcutLink;
 
@@ -105,9 +106,9 @@ export type Client = BaseEntity & {
 
 export type ClientPayload = Omit<Client, keyof BaseEntity>;
 
-// Technician
-export type Technician = BaseEntity & {
-	role?: string;
+// Employee (formerly Technician)
+export type Employee = BaseEntity & {
+	role: "admin" | "manager" | "clerk" | "technician";
 	is_active?: boolean;
 	email?: string;
 	birthday?: string;
@@ -123,7 +124,11 @@ export type Technician = BaseEntity & {
 	philhealth_number?: string;
 	basic_salary?: number;
 	profile_image?: string;
+	assigned_stall?: Stall;
 };
+
+// Keep Technician as alias for backward compatibility
+export type Technician = Employee;
 
 // Navigation
 

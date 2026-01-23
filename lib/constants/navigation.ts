@@ -2,6 +2,7 @@ import { NavigationEntry, ShortcutEntry } from "@/lib/constants/types";
 import {
 	Banknote,
 	Boxes,
+	CalendarDays,
 	// CalendarDays,
 	CircleDollarSign,
 	Coins,
@@ -60,23 +61,16 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 		icon: Users,
 		permission: "view_clients",
 	},
-
 	payroll: {
 		name: "Payroll",
-
 		icon: LayoutDashboard,
-
 		children: [
 			{
-				name: "Admin Settings",
-
+				name: "Payroll Settings",
 				href: "/payroll/settings",
-
 				icon: Settings,
-
 				permission: "manage_payroll_settings",
 			},
-
 			{
 				name: "Holidays",
 
@@ -86,28 +80,32 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 
 				permission: "manage_holidays",
 			},
-
+		],
+	},
+	employees: {
+		name: "Employees",
+		href: "/employees",
+		icon: Users,
+		permission: "view_employees",
+	},
+	attendance: {
+		name: "Attendance",
+		icon: CalendarDays,
+		children: [
 			{
-				name: "Attendance Ops",
-				href: "/payroll/attendance",
-				icon: FileText,
+				name: "Overview",
+				href: "/attendance/overview",
+				icon: CalendarDays,
 				permission: "manage_attendance_admin",
+			},
+			{
+				name: "Timetable",
+				href: "/attendance/timetable",
+				icon: CalendarDays,
+				permission: "manage_attendance",
 			},
 		],
 	},
-
-	technicians: {
-		name: "Technicians",
-		href: "/technicians",
-		icon: Users,
-		permission: "view_technicians",
-	},
-	// attendance: {
-	// 	name: "Attendance",
-	// 	href: "/attendance",
-	// 	icon: CalendarDays,
-	// 	permission: "view_attendance",
-	// },
 	// services: {
 	//   name: 'Services',
 	//   href: '/services',
@@ -193,6 +191,24 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 		permission: "view_settings",
 	},
 };
+
+// Ordered navigation array to maintain consistent sidebar sorting with better business hierarchy
+export const orderedNavigation: NavigationEntry[] = [
+	baseNavigation.dashboard,
+	// Core Business Operations
+	baseNavigation.sales,
+	baseNavigation.receivables,
+	baseNavigation.expenses,
+	baseNavigation.inventory,
+	// Customer & People Management
+	baseNavigation.clients,
+	baseNavigation.employees,
+	// HR & Operations
+	baseNavigation.payroll,
+	baseNavigation.attendance,
+	// System Management
+	baseNavigation.settings,
+];
 
 export const baseShortcuts: ShortcutEntry[] = [
 	// 	{

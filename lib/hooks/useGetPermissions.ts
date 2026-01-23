@@ -5,7 +5,7 @@ export function useGetPermissions(role: Roles) {
 	return useMemo(() => {
 		const commonViewPermissions = [
 			"view_clients",
-			"view_technicians",
+			"view_employees",
 			"view_items",
 			"view_stallstocks",
 			"view_settings",
@@ -14,6 +14,8 @@ export function useGetPermissions(role: Roles) {
 			"view_remittances",
 			"view_cheque_collections",
 		];
+
+		const commonEmployeePermissions = ["manage_attendance"];
 
 		const commonShortcuts = [
 			"shortcut_add_client",
@@ -51,6 +53,7 @@ export function useGetPermissions(role: Roles) {
 			manager: [
 				...commonViewPermissions,
 				...commonShortcuts,
+				...commonEmployeePermissions,
 				"manage_stock_transfer",
 				"shortcut_add_transfer",
 				"view_services",
@@ -65,13 +68,16 @@ export function useGetPermissions(role: Roles) {
 				"view_aircon_models",
 				"view_aircon_units",
 				"view_aircon_installations",
+				"manage_holidays",
 			],
 			clerk: [
 				...commonViewPermissions,
 				...commonShortcuts,
+				...commonEmployeePermissions,
 				"manage_stock_transfer",
 				"shortcut_add_transfer",
 			],
+			technician: [...commonEmployeePermissions],
 			guest: [],
 		};
 
