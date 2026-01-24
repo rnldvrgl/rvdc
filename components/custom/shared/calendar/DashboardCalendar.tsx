@@ -29,12 +29,6 @@ import {
 	XCircle,
 	Thermometer,
 	Plane,
-	Cake,
-	Building,
-	CalendarDays,
-	Brush,
-	Wrench,
-	Store,
 } from "lucide-react";
 import {
 	format,
@@ -52,11 +46,6 @@ import {
 	addDays,
 	subDays,
 } from "date-fns";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 import {
 	useCalendarEvents,
@@ -64,6 +53,9 @@ import {
 } from "@/lib/queries/calendar/useCalendarEvents";
 import { useCalendarPreferences } from "@/lib/hooks/useCalendarPreferences";
 import CalendarSettings from "./CalendarSettings";
+import { CalendarEventItem } from "./CalendarEventItem";
+import { EventIcon } from "./EventIcon";
+import { DayViewEventItem } from "./DayViewEventItem";
 import { cn } from "@/lib/utils/helpers";
 
 // Color utility for event types
@@ -159,41 +151,7 @@ const EventDetailModal = ({
 					<div className="space-y-4">
 						<div className="flex items-center gap-3">
 							<div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-								{extendedProps.iconComponent ? (
-									<extendedProps.iconComponent className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-								) : (
-									(() => {
-										const status =
-											extendedProps.status ||
-											extendedProps.attendance_status;
-										switch (status) {
-											case "present":
-												return (
-													<CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-												);
-											case "late":
-												return (
-													<AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-												);
-											case "absent":
-												return (
-													<XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
-												);
-											case "sick":
-												return (
-													<Thermometer className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-												);
-											case "vacation":
-												return (
-													<Plane className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-												);
-											default:
-												return (
-													<CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-												);
-										}
-									})()
-								)}
+								<EventIcon event={event} size="lg" />
 							</div>
 							<div>
 								<h3 className="font-semibold">
@@ -255,7 +213,7 @@ const EventDetailModal = ({
 					<div className="space-y-4">
 						<div className="flex items-center gap-3">
 							<div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-								<Cake className="w-5 h-5 text-green-600 dark:text-green-400" />
+								<EventIcon event={event} size="lg" />
 							</div>
 							<div>
 								<h3 className="font-semibold">
@@ -287,11 +245,7 @@ const EventDetailModal = ({
 										: "bg-orange-100 dark:bg-orange-900/30"
 								} flex items-center justify-center`}
 							>
-								{isRegular ? (
-									<Building className="w-5 h-5 text-red-600 dark:text-red-400" />
-								) : (
-									<CalendarDays className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-								)}
+								<EventIcon event={event} size="lg" />
 							</div>
 							<div>
 								<h3 className="font-semibold">{event.title}</h3>
@@ -320,13 +274,7 @@ const EventDetailModal = ({
 					<div className="space-y-4">
 						<div className="flex items-center gap-3">
 							<div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-								{extendedProps.service_type === "cleaning" ? (
-									<Brush className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-								) : extendedProps.service_type === "on_site" ? (
-									<Wrench className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-								) : (
-									<Store className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-								)}
+								<EventIcon event={event} size="lg" />
 							</div>
 							<div>
 								<h3 className="font-semibold">
@@ -782,229 +730,14 @@ const DashboardCalendar = ({
 													.slice(0, 3)
 													.map(
 														(event, eventIndex) => (
-															<Tooltip
+															<CalendarEventItem
 																key={eventIndex}
-															>
-																<TooltipTrigger
-																	asChild
-																>
-																	<button
-																		onClick={(
-																			e,
-																		) => {
-																			e.stopPropagation();
-																			handleEventClick(
-																				event,
-																			);
-																		}}
-																		className="w-full text-left"
-																	>
-																		<div
-																			className="text-xs px-1.5 py-0.5 rounded truncate hover:opacity-80 transition-opacity flex items-center gap-1"
-																			style={{
-																				backgroundColor:
-																					event.backgroundColor,
-																				color: event.textColor,
-																			}}
-																		>
-																			{event
-																				.extendedProps
-																				?.iconComponent && (
-																				<event.extendedProps.iconComponent className="size-3 shrink-0" />
-																			)}
-																			{event
-																				.extendedProps
-																				?.type ===
-																				"attendance" &&
-																				!event
-																					.extendedProps
-																					?.iconComponent &&
-																				(() => {
-																					const status =
-																						event
-																							.extendedProps
-																							.status;
-																					switch (
-																						status
-																					) {
-																						case "present":
-																							return (
-																								<CheckCircle className="size-3 shrink-0" />
-																							);
-																						case "late":
-																							return (
-																								<AlertTriangle className="size-3 shrink-0" />
-																							);
-																						case "absent":
-																							return (
-																								<XCircle className="size-3 shrink-0" />
-																							);
-																						case "sick":
-																							return (
-																								<Thermometer className="size-3 shrink-0" />
-																							);
-																						case "vacation":
-																							return (
-																								<Plane className="size-3 shrink-0" />
-																							);
-																						default:
-																							return null;
-																					}
-																				})()}
-																			{event
-																				.extendedProps
-																				?.type ===
-																				"birthday" && (
-																				<Cake className="size-3 shrink-0" />
-																			)}
-																			{event
-																				.extendedProps
-																				?.type ===
-																				"holiday" &&
-																				(event
-																					.extendedProps
-																					.holiday_type ===
-																				"regular" ? (
-																					<Building className="size-3 shrink-0" />
-																				) : (
-																					<CalendarDays className="size-3 shrink-0" />
-																				))}
-																			{event
-																				.extendedProps
-																				?.type ===
-																				"schedule" &&
-																				(event
-																					.extendedProps
-																					.service_type ===
-																				"cleaning" ? (
-																					<Brush className="size-3 shrink-0" />
-																				) : event
-																						.extendedProps
-																						.service_type ===
-																				  "on_site" ? (
-																					<Wrench className="size-3 shrink-0" />
-																				) : (
-																					<Store className="size-3 shrink-0" />
-																				))}
-																			<span className="truncate">
-																				{
-																					event.title
-																				}
-																			</span>
-																		</div>
-																	</button>
-																</TooltipTrigger>
-																<TooltipContent>
-																	<div className="max-w-xs">
-																		<div className="font-medium">
-																			{
-																				event.title
-																			}
-																		</div>
-																		{event
-																			.extendedProps
-																			?.type ===
-																			"attendance" && (
-																			<div className="text-xs mt-1">
-																				Status:{" "}
-																				{
-																					event
-																						.extendedProps
-																						.status
-																				}
-																				{event
-																					.extendedProps
-																					.checkIn && (
-																					<div>
-																						Check
-																						In:{" "}
-																						{
-																							event
-																								.extendedProps
-																								.checkIn
-																						}
-																					</div>
-																				)}
-																				{event
-																					.extendedProps
-																					.checkOut && (
-																					<div>
-																						Check
-																						Out:{" "}
-																						{
-																							event
-																								.extendedProps
-																								.checkOut
-																						}
-																					</div>
-																				)}
-																			</div>
-																		)}
-																		{event
-																			.extendedProps
-																			?.type ===
-																			"birthday" && (
-																			<div className="text-xs  mt-1">
-																				Employee
-																				Birthday
-																			</div>
-																		)}
-																		{event
-																			.extendedProps
-																			?.type ===
-																			"holiday" && (
-																			<div className="text-xs  mt-1">
-																				{event
-																					.extendedProps
-																					.holiday_type ===
-																				"regular"
-																					? "Regular Holiday"
-																					: "Special Holiday"}
-																			</div>
-																		)}
-																		{event
-																			.extendedProps
-																			?.type ===
-																			"schedule" && (
-																			<div className="text-xs mt-1">
-																				{event.extendedProps.service_type
-																					?.replace(
-																						"_",
-																						" ",
-																					)
-																					.replace(
-																						/\b\w/g,
-																						(
-																							l: string,
-																						) =>
-																							l.toUpperCase(),
-																					)}{" "}
-																				Service
-																				{event
-																					.extendedProps
-																					.client_name && (
-																					<div>
-																						Client:{" "}
-																						{
-																							event
-																								.extendedProps
-																								.client_name
-																						}
-																					</div>
-																				)}
-																			</div>
-																		)}
-																		<div className="text-xs mt-1">
-																			{format(
-																				new Date(
-																					event.start,
-																				),
-																				"MMM dd, yyyy",
-																			)}
-																		</div>
-																	</div>
-																</TooltipContent>
-															</Tooltip>
+																event={event}
+																variant="full"
+																onClick={
+																	handleEventClick
+																}
+															/>
 														),
 													)}
 												{dayEvents.length > 3 && (
@@ -1021,46 +754,14 @@ const DashboardCalendar = ({
 													.slice(0, 4)
 													.map(
 														(event, eventIndex) => (
-															<Tooltip
+															<CalendarEventItem
 																key={eventIndex}
-															>
-																<TooltipTrigger
-																	asChild
-																>
-																	<button
-																		onClick={(
-																			e,
-																		) => {
-																			e.stopPropagation();
-																			handleEventClick(
-																				event,
-																			);
-																		}}
-																		className="w-2 h-2 rounded-full inline-block mr-1 hover:scale-110 transition-transform"
-																		style={{
-																			backgroundColor:
-																				event.backgroundColor,
-																		}}
-																	/>
-																</TooltipTrigger>
-																<TooltipContent>
-																	<div className="max-w-xs">
-																		<div className="font-medium">
-																			{
-																				event.title
-																			}
-																		</div>
-																		<div className="text-xs mt-1">
-																			{format(
-																				new Date(
-																					event.start,
-																				),
-																				"MMM dd, yyyy",
-																			)}
-																		</div>
-																	</div>
-																</TooltipContent>
-															</Tooltip>
+																event={event}
+																variant="dot"
+																onClick={
+																	handleEventClick
+																}
+															/>
 														),
 													)}
 											</div>
@@ -1141,210 +842,13 @@ const DashboardCalendar = ({
 										onClick={() => handleDayClick(day)}
 									>
 										{dayEvents.map((event, eventIndex) => (
-											<Tooltip key={eventIndex}>
-												<TooltipTrigger asChild>
-													<button
-														onClick={(e) => {
-															e.stopPropagation();
-															handleEventClick(
-																event,
-															);
-														}}
-														className="w-full text-left mb-1"
-													>
-														<div
-															className="text-xs p-1 rounded truncate flex items-center gap-1"
-															style={{
-																backgroundColor:
-																	event.backgroundColor,
-																color: event.textColor,
-															}}
-														>
-															{event.extendedProps
-																?.iconComponent && (
-																<event.extendedProps.iconComponent className="size-3 shrink-0" />
-															)}
-															{event.extendedProps
-																?.type ===
-																"attendance" &&
-																!event
-																	.extendedProps
-																	?.iconComponent &&
-																(() => {
-																	const status =
-																		event
-																			.extendedProps
-																			.status;
-																	switch (
-																		status
-																	) {
-																		case "present":
-																			return (
-																				<CheckCircle className="size-3 shrink-0" />
-																			);
-																		case "late":
-																			return (
-																				<AlertTriangle className="size-3 shrink-0" />
-																			);
-																		case "absent":
-																			return (
-																				<XCircle className="size-3 shrink-0" />
-																			);
-																		case "sick":
-																			return (
-																				<Thermometer className="size-3 shrink-0" />
-																			);
-																		case "vacation":
-																			return (
-																				<Plane className="size-3 shrink-0" />
-																			);
-																		default:
-																			return null;
-																	}
-																})()}
-															{event.extendedProps
-																?.type ===
-																"birthday" && (
-																<Cake className="size-3 shrink-0" />
-															)}
-															{event.extendedProps
-																?.type ===
-																"holiday" &&
-																(event
-																	.extendedProps
-																	.holiday_type ===
-																"regular" ? (
-																	<Building className="size-3 shrink-0" />
-																) : (
-																	<CalendarDays className="size-3 shrink-0" />
-																))}
-															{event.extendedProps
-																?.type ===
-																"schedule" &&
-																(event
-																	.extendedProps
-																	.service_type ===
-																"cleaning" ? (
-																	<Brush className="size-3 shrink-0" />
-																) : event
-																		.extendedProps
-																		.service_type ===
-																  "on_site" ? (
-																	<Wrench className="size-3 shrink-0" />
-																) : (
-																	<Store className="size-3 shrink-0" />
-																))}
-															<span className="truncate">
-																{event.title}
-															</span>
-														</div>
-													</button>
-												</TooltipTrigger>
-												<TooltipContent>
-													<div className="max-w-xs">
-														<div className="font-medium">
-															{event.title}
-														</div>
-														{event.extendedProps
-															?.type ===
-															"attendance" && (
-															<div className="text-xs text-muted-foreground mt-1">
-																Status:{" "}
-																{
-																	event
-																		.extendedProps
-																		.status
-																}
-																{event
-																	.extendedProps
-																	.checkIn && (
-																	<div>
-																		Check
-																		In:{" "}
-																		{
-																			event
-																				.extendedProps
-																				.checkIn
-																		}
-																	</div>
-																)}
-																{event
-																	.extendedProps
-																	.checkOut && (
-																	<div>
-																		Check
-																		Out:{" "}
-																		{
-																			event
-																				.extendedProps
-																				.checkOut
-																		}
-																	</div>
-																)}
-															</div>
-														)}
-														{event.extendedProps
-															?.type ===
-															"birthday" && (
-															<div className="text-xs text-muted-foreground mt-1">
-																Employee
-																Birthday
-															</div>
-														)}
-														{event.extendedProps
-															?.type ===
-															"holiday" && (
-															<div className="text-xs text-muted-foreground mt-1">
-																{event
-																	.extendedProps
-																	.holiday_type ===
-																"regular"
-																	? "Regular Holiday"
-																	: "Special Holiday"}
-															</div>
-														)}
-														{event.extendedProps
-															?.type ===
-															"schedule" && (
-															<div className="text-xs text-muted-foreground mt-1">
-																{event.extendedProps.service_type
-																	?.replace(
-																		"_",
-																		" ",
-																	)
-																	.replace(
-																		/\b\w/g,
-																		(
-																			l: string,
-																		) =>
-																			l.toUpperCase(),
-																	)}{" "}
-																Service
-																{event
-																	.extendedProps
-																	.client_name && (
-																	<div>
-																		Client:{" "}
-																		{
-																			event
-																				.extendedProps
-																				.client_name
-																		}
-																	</div>
-																)}
-															</div>
-														)}
-														<div className="text-xs text-muted-foreground mt-1">
-															{format(
-																new Date(
-																	event.start,
-																),
-																"MMM dd, yyyy h:mm a",
-															)}
-														</div>
-													</div>
-												</TooltipContent>
-											</Tooltip>
+											<CalendarEventItem
+												key={eventIndex}
+												event={event}
+												variant="full"
+												onClick={handleEventClick}
+												className="mb-1"
+											/>
 										))}
 									</div>
 								);
@@ -1375,188 +879,12 @@ const DashboardCalendar = ({
 							{dayEvents
 								.filter((e) => e.allDay)
 								.map((event, index) => (
-									<Tooltip key={index}>
-										<TooltipTrigger asChild>
-											<button
-												onClick={() =>
-													handleEventClick(event)
-												}
-												className="w-full text-left p-2 rounded-lg border hover:bg-muted/50 transition-colors"
-											>
-												<div className="flex items-center gap-3">
-													{event.extendedProps
-														?.iconComponent ? (
-														<event.extendedProps.iconComponent className="w-4 h-4" />
-													) : event.extendedProps
-															?.type ===
-													  "attendance" ? (
-														(() => {
-															const status =
-																event
-																	.extendedProps
-																	.status;
-															switch (status) {
-																case "present":
-																	return (
-																		<CheckCircle className="w-4 h-4 text-green-600" />
-																	);
-																case "late":
-																	return (
-																		<AlertTriangle className="w-4 h-4 text-yellow-600" />
-																	);
-																case "absent":
-																	return (
-																		<XCircle className="w-4 h-4 text-red-600" />
-																	);
-																case "sick":
-																	return (
-																		<Thermometer className="w-4 h-4 text-purple-600" />
-																	);
-																case "vacation":
-																	return (
-																		<Plane className="w-4 h-4 text-cyan-600" />
-																	);
-																default:
-																	return (
-																		<div
-																			className="size-3 rounded-full"
-																			style={{
-																				backgroundColor:
-																					event.backgroundColor,
-																			}}
-																		/>
-																	);
-															}
-														})()
-													) : event.extendedProps
-															?.type ===
-													  "birthday" ? (
-														<Cake className="w-4 h-4 text-green-600" />
-													) : event.extendedProps
-															?.type ===
-													  "holiday" ? (
-														event.extendedProps
-															.holiday_type ===
-														"regular" ? (
-															<Building className="w-4 h-4 text-red-600" />
-														) : (
-															<CalendarDays className="w-4 h-4 text-orange-600" />
-														)
-													) : event.extendedProps
-															?.type ===
-													  "schedule" ? (
-														event.extendedProps
-															.service_type ===
-														"cleaning" ? (
-															<Brush className="w-4 h-4 text-blue-600" />
-														) : event.extendedProps
-																.service_type ===
-														  "on_site" ? (
-															<Wrench className="w-4 h-4 text-blue-600" />
-														) : (
-															<Store className="w-4 h-4 text-blue-600" />
-														)
-													) : (
-														<div
-															className="size-3 rounded-full"
-															style={{
-																backgroundColor:
-																	event.backgroundColor,
-															}}
-														/>
-													)}
-													<span className="font-medium">
-														{event.title}
-													</span>
-												</div>
-											</button>
-										</TooltipTrigger>
-										<TooltipContent>
-											<div className="max-w-xs">
-												<div className="font-medium">
-													{event.title}
-												</div>
-												{event.extendedProps?.type ===
-													"attendance" && (
-													<div className="text-xs text-muted-foreground mt-1">
-														Status:{" "}
-														{
-															event.extendedProps
-																.status
-														}
-														{event.extendedProps
-															.checkIn && (
-															<div>
-																Check In:{" "}
-																{
-																	event
-																		.extendedProps
-																		.checkIn
-																}
-															</div>
-														)}
-														{event.extendedProps
-															.checkOut && (
-															<div>
-																Check Out:{" "}
-																{
-																	event
-																		.extendedProps
-																		.checkOut
-																}
-															</div>
-														)}
-													</div>
-												)}
-												{event.extendedProps?.type ===
-													"birthday" && (
-													<div className="text-xs text-muted-foreground mt-1">
-														Employee Birthday
-													</div>
-												)}
-												{event.extendedProps?.type ===
-													"holiday" && (
-													<div className="text-xs text-muted-foreground mt-1">
-														{event.extendedProps
-															.holiday_type ===
-														"regular"
-															? "Regular Holiday"
-															: "Special Holiday"}
-													</div>
-												)}
-												{event.extendedProps?.type ===
-													"schedule" && (
-													<div className="text-xs text-muted-foreground mt-1">
-														{event.extendedProps.service_type
-															?.replace("_", " ")
-															.replace(
-																/\b\w/g,
-																(l: string) =>
-																	l.toUpperCase(),
-															)}{" "}
-														Service
-														{event.extendedProps
-															.client_name && (
-															<div>
-																Client:{" "}
-																{
-																	event
-																		.extendedProps
-																		.client_name
-																}
-															</div>
-														)}
-													</div>
-												)}
-												<div className="text-xs text-muted-foreground mt-1">
-													{format(
-														new Date(event.start),
-														"EEEE, MMMM dd, yyyy",
-													)}
-												</div>
-											</div>
-										</TooltipContent>
-									</Tooltip>
+									<CalendarEventItem
+										key={index}
+										event={event}
+										variant="compact"
+										onClick={handleEventClick}
+									/>
 								))}
 						</div>
 					</div>
@@ -1583,210 +911,11 @@ const DashboardCalendar = ({
 								</div>
 								<div className="flex-1 p-3 space-y-2">
 									{hourEvents.map((event, eventIndex) => (
-										<Tooltip key={eventIndex}>
-											<TooltipTrigger asChild>
-												<button
-													onClick={() =>
-														handleEventClick(event)
-													}
-													className="w-full text-left"
-												>
-													<div
-														className="p-2 rounded text-sm"
-														style={{
-															backgroundColor:
-																event.backgroundColor,
-															color: event.textColor,
-														}}
-													>
-														<div className="font-medium flex items-center gap-2">
-															{event.extendedProps
-																?.iconComponent ? (
-																<event.extendedProps.iconComponent className="w-4 h-4 shrink-0" />
-															) : event
-																	.extendedProps
-																	?.type ===
-															  "attendance" ? (
-																(() => {
-																	const status =
-																		event
-																			.extendedProps
-																			.status;
-																	switch (
-																		status
-																	) {
-																		case "present":
-																			return (
-																				<CheckCircle className="w-4 h-4 shrink-0" />
-																			);
-																		case "late":
-																			return (
-																				<AlertTriangle className="w-4 h-4 shrink-0" />
-																			);
-																		case "absent":
-																			return (
-																				<XCircle className="w-4 h-4 shrink-0" />
-																			);
-																		case "sick":
-																			return (
-																				<Thermometer className="w-4 h-4 shrink-0" />
-																			);
-																		case "vacation":
-																			return (
-																				<Plane className="w-4 h-4 shrink-0" />
-																			);
-																		default:
-																			return null;
-																	}
-																})()
-															) : event
-																	.extendedProps
-																	?.type ===
-															  "birthday" ? (
-																<Cake className="w-4 h-4 shrink-0" />
-															) : event
-																	.extendedProps
-																	?.type ===
-															  "holiday" ? (
-																event
-																	.extendedProps
-																	.holiday_type ===
-																"regular" ? (
-																	<Building className="w-4 h-4 shrink-0" />
-																) : (
-																	<CalendarDays className="w-4 h-4 shrink-0" />
-																)
-															) : event
-																	.extendedProps
-																	?.type ===
-															  "schedule" ? (
-																event
-																	.extendedProps
-																	.service_type ===
-																"cleaning" ? (
-																	<Brush className="w-4 h-4 shrink-0" />
-																) : event
-																		.extendedProps
-																		.service_type ===
-																  "on_site" ? (
-																	<Wrench className="w-4 h-4 shrink-0" />
-																) : (
-																	<Store className="w-4 h-4 shrink-0" />
-																)
-															) : null}
-															<span>
-																{event.title}
-															</span>
-														</div>
-														<div className="text-xs opacity-90">
-															{format(
-																new Date(
-																	event.start,
-																),
-																"h:mm a",
-															)}
-														</div>
-													</div>
-												</button>
-											</TooltipTrigger>
-											<TooltipContent>
-												<div className="max-w-xs">
-													<div className="font-medium">
-														{event.title}
-													</div>
-													{event.extendedProps
-														?.type ===
-														"attendance" && (
-														<div className="text-xs text-muted-foreground mt-1">
-															Status:{" "}
-															{
-																event
-																	.extendedProps
-																	.status
-															}
-															{event.extendedProps
-																.checkIn && (
-																<div>
-																	Check In:{" "}
-																	{
-																		event
-																			.extendedProps
-																			.checkIn
-																	}
-																</div>
-															)}
-															{event.extendedProps
-																.checkOut && (
-																<div>
-																	Check Out:{" "}
-																	{
-																		event
-																			.extendedProps
-																			.checkOut
-																	}
-																</div>
-															)}
-														</div>
-													)}
-													{event.extendedProps
-														?.type ===
-														"birthday" && (
-														<div className="text-xs text-muted-foreground mt-1">
-															Employee Birthday
-														</div>
-													)}
-													{event.extendedProps
-														?.type ===
-														"holiday" && (
-														<div className="text-xs text-muted-foreground mt-1">
-															{event.extendedProps
-																.holiday_type ===
-															"regular"
-																? "Regular Holiday"
-																: "Special Holiday"}
-														</div>
-													)}
-													{event.extendedProps
-														?.type ===
-														"schedule" && (
-														<div className="text-xs text-muted-foreground mt-1">
-															{event.extendedProps.service_type
-																?.replace(
-																	"_",
-																	" ",
-																)
-																.replace(
-																	/\b\w/g,
-																	(
-																		l: string,
-																	) =>
-																		l.toUpperCase(),
-																)}{" "}
-															Service
-															{event.extendedProps
-																.client_name && (
-																<div>
-																	Client:{" "}
-																	{
-																		event
-																			.extendedProps
-																			.client_name
-																	}
-																</div>
-															)}
-														</div>
-													)}
-													<div className="text-xs text-muted-foreground mt-1">
-														{format(
-															new Date(
-																event.start,
-															),
-															"h:mm a - MMMM dd, yyyy",
-														)}
-													</div>
-												</div>
-											</TooltipContent>
-										</Tooltip>
+										<DayViewEventItem
+											key={eventIndex}
+											event={event}
+											onClick={handleEventClick}
+										/>
 									))}
 								</div>
 							</div>
