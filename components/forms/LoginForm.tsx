@@ -88,7 +88,7 @@ export function LoginForm() {
         rounded-3xl
         ring-1 dark:ring-foreground/10
         border border-border/40
-        bg-gradient-to-br from-background/80 to-background/60
+        bg-linear-to-br from-background/80 to-background/60
         backdrop-blur-lg
         shadow-[0_10px_30px_rgba(0,0,0,0.25)]
         hover:shadow-[0_12px_36px_rgba(0,0,0,0.3)]
