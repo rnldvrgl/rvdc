@@ -221,8 +221,9 @@ const PageHeader = ({
 									<Button
 										variant="outline"
 										size="sm"
-										onClick={async () => {
+										onClick={() => {
 											try {
+												onRefresh();
 												toast.success(
 													"Data refreshed successfully.",
 												);

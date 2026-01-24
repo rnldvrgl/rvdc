@@ -424,17 +424,14 @@ const DayEventsModal = ({
 						>
 							<div className="flex items-start gap-3">
 								<div
-									className="w-3 h-3 rounded-full mt-1.5 shrink-0"
+									className="size-3 rounded-full mt-1.5 shrink-0"
 									style={{
 										backgroundColor: event.backgroundColor,
 									}}
 								/>
 								<div className="flex-1 min-w-0">
 									<h4 className="font-medium text-sm">
-										{event.title.replace(
-											/^[🎂🏛️📅🧹🔧🏪]\s*/,
-											"",
-										)}
+										{event.title}
 									</h4>
 									<p className="text-xs text-muted-foreground mt-1">
 										{event.extendedProps.type ===
@@ -637,17 +634,13 @@ const DashboardCalendar = ({
 		return (
 			<Card className={className}>
 				<CardHeader>
-					<div className="flex items-center justify-between">
-						<div>
-							<CardTitle className="flex items-center gap-2">
-								<Calendar className="w-5 h-5" />
-								{title || "Calendar"}
-							</CardTitle>
-							<CardDescription>
-								Loading calendar preferences...
-							</CardDescription>
-						</div>
-					</div>
+					<CardTitle className="flex items-center gap-2">
+						<Calendar className="w-5 h-5" />
+						{title || "Calendar"}
+					</CardTitle>
+					<CardDescription>
+						Loading calendar preferences...
+					</CardDescription>
 				</CardHeader>
 				<CardContent>
 					<div className="flex items-center justify-center py-8">
@@ -772,7 +765,7 @@ const DashboardCalendar = ({
 											</span>
 											{dayEvents.length > 0 && (
 												<div className="flex items-center gap-1">
-													<div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+													<div className="size-1.5 rounded-full bg-primary"></div>
 													{dayEvents.length > 1 && (
 														<span className="text-xs text-muted-foreground">
 															{dayEvents.length}
@@ -817,7 +810,7 @@ const DashboardCalendar = ({
 																			{event
 																				.extendedProps
 																				?.iconComponent && (
-																				<event.extendedProps.iconComponent className="w-3 h-3 flex-shrink-0" />
+																				<event.extendedProps.iconComponent className="size-3 shrink-0" />
 																			)}
 																			{event
 																				.extendedProps
@@ -836,23 +829,23 @@ const DashboardCalendar = ({
 																					) {
 																						case "present":
 																							return (
-																								<CheckCircle className="w-3 h-3 flex-shrink-0" />
+																								<CheckCircle className="size-3 shrink-0" />
 																							);
 																						case "late":
 																							return (
-																								<AlertTriangle className="w-3 h-3 flex-shrink-0" />
+																								<AlertTriangle className="size-3 shrink-0" />
 																							);
 																						case "absent":
 																							return (
-																								<XCircle className="w-3 h-3 flex-shrink-0" />
+																								<XCircle className="size-3 shrink-0" />
 																							);
 																						case "sick":
 																							return (
-																								<Thermometer className="w-3 h-3 flex-shrink-0" />
+																								<Thermometer className="size-3 shrink-0" />
 																							);
 																						case "vacation":
 																							return (
-																								<Plane className="w-3 h-3 flex-shrink-0" />
+																								<Plane className="size-3 shrink-0" />
 																							);
 																						default:
 																							return null;
@@ -862,7 +855,7 @@ const DashboardCalendar = ({
 																				.extendedProps
 																				?.type ===
 																				"birthday" && (
-																				<Cake className="w-3 h-3 flex-shrink-0" />
+																				<Cake className="size-3 shrink-0" />
 																			)}
 																			{event
 																				.extendedProps
@@ -872,9 +865,9 @@ const DashboardCalendar = ({
 																					.extendedProps
 																					.holiday_type ===
 																				"regular" ? (
-																					<Building className="w-3 h-3 flex-shrink-0" />
+																					<Building className="size-3 shrink-0" />
 																				) : (
-																					<CalendarDays className="w-3 h-3 flex-shrink-0" />
+																					<CalendarDays className="size-3 shrink-0" />
 																				))}
 																			{event
 																				.extendedProps
@@ -884,14 +877,14 @@ const DashboardCalendar = ({
 																					.extendedProps
 																					.service_type ===
 																				"cleaning" ? (
-																					<Brush className="w-3 h-3 flex-shrink-0" />
+																					<Brush className="size-3 shrink-0" />
 																				) : event
 																						.extendedProps
 																						.service_type ===
 																				  "on_site" ? (
-																					<Wrench className="w-3 h-3 flex-shrink-0" />
+																					<Wrench className="size-3 shrink-0" />
 																				) : (
-																					<Store className="w-3 h-3 flex-shrink-0" />
+																					<Store className="size-3 shrink-0" />
 																				))}
 																			<span className="truncate">
 																				{
@@ -912,7 +905,7 @@ const DashboardCalendar = ({
 																			.extendedProps
 																			?.type ===
 																			"attendance" && (
-																			<div className="text-xs text-muted-foreground mt-1">
+																			<div className="text-xs mt-1">
 																				Status:{" "}
 																				{
 																					event
@@ -951,7 +944,7 @@ const DashboardCalendar = ({
 																			.extendedProps
 																			?.type ===
 																			"birthday" && (
-																			<div className="text-xs text-muted-foreground mt-1">
+																			<div className="text-xs  mt-1">
 																				Employee
 																				Birthday
 																			</div>
@@ -960,7 +953,7 @@ const DashboardCalendar = ({
 																			.extendedProps
 																			?.type ===
 																			"holiday" && (
-																			<div className="text-xs text-muted-foreground mt-1">
+																			<div className="text-xs  mt-1">
 																				{event
 																					.extendedProps
 																					.holiday_type ===
@@ -973,7 +966,7 @@ const DashboardCalendar = ({
 																			.extendedProps
 																			?.type ===
 																			"schedule" && (
-																			<div className="text-xs text-muted-foreground mt-1">
+																			<div className="text-xs mt-1">
 																				{event.extendedProps.service_type
 																					?.replace(
 																						"_",
@@ -1001,7 +994,7 @@ const DashboardCalendar = ({
 																				)}
 																			</div>
 																		)}
-																		<div className="text-xs text-muted-foreground mt-1">
+																		<div className="text-xs mt-1">
 																			{format(
 																				new Date(
 																					event.start,
@@ -1015,7 +1008,7 @@ const DashboardCalendar = ({
 														),
 													)}
 												{dayEvents.length > 3 && (
-													<div className="text-xs text-muted-foreground text-center">
+													<div className="text-xs text-muted-foreground text-center mt-2">
 														+{dayEvents.length - 3}{" "}
 														more
 													</div>
@@ -1057,7 +1050,7 @@ const DashboardCalendar = ({
 																				event.title
 																			}
 																		</div>
-																		<div className="text-xs text-muted-foreground mt-1">
+																		<div className="text-xs mt-1">
 																			{format(
 																				new Date(
 																					event.start,
@@ -1169,7 +1162,7 @@ const DashboardCalendar = ({
 														>
 															{event.extendedProps
 																?.iconComponent && (
-																<event.extendedProps.iconComponent className="w-3 h-3 flex-shrink-0" />
+																<event.extendedProps.iconComponent className="size-3 shrink-0" />
 															)}
 															{event.extendedProps
 																?.type ===
@@ -1187,23 +1180,23 @@ const DashboardCalendar = ({
 																	) {
 																		case "present":
 																			return (
-																				<CheckCircle className="w-3 h-3 flex-shrink-0" />
+																				<CheckCircle className="size-3 shrink-0" />
 																			);
 																		case "late":
 																			return (
-																				<AlertTriangle className="w-3 h-3 flex-shrink-0" />
+																				<AlertTriangle className="size-3 shrink-0" />
 																			);
 																		case "absent":
 																			return (
-																				<XCircle className="w-3 h-3 flex-shrink-0" />
+																				<XCircle className="size-3 shrink-0" />
 																			);
 																		case "sick":
 																			return (
-																				<Thermometer className="w-3 h-3 flex-shrink-0" />
+																				<Thermometer className="size-3 shrink-0" />
 																			);
 																		case "vacation":
 																			return (
-																				<Plane className="w-3 h-3 flex-shrink-0" />
+																				<Plane className="size-3 shrink-0" />
 																			);
 																		default:
 																			return null;
@@ -1212,7 +1205,7 @@ const DashboardCalendar = ({
 															{event.extendedProps
 																?.type ===
 																"birthday" && (
-																<Cake className="w-3 h-3 flex-shrink-0" />
+																<Cake className="size-3 shrink-0" />
 															)}
 															{event.extendedProps
 																?.type ===
@@ -1221,9 +1214,9 @@ const DashboardCalendar = ({
 																	.extendedProps
 																	.holiday_type ===
 																"regular" ? (
-																	<Building className="w-3 h-3 flex-shrink-0" />
+																	<Building className="size-3 shrink-0" />
 																) : (
-																	<CalendarDays className="w-3 h-3 flex-shrink-0" />
+																	<CalendarDays className="size-3 shrink-0" />
 																))}
 															{event.extendedProps
 																?.type ===
@@ -1232,14 +1225,14 @@ const DashboardCalendar = ({
 																	.extendedProps
 																	.service_type ===
 																"cleaning" ? (
-																	<Brush className="w-3 h-3 flex-shrink-0" />
+																	<Brush className="size-3 shrink-0" />
 																) : event
 																		.extendedProps
 																		.service_type ===
 																  "on_site" ? (
-																	<Wrench className="w-3 h-3 flex-shrink-0" />
+																	<Wrench className="size-3 shrink-0" />
 																) : (
-																	<Store className="w-3 h-3 flex-shrink-0" />
+																	<Store className="size-3 shrink-0" />
 																))}
 															<span className="truncate">
 																{event.title}
@@ -1426,7 +1419,7 @@ const DashboardCalendar = ({
 																default:
 																	return (
 																		<div
-																			className="w-3 h-3 rounded-full"
+																			className="size-3 rounded-full"
 																			style={{
 																				backgroundColor:
 																					event.backgroundColor,
@@ -1465,7 +1458,7 @@ const DashboardCalendar = ({
 														)
 													) : (
 														<div
-															className="w-3 h-3 rounded-full"
+															className="size-3 rounded-full"
 															style={{
 																backgroundColor:
 																	event.backgroundColor,
@@ -1609,7 +1602,7 @@ const DashboardCalendar = ({
 														<div className="font-medium flex items-center gap-2">
 															{event.extendedProps
 																?.iconComponent ? (
-																<event.extendedProps.iconComponent className="w-4 h-4 flex-shrink-0" />
+																<event.extendedProps.iconComponent className="w-4 h-4 shrink-0" />
 															) : event
 																	.extendedProps
 																	?.type ===
@@ -1624,23 +1617,23 @@ const DashboardCalendar = ({
 																	) {
 																		case "present":
 																			return (
-																				<CheckCircle className="w-4 h-4 flex-shrink-0" />
+																				<CheckCircle className="w-4 h-4 shrink-0" />
 																			);
 																		case "late":
 																			return (
-																				<AlertTriangle className="w-4 h-4 flex-shrink-0" />
+																				<AlertTriangle className="w-4 h-4 shrink-0" />
 																			);
 																		case "absent":
 																			return (
-																				<XCircle className="w-4 h-4 flex-shrink-0" />
+																				<XCircle className="w-4 h-4 shrink-0" />
 																			);
 																		case "sick":
 																			return (
-																				<Thermometer className="w-4 h-4 flex-shrink-0" />
+																				<Thermometer className="w-4 h-4 shrink-0" />
 																			);
 																		case "vacation":
 																			return (
-																				<Plane className="w-4 h-4 flex-shrink-0" />
+																				<Plane className="w-4 h-4 shrink-0" />
 																			);
 																		default:
 																			return null;
@@ -1650,7 +1643,7 @@ const DashboardCalendar = ({
 																	.extendedProps
 																	?.type ===
 															  "birthday" ? (
-																<Cake className="w-4 h-4 flex-shrink-0" />
+																<Cake className="w-4 h-4 shrink-0" />
 															) : event
 																	.extendedProps
 																	?.type ===
@@ -1659,9 +1652,9 @@ const DashboardCalendar = ({
 																	.extendedProps
 																	.holiday_type ===
 																"regular" ? (
-																	<Building className="w-4 h-4 flex-shrink-0" />
+																	<Building className="w-4 h-4 shrink-0" />
 																) : (
-																	<CalendarDays className="w-4 h-4 flex-shrink-0" />
+																	<CalendarDays className="w-4 h-4 shrink-0" />
 																)
 															) : event
 																	.extendedProps
@@ -1671,14 +1664,14 @@ const DashboardCalendar = ({
 																	.extendedProps
 																	.service_type ===
 																"cleaning" ? (
-																	<Brush className="w-4 h-4 flex-shrink-0" />
+																	<Brush className="w-4 h-4 shrink-0" />
 																) : event
 																		.extendedProps
 																		.service_type ===
 																  "on_site" ? (
-																	<Wrench className="w-4 h-4 flex-shrink-0" />
+																	<Wrench className="w-4 h-4 shrink-0" />
 																) : (
-																	<Store className="w-4 h-4 flex-shrink-0" />
+																	<Store className="w-4 h-4 shrink-0" />
 																)
 															) : null}
 															<span>
@@ -1835,7 +1828,7 @@ const DashboardCalendar = ({
 			>
 				<CardHeader>
 					<div className="flex items-center justify-between">
-						<div>
+						<div className="space-y-2">
 							<CardTitle className="flex items-center gap-2">
 								<Calendar className="w-5 h-5" />
 								{title || "Calendar"}
@@ -1907,25 +1900,25 @@ const DashboardCalendar = ({
 					{/* Legend */}
 					<div className="flex flex-wrap gap-4 p-3 bg-muted/30 rounded-lg text-xs">
 						<div className="flex items-center gap-2">
-							<div className="w-3 h-3 rounded bg-green-500" />
+							<div className="size-3 rounded bg-green-500" />
 							<span className="text-muted-foreground">
 								Birthdays
 							</span>
 						</div>
 						<div className="flex items-center gap-2">
-							<div className="w-3 h-3 rounded bg-red-500" />
+							<div className="size-3 rounded bg-red-500" />
 							<span className="text-muted-foreground">
 								Regular Holidays
 							</span>
 						</div>
 						<div className="flex items-center gap-2">
-							<div className="w-3 h-3 rounded bg-orange-500" />
+							<div className="size-3 rounded bg-orange-500" />
 							<span className="text-muted-foreground">
 								Special Holidays
 							</span>
 						</div>
 						<div className="flex items-center gap-2">
-							<div className="w-3 h-3 rounded bg-blue-500" />
+							<div className="size-3 rounded bg-blue-500" />
 							<span className="text-muted-foreground">
 								Services
 							</span>

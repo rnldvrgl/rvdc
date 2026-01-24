@@ -7,7 +7,7 @@ import PageHeader from "@/components/custom/shared/PageHeader";
 import { Wrapper } from "@/components/custom/shared/Wrapper";
 import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar";
 import { FormProvider, useForm } from "react-hook-form";
-import { BarChart3, TrendingUp, Calendar } from "lucide-react";
+import { BarChart3, TrendingUp } from "lucide-react";
 import { useGetSummary } from "@/lib/queries/analytics/useGetAnalytics";
 
 type DashboardFormValues = {
@@ -40,6 +40,8 @@ const DashboardPage = () => {
 				breadcrumbs={["Dashboard"]}
 				onRefresh={refetch}
 			/>
+			{/* Calendar */}
+			<DashboardCalendar />
 
 			<FormProvider {...form}>
 				<div className="space-y-6">
@@ -64,21 +66,6 @@ const DashboardPage = () => {
 
 					{/* Charts */}
 					<DashboardCharts />
-
-					{/* Calendar */}
-					<div className="space-y-4">
-						<div className="space-y-1">
-							<h2 className="text-lg font-semibold flex items-center gap-2">
-								<Calendar className="size-5" />
-								Calendar
-							</h2>
-							<p className="text-sm text-muted-foreground">
-								View upcoming birthdays, holidays, and scheduled
-								services
-							</p>
-						</div>
-						<DashboardCalendar />
-					</div>
 				</div>
 			</FormProvider>
 		</Wrapper>
