@@ -36,7 +36,7 @@ export function CalendarEventItem({
 						onClick={handleClick}
 						className={cn(
 							"size-2 rounded-full inline-block mr-1 hover:scale-110 transition-transform",
-							className
+							className,
 						)}
 						style={{
 							backgroundColor: event.backgroundColor,
@@ -57,13 +57,15 @@ export function CalendarEventItem({
 					<button
 						onClick={handleClick}
 						className={cn(
-							"w-full text-left p-2 rounded-lg border hover:bg-muted/50 transition-colors",
-							className
+							"w-full text-left p-2 sm:p-1 rounded-sm cursor-pointer border hover:bg-muted/50 transition-colors",
+							className,
 						)}
 					>
-						<div className="flex items-center gap-3">
-							<EventIcon event={event} size="md" />
-							<span className="font-medium truncate">{event.title}</span>
+						<div className="flex items-center gap-2">
+							<EventIcon event={event} size="sm" />
+							<span className="font-medium truncate text-xs sm:text-sm">
+								{event.title}
+							</span>
 						</div>
 					</button>
 				</TooltipTrigger>
@@ -83,14 +85,14 @@ export function CalendarEventItem({
 					className={cn("w-full text-left", className)}
 				>
 					<div
-						className="text-xs px-1.5 py-0.5 rounded truncate hover:opacity-80 transition-opacity flex items-center gap-1"
+						className="text-sm px-2 py-1 rounded truncate hover:opacity-80 transition-opacity flex items-center gap-1"
 						style={{
 							backgroundColor: event.backgroundColor,
 							color: event.textColor,
 						}}
 					>
 						<EventIcon event={event} size="sm" />
-						<span className="truncate">{event.title}</span>
+						<span className="truncate text-sm">{event.title}</span>
 					</div>
 				</button>
 			</TooltipTrigger>

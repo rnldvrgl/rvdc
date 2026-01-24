@@ -34,7 +34,7 @@ export function DayViewEventItem({
 					className={cn("w-full text-left", className)}
 				>
 					<div
-						className="p-2 rounded text-sm hover:opacity-90 transition-opacity"
+						className="p-3 sm:p-2 rounded text-sm sm:text-base hover:opacity-90 transition-opacity"
 						style={{
 							backgroundColor: event.backgroundColor,
 							color: event.textColor,
@@ -42,9 +42,11 @@ export function DayViewEventItem({
 					>
 						<div className="font-medium flex items-center gap-2">
 							<EventIcon event={event} size="md" />
-							<span className="truncate">{event.title}</span>
+							<span className="truncate text-sm sm:text-base">
+								{event.title}
+							</span>
 						</div>
-						<div className="text-xs opacity-90 mt-1">
+						<div className="text-sm opacity-90 mt-1 sm:mt-2">
 							{format(new Date(event.start), "h:mm a")}
 							{event.end && event.start !== event.end && (
 								<span>

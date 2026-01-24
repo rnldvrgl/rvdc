@@ -18,11 +18,12 @@ import { cn } from "@/lib/utils/helpers";
 
 interface EventIconProps {
 	event: CalendarEvent;
-	size?: "sm" | "md" | "lg";
+	size?: "xs" | "sm" | "md" | "lg";
 	className?: string;
 }
 
 const sizeClasses = {
+	xs: "size-2.5",
 	sm: "size-3",
 	md: "size-4",
 	lg: "size-5",
@@ -40,40 +41,122 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
 
 	switch (type) {
 		case "attendance": {
-			const status = event.extendedProps.status || event.extendedProps.attendance_status;
+			const status =
+				event.extendedProps.status ||
+				event.extendedProps.attendance_status;
 			switch (status) {
 				case "present":
-					return <CheckCircle className={cn(baseClasses, "text-green-600 dark:text-green-400")} />;
+					return (
+						<CheckCircle
+							className={cn(
+								baseClasses,
+								"text-green-600 dark:text-green-400",
+							)}
+						/>
+					);
 				case "late":
-					return <AlertTriangle className={cn(baseClasses, "text-yellow-600 dark:text-yellow-400")} />;
+					return (
+						<AlertTriangle
+							className={cn(
+								baseClasses,
+								"text-yellow-600 dark:text-yellow-400",
+							)}
+						/>
+					);
 				case "absent":
-					return <XCircle className={cn(baseClasses, "text-red-600 dark:text-red-400")} />;
+					return (
+						<XCircle
+							className={cn(
+								baseClasses,
+								"text-red-600 dark:text-red-400",
+							)}
+						/>
+					);
 				case "sick":
-					return <Thermometer className={cn(baseClasses, "text-purple-600 dark:text-purple-400")} />;
+					return (
+						<Thermometer
+							className={cn(
+								baseClasses,
+								"text-purple-600 dark:text-purple-400",
+							)}
+						/>
+					);
 				case "vacation":
-					return <Plane className={cn(baseClasses, "text-cyan-600 dark:text-cyan-400")} />;
+					return (
+						<Plane
+							className={cn(
+								baseClasses,
+								"text-cyan-600 dark:text-cyan-400",
+							)}
+						/>
+					);
 				default:
-					return <CheckCircle className={cn(baseClasses, "text-blue-600 dark:text-blue-400")} />;
+					return (
+						<CheckCircle
+							className={cn(
+								baseClasses,
+								"text-blue-600 dark:text-blue-400",
+							)}
+						/>
+					);
 			}
 		}
 		case "birthday":
-			return <Cake className={cn(baseClasses, "text-green-600 dark:text-green-400")} />;
+			return (
+				<Cake
+					className={cn(
+						baseClasses,
+						"text-green-600 dark:text-green-400",
+					)}
+				/>
+			);
 		case "holiday": {
 			const isRegular = event.extendedProps.holiday_type === "regular";
 			return isRegular ? (
-				<Building className={cn(baseClasses, "text-red-600 dark:text-red-400")} />
+				<Building
+					className={cn(
+						baseClasses,
+						"text-red-600 dark:text-red-400",
+					)}
+				/>
 			) : (
-				<CalendarDays className={cn(baseClasses, "text-orange-600 dark:text-orange-400")} />
+				<CalendarDays
+					className={cn(
+						baseClasses,
+						"text-orange-600 dark:text-orange-400",
+					)}
+				/>
 			);
 		}
 		case "schedule": {
 			const serviceType = event.extendedProps.service_type;
 			if (serviceType === "cleaning") {
-				return <Brush className={cn(baseClasses, "text-blue-600 dark:text-blue-400")} />;
+				return (
+					<Brush
+						className={cn(
+							baseClasses,
+							"text-blue-600 dark:text-blue-400",
+						)}
+					/>
+				);
 			} else if (serviceType === "on_site") {
-				return <Wrench className={cn(baseClasses, "text-blue-600 dark:text-blue-400")} />;
+				return (
+					<Wrench
+						className={cn(
+							baseClasses,
+							"text-blue-600 dark:text-blue-400",
+						)}
+					/>
+				);
 			} else {
-				return <Store className={cn(baseClasses, "text-blue-600 dark:text-blue-400")} />;
+				return (
+					<Store
+						className={cn(
+							baseClasses,
+							"text-blue-600 dark:text-blue-400",
+						)}
+					/>
+				);
 			}
 		}
 		default:

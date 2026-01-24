@@ -434,6 +434,7 @@ interface DashboardCalendarProps {
 	weekStartsOn?: 0 | 1; // 0 = Sunday, 1 = Monday
 	onEventClick?: (event: CalendarEvent) => void;
 	onDateClick?: (date: Date) => void;
+	withSettings?: boolean;
 }
 
 const DashboardCalendar = ({
@@ -446,6 +447,7 @@ const DashboardCalendar = ({
 	weekStartsOn,
 	onEventClick,
 	onDateClick,
+	withSettings = true,
 }: DashboardCalendarProps) => {
 	const { preferences, isLoaded } = useCalendarPreferences();
 	const [currentDate, setCurrentDate] = useState(new Date());
@@ -665,10 +667,12 @@ const DashboardCalendar = ({
 						(day) => (
 							<div
 								key={day}
-								className="p-3 text-center text-sm font-medium text-muted-foreground"
+								className="p-2 sm:p-3 text-center text-sm sm:text-base font-medium text-muted-foreground"
 							>
 								<span className="hidden sm:inline">{day}</span>
-								<span className="sm:hidden">{day[0]}</span>
+								<span className="sm:hidden text-sm">
+									{day[0]}
+								</span>
 							</div>
 						),
 					)}
@@ -679,7 +683,7 @@ const DashboardCalendar = ({
 					{weeks.map((week, weekIndex) => (
 						<div
 							key={weekIndex}
-							className="grid grid-cols-7 divide-x min-h-24 lg:min-h-32"
+							className="grid grid-cols-7 divide-x min-h-20 sm:min-h-24 md:min-h-28 lg:min-h-32"
 						>
 							{week.map((day) => {
 								const dayEvents =
@@ -694,17 +698,17 @@ const DashboardCalendar = ({
 									<div
 										key={day.toDateString()}
 										className={cn(
-											"p-2 cursor-pointer hover:bg-muted/50 transition-colors",
+											"p-2 sm:p-3 cursor-pointer hover:bg-muted/50 transition-colors overflow-hidden",
 											!isCurrentMonth &&
 												"bg-muted/20 text-muted-foreground",
 											isTodayDate && "bg-primary/10",
 										)}
 										onClick={() => handleDayClick(day)}
 									>
-										<div className="flex items-center justify-between mb-1">
+										<div className="flex items-center justify-between mb-1 sm:mb-2">
 											<span
 												className={cn(
-													"text-sm font-medium",
+													"text-base sm:text-lg font-medium leading-none",
 													isTodayDate &&
 														"text-primary font-semibold",
 												)}
@@ -713,9 +717,9 @@ const DashboardCalendar = ({
 											</span>
 											{dayEvents.length > 0 && (
 												<div className="flex items-center gap-1">
-													<div className="size-1.5 rounded-full bg-primary"></div>
+													<div className="size-2 sm:size-2.5 rounded-full bg-primary"></div>
 													{dayEvents.length > 1 && (
-														<span className="text-xs text-muted-foreground">
+														<span className="text-sm sm:text-xs text-muted-foreground">
 															{dayEvents.length}
 														</span>
 													)}
@@ -727,31 +731,31 @@ const DashboardCalendar = ({
 											{/* Desktop: Show event titles */}
 											<div className="hidden lg:block">
 												{dayEvents
-													.slice(0, 3)
+													.slice(0, 2)
 													.map(
 														(event, eventIndex) => (
 															<CalendarEventItem
 																key={eventIndex}
 																event={event}
-																variant="full"
+																variant="compact"
 																onClick={
 																	handleEventClick
 																}
 															/>
 														),
 													)}
-												{dayEvents.length > 3 && (
+												{dayEvents.length > 2 && (
 													<div className="text-xs text-muted-foreground text-center mt-2">
-														+{dayEvents.length - 3}{" "}
+														+{dayEvents.length - 2}{" "}
 														more
 													</div>
 												)}
 											</div>
 
-											{/* Tablet: Show dots with tooltips */}
+											{/* Tablet: Show compact events */}
 											<div className="hidden sm:block lg:hidden">
 												{dayEvents
-													.slice(0, 4)
+													.slice(0, 2)
 													.map(
 														(event, eventIndex) => (
 															<CalendarEventItem
@@ -786,75 +790,143 @@ const DashboardCalendar = ({
 		}
 
 		return (
-			<div className="border rounded-lg overflow-hidden">
-				{/* Day headers */}
-				<div className="grid grid-cols-8 border-b bg-muted/30">
-					<div className="p-3"></div>
-					{days.map((day) => (
-						<div
-							key={day.toDateString()}
-							className="p-3 text-center"
-						>
-							<div className="text-xs text-muted-foreground">
-								{format(day, "EEE")}
-							</div>
-							<div
-								className={cn(
-									"text-lg font-medium",
-									isToday(day) && "text-primary",
-								)}
-							>
-								{format(day, "d")}
-							</div>
-						</div>
-					))}
+			<div className="border rounded-lg">
+				{/* Mobile: Show simplified list view */}
+				<div className="block sm:hidden">
+					<div className="divide-y">
+						{days.map((day) => {
+							const dayEvents =
+								eventsByDate[day.toDateString()] || [];
+							const isTodayDate = isToday(day);
+
+							if (dayEvents.length === 0) return null;
+
+							return (
+								<div
+									key={day.toDateString()}
+									className={cn(
+										"p-4 cursor-pointer hover:bg-muted/50",
+										isTodayDate && "bg-primary/10",
+									)}
+									onClick={() => handleDayClick(day)}
+								>
+									<div className="flex items-center justify-between mb-3">
+										<div
+											className={cn(
+												"text-base font-semibold",
+												isTodayDate && "text-primary",
+											)}
+										>
+											{format(day, "EEE, MMM d")}
+										</div>
+										<div className="text-sm text-muted-foreground">
+											{dayEvents.length} event
+											{dayEvents.length > 1 ? "s" : ""}
+										</div>
+									</div>
+									<div className="space-y-2">
+										{dayEvents
+											.slice(0, 3)
+											.map((event, eventIndex) => (
+												<CalendarEventItem
+													key={eventIndex}
+													event={event}
+													variant="compact"
+													onClick={handleEventClick}
+												/>
+											))}
+										{dayEvents.length > 3 && (
+											<div className="text-sm text-muted-foreground text-center mt-3">
+												+{dayEvents.length - 3} more
+											</div>
+										)}
+									</div>
+								</div>
+							);
+						})}
+					</div>
 				</div>
 
-				{/* Time grid */}
-				<div className="divide-y max-h-96 overflow-y-auto">
-					{timeSlots.map((hour) => (
-						<div
-							key={hour}
-							className="grid grid-cols-8 divide-x min-h-12"
-						>
-							<div className="p-2 text-xs text-muted-foreground bg-muted/20">
-								{format(
-									new Date().setHours(hour, 0, 0, 0),
-									"h:mm a",
-								)}
-							</div>
-							{days.map((day) => {
-								const dayEvents =
-									eventsByDate[day.toDateString()]?.filter(
-										(event) => {
-											if (event.allDay) return hour === 0; // Show all-day events in first slot (midnight)
-											const eventHour = new Date(
-												event.start,
-											).getHours();
-											return eventHour === hour;
-										},
-									) || [];
-
-								return (
-									<div
-										key={`${day.toDateString()}-${hour}`}
-										className="p-1 hover:bg-muted/50 transition-colors cursor-pointer"
-										onClick={() => handleDayClick(day)}
-									>
-										{dayEvents.map((event, eventIndex) => (
-											<CalendarEventItem
-												key={eventIndex}
-												event={event}
-												variant="full"
-												onClick={handleEventClick}
-												className="mb-1"
-											/>
-										))}
+				{/* Desktop/Tablet: Show grid view */}
+				<div className="hidden sm:block overflow-x-auto">
+					<div className="min-w-full">
+						{/* Day headers */}
+						<div className="grid grid-cols-8 border-b bg-muted/30 min-w-[640px]">
+							<div className="p-2 sm:p-3 w-16 sm:w-20"></div>
+							{days.map((day) => (
+								<div
+									key={day.toDateString()}
+									className="p-2 sm:p-3 text-center min-w-20"
+								>
+									<div className="text-xs text-muted-foreground">
+										{format(day, "EEE")}
 									</div>
-								);
-							})}
+									<div
+										className={cn(
+											"text-sm sm:text-lg font-medium",
+											isToday(day) && "text-primary",
+										)}
+									>
+										{format(day, "d")}
+									</div>
+								</div>
+							))}
 						</div>
-					))}
+
+						{/* Time grid */}
+						<div className="divide-y max-h-80 sm:max-h-96 overflow-y-auto min-w-[640px]">
+							{timeSlots.map((hour) => (
+								<div
+									key={hour}
+									className="grid grid-cols-8 divide-x min-h-10 sm:min-h-12"
+								>
+									<div className="p-2 text-xs text-muted-foreground bg-muted/20 w-16 sm:w-20">
+										{format(
+											new Date().setHours(hour, 0, 0, 0),
+											"h:mm a",
+										)}
+									</div>
+									{days.map((day) => {
+										const dayEvents =
+											eventsByDate[
+												day.toDateString()
+											]?.filter((event) => {
+												if (event.allDay)
+													return hour === 0; // Show all-day events in first slot (midnight)
+												const eventHour = new Date(
+													event.start,
+												).getHours();
+												return eventHour === hour;
+											}) || [];
+
+										return (
+											<div
+												key={`${day.toDateString()}-${hour}`}
+												className="p-1 hover:bg-muted/50 transition-colors cursor-pointer min-w-20"
+												onClick={() =>
+													handleDayClick(day)
+												}
+											>
+												{dayEvents.map(
+													(event, eventIndex) => (
+														<CalendarEventItem
+															key={eventIndex}
+															event={event}
+															variant="compact"
+															onClick={
+																handleEventClick
+															}
+															className="mb-0.5 text-xs"
+														/>
+													),
+												)}
+											</div>
+										);
+									})}
+								</div>
+							))}
+						</div>
+					</div>
 				</div>
 			</div>
 		);
@@ -901,15 +973,15 @@ const DashboardCalendar = ({
 						return (
 							<div
 								key={hour}
-								className="border-b last:border-b-0 min-h-16 flex"
+								className="border-b last:border-b-0 min-h-16 sm:min-h-20 flex"
 							>
-								<div className="w-20 p-3 text-xs text-muted-foreground bg-muted/20 shrink-0">
+								<div className="w-20 sm:w-24 p-3 sm:p-4 text-sm text-muted-foreground bg-muted/20 shrink-0">
 									{format(
 										new Date().setHours(hour, 0, 0, 0),
 										"h:mm a",
 									)}
 								</div>
-								<div className="flex-1 p-3 space-y-2">
+								<div className="flex-1 p-3 sm:p-4 space-y-2">
 									{hourEvents.map((event, eventIndex) => (
 										<DayViewEventItem
 											key={eventIndex}
@@ -956,24 +1028,25 @@ const DashboardCalendar = ({
 				className={className}
 			>
 				<CardHeader>
-					<div className="flex items-center justify-between">
+					<div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
 						<div className="space-y-2">
-							<CardTitle className="flex items-center gap-2">
-								<Calendar className="w-5 h-5" />
+							<CardTitle className="flex items-center gap-2 text-xl">
+								<Calendar className="w-6 h-6" />
 								{title || "Calendar"}
 							</CardTitle>
-							<CardDescription>
+							<CardDescription className="text-base">
 								{description ||
 									"View birthdays, holidays, and scheduled services"}
 							</CardDescription>
 						</div>
-						<div className="flex items-center gap-2">
-							<CalendarSettings />
+						<div className="flex flex-col md:flex-row items-center justify-center md:justify-end gap-2">
+							{withSettings && <CalendarSettings />}
 							<Button
 								variant="outline"
 								size="sm"
 								onClick={() => refetch()}
 								disabled={isLoading}
+								className="text-sm"
 							>
 								{isLoading ? "Loading..." : "Refresh"}
 							</Button>
@@ -982,73 +1055,142 @@ const DashboardCalendar = ({
 				</CardHeader>
 				<CardContent className="space-y-4">
 					{/* Controls */}
-					<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-						<div className="flex items-center gap-2">
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => handleNavigation("prev")}
-							>
-								<ChevronLeft className="w-4 h-4" />
-							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => handleNavigation("next")}
-							>
-								<ChevronRight className="w-4 h-4" />
-							</Button>
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => handleNavigation("today")}
-							>
-								Today
-							</Button>
+					<div className="space-y-4">
+						{/* Mobile: Stack everything vertically */}
+						<div className="flex flex-col space-y-3 sm:hidden">
+							{/* Title */}
+							<h2 className="text-lg font-semibold text-center px-2">
+								{dateTitle}
+							</h2>
+
+							{/* View buttons - prioritize on mobile */}
+							<div className="flex items-center justify-center gap-2">
+								{["month", "week", "day"].map((v) => (
+									<Button
+										key={v}
+										variant={
+											view === v ? "default" : "outline"
+										}
+										size="sm"
+										onClick={() =>
+											setView(v as CalendarView)
+										}
+										className="capitalize text-base"
+									>
+										{v}
+									</Button>
+								))}
+							</div>
+
+							{/* Navigation */}
+							<div className="flex items-center justify-center gap-2">
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => handleNavigation("prev")}
+								>
+									<ChevronLeft className="w-5 h-5" />
+								</Button>
+								<Button
+									variant={`${currentDate.toDateString() === new Date().toDateString() ? "default" : "outline"}`}
+									size="default"
+									onClick={() => handleNavigation("today")}
+									disabled={
+										currentDate.toDateString() ===
+										new Date().toDateString()
+									}
+									className="text-base px-6 py-2 h-10"
+								>
+									Today
+								</Button>
+								<Button
+									variant="outline"
+									size="default"
+									onClick={() => handleNavigation("next")}
+									className="px-4 py-2 h-10"
+								>
+									<ChevronRight className="w-5 h-5" />
+								</Button>
+							</div>
 						</div>
 
-						<h2 className="text-lg font-semibold text-center flex-1 sm:flex-initial">
-							{dateTitle}
-						</h2>
-
-						<div className="flex items-center gap-1">
-							{["month", "week", "day"].map((v) => (
+						{/* Desktop: Horizontal layout */}
+						<div className="hidden sm:flex sm:items-center justify-between gap-4">
+							<div className="flex items-center gap-2">
 								<Button
-									key={v}
-									variant={view === v ? "default" : "outline"}
+									variant="outline"
 									size="sm"
-									onClick={() => setView(v as CalendarView)}
-									className="capitalize"
+									onClick={() => handleNavigation("prev")}
 								>
-									{v}
+									<ChevronLeft className="w-4 h-4" />
 								</Button>
-							))}
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => handleNavigation("next")}
+								>
+									<ChevronRight className="w-4 h-4" />
+								</Button>
+								<Button
+									variant={`${currentDate.toDateString() === new Date().toDateString() ? "default" : "outline"}`}
+									size="sm"
+									onClick={() => handleNavigation("today")}
+									disabled={
+										currentDate.toDateString() ===
+										new Date().toDateString()
+									}
+								>
+									Today
+								</Button>
+							</div>
+
+							<h2 className="text-lg font-semibold text-center flex-1">
+								{dateTitle}
+							</h2>
+
+							<div className="flex items-center gap-1">
+								{["month", "week", "day"].map((v) => (
+									<Button
+										key={v}
+										variant={
+											view === v ? "default" : "outline"
+										}
+										size="sm"
+										onClick={() =>
+											setView(v as CalendarView)
+										}
+										className="capitalize"
+									>
+										{v}
+									</Button>
+								))}
+							</div>
 						</div>
 					</div>
 
 					{/* Legend */}
-					<div className="flex flex-wrap gap-4 p-3 bg-muted/30 rounded-lg text-xs">
+					<div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 p-4 bg-muted/30 rounded-lg">
 						<div className="flex items-center gap-2">
 							<div className="size-3 rounded bg-green-500" />
-							<span className="text-muted-foreground">
+							<span className="text-muted-foreground text-sm">
 								Birthdays
 							</span>
 						</div>
 						<div className="flex items-center gap-2">
 							<div className="size-3 rounded bg-red-500" />
-							<span className="text-muted-foreground">
-								Regular Holidays
+							<span className="text-muted-foreground text-sm">
+								Holidays
 							</span>
 						</div>
 						<div className="flex items-center gap-2">
 							<div className="size-3 rounded bg-orange-500" />
-							<span className="text-muted-foreground">
-								Special Holidays
+							<span className="text-muted-foreground text-sm">
+								Special
 							</span>
 						</div>
 						<div className="flex items-center gap-2">
 							<div className="size-3 rounded bg-blue-500" />
-							<span className="text-muted-foreground">
+							<span className="text-muted-foreground text-sm">
 								Services
 							</span>
 						</div>
