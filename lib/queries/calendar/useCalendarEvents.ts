@@ -8,9 +8,9 @@ export interface CalendarEvent {
 	start: string;
 	end?: string;
 	allDay?: boolean;
-	backgroundColor: string;
-	borderColor: string;
-	textColor: string;
+	backgroundColor?: string;
+	borderColor?: string;
+	textColor?: string;
 	extendedProps: {
 		type: "birthday" | "holiday" | "schedule" | "attendance";
 		user_id?: number;

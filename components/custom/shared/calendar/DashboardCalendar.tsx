@@ -66,6 +66,67 @@ import { useCalendarPreferences } from "@/lib/hooks/useCalendarPreferences";
 import CalendarSettings from "./CalendarSettings";
 import { cn } from "@/lib/utils/helpers";
 
+// Color utility for event types
+const getEventColors = (event: CalendarEvent) => {
+	const { type } = event.extendedProps;
+
+	switch (type) {
+		case "attendance":
+			const status =
+				event.extendedProps.status ||
+				event.extendedProps.attendance_status;
+			switch (status) {
+				case "present":
+					return {
+						bg: "#10b981",
+						border: "#10b981",
+						text: "#ffffff",
+					};
+				case "late":
+					return {
+						bg: "#f59e0b",
+						border: "#f59e0b",
+						text: "#ffffff",
+					};
+				case "absent":
+					return {
+						bg: "#ef4444",
+						border: "#ef4444",
+						text: "#ffffff",
+					};
+				case "sick":
+					return {
+						bg: "#8b5cf6",
+						border: "#8b5cf6",
+						text: "#ffffff",
+					};
+				case "vacation":
+					return {
+						bg: "#06b6d4",
+						border: "#06b6d4",
+						text: "#ffffff",
+					};
+				default:
+					return {
+						bg: "#6b7280",
+						border: "#6b7280",
+						text: "#ffffff",
+					};
+			}
+		case "birthday":
+			return { bg: "#22c55e", border: "#22c55e", text: "#ffffff" };
+		case "holiday":
+			const isRegular = event.extendedProps.holiday_type === "regular";
+			return isRegular
+				? { bg: "#dc2626", border: "#dc2626", text: "#ffffff" }
+				: { bg: "#ea580c", border: "#ea580c", text: "#ffffff" };
+		case "schedule":
+			return { bg: "#3b82f6", border: "#3b82f6", text: "#ffffff" };
+		default:
+			return { bg: "#6b7280", border: "#6b7280", text: "#ffffff" };
+	}
+};
+
 type CalendarView = "month" | "week" | "day";
 
 interface EventDetailModalProps {
@@ -498,14 +559,6 @@ const DashboardCalendar = ({
 		}
 
 		return attendanceData.map((record) => {
-			const statusColors = {
-				present: { bg: "#10b981", text: "#ffffff" },
-				late: { bg: "#f59e0b", text: "#ffffff" },
-				absent: { bg: "#ef4444", text: "#ffffff" },
-				sick: { bg: "#8b5cf6", text: "#ffffff" },
-				vacation: { bg: "#06b6d4", text: "#ffffff" },
-			};
-
 			const statusIcons = {
 				present: CheckCircle,
 				late: AlertTriangle,
@@ -514,8 +567,6 @@ const DashboardCalendar = ({
 				vacation: Plane,
 			};
 
-			const color =
-				statusColors[record.status as keyof typeof statusColors];
 			const IconComponent =
 				statusIcons[record.status as keyof typeof statusIcons];
 
@@ -525,9 +576,6 @@ const DashboardCalendar = ({
 				start: record.date,
 				end: record.date,
 				allDay: true,
-				backgroundColor: color.bg,
-				borderColor: color.bg,
-				textColor: color.text,
 				extendedProps: {
 					type: "attendance" as const,
 					employeeName: record.employeeName,
@@ -567,7 +615,15 @@ const DashboardCalendar = ({
 				if (!acc[dateKey]) {
 					acc[dateKey] = [];
 				}
-				acc[dateKey].push(event);
+				// Add colors to each event
+				const colors = getEventColors(event);
+				const eventWithColors = {
+					...event,
+					backgroundColor: colors.bg,
+					borderColor: colors.border,
+					textColor: colors.text,
+				};
+				acc[dateKey].push(eventWithColors);
 				return acc;
 			},
 			{},
