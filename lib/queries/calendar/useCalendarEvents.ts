@@ -19,7 +19,7 @@ export interface CalendarEvent {
 		holiday_id?: number;
 		service_type?: string;
 		client_name?: string;
-		technician_name?: string;
+		technician_names?: string[];
 		schedule_id?: number;
 		notes?: string;
 		// Attendance specific props

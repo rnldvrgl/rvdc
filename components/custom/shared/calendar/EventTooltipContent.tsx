@@ -2,6 +2,8 @@
 
 import { CalendarEvent } from "@/lib/queries/calendar/useCalendarEvents";
 import { format } from "date-fns";
+import { Clock, User, UserCog } from "lucide-react";
+import { EventIcon } from "./EventIcon";
 
 interface EventTooltipContentProps {
 	event: CalendarEvent;
@@ -11,8 +13,10 @@ export function EventTooltipContent({ event }: EventTooltipContentProps) {
 	const { type } = event.extendedProps;
 
 	const renderAttendanceDetails = () => (
-		<div className="text-xs text-muted-foreground mt-1">
-			Status: {event.extendedProps.status || event.extendedProps.attendance_status}
+		<div className="text-xs text-primary-foreground mt-1">
+			Status:{" "}
+			{event.extendedProps.status ||
+				event.extendedProps.attendance_status}
 			{event.extendedProps.checkIn && (
 				<div>Check In: {event.extendedProps.checkIn}</div>
 			)}
@@ -26,31 +30,60 @@ export function EventTooltipContent({ event }: EventTooltipContentProps) {
 	);
 
 	const renderBirthdayDetails = () => (
-		<div className="text-xs text-muted-foreground mt-1">
+		<div className="text-xs text-primary-foreground mt-1">
 			Employee Birthday
 		</div>
 	);
 
 	const renderHolidayDetails = () => (
-		<div className="text-xs text-muted-foreground mt-1">
-			{event.extendedProps.holiday_type === "regular"
-				? "Regular Holiday"
-				: "Special Holiday"}
+		<div className="text-xs text-primary-foreground mt-1 flex items-center">
+			<EventIcon
+				event={event}
+				size="md"
+				className="text-white! dark:text-white!"
+			/>
+			<span className="ml-1">
+				{event.extendedProps.holiday_type === "regular"
+					? "Regular Holiday"
+					: "Special Holiday"}
+			</span>
 		</div>
 	);
 
 	const renderScheduleDetails = () => (
-		<div className="text-xs text-muted-foreground mt-1">
-			{event.extendedProps.service_type
-				?.replace("_", " ")
-				.replace(/\b\w/g, (l: string) => l.toUpperCase())}{" "}
-			Service
-			{event.extendedProps.client_name && (
-				<div>Client: {event.extendedProps.client_name}</div>
-			)}
-			{event.extendedProps.technician_name && (
-				<div>Technician: {event.extendedProps.technician_name}</div>
-			)}
+		<div className="text-xs text-primary-foreground mt-1">
+			<div className="flex items-center">
+				<User className="size-3 md:size-4" />
+				<span className="ml-1">
+					<span className="font-semibold">Client: </span>
+					{event.extendedProps.client_name}
+				</span>
+			</div>
+			<div className="flex items-center">
+				<UserCog className="size-3 md:size-4" />
+				<span className="ml-1">
+					{event.extendedProps.technician_names && (
+						<div>
+							<span className="font-semibold">
+								Technician/s:{" "}
+							</span>
+							{event.extendedProps.technician_names?.map(
+								(name: string, index: number) => (
+									<span key={index}>
+										{name}
+										{index <
+										event.extendedProps.technician_names!
+											.length -
+											1
+											? ", "
+											: ""}
+									</span>
+								),
+							)}
+						</div>
+					)}
+				</span>
+			</div>
 		</div>
 	);
 
@@ -63,11 +96,17 @@ export function EventTooltipContent({ event }: EventTooltipContentProps) {
 			{type === "holiday" && renderHolidayDetails()}
 			{type === "schedule" && renderScheduleDetails()}
 
-			<div className="text-xs text-muted-foreground mt-1">
-				{format(new Date(event.start), "MMM dd, yyyy")}
-				{!event.allDay && (
-					<span> at {format(new Date(event.start), "h:mm a")}</span>
-				)}
+			<div className="mt-1 flex items-center ">
+				<Clock className="size-3 md:size-4" />
+				<span className="text-xs text-primary-foreground italic ml-1">
+					{format(new Date(event.start), "MMM dd, yyyy")}
+					{!event.allDay && (
+						<span>
+							{" "}
+							at {format(new Date(event.start), "h:mm a")}
+						</span>
+					)}
+				</span>
 			</div>
 		</div>
 	);

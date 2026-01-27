@@ -297,9 +297,20 @@ const EventDetailModal = ({
 							</div>
 							<div className="flex items-center gap-2 text-sm">
 								<User className="w-4 h-4" />
-								<span>
-									Technician: {extendedProps.technician_name}
-								</span>
+								Technician/s:{" "}
+								{extendedProps.technician_names?.map(
+									(name: string, index: number) => (
+										<span key={index}>
+											{name}
+											{index <
+											extendedProps.technician_names!
+												.length -
+												1
+												? ", "
+												: ""}
+										</span>
+									),
+								)}
 							</div>
 							<div className="flex items-center gap-2 text-sm">
 								<Clock className="w-4 h-4" />
@@ -381,7 +392,7 @@ const DayEventsModal = ({
 									<h4 className="font-medium text-sm">
 										{event.title}
 									</h4>
-									<p className="text-xs text-muted-foreground mt-1">
+									<p className="text-xs text-muted-foreground mt-1 capitalize">
 										{event.extendedProps.type ===
 											"birthday" && "Employee Birthday"}
 										{event.extendedProps.type ===
@@ -852,7 +863,7 @@ const DashboardCalendar = ({
 					<div className="min-w-full">
 						{/* Day headers */}
 						<div className="grid grid-cols-8 border-b bg-muted/30 min-w-[640px]">
-							<div className="p-2 sm:p-3 w-16 sm:w-20"></div>
+							<div className="p-2 sm:p-3"></div>
 							{days.map((day) => (
 								<div
 									key={day.toDateString()}
@@ -880,7 +891,7 @@ const DashboardCalendar = ({
 									key={hour}
 									className="grid grid-cols-8 divide-x min-h-10 sm:min-h-12"
 								>
-									<div className="p-2 text-xs text-muted-foreground bg-muted/20 w-16 sm:w-20">
+									<div className="p-2 text-xs flex items-center justify-center text-muted-foreground text-center bg-muted/20">
 										{format(
 											new Date().setHours(hour, 0, 0, 0),
 											"h:mm a",
