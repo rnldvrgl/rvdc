@@ -112,6 +112,11 @@ export function AttendanceTypeBadge({
         "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
       label: "Pending",
     },
+    INVALID: {
+      icon: AlertCircle,
+      className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+      label: "Invalid",
+    },
   }
 
   const { icon: Icon, className: typeClassName, label } = config[type]

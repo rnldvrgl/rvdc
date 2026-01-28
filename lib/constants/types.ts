@@ -280,6 +280,7 @@ export type AttendanceType =
   | "ABSENT"
   | "LEAVE"
   | "PENDING"
+  | "INVALID"
 export type AttendanceStatus = "PENDING" | "APPROVED" | "REJECTED" | "NONE"
 export type LeaveType = "SICK" | "EMERGENCY"
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED"
