@@ -1,10 +1,10 @@
 "use client"
 
-import { AttendanceApproval } from "@/components/custom/attendance/AttendanceApproval"
-import { EmployeeFilter } from "@/components/custom/attendance/EmployeeFilter"
+import { ClockInOut } from "@/components/custom/attendance/ClockInOut"
 import { GradientStatCard } from "@/components/custom/attendance/GradientStatCard"
 import { RecentActivitySection } from "@/components/custom/attendance/RecentActivitySection"
 import { StatCard } from "@/components/custom/attendance/StatCard"
+import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import {
@@ -12,31 +12,31 @@ import {
   STAT_CARD_CONFIGS,
 } from "@/lib/constants/attendanceCards"
 import { useAttendanceStats } from "@/lib/hooks/useAttendanceStats"
-import { useNavigation } from "@/lib/hooks/useNavigation"
-import useSearchParameters from "@/lib/hooks/useSearchParameters"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useDailyAttendances } from "@/lib/queries/useAttendance"
-import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { convertAttendanceForCalendar } from "@/lib/utils/attendance"
 import { Users } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
-type SelectedEmployeeType =
-  | (Record<"employee_id", number | string> & Record<"employee_name", string>)
-  | undefined
+const AttendancePage = () => {
+  const { role, user_id } = useCurrentUser()
+  const [dateRange] = useState({
+    start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .split("T")[0],
+    end_date: new Date().toISOString().split("T")[0],
+  })
 
-const AttendanceOverviewPage = () => {
-  const { filter } = useSearchParameters()
-  const { push } = useNavigation()
-  const { data: employeeChoicesData } = useEmployeeChoices()
-  const [selectedEmployee, setSelectedEmployee] =
-    useState<SelectedEmployeeType>(undefined)
-
-  const employeeChoices = employeeChoicesData || []
+  // Fetch attendance data from API
   const {
     data: attendanceData,
     isLoading,
     refetch,
-  } = useDailyAttendances({ filter })
+  } = useDailyAttendances({
+    start_date: dateRange.start_date,
+    end_date: dateRange.end_date,
+    filter: { employee_id: user_id },
+  })
 
   const attendanceRecords = attendanceData?.results || []
 
@@ -46,12 +46,17 @@ const AttendanceOverviewPage = () => {
   // Calculate stats using custom hook
   const stats = useAttendanceStats(attendanceRecords, calendarEvents)
 
-  // Update URL when employee selection changes
-  useEffect(() => {
-    push({
-      filter: { ...filter, employee_id: selectedEmployee?.employee_id },
-    })
-  }, [selectedEmployee])
+  const handleEventClick = (event: {
+    id: string
+    title: string
+    extendedProps?: Record<string, unknown>
+  }) => {
+    console.log("Attendance event clicked:", event)
+  }
+
+  const handleDateClick = (date: Date) => {
+    console.log("Date clicked:", date)
+  }
 
   return (
     <Wrapper>
@@ -60,20 +65,11 @@ const AttendanceOverviewPage = () => {
           icon={Users}
           title="Attendance"
           description="Track and manage employee attendance"
-          breadcrumbs={[
-            "Attendance",
-            "Overview",
-            `${selectedEmployee?.employee_name || "All Employees"}`,
-          ]}
-          onRefresh={refetch}
+          breadcrumbs={["Attendance"]}
         />
 
-        {/* Employee Filter */}
-        <EmployeeFilter
-          employees={employeeChoices}
-          selectedEmployee={selectedEmployee ?? undefined}
-          onEmployeeChange={setSelectedEmployee}
-        />
+        {/* Clock In/Out Panel */}
+        <ClockInOut onSuccess={() => refetch()} />
 
         {/* Summary Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -126,18 +122,29 @@ const AttendanceOverviewPage = () => {
           })}
         </div>
 
-        {/* Admin Approval Panel */}
-        <AttendanceApproval />
+        {/* Calendar Section */}
+        <DashboardCalendar
+          mode="attendance"
+          attendanceData={calendarEvents}
+          useCustomData={true}
+          title="Employee Attendance Tracker"
+          description="Showing your attendance records"
+          weekStartsOn={1}
+          height="auto"
+          onEventClick={handleEventClick}
+          onDateClick={handleDateClick}
+          className="w-full"
+        />
 
         {/* Recent Records */}
         <RecentActivitySection
           records={attendanceRecords}
           isLoading={isLoading}
-          showEmployeeCount={!selectedEmployee}
+          showEmployeeCount={true}
         />
       </div>
     </Wrapper>
   )
 }
 
-export default AttendanceOverviewPage
+export default AttendancePage

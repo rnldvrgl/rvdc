@@ -1,0 +1,267 @@
+"use client"
+
+import { AttendanceTypeBadge } from "@/components/custom/attendance/AttendanceBadges"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
+import { DailyAttendance } from "@/lib/constants/types"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import useSearchParameters from "@/lib/hooks/useSearchParameters"
+import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
+import { usePendingAttendanceApprovals } from "@/lib/queries/useAttendance"
+import { canApprove, formatDate, formatTime } from "@/lib/utils/attendance"
+import { formatMinutesToHours } from "@/lib/utils/helpers"
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Loader2,
+  XCircle,
+} from "lucide-react"
+import { useState } from "react"
+
+export function AttendanceApproval() {
+  const { role } = useCurrentUser()
+  const { filter } = useSearchParameters()
+  const [selectedAttendanceId, setSelectedAttendanceId] = useState<
+    number | null
+  >(null)
+  const [notes, setNotes] = useState("")
+
+  // Check if user can approve
+  const hasApprovalRights = canApprove(role || "")
+
+  // Fetch pending approvals
+  const { data: pendingApprovals, isLoading: approvalsLoading } =
+    usePendingAttendanceApprovals({ filter })
+
+  // Mutations
+  const { approveAttendance, rejectAttendance } = useAttendanceMutations()
+
+  const handleApprove = async (attendanceId: number) => {
+    setSelectedAttendanceId(attendanceId)
+    await approveAttendance.mutateAsync(
+      {
+        attendance_ids: [attendanceId],
+      },
+      {
+        onSuccess: () => {
+          setNotes("")
+          setSelectedAttendanceId(null)
+        },
+      },
+    )
+  }
+
+  const handleReject = async (attendanceId: number) => {
+    setSelectedAttendanceId(attendanceId)
+    await rejectAttendance.mutateAsync(
+      {
+        attendance_ids: [attendanceId],
+        reason: notes || undefined,
+      },
+      {
+        onSuccess: () => {
+          setNotes("")
+          setSelectedAttendanceId(null)
+        },
+      },
+    )
+  }
+
+  const isLoading = approveAttendance.isPending || rejectAttendance.isPending
+
+  if (!hasApprovalRights) {
+    return null
+  }
+
+  if (approvalsLoading) {
+    return (
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5" />
+            Pending Attendance Approvals
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center py-6">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!pendingApprovals || pendingApprovals.length === 0) {
+    return (
+      <Card>
+        <CardHeader className="border-b">
+          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 w-fit mx-auto">
+                <Clock className="size-4 text-slate-600 dark:text-slate-400" />
+              </div>
+              <CardTitle className="text-base md:text-lg font-semibold">
+                Pending Attendance Approvals
+              </CardTitle>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6 text-muted-foreground">
+            No pending attendance records to review.
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 w-fit mx-auto">
+                <Clock className="size-4 text-slate-600 dark:text-slate-400" />
+              </div>
+              <CardTitle className="text-base md:text-lg font-semibold">
+                Pending Attendance Approvals
+              </CardTitle>
+            </div>
+          </div>
+          <Badge variant="secondary">{pendingApprovals.length} pending</Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Employee</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Clock In</TableHead>
+                <TableHead>Clock Out</TableHead>
+                <TableHead>Hours</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Notes</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pendingApprovals?.map((attendance: DailyAttendance) => {
+                const clockInTime = attendance.clock_in
+                  ? formatTime(attendance.clock_in)
+                  : "—"
+                const clockOutTime = attendance.clock_out
+                  ? formatTime(attendance.clock_out)
+                  : "—"
+                const hoursWorked = attendance.paid_hours || "—"
+
+                return (
+                  <TableRow key={attendance.id}>
+                    <TableCell className="font-medium">
+                      {attendance.employee_name || "Unknown"}
+                    </TableCell>
+                    <TableCell>{formatDate(attendance.date)}</TableCell>
+                    <TableCell>
+                      {clockInTime}
+                      {attendance.is_late && (
+                        <div className="text-xs text-amber-600 flex items-center gap-1 mt-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          Late {formatMinutesToHours(attendance.late_minutes)}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>{clockOutTime}</TableCell>
+                    <TableCell>
+                      {hoursWorked}
+                      {attendance.late_penalty_amount &&
+                        parseFloat(attendance.late_penalty_amount) > 0 && (
+                          <div className="text-xs text-red-600 mt-1">
+                            -₱{attendance.late_penalty_amount}
+                          </div>
+                        )}
+                    </TableCell>
+                    <TableCell>
+                      <AttendanceTypeBadge type={attendance.attendance_type} />
+                    </TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {attendance.notes || "—"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          disabled={
+                            isLoading || selectedAttendanceId === attendance.id
+                          }
+                          onClick={() => handleApprove(attendance.id)}
+                        >
+                          {selectedAttendanceId === attendance.id &&
+                          approveAttendance.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          disabled={
+                            isLoading || selectedAttendanceId === attendance.id
+                          }
+                          onClick={() => handleReject(attendance.id)}
+                        >
+                          {selectedAttendanceId === attendance.id &&
+                          rejectAttendance.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Reject
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Optional notes for approval/rejection */}
+        {selectedAttendanceId && (
+          <div className="mt-4 space-y-2">
+            <label className="text-sm font-medium">Notes (optional)</label>
+            <Textarea
+              placeholder="Add notes for approval/rejection..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              disabled={isLoading}
+              rows={2}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
