@@ -1,6 +1,7 @@
 import {
   AttendanceStatus,
   AttendanceType,
+  CalendarAttendanceStatus,
   LeaveStatus,
   LeaveType,
 } from "@/lib/constants/types"
