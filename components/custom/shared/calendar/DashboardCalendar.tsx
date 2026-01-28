@@ -111,6 +111,17 @@ const getEventColors = (event: CalendarEvent) => {
       return isRegular
         ? { bg: "#dc2626", border: "#dc2626", text: "#ffffff" }
         : { bg: "#ea580c", border: "#ea580c", text: "#ffffff" }
+    case "leave":
+      // Different colors for different leave types
+      const leaveType = event.extendedProps.leave_type
+      switch (leaveType) {
+        case "sick":
+          return { bg: "#8b5cf6", border: "#8b5cf6", text: "#ffffff" }
+        case "emergency":
+          return { bg: "#f59e0b", border: "#f59e0b", text: "#ffffff" }
+        default:
+          return { bg: "#6366f1", border: "#6366f1", text: "#ffffff" }
+      }
     case "schedule":
       return { bg: "#3b82f6", border: "#3b82f6", text: "#ffffff" }
     default:
@@ -249,6 +260,37 @@ const EventDetailModal = ({
           </div>
         )
 
+      case "leave":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                <Plane className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold">{extendedProps.employee_name}</h3>
+                <Badge variant="secondary">
+                  {extendedProps.leave_type_display}
+                </Badge>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground">
+                {format(new Date(event.start), "EEEE, MMMM dd, yyyy")}
+                {event.end && event.end !== event.start && (
+                  <> - {format(new Date(event.end), "EEEE, MMMM dd, yyyy")}</>
+                )}
+              </div>
+              {extendedProps.reason && (
+                <div className="text-sm">
+                  <span className="font-medium">Reason:</span>{" "}
+                  {extendedProps.reason}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+
       case "schedule":
         return (
           <div className="space-y-4">
@@ -374,6 +416,8 @@ const DayEventsModal = ({
                       "Employee Birthday"}
                     {event.extendedProps.type === "holiday" &&
                       `${event.extendedProps.holiday_type === "regular" ? "Regular" : "Special"} Holiday`}
+                    {event.extendedProps.type === "leave" &&
+                      `${event.extendedProps.leave_type_display} Leave`}
                     {event.extendedProps.type === "schedule" &&
                       `${event.extendedProps.service_type?.replace("_", " ")} - ${event.extendedProps.client_name}`}
                   </p>

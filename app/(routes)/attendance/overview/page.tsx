@@ -3,6 +3,7 @@
 import { AttendanceApproval } from "@/components/custom/attendance/AttendanceApproval"
 import { EmployeeFilter } from "@/components/custom/attendance/EmployeeFilter"
 import { GradientStatCard } from "@/components/custom/attendance/GradientStatCard"
+import { LeaveOverview } from "@/components/custom/attendance/LeaveOverview"
 import { RecentActivitySection } from "@/components/custom/attendance/RecentActivitySection"
 import { StatCard } from "@/components/custom/attendance/StatCard"
 import PageHeader from "@/components/custom/shared/PageHeader"
@@ -128,6 +129,9 @@ const AttendanceOverviewPage = () => {
 
         {/* Admin Approval Panel */}
         <AttendanceApproval />
+
+        {/* Leave Overview Section */}
+        <LeaveOverview />
 
         {/* Recent Records */}
         <RecentActivitySection
