@@ -1,6 +1,10 @@
 "use client"
 
-import { AttendanceTypeBadge } from "@/components/custom/attendance/AttendanceBadges"
+import {
+  AttendanceTypeBadge,
+  AwolBadge,
+} from "@/components/custom/attendance/AttendanceBadges"
+import { UniformPenaltyCheckboxes } from "@/components/custom/attendance/UniformPenaltyCheckboxes"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,11 +27,13 @@ import { formatMinutesToHours } from "@/lib/utils/helpers"
 import {
   AlertTriangle,
   CheckCircle,
+  ChevronDown,
+  ChevronRight,
   Clock,
   Loader2,
   XCircle,
 } from "lucide-react"
-import { useState } from "react"
+import { Fragment, useState } from "react"
 
 export function AttendanceApproval() {
   const { role } = useCurrentUser()
@@ -35,6 +41,7 @@ export function AttendanceApproval() {
   const [selectedAttendanceId, setSelectedAttendanceId] = useState<
     number | null
   >(null)
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
   const [notes, setNotes] = useState("")
 
   // Check if user can approve
@@ -60,6 +67,16 @@ export function AttendanceApproval() {
         },
       },
     )
+  }
+
+  const toggleRow = (attendanceId: number) => {
+    const newExpanded = new Set(expandedRows)
+    if (newExpanded.has(attendanceId)) {
+      newExpanded.delete(attendanceId)
+    } else {
+      newExpanded.add(attendanceId)
+    }
+    setExpandedRows(newExpanded)
   }
 
   const handleReject = async (attendanceId: number) => {
@@ -148,6 +165,7 @@ export function AttendanceApproval() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10"></TableHead>
                 <TableHead>Employee</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Clock In</TableHead>
@@ -167,81 +185,132 @@ export function AttendanceApproval() {
                   ? formatTime(attendance.clock_out)
                   : "—"
                 const hoursWorked = attendance.paid_hours || "—"
+                const isExpanded = expandedRows.has(attendance.id)
 
                 return (
-                  <TableRow key={attendance.id}>
-                    <TableCell className="font-medium">
-                      {attendance.employee_name || "Unknown"}
-                    </TableCell>
-                    <TableCell>{formatDate(attendance.date)}</TableCell>
-                    <TableCell>
-                      {clockInTime}
-                      {attendance.is_late && (
-                        <div className="text-xs text-amber-600 flex items-center gap-1 mt-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          Late {formatMinutesToHours(attendance.late_minutes)}
+                  <Fragment key={attendance.id}>
+                    <TableRow>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => toggleRow(attendance.id)}
+                        >
+                          {isExpanded ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="space-y-1">
+                          <div>{attendance.employee_name || "Unknown"}</div>
+                          {attendance.is_awol && (
+                            <AwolBadge
+                              isAwol={attendance.is_awol}
+                              consecutiveAbsences={
+                                attendance.consecutive_absences
+                              }
+                            />
+                          )}
                         </div>
-                      )}
-                    </TableCell>
-                    <TableCell>{clockOutTime}</TableCell>
-                    <TableCell>
-                      {hoursWorked}
-                      {attendance.late_penalty_amount &&
-                        parseFloat(attendance.late_penalty_amount) > 0 && (
-                          <div className="text-xs text-red-600 mt-1">
-                            -₱{attendance.late_penalty_amount}
+                      </TableCell>
+                      <TableCell>{formatDate(attendance.date)}</TableCell>
+                      <TableCell>
+                        {clockInTime}
+                        {attendance.is_late && (
+                          <div className="text-xs text-amber-600 flex items-center gap-1 mt-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            Late {formatMinutesToHours(attendance.late_minutes)}
                           </div>
                         )}
-                    </TableCell>
-                    <TableCell>
-                      <AttendanceTypeBadge type={attendance.attendance_type} />
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {attendance.notes || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          disabled={
-                            isLoading || selectedAttendanceId === attendance.id
-                          }
-                          onClick={() => handleApprove(attendance.id)}
-                        >
-                          {selectedAttendanceId === attendance.id &&
-                          approveAttendance.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </>
+                      </TableCell>
+                      <TableCell>{clockOutTime}</TableCell>
+                      <TableCell>
+                        {hoursWorked}
+                        {attendance.late_penalty_amount &&
+                          parseFloat(attendance.late_penalty_amount) > 0 && (
+                            <div className="text-xs text-red-600 mt-1">
+                              -₱{attendance.late_penalty_amount}
+                            </div>
                           )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          disabled={
-                            isLoading || selectedAttendanceId === attendance.id
-                          }
-                          onClick={() => handleReject(attendance.id)}
-                        >
-                          {selectedAttendanceId === attendance.id &&
-                          rejectAttendance.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </>
+                        {attendance.uniform_penalty_amount &&
+                          parseFloat(attendance.uniform_penalty_amount) > 0 && (
+                            <div className="text-xs text-red-600 mt-1">
+                              Uniform: -₱{attendance.uniform_penalty_amount}
+                            </div>
                           )}
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                      <TableCell>
+                        <AttendanceTypeBadge
+                          type={attendance.attendance_type}
+                        />
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {attendance.notes || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            disabled={
+                              isLoading ||
+                              selectedAttendanceId === attendance.id
+                            }
+                            onClick={() => handleApprove(attendance.id)}
+                          >
+                            {selectedAttendanceId === attendance.id &&
+                            approveAttendance.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approve
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            disabled={
+                              isLoading ||
+                              selectedAttendanceId === attendance.id
+                            }
+                            onClick={() => handleReject(attendance.id)}
+                          >
+                            {selectedAttendanceId === attendance.id &&
+                            rejectAttendance.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Reject
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+
+                    {/* Expanded Row for Uniform Penalties */}
+                    {isExpanded && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={9}
+                          className="bg-muted/20"
+                        >
+                          <div className="py-4 px-6">
+                            <UniformPenaltyCheckboxes attendance={attendance} />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </Fragment>
                 )
               })}
             </TableBody>

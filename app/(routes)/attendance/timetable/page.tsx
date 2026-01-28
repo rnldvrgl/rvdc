@@ -39,6 +39,7 @@ const AttendancePage = () => {
   })
 
   const attendanceRecords = attendanceData?.results || []
+  const yesterdayAttendance = attendanceData?.results[1] || null
 
   // Convert to calendar format
   const calendarEvents = convertAttendanceForCalendar(attendanceRecords)
@@ -69,7 +70,10 @@ const AttendancePage = () => {
         />
 
         {/* Clock In/Out Panel */}
-        <ClockInOut onSuccess={() => refetch()} />
+        <ClockInOut
+          onSuccess={() => refetch()}
+          yesterdayAttendance={yesterdayAttendance ?? undefined}
+        />
 
         {/* Summary Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

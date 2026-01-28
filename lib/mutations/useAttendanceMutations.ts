@@ -8,6 +8,7 @@ import {
   LeaveRequestPayload,
   RejectAttendancePayload,
   RejectLeavePayload,
+  UpdateUniformPenaltiesPayload,
 } from "@/lib/constants/types"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
@@ -95,6 +96,23 @@ export function useAttendanceMutations() {
     },
   })
 
+  const updateUniformPenalties = useApiMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number
+      data: UpdateUniformPenaltiesPayload
+    }) => api.patch(`${attendanceUrl}${id}/update_uniform_penalties/`, data),
+    successMessage: "Uniform penalties updated successfully.",
+    invalidateQueries: sharedInvalidations,
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["daily-attendance", `${id}`],
+      })
+    },
+  })
+
   return {
     clockIn,
     clockOut,
@@ -102,6 +120,7 @@ export function useAttendanceMutations() {
     rejectAttendance,
     updateAttendance,
     deleteAttendance,
+    updateUniformPenalties,
   }
 }
 

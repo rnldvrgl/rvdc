@@ -299,12 +299,20 @@ export type DailyAttendance = BaseEntity & {
   clock_out: string | null
   attendance_type: AttendanceType
   attendance_type_display: string
+  consecutive_absences: number
+  is_awol: boolean
   total_hours: string
   break_hours: string
   paid_hours: string
   is_late: boolean
   late_minutes: number
+  auto_closed: boolean
+  auto_close_warning_count: number
   late_penalty_amount: string
+  missing_uniform_shirt: boolean
+  missing_uniform_pants: boolean
+  missing_uniform_shoes: boolean
+  uniform_penalty_amount: string
   status: AttendanceStatus
   status_display: string
   approved_by: number | null
@@ -333,6 +341,12 @@ export type ApproveAttendancePayload = {
 export type RejectAttendancePayload = {
   attendance_ids: number[]
   reason?: string
+}
+
+export type UpdateUniformPenaltiesPayload = {
+  missing_uniform_shirt: boolean
+  missing_uniform_pants: boolean
+  missing_uniform_shoes: boolean
 }
 
 export type LeaveBalance = BaseEntity & {

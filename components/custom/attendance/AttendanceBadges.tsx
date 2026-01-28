@@ -159,3 +159,71 @@ export function LateBadge({
     </Badge>
   )
 }
+
+type AutoCloseWarningBadgeProps = {
+  autoCloseWarningCount: number
+  showIfZero?: boolean
+  className?: string
+  size?: "sm" | "md" | "lg"
+}
+
+export function AutoCloseWarningBadge({
+  autoCloseWarningCount,
+  showIfZero = false,
+  className,
+  size = "md",
+}: AutoCloseWarningBadgeProps) {
+  if (!showIfZero && autoCloseWarningCount === 0) {
+    return null
+  }
+
+  const sizeClasses = {
+    sm: "text-xs px-2 py-0.5",
+    md: "text-sm px-3 py-1",
+    lg: "text-base px-4 py-2 font-semibold",
+  }
+
+  return (
+    <Badge
+      className={cn(
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800",
+        sizeClasses[size],
+        className,
+      )}
+      variant="outline"
+    >
+      <AlertTriangle className="mr-1.5 h-4 w-4" />
+      {autoCloseWarningCount} Auto-Close Warning
+      {autoCloseWarningCount !== 1 ? "s" : ""}
+    </Badge>
+  )
+}
+
+type AwolBadgeProps = {
+  isAwol: boolean
+  consecutiveAbsences?: number
+  className?: string
+}
+
+export function AwolBadge({
+  isAwol,
+  consecutiveAbsences = 0,
+  className,
+}: AwolBadgeProps) {
+  if (!isAwol) {
+    return null
+  }
+
+  return (
+    <Badge
+      className={cn(
+        "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border-red-300 dark:border-red-700 font-semibold",
+        className,
+      )}
+      variant="outline"
+    >
+      <XCircle className="mr-1 h-3 w-3" />
+      AWOL ({consecutiveAbsences} days)
+    </Badge>
+  )
+}

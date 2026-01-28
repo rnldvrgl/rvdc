@@ -1,12 +1,19 @@
 "use client"
 
-import { AttendanceStatusBadge } from "@/components/custom/attendance/AttendanceBadges"
+import {
+  AttendanceStatusBadge,
+  AttendanceTypeBadge,
+  AutoCloseWarningBadge,
+} from "@/components/custom/attendance/AttendanceBadges"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
-import { useCurrentAttendanceStatus } from "@/lib/queries/useAttendance"
+import {
+  useCurrentAttendanceStatus,
+  useDailyAttendance,
+} from "@/lib/queries/useAttendance"
 import { canClockInOut, formatTime } from "@/lib/utils/attendance"
 import { formatMinutesToHours } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
@@ -25,13 +32,17 @@ import {
   XCircle,
 } from "lucide-react"
 import { useState } from "react"
-
 type ClockInOutProps = {
   date?: string
+  yesterdayAttendance: ReturnType<typeof useDailyAttendance>["data"]
   onSuccess?: () => void
 }
 
-export function ClockInOut({ date, onSuccess }: ClockInOutProps) {
+export function ClockInOut({
+  date,
+  yesterdayAttendance,
+  onSuccess,
+}: ClockInOutProps) {
   const { user_id, role } = useCurrentUser()
   const [notes, setNotes] = useState("")
   const [showNotes, setShowNotes] = useState(false)
@@ -42,6 +53,7 @@ export function ClockInOut({ date, onSuccess }: ClockInOutProps) {
 
   const { data: currentStatus, isLoading: statusLoading } =
     useCurrentAttendanceStatus()
+
   const { clockIn, clockOut } = useAttendanceMutations()
 
   const handleClockIn = async () => {
@@ -107,10 +119,23 @@ export function ClockInOut({ date, onSuccess }: ClockInOutProps) {
 
   return (
     <Card className="border-0 shadow-sm">
-      <CardContent className="p-6 space-y-6">
+      <CardContent className="space-y-6">
+        {/* Auto-Close Warning Badge */}
+        {yesterdayAttendance?.auto_closed &&
+          yesterdayAttendance.auto_close_warning_count > 0 && (
+            <div className="flex items-center justify-center p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border-2 border-yellow-200 dark:border-yellow-800">
+              <AutoCloseWarningBadge
+                autoCloseWarningCount={
+                  yesterdayAttendance.auto_close_warning_count
+                }
+                size="lg"
+              />
+            </div>
+          )}
+
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col lg:flex-row space-y-3 items-center justify-between">
+          <div className="flex flex-col lg:flex-row items-center gap-3">
             <div
               className={`p-2.5 rounded-xl ${isClockedOut ? "bg-green-100 dark:bg-green-950" : isClockedIn ? "bg-blue-100 dark:bg-blue-950" : "bg-gray-100 dark:bg-gray-900"}`}
             >
@@ -118,16 +143,28 @@ export function ClockInOut({ date, onSuccess }: ClockInOutProps) {
                 className={`h-5 w-5 ${isClockedOut ? "text-green-600 dark:text-green-400" : isClockedIn ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"}`}
               />
             </div>
-            <div>
-              <h3 className="font-semibold">Attendance Clock</h3>
+            <div className="text-center lg:text-left">
+              <h3 className="font-semibold ">Attendance Clock</h3>
               <p className="text-xs text-muted-foreground">
                 {formatDate(new Date(), "EEEE, MMMM dd, yyyy")}
               </p>
             </div>
           </div>
-          <AttendanceStatusBadge
-            status={!currentStatus?.status ? "NONE" : currentStatus.status}
-          />
+          <div className="flex gap-2">
+            <AttendanceStatusBadge
+              status={!currentStatus?.status ? "NONE" : currentStatus.status}
+            />
+            {currentStatus?.attendance_type !== "PENDING" &&
+              currentStatus?.status !== "PENDING" && (
+                <AttendanceTypeBadge
+                  type={
+                    !currentStatus?.attendance_type
+                      ? "INVALID"
+                      : currentStatus.attendance_type
+                  }
+                />
+              )}
+          </div>
         </div>
 
         {/* Attendance Details */}
@@ -262,7 +299,8 @@ export function ClockInOut({ date, onSuccess }: ClockInOutProps) {
                   <label className="text-sm font-medium">
                     Notes (optional)
                   </label>
-                  <button
+                  <Button
+                    variant="link"
                     onClick={() => {
                       setShowNotes(false)
                       setNotes("")
@@ -270,7 +308,7 @@ export function ClockInOut({ date, onSuccess }: ClockInOutProps) {
                     className="text-xs text-muted-foreground hover:text-foreground"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
                 <Textarea
                   value={notes}
@@ -282,13 +320,14 @@ export function ClockInOut({ date, onSuccess }: ClockInOutProps) {
                 />
               </>
             ) : (
-              <button
+              <Button
                 onClick={() => setShowNotes(true)}
+                variant="link"
                 className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <FileText className="h-4 w-4" />
                 Add notes
-              </button>
+              </Button>
             )}
           </div>
         )}
@@ -301,6 +340,7 @@ export function ClockInOut({ date, onSuccess }: ClockInOutProps) {
               disabled={!!currentStatus || isLoading}
               className="h-11"
               size="lg"
+              variant="success"
             >
               {clockIn.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -314,7 +354,7 @@ export function ClockInOut({ date, onSuccess }: ClockInOutProps) {
             <Button
               onClick={handleClockOut}
               disabled={!isClockedIn || isLoading}
-              variant="secondary"
+              variant="destructive"
               className="h-11"
               size="lg"
             >
