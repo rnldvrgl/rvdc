@@ -284,12 +284,8 @@ export type AttendanceType =
 export type AttendanceStatus = "PENDING" | "APPROVED" | "REJECTED" | "NONE"
 export type LeaveType = "SICK" | "EMERGENCY"
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED"
-export type CalendarAttendanceStatus =
-  | "present"
-  | "late"
-  | "absent"
-  | "vacation"
-  | "sick"
+export type ShiftPeriod = "AM" | "PM" | "FULL"
+export type CalendarAttendanceStatus = "present" | "late" | "absent" | "leave"
 
 export type DailyAttendance = BaseEntity & {
   employee: number
@@ -368,6 +364,8 @@ export type LeaveRequest = BaseEntity & {
   leave_type_display: string
   date: string
   is_half_day: boolean
+  shift_period: ShiftPeriod
+  shift_period_display: string
   days_count: string
   reason: string
   status: LeaveStatus
@@ -383,6 +381,7 @@ export type LeaveRequestPayload = {
   leave_type: LeaveType
   date: string
   is_half_day: boolean
+  shift_period: ShiftPeriod
   reason: string
 }
 
@@ -393,4 +392,54 @@ export type ApproveLeavePayload = {
 export type RejectLeavePayload = {
   leave_request_ids: number[]
   reason?: string
+}
+
+// Offense types
+export type OffenseType = "AWOL" | "LATE" | "CURFEW" | "OTHER"
+export type SeverityLevel = "WARNING" | "SUSPENSION" | "TERMINATION"
+
+export type Offense = BaseEntity & {
+  employee: number
+  employee_name: string
+  employee_id_number: string
+  offense_type: OffenseType
+  offense_type_display: string
+  severity_level: SeverityLevel
+  severity_level_display: string
+  date: string
+  description: string
+  penalty_days: number
+  suspension_start_date: string | null
+  suspension_end_date: string | null
+  created_by: number | null
+  created_by_name: string | null
+  notes: string
+  offense_count: number
+}
+
+export type OffensePayload = {
+  employee: number
+  offense_type: OffenseType
+  severity_level?: SeverityLevel // Optional: auto-calculated by backend
+  date: string
+  description: string
+  penalty_days?: number
+  suspension_start_date?: string | null
+  notes?: string
+}
+
+export type OffenseStatistics = {
+  employee_id: number
+  employee_name: string
+  employee_id_number: string
+  total_offenses: number
+  awol_count: number
+  late_count: number
+  curfew_count: number
+  other_count: number
+  warning_count: number
+  suspension_count: number
+  termination_count: number
+  is_at_limit: boolean
+  last_offense_date: string | null
 }

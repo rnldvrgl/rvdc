@@ -12,6 +12,10 @@ interface AttendanceRecordItemProps {
 }
 
 export const AttendanceRecordItem = ({ record }: AttendanceRecordItemProps) => {
+  // Extract leave information from notes if attendance_type is LEAVE
+  const isLeave = record.attendance_type === "LEAVE"
+  const leaveInfo = isLeave && record.notes ? record.notes : null
+
   return (
     <div className="border-b last:border-b-0 border-slate-200 dark:border-slate-800">
       <div className="p-4 md:p-5">
@@ -29,11 +33,19 @@ export const AttendanceRecordItem = ({ record }: AttendanceRecordItemProps) => {
                 day: "numeric",
               })}
             </div>
+            {isLeave && leaveInfo && (
+              <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                {leaveInfo}
+              </div>
+            )}
           </div>
 
           {/* Status Badges */}
           <div className="flex flex-wrap justify-center md:justify-center gap-2 md:flex-1">
-            <AttendanceStatusBadge status={record.status} />
+            {record.status == "APPROVED" &&
+              record.attendance_type != "ABSENT" && (
+                <AttendanceStatusBadge status={record.status} />
+              )}
             <AttendanceTypeBadge type={record.attendance_type} />
             {record.is_late && (
               <LateBadge
@@ -45,8 +57,8 @@ export const AttendanceRecordItem = ({ record }: AttendanceRecordItemProps) => {
 
           {/* Time & Metrics */}
           <div className="flex flex-col items-center md:items-end gap-2 md:flex-1">
-            {/* Clock In / Out */}
-            {record.clock_in && (
+            {/* Clock In / Out or Leave Status */}
+            {!isLeave && record.clock_in ? (
               <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground bg-slate-100 dark:bg-slate-800/50 rounded-full px-3 py-1.5">
                 <Clock className="h-3.5 w-3.5" />
                 <span>
@@ -54,7 +66,12 @@ export const AttendanceRecordItem = ({ record }: AttendanceRecordItemProps) => {
                   {record.clock_out ? formatTime(record.clock_out) : "Pending"}
                 </span>
               </div>
-            )}
+            ) : isLeave ? (
+              <div className="flex items-center gap-2 text-xs md:text-sm text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 rounded-full px-3 py-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                <span>On Leave</span>
+              </div>
+            ) : null}
 
             {/* Metrics */}
             <div className="flex flex-wrap justify-center md:justify-end gap-3 text-xs font-medium">

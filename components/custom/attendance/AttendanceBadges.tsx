@@ -96,8 +96,7 @@ export function AttendanceTypeBadge({
     },
     ABSENT: {
       icon: XCircle,
-      className:
-        "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+      className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
       label: "Absent",
     },
     LEAVE: {

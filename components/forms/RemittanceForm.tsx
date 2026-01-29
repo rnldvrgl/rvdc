@@ -1,18 +1,18 @@
-'use client'
+"use client"
 
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Info } from 'lucide-react'
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Info } from "lucide-react"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
 
-import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
-import { useRemittanceMutations } from '@/lib/mutations/useRemittanceMutations'
-import { useStallChoices } from '@/lib/queries/useChoices'
-import useUserProfileStore from '@/lib/store/useUserProfileStore'
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useRemittanceMutations } from "@/lib/mutations/useRemittanceMutations"
+import { useStallChoices } from "@/lib/queries/useChoices"
+import useUserProfileStore from "@/lib/store/useUserProfileStore"
 
-import { ComboBox } from '@/components/custom/inputs/ComboBox'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
@@ -20,8 +20,8 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -29,16 +29,16 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Textarea } from '@/components/ui/textarea'
+} from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from "@/components/ui/tooltip"
 
-import { RemittanceRecordPayload } from '@/lib/constants/infers'
-import { RemittanceRecordSchema } from '@/lib/constants/schema'
+import { RemittanceRecordPayload } from "@/lib/constants/infers"
+import { RemittanceRecordSchema } from "@/lib/constants/schema"
 
 const DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5, 1] as const
 
@@ -74,8 +74,8 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
     defaultValues: {
       stall:
         initialData?.stall ??
-        (role === 'admin' ? undefined : userProfile?.assigned_stall?.id),
-      notes: initialData?.notes ?? '',
+        (role === "admin" ? undefined : userProfile?.assigned_stall?.id),
+      notes: initialData?.notes ?? "",
       cash_breakdown: {
         ...Object.fromEntries(
           DENOMINATIONS.flatMap((d) => [
@@ -119,10 +119,9 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
     if (isRemitted) return
 
     const stallId =
-      role === 'admin' ? data.stall : userProfile?.assigned_stall?.id
+      role === "admin" ? data.stall : userProfile?.assigned_stall?.id
 
     if (!stallId) {
-      console.error('Missing stall ID')
       return
     }
 
@@ -147,7 +146,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         onSubmit={handleSubmit(onSubmit)}
         className="grid space-y-6 max-w-xl"
       >
-        {role === 'admin' && (
+        {role === "admin" && (
           <FormField
             control={control}
             name="stall"
@@ -246,12 +245,12 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                                 disabled={disabled}
                                 min={0}
                                 value={
-                                  typeof field.value === 'number'
+                                  typeof field.value === "number"
                                     ? field.value
                                     : 0
                                 }
                                 onChange={(e) => {
-                                  const val = parseInt(e.target.value || '0')
+                                  const val = parseInt(e.target.value || "0")
                                   field.onChange(val)
                                   handleDeclaredChange(denom, val)
                                 }}
@@ -277,13 +276,13 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                                 className="w-20 text-center"
                                 disabled={disabled || syncStates[denom]}
                                 value={
-                                  typeof field.value === 'number'
+                                  typeof field.value === "number"
                                     ? field.value
                                     : 0
                                 }
                                 onChange={(e) =>
                                   field.onChange(
-                                    parseInt(e.target.value || '0'),
+                                    parseInt(e.target.value || "0"),
                                   )
                                 }
                               />
@@ -335,7 +334,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
             type="submit"
             disabled={disabled}
           >
-            {isEditing ? 'Update Remittance' : 'Save Remittance'}
+            {isEditing ? "Update Remittance" : "Save Remittance"}
           </Button>
         </div>
       </form>

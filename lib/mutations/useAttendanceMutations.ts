@@ -6,6 +6,7 @@ import {
   ClockInPayload,
   ClockOutPayload,
   LeaveRequestPayload,
+  OffensePayload,
   RejectAttendancePayload,
   RejectLeavePayload,
   UpdateUniformPenaltiesPayload,
@@ -13,6 +14,7 @@ import {
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
 import { useQueryClient } from "@tanstack/react-query"
+import toast from "react-hot-toast"
 
 export function useAttendanceMutations() {
   const queryClient = useQueryClient()
@@ -142,12 +144,29 @@ export function useLeaveRequestMutations() {
     invalidateQueries: sharedInvalidations,
   })
 
-  const approveLeave = useApiMutation({
+  const approveLeave = useApiMutation<ApproveLeavePayload, any>({
     mutationFn: (data: ApproveLeavePayload) =>
       api.post(`${leaveRequestUrl}approve/`, data),
-    successMessage: "Leave request(s) approved successfully.",
     invalidateQueries: sharedInvalidations,
-    onSuccess: (_, payload) => {
+    onSuccess: (response, payload) => {
+      // Show appropriate message based on response
+      const approvedCount = response?.approved_count || 0
+      const errors = response?.errors || []
+
+      if (approvedCount > 0) {
+        toast.success(
+          `${approvedCount} leave request(s) approved successfully.`,
+        )
+      }
+
+      if (errors.length > 0) {
+        errors.forEach((error: any) => {
+          toast.error(
+            `Error approving request ${error.leave_request_id}: ${error.error}`,
+          )
+        })
+      }
+
       // Invalidate individual leave requests
       payload.leave_request_ids.forEach((id) => {
         queryClient.invalidateQueries({
@@ -157,12 +176,20 @@ export function useLeaveRequestMutations() {
     },
   })
 
-  const rejectLeave = useApiMutation({
+  const rejectLeave = useApiMutation<RejectLeavePayload, any>({
     mutationFn: (data: RejectLeavePayload) =>
       api.post(`${leaveRequestUrl}reject/`, data),
-    successMessage: "Leave request(s) rejected successfully.",
     invalidateQueries: sharedInvalidations,
-    onSuccess: (_, payload) => {
+    onSuccess: (response, payload) => {
+      // Show appropriate message based on response
+      const rejectedCount = response?.rejected_count || 0
+
+      if (rejectedCount > 0) {
+        toast.success(
+          `${rejectedCount} leave request(s) rejected successfully.`,
+        )
+      }
+
       // Invalidate individual leave requests
       payload.leave_request_ids.forEach((id) => {
         queryClient.invalidateQueries({
@@ -218,5 +245,52 @@ export function useLeaveRequestMutations() {
     cancelLeave,
     updateLeaveRequest,
     deleteLeaveRequest,
+  }
+}
+
+export function useOffenseMutations() {
+  const queryClient = useQueryClient()
+  const offenseUrl = "/attendance/offenses/"
+
+  const sharedInvalidations = [
+    { queryKey: ["offenses"] },
+    { queryKey: ["my-offenses"] },
+    { queryKey: ["offense-statistics"] },
+    { queryKey: ["employee-offense-history"] },
+  ]
+
+  const createOffense = useApiMutation({
+    mutationFn: (data: OffensePayload) => api.post(offenseUrl, data),
+    successMessage: "Offense recorded successfully.",
+    invalidateQueries: sharedInvalidations,
+  })
+
+  const updateOffense = useApiMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<OffensePayload> }) =>
+      api.patch(`${offenseUrl}${id}/`, data),
+    successMessage: "Offense updated successfully.",
+    invalidateQueries: sharedInvalidations,
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({
+        queryKey: ["offense", `${id}`],
+      })
+    },
+  })
+
+  const deleteOffense = useApiMutation({
+    mutationFn: (id: number) => api.delete(`${offenseUrl}${id}/`),
+    successMessage: "Offense deleted successfully.",
+    invalidateQueries: sharedInvalidations,
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({
+        queryKey: ["offense", `${id}`],
+      })
+    },
+  })
+
+  return {
+    createOffense,
+    updateOffense,
+    deleteOffense,
   }
 }

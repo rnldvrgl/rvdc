@@ -13,6 +13,7 @@ import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
 import {
   useCurrentAttendanceStatus,
   useDailyAttendance,
+  useLeaveRequests,
 } from "@/lib/queries/useAttendance"
 import { canClockInOut, formatTime } from "@/lib/utils/attendance"
 import { formatMinutesToHours } from "@/lib/utils/helpers"
@@ -53,6 +54,17 @@ export function ClockInOut({
 
   const { data: currentStatus, isLoading: statusLoading } =
     useCurrentAttendanceStatus()
+
+  // Check if user has approved leave for today
+  const { data: todayLeave } = useLeaveRequests({
+    filter: {
+      employee_id: user_id,
+      date: today,
+      status: "APPROVED",
+    },
+  })
+
+  const approvedLeave = todayLeave?.results?.[0]
 
   const { clockIn, clockOut } = useAttendanceMutations()
 
@@ -96,6 +108,62 @@ export function ClockInOut({
   const isLoading = clockIn.isPending || clockOut.isPending
   const isClockedIn = currentStatus && !currentStatus.clock_out
   const isClockedOut = currentStatus && currentStatus.clock_out
+
+  // Determine if clock buttons should be disabled based on leave
+  const getCurrentHour = () => {
+    console.log("Today:", today)
+    return new Date(today).getHours()
+  }
+
+  const isClockDisabledByLeave = () => {
+    if (!approvedLeave) return false
+
+    // Full day leave - disable all day
+    if (approvedLeave.shift_period === "FULL") {
+      return true
+    }
+
+    // Half day morning (leaving at 12 PM) - disable after 1 PM (13:00)
+    if (approvedLeave.shift_period === "AM") {
+      return getCurrentHour() >= 13
+    }
+
+    // Half day afternoon (leaving at 5 PM) - disable before 1 PM (13:00)
+    if (approvedLeave.shift_period === "PM") {
+      return getCurrentHour() < 13
+    }
+
+    return false
+  }
+
+  const getLeaveMessage = () => {
+    if (!approvedLeave) return null
+
+    if (approvedLeave.shift_period === "FULL") {
+      return `You are on ${approvedLeave.leave_type_display.toLowerCase()} today (Full Day). Clock in/out is not available.`
+    }
+
+    if (approvedLeave.shift_period === "AM") {
+      // On leave in the morning, works afternoon shift (1pm-6pm)
+      if (getCurrentHour() >= 13) {
+        return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Morning). You can clock in/out for your afternoon shift (1:00 PM - 6:00 PM).`
+      }
+      return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Morning). Your afternoon shift starts at 1:00 PM.`
+    }
+
+    if (approvedLeave.shift_period === "PM") {
+      // On leave in the afternoon, works morning shift (8am-1pm)
+      if (getCurrentHour() >= 13) {
+        return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Afternoon). Your morning shift has ended at 1:00 PM.`
+      }
+      return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Afternoon). You can clock in/out for your morning shift (8:00 AM - 1:00 PM).`
+    }
+
+    return null
+  }
+
+  const leaveMessage = getLeaveMessage()
+  const clockDisabled = isClockDisabledByLeave()
 
   if (!canClock || !user_id) {
     return (
@@ -334,40 +402,58 @@ export function ClockInOut({
 
         {/* Action Buttons */}
         {!isClockedOut && (
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              onClick={handleClockIn}
-              disabled={!!currentStatus || isLoading}
-              className="h-11"
-              size="lg"
-              variant="success"
-            >
-              {clockIn.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Clock In
-                </>
-              )}
-            </Button>
-            <Button
-              onClick={handleClockOut}
-              disabled={!isClockedIn || isLoading}
-              variant="destructive"
-              className="h-11"
-              size="lg"
-            >
-              {clockOut.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Clock Out
-                </>
-              )}
-            </Button>
-          </div>
+          <>
+            {/* Leave Message */}
+            {leaveMessage && (
+              <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900">
+                <AlertCircle className="h-5 w-5 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-purple-900 dark:text-purple-200">
+                    On Leave
+                  </p>
+                  <p className="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
+                    {leaveMessage}
+                  </p>
+                </div>
+              </div>
+            )}
+            {!clockDisabled && (
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={handleClockIn}
+                  disabled={!!currentStatus || isLoading || clockDisabled}
+                  className="h-11"
+                  size="lg"
+                  variant="success"
+                >
+                  {clockIn.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Clock In
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleClockOut}
+                  disabled={!isClockedIn || isLoading || clockDisabled}
+                  variant="destructive"
+                  className="h-11"
+                  size="lg"
+                >
+                  {clockOut.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Clock Out
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Completed Message */}

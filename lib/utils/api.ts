@@ -1,29 +1,28 @@
-import { refreshToken } from '@/lib/utils/auth'
-import { deleteCookie, setCookie } from '@/lib/utils/cookies'
-import { getToken, removeToken, setToken } from '@/lib/utils/tokens'
-import axios from 'axios'
-import toast from 'react-hot-toast'
+import { refreshToken } from "@/lib/utils/auth"
+import { deleteCookie, setCookie } from "@/lib/utils/cookies"
+import { getToken, removeToken, setToken } from "@/lib/utils/tokens"
+import axios from "axios"
+import toast from "react-hot-toast"
 
-const baseURL = '/api'
+const baseURL = "/api"
 const api = axios.create({
   withCredentials: true,
   baseURL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 })
 
 // Request Interceptor — Attach token
 api.interceptors.request.use(
   async (config) => {
-    const access_token = await getToken('access')
+    const access_token = await getToken("access")
     if (access_token) {
-      config.headers['Authorization'] = `Bearer ${access_token}`
+      config.headers["Authorization"] = `Bearer ${access_token}`
     }
     return config
   },
   (error) => {
-    console.error('Request error:', error)
     return Promise.reject(error)
   },
 )
@@ -42,43 +41,42 @@ api.interceptors.response.use(
       originalRequest._retry = true
 
       const errData = error?.response?.data
-      const remember_me = await getToken('remember')
+      const remember_me = await getToken("remember")
 
       // Check typical DRF simplejwt responses
       const tokenNotValid =
-        errData?.code === 'token_not_valid' ||
-        (typeof errData?.detail === 'string' &&
-          errData.detail.toLowerCase().includes('token not valid'))
+        errData?.code === "token_not_valid" ||
+        (typeof errData?.detail === "string" &&
+          errData.detail.toLowerCase().includes("token not valid"))
 
-      if (tokenNotValid && remember_me === 'true') {
+      if (tokenNotValid && remember_me === "true") {
         try {
           const newAccess = (await refreshToken()) as {
             access: string
             refresh: string
           }
           if (newAccess?.access) {
-            setToken('access', newAccess.access)
-            setToken('refresh', newAccess.refresh)
+            setToken("access", newAccess.access)
+            setToken("refresh", newAccess.refresh)
             const { access, refresh } = newAccess
-            setCookie('access', access)
-            setCookie('refresh', refresh)
-            originalRequest.headers[
-              'Authorization'
-            ] = `Bearer ${newAccess.access}`
+            setCookie("access", access)
+            setCookie("refresh", refresh)
+            originalRequest.headers["Authorization"] =
+              `Bearer ${newAccess.access}`
             return api(originalRequest)
           }
         } catch (refreshErr) {
-          console.error('Token refresh failed:', refreshErr)
+          console.error("Token refresh failed:", refreshErr)
         }
       }
 
-      removeToken('access')
-      removeToken('refresh')
-      removeToken('remember')
+      removeToken("access")
+      removeToken("refresh")
+      removeToken("remember")
       deleteCookie()
 
-      window.location.href = '/'
-      toast.error('Your session has expired. Please login again.')
+      window.location.href = "/"
+      toast.error("Your session has expired. Please login again.")
 
       return new Promise(() => {})
     }

@@ -8,6 +8,7 @@ import { UniformPenaltyCheckboxes } from "@/components/custom/attendance/Uniform
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Table,
   TableBody,
@@ -43,6 +44,54 @@ export function AttendanceApproval() {
   >(null)
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
   const [notes, setNotes] = useState("")
+  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
+
+  const toggleSelectItem = (id: number) => {
+    const newSelected = new Set(selectedItems)
+    if (newSelected.has(id)) {
+      newSelected.delete(id)
+    } else {
+      newSelected.add(id)
+    }
+    setSelectedItems(newSelected)
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === pendingApprovals?.length) {
+      setSelectedItems(new Set())
+    } else {
+      setSelectedItems(new Set(pendingApprovals?.map((a) => a.id) || []))
+    }
+  }
+
+  const handleBulkApprove = async () => {
+    await approveAttendance.mutateAsync(
+      {
+        attendance_ids: Array.from(selectedItems),
+      },
+      {
+        onSuccess: () => {
+          setSelectedItems(new Set())
+          setNotes("")
+        },
+      },
+    )
+  }
+
+  const handleBulkReject = async () => {
+    await rejectAttendance.mutateAsync(
+      {
+        attendance_ids: Array.from(selectedItems),
+        reason: notes || undefined,
+      },
+      {
+        onSuccess: () => {
+          setSelectedItems(new Set())
+          setNotes("")
+        },
+      },
+    )
+  }
 
   // Check if user can approve
   const hasApprovalRights = canApprove(role || "")
@@ -146,18 +195,54 @@ export function AttendanceApproval() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 w-fit mx-auto">
-                <Clock className="size-4 text-slate-600 dark:text-slate-400" />
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 w-fit mx-auto">
+                  <Clock className="size-4 text-slate-600 dark:text-slate-400" />
+                </div>
+                <CardTitle className="text-base md:text-lg font-semibold">
+                  Pending Attendance Approvals
+                </CardTitle>
               </div>
-              <CardTitle className="text-base md:text-lg font-semibold">
-                Pending Attendance Approvals
-              </CardTitle>
             </div>
+            <Badge variant="secondary">{pendingApprovals.length} pending</Badge>
           </div>
-          <Badge variant="secondary">{pendingApprovals.length} pending</Badge>
+          {selectedItems.size > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground">
+                {selectedItems.size} selected
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                onClick={handleBulkApprove}
+                disabled={isLoading}
+              >
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Approve Selected
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleBulkReject}
+                disabled={isLoading}
+              >
+                <XCircle className="h-4 w-4 mr-1" />
+                Reject Selected
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setSelectedItems(new Set())}
+              >
+                Clear
+              </Button>
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -165,6 +250,15 @@ export function AttendanceApproval() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={
+                      selectedItems.size === pendingApprovals?.length &&
+                      pendingApprovals?.length > 0
+                    }
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </TableHead>
                 <TableHead className="w-10"></TableHead>
                 <TableHead>Employee</TableHead>
                 <TableHead>Date</TableHead>
@@ -190,6 +284,14 @@ export function AttendanceApproval() {
                 return (
                   <Fragment key={attendance.id}>
                     <TableRow>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedItems.has(attendance.id)}
+                          onCheckedChange={() =>
+                            toggleSelectItem(attendance.id)
+                          }
+                        />
+                      </TableCell>
                       <TableCell>
                         <Button
                           variant="ghost"
@@ -301,7 +403,7 @@ export function AttendanceApproval() {
                     {isExpanded && (
                       <TableRow>
                         <TableCell
-                          colSpan={9}
+                          colSpan={10}
                           className="bg-muted/20"
                         >
                           <div className="py-4 px-6">

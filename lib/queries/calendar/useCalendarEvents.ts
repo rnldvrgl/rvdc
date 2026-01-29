@@ -23,10 +23,10 @@ export interface CalendarEvent {
     schedule_id?: number
     notes?: string
     // Attendance specific props
-    attendance_status?: "present" | "absent" | "late" | "sick" | "vacation"
+    attendance_status?: "present" | "absent" | "late" | "leave" | "invalid"
     employee_name?: string
     employeeName?: string
-    status?: "present" | "absent" | "late" | "sick" | "vacation"
+    status?: "present" | "absent" | "late" | "leave" | "invalid"
     check_in?: string
     check_out?: string
     checkIn?: string
@@ -36,8 +36,11 @@ export interface CalendarEvent {
     // Leave specific props
     leave_id?: number
     employee_id?: number
-    leave_type?: string
+    leave_type?: "SICK" | "EMERGENCY"
     leave_type_display?: string
+    is_half_day?: boolean
+    shift_period?: string
+    shift_period_display?: string
     reason?: string
   }
 }

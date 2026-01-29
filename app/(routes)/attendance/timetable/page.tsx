@@ -137,7 +137,9 @@ const AttendancePage = () => {
           height="auto"
           onEventClick={handleEventClick}
           onDateClick={handleDateClick}
+          eventTypes={["attendance", "leave"]}
           className="w-full"
+          withSettings={false}
         />
 
         {/* Recent Records */}

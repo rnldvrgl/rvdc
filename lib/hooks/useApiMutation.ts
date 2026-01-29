@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { UseApiMutationProps } from '@/lib/constants/interface'
-import { useDRFToastError } from '@/lib/hooks/useDRFToastError'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import toast from 'react-hot-toast'
+import { UseApiMutationProps } from "@/lib/constants/interface"
+import { useDRFToastError } from "@/lib/hooks/useDRFToastError"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import toast from "react-hot-toast"
 
 export function useApiMutation<TVariables, TData>({
   mutationFn,

@@ -1,5 +1,6 @@
 import { NavigationEntry, ShortcutEntry } from "@/lib/constants/types"
 import {
+  AlertTriangle,
   Banknote,
   Boxes,
   CalendarDays,
@@ -108,6 +109,18 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         href: "/attendance/leaves",
         icon: Plane,
         permission: "manage_attendance",
+      },
+      {
+        name: "Offenses",
+        href: "/attendance/offenses",
+        icon: AlertTriangle,
+        permission: "manage_attendance_admin",
+      },
+      {
+        name: "My Offenses",
+        href: "/attendance/my-offenses",
+        icon: AlertTriangle,
+        permission: "view_own_offenses",
       },
     ],
   },

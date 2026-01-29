@@ -33,17 +33,13 @@ import {
   subWeeks,
 } from "date-fns"
 import {
-  AlertTriangle,
   Calendar,
-  CheckCircle,
   ChevronLeft,
   ChevronRight,
   Clock,
   FileText,
   Plane,
-  Thermometer,
   User,
-  XCircle,
 } from "lucide-react"
 import { useMemo, useState } from "react"
 
@@ -58,91 +54,232 @@ import CalendarSettings from "./CalendarSettings"
 import { DayViewEventItem } from "./DayViewEventItem"
 import { EventIcon } from "./EventIcon"
 
-// Color utility for event types
-const getEventColors = (event: CalendarEvent) => {
+// ============================================================================
+// TYPES & CONSTANTS
+// ============================================================================
+
+type CalendarView = "month" | "week" | "day"
+
+type AttendanceStatus = "present" | "late" | "absent" | "leave" | "invalid"
+
+type EventType =
+  | "birthday"
+  | "holiday"
+  | "attendance"
+  | "leave"
+  | "schedule"
+  | "service"
+
+interface EventColors {
+  bg: string
+  border: string
+  text: string
+  lightBg?: string
+  hoverBg?: string
+}
+
+interface AttendanceRecord {
+  id: string
+  employeeName: string
+  date: string
+  status: AttendanceStatus
+  checkIn?: string
+  checkOut?: string
+  hours: number
+}
+
+interface DashboardCalendarProps {
+  className?: string
+  mode?: "default" | "attendance"
+  attendanceData?: AttendanceRecord[]
+  useCustomData?: boolean
+  title?: string
+  description?: string
+  height?: string
+  weekStartsOn?: 0 | 1
+  onEventClick?: (event: CalendarEvent) => void
+  onDateClick?: (date: Date) => void
+  withSettings?: boolean
+  eventTypes?: EventType[]
+}
+
+// ============================================================================
+// COLOR THEME CONFIGURATION
+// ============================================================================
+
+const EVENT_COLORS: Record<string, EventColors> = {
+  // Attendance statuses
+  present: {
+    bg: "#10b981",
+    border: "#059669",
+    text: "#ffffff",
+    lightBg: "bg-emerald-50/60 dark:bg-emerald-900/20",
+    hoverBg: "hover:bg-emerald-50/80 dark:hover:bg-emerald-900/30",
+  },
+  late: {
+    bg: "#f59e0b",
+    border: "#d97706",
+    text: "#ffffff",
+    lightBg: "bg-amber-50/60 dark:bg-amber-900/20",
+    hoverBg: "hover:bg-amber-50/80 dark:hover:bg-amber-900/30",
+  },
+  absent: {
+    bg: "#ef4444",
+    border: "#dc2626",
+    text: "#ffffff",
+    lightBg: "bg-red-50/60 dark:bg-red-900/20",
+    hoverBg: "hover:bg-red-50/80 dark:hover:bg-red-900/30",
+  },
+  leave: {
+    bg: "#8b5cf6",
+    border: "#7c3aed",
+    text: "#ffffff",
+    lightBg: "bg-violet-50/60 dark:bg-violet-900/20",
+    hoverBg: "hover:bg-violet-50/80 dark:hover:bg-violet-900/30",
+  },
+  invalid: {
+    bg: "#6b7280",
+    border: "#4b5563",
+    text: "#ffffff",
+    lightBg: "bg-gray-50/60 dark:bg-gray-900/20",
+    hoverBg: "hover:bg-gray-50/80 dark:hover:bg-gray-900/30",
+  },
+
+  // Event types
+  birthday: {
+    bg: "#22c55e",
+    border: "#16a34a",
+    text: "#ffffff",
+  },
+  regularHoliday: {
+    bg: "#dc2626",
+    border: "#b91c1c",
+    text: "#ffffff",
+  },
+  specialHoliday: {
+    bg: "#ea580c",
+    border: "#c2410c",
+    text: "#ffffff",
+  },
+  sickLeave: {
+    bg: "#8b5cf6",
+    border: "#7c3aed",
+    text: "#ffffff",
+  },
+  emergencyLeave: {
+    bg: "#f59e0b",
+    border: "#d97706",
+    text: "#ffffff",
+  },
+  regularLeave: {
+    bg: "#6366f1",
+    border: "#4f46e5",
+    text: "#ffffff",
+  },
+  schedule: {
+    bg: "#0891b2",
+    border: "#0e7490",
+    text: "#ffffff",
+  },
+  default: {
+    bg: "#6b7280",
+    border: "#4b5563",
+    text: "#ffffff",
+  },
+}
+
+const LEGEND_ITEMS = [
+  { type: "birthday", label: "Birthdays", color: EVENT_COLORS.birthday.bg },
+  { type: "holiday", label: "Holidays", color: EVENT_COLORS.regularHoliday.bg },
+  { type: "service", label: "Services", color: "#3b82f6" },
+  { type: "schedule", label: "Schedules", color: EVENT_COLORS.schedule.bg },
+] as const
+
+const ATTENDANCE_LEGEND_ITEMS: Array<{
+  value: AttendanceStatus
+  label: string
+}> = [
+  { value: "present", label: "Present" },
+  { value: "late", label: "Late" },
+  { value: "absent", label: "Absent" },
+  { value: "leave", label: "Leave" },
+  { value: "invalid", label: "Invalid" },
+]
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+const getEventColors = (event: CalendarEvent): EventColors => {
   const { type } = event.extendedProps
 
   switch (type) {
-    case "attendance":
+    case "attendance": {
       const status =
         event.extendedProps.status || event.extendedProps.attendance_status
-      switch (status) {
-        case "present":
-          return {
-            bg: "#10b981",
-            border: "#10b981",
-            text: "#ffffff",
-          }
-        case "late":
-          return {
-            bg: "#f59e0b",
-            border: "#f59e0b",
-            text: "#ffffff",
-          }
-        case "absent":
-          return {
-            bg: "#ef4444",
-            border: "#ef4444",
-            text: "#ffffff",
-          }
-        case "sick":
-          return {
-            bg: "#8b5cf6",
-            border: "#8b5cf6",
-            text: "#ffffff",
-          }
-        case "vacation":
-          return {
-            bg: "#06b6d4",
-            border: "#06b6d4",
-            text: "#ffffff",
-          }
-        default:
-          return {
-            bg: "#6b7280",
-            border: "#6b7280",
-            text: "#ffffff",
-          }
-      }
+      return EVENT_COLORS[status as string] || EVENT_COLORS.default
+    }
+
     case "birthday":
-      return { bg: "#22c55e", border: "#22c55e", text: "#ffffff" }
-    case "holiday":
+      return EVENT_COLORS.birthday
+
+    case "holiday": {
       const isRegular = event.extendedProps.holiday_type === "regular"
       return isRegular
-        ? { bg: "#dc2626", border: "#dc2626", text: "#ffffff" }
-        : { bg: "#ea580c", border: "#ea580c", text: "#ffffff" }
-    case "leave":
-      // Different colors for different leave types
+        ? EVENT_COLORS.regularHoliday
+        : EVENT_COLORS.specialHoliday
+    }
+
+    case "leave": {
       const leaveType = event.extendedProps.leave_type
       switch (leaveType) {
-        case "sick":
-          return { bg: "#8b5cf6", border: "#8b5cf6", text: "#ffffff" }
-        case "emergency":
-          return { bg: "#f59e0b", border: "#f59e0b", text: "#ffffff" }
+        case "SICK":
+          return EVENT_COLORS.sickLeave
+        case "EMERGENCY":
+          return EVENT_COLORS.emergencyLeave
         default:
-          return { bg: "#6366f1", border: "#6366f1", text: "#ffffff" }
+          return EVENT_COLORS.regularLeave
       }
+    }
+
     case "schedule":
-      return { bg: "#3b82f6", border: "#3b82f6", text: "#ffffff" }
+      return EVENT_COLORS.schedule
+
     default:
-      return { bg: "#6b7280", border: "#6b7280", text: "#ffffff" }
+      return EVENT_COLORS.default
   }
 }
 
-type CalendarView = "month" | "week" | "day"
+const getDayBackgroundColor = (
+  day: Date,
+  eventsByDate: Record<string, CalendarEvent[]>,
+  mode: "default" | "attendance",
+): string => {
+  if (mode !== "attendance") return ""
+
+  const dayEvents = eventsByDate[day.toDateString()] || []
+  const attendanceEvent = dayEvents.find(
+    (event) => event.extendedProps?.type === "attendance",
+  )
+
+  if (!attendanceEvent) return ""
+
+  const status =
+    attendanceEvent.extendedProps?.status ||
+    attendanceEvent.extendedProps?.attendance_status
+  const colors = EVENT_COLORS[status as string]
+
+  return colors ? `${colors.lightBg} ${colors.hoverBg}` : ""
+}
+
+// ============================================================================
+// MODAL COMPONENTS
+// ============================================================================
 
 interface EventDetailModalProps {
   event: CalendarEvent | null
   isOpen: boolean
   onClose: () => void
-}
-
-interface DayEventsModalProps {
-  date: Date
-  events: CalendarEvent[]
-  isOpen: boolean
-  onClose: () => void
-  onEventClick: (event: CalendarEvent) => void
 }
 
 const EventDetailModal = ({
@@ -170,13 +307,8 @@ const EventDetailModal = ({
                 <h3 className="font-semibold">
                   {extendedProps.employeeName || extendedProps.employee_name}
                 </h3>
-                <p className="text-sm text-muted-foreground">
-                  {((extendedProps.status || extendedProps.attendance_status)
-                    ?.charAt(0)
-                    ?.toUpperCase() || "") +
-                    ((
-                      extendedProps.status || extendedProps.attendance_status
-                    )?.slice(1) || "")}
+                <p className="text-sm text-muted-foreground capitalize">
+                  {extendedProps.status || extendedProps.attendance_status}
                 </p>
               </div>
             </div>
@@ -205,6 +337,7 @@ const EventDetailModal = ({
             </div>
           </div>
         )
+
       case "birthday":
         return (
           <div className="space-y-4">
@@ -230,17 +363,18 @@ const EventDetailModal = ({
           </div>
         )
 
-      case "holiday":
+      case "holiday": {
         const isRegular = extendedProps.holiday_type === "regular"
         return (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div
-                className={`w-10 h-10 rounded-full ${
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center",
                   isRegular
                     ? "bg-red-100 dark:bg-red-900/30"
-                    : "bg-orange-100 dark:bg-orange-900/30"
-                } flex items-center justify-center`}
+                    : "bg-orange-100 dark:bg-orange-900/30",
+                )}
               >
                 <EventIcon
                   event={event}
@@ -259,6 +393,7 @@ const EventDetailModal = ({
             </div>
           </div>
         )
+      }
 
       case "leave":
         return (
@@ -295,7 +430,7 @@ const EventDetailModal = ({
         return (
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-cyan-100 dark:bg-cyan-900/30 flex items-center justify-center">
                 <EventIcon
                   event={event}
                   size="lg"
@@ -315,25 +450,17 @@ const EventDetailModal = ({
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
-                <User className="w-4 h-4" />
+                <User className="w-4 h-4 text-muted-foreground" />
                 <span>Client: {extendedProps.client_name}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <User className="w-4 h-4" />
-                Technician/s:{" "}
-                {extendedProps.technician_names?.map(
-                  (name: string, index: number) => (
-                    <span key={index}>
-                      {name}
-                      {index < extendedProps.technician_names!.length - 1
-                        ? ", "
-                        : ""}
-                    </span>
-                  ),
-                )}
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span>
+                  Technician/s: {extendedProps.technician_names?.join(", ")}
+                </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
-                <Clock className="w-4 h-4" />
+                <Clock className="w-4 h-4 text-muted-foreground" />
                 <span>
                   {format(
                     new Date(event.start),
@@ -343,7 +470,7 @@ const EventDetailModal = ({
               </div>
               {extendedProps.notes && (
                 <div className="flex items-start gap-2 text-sm">
-                  <FileText className="w-4 h-4 mt-0.5" />
+                  <FileText className="w-4 h-4 mt-0.5 text-muted-foreground" />
                   <div>
                     <span className="font-medium">Notes: </span>
                     <span className="text-muted-foreground">
@@ -376,6 +503,14 @@ const EventDetailModal = ({
   )
 }
 
+interface DayEventsModalProps {
+  date: Date
+  events: CalendarEvent[]
+  isOpen: boolean
+  onClose: () => void
+  onEventClick: (event: CalendarEvent) => void
+}
+
 const DayEventsModal = ({
   date,
   events,
@@ -405,9 +540,7 @@ const DayEventsModal = ({
               <div className="flex items-start gap-3">
                 <div
                   className="size-3 rounded-full mt-1.5 shrink-0"
-                  style={{
-                    backgroundColor: event.backgroundColor,
-                  }}
+                  style={{ backgroundColor: event.backgroundColor }}
                 />
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-sm">{event.title}</h4>
@@ -441,27 +574,9 @@ const DayEventsModal = ({
   )
 }
 
-interface DashboardCalendarProps {
-  className?: string
-  mode?: "default" | "attendance"
-  attendanceData?: {
-    id: string
-    employeeName: string
-    date: string
-    status: "present" | "late" | "absent" | "sick" | "vacation"
-    checkIn?: string
-    checkOut?: string
-    hours: number
-  }[]
-  useCustomData?: boolean
-  title?: string
-  description?: string
-  height?: string
-  weekStartsOn?: 0 | 1 // 0 = Sunday, 1 = Monday
-  onEventClick?: (event: CalendarEvent) => void
-  onDateClick?: (date: Date) => void
-  withSettings?: boolean
-}
+// ============================================================================
+// MAIN CALENDAR COMPONENT
+// ============================================================================
 
 const DashboardCalendar = ({
   className,
@@ -474,6 +589,7 @@ const DashboardCalendar = ({
   onEventClick,
   onDateClick,
   withSettings = true,
+  eventTypes,
 }: DashboardCalendarProps) => {
   const { preferences, isLoaded } = useCalendarPreferences()
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -486,17 +602,17 @@ const DashboardCalendar = ({
   )
   const [isDayEventsModalOpen, setIsDayEventsModalOpen] = useState(false)
 
-  // Use provided weekStartsOn prop or fall back to user preferences
   const effectiveWeekStartsOn = weekStartsOn ?? preferences.weekStartsOn
 
-  // Calculate date range based on view
+  // ============================================================================
+  // DATA FETCHING & PROCESSING
+  // ============================================================================
+
   const { dateRange, title: dateTitle } = useMemo(() => {
-    const weekStartOptions = {
-      weekStartsOn: effectiveWeekStartsOn as 0 | 1,
-    }
+    const weekStartOptions = { weekStartsOn: effectiveWeekStartsOn as 0 | 1 }
 
     switch (view) {
-      case "month":
+      case "month": {
         const monthStart = startOfMonth(currentDate)
         const monthEnd = endOfMonth(currentDate)
         const calendarStart = startOfWeek(monthStart, weekStartOptions)
@@ -505,16 +621,15 @@ const DashboardCalendar = ({
           dateRange: { start: calendarStart, end: calendarEnd },
           title: format(currentDate, "MMMM yyyy"),
         }
-      case "week":
+      }
+      case "week": {
         const weekStart = startOfWeek(currentDate, weekStartOptions)
         const weekEnd = endOfWeek(currentDate, weekStartOptions)
         return {
           dateRange: { start: weekStart, end: weekEnd },
-          title:
-            format(weekStart, "MMM dd") +
-            " - " +
-            format(weekEnd, "MMM dd, yyyy"),
+          title: `${format(weekStart, "MMM dd")} - ${format(weekEnd, "MMM dd, yyyy")}`,
         }
+      }
       case "day":
         return {
           dateRange: { start: currentDate, end: currentDate },
@@ -523,41 +638,24 @@ const DashboardCalendar = ({
     }
   }, [view, currentDate, effectiveWeekStartsOn])
 
-  // Convert attendance data to calendar events
   const attendanceEvents = useMemo(() => {
-    if (!useCustomData || mode !== "attendance" || !attendanceData) {
-      return []
-    }
+    if (!useCustomData || mode !== "attendance" || !attendanceData) return []
 
-    return attendanceData.map((record) => {
-      const statusIcons = {
-        present: CheckCircle,
-        late: AlertTriangle,
-        absent: XCircle,
-        sick: Thermometer,
-        vacation: Plane,
-      }
-
-      const IconComponent =
-        statusIcons[record.status as keyof typeof statusIcons]
-
-      return {
-        id: record.id,
-        title: record.employeeName,
-        start: record.date,
-        end: record.date,
-        allDay: true,
-        extendedProps: {
-          type: "attendance" as const,
-          employeeName: record.employeeName,
-          status: record.status,
-          checkIn: record.checkIn,
-          checkOut: record.checkOut,
-          hours: record.hours,
-          iconComponent: IconComponent,
-        },
-      }
-    })
+    return attendanceData.map((record) => ({
+      id: record.id,
+      title: record.employeeName,
+      start: record.date,
+      end: record.date,
+      allDay: true,
+      extendedProps: {
+        type: "attendance" as const,
+        employeeName: record.employeeName,
+        status: record.status,
+        checkIn: record.checkIn,
+        checkOut: record.checkOut,
+        hours: record.hours,
+      },
+    }))
   }, [useCustomData, mode, attendanceData])
 
   const {
@@ -571,57 +669,36 @@ const DashboardCalendar = ({
     enabled: !useCustomData,
   })
 
-  // Group events by date
   const eventsByDate = useMemo(() => {
-    // Use either attendance events or API events
-    const events = useCustomData ? attendanceEvents : apiEvents || []
+    let events = useCustomData ? attendanceEvents : apiEvents || []
 
-    if (!events || events.length === 0) {
-      return {}
+    if (eventTypes && eventTypes.length > 0) {
+      events = events.filter((event) =>
+        eventTypes.includes(event.extendedProps?.type as EventType),
+      )
     }
 
-    const grouped = events.reduce(
-      (acc: Record<string, CalendarEvent[]>, event) => {
-        const dateKey = new Date(event.start).toDateString()
-        if (!acc[dateKey]) {
-          acc[dateKey] = []
-        }
-        // Add colors to each event
-        const colors = getEventColors(event)
-        const eventWithColors = {
-          ...event,
-          backgroundColor: colors.bg,
-          borderColor: colors.border,
-          textColor: colors.text,
-        }
-        acc[dateKey].push(eventWithColors)
-        return acc
-      },
-      {},
-    )
+    if (!events || events.length === 0) return {}
 
-    return grouped
-  }, [useCustomData, attendanceEvents, apiEvents])
+    return events.reduce((acc: Record<string, CalendarEvent[]>, event) => {
+      const dateKey = new Date(event.start).toDateString()
+      if (!acc[dateKey]) acc[dateKey] = []
 
-  // Don't render calendar until preferences are loaded (unless weekStartsOn is explicitly provided)
-  if (!isLoaded && weekStartsOn === undefined) {
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            {title || "Calendar"}
-          </CardTitle>
-          <CardDescription>Loading calendar preferences...</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+      const colors = getEventColors(event)
+      acc[dateKey].push({
+        ...event,
+        backgroundColor: colors.bg,
+        borderColor: colors.border,
+        textColor: colors.text,
+      })
+
+      return acc
+    }, {})
+  }, [useCustomData, attendanceEvents, apiEvents, eventTypes])
+
+  // ============================================================================
+  // EVENT HANDLERS
+  // ============================================================================
 
   const handleNavigation = (direction: "prev" | "next" | "today") => {
     if (direction === "today") {
@@ -658,9 +735,7 @@ const DashboardCalendar = ({
   }
 
   const handleDayClick = (date: Date) => {
-    if (onDateClick) {
-      onDateClick(date)
-    }
+    if (onDateClick) onDateClick(date)
 
     const dayEvents = eventsByDate[date.toDateString()] || []
     if (dayEvents.length === 0) return
@@ -670,11 +745,16 @@ const DashboardCalendar = ({
     setIsDayEventsModalOpen(true)
   }
 
+  // ============================================================================
+  // RENDER FUNCTIONS
+  // ============================================================================
+
   const renderMonthView = () => {
     const dayNames =
       effectiveWeekStartsOn === 0
         ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
         : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
     const days = eachDayOfInterval(dateRange)
     const weeks = []
     for (let i = 0; i < days.length; i += 7) {
@@ -683,7 +763,6 @@ const DashboardCalendar = ({
 
     return (
       <div className="border rounded-lg overflow-hidden">
-        {/* Day headers */}
         <div className="grid grid-cols-7 border-b bg-muted/30">
           {dayNames.map((day) => (
             <div
@@ -696,7 +775,6 @@ const DashboardCalendar = ({
           ))}
         </div>
 
-        {/* Calendar grid */}
         <div className="divide-y">
           {weeks.map((week, weekIndex) => (
             <div
@@ -707,14 +785,20 @@ const DashboardCalendar = ({
                 const dayEvents = eventsByDate[day.toDateString()] || []
                 const isCurrentMonth = isSameMonth(day, currentDate)
                 const isTodayDate = isToday(day)
+                const dayBgColor = getDayBackgroundColor(
+                  day,
+                  eventsByDate,
+                  mode,
+                )
 
                 return (
                   <div
                     key={day.toDateString()}
                     className={cn(
-                      "p-2 sm:p-3 cursor-pointer hover:bg-muted/50 transition-colors overflow-hidden",
+                      "p-2 sm:p-3 cursor-pointer transition-colors overflow-hidden",
                       !isCurrentMonth && "bg-muted/20 text-muted-foreground",
-                      isTodayDate && "bg-primary/10",
+                      isTodayDate && "ring-2 ring-primary ring-inset",
+                      dayBgColor || "hover:bg-muted/50",
                     )}
                     onClick={() => handleDayClick(day)}
                   >
@@ -729,7 +813,7 @@ const DashboardCalendar = ({
                       </span>
                       {dayEvents.length > 0 && (
                         <div className="flex items-center gap-1">
-                          <div className="size-2 sm:size-2.5 rounded-full bg-primary"></div>
+                          <div className="size-2 sm:size-2.5 rounded-full bg-primary" />
                           {dayEvents.length > 1 && (
                             <span className="text-sm sm:text-xs text-muted-foreground">
                               {dayEvents.length}
@@ -740,7 +824,6 @@ const DashboardCalendar = ({
                     </div>
 
                     <div className="space-y-1">
-                      {/* Desktop: Show event titles */}
                       <div className="hidden lg:block">
                         {dayEvents.slice(0, 2).map((event, eventIndex) => (
                           <CalendarEventItem
@@ -757,7 +840,6 @@ const DashboardCalendar = ({
                         )}
                       </div>
 
-                      {/* Tablet: Show compact events */}
                       <div className="hidden sm:block lg:hidden">
                         {dayEvents.slice(0, 2).map((event, eventIndex) => (
                           <CalendarEventItem
@@ -768,8 +850,6 @@ const DashboardCalendar = ({
                           />
                         ))}
                       </div>
-
-                      {/* Mobile: Just the indicator handled above */}
                     </div>
                   </div>
                 )
@@ -783,14 +863,10 @@ const DashboardCalendar = ({
 
   const renderWeekView = () => {
     const days = eachDayOfInterval(dateRange)
-    const timeSlots = []
-    for (let hour = 0; hour < 24; hour++) {
-      timeSlots.push(hour)
-    }
+    const timeSlots = Array.from({ length: 24 }, (_, i) => i)
 
     return (
       <div className="border rounded-lg">
-        {/* Mobile: Show simplified list view */}
         <div className="block sm:hidden">
           <div className="divide-y">
             {days.map((day) => {
@@ -818,8 +894,7 @@ const DashboardCalendar = ({
                       {format(day, "EEE, MMM d")}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {dayEvents.length} event
-                      {dayEvents.length > 1 ? "s" : ""}
+                      {dayEvents.length} event{dayEvents.length > 1 ? "s" : ""}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -843,12 +918,10 @@ const DashboardCalendar = ({
           </div>
         </div>
 
-        {/* Desktop/Tablet: Show grid view */}
         <div className="hidden sm:block overflow-x-auto">
           <div className="min-w-full">
-            {/* Day headers */}
             <div className="grid grid-cols-8 border-b bg-muted/30 min-w-[640px]">
-              <div className="p-2 sm:p-3"></div>
+              <div className="p-2 sm:p-3" />
               {days.map((day) => (
                 <div
                   key={day.toDateString()}
@@ -869,7 +942,6 @@ const DashboardCalendar = ({
               ))}
             </div>
 
-            {/* Time grid */}
             <div className="divide-y max-h-80 sm:max-h-96 overflow-y-auto min-w-[640px]">
               {timeSlots.map((hour) => (
                 <div
@@ -882,9 +954,8 @@ const DashboardCalendar = ({
                   {days.map((day) => {
                     const dayEvents =
                       eventsByDate[day.toDateString()]?.filter((event) => {
-                        if (event.allDay) return hour === 0 // Show all-day events in first slot (midnight)
-                        const eventHour = new Date(event.start).getHours()
-                        return eventHour === hour
+                        if (event.allDay) return hour === 0
+                        return new Date(event.start).getHours() === hour
                       }) || []
 
                     return (
@@ -916,14 +987,10 @@ const DashboardCalendar = ({
 
   const renderDayView = () => {
     const dayEvents = eventsByDate[currentDate.toDateString()] || []
-    const timeSlots = []
-    for (let hour = 0; hour < 24; hour++) {
-      timeSlots.push(hour)
-    }
+    const timeSlots = Array.from({ length: 24 }, (_, i) => i)
 
     return (
       <div className="space-y-4">
-        {/* All-day events */}
         {dayEvents.filter((e) => e.allDay).length > 0 && (
           <div className="border rounded-lg p-4">
             <h3 className="text-sm font-medium mb-3 text-muted-foreground">
@@ -944,7 +1011,6 @@ const DashboardCalendar = ({
           </div>
         )}
 
-        {/* Timed events */}
         <div className="border rounded-lg overflow-hidden">
           {timeSlots.map((hour) => {
             const hourEvents = dayEvents.filter((event) => {
@@ -977,6 +1043,73 @@ const DashboardCalendar = ({
     )
   }
 
+  const renderLegend = () => {
+    const items = eventTypes
+      ? LEGEND_ITEMS.filter((item) =>
+          eventTypes.includes(item.type as EventType),
+        )
+      : LEGEND_ITEMS
+
+    return (
+      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 p-4 bg-muted/30 rounded-lg">
+        {items.map((item) => (
+          <div
+            key={item.type}
+            className="flex items-center gap-2"
+          >
+            <div
+              className="size-3 rounded"
+              style={{ backgroundColor: item.color }}
+            />
+            <span className="text-muted-foreground text-sm">{item.label}</span>
+          </div>
+        ))}
+
+        {eventTypes?.includes("attendance") &&
+          ATTENDANCE_LEGEND_ITEMS.map((type) => {
+            const colors = EVENT_COLORS[type.value]
+            return (
+              <div
+                key={type.value}
+                className="flex items-center gap-2"
+              >
+                <div
+                  className="size-3 rounded"
+                  style={{ backgroundColor: colors.bg }}
+                />
+                <span className="text-muted-foreground text-sm">
+                  {type.label}
+                </span>
+              </div>
+            )
+          })}
+      </div>
+    )
+  }
+
+  // ============================================================================
+  // LOADING & ERROR STATES
+  // ============================================================================
+
+  if (!isLoaded && weekStartsOn === undefined) {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            {title || "Calendar"}
+          </CardTitle>
+          <CardDescription>Loading calendar preferences...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   if (error) {
     return (
       <Card className={className}>
@@ -1002,6 +1135,10 @@ const DashboardCalendar = ({
       </Card>
     )
   }
+
+  // ============================================================================
+  // MAIN RENDER
+  // ============================================================================
 
   return (
     <>
@@ -1035,139 +1172,122 @@ const DashboardCalendar = ({
             </div>
           </div>
         </CardHeader>
+
         <CardContent className="space-y-4">
-          {/* Controls */}
-          <div className="space-y-4">
-            {/* Mobile: Stack everything vertically */}
-            <div className="flex flex-col space-y-3 sm:hidden">
-              {/* Title */}
-              <h2 className="text-lg font-semibold text-center px-2">
-                {dateTitle}
-              </h2>
+          {/* Mobile Controls */}
+          <div className="flex flex-col space-y-3 sm:hidden">
+            <h2 className="text-lg font-semibold text-center px-2">
+              {dateTitle}
+            </h2>
 
-              {/* View buttons - prioritize on mobile */}
-              <div className="flex items-center justify-center gap-2">
-                {["month", "week", "day"].map((v) => (
-                  <Button
-                    key={v}
-                    variant={view === v ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setView(v as CalendarView)}
-                    className="capitalize text-base"
-                  >
-                    {v}
-                  </Button>
-                ))}
-              </div>
-
-              {/* Navigation */}
-              <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2">
+              {(["month", "week", "day"] as const).map((v) => (
                 <Button
-                  variant="outline"
+                  key={v}
+                  variant={view === v ? "default" : "outline"}
                   size="sm"
-                  onClick={() => handleNavigation("prev")}
+                  onClick={() => setView(v)}
+                  className="capitalize text-base"
                 >
-                  <ChevronLeft className="w-5 h-5" />
+                  {v}
                 </Button>
-                <Button
-                  variant={`${currentDate.toDateString() === new Date().toDateString() ? "default" : "outline"}`}
-                  size="default"
-                  onClick={() => handleNavigation("today")}
-                  disabled={
-                    currentDate.toDateString() === new Date().toDateString()
-                  }
-                  className="text-base px-6 py-2 h-10"
-                >
-                  Today
-                </Button>
-                <Button
-                  variant="outline"
-                  size="default"
-                  onClick={() => handleNavigation("next")}
-                  className="px-4 py-2 h-10"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
-              </div>
+              ))}
             </div>
 
-            {/* Desktop: Horizontal layout */}
-            <div className="hidden sm:flex sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleNavigation("prev")}
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleNavigation("next")}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant={`${currentDate.toDateString() === new Date().toDateString() ? "default" : "outline"}`}
-                  size="sm"
-                  onClick={() => handleNavigation("today")}
-                  disabled={
-                    currentDate.toDateString() === new Date().toDateString()
-                  }
-                >
-                  Today
-                </Button>
-              </div>
-
-              <h2 className="text-lg font-semibold text-center flex-1">
-                {dateTitle}
-              </h2>
-
-              <div className="flex items-center gap-1">
-                {["month", "week", "day"].map((v) => (
-                  <Button
-                    key={v}
-                    variant={view === v ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setView(v as CalendarView)}
-                    className="capitalize"
-                  >
-                    {v}
-                  </Button>
-                ))}
-              </div>
+            <div className="flex items-center justify-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleNavigation("prev")}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+              <Button
+                variant={
+                  currentDate.toDateString() === new Date().toDateString()
+                    ? "default"
+                    : "outline"
+                }
+                size="default"
+                onClick={() => handleNavigation("today")}
+                disabled={
+                  currentDate.toDateString() === new Date().toDateString()
+                }
+                className="text-base px-6 py-2 h-10"
+              >
+                Today
+              </Button>
+              <Button
+                variant="outline"
+                size="default"
+                onClick={() => handleNavigation("next")}
+                className="px-4 py-2 h-10"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
             </div>
           </div>
 
-          {/* Legend */}
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 p-4 bg-muted/30 rounded-lg">
+          {/* Desktop Controls */}
+          <div className="hidden sm:flex sm:items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <div className="size-3 rounded bg-green-500" />
-              <span className="text-muted-foreground text-sm">Birthdays</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleNavigation("prev")}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleNavigation("next")}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={
+                  currentDate.toDateString() === new Date().toDateString()
+                    ? "default"
+                    : "outline"
+                }
+                size="sm"
+                onClick={() => handleNavigation("today")}
+                disabled={
+                  currentDate.toDateString() === new Date().toDateString()
+                }
+              >
+                Today
+              </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="size-3 rounded bg-red-500" />
-              <span className="text-muted-foreground text-sm">Holidays</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="size-3 rounded bg-orange-500" />
-              <span className="text-muted-foreground text-sm">Special</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="size-3 rounded bg-blue-500" />
-              <span className="text-muted-foreground text-sm">Services</span>
+
+            <h2 className="text-lg font-semibold text-center flex-1">
+              {dateTitle}
+            </h2>
+
+            <div className="flex items-center gap-1">
+              {(["month", "week", "day"] as const).map((v) => (
+                <Button
+                  key={v}
+                  variant={view === v ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setView(v)}
+                  className="capitalize"
+                >
+                  {v}
+                </Button>
+              ))}
             </div>
           </div>
 
-          {/* Calendar Views */}
+          {renderLegend()}
+
           {view === "month" && renderMonthView()}
           {view === "week" && renderWeekView()}
           {view === "day" && renderDayView()}
         </CardContent>
       </Card>
 
-      {/* Modals */}
       <EventDetailModal
         event={selectedEvent}
         isOpen={isEventModalOpen}

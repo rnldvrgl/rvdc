@@ -200,7 +200,7 @@ const mapAttendanceTypeToCalendarStatus = (
     case "ABSENT":
       return "absent"
     case "LEAVE":
-      return "vacation"
+      return "leave"
     default:
       return "absent"
   }

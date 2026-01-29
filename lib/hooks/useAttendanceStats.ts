@@ -8,7 +8,7 @@ interface AttendanceRecord {
 }
 
 interface CalendarEvent {
-  status: "present" | "late" | "absent" | "vacation" | "sick"
+  status: "present" | "late" | "absent" | "leave"
   [key: string]: any
 }
 
@@ -21,6 +21,7 @@ interface AttendanceStats {
   presentCount: number
   lateCount: number
   absentCount: number
+  leaveCount: number
 }
 
 export const useAttendanceStats = (
@@ -50,6 +51,7 @@ export const useAttendanceStats = (
     const absentCount = calendarEvents.filter(
       (e) => e.status === "absent",
     ).length
+    const leaveCount = calendarEvents.filter((e) => e.status === "leave").length
 
     return {
       totalCount,
@@ -60,6 +62,7 @@ export const useAttendanceStats = (
       presentCount,
       lateCount,
       absentCount,
+      leaveCount,
     }
   }, [attendanceRecords, calendarEvents])
 }
