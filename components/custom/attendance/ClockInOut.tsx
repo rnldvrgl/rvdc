@@ -18,10 +18,8 @@ import {
 import { canClockInOut, formatTime } from "@/lib/utils/attendance"
 import { formatMinutesToHours } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
-import { formatInTimeZone } from "date-fns-tz"
 import {
   AlertCircle,
-  Calendar,
   CheckCircle,
   Clock,
   FileText,
@@ -48,13 +46,11 @@ export function ClockInOut({
   const [notes, setNotes] = useState("")
   const [showNotes, setShowNotes] = useState(false)
 
-  const today =
-    date || formatInTimeZone(new Date(), "Asia/Manila", "yyyy-MM-dd")
+  const today = date || formatDate(new Date(), "yyyy-MM-dd")
   const canClock = canClockInOut(role || "")
 
   const { data: currentStatus, isLoading: statusLoading } =
     useCurrentAttendanceStatus()
-
   // Check if user has approved leave for today
   const { data: todayLeave } = useLeaveRequests({
     filter: {
@@ -88,10 +84,10 @@ export function ClockInOut({
   }
 
   const handleClockOut = async () => {
-    if (!currentStatus?.id) return
+    if (!currentStatus?.attendance?.id) return
     await clockOut.mutateAsync(
       {
-        attendance_id: currentStatus.id,
+        attendance_id: currentStatus.attendance.id,
         clock_out: new Date().toISOString(),
         notes,
       },
@@ -106,12 +102,13 @@ export function ClockInOut({
   }
 
   const isLoading = clockIn.isPending || clockOut.isPending
-  const isClockedIn = currentStatus && !currentStatus.clock_out
-  const isClockedOut = currentStatus && currentStatus.clock_out
+  const isClockedIn =
+    currentStatus?.attendance && !currentStatus.attendance.clock_out
+  const isClockedOut =
+    currentStatus?.attendance && currentStatus.attendance.clock_out
 
   // Determine if clock buttons should be disabled based on leave
   const getCurrentHour = () => {
-    console.log("Today:", today)
     return new Date(today).getHours()
   }
 
@@ -220,15 +217,19 @@ export function ClockInOut({
           </div>
           <div className="flex gap-2">
             <AttendanceStatusBadge
-              status={!currentStatus?.status ? "NONE" : currentStatus.status}
+              status={
+                !currentStatus?.attendance?.status
+                  ? "NONE"
+                  : currentStatus.attendance.status
+              }
             />
-            {currentStatus?.attendance_type !== "PENDING" &&
-              currentStatus?.status !== "PENDING" && (
+            {currentStatus?.attendance?.attendance_type !== "PENDING" &&
+              currentStatus?.attendance?.status !== "PENDING" && (
                 <AttendanceTypeBadge
                   type={
-                    !currentStatus?.attendance_type
+                    !currentStatus?.attendance?.attendance_type
                       ? "INVALID"
-                      : currentStatus.attendance_type
+                      : currentStatus.attendance.attendance_type
                   }
                 />
               )}
@@ -236,27 +237,16 @@ export function ClockInOut({
         </div>
 
         {/* Attendance Details */}
-        {currentStatus ? (
+        {currentStatus?.attendance ? (
           <div className="space-y-3">
             <div className="grid gap-3">
-              {/* Date */}
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
-                <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-muted-foreground">Date</p>
-                  <p className="text-sm font-medium truncate">
-                    {formatDate(new Date(currentStatus.date), "EEEE, dd MMMM")}
-                  </p>
-                </div>
-              </div>
-
               {/* Employee */}
               <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
                 <User className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Employee</p>
                   <p className="text-sm font-medium truncate">
-                    {currentStatus.employee_name}
+                    {currentStatus.attendance.employee_name}
                   </p>
                 </div>
               </div>
@@ -268,7 +258,9 @@ export function ClockInOut({
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">Clock In</p>
                     <p className="text-sm font-medium">
-                      {formatTime(currentStatus.clock_in)}
+                      {currentStatus.attendance.clock_in
+                        ? formatTime(currentStatus.attendance.clock_in)
+                        : "—"}
                     </p>
                   </div>
                 </div>
@@ -278,8 +270,8 @@ export function ClockInOut({
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">Clock Out</p>
                     <p className="text-sm font-medium">
-                      {currentStatus.clock_out
-                        ? formatTime(currentStatus.clock_out)
+                      {currentStatus.attendance.clock_out
+                        ? formatTime(currentStatus.attendance.clock_out)
                         : "—"}
                     </p>
                   </div>
@@ -287,7 +279,7 @@ export function ClockInOut({
               </div>
 
               {/* Late Status */}
-              {currentStatus.is_late && (
+              {currentStatus.attendance.is_late && (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
                   <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -295,28 +287,32 @@ export function ClockInOut({
                       Late Status
                     </p>
                     <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
-                      Late by {formatMinutesToHours(currentStatus.late_minutes)}
+                      Late by{" "}
+                      {formatMinutesToHours(
+                        currentStatus.attendance.late_minutes,
+                      )}
                     </p>
                   </div>
                 </div>
               )}
 
               {/* Paid Hours */}
-              {currentStatus.paid_hours && (
+              {currentStatus.attendance.paid_hours && (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
                   <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">Paid Hours</p>
                     <p className="text-sm font-medium">
-                      {currentStatus.paid_hours}
+                      {currentStatus.attendance.paid_hours} hrs
                     </p>
                   </div>
                 </div>
               )}
 
               {/* Late Penalty */}
-              {currentStatus.late_penalty_amount &&
-                parseFloat(currentStatus.late_penalty_amount) > 0 && (
+              {currentStatus.attendance.late_penalty_amount &&
+                parseFloat(currentStatus.attendance.late_penalty_amount) >
+                  0 && (
                   <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
                     <PhilippinePeso className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -324,21 +320,21 @@ export function ClockInOut({
                         Late Penalty
                       </p>
                       <p className="text-sm font-medium text-red-900 dark:text-red-200">
-                        {parseFloat(currentStatus.late_penalty_amount).toFixed(
-                          0,
-                        )}
+                        {parseFloat(
+                          currentStatus.attendance.late_penalty_amount,
+                        ).toFixed(0)}
                       </p>
                     </div>
                   </div>
                 )}
 
               {/* Notes */}
-              {currentStatus.notes && (
+              {currentStatus.attendance.notes && (
                 <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-muted/50">
                   <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground mb-1">Notes</p>
-                    <p className="text-sm">{currentStatus.notes}</p>
+                    <p className="text-sm">{currentStatus.attendance.notes}</p>
                   </div>
                 </div>
               )}
@@ -353,7 +349,7 @@ export function ClockInOut({
               No attendance record for today
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Click "Clock In" to start
+              Click `Clock In` to start
             </p>
           </div>
         )}
@@ -421,7 +417,9 @@ export function ClockInOut({
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   onClick={handleClockIn}
-                  disabled={!!currentStatus || isLoading || clockDisabled}
+                  disabled={
+                    !!currentStatus?.attendance || isLoading || clockDisabled
+                  }
                   className="h-11"
                   size="lg"
                   variant="success"

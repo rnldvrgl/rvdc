@@ -1,6 +1,7 @@
 "use client"
 
 import type {
+  CurrentAttendanceStatus,
   DailyAttendance,
   LeaveBalance,
   LeaveRequest,
@@ -47,9 +48,9 @@ export function usePendingAttendanceApprovals(
 
 // !TODO: FIX: Backend endpoint needs to be fixed to avoid paginated results
 export function useCurrentAttendanceStatus() {
-  return useApiQuery<DailyAttendance | null>({
+  return useApiQuery<CurrentAttendanceStatus | null>({
     queryKey: ["current-attendance-status"],
-    url: `${attendanceUrl}/current_status`,
+    url: `${attendanceUrl}current_status`,
   })
 }
 

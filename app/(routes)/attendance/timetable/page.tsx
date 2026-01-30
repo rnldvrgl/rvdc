@@ -4,7 +4,6 @@ import { ClockInOut } from "@/components/custom/attendance/ClockInOut"
 import { GradientStatCard } from "@/components/custom/attendance/GradientStatCard"
 import { RecentActivitySection } from "@/components/custom/attendance/RecentActivitySection"
 import { StatCard } from "@/components/custom/attendance/StatCard"
-import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import {
@@ -19,7 +18,7 @@ import { Users } from "lucide-react"
 import { useState } from "react"
 
 const AttendancePage = () => {
-  const { role, user_id } = useCurrentUser()
+  const { user_id } = useCurrentUser()
   const [dateRange] = useState({
     start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
       .toISOString()
@@ -46,18 +45,6 @@ const AttendancePage = () => {
 
   // Calculate stats using custom hook
   const stats = useAttendanceStats(attendanceRecords, calendarEvents)
-
-  const handleEventClick = (event: {
-    id: string
-    title: string
-    extendedProps?: Record<string, unknown>
-  }) => {
-    console.log("Attendance event clicked:", event)
-  }
-
-  const handleDateClick = (date: Date) => {
-    console.log("Date clicked:", date)
-  }
 
   return (
     <Wrapper>
@@ -125,22 +112,6 @@ const AttendancePage = () => {
             )
           })}
         </div>
-
-        {/* Calendar Section */}
-        <DashboardCalendar
-          mode="attendance"
-          attendanceData={calendarEvents}
-          useCustomData={true}
-          title="Employee Attendance Tracker"
-          description="Showing your attendance records"
-          weekStartsOn={1}
-          height="auto"
-          onEventClick={handleEventClick}
-          onDateClick={handleDateClick}
-          eventTypes={["attendance", "leave"]}
-          className="w-full"
-          withSettings={false}
-        />
 
         {/* Recent Records */}
         <RecentActivitySection

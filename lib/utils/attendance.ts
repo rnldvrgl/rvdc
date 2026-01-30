@@ -2,6 +2,7 @@ import {
   AttendanceStatus,
   AttendanceType,
   CalendarAttendanceStatus,
+  DailyAttendance,
   LeaveStatus,
   LeaveType,
 } from "@/lib/constants/types"
@@ -73,22 +74,40 @@ export const getLeaveTypeColor = (type: LeaveType): string => {
 export const formatTime = (dateTimeString: string | null): string => {
   if (!dateTimeString) return "-"
 
-  const date = new Date(dateTimeString)
-  return date.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  })
+  try {
+    const date = new Date(dateTimeString)
+    if (isNaN(date.getTime())) {
+      return "-"
+    }
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
+  } catch (error) {
+    console.error("Invalid date string:", dateTimeString, error)
+    return "-"
+  }
 }
 
 // Format date (MMM DD, YYYY)
 export const formatDate = (dateString: string): string => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
+  if (!dateString) return "-"
+
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
+      return "-"
+    }
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    })
+  } catch (error) {
+    console.error("Invalid date string:", dateString, error)
+    return "-"
+  }
 }
 
 // Format hours (e.g., "8.00 hrs")
@@ -169,7 +188,9 @@ export const createClockOutPayload = (
 }
 
 // Convert attendance data for calendar
-export const convertAttendanceForCalendar = (attendances: any[]) => {
+export const convertAttendanceForCalendar = (
+  attendances: DailyAttendance[],
+) => {
   return attendances.map((attendance) => ({
     id: attendance.id.toString(),
     employeeName: attendance.employee_name,

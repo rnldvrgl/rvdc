@@ -4,8 +4,8 @@ import {
   Banknote,
   Boxes,
   CalendarDays,
-  // CalendarDays,
   CircleDollarSign,
+  Clock,
   Coins,
   FileText,
   Layers,
@@ -66,6 +66,18 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: LayoutDashboard,
     children: [
       {
+        name: "Weekly Payroll",
+        href: "/payroll/weekly",
+        icon: CircleDollarSign,
+        permission: "manage_payroll",
+      },
+      {
+        name: "My Payroll",
+        href: "/payroll/slip",
+        icon: FileText,
+        permission: "view_payroll",
+      },
+      {
         name: "Payroll Settings",
         href: "/payroll/settings",
         icon: Settings,
@@ -73,12 +85,15 @@ export const baseNavigation: Record<string, NavigationEntry> = {
       },
       {
         name: "Holidays",
-
         href: "/payroll/holidays",
-
         icon: FileText,
-
         permission: "manage_holidays",
+      },
+      {
+        name: "Deductions",
+        href: "/payroll/deductions",
+        icon: Banknote,
+        permission: "manage_deductions",
       },
     ],
   },
@@ -108,6 +123,18 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         name: "Leaves",
         href: "/attendance/leaves",
         icon: Plane,
+        permission: "manage_attendance",
+      },
+      {
+        name: "Overtime Requests",
+        href: "/attendance/overtime",
+        icon: Clock,
+        permission: "manage_attendance_admin",
+      },
+      {
+        name: "My Overtime",
+        href: "/attendance/my-overtime",
+        icon: Clock,
         permission: "manage_attendance",
       },
       {
@@ -204,9 +231,21 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   // },
   settings: {
     name: "Settings",
-    href: "/settings",
     icon: Settings,
-    permission: "view_settings",
+    children: [
+      {
+        name: "User Profile",
+        href: "/settings/profile",
+        icon: Settings,
+        permission: "view_settings",
+      },
+      {
+        name: "Government Benefits",
+        href: "/settings/government-benefits",
+        icon: Banknote,
+        permission: "manage_government_benefits",
+      },
+    ],
   },
 }
 

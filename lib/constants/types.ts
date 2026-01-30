@@ -231,6 +231,17 @@ export type WeeklyPayroll = {
   employee: number
 
   employee_name?: string
+  employee_role?: string
+  employee_detail?: {
+    id: number
+    username: string
+    first_name: string
+    last_name: string
+    full_name: string
+    role: string
+    daily_rate: string | number
+    hourly_rate: string | number
+  }
 
   week_start: string // ISO Date
   week_end?: string // ISO Date
@@ -255,12 +266,44 @@ export type WeeklyPayroll = {
   night_diff_pay: string | number
   approved_ot_pay: string | number
 
+  holiday_pay_regular?: string | number
+  holiday_pay_special?: string | number
+  holiday_pay_total?: string | number
+
   deductions: Record<string, string | number>
+  deduction_items?: Array<{
+    id: number
+    category: string
+    name: string
+    description?: string
+    employee_share: string | number
+    employer_share: string | number
+    source_type?: string
+    source_id?: number
+    calculation_method?: string
+    basis_amount?: string | number
+    rate?: string | number
+  }>
   total_deductions: string | number
 
   net_pay: string | number
 
-  status: "draft" | "approved" | "paid"
+  status: "draft" | "approved" | "paid" | "received" | "cancelled"
+  status_display?: string
+
+  received_at?: string | null
+  received_by?: number | null
+  received_by_detail?: {
+    id: number
+    username: string
+    first_name: string
+    last_name: string
+    full_name: string
+  }
+
+  disputed: boolean
+  disputed_reason?: string
+  disputed_at?: string | null
 
   notes?: string
 
@@ -269,6 +312,13 @@ export type WeeklyPayroll = {
   created_at: string
   updated_at: string
 }
+
+export type PayrollStatus =
+  | "draft"
+  | "approved"
+  | "paid"
+  | "received"
+  | "cancelled"
 
 export type HolidayKind = "regular" | "special_non_working"
 
@@ -287,7 +337,7 @@ export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED"
 export type ShiftPeriod = "AM" | "PM" | "FULL"
 export type CalendarAttendanceStatus = "present" | "late" | "absent" | "leave"
 
-export type DailyAttendance = BaseEntity & {
+export type AttendanceRecord = BaseEntity & {
   employee: number
   employee_name: string
   date: string
@@ -315,6 +365,17 @@ export type DailyAttendance = BaseEntity & {
   approved_by_name: string | null
   approved_at: string | null
   notes: string
+}
+
+export type DailyAttendance = AttendanceRecord & {
+  is_suspended: boolean
+  suspension_info: SuspensionInfo | null
+}
+
+export type CurrentAttendanceStatus = {
+  attendance: DailyAttendance | null
+  is_suspended: boolean
+  suspension_info: SuspensionInfo | null
 }
 
 export type ClockInPayload = {
@@ -442,4 +503,11 @@ export type OffenseStatistics = {
   termination_count: number
   is_at_limit: boolean
   last_offense_date: string | null
+}
+
+export type SuspensionInfo = {
+  is_suspended: boolean
+  suspension_start_date: string | null
+  suspension_end_date: string | null
+  offense_type: OffenseType | null
 }

@@ -15,7 +15,11 @@ export function useGetPermissions(role: Roles) {
       "view_cheque_collections",
     ]
 
-    const commonEmployeePermissions = ["manage_attendance", "view_own_offenses"]
+    const commonEmployeePermissions = [
+      "manage_attendance",
+      "view_own_offenses",
+      "view_payroll",
+    ]
 
     const commonShortcuts = [
       "shortcut_add_client",
@@ -44,11 +48,13 @@ export function useGetPermissions(role: Roles) {
         "view_aircon_models",
         "view_aircon_units",
         "view_aircon_installations",
-        "view_payroll",
+        "manage_payroll",
+        "manage_government_benefits",
 
         "manage_payroll_settings",
         "manage_holidays",
         "manage_attendance_admin",
+        "manage_deductions",
       ],
       manager: [
         ...commonViewPermissions,

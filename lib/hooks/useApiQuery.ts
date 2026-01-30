@@ -1,9 +1,9 @@
-import api from '@/lib/utils/api'
+import api from "@/lib/utils/api"
 import {
   useQuery,
   UseQueryOptions,
   UseQueryResult,
-} from '@tanstack/react-query'
+} from "@tanstack/react-query"
 
 export function useApiQuery<T>({
   queryKey,
@@ -11,12 +11,14 @@ export function useApiQuery<T>({
   params,
   options,
   staleTime,
+  enabled,
 }: {
   queryKey: readonly unknown[]
   url: string
   params?: Record<string, unknown>
   options?: Partial<UseQueryOptions<T, Error, T, readonly unknown[]>>
   staleTime?: number
+  enabled?: boolean
 }): UseQueryResult<T> {
   return useQuery<T, Error, T>({
     queryKey,
@@ -27,5 +29,6 @@ export function useApiQuery<T>({
     staleTime: staleTime || 1000 * 60 * 5,
     ...options,
     select: options?.select,
+    enabled: enabled !== undefined ? enabled : options?.enabled,
   })
 }
