@@ -16,7 +16,7 @@ import {
 	useStockTransferFilters,
 	useStockTransfers,
 } from "@/lib/queries/inventory/useStocks";
-import { Plus, ArrowRightLeft, RefreshCw, Eye } from "lucide-react";
+import { Plus, ArrowRightLeft } from "lucide-react";
 import { getStockTransferColumns } from "./columns";
 
 export default function StockTransfersPage() {
@@ -75,27 +75,14 @@ export default function StockTransfersPage() {
 				title="Stock Transfers"
 				description="Manage inventory transfers between stockroom and stalls with comprehensive tracking and expense management."
 				breadcrumbs={["Dashboard", "Inventory", "Stocks", "Transfers"]}
-				isAdminOnly={!isAdmin}
-				actions={
-					<div className="flex gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							onClick={() => refetch()}
-							disabled={isLoading}
-						>
-							<RefreshCw
-								className={`size-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-							/>
-							Refresh
+				onRefresh={refetch}
+				actionButton={
+					isAdmin && (
+						<Button onClick={() => openCreate()}>
+							<Plus className="size-4 mr-2" />
+							New Transfer
 						</Button>
-						{isAdmin && (
-							<Button onClick={() => openCreate()}>
-								<Plus className="size-4 mr-2" />
-								New Transfer
-							</Button>
-						)}
-					</div>
+					)
 				}
 			/>
 
@@ -165,14 +152,6 @@ export default function StockTransfersPage() {
 						previous: null,
 						results: [],
 					}
-				}
-				headerActions={
-					isAdmin && (
-						<Button onClick={() => openCreate()}>
-							<Plus className="size-4 mr-2" />
-							Transfer Stock
-						</Button>
-					)
 				}
 				defaultRangePreset="Last 30 Days"
 				filters={filters}
