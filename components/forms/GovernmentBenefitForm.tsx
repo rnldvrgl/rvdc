@@ -196,7 +196,7 @@ export function GovernmentBenefitForm({
 			if (isEditing) {
 				await updateMutation.mutateAsync({
 					id: benefit.id,
-					...payload,
+					data: payload,
 				});
 			} else {
 				await createMutation.mutateAsync(payload);

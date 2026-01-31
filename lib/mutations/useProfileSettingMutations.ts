@@ -7,12 +7,18 @@ import api from "@/lib/utils/api";
 export function useProfileSettingMutations() {
 	const url = "/users/profile/";
 
-	const commonInvalidations = [{ queryKey: ["user-profile"] }];
+	const sharedInvalidations = [
+		{ queryKey: ["user-profile"] },
+		{ queryKey: ["current-user"] },
+	];
 
 	const updateUserProfile = useApiMutation({
-		mutationFn: (data: Partial<UserProfilePayload>) => api.patch(url, data),
+		mutationFn: (data: Partial<UserProfilePayload>) =>
+			api.patch(url, data).then((res) => res.data),
+		usePromiseToast: true,
+		loadingMessage: "Updating profile...",
 		successMessage: "Profile updated successfully.",
-		invalidateQueries: commonInvalidations,
+		invalidateQueries: sharedInvalidations,
 	});
 
 	return {

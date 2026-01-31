@@ -20,31 +20,31 @@ interface StatsCardProps {
 
 const variantStyles = {
 	default: {
-		bg: "bg-gradient-to-br from-slate-50/80 to-slate-100/60 dark:from-slate-900/50 dark:to-slate-800/30",
+		bg: "bg-linear-to-br from-slate-50/80 to-slate-100/60 dark:from-slate-900/50 dark:to-slate-800/30",
 		icon: "bg-slate-100/80 dark:bg-slate-800/60",
 		iconColor: "text-slate-600 dark:text-slate-400",
 		border: "border-slate-200/60 dark:border-slate-700/40",
 	},
 	success: {
-		bg: "bg-gradient-to-br from-emerald-50/70 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20",
+		bg: "bg-linear-to-br from-emerald-50/70 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20",
 		icon: "bg-emerald-100/70 dark:bg-emerald-900/40",
 		iconColor: "text-emerald-600 dark:text-emerald-400",
 		border: "border-emerald-200/50 dark:border-emerald-700/30",
 	},
 	warning: {
-		bg: "bg-gradient-to-br from-amber-50/70 to-orange-100/50 dark:from-amber-950/30 dark:to-orange-900/20",
+		bg: "bg-linear-to-br from-amber-50/70 to-orange-100/50 dark:from-amber-950/30 dark:to-orange-900/20",
 		icon: "bg-amber-100/70 dark:bg-amber-900/40",
 		iconColor: "text-amber-600 dark:text-amber-400",
 		border: "border-amber-200/50 dark:border-amber-700/30",
 	},
 	danger: {
-		bg: "bg-gradient-to-br from-red-50/70 to-rose-100/50 dark:from-red-950/30 dark:to-rose-900/20",
+		bg: "bg-linear-to-br from-red-50/70 to-rose-100/50 dark:from-red-950/30 dark:to-rose-900/20",
 		icon: "bg-red-100/70 dark:bg-red-900/40",
 		iconColor: "text-red-600 dark:text-red-400",
 		border: "border-red-200/50 dark:border-red-700/30",
 	},
 	info: {
-		bg: "bg-gradient-to-br from-blue-50/70 to-indigo-100/50 dark:from-blue-950/30 dark:to-indigo-900/20",
+		bg: "bg-linear-to-br from-blue-50/70 to-indigo-100/50 dark:from-blue-950/30 dark:to-indigo-900/20",
 		icon: "bg-blue-100/70 dark:bg-blue-900/40",
 		iconColor: "text-blue-600 dark:text-blue-400",
 		border: "border-blue-200/50 dark:border-blue-700/30",

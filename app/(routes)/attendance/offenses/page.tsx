@@ -90,7 +90,7 @@ export default function OffensesPage() {
 				{/* Statistics Cards */}
 				{statistics && statistics.length > 0 && (
 					<div className="grid gap-4 md:grid-cols-3">
-						<Card className="border-yellow-200 dark:border-yellow-800 bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950/20 dark:to-yellow-900/20">
+						<Card className="border-yellow-200 dark:border-yellow-800 bg-linear-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950/20 dark:to-yellow-900/20">
 							<CardHeader className="flex flex-row items-center justify-between pb-2">
 								<CardTitle className="text-sm font-semibold text-yellow-900 dark:text-yellow-200">
 									Total Employees with Offenses
@@ -115,7 +115,7 @@ export default function OffensesPage() {
 							</CardContent>
 						</Card>
 
-						<Card className="border-orange-200 dark:border-orange-800 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20">
+						<Card className="border-orange-200 dark:border-orange-800 bg-linear-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20">
 							<CardHeader className="flex flex-row items-center justify-between pb-2">
 								<CardTitle className="text-sm font-semibold text-orange-900 dark:text-orange-200">
 									Total Offenses
@@ -138,7 +138,7 @@ export default function OffensesPage() {
 							</CardContent>
 						</Card>
 
-						<Card className="border-red-200 dark:border-red-800 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20">
+						<Card className="border-red-200 dark:border-red-800 bg-linear-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20">
 							<CardHeader className="flex flex-row items-center justify-between pb-2">
 								<CardTitle className="text-sm font-semibold text-red-900 dark:text-red-200">
 									Critical Attention

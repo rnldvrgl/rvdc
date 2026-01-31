@@ -12,11 +12,9 @@ export const governmentBenefitSchema = z
 		calculation_method: z.enum(["fixed", "percentage", "progressive_tax"], {
 			required_error: "Calculation method is required",
 		}),
-		period_type: z
-			.enum(["weekly", "monthly"], {
-				required_error: "Period type is required",
-			})
-			.default("monthly"),
+		period_type: z.enum(["weekly", "monthly"], {
+			required_error: "Period type is required",
+		}),
 		employee_share_amount: z
 			.number()
 			.nonnegative("Amount must be non-negative")
