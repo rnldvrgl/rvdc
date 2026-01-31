@@ -47,7 +47,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { useState } from "react"
-import toast from "react-hot-toast"
+import { toast } from "sonner"
 
 export default function GovernmentBenefitsPage() {
   const [isAddOpen, setIsAddOpen] = useState(false)

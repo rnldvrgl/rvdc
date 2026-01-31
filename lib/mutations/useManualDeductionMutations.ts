@@ -5,7 +5,7 @@ import type {
 } from "@/lib/schemas/manualDeductionSchema"
 import api from "@/lib/utils/api"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import toast from "react-hot-toast"
+import { toast } from "sonner"
 
 export const useCreateManualDeduction = () => {
   return useApiMutation<ManualDeductionFormData, ManualDeduction>({

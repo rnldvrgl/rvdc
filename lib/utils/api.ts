@@ -2,7 +2,7 @@ import { refreshToken } from "@/lib/utils/auth"
 import { deleteCookie, setCookie } from "@/lib/utils/cookies"
 import { getToken, removeToken, setToken } from "@/lib/utils/tokens"
 import axios from "axios"
-import toast from "react-hot-toast"
+import { toast } from "sonner"
 
 const baseURL = "/api"
 const api = axios.create({
