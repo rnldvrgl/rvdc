@@ -231,6 +231,17 @@ export type WeeklyPayroll = {
 	employee: number;
 
 	employee_name?: string;
+	employee_role?: string;
+	employee_detail?: {
+		id: number;
+		username: string;
+		first_name: string;
+		last_name: string;
+		full_name: string;
+		role: string;
+		daily_rate: string | number;
+		hourly_rate: string | number;
+	};
 
 	week_start: string; // ISO Date
 	week_end?: string; // ISO Date
@@ -241,8 +252,6 @@ export type WeeklyPayroll = {
 	overtime_multiplier: string | number;
 
 	regular_hours: string | number;
-	overtime_hours: string | number;
-
 	night_diff_hours: string | number;
 	approved_ot_hours: string | number;
 
@@ -255,12 +264,39 @@ export type WeeklyPayroll = {
 	night_diff_pay: string | number;
 	approved_ot_pay: string | number;
 
+	holiday_pay_regular?: string | number;
+	holiday_pay_special?: string | number;
+	holiday_pay_total?: string | number;
+
 	deductions: Record<string, string | number>;
+	deduction_metadata: Record<
+		string,
+		{
+			source_type?: string;
+			source_id?: number;
+			category?: string;
+		}
+	>;
 	total_deductions: string | number;
 
 	net_pay: string | number;
 
-	status: "draft" | "approved" | "paid";
+	status: "draft" | "approved" | "paid" | "received" | "cancelled";
+	status_display?: string;
+
+	received_at?: string | null;
+	received_by?: number | null;
+	received_by_detail?: {
+		id: number;
+		username: string;
+		first_name: string;
+		last_name: string;
+		full_name: string;
+	};
+
+	disputed: boolean;
+	disputed_reason?: string;
+	disputed_at?: string | null;
 
 	notes?: string;
 
@@ -270,4 +306,201 @@ export type WeeklyPayroll = {
 	updated_at: string;
 };
 
+export type PayrollStatus =
+	| "draft"
+	| "approved"
+	| "paid"
+	| "received"
+	| "cancelled";
+
 export type HolidayKind = "regular" | "special_non_working";
+
+// Attendance System Types
+export type AttendanceType =
+	| "FULL_DAY"
+	| "HALF_DAY"
+	| "PARTIAL"
+	| "ABSENT"
+	| "LEAVE"
+	| "PENDING"
+	| "INVALID";
+export type AttendanceStatus = "PENDING" | "APPROVED" | "REJECTED" | "NONE";
+export type LeaveType = "SICK" | "EMERGENCY";
+export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+export type ShiftPeriod = "AM" | "PM" | "FULL";
+export type CalendarAttendanceStatus = "present" | "late" | "absent" | "leave";
+
+export type AttendanceRecord = BaseEntity & {
+	employee: number;
+	employee_name: string;
+	date: string;
+	clock_in: string | null;
+	clock_out: string | null;
+	attendance_type: AttendanceType;
+	attendance_type_display: string;
+	consecutive_absences: number;
+	is_awol: boolean;
+	total_hours: string;
+	break_hours: string;
+	paid_hours: string;
+	is_late: boolean;
+	late_minutes: number;
+	auto_closed: boolean;
+	auto_close_warning_count: number;
+	late_penalty_amount: string;
+	missing_uniform_shirt: boolean;
+	missing_uniform_pants: boolean;
+	missing_uniform_shoes: boolean;
+	uniform_penalty_amount: string;
+	status: AttendanceStatus;
+	status_display: string;
+	approved_by: number | null;
+	approved_by_name: string | null;
+	approved_at: string | null;
+	notes: string;
+};
+
+export type DailyAttendance = AttendanceRecord & {
+	is_suspended: boolean;
+	suspension_info: SuspensionInfo | null;
+};
+
+export type CurrentAttendanceStatus = {
+	attendance: DailyAttendance | null;
+	is_suspended: boolean;
+	suspension_info: SuspensionInfo | null;
+};
+
+export type ClockInPayload = {
+	employee_id: number;
+	date: string;
+	clock_in: string;
+	notes?: string;
+};
+
+export type ClockOutPayload = {
+	attendance_id: number;
+	clock_out: string;
+	notes?: string;
+};
+
+export type ApproveAttendancePayload = {
+	attendance_ids: number[];
+};
+
+export type RejectAttendancePayload = {
+	attendance_ids: number[];
+	reason?: string;
+};
+
+export type UpdateUniformPenaltiesPayload = {
+	missing_uniform_shirt: boolean;
+	missing_uniform_pants: boolean;
+	missing_uniform_shoes: boolean;
+};
+
+export type LeaveBalance = BaseEntity & {
+	employee: number;
+	employee_name: string;
+	year: number;
+	sick_leave_total: number;
+	sick_leave_used: string;
+	sick_leave_remaining: string;
+	emergency_leave_total: number;
+	emergency_leave_used: string;
+	emergency_leave_remaining: string;
+};
+
+export type LeaveRequest = BaseEntity & {
+	employee: number;
+	employee_name: string;
+	leave_type: LeaveType;
+	leave_type_display: string;
+	date: string;
+	is_half_day: boolean;
+	shift_period: ShiftPeriod;
+	shift_period_display: string;
+	days_count: string;
+	reason: string;
+	status: LeaveStatus;
+	status_display: string;
+	approved_by: number | null;
+	approved_by_name: string | null;
+	approved_at: string | null;
+	rejection_reason: string;
+};
+
+export type LeaveRequestPayload = {
+	employee?: number; // Optional for admin/manager, auto-set for others
+	leave_type: LeaveType;
+	date: string;
+	is_half_day: boolean;
+	shift_period: ShiftPeriod;
+	reason: string;
+};
+
+export type ApproveLeavePayload = {
+	leave_request_ids: number[];
+};
+
+export type RejectLeavePayload = {
+	leave_request_ids: number[];
+	reason?: string;
+};
+
+// Offense types
+export type OffenseType = "AWOL" | "LATE" | "CURFEW" | "OTHER";
+export type SeverityLevel = "WARNING" | "SUSPENSION" | "TERMINATION";
+
+export type Offense = BaseEntity & {
+	employee: number;
+	employee_name: string;
+	employee_id_number: string;
+	offense_type: OffenseType;
+	offense_type_display: string;
+	severity_level: SeverityLevel;
+	severity_level_display: string;
+	date: string;
+	description: string;
+	penalty_days: number;
+	suspension_start_date: string | null;
+	suspension_end_date: string | null;
+	created_by: number | null;
+	created_by_name: string | null;
+	notes: string;
+	offense_count: number;
+};
+
+export type OffensePayload = {
+	employee: number;
+	offense_type: OffenseType;
+	severity_level?: SeverityLevel; // Optional: auto-calculated by backend
+	date: string;
+	description: string;
+	penalty_days?: number;
+	suspension_start_date?: string | null;
+	notes?: string;
+};
+
+export type OffenseStatistics = {
+	employee_id: number;
+	employee_name: string;
+	employee_id_number: string;
+	total_offenses: number;
+	awol_count: number;
+	late_count: number;
+	curfew_count: number;
+	other_count: number;
+	warning_count: number;
+	suspension_count: number;
+	termination_count: number;
+	is_at_limit: boolean;
+	last_offense_date: string | null;
+};
+
+export type SuspensionInfo = {
+	is_suspended: boolean;
+	suspension_start_date: string | null;
+	suspension_end_date: string | null;
+	offense_type: OffenseType | null;
+};

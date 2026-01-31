@@ -17,6 +17,10 @@ export interface UseApiMutationProps<TVariables, TData> {
 	invalidateQueries?: { queryKey: string[] }[];
 	onSuccess?: (data: TData, variables: TVariables) => void;
 	onError?: (error: unknown) => void;
+	// Toast.promise configuration
+	usePromiseToast?: boolean; // Enable toast.promise instead of toast.success/error
+	loadingMessage?: string; // Message shown during loading
+	errorMessage?: string; // Custom error message (overrides DRF error handling)
 }
 
 export interface GetColumnsProps<T> {

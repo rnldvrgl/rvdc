@@ -1,9 +1,6 @@
 "use client";
 
-import {
-	useApiMutation,
-	useApiMutation as useMutation,
-} from "@/lib/hooks/useApiMutation";
+import { useApiMutation } from "@/lib/hooks/useApiMutation";
 import { useQueryClient } from "@tanstack/react-query";
 
 import api from "@/lib/utils/api";
@@ -25,7 +22,6 @@ const weeklyPayrollRecompute = (id: number) =>
 
 /**
  * Centralized mutations for Payroll domain
- * - Time Entries
  * - Additional Earnings
  * - Weekly Payrolls
  * - Payroll Settings
@@ -38,24 +34,19 @@ const weeklyPayrollRecompute = (id: number) =>
  * Additional Earnings Mutations
  */
 export const useCreateAdditionalEarning = () => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async (payload: Partial<AdditionalEarning>) => {
 			const { data } = await api.post(ADDITIONAL_EARNINGS, payload);
 			return data as AdditionalEarning;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({
-				queryKey: ["payroll", "additional-earnings"],
-			});
-		},
+		usePromiseToast: true,
+		loadingMessage: "Creating additional earning...",
+		successMessage: "Additional earning created successfully!",
+		invalidateQueries: [{ queryKey: ["payroll", "additional-earnings"] }],
 	});
 };
 
 export const useUpdateAdditionalEarning = (id: number) => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async (payload: Partial<AdditionalEarning>) => {
 			const { data } = await api.patch(
@@ -64,33 +55,29 @@ export const useUpdateAdditionalEarning = (id: number) => {
 			);
 			return data as AdditionalEarning;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({
-				queryKey: ["payroll", "additional-earnings"],
-			});
-			qc.invalidateQueries({
-				queryKey: ["payroll", "additional-earning", id],
-			});
-		},
+		usePromiseToast: true,
+		loadingMessage: "Updating additional earning...",
+		successMessage: "Additional earning updated successfully!",
+		invalidateQueries: [
+			{ queryKey: ["payroll", "additional-earnings"] },
+			{ queryKey: ["payroll", "additional-earning", id.toString()] },
+		],
 	});
 };
 
 export const useDeleteAdditionalEarning = (id: number) => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async () => {
 			await api.delete(`${ADDITIONAL_EARNINGS}${id}/`);
 			return true;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({
-				queryKey: ["payroll", "additional-earnings"],
-			});
-			qc.invalidateQueries({
-				queryKey: ["payroll", "additional-earning", id],
-			});
-		},
+		usePromiseToast: true,
+		loadingMessage: "Deleting additional earning...",
+		successMessage: "Additional earning deleted successfully!",
+		invalidateQueries: [
+			{ queryKey: ["payroll", "additional-earnings"] },
+			{ queryKey: ["payroll", "additional-earning", id.toString()] },
+		],
 	});
 };
 
@@ -98,50 +85,47 @@ export const useDeleteAdditionalEarning = (id: number) => {
  * Weekly Payroll Mutations
  */
 export const useCreateWeeklyPayroll = () => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async (payload: Partial<WeeklyPayroll>) => {
 			const { data } = await api.post(WEEKLY_PAYROLLS, payload);
 			return data as WeeklyPayroll;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: ["payroll", "weekly-payrolls"] });
-		},
+		usePromiseToast: true,
+		loadingMessage: "Creating payroll...",
+		successMessage: "Payroll created successfully!",
+		invalidateQueries: [{ queryKey: ["payroll", "weekly-payrolls"] }],
 	});
 };
 
 export const useUpdateWeeklyPayroll = (id: number) => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async (payload: Partial<WeeklyPayroll>) => {
 			const { data } = await api.patch(weeklyPayrollDetail(id), payload);
 			return data as WeeklyPayroll;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: ["payroll", "weekly-payrolls"] });
-			qc.invalidateQueries({
-				queryKey: ["payroll", "weekly-payroll", id],
-			});
-		},
+		usePromiseToast: true,
+		loadingMessage: "Updating payroll...",
+		successMessage: "Payroll updated successfully!",
+		invalidateQueries: [
+			{ queryKey: ["payroll", "weekly-payrolls"] },
+			{ queryKey: ["payroll", "weekly-payroll", id.toString()] },
+		],
 	});
 };
 
 export const useDeleteWeeklyPayroll = (id: number) => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async () => {
 			await api.delete(weeklyPayrollDetail(id));
 			return true;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: ["payroll", "weekly-payrolls"] });
-			qc.invalidateQueries({
-				queryKey: ["payroll", "weekly-payroll", id],
-			});
-		},
+		usePromiseToast: true,
+		loadingMessage: "Deleting payroll...",
+		successMessage: "Payroll deleted successfully!",
+		invalidateQueries: [
+			{ queryKey: ["payroll", "weekly-payrolls"] },
+			{ queryKey: ["payroll", "weekly-payroll", id.toString()] },
+		],
 	});
 };
 
@@ -161,11 +145,23 @@ export const useRecomputeWeeklyPayroll = (id: number) => {
 			);
 			return data as WeeklyPayroll;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: ["payroll", "weekly-payrolls"] });
-			qc.invalidateQueries({
-				queryKey: ["payroll", "weekly-payroll", id],
+		usePromiseToast: true,
+		loadingMessage: "Recalculating payroll...",
+		successMessage: "Payroll recalculated successfully!",
+		onSuccess: async (data) => {
+			// Invalidate and refetch all related queries aggressively
+			await qc.invalidateQueries({
+				queryKey: ["payroll", "weekly-payrolls"],
+				refetchType: "active",
 			});
+
+			await qc.invalidateQueries({
+				queryKey: ["payroll", "weekly-payroll", id],
+				refetchType: "active",
+			});
+
+			// Also set the query data directly to ensure immediate update
+			qc.setQueryData(["payroll", "weekly-payroll", id], data);
 		},
 	});
 };
@@ -174,28 +170,28 @@ export const useRecomputeWeeklyPayroll = (id: number) => {
  * Payroll Settings Mutations
  */
 export const useUpdatePayrollSettings = () => {
-	const qc = useQueryClient();
-	return useMutation({
+	return useApiMutation({
 		mutationFn: async (payload: Partial<PayrollSettings>) => {
 			const { data } = await api.put(PAYROLL_SETTINGS, payload);
 			return data as PayrollSettings;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: ["payroll", "settings"] });
-		},
+		usePromiseToast: true,
+		loadingMessage: "Updating payroll settings...",
+		successMessage: "Payroll settings updated successfully!",
+		invalidateQueries: [{ queryKey: ["payroll", "settings"] }],
 	});
 };
 
 export const usePatchPayrollSettings = () => {
-	const qc = useQueryClient();
 	return useApiMutation({
 		mutationFn: async (payload: Partial<PayrollSettings>) => {
 			const { data } = await api.patch(PAYROLL_SETTINGS, payload);
 			return data as PayrollSettings;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: ["payroll", "settings"] });
-		},
+		usePromiseToast: true,
+		loadingMessage: "Updating settings...",
+		successMessage: "Settings updated successfully!",
+		invalidateQueries: [{ queryKey: ["payroll", "settings"] }],
 	});
 };
 
@@ -203,40 +199,40 @@ export const usePatchPayrollSettings = () => {
  * Holidays Mutations
  */
 export const useCreateHoliday = () => {
-	const qc = useQueryClient();
 	return useApiMutation({
 		mutationFn: async (payload: Omit<Holiday, "id" | "is_deleted">) => {
 			const { data } = await api.post(HOLIDAYS, payload);
 			return data as Holiday;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: ["payroll", "holidays"] });
-		},
+		usePromiseToast: true,
+		loadingMessage: "Creating holiday...",
+		successMessage: "Holiday created successfully!",
+		invalidateQueries: [{ queryKey: ["payroll", "holidays"] }],
 	});
 };
 
 export const useUpdateHoliday = (id: number) => {
-	const qc = useQueryClient();
 	return useApiMutation({
 		mutationFn: async (payload: Partial<Holiday>) => {
 			const { data } = await api.patch(`${HOLIDAYS}${id}/`, payload);
 			return data as Holiday;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: ["payroll", "holidays"] });
-		},
+		usePromiseToast: true,
+		loadingMessage: "Updating holiday...",
+		successMessage: "Holiday updated successfully!",
+		invalidateQueries: [{ queryKey: ["payroll", "holidays"] }],
 	});
 };
 
 export const useDeleteHoliday = (id: number) => {
-	const qc = useQueryClient();
 	return useApiMutation({
 		mutationFn: async () => {
 			await api.delete(`${HOLIDAYS}${id}/`);
 			return true;
 		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: ["payroll", "holidays"] });
-		},
+		usePromiseToast: true,
+		loadingMessage: "Deleting holiday...",
+		successMessage: "Holiday deleted successfully!",
+		invalidateQueries: [{ queryKey: ["payroll", "holidays"] }],
 	});
 };
