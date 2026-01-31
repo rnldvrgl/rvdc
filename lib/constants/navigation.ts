@@ -1,21 +1,22 @@
 import { NavigationEntry, ShortcutEntry } from "@/lib/constants/types";
 import {
+	AlertTriangle,
 	Banknote,
 	Boxes,
-	// CalendarDays,
+	CalendarDays,
 	CircleDollarSign,
+	Clock,
 	Coins,
 	FileText,
 	Layers,
 	LayoutDashboard,
 	Package,
+	Plane,
 	Repeat,
 	Settings,
 	Store,
 	Users,
 	Warehouse,
-	// Wind,
-	// Wrench,
 } from "lucide-react";
 
 export const baseNavigation: Record<string, NavigationEntry> = {
@@ -60,18 +61,96 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 		icon: Users,
 		permission: "view_clients",
 	},
-	technicians: {
-		name: "Technicians",
-		href: "/technicians",
-		icon: Users,
-		permission: "view_technicians",
+	payroll: {
+		name: "Payroll",
+		icon: LayoutDashboard,
+		children: [
+			{
+				name: "Weekly Payroll",
+				href: "/payroll/weekly",
+				icon: CircleDollarSign,
+				permission: "manage_payroll",
+			},
+			{
+				name: "My Payroll",
+				href: "/payroll/slip",
+				icon: FileText,
+				permission: "view_payroll",
+			},
+			{
+				name: "Payroll Settings",
+				href: "/payroll/settings",
+				icon: Settings,
+				permission: "manage_payroll_settings",
+			},
+			{
+				name: "Holidays",
+				href: "/payroll/holidays",
+				icon: FileText,
+				permission: "manage_holidays",
+			},
+			{
+				name: "Deductions",
+				href: "/payroll/deductions",
+				icon: Banknote,
+				permission: "manage_deductions",
+			},
+		],
 	},
-	// attendance: {
-	// 	name: "Attendance",
-	// 	href: "/attendance",
-	// 	icon: CalendarDays,
-	// 	permission: "view_attendance",
-	// },
+	employees: {
+		name: "Employees",
+		href: "/employees",
+		icon: Users,
+		permission: "view_employees",
+	},
+	attendance: {
+		name: "Attendance",
+		icon: CalendarDays,
+		children: [
+			{
+				name: "Overview",
+				href: "/attendance/overview",
+				icon: CalendarDays,
+				permission: "manage_attendance_admin",
+			},
+			{
+				name: "Timetable",
+				href: "/attendance/timetable",
+				icon: CalendarDays,
+				permission: "manage_attendance",
+			},
+			{
+				name: "Leaves",
+				href: "/attendance/leaves",
+				icon: Plane,
+				permission: "manage_attendance",
+			},
+			{
+				name: "Overtime Requests",
+				href: "/attendance/overtime",
+				icon: Clock,
+				permission: "manage_attendance_admin",
+			},
+			{
+				name: "My Overtime",
+				href: "/attendance/my-overtime",
+				icon: Clock,
+				permission: "manage_attendance",
+			},
+			{
+				name: "Offenses",
+				href: "/attendance/offenses",
+				icon: AlertTriangle,
+				permission: "manage_attendance_admin",
+			},
+			{
+				name: "My Offenses",
+				href: "/attendance/my-offenses",
+				icon: AlertTriangle,
+				permission: "view_own_offenses",
+			},
+		],
+	},
 	// services: {
 	//   name: 'Services',
 	//   href: '/services',
@@ -152,11 +231,47 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 	// },
 	settings: {
 		name: "Settings",
-		href: "/settings",
 		icon: Settings,
-		permission: "view_settings",
+		children: [
+			{
+				name: "User Profile",
+				href: "/settings/profile",
+				icon: Settings,
+				permission: "view_settings",
+			},
+			{
+				name: "Government Benefits",
+				href: "/settings/government-benefits",
+				icon: Banknote,
+				permission: "manage_government_benefits",
+			},
+			{
+				name: "Tax Brackets",
+				href: "/settings/tax-brackets",
+				icon: CircleDollarSign,
+				permission: "manage_government_benefits",
+			},
+		],
 	},
 };
+
+// Ordered navigation array to maintain consistent sidebar sorting with better business hierarchy
+export const orderedNavigation: NavigationEntry[] = [
+	baseNavigation.dashboard,
+	// Core Business Operations
+	baseNavigation.sales,
+	baseNavigation.receivables,
+	baseNavigation.expenses,
+	baseNavigation.inventory,
+	// Customer & People Management
+	baseNavigation.clients,
+	baseNavigation.employees,
+	// HR & Operations
+	baseNavigation.payroll,
+	baseNavigation.attendance,
+	// System Management
+	baseNavigation.settings,
+];
 
 export const baseShortcuts: ShortcutEntry[] = [
 	// 	{

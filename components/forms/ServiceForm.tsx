@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { ComboBox } from '@/components/custom/inputs/ComboBox'
-import DatePicker from '@/components/custom/inputs/DatePicker'
-import TimePicker from '@/components/custom/inputs/TimePicker'
-import { Button } from '@/components/ui/button'
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import DatePicker from "@/components/custom/inputs/DatePicker"
+import TimePicker from "@/components/custom/inputs/TimePicker"
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -11,33 +11,33 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { useClientChoices } from '@/lib/queries/useChoices'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Save } from 'lucide-react'
-import { useForm, useWatch } from 'react-hook-form'
-import * as z from 'zod'
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { useClientChoices } from "@/lib/queries/useChoices"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Save } from "lucide-react"
+import { useForm, useWatch } from "react-hook-form"
+import * as z from "zod"
 
 const serviceTypeOptions = [
-  { label: 'Repair', value: 'repair' },
-  { label: 'Check-up', value: 'check_up' },
-  { label: 'Cleaning', value: 'cleaning' },
+  { label: "Repair", value: "repair" },
+  { label: "Check-up", value: "check_up" },
+  { label: "Cleaning", value: "cleaning" },
 ]
 
 const serviceModeOptions = [
-  { label: 'In Shop', value: 'in_shop' },
-  { label: 'Home Service', value: 'home_service' },
-  { label: 'Pickup and Return', value: 'pickup' },
+  { label: "In Shop", value: "in_shop" },
+  { label: "Home Service", value: "home_service" },
+  { label: "Pickup and Return", value: "pickup" },
 ]
 
 const serviceSchema = z.object({
-  client_id: z.number({ required_error: 'Client is required' }),
-  service_type: z.enum(['repair', 'check_up', 'cleaning'], {
-    required_error: 'Type is required',
+  client_id: z.number({ required_error: "Client is required" }),
+  service_type: z.enum(["repair", "check_up", "cleaning"], {
+    required_error: "Type is required",
   }),
-  service_mode: z.enum(['in_shop', 'home_service', 'pickup'], {
-    required_error: 'Mode is required',
+  service_mode: z.enum(["in_shop", "home_service", "pickup"], {
+    required_error: "Mode is required",
   }),
   related_transaction_id: z.number().nullable().optional(),
   description: z.string().optional(),
@@ -62,25 +62,24 @@ export default function ServiceForm({
     defaultValues: initialData ?? {
       client_id: undefined,
       service_type: undefined,
-      service_mode: 'in_shop',
+      service_mode: "in_shop",
       related_transaction_id: null,
-      description: '',
-      remarks: '',
+      description: "",
+      remarks: "",
       scheduled_date: null,
       scheduled_time: null,
     },
-    mode: 'onChange',
+    mode: "onChange",
   })
 
   const { data: clients = [] } = useClientChoices()
 
   const selectedMode = useWatch({
     control: form.control,
-    name: 'service_mode',
+    name: "service_mode",
   })
 
   const onSubmit = (data: FormValues) => {
-    console.log('Form submitted', data)
     onClose()
   }
 
@@ -141,7 +140,7 @@ export default function ServiceForm({
           )}
         />
 
-        {selectedMode !== 'in_shop' && (
+        {selectedMode !== "in_shop" && (
           <>
             <FormField
               name="scheduled_date"
@@ -211,7 +210,7 @@ export default function ServiceForm({
           className="w-full"
         >
           <Save className="mr-2 h-4 w-4" />
-          {initialData ? 'Update Service' : 'Create Service'}
+          {initialData ? "Update Service" : "Create Service"}
         </Button>
       </form>
     </Form>
