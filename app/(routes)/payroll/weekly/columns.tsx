@@ -119,7 +119,9 @@ export function getPayrollColumns({
 			header: "Hours",
 			cell: ({ row }: { row: Row<WeeklyPayroll> }) => {
 				const regularHours = Number(row.original.regular_hours || 0);
-				const overtimeHours = Number(row.original.overtime_hours || 0);
+				const overtimeHours = Number(
+					row.original.approved_ot_hours || 0,
+				);
 				const totalHours = regularHours + overtimeHours;
 				return (
 					<div className="flex items-center gap-2">

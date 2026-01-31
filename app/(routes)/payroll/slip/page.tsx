@@ -158,7 +158,7 @@ export default function MyPayrollPage() {
 											<p className="text-lg font-semibold">
 												{Number(payroll.regular_hours) +
 													Number(
-														payroll.overtime_hours,
+														payroll.approved_ot_hours,
 													)}
 												h
 											</p>

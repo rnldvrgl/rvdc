@@ -12,6 +12,11 @@ export const governmentBenefitSchema = z
 		calculation_method: z.enum(["fixed", "percentage", "progressive_tax"], {
 			required_error: "Calculation method is required",
 		}),
+		period_type: z
+			.enum(["weekly", "monthly"], {
+				required_error: "Period type is required",
+			})
+			.default("monthly"),
 		employee_share_amount: z
 			.number()
 			.nonnegative("Amount must be non-negative")
@@ -100,6 +105,7 @@ export interface GovernmentBenefit {
 	benefit_type: "sss" | "philhealth" | "pagibig" | "bir_tax";
 	name: string;
 	calculation_method: "fixed" | "percentage" | "progressive_tax";
+	period_type: "weekly" | "monthly";
 	employee_share_amount: string | null;
 	employer_share_amount: string | null;
 	employee_share_rate: string | null;

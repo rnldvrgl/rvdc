@@ -1,18 +1,18 @@
-import { RemittanceRecord } from '@/lib/constants/interface'
-import type { PaginatedFilterProps } from '@/lib/constants/types'
-import { useFilters } from '@/lib/hooks/useFilters'
-import { usePaginatedQuery } from '@/lib/hooks/usePaginatedQuery'
+import { RemittanceRecord } from "@/lib/constants/interface";
+import type { PaginatedFilterProps } from "@/lib/constants/types";
+import { useFilters } from "@/lib/hooks/useFilters";
+import { usePaginatedQuery } from "@/lib/hooks/usePaginatedQuery";
 
-const remittanceUrl = '/remittances/'
+const remittanceUrl = "/remittances/";
 
 export function useRemittancesRecords(props: PaginatedFilterProps = {}) {
-  return usePaginatedQuery<RemittanceRecord>({
-    ...props,
-    url: remittanceUrl,
-    queryKeyBase: 'remittances',
-  })
+	return usePaginatedQuery<RemittanceRecord>({
+		...props,
+		url: remittanceUrl,
+		queryKeyBase: "remittances",
+	});
 }
 
 export function useRemittancesRecordFilters() {
-  return useFilters('remittance-filters', `${remittanceUrl}filters/`)
+	return useFilters("remittance-filters", `${remittanceUrl}filters/`);
 }

@@ -1,8 +1,19 @@
 "use client";
 
 import { AddManualDeductionForm } from "@/components/forms/AddManualDeductionForm";
+import { AddAdditionalEarningForm } from "@/components/forms/AddAdditionalEarningForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
 	Card,
 	CardContent,
@@ -24,6 +35,9 @@ import { SHOP_INFO } from "@/lib/constants/meta";
 import { PayrollStatus } from "@/lib/constants/types";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
 import { usePayrollMutations } from "@/lib/mutations/usePayrollMutations";
+import { useRecomputeWeeklyPayroll } from "@/lib/mutations/payroll/usePayrollMutations";
+import { useDeleteManualDeduction } from "@/lib/mutations/useManualDeductionMutations";
+import { useDeleteAdditionalEarning } from "@/lib/mutations/useAdditionalEarningMutations";
 import { useWeeklyPayroll } from "@/lib/queries/usePayroll";
 import { cn } from "@/lib/utils/helpers";
 import { format } from "date-fns";
@@ -33,14 +47,15 @@ import {
 	Building,
 	CheckCircle,
 	Clock,
-	DollarSign,
 	FileText,
 	Loader2,
 	LucideIcon,
 	Minus,
 	PhilippinePesoIcon,
 	Plus,
+	RefreshCw,
 	User,
+	X,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -88,12 +103,21 @@ export function WeeklyPayrollSlip({
 	const { userProfile, isAdmin } = useCurrentUser();
 	const { updateStatus, markAsReceived, disputePayroll } =
 		usePayrollMutations();
+	const recomputePayroll = useRecomputeWeeklyPayroll(payrollId);
+	const deleteManualDeduction = useDeleteManualDeduction(payrollId);
 
 	const [disputeDialogOpen, setDisputeDialogOpen] = useState(false);
 	const [disputeReason, setDisputeReason] = useState("");
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [manualDeductionDialogOpen, setManualDeductionDialogOpen] =
 		useState(false);
+	const [additionalEarningDialogOpen, setAdditionalEarningDialogOpen] =
+		useState(false);
+	const [deleteDeductionId, setDeleteDeductionId] = useState<number | null>(
+		null,
+	);
+	const [deleteEarningId, setDeleteEarningId] = useState<number | null>(null);
+	const deleteAdditionalEarning = useDeleteAdditionalEarning(payrollId);
 
 	if (isLoading) {
 		return (
@@ -127,7 +151,7 @@ export function WeeklyPayrollSlip({
 		typeof value === "string" ? parseFloat(value) || 0 : value || 0;
 
 	const regularHours = toNumber(payroll.regular_hours);
-	const overtimeHours = toNumber(payroll.overtime_hours);
+	const approvedOtHours = toNumber(payroll.approved_ot_hours);
 	const nightDiffHours = toNumber(payroll.night_diff_hours);
 	const holidayPayRegular = toNumber(payroll.holiday_pay_regular || 0);
 	const holidayPaySpecial = toNumber(payroll.holiday_pay_special || 0);
@@ -176,13 +200,51 @@ export function WeeklyPayrollSlip({
 
 				{/* Action Buttons */}
 				{isAdmin && (
-					<div className="flex flex-wrap gap-2 print:hidden">
+					<div className="grid md:grid-cols-4 gap-3 print:hidden">
 						{payroll.status === "draft" && (
 							<>
 								<Button
 									size="sm"
 									variant="success"
-									className="flex-1 min-w-[120px]"
+									onClick={() =>
+										setAdditionalEarningDialogOpen(true)
+									}
+									disabled={isProcessing}
+								>
+									<Plus className="h-3.5 w-3.5 mr-1.5" />
+									Add Earning
+								</Button>
+								<Button
+									size="sm"
+									variant="warning"
+									onClick={() =>
+										setManualDeductionDialogOpen(true)
+									}
+									disabled={isProcessing}
+								>
+									<PhilippinePesoIcon className="h-3.5 w-3.5 mr-1.5" />
+									Add Deduction
+								</Button>
+								<Button
+									size="sm"
+									variant="outline"
+									onClick={async () => {
+										setIsProcessing(true);
+										await recomputePayroll.mutateAsync({});
+										setIsProcessing(false);
+									}}
+									disabled={
+										isProcessing ||
+										recomputePayroll.isPending
+									}
+								>
+									<RefreshCw className="h-3.5 w-3.5 mr-1.5" />
+									Recompute
+								</Button>
+
+								<Button
+									size="sm"
+									variant="success"
 									onClick={async () => {
 										setIsProcessing(true);
 										await updateStatus.mutateAsync({
@@ -198,94 +260,65 @@ export function WeeklyPayrollSlip({
 									<CheckCircle className="h-3.5 w-3.5 mr-1.5" />
 									Approve
 								</Button>
-								<Button
-									size="sm"
-									variant="warning"
-									className="flex-1 min-w-[120px]"
-									onClick={() =>
-										setManualDeductionDialogOpen(true)
-									}
-									disabled={isProcessing}
-								>
-									<PhilippinePesoIcon className="h-3.5 w-3.5 mr-1.5" />
-									Add Deduction
-								</Button>
 							</>
 						)}
 						{payroll.status === "approved" && (
-							<>
-								<Button
-									size="sm"
-									variant="success"
-									className="flex-1 min-w-[120px]"
-									onClick={async () => {
-										setIsProcessing(true);
-										await updateStatus.mutateAsync({
-											id: payrollId,
-											status: "paid",
-										});
-										setIsProcessing(false);
-									}}
-									disabled={
-										isProcessing || updateStatus.isPending
-									}
-								>
-									<Banknote className="h-3.5 w-3.5 mr-1.5" />
-									Mark as Paid
-								</Button>
-								<Button
-									size="sm"
-									variant="outline"
-									className="flex-1 min-w-[120px]"
-									onClick={() =>
-										setManualDeductionDialogOpen(true)
-									}
-									disabled={isProcessing}
-								>
-									<DollarSign className="h-3.5 w-3.5 mr-1.5" />
-									Add Deduction
-								</Button>
-							</>
+							<Button
+								size="sm"
+								variant="success"
+								className="col-span-3"
+								onClick={async () => {
+									setIsProcessing(true);
+									await updateStatus.mutateAsync({
+										id: payrollId,
+										status: "paid",
+									});
+									setIsProcessing(false);
+								}}
+								disabled={
+									isProcessing || updateStatus.isPending
+								}
+							>
+								<Banknote className="h-3.5 w-3.5 mr-1.5" />
+								Mark as Paid
+							</Button>
 						)}
 					</div>
 				)}
 
-				{!isAdmin && userProfile?.id === payroll.employee && (
-					<div className="flex flex-wrap gap-2 print:hidden">
-						{payroll.status === "paid" && !payroll.disputed && (
-							<>
-								<Button
-									size="sm"
-									variant="success"
-									className="flex-1 min-w-[120px]"
-									onClick={async () => {
-										setIsProcessing(true);
-										await markAsReceived.mutateAsync({
-											id: payrollId,
-										});
-										setIsProcessing(false);
-									}}
-									disabled={
-										isProcessing || markAsReceived.isPending
-									}
-								>
-									<CheckCircle className="h-3.5 w-3.5 mr-1.5" />
-									Mark Received
-								</Button>
-								<Button
-									size="sm"
-									variant="destructive"
-									className="flex-1 min-w-[120px]"
-									onClick={() => setDisputeDialogOpen(true)}
-									disabled={isProcessing}
-								>
-									<AlertCircle className="h-3.5 w-3.5 mr-1.5" />
-									Dispute
-								</Button>
-							</>
-						)}
-					</div>
-				)}
+				{!isAdmin &&
+					userProfile?.id === payroll.employee &&
+					payroll.status === "paid" &&
+					!payroll.disputed && (
+						<div className="grid md:grid-cols-2 gap-2 print:hidden">
+							<Button
+								size="sm"
+								variant="success"
+								onClick={async () => {
+									setIsProcessing(true);
+									await markAsReceived.mutateAsync({
+										id: payrollId,
+									});
+									setIsProcessing(false);
+								}}
+								disabled={
+									isProcessing || markAsReceived.isPending
+								}
+							>
+								<CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+								Mark Received
+							</Button>
+							<Button
+								size="sm"
+								variant="destructive"
+								onClick={() => setDisputeDialogOpen(true)}
+								disabled={isProcessing}
+							>
+								<AlertCircle className="h-3.5 w-3.5 mr-1.5" />
+								Dispute
+							</Button>
+						</div>
+					)}
 			</CardHeader>
 
 			<CardContent className="space-y-3">
@@ -374,10 +407,10 @@ export function WeeklyPayrollSlip({
 						</div>
 						<div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-900/40 border">
 							<p className="text-lg font-bold text-orange-600 dark:text-orange-400">
-								{overtimeHours.toFixed(1)}
+								{approvedOtHours.toFixed(1)}
 							</p>
 							<p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-								Overtime
+								Approved OT
 							</p>
 						</div>
 						<div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-900/40 border">
@@ -413,37 +446,116 @@ export function WeeklyPayrollSlip({
 							</h3>
 						</div>
 						<div className="space-y-1.5">
-							{[
-								{
-									label: "Basic Pay",
-									amount:
+							{/* Basic Pay - Regular hours + per-day overtime (>8hrs) */}
+							<div className="flex justify-between text-xs sm:text-sm">
+								<span className="text-muted-foreground">
+									Basic Pay
+								</span>
+								<span className="font-medium">
+									₱
+									{(
 										grossPay -
 										nightDiffPay -
 										approvedOtPay -
-										holidayPayTotal,
-								},
-								{ label: "Overtime", amount: approvedOtPay },
-								{ label: "Holiday", amount: holidayPayTotal },
-								{ label: "Night Diff", amount: nightDiffPay },
-								{ label: "Allowances", amount: allowances },
-								{ label: "Other", amount: additionalEarnings },
-							].map((item) => (
-								<div
-									key={item.label}
-									className="flex justify-between text-xs sm:text-sm"
-								>
+										holidayPayTotal
+									).toLocaleString(undefined, {
+										minimumFractionDigits: 2,
+										maximumFractionDigits: 2,
+									})}
+								</span>
+							</div>
+
+							{/* Approved Overtime - Show only if > 0 */}
+							{approvedOtPay > 0 && (
+								<div className="flex justify-between text-xs sm:text-sm">
 									<span className="text-muted-foreground">
-										{item.label}
+										Overtime
 									</span>
 									<span className="font-medium">
 										₱
-										{item.amount.toLocaleString(undefined, {
+										{approvedOtPay.toLocaleString(
+											undefined,
+											{
+												minimumFractionDigits: 2,
+												maximumFractionDigits: 2,
+											},
+										)}
+									</span>
+								</div>
+							)}
+
+							{/* Holiday Pay */}
+							{holidayPayTotal > 0 && (
+								<div className="flex justify-between text-xs sm:text-sm">
+									<span className="text-muted-foreground">
+										Holiday
+									</span>
+									<span className="font-medium">
+										₱
+										{holidayPayTotal.toLocaleString(
+											undefined,
+											{
+												minimumFractionDigits: 2,
+												maximumFractionDigits: 2,
+											},
+										)}
+									</span>
+								</div>
+							)}
+
+							{/* Night Differential */}
+							{nightDiffPay > 0 && (
+								<div className="flex justify-between text-xs sm:text-sm">
+									<span className="text-muted-foreground">
+										Night Diff
+									</span>
+									<span className="font-medium">
+										₱
+										{nightDiffPay.toLocaleString(
+											undefined,
+											{
+												minimumFractionDigits: 2,
+												maximumFractionDigits: 2,
+											},
+										)}
+									</span>
+								</div>
+							)}
+
+							{/* Allowances */}
+							{allowances > 0 && (
+								<div className="flex justify-between text-xs sm:text-sm">
+									<span className="text-muted-foreground">
+										Allowances
+									</span>
+									<span className="font-medium">
+										₱
+										{allowances.toLocaleString(undefined, {
 											minimumFractionDigits: 2,
 											maximumFractionDigits: 2,
 										})}
 									</span>
 								</div>
-							))}
+							)}
+
+							{/* Additional Earnings */}
+							{additionalEarnings > 0 && (
+								<div className="flex justify-between text-xs sm:text-sm">
+									<span className="text-muted-foreground">
+										Other
+									</span>
+									<span className="font-medium">
+										₱
+										{additionalEarnings.toLocaleString(
+											undefined,
+											{
+												minimumFractionDigits: 2,
+												maximumFractionDigits: 2,
+											},
+										)}
+									</span>
+								</div>
+							)}
 						</div>
 						<Separator className="my-2" />
 						<div className="flex justify-between font-semibold text-green-700 dark:text-green-400 text-sm">
@@ -468,29 +580,55 @@ export function WeeklyPayrollSlip({
 						</div>
 						{totalDeductions > 0 ? (
 							<div className="space-y-1.5">
-								{/* Prioritize structured deduction items if available */}
-								{payroll.deduction_items &&
-								payroll.deduction_items.length > 0
-									? payroll.deduction_items.map((item) => {
-											const amount = toNumber(
-												item.employee_share,
-											);
-											if (amount <= 0) return null;
+								{/* Use deductions JSON with metadata */}
+								{Object.entries(payroll.deductions || {}).map(
+									([key, value]) => {
+										const amount = toNumber(value);
+										if (amount <= 0) return null;
 
-											return (
-												<div
-													key={item.id}
-													className="flex justify-between text-xs sm:text-sm"
-												>
-													<span className="text-muted-foreground flex items-center gap-1.5">
+										const metadata =
+											payroll.deduction_metadata?.[key];
+										const isManualDeduction =
+											metadata?.source_type ===
+												"ManualDeduction" &&
+											metadata?.source_id;
+										const canDelete =
+											isAdmin &&
+											payroll.status === "draft" &&
+											isManualDeduction;
+
+										const label = key
+											.split("_")
+											.map(
+												(word) =>
+													word
+														.charAt(0)
+														.toUpperCase() +
+													word.slice(1),
+											)
+											.join(" ")
+											.replace("_", " ");
+
+										return (
+											<div
+												key={key}
+												className="flex justify-between items-center text-xs sm:text-sm group"
+											>
+												<span className="text-muted-foreground flex items-center gap-1.5">
+													{metadata?.category && (
 														<Badge
 															variant="outline"
-															className="text-[10px] px-1.5 py-0"
+															className="text-xs sm:text-sm px-1.5 py-0"
 														>
-															{item.category}
+															{metadata.category.replace(
+																/_/g,
+																" ",
+															)}
 														</Badge>
-														{item.name}
-													</span>
+													)}
+													{label}
+												</span>
+												<div className="flex items-center gap-2">
 													<span className="font-medium">
 														₱
 														{amount.toLocaleString(
@@ -501,48 +639,25 @@ export function WeeklyPayrollSlip({
 															},
 														)}
 													</span>
+													{canDelete && (
+														<Button
+															variant="ghost"
+															size="sm"
+															className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity print:hidden"
+															onClick={() =>
+																setDeleteDeductionId(
+																	metadata.source_id!,
+																)
+															}
+														>
+															<X className="h-3 w-3 text-red-500" />
+														</Button>
+													)}
 												</div>
-											);
-										})
-									: // Fallback to JSON deductions
-										Object.entries(
-											payroll.deductions || {},
-										).map(([key, value]) => {
-											const amount = toNumber(value);
-											if (amount <= 0) return null;
-
-											const label = key
-												.split("_")
-												.map(
-													(word) =>
-														word
-															.charAt(0)
-															.toUpperCase() +
-														word.slice(1),
-												)
-												.join(" ");
-
-											return (
-												<div
-													key={key}
-													className="flex justify-between text-xs sm:text-sm"
-												>
-													<span className="text-muted-foreground">
-														{label}
-													</span>
-													<span className="font-medium">
-														₱
-														{amount.toLocaleString(
-															undefined,
-															{
-																minimumFractionDigits: 2,
-																maximumFractionDigits: 2,
-															},
-														)}
-													</span>
-												</div>
-											);
-										})}
+											</div>
+										);
+									},
+								)}
 							</div>
 						) : (
 							<div className="flex items-center justify-center grow">
@@ -571,226 +686,6 @@ export function WeeklyPayrollSlip({
 						)}
 					</div>
 				</div>
-
-				{/* Detailed Deduction Breakdown (if deduction_items exist) */}
-				{payroll.deduction_items &&
-					payroll.deduction_items.length > 0 && (
-						<div className="rounded-lg border p-4 print:break-inside-avoid">
-							<h3 className="text-sm sm:text-base font-semibold mb-3 flex items-center gap-2">
-								<FileText className="h-4 w-4 text-primary" />
-								Detailed Deduction Breakdown
-							</h3>
-							<div className="space-y-3">
-								{payroll.deduction_items.map((item) => (
-									<div key={item.id} className="space-y-1">
-										<div className="flex justify-between items-start">
-											<div className="flex-1">
-												<div className="flex items-center gap-2 flex-wrap">
-													<Badge
-														variant={
-															item.category ===
-															"government"
-																? "default"
-																: item.category ===
-																	  "tax"
-																	? "destructive"
-																	: item.category ===
-																		  "manual"
-																		? "secondary"
-																		: "outline"
-														}
-														className="text-xs capitalize"
-													>
-														{item.category.replace(
-															"_",
-															" ",
-														)}
-													</Badge>
-													<span className="text-xs sm:text-sm font-medium">
-														{item.name}
-													</span>
-												</div>
-												{item.description && (
-													<p className="text-xs text-muted-foreground mt-1 ml-1">
-														{item.description}
-													</p>
-												)}
-											</div>
-											<div className="text-right">
-												<span className="text-xs sm:text-sm font-semibold text-red-600 dark:text-red-400">
-													₱
-													{toNumber(
-														item.employee_share,
-													).toLocaleString(
-														undefined,
-														{
-															minimumFractionDigits: 2,
-															maximumFractionDigits: 2,
-														},
-													)}
-												</span>
-											</div>
-										</div>
-
-										{/* Show calculation details */}
-										{(item.calculation_method ||
-											toNumber(item.employer_share) >
-												0) && (
-											<div className="space-y-1 text-xs pl-4 mt-1.5">
-												<div className="flex justify-between">
-													<span className="text-muted-foreground">
-														Employee Share:
-													</span>
-													<span className="font-medium">
-														₱
-														{toNumber(
-															item.employee_share,
-														).toLocaleString(
-															undefined,
-															{
-																minimumFractionDigits: 2,
-																maximumFractionDigits: 2,
-															},
-														)}
-													</span>
-												</div>
-												{toNumber(item.employer_share) >
-													0 && (
-													<div className="flex justify-between">
-														<span className="text-muted-foreground">
-															Employer Share:
-														</span>
-														<span className="font-medium text-muted-foreground/70">
-															₱
-															{toNumber(
-																item.employer_share,
-															).toLocaleString(
-																undefined,
-																{
-																	minimumFractionDigits: 2,
-																	maximumFractionDigits: 2,
-																},
-															)}
-														</span>
-													</div>
-												)}
-											</div>
-										)}
-
-										{/* Show calculation method if available */}
-										{item.calculation_method && (
-											<div className="flex flex-wrap gap-3 text-xs text-muted-foreground/70 pl-4 mt-1">
-												<span className="inline-flex items-center gap-1">
-													<span className="font-medium">
-														Method:
-													</span>
-													<span className="capitalize">
-														{item.calculation_method.replace(
-															"_",
-															" ",
-														)}
-													</span>
-												</span>
-												{item.rate && (
-													<span className="inline-flex items-center gap-1">
-														<span className="font-medium">
-															Rate:
-														</span>
-														<span>
-															{(
-																toNumber(
-																	item.rate,
-																) * 100
-															).toFixed(2)}
-															%
-														</span>
-													</span>
-												)}
-												{item.basis_amount && (
-													<span className="inline-flex items-center gap-1">
-														<span className="font-medium">
-															Basis:
-														</span>
-														<span>
-															₱
-															{toNumber(
-																item.basis_amount,
-															).toLocaleString(
-																undefined,
-																{
-																	minimumFractionDigits: 2,
-																	maximumFractionDigits: 2,
-																},
-															)}
-														</span>
-													</span>
-												)}
-											</div>
-										)}
-
-										<Separator className="mt-2" />
-									</div>
-								))}
-
-								{/* Summary totals */}
-								<div className="pt-3 mt-3 border-t space-y-2">
-									<div className="flex justify-between font-semibold text-xs sm:text-sm">
-										<span>Total Employee Deductions:</span>
-										<span className="text-red-600 dark:text-red-400">
-											₱
-											{payroll.deduction_items
-												.reduce(
-													(sum, item) =>
-														sum +
-														toNumber(
-															item.employee_share,
-														),
-													0,
-												)
-												.toLocaleString(undefined, {
-													minimumFractionDigits: 2,
-													maximumFractionDigits: 2,
-												})}
-										</span>
-									</div>
-									{payroll.deduction_items.some(
-										(item) =>
-											toNumber(item.employer_share) > 0,
-									) && (
-										<div className="flex justify-between text-xs sm:text-sm text-muted-foreground">
-											<span>
-												Total Employer Contributions:
-											</span>
-											<span className="font-medium">
-												₱
-												{payroll.deduction_items
-													.reduce(
-														(sum, item) =>
-															sum +
-															toNumber(
-																item.employer_share,
-															),
-														0,
-													)
-													.toLocaleString(undefined, {
-														minimumFractionDigits: 2,
-														maximumFractionDigits: 2,
-													})}
-											</span>
-										</div>
-									)}
-									<p className="text-xs text-muted-foreground/70 pt-1">
-										<span className="font-medium">
-											Note:
-										</span>{" "}
-										Employer contributions are for
-										informational purposes and are not
-										deducted from your pay.
-									</p>
-								</div>
-							</div>
-						</div>
-					)}
 
 				{/* Net Pay Summary - Prominent but Compact */}
 				<div className="rounded-lg bg-linear-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 p-4 text-white shadow-md print:bg-white print:border-2 print:border-green-600 print:text-green-600">
@@ -924,13 +819,134 @@ export function WeeklyPayrollSlip({
 				</DialogContent>
 			</Dialog>
 
+			{/* Additional Earning Dialog */}
+			<AddAdditionalEarningForm
+				open={additionalEarningDialogOpen}
+				onOpenChange={setAdditionalEarningDialogOpen}
+				employeeId={payroll.employee}
+				employeeName={employeeName}
+				weekStart={payroll.week_start}
+				weekEnd={payroll.week_end}
+				payrollId={payroll.id}
+			/>
+
 			{/* Manual Deduction Dialog */}
 			<AddManualDeductionForm
 				open={manualDeductionDialogOpen}
 				onOpenChange={setManualDeductionDialogOpen}
 				employeeId={payroll.employee}
 				employeeName={employeeName}
+				weekStart={payroll.week_start}
+				weekEnd={payroll.week_end}
+				payrollId={payroll.id}
 			/>
+
+			{/* Delete Deduction Confirmation Dialog */}
+			<AlertDialog
+				open={deleteDeductionId !== null}
+				onOpenChange={(open: boolean) => {
+					if (!open) setDeleteDeductionId(null);
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle className="flex items-center gap-2">
+							<AlertCircle className="h-5 w-5 text-destructive" />
+							Delete Manual Deduction?
+						</AlertDialogTitle>
+						<AlertDialogDescription className="space-y-3">
+							<div className="font-semibold text-foreground">
+								⚠️ Warning: This will permanently delete this
+								deduction.
+							</div>
+							<div className="space-y-2 text-sm">
+								<div>
+									<strong>For one-time deductions:</strong>{" "}
+									Only removes from this payroll.
+								</div>
+								<div>
+									<strong>For recurring deductions:</strong>{" "}
+									Removes from ALL current and future payrolls
+									where this deduction was configured.
+								</div>
+							</div>
+							<div className="text-xs text-muted-foreground italic">
+								Note: Soft delete preserves audit trail. The
+								deduction record remains in the database for
+								reporting purposes.
+							</div>
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel
+							onClick={() => setDeleteDeductionId(null)}
+						>
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+							onClick={async () => {
+								if (deleteDeductionId) {
+									await deleteManualDeduction.mutateAsync(
+										deleteDeductionId,
+									);
+									setDeleteDeductionId(null);
+								}
+							}}
+						>
+							{deleteManualDeduction.isPending && (
+								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+							)}
+							Delete Anyway
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			{/* Delete Earning Confirmation Dialog */}
+			<AlertDialog
+				open={deleteEarningId !== null}
+				onOpenChange={(open: boolean) => {
+					if (!open) setDeleteEarningId(null);
+				}}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle className="flex items-center gap-2">
+							<AlertCircle className="h-5 w-5 text-destructive" />
+							Delete Additional Earning?
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							This will permanently remove this earning from the
+							payroll. The earning record will be soft-deleted for
+							audit purposes.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel
+							onClick={() => setDeleteEarningId(null)}
+						>
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+							onClick={async () => {
+								if (deleteEarningId) {
+									await deleteAdditionalEarning.mutateAsync(
+										deleteEarningId,
+									);
+									setDeleteEarningId(null);
+								}
+							}}
+						>
+							{deleteAdditionalEarning.isPending && (
+								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+							)}
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</Card>
 	);
 }

@@ -65,6 +65,7 @@ export function GovernmentBenefitForm({
 			benefit_type: "sss",
 			name: "",
 			calculation_method: "percentage",
+			period_type: "monthly",
 			employee_share_amount: null,
 			employer_share_amount: null,
 			employee_share_rate: null,
@@ -83,6 +84,7 @@ export function GovernmentBenefitForm({
 				benefit_type: benefit.benefit_type,
 				name: benefit.name,
 				calculation_method: benefit.calculation_method,
+				period_type: benefit.period_type || "monthly",
 				employee_share_amount: benefit.employee_share_amount
 					? Number(benefit.employee_share_amount)
 					: null,
@@ -107,6 +109,7 @@ export function GovernmentBenefitForm({
 				benefit_type: "sss",
 				name: "",
 				calculation_method: "percentage",
+				period_type: "monthly",
 				employee_share_amount: null,
 				employer_share_amount: null,
 				employee_share_rate: null,
@@ -193,7 +196,7 @@ export function GovernmentBenefitForm({
 			if (isEditing) {
 				await updateMutation.mutateAsync({
 					id: benefit.id,
-					data: payload,
+					...payload,
 				});
 			} else {
 				await createMutation.mutateAsync(payload);
@@ -351,6 +354,45 @@ export function GovernmentBenefitForm({
 							)}
 						/>
 
+						{/* Period Type - Only show for fixed amounts */}
+						{calculationMethod === "fixed" && (
+							<FormField
+								control={form.control}
+								name="period_type"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel required>
+											Period Type
+										</FormLabel>
+										<Select
+											onValueChange={field.onChange}
+											value={field.value}
+										>
+											<FormControl>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Select period type" />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												<SelectItem value="monthly">
+													Monthly (divide by 4 for
+													weekly payroll)
+												</SelectItem>
+												<SelectItem value="weekly">
+													Weekly (use as-is)
+												</SelectItem>
+											</SelectContent>
+										</Select>
+										<FormDescription>
+											{field.value === "monthly"
+												? "Amount will be divided by 4 for weekly payroll. Use this for standard SSS, PhilHealth, and Pag-IBIG contributions."
+												: "Amount will be used as-is for each weekly payroll."}
+										</FormDescription>
+									</FormItem>
+								)}
+							/>
+						)}
+
 						{/* Fixed Amount Fields */}
 						{calculationMethod === "fixed" && (
 							<div className="grid grid-cols-2 gap-4">
@@ -382,7 +424,10 @@ export function GovernmentBenefitForm({
 												/>
 											</FormControl>
 											<FormDescription>
-												Fixed weekly amount
+												{form.watch("period_type") ===
+												"monthly"
+													? "Monthly amount (will be ÷ 4 for weekly)"
+													: "Weekly amount"}
 											</FormDescription>
 										</FormItem>
 									)}
@@ -415,7 +460,10 @@ export function GovernmentBenefitForm({
 												/>
 											</FormControl>
 											<FormDescription>
-												For reporting only
+												{form.watch("period_type") ===
+												"monthly"
+													? "Monthly employer share (for reporting)"
+													: "Weekly employer share (for reporting)"}
 											</FormDescription>
 										</FormItem>
 									)}

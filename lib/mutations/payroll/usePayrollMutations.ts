@@ -34,8 +34,6 @@ const weeklyPayrollRecompute = (id: number) =>
  * Additional Earnings Mutations
  */
 export const useCreateAdditionalEarning = () => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async (payload: Partial<AdditionalEarning>) => {
 			const { data } = await api.post(ADDITIONAL_EARNINGS, payload);
@@ -49,8 +47,6 @@ export const useCreateAdditionalEarning = () => {
 };
 
 export const useUpdateAdditionalEarning = (id: number) => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async (payload: Partial<AdditionalEarning>) => {
 			const { data } = await api.patch(
@@ -70,8 +66,6 @@ export const useUpdateAdditionalEarning = (id: number) => {
 };
 
 export const useDeleteAdditionalEarning = (id: number) => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async () => {
 			await api.delete(`${ADDITIONAL_EARNINGS}${id}/`);
@@ -91,8 +85,6 @@ export const useDeleteAdditionalEarning = (id: number) => {
  * Weekly Payroll Mutations
  */
 export const useCreateWeeklyPayroll = () => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async (payload: Partial<WeeklyPayroll>) => {
 			const { data } = await api.post(WEEKLY_PAYROLLS, payload);
@@ -106,8 +98,6 @@ export const useCreateWeeklyPayroll = () => {
 };
 
 export const useUpdateWeeklyPayroll = (id: number) => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async (payload: Partial<WeeklyPayroll>) => {
 			const { data } = await api.patch(weeklyPayrollDetail(id), payload);
@@ -124,8 +114,6 @@ export const useUpdateWeeklyPayroll = (id: number) => {
 };
 
 export const useDeleteWeeklyPayroll = (id: number) => {
-	const qc = useQueryClient();
-
 	return useApiMutation({
 		mutationFn: async () => {
 			await api.delete(weeklyPayrollDetail(id));
@@ -160,10 +148,21 @@ export const useRecomputeWeeklyPayroll = (id: number) => {
 		usePromiseToast: true,
 		loadingMessage: "Recalculating payroll...",
 		successMessage: "Payroll recalculated successfully!",
-		invalidateQueries: [
-			{ queryKey: ["payroll", "weekly-payrolls"] },
-			{ queryKey: ["payroll", "weekly-payroll", id.toString()] },
-		],
+		onSuccess: async (data) => {
+			// Invalidate and refetch all related queries aggressively
+			await qc.invalidateQueries({
+				queryKey: ["payroll", "weekly-payrolls"],
+				refetchType: "active",
+			});
+
+			await qc.invalidateQueries({
+				queryKey: ["payroll", "weekly-payroll", id],
+				refetchType: "active",
+			});
+
+			// Also set the query data directly to ensure immediate update
+			qc.setQueryData(["payroll", "weekly-payroll", id], data);
+		},
 	});
 };
 
@@ -171,7 +170,6 @@ export const useRecomputeWeeklyPayroll = (id: number) => {
  * Payroll Settings Mutations
  */
 export const useUpdatePayrollSettings = () => {
-	const qc = useQueryClient();
 	return useApiMutation({
 		mutationFn: async (payload: Partial<PayrollSettings>) => {
 			const { data } = await api.put(PAYROLL_SETTINGS, payload);
@@ -185,7 +183,6 @@ export const useUpdatePayrollSettings = () => {
 };
 
 export const usePatchPayrollSettings = () => {
-	const qc = useQueryClient();
 	return useApiMutation({
 		mutationFn: async (payload: Partial<PayrollSettings>) => {
 			const { data } = await api.patch(PAYROLL_SETTINGS, payload);
@@ -202,7 +199,6 @@ export const usePatchPayrollSettings = () => {
  * Holidays Mutations
  */
 export const useCreateHoliday = () => {
-	const qc = useQueryClient();
 	return useApiMutation({
 		mutationFn: async (payload: Omit<Holiday, "id" | "is_deleted">) => {
 			const { data } = await api.post(HOLIDAYS, payload);
@@ -216,7 +212,6 @@ export const useCreateHoliday = () => {
 };
 
 export const useUpdateHoliday = (id: number) => {
-	const qc = useQueryClient();
 	return useApiMutation({
 		mutationFn: async (payload: Partial<Holiday>) => {
 			const { data } = await api.patch(`${HOLIDAYS}${id}/`, payload);
@@ -230,7 +225,6 @@ export const useUpdateHoliday = (id: number) => {
 };
 
 export const useDeleteHoliday = (id: number) => {
-	const qc = useQueryClient();
 	return useApiMutation({
 		mutationFn: async () => {
 			await api.delete(`${HOLIDAYS}${id}/`);
