@@ -300,25 +300,81 @@ export interface Notification {
 	summary: string;
 }
 
+// Expense Category
+export interface ExpenseCategory {
+	id: number;
+	name: string;
+	description: string;
+	monthly_budget: number;
+	is_active: boolean;
+	is_deleted: boolean;
+	parent?: number;
+	parent_name?: string;
+	parent_data?: ExpenseCategory;
+	subcategories?: ExpenseCategory[];
+	created_at: string;
+	updated_at: string;
+}
+
+export interface ExpenseCategoryPayload {
+	name: string;
+	description?: string;
+	monthly_budget?: number;
+	is_active?: boolean;
+	parent?: number;
+}
+
+// Expense Item
+export interface ExpenseItem {
+	id: number;
+	expense: number;
+	item?: number;
+	item_data?: Item;
+	description: string;
+	quantity: number;
+	unit_price: number;
+	total_price: number;
+	created_at: string;
+	updated_at: string;
+}
+
+// Expense
 export interface Expense {
 	id: number;
 	stall: number | string;
 	stall_data: Stall;
+	category?: number;
+	category_data?: ExpenseCategory;
 	total_price: number;
 	paid_amount: number;
 	is_paid: boolean;
+	payment_status: "unpaid" | "partial" | "paid";
+	payment_method?: string;
 	description: string;
-	source: "manual" | "transfer";
+	expense_date: string;
+	reference_number?: string;
+	vendor?: string;
+	source: "manual" | "service";
+	is_deleted: boolean;
+	deleted_at?: string;
 	created_by: { id: number; name: string };
 	created_at: string;
+	updated_at?: string;
 	paid_at?: string;
-	transfer?: StockTransfer;
+	items?: ExpenseItem[];
 }
 
 export interface ExpensePayload {
 	stall?: number;
+	category?: number;
 	total_price: number;
 	description: string;
+	expense_date?: string;
+	reference_number?: string;
+	vendor?: string;
+	payment_status?: "unpaid" | "partial" | "paid";
+	payment_method?: string;
+	paid_amount?: number;
 }
 
 // Payment enums

@@ -386,7 +386,6 @@ export default function OffenseForm({
 										<FormDescription>
 											Number of days suspended
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>
@@ -418,7 +417,6 @@ export default function OffenseForm({
 										<FormDescription>
 											When suspension begins
 										</FormDescription>
-										<FormMessage />
 									</FormItem>
 								)}
 							/>

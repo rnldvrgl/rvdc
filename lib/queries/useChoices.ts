@@ -1,6 +1,7 @@
 import {
 	AirconBrands,
 	AirconModels,
+	ExpenseCategory,
 	Item,
 	ProductCategory,
 	Stall,
@@ -106,5 +107,12 @@ export const useAirconModelsChoices = () => {
 	return useApiQuery<AirconModels[]>({
 		queryKey: ["aircon-models-choices"],
 		url: `${url}aircon-models/`,
+	});
+};
+
+export const useExpenseCategoryChoices = () => {
+	return useApiQuery<ExpenseCategory[]>({
+		queryKey: ["expense-category-choices"],
+		url: `${url}expense-categories/`,
 	});
 };

@@ -51,9 +51,21 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 	},
 	expenses: {
 		name: "Expenses",
-		href: "/expenses",
 		icon: Coins,
-		permission: "view_expenses",
+		children: [
+			{
+				name: "All Expenses",
+				href: "/expenses/manage",
+				icon: Coins,
+				permission: "view_expenses",
+			},
+			{
+				name: "Categories",
+				href: "/expenses/categories",
+				icon: Layers,
+				permission: "view_expense_categories",
+			},
+		],
 	},
 	clients: {
 		name: "Clients",
