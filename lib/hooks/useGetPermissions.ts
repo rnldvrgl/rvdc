@@ -14,6 +14,7 @@ export function useGetPermissions(role: Roles) {
 			"view_remittances",
 			"view_cheque_collections",
 			"view_expenses",
+			"view_services",
 		];
 
 		const commonEmployeePermissions = [

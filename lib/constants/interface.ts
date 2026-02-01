@@ -688,3 +688,241 @@ export type AirconUnitPayload = {
 	reserved_by?: number | null;
 	free_cleaning_redeemed?: boolean;
 };
+
+// ---------------------
+// Services & Installations
+// ---------------------
+export type ServiceType =
+	| "repair"
+	| "inspection"
+	| "cleaning"
+	| "motor_rewind"
+	| "installation";
+export type ServiceMode = "carry_in" | "home_service" | "pull_out";
+export type ServiceStatus =
+	| "pending"
+	| "in_progress"
+	| "completed"
+	| "cancelled";
+export type ApplianceStatus =
+	| "received"
+	| "diagnosed"
+	| "in_repair"
+	| "completed"
+	| "ready_for_pickup"
+	| "delivered";
+export type AssignmentType = "repair" | "pickup" | "delivery" | "inspect";
+
+// Appliance Type
+export interface ApplianceType {
+	id: number;
+	name: string;
+}
+
+// Service Appliance
+export interface ServiceAppliance {
+	id: number;
+	service: number;
+	appliance_type: ApplianceType | null;
+	brand?: string;
+	model?: string;
+	issue_reported?: string;
+	diagnosis_notes?: string;
+	status: ApplianceStatus;
+	labor_fee: string;
+	labor_is_free: boolean;
+	labor_original_amount?: string;
+}
+
+export interface ServiceAppliancePayload {
+	service?: number;
+	appliance_type: number | null;
+	brand?: string;
+	model?: string;
+	issue_reported?: string;
+	diagnosis_notes?: string;
+	status?: ApplianceStatus;
+	labor_fee: number;
+	labor_is_free?: boolean;
+	labor_original_amount?: number;
+}
+
+// Appliance Item Used
+export interface ApplianceItemUsed {
+	id: number;
+	appliance: number;
+	item: Item | null;
+	quantity: number;
+	stall_stock?: number | null;
+	is_free: boolean;
+	free_quantity: number;
+	promo_name?: string;
+	expense?: number | null;
+}
+
+export interface ApplianceItemUsedPayload {
+	appliance: number;
+	item: number;
+	quantity: number;
+	stall_stock?: number | null;
+	is_free?: boolean;
+	free_quantity?: number;
+	promo_name?: string;
+}
+
+// Technician Assignment
+export interface TechnicianAssignment {
+	id: number;
+	service: number;
+	appliance?: number | null;
+	technician: number; // Backend returns ID, not full User object
+	technician_name?: string; // Optional: technician's full name from backend
+	assignment_type: AssignmentType;
+	note?: string;
+}
+
+export interface TechnicianAssignmentPayload {
+	service?: number;
+	appliance?: number | null;
+	technician: number;
+	assignment_type: AssignmentType;
+	note?: string;
+}
+
+// Service Payment
+export interface ServicePayment {
+	id: number;
+	service: number;
+	payment_type: PaymentType;
+	amount: string;
+	payment_date: string;
+	received_by?: User | null;
+	notes?: string;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface ServicePaymentPayload {
+	service: number;
+	payment_type: PaymentType;
+	amount: number;
+	payment_date?: string;
+	received_by?: number;
+	notes?: string;
+}
+
+// Service
+export interface Service {
+	id: number;
+	client: Client;
+	stall?: Stall | null;
+	service_type: ServiceType;
+	service_mode: ServiceMode;
+	related_transaction?: number | null;
+	description?: string;
+	override_address?: string;
+	override_contact_person?: string;
+	override_contact_number?: string;
+	pickup_date?: string;
+	delivery_date?: string;
+	received_at?: string;
+	status: ServiceStatus;
+	remarks?: string;
+	notes?: string;
+	created_at: string;
+	updated_at: string;
+	main_stall_revenue: string;
+	sub_stall_revenue: string;
+	total_revenue: string;
+	payment_status: PaymentStatus;
+	total_cost?: string;
+	scheduled_end_time?: string;
+	total_paid?: string;
+	balance_due?: string;
+	appliances?: ServiceAppliance[];
+	technician_assignments?: TechnicianAssignment[];
+	payments?: ServicePayment[];
+}
+
+export interface ServicePayload {
+	client: number;
+	service_type: ServiceType;
+	service_mode: ServiceMode;
+	related_transaction?: number | null;
+	description?: string;
+	override_address?: string;
+	override_contact_person?: string;
+	override_contact_number?: string;
+	pickup_date?: string;
+	delivery_date?: string;
+	received_at?: string;
+	status?: ServiceStatus;
+	remarks?: string;
+	notes?: string;
+	technician_assignments?: TechnicianAssignmentPayload[];
+}
+
+// Aircon Installation
+export interface AirconInstallation {
+	id: number;
+	service: number;
+	notes?: string;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface AirconInstallationPayload {
+	service: number;
+	notes?: string;
+}
+
+// Warranty Claim
+export type ClaimStatus =
+	| "pending"
+	| "approved"
+	| "rejected"
+	| "in_progress"
+	| "completed"
+	| "cancelled";
+export type ClaimType = "repair" | "replacement" | "parts" | "inspection";
+
+export interface WarrantyClaim {
+	id: number;
+	unit: AirconUnits;
+	service?: number | null;
+	claim_type: ClaimType;
+	status: ClaimStatus;
+	issue_description: string;
+	customer_notes?: string;
+	technician_assessment?: string;
+	is_valid_claim: boolean;
+	reviewed_by?: User | null;
+	reviewed_at?: string;
+	rejection_reason?: string;
+	estimated_cost: string;
+	actual_cost: string;
+	claim_date: string;
+	completed_at?: string;
+	created_at: string;
+	updated_at: string;
+	is_pending?: boolean;
+	is_approved?: boolean;
+	warranty_days_remaining_at_claim?: number;
+}
+
+export interface WarrantyClaimPayload {
+	unit: number;
+	service?: number | null;
+	claim_type: ClaimType;
+	status?: ClaimStatus;
+	issue_description: string;
+	customer_notes?: string;
+	technician_assessment?: string;
+	is_valid_claim?: boolean;
+	reviewed_by?: number | null;
+	rejection_reason?: string;
+	estimated_cost?: number;
+	actual_cost?: number;
+	claim_date?: string;
+	completed_at?: string;
+}

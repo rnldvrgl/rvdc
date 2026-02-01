@@ -114,6 +114,7 @@ export type Employee = BaseEntity & {
 	birthday?: string;
 	first_name: string;
 	last_name: string;
+	full_name: string;
 	contact_number: string;
 	address: string;
 	province: string;

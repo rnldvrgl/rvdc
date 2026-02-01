@@ -14,9 +14,12 @@ import {
 	Plane,
 	Repeat,
 	Settings,
+	ShieldCheck,
 	Store,
 	Users,
 	Warehouse,
+	Wind,
+	Wrench,
 } from "lucide-react";
 
 export const baseNavigation: Record<string, NavigationEntry> = {
@@ -163,42 +166,42 @@ export const baseNavigation: Record<string, NavigationEntry> = {
 			},
 		],
 	},
-	// services: {
-	//   name: 'Services',
-	//   href: '/services',
-	//   icon: Wrench,
-	//   permission: 'view_services',
-	// },
-	// aircons: {
-	//   name: 'Airconditioning',
-	//   icon: Wind,
-	//   children: [
-	//     {
-	//       name: 'Brands',
-	//       href: '/aircons/brands',
-	//       icon: Layers,
-	//       permission: 'view_aircon_brands',
-	//     },
-	//     {
-	//       name: 'Models',
-	//       href: '/aircons/models',
-	//       icon: Boxes,
-	//       permission: 'view_aircon_models',
-	//     },
-	//     {
-	//       name: 'Units',
-	//       href: '/aircons/units',
-	//       icon: Package,
-	//       permission: 'view_aircon_units',
-	//     },
-	//     {
-	//       name: 'Installations',
-	//       href: '/aircons/installations',
-	//       icon: Wrench,
-	//       permission: 'view_aircon_installations',
-	//     },
-	//   ],
-	// },
+	services: {
+		name: "Services",
+		href: "/services",
+		icon: Wrench,
+		permission: "view_services",
+	},
+	aircons: {
+		name: "Airconditioning",
+		icon: Wind,
+		children: [
+			{
+				name: "Brands",
+				href: "/aircons/brands",
+				icon: Layers,
+				permission: "view_aircon_brands",
+			},
+			{
+				name: "Models",
+				href: "/aircons/models",
+				icon: Boxes,
+				permission: "view_aircon_models",
+			},
+			{
+				name: "Units",
+				href: "/aircons/units",
+				icon: Package,
+				permission: "view_aircon_units",
+			},
+			{
+				name: "Warranty Claims",
+				href: "/warranty-claims",
+				icon: ShieldCheck,
+				permission: "view_warranty_claims",
+			},
+		],
+	},
 	inventory: {
 		name: "Inventory",
 		icon: Boxes,
@@ -272,9 +275,11 @@ export const orderedNavigation: NavigationEntry[] = [
 	baseNavigation.dashboard,
 	// Core Business Operations
 	baseNavigation.sales,
+	baseNavigation.services,
 	baseNavigation.receivables,
 	baseNavigation.expenses,
 	baseNavigation.inventory,
+	baseNavigation.aircons,
 	// Customer & People Management
 	baseNavigation.clients,
 	baseNavigation.employees,
