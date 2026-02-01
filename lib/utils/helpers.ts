@@ -248,14 +248,6 @@ export function formatHours(value: number | string | undefined): string {
 	return `${safe.toFixed(2)} h`;
 }
 
-export function formatDateDisplay(input?: string | Date): string {
-	if (!input) return "-";
-	const dt = input instanceof Date ? input : new Date(input);
-	// Fallback if invalid date
-	if (isNaN(dt.getTime())) return "-";
-	return dt.toLocaleDateString();
-}
-
 export function getWeekEnd(weekStart?: string): string | undefined {
 	if (!weekStart) return undefined;
 

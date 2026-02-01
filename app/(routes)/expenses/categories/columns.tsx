@@ -1,13 +1,10 @@
-import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
-import { Badge } from '@/components/ui/badge'
-import { ExpenseCategory } from '@/lib/constants/interface'
-import {
-  formatCurrency,
-  safeCell,
-} from '@/lib/utils/helpers'
-import { formatDate } from '@/lib/utils/helpers/date'
-import { ColumnDef, Row } from '@tanstack/react-table'
-import { Edit, Eye, Trash2, CheckCircle, XCircle } from 'lucide-react'
+import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
+import { Badge } from "@/components/ui/badge"
+import { ExpenseCategory } from "@/lib/constants/interface"
+import { formatCurrency, safeCell } from "@/lib/utils/helpers"
+import { formatDate } from "@/lib/utils/helpers/date"
+import { ColumnDef, Row } from "@tanstack/react-table"
+import { CheckCircle, Edit, Eye, Trash2, XCircle } from "lucide-react"
 
 interface GetExpenseCategoryColumnsProps {
   onView?: (category: ExpenseCategory) => void
@@ -24,17 +21,15 @@ export function getExpenseCategoryColumns({
 }: GetExpenseCategoryColumnsProps): ColumnDef<ExpenseCategory>[] {
   return [
     {
-      accessorKey: 'name',
-      header: 'Category Name',
+      accessorKey: "name",
+      header: "Category Name",
       cell: ({ row }: { row: Row<ExpenseCategory> }) => {
         const category = row.original
         const isSubcategory = !!category.parent
         return (
           <div className="flex items-center gap-2">
-            {isSubcategory && (
-              <span className="text-muted-foreground">└─</span>
-            )}
-            <span className={isSubcategory ? 'ml-4' : 'font-medium'}>
+            {isSubcategory && <span className="text-muted-foreground">└─</span>}
+            <span className={isSubcategory ? "ml-4" : "font-medium"}>
               {safeCell(category.name)}
             </span>
           </div>
@@ -42,8 +37,8 @@ export function getExpenseCategoryColumns({
       },
     },
     {
-      accessorKey: 'parent_data.name',
-      header: 'Parent Category',
+      accessorKey: "parent_data.name",
+      header: "Parent Category",
       cell: ({ row }: { row: Row<ExpenseCategory> }) => {
         const parentName = row.original.parent_data?.name
         return parentName ? (
@@ -54,8 +49,8 @@ export function getExpenseCategoryColumns({
       },
     },
     {
-      accessorKey: 'description',
-      header: 'Description',
+      accessorKey: "description",
+      header: "Description",
       cell: ({ getValue }) => {
         const description = getValue() as string
         return description ? (
@@ -68,8 +63,8 @@ export function getExpenseCategoryColumns({
       },
     },
     {
-      accessorKey: 'monthly_budget',
-      header: 'Monthly Budget',
+      accessorKey: "monthly_budget",
+      header: "Monthly Budget",
       cell: ({ getValue }) => {
         const budget = getValue() as number
         return budget > 0 ? (
@@ -80,33 +75,30 @@ export function getExpenseCategoryColumns({
       },
     },
     {
-      accessorKey: 'is_active',
-      header: 'Status',
+      accessorKey: "is_active",
+      header: "Status",
       cell: ({ getValue }) => {
         const isActive = getValue() as boolean
         return (
-          <Badge variant={isActive ? 'default' : 'secondary'}>
-            {isActive ? 'Active' : 'Inactive'}
+          <Badge variant={isActive ? "default" : "secondary"}>
+            {isActive ? "Active" : "Inactive"}
           </Badge>
         )
       },
     },
     {
-      accessorKey: 'created_at',
-      header: 'Created',
+      accessorKey: "created_at",
+      header: "Created",
       cell: ({ getValue }) =>
         safeCell(
           getValue()
-            ? formatDate(
-                new Date(getValue() as string),
-                'MMM dd, yyyy',
-              )
+            ? formatDate(new Date(getValue() as string), "MMM dd, yyyy")
             : null,
         ),
     },
     {
-      accessorKey: 'action',
-      header: 'Action',
+      accessorKey: "action",
+      header: "Action",
       cell: ({ row }) => {
         const category = row.original
         const isActive = category.is_active
@@ -117,21 +109,21 @@ export function getExpenseCategoryColumns({
               ...(onView
                 ? [
                     {
-                      label: 'View Details',
+                      label: "View Details",
                       icon: <Eye className="size-4" />,
                       onClick: () => onView(category),
                     },
                   ]
                 : []),
               {
-                label: 'Edit',
-                icon: <Edit className="size-4" />,
+                label: "Edit",
+                icon: Edit,
                 onClick: () => onEdit(category),
               },
               ...(onToggleActive
                 ? [
                     {
-                      label: isActive ? 'Deactivate' : 'Activate',
+                      label: isActive ? "Deactivate" : "Activate",
                       icon: isActive ? (
                         <XCircle className="size-4" />
                       ) : (
@@ -142,8 +134,8 @@ export function getExpenseCategoryColumns({
                   ]
                 : []),
               {
-                label: 'Delete',
-                icon: <Trash2 className="size-4 text-destructive" />,
+                label: "Delete",
+                icon: Trash2,
                 onClick: () => onDelete(category),
                 destructive: true,
                 confirmText: `Delete category "${category.name}"? This action cannot be undone.`,

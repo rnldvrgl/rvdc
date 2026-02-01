@@ -215,12 +215,12 @@ export function getOffenseColumns({
                 ? [
                     {
                       label: "Edit",
-                      icon: <Edit className="size-4" />,
+                      icon: Edit,
                       onClick: () => onEdit(offense),
                     },
                     {
                       label: "Delete",
-                      icon: <Trash2 className="size-4 text-destructive" />,
+                      icon: Trash2,
                       onClick: () => onDelete(offense.id),
                       destructive: true,
                       confirmText: `Delete offense for ${offense.employee_name}?`,

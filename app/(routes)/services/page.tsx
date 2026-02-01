@@ -1,245 +1,230 @@
-"use client";
+"use client"
 
-import { getServiceColumns } from "@/app/(routes)/services/columns";
-import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog";
-import EntitySheet from "@/components/custom/shared/EntitySheet";
-import PageHeader from "@/components/custom/shared/PageHeader";
-import { Wrapper } from "@/components/custom/shared/Wrapper";
-import { DataTable } from "@/components/custom/table/DataTable";
-import ServiceForm from "@/components/forms/ServiceForm";
-import { Button } from "@/components/ui/button";
-import { Service } from "@/lib/constants/interface";
-import { PaginatedResult } from "@/lib/constants/types";
-import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
-import { useEntitySheet } from "@/lib/hooks/useEntitySheet";
-import useSearchParameters from "@/lib/hooks/useSearchParameters";
-import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations";
+import { getServiceColumns } from "@/app/(routes)/services/columns"
+import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
+import EntitySheet from "@/components/custom/shared/EntitySheet"
+import PageHeader from "@/components/custom/shared/PageHeader"
+import { Wrapper } from "@/components/custom/shared/Wrapper"
+import { DataTable } from "@/components/custom/table/DataTable"
+import ServiceForm from "@/components/forms/ServiceForm"
+import ServiceDetail from "@/components/services/ServiceDetail"
+import { Button } from "@/components/ui/button"
+import { Service } from "@/lib/constants/interface"
+import { PaginatedResult } from "@/lib/constants/types"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
+import useSearchParameters from "@/lib/hooks/useSearchParameters"
+import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import {
-	useServiceFilters,
-	useServices,
-} from "@/lib/queries/services/useServices";
-import { Plus, Wrench } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+  useService,
+  useServiceFilters,
+  useServices,
+} from "@/lib/queries/services/useServices"
+import { Plus, Wrench } from "lucide-react"
+import { useState } from "react"
+import { toast } from "sonner"
 
 export default function ServicesPage() {
-	const { role } = useCurrentUser();
-	const canAddService = role === "admin" || role === "manager";
-	const [detailsOpen, setDetailsOpen] = useState(false);
-	const [selectedService, setSelectedService] = useState<Service | null>(
-		null,
-	);
-	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-	const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
-	const [serviceToDelete, setServiceToDelete] = useState<Service | null>(
-		null,
-	);
-	const [serviceToComplete, setServiceToComplete] = useState<Service | null>(
-		null,
-	);
+  const { role } = useCurrentUser()
+  const canAddService = role === "admin" || role === "manager"
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false)
+  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null)
+  const [serviceToComplete, setServiceToComplete] = useState<Service | null>(
+    null,
+  )
 
-	// Search params
-	const { filter, ordering, search, page, limit } = useSearchParameters();
+  // Search params
+  const { filter, ordering, search, page, limit } = useSearchParameters()
 
-	// Data fetching
-	const { data: services, isLoading } = useServices({
-		page,
-		limit,
-		search,
-		filter,
-		ordering,
-	});
+  // Data fetching
+  const {
+    data: services,
+    isLoading,
+    refetch,
+  } = useServices({
+    page,
+    limit,
+    search,
+    filter,
+    ordering,
+  })
 
-	const { filters: filterDefs, orderingOptions } = useServiceFilters();
+  const { filters: filterDefs, orderingOptions } = useServiceFilters()
 
-	// Mutations
-	const { deleteService, completeService } = useServiceMutations();
+  // Mutations
+  const { deleteService, completeService } = useServiceMutations()
 
-	// Entity sheet for create/edit
-	const { entityState, openEntity, closeEntity } = useEntitySheet<Service>();
+  // Entity sheet for create/edit
+  const { entityState, openEntity, closeEntity } = useEntitySheet<Service>()
 
-	const handleView = (service: Service) => {
-		setSelectedService(service);
-		setDetailsOpen(true);
-	};
+  const handleView = (service: Service) => {
+    setSelectedService(service)
+    setDetailsOpen(true)
+  }
 
-	const handleEdit = (service: Service) => {
-		openEntity(service);
-	};
+  // Fetch fresh service data when viewing details
+  const { data: detailService, refetch: refetchService } = useService(
+    selectedService?.id,
+  )
 
-	const handleDelete = (service: Service) => {
-		setServiceToDelete(service);
-		setDeleteDialogOpen(true);
-	};
+  const handleEdit = (service: Service) => {
+    openEntity(service)
+  }
 
-	const confirmDelete = () => {
-		if (serviceToDelete) {
-			deleteService.mutate(serviceToDelete.id, {
-				onSuccess: () => {
-					setDeleteDialogOpen(false);
-					setServiceToDelete(null);
-				},
-			});
-		}
-	};
+  const handleDelete = (service: Service) => {
+    setServiceToDelete(service)
+    setDeleteDialogOpen(true)
+  }
 
-	const handleComplete = (service: Service) => {
-		setServiceToComplete(service);
-		setCompleteDialogOpen(true);
-	};
+  const confirmDelete = () => {
+    if (serviceToDelete) {
+      deleteService.mutate(serviceToDelete.id, {
+        onSuccess: () => {
+          setDeleteDialogOpen(false)
+          setServiceToDelete(null)
+        },
+      })
+    }
+  }
 
-	const confirmComplete = () => {
-		if (serviceToComplete) {
-			completeService.mutate(serviceToComplete.id, {
-				onSuccess: () => {
-					toast.success("Service completed successfully!");
-					setCompleteDialogOpen(false);
-					setServiceToComplete(null);
-				},
-			});
-		}
-	};
+  const handleComplete = (service: Service) => {
+    setServiceToComplete(service)
+    setCompleteDialogOpen(true)
+  }
 
-	const columns = getServiceColumns({
-		role,
-		onView: handleView,
-		onEdit: handleEdit,
-		onDelete: handleDelete,
-		onComplete: handleComplete,
-	});
+  const confirmComplete = () => {
+    if (serviceToComplete) {
+      completeService.mutate(serviceToComplete.id, {
+        onSuccess: () => {
+          toast.success("Service completed successfully!")
+          setCompleteDialogOpen(false)
+          setServiceToComplete(null)
+        },
+      })
+    }
+  }
 
-	return (
-		<Wrapper>
-			<PageHeader
-				icon={Wrench}
-				title="Services"
-				description="Manage repair, installation, and maintenance services"
-				actionButton={
-					canAddService && (
-						<Button onClick={() => openEntity()} size="sm">
-							<Plus className="mr-2 h-4 w-4" />
-							New Service
-						</Button>
-					)
-				}
-			/>
+  const columns = getServiceColumns({
+    role,
+    onView: handleView,
+    onEdit: handleEdit,
+    onDelete: handleDelete,
+    onComplete: handleComplete,
+  })
 
-			<DataTable<Service, unknown>
-				columns={columns}
-				data={
-					services ??
-					({
-						count: 0,
-						next: null,
-						previous: null,
-						results: [],
-					} as PaginatedResult<Service>)
-				}
-				isLoading={isLoading}
-				filters={filterDefs ?? []}
-				orderingOptions={orderingOptions ?? []}
-			/>
+  return (
+    <Wrapper>
+      <PageHeader
+        icon={Wrench}
+        title="Services"
+        description="Manage repair, installation, and maintenance services"
+        actionButton={
+          canAddService && (
+            <Button
+              onClick={() => openEntity()}
+              size="sm"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              New Service
+            </Button>
+          )
+        }
+        onRefresh={refetch}
+      />
 
-			{/* Create/Edit Sheet */}
-			<EntitySheet
-				className="sm:min-w-2xl md:minx-w-3xl xl:min-w-3xl"
-				open={entityState.open}
-				onClose={closeEntity}
-				title={
-					entityState.entity ? "Edit Service" : "Create New Service"
-				}
-				description={
-					entityState.entity
-						? "Update service information"
-						: "Create a new service request"
-				}
-				entity={entityState.entity}
-				renderForm={({ onClose, entity }) => (
-					<ServiceForm
-						initialData={entity as Service}
-						onClose={onClose}
-					/>
-				)}
-			/>
+      <DataTable<Service, unknown>
+        columns={columns}
+        data={
+          services ??
+          ({
+            count: 0,
+            next: null,
+            previous: null,
+            results: [],
+          } as PaginatedResult<Service>)
+        }
+        isLoading={isLoading}
+        filters={filterDefs ?? []}
+        orderingOptions={orderingOptions ?? []}
+      />
 
-			{/* Details Sheet - TODO: Implement ServiceDetails component */}
-			{detailsOpen && selectedService && (
-				<EntitySheet
-					open={detailsOpen}
-					onClose={() => setDetailsOpen(false)}
-					title={`Service #${selectedService.id}`}
-					description="Service details"
-					entity={selectedService}
-					renderForm={() => (
-						<div className="space-y-4">
-							<div>
-								<h3 className="font-semibold">Client</h3>
-								<p className="text-sm text-muted-foreground">
-									{selectedService.client?.full_name}
-								</p>
-							</div>
-							<div>
-								<h3 className="font-semibold">Type</h3>
-								<p className="text-sm text-muted-foreground">
-									{selectedService.service_type}
-								</p>
-							</div>
-							<div>
-								<h3 className="font-semibold">Status</h3>
-								<p className="text-sm text-muted-foreground">
-									{selectedService.status}
-								</p>
-							</div>
-							<div>
-								<h3 className="font-semibold">Description</h3>
-								<p className="text-sm text-muted-foreground">
-									{selectedService.description || "N/A"}
-								</p>
-							</div>
-							<div>
-								<h3 className="font-semibold">Remarks</h3>
-								<p className="text-sm text-muted-foreground">
-									{selectedService.remarks || "N/A"}
-								</p>
-							</div>
-							<Button
-								onClick={() => handleEdit(selectedService)}
-								className="w-full"
-							>
-								Edit Service
-							</Button>
-						</div>
-					)}
-				/>
-			)}
+      {/* Create/Edit Sheet */}
+      <EntitySheet
+        className="sm:min-w-2xl md:minx-w-3xl xl:min-w-3xl"
+        open={entityState.open}
+        onClose={closeEntity}
+        title={entityState.entity ? "Edit Service" : "Create New Service"}
+        description={
+          entityState.entity
+            ? "Update service information"
+            : "Create a new service request"
+        }
+        entity={entityState.entity}
+        renderForm={({ onClose, entity }) => (
+          <ServiceForm
+            initialData={entity as Service}
+            onClose={onClose}
+          />
+        )}
+      />
 
-			{/* Delete Confirmation Dialog */}
-			<ConfirmDialog
-				open={deleteDialogOpen}
-				onCancel={() => setDeleteDialogOpen(false)}
-				title="Delete Service"
-				description={
-					serviceToDelete
-						? `Are you sure you want to delete service #${serviceToDelete.id}? This action cannot be undone.`
-						: ""
-				}
-				onConfirm={confirmDelete}
-				confirmText="Delete"
-			/>
+      {/* Details Sheet */}
+      {detailsOpen && selectedService && (
+        <EntitySheet
+          className="sm:min-w-2xl md:minx-w-3xl xl:min-w-3xl"
+          open={detailsOpen}
+          onClose={() => {
+            setDetailsOpen(false)
+            setSelectedService(null)
+          }}
+          title={`Service #${String(selectedService.id).padStart(4, "0")}`}
+          description={`Created ${new Date(selectedService.created_at).toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`}
+          entity={selectedService}
+          renderForm={() => (
+            <ServiceDetail
+              service={detailService || selectedService}
+              onEdit={() => {
+                setDetailsOpen(false)
+                handleEdit(detailService || selectedService)
+              }}
+              onRefresh={() => {
+                refetchService()
+              }}
+            />
+          )}
+        />
+      )}
 
-			{/* Complete Confirmation Dialog */}
-			<ConfirmDialog
-				open={completeDialogOpen}
-				onCancel={() => setCompleteDialogOpen(false)}
-				title="Complete Service"
-				description={
-					serviceToComplete
-						? `Complete service #${serviceToComplete.id}? This will finalize stock consumption and create transactions.`
-						: ""
-				}
-				onConfirm={confirmComplete}
-				confirmText="Complete"
-			/>
-		</Wrapper>
-	);
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onCancel={() => setDeleteDialogOpen(false)}
+        title="Delete Service"
+        description={
+          serviceToDelete
+            ? `Are you sure you want to delete service #${serviceToDelete.id}? This action cannot be undone.`
+            : ""
+        }
+        onConfirm={confirmDelete}
+        confirmText="Delete"
+      />
+
+      {/* Complete Confirmation Dialog */}
+      <ConfirmDialog
+        open={completeDialogOpen}
+        onCancel={() => setCompleteDialogOpen(false)}
+        title="Complete Service"
+        description={
+          serviceToComplete
+            ? `Complete service #${serviceToComplete.id}? This will finalize stock consumption and create transactions.`
+            : ""
+        }
+        onConfirm={confirmComplete}
+        confirmText="Complete"
+      />
+    </Wrapper>
+  )
 }

@@ -256,7 +256,7 @@ export default function ServiceForm({
 			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
 				{/* Info Alert for New Services */}
 				{!initialData && (
-					<Alert>
+					<Alert variant="info">
 						<Info className="h-4 w-4" />
 						<AlertDescription>
 							<strong>Note:</strong> After creating this service,
@@ -278,7 +278,7 @@ export default function ServiceForm({
 							<ComboBox
 								options={clients.map((c) => ({
 									value: c.id,
-									label: c.full_name,
+									label: `${c.full_name} (${c.contact_number})`,
 								}))}
 								value={field.value ?? null}
 								onChange={field.onChange}

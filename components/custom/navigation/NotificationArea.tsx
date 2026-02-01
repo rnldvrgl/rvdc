@@ -208,7 +208,7 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
 													{
 														label: "Delete",
 														icon: (
-															<Trash2 className="size-4 text-destructive" />
+															Trash2
 														),
 														destructive: true,
 														onClick: () =>

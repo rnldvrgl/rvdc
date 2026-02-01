@@ -1,15 +1,15 @@
-import { withTooltipHeader } from '@/components/custom/table/components/ColumnHeaderWithTooltip'
-import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
-import { Badge } from '@/components/ui/badge'
-import { ChequeCollection, GetColumnsProps } from '@/lib/constants/interface'
+import { withTooltipHeader } from "@/components/custom/table/components/ColumnHeaderWithTooltip"
+import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
+import { Badge } from "@/components/ui/badge"
+import { ChequeCollection, GetColumnsProps } from "@/lib/constants/interface"
 import {
   formatCurrency,
   getHashedStallBadgeClass,
   safeCell,
-} from '@/lib/utils/helpers'
-import { formatDate } from '@/lib/utils/helpers/date'
-import { ColumnDef } from '@tanstack/react-table'
-import { Edit, Eye, Trash2 } from 'lucide-react'
+} from "@/lib/utils/helpers"
+import { formatDate } from "@/lib/utils/helpers/date"
+import { ColumnDef } from "@tanstack/react-table"
+import { Edit, Eye, Trash2 } from "lucide-react"
 export function getChequeCollectionColumns({
   role,
   onView,
@@ -18,49 +18,49 @@ export function getChequeCollectionColumns({
 }: GetColumnsProps<ChequeCollection>): ColumnDef<ChequeCollection>[] {
   const columns: ColumnDef<ChequeCollection>[] = [
     {
-      accessorKey: 'date_collected',
+      accessorKey: "date_collected",
       header: withTooltipHeader(
-        'Date Collected',
-        'Date when cheque was collected',
+        "Date Collected",
+        "Date when cheque was collected",
       ),
       cell: ({ getValue }) =>
         safeCell(
-          getValue() ? formatDate(getValue() as Date, 'MMM dd, yyyy') : null,
+          getValue() ? formatDate(getValue() as Date, "MMM dd, yyyy") : null,
         ),
       enableSorting: true,
     },
     {
-      accessorKey: 'client_name',
-      header: withTooltipHeader('Client', 'Name of the client'),
+      accessorKey: "client_name",
+      header: withTooltipHeader("Client", "Name of the client"),
       cell: ({ row }) => safeCell(row.original.client_name),
       enableSorting: true,
     },
     {
-      accessorKey: 'cheque_number',
-      header: withTooltipHeader('Cheque #', 'Cheque number'),
+      accessorKey: "cheque_number",
+      header: withTooltipHeader("Cheque #", "Cheque number"),
       cell: ({ getValue }) => safeCell(getValue()),
     },
     {
-      accessorKey: 'cheque_date',
-      header: withTooltipHeader('Cheque Date', 'Date written on the cheque'),
+      accessorKey: "cheque_date",
+      header: withTooltipHeader("Cheque Date", "Date written on the cheque"),
       cell: ({ getValue }) =>
         safeCell(
-          getValue() ? formatDate(getValue() as Date, 'MMM dd, yyyy') : null,
+          getValue() ? formatDate(getValue() as Date, "MMM dd, yyyy") : null,
         ),
     },
     {
-      accessorKey: 'billing_amount',
-      header: withTooltipHeader('Billing', 'Billing Amount'),
+      accessorKey: "billing_amount",
+      header: withTooltipHeader("Billing", "Billing Amount"),
       cell: ({ getValue }) => formatCurrency(getValue() as number),
     },
     {
-      accessorKey: 'cheque_amount',
-      header: withTooltipHeader('Cheque', 'Cheque Amount'),
+      accessorKey: "cheque_amount",
+      header: withTooltipHeader("Cheque", "Cheque Amount"),
       cell: ({ getValue }) => formatCurrency(getValue() as number),
     },
     {
-      accessorKey: 'bank_name',
-      header: withTooltipHeader('Bank', 'Issuing Bank'),
+      accessorKey: "bank_name",
+      header: withTooltipHeader("Bank", "Issuing Bank"),
       cell: ({ row }) => {
         const bankName = safeCell(row.original.bank_name)
         return (
@@ -71,39 +71,39 @@ export function getChequeCollectionColumns({
       },
     },
     {
-      accessorKey: 'status',
-      header: withTooltipHeader('Status', 'Current status'),
+      accessorKey: "status",
+      header: withTooltipHeader("Status", "Current status"),
       cell: ({ getValue }) => {
         const value = getValue() as string
-        let variant: 'success' | 'warning' | 'destructive' | 'default' =
-          'default'
-        if (value === 'deposited' || value === 'encashed') variant = 'success'
-        else if (value === 'pending') variant = 'warning'
-        else if (['bounced', 'returned', 'cancelled'].includes(value))
-          variant = 'destructive'
+        let variant: "success" | "warning" | "destructive" | "default" =
+          "default"
+        if (value === "deposited" || value === "encashed") variant = "success"
+        else if (value === "pending") variant = "warning"
+        else if (["bounced", "returned", "cancelled"].includes(value))
+          variant = "destructive"
         return <Badge variant={variant}>{value}</Badge>
       },
     },
     {
-      id: 'action',
-      header: 'Actions',
+      id: "action",
+      header: "Actions",
       cell: ({ row }) => {
         const actions = [
           {
-            label: 'View',
+            label: "View",
             icon: <Eye className="size-4" />,
             onClick: () => onView?.(row.original),
           },
           {
-            label: 'Edit',
-            icon: <Edit className="size-4" />,
+            label: "Edit",
+            icon: Edit,
             onClick: () => onEdit?.(row.original),
           },
-          ...(role === 'admin'
+          ...(role === "admin"
             ? [
                 {
-                  label: 'Delete',
-                  icon: <Trash2 className="size-4 text-destructive" />,
+                  label: "Delete",
+                  icon: Trash2,
                   onClick: () => onDelete?.(row.original),
                   destructive: true,
                   confirmText: `Delete cheque ${row.original.cheque_number}?`,
