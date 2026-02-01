@@ -90,8 +90,23 @@ export function getServiceColumns({
 			header: "Type",
 			cell: ({ getValue }) => {
 				const value = getValue() as string;
+				const typeVariants: Record<
+					string,
+					| "default"
+					| "secondary"
+					| "outline"
+					| "destructive"
+					| "success"
+					| "warning"
+				> = {
+					repair: "warning",
+					inspection: "default",
+					cleaning: "success",
+					motor_rewind: "destructive",
+					installation: "default",
+				};
 				return (
-					<Badge variant="outline">
+					<Badge variant={typeVariants[value] || "outline"}>
 						{serviceTypeLabels[value] || safeCell(value)}
 					</Badge>
 				);
@@ -102,8 +117,21 @@ export function getServiceColumns({
 			header: "Mode",
 			cell: ({ getValue }) => {
 				const value = getValue() as string;
+				const modeVariants: Record<
+					string,
+					| "default"
+					| "secondary"
+					| "outline"
+					| "destructive"
+					| "success"
+					| "warning"
+				> = {
+					home_service: "default",
+					carry_in: "secondary",
+					pull_out: "outline",
+				};
 				return (
-					<Badge variant="secondary">
+					<Badge variant={modeVariants[value] || "secondary"}>
 						{serviceModeLabels[value] || safeCell(value)}
 					</Badge>
 				);

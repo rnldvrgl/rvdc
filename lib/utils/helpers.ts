@@ -161,6 +161,7 @@ export function getBadgeVariant(
 	source = source.toLocaleLowerCase();
 	const variants: Record<string, badgeVariants> = {
 		paid: "success",
+		pending: "secondary",
 		high_stock: "success",
 		manual: "secondary",
 		picked_up: "default",
@@ -172,6 +173,15 @@ export function getBadgeVariant(
 		unpaid: "destructive",
 		inverter: "default",
 		"non-inverter": "destructive",
+		// Service statuses
+		in_progress: "default",
+		completed: "success",
+		cancelled: "destructive",
+		// Appliance statuses
+		diagnosed: "default",
+		repaired: "success",
+		tested: "success",
+		ready: "success",
 	};
 
 	return variants[source] ?? "outline";

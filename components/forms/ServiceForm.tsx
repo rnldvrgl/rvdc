@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
 	Service,
 	ServicePayload,
@@ -27,7 +28,7 @@ import {
 	useTechnicianChoices,
 } from "@/lib/queries/useChoices";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Save } from "lucide-react";
+import { Save, Info } from "lucide-react";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
@@ -253,6 +254,20 @@ export default function ServiceForm({
 	return (
 		<Form {...form}>
 			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+				{/* Info Alert for New Services */}
+				{!initialData && (
+					<Alert>
+						<Info className="h-4 w-4" />
+						<AlertDescription>
+							<strong>Note:</strong> After creating this service,
+							you&apos;ll need to add appliances and items to
+							generate sales when completing the service. You can
+							do this by editing the service or viewing its
+							details.
+						</AlertDescription>
+					</Alert>
+				)}
+
 				{/* Client */}
 				<FormField
 					name="client"
