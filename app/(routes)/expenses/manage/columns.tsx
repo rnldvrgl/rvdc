@@ -149,7 +149,7 @@ export function getExpenseColumns({
             items={[
               {
                 label: "View Details",
-                icon: <Eye className="size-4" />,
+                icon: Eye,
                 onClick: () => onView?.(expense),
               },
               ...(row.original.source === "manual" || !row.original.source

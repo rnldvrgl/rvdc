@@ -110,7 +110,7 @@ export function getExpenseCategoryColumns({
                 ? [
                     {
                       label: "View Details",
-                      icon: <Eye className="size-4" />,
+                      icon: Eye,
                       onClick: () => onView(category),
                     },
                   ]
@@ -124,11 +124,7 @@ export function getExpenseCategoryColumns({
                 ? [
                     {
                       label: isActive ? "Deactivate" : "Activate",
-                      icon: isActive ? (
-                        <XCircle className="size-4" />
-                      ) : (
-                        <CheckCircle className="size-4" />
-                      ),
+                      icon: isActive ? XCircle : CheckCircle,
                       onClick: () => onToggleActive(category),
                     },
                   ]

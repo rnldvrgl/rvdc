@@ -220,49 +220,6 @@ export interface StockRoomStockPayload {
 }
 
 // ---------------------
-// Stock Transfer
-// ---------------------
-export interface StockTransferItem {
-  id: number
-  transfer: number
-  item: Item
-  quantity: number
-}
-
-export interface StockTransfer {
-  id: number
-  from_stall: Stall | null
-  to_stall: Stall
-  transferred_by: User | null
-  technician: User | null
-  transfer_date: string
-  is_finalized: boolean
-  finalized_at: string | null
-  items: StockTransferItem[]
-  is_paid: boolean
-  paid_at: string | null
-  total_price: string | number
-  used_for: string
-}
-
-/**
- * This payload is for creating a transfer.
- * You can either transfer:
- * - from stock room stock (via from_stock_room_stock)
- * - or from another stall (via from_stall)
- */
-export interface StockTransferPayload {
-  from_stall: number | undefined
-  to_stall: number
-  technician: number
-  used_for: string
-  items: {
-    item: number
-    quantity: number
-  }[]
-}
-
-// ---------------------
 // Navigation
 // ---------------------
 export interface NavigationItemBase {
@@ -1010,7 +967,7 @@ export interface Schedule {
   id: number
   client: Client
   service?: number
-  technicians?: CustomUser[]
+  technicians?: User[]
   schedule_type: ScheduleType
   scheduled_date: string
   scheduled_time: string

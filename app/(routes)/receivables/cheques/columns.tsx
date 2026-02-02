@@ -91,7 +91,7 @@ export function getChequeCollectionColumns({
         const actions = [
           {
             label: "View",
-            icon: <Eye className="size-4" />,
+            icon: Eye,
             onClick: () => onView?.(row.original),
           },
           {

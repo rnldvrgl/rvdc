@@ -80,11 +80,7 @@ export function getClientColumns({
                 label: is_blocklisted
                   ? "Remove from blocklist"
                   : "Add to blocklist",
-                icon: is_blocklisted ? (
-                  <ShieldCheck className="size-4 text-emerald-300" />
-                ) : (
-                  <Ban className="size-4 text-destructive" />
-                ),
+                icon: is_blocklisted ? ShieldCheck : Ban,
                 onClick: () => onCustomAction?.(client),
               },
               {

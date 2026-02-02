@@ -83,7 +83,7 @@ export function getEmployeeColumns({
                 ? [
                     {
                       label: "View",
-                      icon: <Eye className="size-4" />,
+                      icon: Eye,
                       onClick: () => onView(employee),
                     },
                   ]

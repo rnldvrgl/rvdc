@@ -184,7 +184,7 @@ export function getPayrollColumns({
             items={[
               {
                 label: "View Details",
-                icon: <Eye className="size-4" />,
+                icon: Eye,
                 onClick: () => onView(payroll),
               },
               ...(isAdmin
