@@ -1,21 +1,17 @@
-'use client'
+"use client"
 
-import NavList from '@/components/custom/navigation/NavList'
-import NotificationArea from '@/components/custom/navigation/NotificationArea'
-import { UserProfile } from '@/components/custom/navigation/UserProfile'
-import { Button } from '@/components/ui/button'
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet'
-import { Skeleton } from '@/components/ui/skeleton'
-import { User } from '@/lib/constants/interface'
-import { RemixiconComponentType } from '@remixicon/react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { LucideIcon, Menu } from 'lucide-react'
-import { useState } from 'react'
+import NavList from "@/components/custom/navigation/NavList"
+import { UserProfile } from "@/components/custom/navigation/UserProfile"
+import { ModeToggle } from "@/components/custom/theme/ModeToggle"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { User } from "@/lib/constants/interface"
+import { useAuthentications } from "@/lib/mutations/useAuthentication"
+import { getToken } from "@/lib/utils/tokens"
+import { RemixiconComponentType } from "@remixicon/react"
+import { AnimatePresence, motion } from "framer-motion"
+import { LogOutIcon, LucideIcon, Menu, X } from "lucide-react"
+import { useState } from "react"
 
 type SidebarItem = {
   name: string
@@ -41,10 +37,13 @@ export default function SidebarNav({
   onAction?: (action: string) => void
   user: User | null
 }) {
-  const [sheetOpen, setSheetOpen] = useState(false)
+  const refresh = getToken("refresh")
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { useLogout } = useAuthentications()
+  const logout = useLogout()
 
   const renderUserHeader = () => (
-    <div className="flex items-center justify-between rounded-xl bg-muted p-4">
+    <div className="flex items-center justify-between rounded-lg bg-primary/10 dark:bg-muted/50 p-3 border border-border/50">
       <AnimatePresence>
         {user ? (
           <motion.div
@@ -55,62 +54,75 @@ export default function SidebarNav({
             transition={{ duration: 0.4 }}
             className="flex items-center gap-3"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold text-sm">
               {user?.first_name?.[0]?.toUpperCase()}
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Welcome back</p>
-              <p className="text-base font-semibold text-foreground">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground">Welcome back</p>
+              <p className="text-sm font-semibold text-foreground truncate">
                 {user?.first_name}
               </p>
             </div>
           </motion.div>
         ) : (
           <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 rounded-full" />
+            <Skeleton className="h-9 w-9 rounded-full" />
             <div className="flex flex-col space-y-1">
+              <Skeleton className="h-3 w-20" />
               <Skeleton className="h-3 w-24" />
-              <Skeleton className="h-4 w-32" />
             </div>
           </div>
         )}
       </AnimatePresence>
 
+      <ModeToggle />
       {/* Notifications dropdown */}
-      <NotificationArea align="start" />
+      {/* DISABLED */}
+      {/* <NotificationArea align="start" /> */}
     </div>
   )
 
   const renderNav = (close?: () => void) => (
     <div className="flex-1 flex flex-col space-y-6">
-      {sections.map((section, i) => (
-        <NavList
-          key={i}
-          title={section.title}
-          items={section.items}
-          activePath={activePath}
-          close={close}
-          onAction={onAction}
-        />
-      ))}
+      {sections.length > 0 &&
+        sections.map((section, i) =>
+          section.items.length > 0 ? (
+            <NavList
+              key={i}
+              title={section.title}
+              items={section.items}
+              activePath={activePath}
+              close={close}
+              onAction={onAction}
+            />
+          ) : null,
+        )}
     </div>
   )
 
   return (
     <>
       {/* Large screens */}
-      <aside className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:w-72 lg:flex-col border-r border-border p-4 h-full">
-        <div className="flex flex-col gap-y-8 w-full">
+      <aside className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:w-80 lg:flex-col border-r bg-primary/5 border-border px-6 py-10 h-full overflow-y-auto">
+        <div className="flex flex-col gap-y-8 w-full pb-4">
           {renderUserHeader()}
           {renderNav()}
         </div>
         <div className="mt-auto">
-          <UserProfile user={user} />
+          <Button
+            variant="default"
+            className="w-full"
+            onClick={() => logout.mutateAsync(refresh)}
+          >
+            <LogOutIcon />
+            Signout
+          </Button>
+          {/* <UserProfile user={user} /> */}
         </div>
       </aside>
 
-      {/* Small screens */}
-      <div className="lg:hidden flex h-16  items-center justify-between border-b border-border px-4">
+      {/* Small screens - Full screen mobile menu */}
+      <div className="lg:hidden flex h-16 items-center justify-between  bg-primary/5 border-b border-border px-6">
         <div className="flex items-center gap-3">
           <AnimatePresence>
             {user ? (
@@ -122,16 +134,16 @@ export default function SidebarNav({
                 transition={{ duration: 0.4 }}
                 className="flex items-center gap-3"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/30 text-primary font-semibold text-sm">
                   {user?.first_name?.[0]?.toUpperCase()}
                 </div>
-                <span className="font-semibold">
+                <span className="font-semibold text-sm">
                   {user?.first_name} {user?.last_name}
                 </span>
               </motion.div>
             ) : (
               <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-full" />
+                <Skeleton className="h-9 w-9 rounded-full" />
                 <Skeleton className="h-4 w-24" />
               </div>
             )}
@@ -139,33 +151,94 @@ export default function SidebarNav({
         </div>
 
         <div className="flex items-center gap-2">
-          <NotificationArea align="end" />
-          <Sheet
-            open={sheetOpen}
-            onOpenChange={setSheetOpen}
+          {/* <NotificationArea align="end" /> */}
+          <Button
+            size="icon"
+            className="rounded-lg"
+            onClick={() => setMobileMenuOpen(true)}
           >
-            <SheetTitle>
-              <SheetTrigger asChild>
-                <Button
-                  size="icon"
-                  variant="outline"
-                >
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-            </SheetTitle>
-            <SheetContent
-              side="left"
-              className="flex flex-col p-4"
-            >
-              {renderNav(() => setSheetOpen(false))}
-              <div className="mt-auto">
-                <UserProfile user={user} />
-              </div>
-            </SheetContent>
-          </Sheet>
+            <Menu className="h-5 w-5" />
+          </Button>
         </div>
       </div>
+
+      {/* Full Screen Mobile Menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="lg:hidden fixed inset-0 z-50 bg-background flex flex-col"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border shrink-0 bg-primary/5">
+              <div className="flex items-center gap-3">
+                {user && (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/30 text-primary font-semibold text-lg">
+                    {user?.first_name?.[0]?.toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-semibold">
+                    {user?.first_name} {user?.last_name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {user?.role || "User"}
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-full"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            {/* Scrollable Navigation */}
+            <div className="flex-1 overflow-y-auto">
+              <div className="py-6 px-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                  className="space-y-6"
+                >
+                  {sections.length > 0 &&
+                    sections.map((section, i) =>
+                      section.items.length > 0 ? (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 + i * 0.05, duration: 0.3 }}
+                        >
+                          <NavList
+                            title={section.title}
+                            items={section.items}
+                            activePath={activePath}
+                            close={() => setMobileMenuOpen(false)}
+                            onAction={(action) => {
+                              onAction?.(action)
+                              setMobileMenuOpen(false)
+                            }}
+                          />
+                        </motion.div>
+                      ) : null,
+                    )}
+                </motion.div>
+              </div>
+            </div>
+            {/* Footer */}
+            <div className="shrink-0 py-2 px-4 border-t border-border ">
+              <UserProfile user={user} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }

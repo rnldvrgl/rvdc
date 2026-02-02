@@ -78,7 +78,7 @@ export function Sidebar() {
   const FormComponent = entityConfig?.Form
 
   return (
-    <section className="h-full overflow-y-auto">
+    <>
       <EntitySheet
         open={open}
         onClose={closeEntity}
@@ -116,6 +116,6 @@ export function Sidebar() {
         }}
         user={user}
       />
-    </section>
+    </>
   )
 }

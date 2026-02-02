@@ -1,10 +1,5 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowRight, Shield, Snowflake, User } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
-import { toast } from "sonner"
 import { PasswordField } from "@/components/custom/inputs/PasswordInput"
 import { Spinner } from "@/components/custom/shared/Spinner"
 import { Button } from "@/components/ui/button"
@@ -21,13 +16,12 @@ import {
 import { Input } from "@/components/ui/input"
 import { loginSchema } from "@/lib/constants/schema"
 import { LoginFormValues } from "@/lib/constants/types"
-import { useDRFToastError } from "@/lib/hooks/useDRFToastError"
-import useUserProfileStore from "@/lib/store/useUserProfileStore"
-import api from "@/lib/utils/api"
-import { setToken } from "@/lib/utils/tokens"
+import { useAuthentications } from "@/lib/mutations/useAuthentication"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { ArrowRight, Shield, Snowflake, User } from "lucide-react"
+import { useForm } from "react-hook-form"
 
 export function LoginForm() {
-  const router = useRouter()
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -39,55 +33,24 @@ export function LoginForm() {
 
   const { handleSubmit, control, formState } = form
   const { isSubmitting } = formState
-  const setUserProfile = useUserProfileStore((state) => state.setUserProfile)
-  const { handleError } = useDRFToastError()
+  const { useLogin } = useAuthentications()
+  const { mutateAsync } = useLogin()
 
   const onSubmit = async (values: LoginFormValues) => {
-    try {
-      const response = await api.post("/auth/login/", values)
-
-      const { access, refresh, role } = response.data
-
-      setToken("access", access)
-      setToken("refresh", refresh)
-      setToken("remember", values.remember_me ? "true" : "false")
-
-      const cookieRes = await fetch("/api/set-cookie", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ access, refresh, role }),
-        credentials: "include",
-      })
-
-      if (!cookieRes.ok) {
-        throw new Error("Failed to set auth cookies")
-      }
-
-      setUserProfile(response.data)
-
-      await new Promise((res) => setTimeout(res, 200))
-
-      router.push("/dashboard")
-
-      toast.success(`Welcome back, ${response.data.first_name}!`)
-    } catch (err: unknown) {
-      handleError(err)
-    }
+    await mutateAsync(values)
   }
 
   return (
     <div className="w-full space-y-6">
       {/* Brand Header */}
       <div className="text-center space-y-4">
-        <div className="mx-auto w-20 h-20 bg-linear-to-br from-purple-500 via-violet-500 to-purle-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/25 relative overflow-hidden">
+        <div className="mx-auto w-20 h-20 bg-linear-to-br from-purple-700 via-violet-700 to-purple-800 dark:from-purple-500 dark:via-violet-500 dark:to-purple-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/25 relative overflow-hidden">
           <div className="absolute inset-2 bg-white/5 rounded-xl flex items-center justify-center backdrop-blur-sm">
             <Snowflake className="w-6 h-6 text-white" />
           </div>
         </div>
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold bg-linear-to-r from-purple-600 via-violet-600 to-purple-700 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-linear-to-r from-purple-700 via-violet-700 to-purple-800 dark:from-purple-500 dark:via-violet-500 dark:to-purple-600 bg-clip-text text-transparent">
             RVDC
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -174,7 +137,7 @@ export function LoginForm() {
 
               <Button
                 type="submit"
-                className="w-full bg-linear-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white font-medium py-2.5 transition-all duration-200 shadow-md hover:shadow-lg"
+                className="w-full bg-linear-to-r from-purple-700 via-violet-700 to-purple-800 dark:from-purple-500 dark:via-violet-500 dark:to-purple-600 text-white font-medium py-2.5 transition-all duration-200 shadow-md hover:shadow-lg"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
