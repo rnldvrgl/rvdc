@@ -169,11 +169,13 @@ export default function ServicesPage() {
             onClose={onClose}
           />
         )}
+        withCloseConfirmation
       />
 
       {/* Details Sheet */}
       {detailsOpen && selectedService && (
         <EntitySheet
+          withCloseConfirmation
           className="sm:min-w-2xl md:minx-w-3xl xl:min-w-3xl"
           open={detailsOpen}
           onClose={() => {
@@ -182,7 +184,7 @@ export default function ServicesPage() {
           }}
           title={`Service #${String(selectedService.id).padStart(4, "0")}`}
           description={`Created ${new Date(selectedService.created_at).toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`}
-          entity={selectedService}
+          entity={detailService}
           renderForm={() => (
             <ServiceDetail
               service={detailService || selectedService}
@@ -190,8 +192,8 @@ export default function ServicesPage() {
                 setDetailsOpen(false)
                 handleEdit(detailService || selectedService)
               }}
-              onRefresh={() => {
-                refetchService()
+              onRefresh={async () => {
+                await refetchService()
               }}
             />
           )}

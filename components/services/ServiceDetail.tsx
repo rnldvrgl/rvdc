@@ -32,6 +32,8 @@ import { useSchedulesByService } from "@/lib/queries/useSchedules"
 import { formatCurrency, getBadgeVariant } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import {
+  AlertCircle,
+  AlertTriangle,
   Calendar,
   CheckCircle,
   Clock,
@@ -46,7 +48,7 @@ import {
   Wrench,
   XIcon,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 interface ServiceDetailProps {
@@ -81,6 +83,15 @@ const paymentStatusLabels: Record<string, string> = {
   unpaid: "Unpaid",
   partial: "Partially Paid",
   paid: "Paid",
+}
+
+const applianceStatusLabels: Record<string, string> = {
+  pending: "Pending",
+  in_repair: "In Repair",
+  completed: "Completed",
+  ready_for_pickup: "Ready for Pickup",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
 }
 
 export default function ServiceDetail({
@@ -134,6 +145,32 @@ export default function ServiceDetail({
   const isCompleted = service.status === "completed"
   const isCarryIn = service.service_mode === "carry_in"
 
+  // Initialize discount form with existing values
+  useEffect(() => {
+    const discountAmount = parseFloat(service.service_discount_amount || "0")
+    const discountPercentage = parseFloat(
+      service.service_discount_percentage || "0",
+    )
+
+    if (discountPercentage > 0) {
+      setDiscountType("percentage")
+      setDiscountValue(service.service_discount_percentage || "")
+    } else if (discountAmount > 0) {
+      setDiscountType("fixed")
+      setDiscountValue(service.service_discount_amount || "")
+    } else {
+      setDiscountType("none")
+      setDiscountValue("")
+    }
+
+    setDiscountReason(service.discount_reason || "")
+  }, [
+    service.id,
+    service.service_discount_amount,
+    service.service_discount_percentage,
+    service.discount_reason,
+  ])
+
   // Calculate discount amount
   const calculateDiscount = () => {
     if (discountType === "none" || !discountValue) return 0
@@ -176,13 +213,17 @@ export default function ServiceDetail({
           )
         }
         setCompleteDialogOpen(false)
+      },
+      onSettled: () => {
         onRefresh?.()
       },
     })
   }
 
   const handleAddPayment = () => {
-    setPaymentAmount(service.balance_due || service.total_revenue || "0")
+    const balanceDue =
+      calculateActualTotalRevenue() - parseFloat(service.total_paid || "0")
+    setPaymentAmount(balanceDue > 0 ? balanceDue.toString() : "0")
     setPaymentType("cash")
     setPaymentNotes("")
     setPaymentDialogOpen(true)
@@ -200,6 +241,8 @@ export default function ServiceDetail({
         onSuccess: () => {
           setCancelDialogOpen(false)
           setCancelReason("")
+        },
+        onSettled: () => {
           onRefresh?.()
         },
       },
@@ -243,6 +286,8 @@ export default function ServiceDetail({
           setRefundDialogOpen(false)
           setRefundAmount("")
           setRefundReason("")
+        },
+        onSettled: () => {
           onRefresh?.()
         },
       },
@@ -250,14 +295,43 @@ export default function ServiceDetail({
   }
 
   const handleApplyDiscount = () => {
+    // Allow removing discount by selecting "none"
     if (discountType === "none") {
-      toast.error("Please select a discount type")
+      updateService.mutate(
+        {
+          id: service.id,
+          data: {
+            service_discount_amount: 0,
+            service_discount_percentage: 0,
+            discount_reason: "",
+          },
+        },
+        {
+          onSuccess: () => {
+            setDiscountType("none")
+            setDiscountValue("")
+            setDiscountReason("")
+          },
+          onSettled: () => {
+            onRefresh?.()
+          },
+        },
+      )
       return
     }
 
     if (!discountValue || parseFloat(discountValue) <= 0) {
       toast.error("Please enter a valid discount value")
       return
+    }
+
+    // Validate percentage discount
+    if (discountType === "percentage") {
+      const percentage = parseFloat(discountValue)
+      if (percentage > 100) {
+        toast.error("Percentage discount cannot exceed 100%")
+        return
+      }
     }
 
     updateService.mutate(
@@ -276,6 +350,9 @@ export default function ServiceDetail({
           setDiscountType("none")
           setDiscountValue("")
           setDiscountReason("")
+        },
+        onSettled: () => {
+          // Call onRefresh after query invalidation completes
           onRefresh?.()
         },
       },
@@ -303,9 +380,51 @@ export default function ServiceDetail({
           setPaymentAmount("")
           setPaymentType("cash")
           setPaymentNotes("")
+        },
+        onSettled: () => {
+          // Call onRefresh after query invalidation completes
           onRefresh?.()
         },
       },
+    )
+  }
+
+  // Helper function to calculate actual total revenue with service discount
+  const calculateActualTotalRevenue = () => {
+    const appliancesSubtotal =
+      service.appliances?.reduce((total, appliance) => {
+        const laborFee = parseFloat(
+          appliance.discounted_labor_fee || appliance.labor_fee || "0",
+        )
+        const partsCost = parseFloat(appliance.total_parts_cost || "0")
+        return total + laborFee + partsCost
+      }, 0) || 0
+
+    const discountAmount = parseFloat(service.service_discount_amount || "0")
+    const discountPercentage = parseFloat(
+      service.service_discount_percentage || "0",
+    )
+
+    let actualDiscount = discountAmount
+    if (discountPercentage > 0 && discountAmount === 0) {
+      actualDiscount = (appliancesSubtotal * discountPercentage) / 100
+    }
+
+    return appliancesSubtotal - actualDiscount
+  }
+
+  const OverPaymentWarning = () => {
+    return (
+      <Alert
+        variant="warning"
+        className="mt-3"
+      >
+        <AlertTriangle className="h-4 w-4" />
+        <AlertDescription>
+          Overpayment detected! Customer paid more than the total amount. Please
+          process a refund for the excess amount.
+        </AlertDescription>
+      </Alert>
     )
   }
 
@@ -338,7 +457,7 @@ export default function ServiceDetail({
           )}
         {service.status === "completed" && canProcessRefunds && (
           <Button
-            variant="outline"
+            variant="warning"
             size="sm"
             onClick={() => {
               setRefundDialogOpen(true)
@@ -348,6 +467,7 @@ export default function ServiceDetail({
               setRefundAmount(maxRefund.toString())
             }}
           >
+            <Info className="mr-1 h-4 w-4" />
             Process Refund
           </Button>
         )}
@@ -583,6 +703,7 @@ export default function ServiceDetail({
                       : 0
                     const hasPartsDiscount = partsOriginalCost > partsCost
 
+                    console.log(partsCost)
                     const applianceTotal = discountedLaborFee + partsCost
 
                     return (
@@ -605,7 +726,8 @@ export default function ServiceDetail({
                             )}
                           </div>
                           <Badge variant={getBadgeVariant(appliance.status)}>
-                            {appliance.status}
+                            {applianceStatusLabels[appliance.status] ||
+                              appliance.status}
                           </Badge>
                         </div>
 
@@ -762,27 +884,21 @@ export default function ServiceDetail({
                       <p className="text-muted-foreground">Original Amount</p>
                       <p className="line-through">
                         {(() => {
-                          const totalRevenue = parseFloat(
-                            service.total_revenue || "0",
-                          )
-                          const discountAmount = parseFloat(
-                            service.service_discount_amount || "0",
-                          )
-                          const discountPercentage = parseFloat(
-                            service.service_discount_percentage || "0",
-                          )
+                          // Calculate subtotal from appliances (before service discount)
+                          const appliancesSubtotal =
+                            service.appliances?.reduce((total, appliance) => {
+                              const laborFee = parseFloat(
+                                appliance.discounted_labor_fee ||
+                                  appliance.labor_fee ||
+                                  "0",
+                              )
+                              const partsCost = parseFloat(
+                                appliance.total_parts_cost || "0",
+                              )
+                              return total + laborFee + partsCost
+                            }, 0) || 0
 
-                          // Calculate original amount based on discount type
-                          let originalAmount = totalRevenue
-                          if (discountAmount > 0) {
-                            originalAmount = totalRevenue + discountAmount
-                          } else if (discountPercentage > 0) {
-                            // Reverse percentage: original = discounted / (1 - percentage/100)
-                            originalAmount =
-                              totalRevenue / (1 - discountPercentage / 100)
-                          }
-
-                          return formatCurrency(originalAmount)
+                          return formatCurrency(appliancesSubtotal)
                         })()}
                       </p>
                     </div>
@@ -801,9 +917,6 @@ export default function ServiceDetail({
                         <p className="text-green-600 font-medium">
                           -
                           {(() => {
-                            const totalRevenue = parseFloat(
-                              service.total_revenue || "0",
-                            )
                             const discountAmount = parseFloat(
                               service.service_discount_amount || "0",
                             )
@@ -811,16 +924,33 @@ export default function ServiceDetail({
                               service.service_discount_percentage || "0",
                             )
 
-                            // Calculate actual discount amount
-                            let actualDiscount = discountAmount
-                            if (discountPercentage > 0 && discountAmount === 0) {
-                              // Calculate from percentage
-                              const original =
-                                totalRevenue / (1 - discountPercentage / 100)
-                              actualDiscount = original - totalRevenue
+                            // If percentage discount, calculate from subtotal
+                            if (
+                              discountPercentage > 0 &&
+                              discountAmount === 0
+                            ) {
+                              const appliancesSubtotal =
+                                service.appliances?.reduce(
+                                  (total, appliance) => {
+                                    const laborFee = parseFloat(
+                                      appliance.discounted_labor_fee ||
+                                        appliance.labor_fee ||
+                                        "0",
+                                    )
+                                    const partsCost = parseFloat(
+                                      appliance.total_parts_cost || "0",
+                                    )
+                                    return total + laborFee + partsCost
+                                  },
+                                  0,
+                                ) || 0
+
+                              const calculatedDiscount =
+                                (appliancesSubtotal * discountPercentage) / 100
+                              return formatCurrency(calculatedDiscount)
                             }
 
-                            return formatCurrency(actualDiscount)
+                            return formatCurrency(discountAmount)
                           })()}
                         </p>
                       </div>
@@ -833,7 +963,7 @@ export default function ServiceDetail({
                     Total Revenue
                   </p>
                   <p className="text-lg font-bold">
-                    {formatCurrency(parseFloat(service.total_revenue || "0"))}
+                    {formatCurrency(calculateActualTotalRevenue())}
                   </p>
                 </div>
                 <Separator />
@@ -871,14 +1001,35 @@ export default function ServiceDetail({
                     </p>
                   </div>
                 )}
-                {service.balance_due && parseFloat(service.balance_due) > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="text-muted-foreground">Balance Due</p>
-                    <p className="font-medium text-red-600">
-                      {formatCurrency(parseFloat(service.balance_due))}
-                    </p>
-                  </div>
-                )}
+                {service.total_refunded &&
+                  parseFloat(service.total_refunded) > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <p className="text-muted-foreground">Total Refunded</p>
+                      <p className="font-medium text-red-600">
+                        -{formatCurrency(parseFloat(service.total_refunded))}
+                      </p>
+                    </div>
+                  )}
+                <Separator />
+                {(() => {
+                  const balanceDue =
+                    calculateActualTotalRevenue() -
+                    parseFloat(service.total_paid || "0") +
+                    parseFloat(service.total_refunded || "0")
+                  return (
+                    <>
+                      <div className="flex items-center justify-between text-sm">
+                        <p className="text-muted-foreground">Balance Due</p>
+                        <p
+                          className={`font-medium ${balanceDue < 0 ? "text-orange-600" : "text-red-600"}`}
+                        >
+                          {formatCurrency(balanceDue)}
+                        </p>
+                      </div>
+                      {balanceDue < 0 && <OverPaymentWarning />}
+                    </>
+                  )
+                })()}
               </CardContent>
             </Card>
           </div>
@@ -1133,7 +1284,8 @@ export default function ServiceDetail({
                       <Input
                         type="number"
                         min="0"
-                        step="0.01"
+                        max={discountType === "percentage" ? "100" : undefined}
+                        step={discountType === "percentage" ? "1" : "0.01"}
                         value={discountValue}
                         onChange={(e) => setDiscountValue(e.target.value)}
                         disabled={discountType === "none"}
@@ -1167,14 +1319,14 @@ export default function ServiceDetail({
 
                   <Button
                     onClick={handleApplyDiscount}
-                    disabled={
-                      discountType === "none" ||
-                      !discountValue ||
-                      updateService.isPending
-                    }
+                    disabled={updateService.isPending}
                     className="w-full"
                   >
-                    {updateService.isPending ? "Applying..." : "Apply Discount"}
+                    {updateService.isPending
+                      ? "Applying..."
+                      : discountType === "none"
+                        ? "Remove Discount"
+                        : "Apply Discount"}
                   </Button>
                 </CardContent>
               </Card>
@@ -1243,7 +1395,7 @@ export default function ServiceDetail({
               <div className="flex items-center justify-between text-sm">
                 <p className="text-muted-foreground">Total Amount</p>
                 <p className="font-medium">
-                  {formatCurrency(parseFloat(service.total_revenue || "0"))}
+                  {formatCurrency(calculateActualTotalRevenue())}
                 </p>
               </div>
               <div className="flex items-center justify-between text-sm">
@@ -1252,15 +1404,171 @@ export default function ServiceDetail({
                   {formatCurrency(parseFloat(service.total_paid || "0"))}
                 </p>
               </div>
+              {service.total_refunded &&
+                parseFloat(service.total_refunded) > 0 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <p className="text-muted-foreground">Total Refunded</p>
+                    <p className="font-medium text-red-600">
+                      -{formatCurrency(parseFloat(service.total_refunded))}
+                    </p>
+                  </div>
+                )}
               <Separator />
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">Balance Due</p>
-                <p className="text-lg font-bold text-red-600">
-                  {formatCurrency(parseFloat(service.balance_due || "0"))}
+                <p
+                  className={`text-lg font-bold ${
+                    calculateActualTotalRevenue() -
+                      parseFloat(service.total_paid || "0") +
+                      parseFloat(service.total_refunded || "0") <
+                    0
+                      ? "text-orange-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {formatCurrency(
+                    calculateActualTotalRevenue() -
+                      parseFloat(service.total_paid || "0") +
+                      parseFloat(service.total_refunded || "0"),
+                  )}
                 </p>
               </div>
+              {calculateActualTotalRevenue() -
+                parseFloat(service.total_paid || "0") +
+                parseFloat(service.total_refunded || "0") <
+                0 && <OverPaymentWarning />}
+              {service.total_refunded && parseFloat(service.total_refunded) && (
+                <div className="text-xs text-muted-foreground">
+                  {formatCurrency(parseFloat(service.total_refunded))}
+                </div>
+              )}
             </CardContent>
           </Card>
+
+          {/* Refund Section */}
+          {canProcessRefunds &&
+            parseFloat(service.total_paid || "0") > 0 &&
+            parseFloat(service.total_paid || "0") >
+              parseFloat(service.total_refunded || "0") && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    Process Refund
+                    {calculateActualTotalRevenue() -
+                      parseFloat(service.total_paid || "0") +
+                      parseFloat(service.total_refunded || "0") <
+                      0 && <Badge variant="warning">Action Required</Badge>}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {service.status !== "completed" ? (
+                    <>
+                      <Alert variant="warning">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription className="space-y-2">
+                          <p className="font-semibold">
+                            Refunds require service completion
+                          </p>
+                          {parseFloat(service.balance_due || "0") < 0 ? (
+                            <>
+                              <p>
+                                The customer has an overpayment of{" "}
+                                <strong>
+                                  {formatCurrency(
+                                    Math.abs(
+                                      parseFloat(service.balance_due || "0"),
+                                    ),
+                                  )}
+                                </strong>{" "}
+                                after applying discounts.
+                              </p>
+                              <div className="mt-3 p-3 bg-muted rounded-md space-y-2 text-sm">
+                                <p className="font-medium">
+                                  To refund the overpayment:
+                                </p>
+                                <ol className="list-decimal list-inside space-y-1 ml-2">
+                                  <li>
+                                    Complete the service using the
+                                    &quot;Complete Service&quot; button above
+                                  </li>
+                                  <li>
+                                    Return to the Payments tab and click
+                                    &quot;Process Refund&quot;
+                                  </li>
+                                  <li>
+                                    The refund amount will be pre-filled with
+                                    the overpayment amount
+                                  </li>
+                                </ol>
+                              </div>
+                            </>
+                          ) : (
+                            <p>
+                              Refunds can only be processed after completing the
+                              service.
+                            </p>
+                          )}
+                        </AlertDescription>
+                      </Alert>
+
+                      {parseFloat(service.balance_due || "0") < 0 && (
+                        <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 rounded-md">
+                          <span className="text-sm font-medium">
+                            Overpayment Amount:
+                          </span>
+                          <span className="text-lg font-bold text-orange-600">
+                            {formatCurrency(
+                              Math.abs(parseFloat(service.balance_due || "0")),
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Alert variant="info">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          Maximum refundable:{" "}
+                          <strong>
+                            {formatCurrency(
+                              parseFloat(service.total_paid || "0") -
+                                parseFloat(service.total_refunded || "0"),
+                            )}
+                          </strong>
+                        </AlertDescription>
+                      </Alert>
+
+                      <Button
+                        className="w-full"
+                        variant="warning"
+                        onClick={() => {
+                          setRefundDialogOpen(true)
+                          // Auto-fill with excess amount if overpayment detected
+                          if (parseFloat(service.balance_due || "0") < 0) {
+                            setRefundAmount(
+                              Math.abs(
+                                parseFloat(service.balance_due || "0"),
+                              ).toString(),
+                            )
+                            setRefundType("partial")
+                          } else {
+                            const maxRefund =
+                              parseFloat(service.total_paid || "0") -
+                              parseFloat(service.total_refunded || "0")
+                            setRefundAmount(maxRefund.toString())
+                            setRefundType("full")
+                          }
+                        }}
+                      >
+                        <AlertCircle className="mr-2 h-4 w-4" />
+                        Process Refund
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
           {/* Add Payment Button */}
           {canRecordPayments && (
@@ -1498,14 +1806,14 @@ export default function ServiceDetail({
               <Input
                 id="amount"
                 type="number"
-                step="0.01"
+                step="1"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
                 placeholder="0.00"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Label htmlFor="notes">Notes</Label>
               <Input
                 id="notes"
                 type="text"
@@ -1561,7 +1869,12 @@ export default function ServiceDetail({
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="cancel_reason">Reason for Cancellation *</Label>
+              <Label
+                htmlFor="cancel_reason"
+                required
+              >
+                Reason for Cancellation
+              </Label>
               <Textarea
                 id="cancel_reason"
                 value={cancelReason}
@@ -1601,7 +1914,7 @@ export default function ServiceDetail({
             <DialogTitle>Process Refund</DialogTitle>
             <DialogDescription>
               Parts are NOT returned to stock (already used). Maximum
-              refundable: ₱
+              refundable:{" "}
               {formatCurrency(
                 parseFloat(service.total_paid || "0") -
                   parseFloat(service.total_refunded || "0"),
@@ -1609,14 +1922,30 @@ export default function ServiceDetail({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            {service.status !== "completed" && (
+              <Alert variant="warning">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Note: Service is not yet completed. Refunds are typically
+                  processed after service completion.
+                </AlertDescription>
+              </Alert>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="refund_type">Refund Type</Label>
                 <Select
                   value={refundType}
-                  onValueChange={(value: "full" | "partial") =>
+                  onValueChange={(value: "full" | "partial") => {
                     setRefundType(value)
-                  }
+                    // Auto-fill amount for full refund
+                    if (value === "full") {
+                      const maxRefundable =
+                        parseFloat(service.total_paid || "0") -
+                        parseFloat(service.total_refunded || "0")
+                      setRefundAmount(maxRefundable.toString())
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -1628,7 +1957,12 @@ export default function ServiceDetail({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="refund_amount">Amount (₱) *</Label>
+                <Label
+                  htmlFor="refund_amount"
+                  required
+                >
+                  Amount (₱)
+                </Label>
                 <Input
                   id="refund_amount"
                   type="number"
@@ -1640,11 +1974,18 @@ export default function ServiceDetail({
                   }
                   value={refundAmount}
                   onChange={(e) => setRefundAmount(e.target.value)}
+                  disabled={refundType === "full"}
+                  className={refundType === "full" ? "bg-muted" : ""}
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="refund_method">Refund Method *</Label>
+              <Label
+                htmlFor="refund_method"
+                required
+              >
+                Refund Method
+              </Label>
               <Select
                 value={refundMethod}
                 onValueChange={(value: "cash" | "gcash" | "bank_transfer") =>
@@ -1662,12 +2003,17 @@ export default function ServiceDetail({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="refund_reason">Reason *</Label>
+              <Label
+                htmlFor="refund_reason"
+                required
+              >
+                Reason
+              </Label>
               <Textarea
                 id="refund_reason"
                 value={refundReason}
                 onChange={(e) => setRefundReason(e.target.value)}
-                placeholder="Customer dissatisfaction, warranty issue, etc..."
+                placeholder="e.g., Overpayment after discount, Customer dissatisfaction, Warranty issue..."
                 rows={3}
               />
             </div>

@@ -29,6 +29,7 @@ import {
   useTechnicianChoices,
 } from "@/lib/queries/useChoices"
 import { formatCurrency } from "@/lib/utils/helpers"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   ChevronDown,
   ChevronUp,
@@ -47,7 +48,7 @@ interface ServiceApplianceManagerProps {
   serviceId: number
   appliances: ServiceAppliance[]
   serviceTechnicians?: number[]
-  onUpdate?: () => void
+  onUpdate?: () => void | Promise<void>
   disabled?: boolean
   canManageParts?: boolean // Allow parts management even when appliance editing is disabled
 }
@@ -74,6 +75,7 @@ export default function ServiceApplianceManager({
   disabled = false,
   canManageParts = true,
 }: ServiceApplianceManagerProps) {
+  const queryClient = useQueryClient()
   const { data: applianceTypes = [] } = useApplianceTypeChoices()
   const { data: users = [], isLoading: usersLoading } = useTechnicianChoices()
   const { addAppliance, updateAppliance, deleteAppliance } =
@@ -133,6 +135,14 @@ export default function ServiceApplianceManager({
       labor_original_amount: appliance.labor_original_amount
         ? parseFloat(appliance.labor_original_amount)
         : 0,
+      // Include existing labor discount fields
+      labor_discount_amount: appliance.labor_discount_amount
+        ? parseFloat(appliance.labor_discount_amount)
+        : undefined,
+      labor_discount_percentage: appliance.labor_discount_percentage
+        ? parseFloat(appliance.labor_discount_percentage)
+        : undefined,
+      labor_discount_reason: appliance.labor_discount_reason || undefined,
       // Default to service-level technicians, or just the assigned technician if different
       assigned_technicians:
         serviceTechnicians && serviceTechnicians.length > 0
@@ -143,10 +153,49 @@ export default function ServiceApplianceManager({
     })
     setEditingId(appliance.id)
     setIsAdding(false)
+    // If there's an existing discount, show the discount section
+    if (
+      (appliance.labor_discount_amount &&
+        parseFloat(appliance.labor_discount_amount) > 0) ||
+      (appliance.labor_discount_percentage &&
+        parseFloat(appliance.labor_discount_percentage) > 0)
+    ) {
+      setShowLaborDiscount(true)
+    }
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingAppliance) return
+
+    // Validate labor discount doesn't exceed labor fee
+    const laborFee = editingAppliance.labor_fee || 0
+    const discountAmount = editingAppliance.labor_discount_amount || 0
+    const discountPercentage = editingAppliance.labor_discount_percentage || 0
+
+    // Only validate if discount is actually being applied (not 0)
+    if (discountAmount > 0) {
+      if (discountAmount > laborFee) {
+        toast.error(
+          `Labor discount (₱${discountAmount.toFixed(2)}) cannot exceed labor fee (₱${laborFee.toFixed(2)})`,
+        )
+        return
+      }
+    }
+
+    if (discountPercentage > 0) {
+      if (discountPercentage > 100) {
+        toast.error("Labor discount percentage cannot exceed 100%")
+        return
+      }
+
+      const calculatedDiscount = (laborFee * discountPercentage) / 100
+      if (calculatedDiscount > laborFee) {
+        toast.error(
+          `Labor discount (${discountPercentage}% = ₱${calculatedDiscount.toFixed(2)}) cannot exceed labor fee (₱${laborFee.toFixed(2)})`,
+        )
+        return
+      }
+    }
 
     const newAppliance: ServiceAppliancePayload = {
       service: serviceId,
@@ -159,6 +208,25 @@ export default function ServiceApplianceManager({
       labor_fee: editingAppliance.labor_fee || 0,
       labor_is_free: editingAppliance.labor_is_free || false,
       labor_original_amount: editingAppliance.labor_original_amount || 0,
+      // Send 0 to clear numeric fields, empty string for reason
+      labor_discount_amount:
+        editingAppliance.labor_discount_amount !== undefined &&
+        editingAppliance.labor_discount_amount > 0
+          ? editingAppliance.labor_discount_amount
+          : 0,
+      labor_discount_percentage:
+        editingAppliance.labor_discount_percentage !== undefined &&
+        editingAppliance.labor_discount_percentage > 0
+          ? editingAppliance.labor_discount_percentage
+          : 0,
+      labor_discount_reason:
+        editingAppliance.labor_discount_amount !== undefined &&
+        editingAppliance.labor_discount_amount > 0
+          ? editingAppliance.labor_discount_reason || ""
+          : editingAppliance.labor_discount_percentage !== undefined &&
+              editingAppliance.labor_discount_percentage > 0
+            ? editingAppliance.labor_discount_reason || ""
+            : "",
       // Convert array back to single technician (backend supports single only)
       // Use first technician in the array
       assigned_technician:
@@ -168,35 +236,44 @@ export default function ServiceApplianceManager({
           : null,
     }
 
-    if (isAdding) {
-      // Add new appliance via API
-      addAppliance.mutate(newAppliance, {
-        onSuccess: () => {
-          toast.success("Appliance added successfully!")
-          setEditingAppliance(null)
-          setIsAdding(false)
-          onUpdate?.()
-        },
-        onError: () => {
-          toast.error("Failed to add appliance")
-        },
+    try {
+      if (isAdding) {
+        // Add new appliance via API
+        await addAppliance.mutateAsync(newAppliance)
+        toast.success("Appliance added successfully!")
+      } else if (editingId) {
+        // Update existing appliance via API
+        await updateAppliance.mutateAsync({ id: editingId, data: newAppliance })
+        toast.success("Appliance updated successfully!")
+      }
+
+      setEditingAppliance(null)
+      setEditingId(null)
+      setIsAdding(false)
+
+      // Small delay for backend to recalculate totals
+      await new Promise((resolve) => setTimeout(resolve, 150))
+
+      // Invalidate all service-related queries to mark them as stale
+      await queryClient.invalidateQueries({
+        queryKey: ["service"],
       })
-    } else if (editingId) {
-      // Update existing appliance via API
-      updateAppliance.mutate(
-        { id: editingId, data: newAppliance },
-        {
-          onSuccess: () => {
-            toast.success("Appliance updated successfully!")
-            setEditingAppliance(null)
-            setEditingId(null)
-            setIsAdding(false)
-            onUpdate?.()
-          },
-          onError: () => {
-            toast.error("Failed to update appliance")
-          },
-        },
+      await queryClient.invalidateQueries({
+        queryKey: ["service-appliances"],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ["appliance-items"],
+      })
+
+      // Trigger parent refresh which will refetch with fresh data
+      if (onUpdate) {
+        await onUpdate()
+      }
+    } catch (error) {
+      // Error is handled by useApiMutation
+      console.error("Failed to save appliance:", error)
+      toast.error(
+        isAdding ? "Failed to add appliance" : "Failed to update appliance",
       )
     }
   }
@@ -212,24 +289,39 @@ export default function ServiceApplianceManager({
     setDeleteDialogOpen(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (applianceToDelete) {
-      deleteAppliance.mutate(
-        { id: applianceToDelete, serviceId },
-        {
-          onSuccess: () => {
-            toast.success("Appliance deleted successfully!")
-            setDeleteDialogOpen(false)
-            setApplianceToDelete(null)
-            onUpdate?.()
-          },
-          onError: () => {
-            toast.error("Failed to delete appliance")
-            setDeleteDialogOpen(false)
-            setApplianceToDelete(null)
-          },
-        },
-      )
+      try {
+        await deleteAppliance.mutateAsync({ id: applianceToDelete, serviceId })
+        toast.success("Appliance deleted successfully!")
+        setDeleteDialogOpen(false)
+        setApplianceToDelete(null)
+
+        // Small delay for backend to recalculate totals
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        // Invalidate all service-related queries to mark them as stale
+        await queryClient.invalidateQueries({
+          queryKey: ["service"],
+        })
+        await queryClient.invalidateQueries({
+          queryKey: ["service-appliances"],
+        })
+        await queryClient.invalidateQueries({
+          queryKey: ["appliance-items"],
+        })
+
+        // Trigger parent refresh which will refetch with fresh data
+        if (onUpdate) {
+          await onUpdate()
+        }
+      } catch (error) {
+        // Error is handled by useApiMutation
+        console.error("Failed to delete appliance:", error)
+        toast.error("Failed to delete appliance")
+        setDeleteDialogOpen(false)
+        setApplianceToDelete(null)
+      }
     }
   }
 
@@ -434,9 +526,10 @@ export default function ServiceApplianceManager({
                       <Label className="text-xs font-medium">Type</Label>
                       <Select
                         value={
-                          editingAppliance.labor_discount_amount
+                          editingAppliance.labor_discount_amount !== undefined
                             ? "fixed"
-                            : editingAppliance.labor_discount_percentage
+                            : editingAppliance.labor_discount_percentage !==
+                                undefined
                               ? "percentage"
                               : "none"
                         }
@@ -908,8 +1001,8 @@ export default function ServiceApplianceManager({
                     <div className="p-4">
                       <AppliancePartsManager
                         applianceId={appliance.id}
-                        serviceId={serviceId}
                         disabled={!canManageParts}
+                        onUpdate={onUpdate}
                       />
                     </div>
                   </div>

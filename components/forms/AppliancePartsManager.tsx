@@ -61,14 +61,14 @@ import { toast } from "sonner"
 
 interface AppliancePartsManagerProps {
   applianceId: number
-  serviceId: number
   disabled?: boolean
+  onUpdate?: () => void | Promise<void>
 }
 
 export default function AppliancePartsManager({
   applianceId,
-  serviceId,
   disabled = false,
+  onUpdate,
 }: AppliancePartsManagerProps) {
   const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -100,7 +100,7 @@ export default function AppliancePartsManager({
   const items = itemsData?.results || []
   const selectedItem = items.find((i) => i.id === selectedItemId)
 
-  const handleSavePart = () => {
+  const handleSavePart = async () => {
     if (!selectedItemId || !quantity) {
       toast.error("Please fill in all fields")
       return
@@ -133,35 +133,38 @@ export default function AppliancePartsManager({
       setDiscountReason("")
     }
 
-    if (editingPartId) {
-      // Update existing part
-      updateItem.mutate(
-        { id: editingPartId, data: payload },
-        {
-          onSuccess: resetForm,
-          onSettled: () => {
-            queryClient.invalidateQueries({
-              queryKey: ["service", `${serviceId}`],
-            })
-            queryClient.invalidateQueries({
-              queryKey: ["appliance-items", applianceId],
-            })
-          },
-        },
-      )
-    } else {
-      // Add new part
-      addItem.mutate(payload, {
-        onSuccess: resetForm,
-        onSettled: () => {
-          queryClient.invalidateQueries({
-            queryKey: ["service", `${serviceId}`],
-          })
-          queryClient.invalidateQueries({
-            queryKey: ["appliance-items", applianceId],
-          })
-        },
+    try {
+      if (editingPartId) {
+        // Update existing part
+        await updateItem.mutateAsync({ id: editingPartId, data: payload })
+      } else {
+        // Add new part
+        await addItem.mutateAsync(payload)
+      }
+
+      resetForm()
+
+      // Small delay for backend to recalculate totals
+      await new Promise((resolve) => setTimeout(resolve, 150))
+
+      // Invalidate all service-related queries to mark them as stale
+      await queryClient.invalidateQueries({
+        queryKey: ["service"],
       })
+      await queryClient.invalidateQueries({
+        queryKey: ["service-appliances"],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ["appliance-items"],
+      })
+
+      // Trigger parent refresh which will refetch with fresh data
+      if (onUpdate) {
+        await onUpdate()
+      }
+    } catch (error) {
+      // Error is handled by useApiMutation
+      console.error("Failed to save part:", error)
     }
   }
 
@@ -191,22 +194,36 @@ export default function AppliancePartsManager({
     setDeleteConfirmOpen(true)
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (itemToDelete) {
-      deleteItem.mutate(
-        { id: itemToDelete, applianceId },
-        {
-          onSettled: () => {
-            queryClient.invalidateQueries({
-              queryKey: ["service", `${serviceId}`],
-            })
-            queryClient.invalidateQueries({
-              queryKey: ["appliance-items", applianceId],
-            })
-          },
-        },
-      )
-      setItemToDelete(null)
+      try {
+        await deleteItem.mutateAsync({ id: itemToDelete, applianceId })
+
+        setItemToDelete(null)
+        setDeleteConfirmOpen(false)
+
+        // Small delay for backend to recalculate totals
+        await new Promise((resolve) => setTimeout(resolve, 150))
+
+        // Invalidate all service-related queries to mark them as stale
+        await queryClient.invalidateQueries({
+          queryKey: ["service"],
+        })
+        await queryClient.invalidateQueries({
+          queryKey: ["service-appliances"],
+        })
+        await queryClient.invalidateQueries({
+          queryKey: ["appliance-items"],
+        })
+
+        // Trigger parent refresh which will refetch with fresh data
+        if (onUpdate) {
+          await onUpdate()
+        }
+      } catch (error) {
+        // Error is handled by useApiMutation
+        console.error("Failed to delete part:", error)
+      }
     }
   }
 
@@ -328,7 +345,7 @@ export default function AppliancePartsManager({
                   ))}
                   <TableRow className="bg-muted/50">
                     <TableCell
-                      colSpan={!disabled ? 3 : 2}
+                      colSpan={3}
                       className="text-right font-semibold"
                     >
                       Total Parts Cost:
