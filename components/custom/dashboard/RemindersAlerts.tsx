@@ -1,0 +1,139 @@
+"use client"
+
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useServices } from "@/lib/queries/services/useServices"
+import { usePendingLeaveApprovals } from "@/lib/queries/useAttendance"
+import { AlertCircle, Bell } from "lucide-react"
+import Link from "next/link"
+
+export function RemindersAlerts() {
+  const { data: pendingLeaves, isLoading: loadingLeaves } =
+    usePendingLeaveApprovals()
+  const { data: servicesData, isLoading: loadingServices } = useServices()
+  const services = servicesData?.results || []
+
+  // Services needing attention
+  const overdueServices =
+    services?.filter((s) => {
+      if (
+        !s.scheduled_end_time ||
+        s.status === "completed" ||
+        s.status === "cancelled"
+      )
+        return false
+      return new Date(s.scheduled_end_time) < new Date()
+    }) || []
+
+  const unpaidServices =
+    services?.filter(
+      (s) =>
+        (s.payment_status === "unpaid" || s.payment_status === "partial") &&
+        s.status === "completed",
+    ) || []
+
+  const totalAlerts =
+    (pendingLeaves?.length || 0) +
+    overdueServices.length +
+    unpaidServices.length
+
+  if (loadingLeaves || loadingServices) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Bell className="size-5" />
+            Reminders & Alerts
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-4">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Bell className="size-5" />
+          Reminders & Alerts
+          {totalAlerts > 0 && (
+            <Badge
+              variant="destructive"
+              className="ml-auto"
+            >
+              {totalAlerts}
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {totalAlerts === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No pending alerts or reminders
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {pendingLeaves && pendingLeaves.length > 0 && (
+              <Link href="/attendance/leave-requests">
+                <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:bg-amber-900/10 hover:bg-amber-100/50 dark:hover:bg-amber-900/20 transition-colors">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="size-4 text-amber-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                        Pending Leave Approvals
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                        {pendingLeaves.length} leave request
+                        {pendingLeaves.length > 1 ? "s" : ""} awaiting approval
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {overdueServices.length > 0 && (
+              <div className="p-3 rounded-lg border border-red-200 bg-red-50/50 dark:bg-red-900/10 hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="size-4 text-red-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-red-900 dark:text-red-100">
+                      Overdue Services
+                    </p>
+                    <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                      {overdueServices.length} service
+                      {overdueServices.length > 1 ? "s" : ""} past target
+                      completion date
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {unpaidServices.length > 0 && (
+              <div className="p-3 rounded-lg border border-orange-200 bg-orange-50/50 dark:bg-orange-900/10 hover:bg-orange-100/50 dark:hover:bg-orange-900/20 transition-colors">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="size-4 text-orange-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-orange-900 dark:text-orange-100">
+                      Unpaid Services
+                    </p>
+                    <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                      {unpaidServices.length} completed service
+                      {unpaidServices.length > 1 ? "s" : ""} awaiting payment
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}

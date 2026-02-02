@@ -1,5 +1,14 @@
 "use client"
 
+import { BirthdayReminders } from "@/components/custom/dashboard/BirthdayReminders"
+import { LeaveBalanceSummary } from "@/components/custom/dashboard/LeaveBalanceSummary"
+import { MyTasksCard } from "@/components/custom/dashboard/MyTasksCard"
+import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
+import { RecentTransactions } from "@/components/custom/dashboard/RecentTransactions"
+import { RemindersAlerts } from "@/components/custom/dashboard/RemindersAlerts"
+import { SalesSummary } from "@/components/custom/dashboard/SalesSummary"
+import { TodayScheduleCard } from "@/components/custom/dashboard/TodayScheduleCard"
+import { UpcomingScheduleCard } from "@/components/custom/dashboard/UpcomingScheduleCard"
 import DateRangePicker from "@/components/custom/inputs/DateRangePicker"
 import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
 import DashboardCharts from "@/components/custom/shared/charts/DashboardCharts"
@@ -57,11 +66,61 @@ const DashboardPage = () => {
           role === "admin" || role === "manager" ? () => refetch() : undefined
         }
       />
-      {/* Calendar */}
-      <DashboardCalendar />
 
-      {role === "admin" ||
-        (role === "manager" && (
+      <div className="space-y-6">
+        {/* Role-Based Dashboard Components */}
+        {role === "technician" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-rows-[auto_auto] gap-6">
+            <div className="row-span-2">
+              <UpcomingScheduleCard />
+            </div>
+            <TodayScheduleCard />
+            <QuickClockInOut />
+            <MyTasksCard />
+            <LeaveBalanceSummary />
+            <div className="col-span-full">
+              <BirthdayReminders />
+            </div>
+          </div>
+        )}
+
+        {role === "clerk" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <QuickClockInOut />
+            <LeaveBalanceSummary />
+            <RecentTransactions />
+            <RemindersAlerts />
+            <SalesSummary />
+            <BirthdayReminders />
+          </div>
+        )}
+
+        {role === "manager" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <QuickClockInOut />
+            <LeaveBalanceSummary />
+            <div className="col-span-full">
+              <BirthdayReminders />
+            </div>
+          </div>
+        )}
+
+        {role === "admin" && (
+          <div className="grid grid-cols-1  gap-6">
+            <BirthdayReminders />
+          </div>
+        )}
+
+        {/* Calendar - All Roles */}
+        {(role === "technician" || role === "clerk") && (
+          <DashboardCalendar withSettings={false} />
+        )}
+        {(role === "admin" || role === "manager") && (
+          <DashboardCalendar withSettings={true} />
+        )}
+
+        {/* Analytics - Admin & Manager Only */}
+        {(role === "admin" || role === "manager") && (
           <FormProvider {...form}>
             <div className="space-y-6">
               {/* Date Range Controls */}
@@ -87,7 +146,8 @@ const DashboardPage = () => {
               <DashboardCharts />
             </div>
           </FormProvider>
-        ))}
+        )}
+      </div>
     </Wrapper>
   )
 }

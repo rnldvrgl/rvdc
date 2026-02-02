@@ -100,6 +100,7 @@ interface DashboardCalendarProps {
   onEventClick?: (event: CalendarEvent) => void
   onDateClick?: (date: Date) => void
   withSettings?: boolean
+  withRefresh?: boolean
   eventTypes?: EventType[]
 }
 
@@ -607,6 +608,7 @@ const DashboardCalendar = ({
   onEventClick,
   onDateClick,
   withSettings = true,
+  withRefresh = true,
   eventTypes,
 }: DashboardCalendarProps) => {
   const { preferences, isLoaded } = useCalendarPreferences()
@@ -1176,18 +1178,22 @@ const DashboardCalendar = ({
                   "View birthdays, holidays, and scheduled services"}
               </CardDescription>
             </div>
-            <div className="flex flex-col md:flex-row items-center justify-center md:justify-end gap-2">
-              {withSettings && <CalendarSettings />}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => refetch()}
-                disabled={isLoading}
-                className="text-sm"
-              >
-                {isLoading ? "Loading..." : "Refresh"}
-              </Button>
-            </div>
+            {(withSettings || withRefresh) && (
+              <div className="flex flex-col md:flex-row items-center justify-center md:justify-end gap-2">
+                {withSettings && <CalendarSettings />}
+                {withRefresh && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetch()}
+                    disabled={isLoading}
+                    className="text-sm"
+                  >
+                    {isLoading ? "Loading..." : "Refresh"}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </CardHeader>
 
