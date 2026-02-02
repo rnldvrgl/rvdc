@@ -41,13 +41,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ApplianceItemUsed } from "@/lib/constants/interface"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useApplianceItemMutations } from "@/lib/mutations/services/useApplianceItemMutations"
 import { useItems } from "@/lib/queries/inventory/useItems"
 import { useApplianceItems } from "@/lib/queries/services/useApplianceItems"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
 import { useQueryClient } from "@tanstack/react-query"
-import { Check, ChevronsUpDown, Package, Plus, Trash2 } from "lucide-react"
+import {
+  Check,
+  ChevronsUpDown,
+  Edit,
+  Package,
+  Plus,
+  Trash2,
+} from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -64,6 +72,7 @@ export default function AppliancePartsManager({
 }: AppliancePartsManagerProps) {
   const queryClient = useQueryClient()
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingPartId, setEditingPartId] = useState<number | null>(null)
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null)
   const [quantity, setQuantity] = useState("1")
   const [itemSearch, setItemSearch] = useState("")
@@ -86,12 +95,12 @@ export default function AppliancePartsManager({
     search: debouncedSearch,
   })
 
-  const { addItem, deleteItem } = useApplianceItemMutations()
+  const { addItem, updateItem, deleteItem } = useApplianceItemMutations()
 
   const items = itemsData?.results || []
   const selectedItem = items.find((i) => i.id === selectedItemId)
 
-  const handleAddPart = () => {
+  const handleSavePart = () => {
     if (!selectedItemId || !quantity) {
       toast.error("Please fill in all fields")
       return
@@ -103,32 +112,78 @@ export default function AppliancePartsManager({
       return
     }
 
-    addItem.mutate(
-      {
-        appliance: applianceId,
-        item: selectedItemId,
-        quantity: qty,
-        discount_amount:
-          discountType === "fixed" ? parseFloat(discountValue || "0") : 0,
-        discount_percentage:
-          discountType === "percentage" ? parseFloat(discountValue || "0") : 0,
-        discount_reason: discountReason || undefined,
-      },
-      {
-        onSuccess: () => {
-          setDialogOpen(false)
-          setSelectedItemId(null)
-          setQuantity("1")
-          setDiscountType("none")
-          setDiscountValue("")
-          setDiscountReason("")
+    const payload = {
+      appliance: applianceId,
+      item: selectedItemId,
+      quantity: qty,
+      discount_amount:
+        discountType === "fixed" ? parseFloat(discountValue || "0") : 0,
+      discount_percentage:
+        discountType === "percentage" ? parseFloat(discountValue || "0") : 0,
+      discount_reason: discountReason || undefined,
+    }
+
+    const resetForm = () => {
+      setDialogOpen(false)
+      setEditingPartId(null)
+      setSelectedItemId(null)
+      setQuantity("1")
+      setDiscountType("none")
+      setDiscountValue("")
+      setDiscountReason("")
+    }
+
+    if (editingPartId) {
+      // Update existing part
+      updateItem.mutate(
+        { id: editingPartId, data: payload },
+        {
+          onSuccess: resetForm,
+          onSettled: () => {
+            queryClient.invalidateQueries({
+              queryKey: ["service", `${serviceId}`],
+            })
+            queryClient.invalidateQueries({
+              queryKey: ["appliance-items", applianceId],
+            })
+          },
         },
+      )
+    } else {
+      // Add new part
+      addItem.mutate(payload, {
+        onSuccess: resetForm,
         onSettled: () => {
-          // Explicitly invalidate the specific service to update details
-          queryClient.invalidateQueries({ queryKey: ["service", serviceId] })
+          queryClient.invalidateQueries({
+            queryKey: ["service", `${serviceId}`],
+          })
+          queryClient.invalidateQueries({
+            queryKey: ["appliance-items", applianceId],
+          })
         },
-      },
-    )
+      })
+    }
+  }
+
+  const handleEditPart = (part: ApplianceItemUsed) => {
+    setEditingPartId(part.id)
+    setSelectedItemId(part.item)
+    setQuantity(part.quantity.toString())
+
+    // Set discount values
+    if (part.discount_percentage && parseFloat(part.discount_percentage) > 0) {
+      setDiscountType("percentage")
+      setDiscountValue(part.discount_percentage)
+    } else if (part.discount_amount && parseFloat(part.discount_amount) > 0) {
+      setDiscountType("fixed")
+      setDiscountValue(part.discount_amount)
+    } else {
+      setDiscountType("none")
+      setDiscountValue("")
+    }
+
+    setDiscountReason(part.discount_reason || "")
+    setDialogOpen(true)
   }
 
   const handleDeletePart = (id: number) => {
@@ -142,7 +197,12 @@ export default function AppliancePartsManager({
         { id: itemToDelete, applianceId },
         {
           onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ["service", serviceId] })
+            queryClient.invalidateQueries({
+              queryKey: ["service", `${serviceId}`],
+            })
+            queryClient.invalidateQueries({
+              queryKey: ["appliance-items", applianceId],
+            })
           },
         },
       )
@@ -190,11 +250,12 @@ export default function AppliancePartsManager({
                 <TableHeader>
                   <TableRow>
                     <TableHead>Item</TableHead>
-                    <TableHead>SKU</TableHead>
                     <TableHead className="text-right">Qty</TableHead>
                     <TableHead className="text-right">Unit Price</TableHead>
                     <TableHead className="text-right">Total</TableHead>
-                    {!disabled && <TableHead className="w-[50px]"></TableHead>}
+                    {!disabled && (
+                      <TableHead className="w-[100px]">Actions</TableHead>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -203,15 +264,14 @@ export default function AppliancePartsManager({
                       <TableCell className="font-medium">
                         {part.item_name}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {part.item}{" "}
-                        {/* Item ID - will show properly after backend fix */}
-                      </TableCell>
                       <TableCell className="text-right">
                         {part.quantity}
                       </TableCell>
                       <TableCell className="text-right">
-                        {part.discount_amount || part.discount_percentage ? (
+                        {(part.discount_amount &&
+                          parseFloat(part.discount_amount) > 0) ||
+                        (part.discount_percentage &&
+                          parseFloat(part.discount_percentage) > 0) ? (
                           <div className="flex flex-col items-end gap-1">
                             <span className="line-through text-xs text-muted-foreground">
                               {formatCurrency(part.item_price)}
@@ -229,10 +289,13 @@ export default function AppliancePartsManager({
                       <TableCell className="text-right font-semibold">
                         <div className="flex flex-col items-end gap-1">
                           <span>{formatCurrency(part.line_total)}</span>
-                          {(part.discount_amount ||
-                            part.discount_percentage) && (
+                          {((part.discount_amount &&
+                            parseFloat(part.discount_amount) > 0) ||
+                            (part.discount_percentage &&
+                              parseFloat(part.discount_percentage) > 0)) && (
                             <span className="text-xs text-green-600">
-                              {part.discount_percentage
+                              {part.discount_percentage &&
+                              parseFloat(part.discount_percentage) > 0
                                 ? `${part.discount_percentage}% off`
                                 : `₱${part.discount_amount} off`}
                             </span>
@@ -241,21 +304,31 @@ export default function AppliancePartsManager({
                       </TableCell>
                       {!disabled && (
                         <TableCell>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => handleDeletePart(part.id)}
-                            disabled={disabled}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleEditPart(part)}
+                              disabled={disabled}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => handleDeletePart(part.id)}
+                              disabled={disabled}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       )}
                     </TableRow>
                   ))}
                   <TableRow className="bg-muted/50">
                     <TableCell
-                      colSpan={4}
+                      colSpan={!disabled ? 3 : 2}
                       className="text-right font-semibold"
                     >
                       Total Parts Cost:
@@ -284,6 +357,7 @@ export default function AppliancePartsManager({
           setDialogOpen(open)
           if (!open) {
             // Reset form when closing
+            setEditingPartId(null)
             setSelectedItemId(null)
             setQuantity("1")
             setItemSearch("")
@@ -295,9 +369,13 @@ export default function AppliancePartsManager({
       >
         <DialogContent className="max-w-sm! md:max-w-md!">
           <DialogHeader>
-            <DialogTitle>Add Part</DialogTitle>
+            <DialogTitle>
+              {editingPartId ? "Edit Part" : "Add Part"}
+            </DialogTitle>
             <DialogDescription>
-              Select an item from inventory and specify the quantity used.
+              {editingPartId
+                ? "Update the part details"
+                : "Select an item from inventory and specify the quantity used."}
             </DialogDescription>
           </DialogHeader>
 
@@ -399,7 +477,7 @@ export default function AppliancePartsManager({
                     <SelectContent>
                       <SelectItem value="none">None</SelectItem>
                       <SelectItem value="percentage">%</SelectItem>
-                      <SelectItem value="fixed">\u20b1</SelectItem>
+                      <SelectItem value="fixed">₱</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -480,15 +558,18 @@ export default function AppliancePartsManager({
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setDialogOpen(false)}
+              onClick={() => {
+                setDialogOpen(false)
+                setEditingPartId(null)
+              }}
             >
               Cancel
             </Button>
             <Button
-              onClick={handleAddPart}
+              onClick={handleSavePart}
               disabled={!selectedItemId || !quantity}
             >
-              Add Part
+              {editingPartId ? "Update Part" : "Add Part"}
             </Button>
           </DialogFooter>
         </DialogContent>

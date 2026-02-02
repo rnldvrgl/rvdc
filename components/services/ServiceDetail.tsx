@@ -558,10 +558,32 @@ export default function ServiceDetail({
                 <CardContent className="space-y-3">
                   {service.appliances.map((appliance) => {
                     const laborFee = parseFloat(appliance.labor_fee || "0")
+                    const discountedLaborFee = parseFloat(
+                      appliance.discounted_labor_fee ||
+                        appliance.labor_fee ||
+                        "0",
+                    )
+                    const hasLaborDiscount =
+                      ((appliance.labor_discount_amount &&
+                        parseFloat(appliance.labor_discount_amount) > 0) ||
+                        (appliance.labor_discount_percentage &&
+                          parseFloat(appliance.labor_discount_percentage) >
+                            0)) &&
+                      !appliance.labor_is_free
+
                     const partsCost = parseFloat(
                       appliance.total_parts_cost || "0",
                     )
-                    const applianceTotal = laborFee + partsCost
+                    const partsOriginalCost = appliance.items_used
+                      ? appliance.items_used.reduce(
+                          (sum, part) =>
+                            sum + parseFloat(part.item_price) * part.quantity,
+                          0,
+                        )
+                      : 0
+                    const hasPartsDiscount = partsOriginalCost > partsCost
+
+                    const applianceTotal = discountedLaborFee + partsCost
 
                     return (
                       <div
@@ -590,36 +612,121 @@ export default function ServiceDetail({
                         <Separator />
 
                         <div className="space-y-1 text-sm">
-                          <div className="flex justify-between">
+                          <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">
                               Labor Fee
                             </span>
-                            <span>{formatCurrency(laborFee)}</span>
+                            {appliance.labor_is_free ? (
+                              <Badge
+                                variant="success"
+                                className="text-xs"
+                              >
+                                FREE
+                              </Badge>
+                            ) : (
+                              <div className="flex flex-col items-end gap-0.5">
+                                {hasLaborDiscount && (
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs line-through text-muted-foreground">
+                                      {formatCurrency(laborFee)}
+                                    </span>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-green-600 border-green-600 text-xs px-1.5 py-0"
+                                    >
+                                      {appliance.labor_discount_percentage &&
+                                      parseFloat(
+                                        appliance.labor_discount_percentage,
+                                      ) > 0
+                                        ? `${appliance.labor_discount_percentage}%`
+                                        : `₱${appliance.labor_discount_amount}`}
+                                    </Badge>
+                                  </div>
+                                )}
+                                <span className="font-medium">
+                                  {formatCurrency(discountedLaborFee)}
+                                </span>
+                              </div>
+                            )}
                           </div>
                           {appliance.items_used &&
                             appliance.items_used.length > 0 && (
                               <>
-                                <div className="flex justify-between">
+                                <div className="flex justify-between items-center">
                                   <span className="text-muted-foreground">
                                     Parts ({appliance.items_used.length} items)
                                   </span>
-                                  <span>{formatCurrency(partsCost)}</span>
+                                  <div className="flex flex-col items-end gap-0.5">
+                                    {hasPartsDiscount && (
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-xs line-through text-muted-foreground">
+                                          {formatCurrency(partsOriginalCost)}
+                                        </span>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-green-600 border-green-600 text-xs px-1.5 py-0"
+                                        >
+                                          {formatCurrency(
+                                            partsOriginalCost - partsCost,
+                                          )}
+                                        </Badge>
+                                      </div>
+                                    )}
+                                    <span className="font-medium">
+                                      {formatCurrency(partsCost)}
+                                    </span>
+                                  </div>
                                 </div>
                                 {/* Show parts details */}
                                 <div className="ml-4 mt-1 space-y-1 text-xs">
-                                  {appliance.items_used.map((part) => (
-                                    <div
-                                      key={part.id}
-                                      className="flex justify-between text-muted-foreground"
-                                    >
-                                      <span>
-                                        • {part.item_name} (x{part.quantity})
-                                      </span>
-                                      <span>
-                                        {formatCurrency(part.line_total)}
-                                      </span>
-                                    </div>
-                                  ))}
+                                  {appliance.items_used.map((part) => {
+                                    const partHasDiscount =
+                                      (part.discount_amount &&
+                                        parseFloat(part.discount_amount) > 0) ||
+                                      (part.discount_percentage &&
+                                        parseFloat(part.discount_percentage) >
+                                          0)
+
+                                    return (
+                                      <div
+                                        key={part.id}
+                                        className="flex justify-between items-center text-muted-foreground"
+                                      >
+                                        <div className="flex items-center gap-1.5">
+                                          <span>
+                                            • {part.item_name} (x{part.quantity}
+                                            )
+                                          </span>
+                                          {partHasDiscount && (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-green-600 border-green-600 text-xs px-1 py-0"
+                                            >
+                                              {part.discount_percentage &&
+                                              parseFloat(
+                                                part.discount_percentage,
+                                              ) > 0
+                                                ? `${part.discount_percentage}%`
+                                                : `₱${part.discount_amount}`}
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        <div className="flex flex-col items-end">
+                                          {partHasDiscount && (
+                                            <span className="text-xs line-through">
+                                              {formatCurrency(
+                                                parseFloat(part.item_price) *
+                                                  part.quantity,
+                                              )}
+                                            </span>
+                                          )}
+                                          <span>
+                                            {formatCurrency(part.line_total)}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )
+                                  })}
                                 </div>
                               </>
                             )}
@@ -645,6 +752,82 @@ export default function ServiceDetail({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                {/* Show service-level discount if exists */}
+                {((service.service_discount_amount &&
+                  parseFloat(service.service_discount_amount) > 0) ||
+                  (service.service_discount_percentage &&
+                    parseFloat(service.service_discount_percentage) > 0)) && (
+                  <>
+                    <div className="flex items-center justify-between text-sm">
+                      <p className="text-muted-foreground">Original Amount</p>
+                      <p className="line-through">
+                        {(() => {
+                          const totalRevenue = parseFloat(
+                            service.total_revenue || "0",
+                          )
+                          const discountAmount = parseFloat(
+                            service.service_discount_amount || "0",
+                          )
+                          const discountPercentage = parseFloat(
+                            service.service_discount_percentage || "0",
+                          )
+
+                          // Calculate original amount based on discount type
+                          let originalAmount = totalRevenue
+                          if (discountAmount > 0) {
+                            originalAmount = totalRevenue + discountAmount
+                          } else if (discountPercentage > 0) {
+                            // Reverse percentage: original = discounted / (1 - percentage/100)
+                            originalAmount =
+                              totalRevenue / (1 - discountPercentage / 100)
+                          }
+
+                          return formatCurrency(originalAmount)
+                        })()}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <p className="text-muted-foreground">Service Discount</p>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className="text-green-600 border-green-600"
+                        >
+                          {service.service_discount_percentage &&
+                          parseFloat(service.service_discount_percentage) > 0
+                            ? `${service.service_discount_percentage}% off`
+                            : `₱${service.service_discount_amount} off`}
+                        </Badge>
+                        <p className="text-green-600 font-medium">
+                          -
+                          {(() => {
+                            const totalRevenue = parseFloat(
+                              service.total_revenue || "0",
+                            )
+                            const discountAmount = parseFloat(
+                              service.service_discount_amount || "0",
+                            )
+                            const discountPercentage = parseFloat(
+                              service.service_discount_percentage || "0",
+                            )
+
+                            // Calculate actual discount amount
+                            let actualDiscount = discountAmount
+                            if (discountPercentage > 0 && discountAmount === 0) {
+                              // Calculate from percentage
+                              const original =
+                                totalRevenue / (1 - discountPercentage / 100)
+                              actualDiscount = original - totalRevenue
+                            }
+
+                            return formatCurrency(actualDiscount)
+                          })()}
+                        </p>
+                      </div>
+                    </div>
+                    <Separator />
+                  </>
+                )}
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-muted-foreground">
                     Total Revenue

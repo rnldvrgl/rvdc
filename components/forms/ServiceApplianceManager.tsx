@@ -10,6 +10,7 @@ import AppliancePartsManager from "@/components/forms/AppliancePartsManager"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -17,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
 import {
   ApplianceStatus,
   ServiceAppliance,
@@ -33,6 +33,7 @@ import {
   ChevronDown,
   ChevronUp,
   Edit,
+  Package,
   Plus,
   Save,
   Trash2,
@@ -132,11 +133,13 @@ export default function ServiceApplianceManager({
       labor_original_amount: appliance.labor_original_amount
         ? parseFloat(appliance.labor_original_amount)
         : 0,
-      // Convert single technician to array for multi-select
-      // If appliance has no technician, default to service-level technicians
-      assigned_technicians: appliance.assigned_technician
-        ? [appliance.assigned_technician]
-        : serviceTechnicians || [],
+      // Default to service-level technicians, or just the assigned technician if different
+      assigned_technicians:
+        serviceTechnicians && serviceTechnicians.length > 0
+          ? serviceTechnicians
+          : appliance.assigned_technician
+            ? [appliance.assigned_technician]
+            : [],
     })
     setEditingId(appliance.id)
     setIsAdding(false)
@@ -244,7 +247,6 @@ export default function ServiceApplianceManager({
             type="button"
             size="sm"
             onClick={handleAdd}
-            variant="outline"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Appliance
@@ -260,7 +262,7 @@ export default function ServiceApplianceManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Appliance Type</label>
+                <Label className="text-sm font-medium">Appliance Type</Label>
                 <Select
                   value={
                     editingAppliance.appliance_type
@@ -292,7 +294,7 @@ export default function ServiceApplianceManager({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Status</label>
+                <Label className="text-sm font-medium">Status</Label>
                 <Select
                   value={editingAppliance.status || "received"}
                   onValueChange={(value: ApplianceStatus) =>
@@ -319,9 +321,9 @@ export default function ServiceApplianceManager({
               </div>
 
               <div className="space-y-2 col-span-2">
-                <label className="text-sm font-medium">
+                <Label className="text-sm font-medium">
                   Assigned Technicians
-                </label>
+                </Label>
                 <MultiSelect
                   options={users.map((tech) => ({
                     value: tech.id.toString(),
@@ -346,7 +348,7 @@ export default function ServiceApplianceManager({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Brand</label>
+                <Label className="text-sm font-medium">Brand</Label>
                 <Input
                   value={editingAppliance.brand || ""}
                   onChange={(e) =>
@@ -360,7 +362,7 @@ export default function ServiceApplianceManager({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Model</label>
+                <Label className="text-sm font-medium">Model</Label>
                 <Input
                   value={editingAppliance.model || ""}
                   onChange={(e) =>
@@ -374,7 +376,7 @@ export default function ServiceApplianceManager({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Labor Fee (₱)</label>
+                <Label className="text-sm font-medium">Labor Fee (₱)</Label>
                 <Input
                   type="number"
                   min="0"
@@ -399,13 +401,14 @@ export default function ServiceApplianceManager({
                       labor_is_free: checked === true,
                     })
                   }
+                  className="cursor-pointer"
                 />
-                <label
+                <Label
                   htmlFor="labor_is_free"
                   className="text-sm font-medium cursor-pointer"
                 >
                   Labor is Free
-                </label>
+                </Label>
               </div>
 
               {/* Labor Discount Section */}
@@ -415,7 +418,7 @@ export default function ServiceApplianceManager({
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowLaborDiscount(!showLaborDiscount)}
-                  className="text-sm p-0 h-auto"
+                  className="w-full text-sm p-0 h-auto"
                 >
                   {showLaborDiscount ? (
                     <ChevronUp className="h-4 w-4 mr-1" />
@@ -428,7 +431,7 @@ export default function ServiceApplianceManager({
                 {showLaborDiscount && (
                   <div className="grid grid-cols-3 gap-3 pl-4 border-l-2">
                     <div className="space-y-2">
-                      <label className="text-xs font-medium">Type</label>
+                      <Label className="text-xs font-medium">Type</Label>
                       <Select
                         value={
                           editingAppliance.labor_discount_amount
@@ -472,7 +475,7 @@ export default function ServiceApplianceManager({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-medium">Amount</label>
+                      <Label className="text-xs font-medium">Amount</Label>
                       <Input
                         type="number"
                         min="0"
@@ -511,7 +514,7 @@ export default function ServiceApplianceManager({
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-medium">Reason</label>
+                      <Label className="text-xs font-medium">Reason</Label>
                       <Input
                         placeholder="Optional"
                         value={editingAppliance.labor_discount_reason || ""}
@@ -535,7 +538,7 @@ export default function ServiceApplianceManager({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Issue Reported</label>
+              <Label className="text-sm font-medium">Issue Reported</Label>
               <Textarea
                 value={editingAppliance.issue_reported || ""}
                 onChange={(e) =>
@@ -550,7 +553,7 @@ export default function ServiceApplianceManager({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Diagnosis Notes</label>
+              <Label className="text-sm font-medium">Diagnosis Notes</Label>
               <Textarea
                 value={editingAppliance.diagnosis_notes || ""}
                 onChange={(e) =>
@@ -567,7 +570,7 @@ export default function ServiceApplianceManager({
             <div className="flex justify-end gap-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="destructive"
                 size="sm"
                 onClick={handleCancel}
               >
@@ -578,6 +581,7 @@ export default function ServiceApplianceManager({
                 type="button"
                 size="sm"
                 onClick={handleSave}
+                variant="success"
               >
                 <Save className="mr-2 h-4 w-4" />
                 Save
@@ -587,40 +591,70 @@ export default function ServiceApplianceManager({
         ) : appliances.length > 0 ? (
           <div className="space-y-3">
             {appliances.map((appliance) => (
-              <div
+              <Card
                 key={appliance.id}
-                className="rounded-md border space-y-0"
+                className="overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="p-3 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
+                {/* Header Section */}
+                <div className="bg-muted/30 px-4 py-3 border-b">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0 space-y-2">
+                      {/* Title Row */}
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-medium">
-                          {appliance.appliance_type?.name || "N/A"}
-                        </p>
-                        <Badge variant="outline">
+                        <h4 className="text-base font-semibold">
+                          {appliance.appliance_type?.name ||
+                            "Unknown Appliance"}
+                        </h4>
+                        <Badge
+                          variant="outline"
+                          className="font-medium"
+                        >
                           {getStatusLabel(appliance.status)}
                         </Badge>
                       </div>
+
+                      {/* Brand/Model Row */}
                       {(appliance.brand || appliance.model) && (
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {appliance.brand || "—"}
-                          {appliance.model && ` • ${appliance.model}`}
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <Package className="h-3.5 w-3.5" />
+                          <span className="font-medium">
+                            {appliance.brand || "—"}
+                          </span>
+                          {appliance.model && (
+                            <>
+                              <span>•</span>
+                              <span>{appliance.model}</span>
+                            </>
+                          )}
                         </p>
                       )}
-                      {appliance.assigned_technician_name && (
-                        <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          Technician: {appliance.assigned_technician_name}
+
+                      {/* Technician Row */}
+                      {serviceTechnicians && serviceTechnicians.length > 0 && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <User className="h-3.5 w-3.5" />
+                          <span>Assigned to:</span>
+                          <span className="font-medium">
+                            {serviceTechnicians
+                              .map((techId) => {
+                                const tech = users.find((u) => u.id === techId)
+                                return tech?.full_name
+                              })
+                              .filter(Boolean)
+                              .join(", ") || "—"}
+                          </span>
                         </p>
                       )}
                     </div>
+
+                    {/* Action Buttons */}
                     <div className="flex gap-1 shrink-0">
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleExpand(appliance.id)}
+                        className="h-8 w-8 p-0"
                       >
                         {expandedAppliances.has(appliance.id) ? (
                           <ChevronUp className="h-4 w-4" />
@@ -635,6 +669,7 @@ export default function ServiceApplianceManager({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(appliance)}
+                            className="h-8 w-8 p-0"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -643,6 +678,7 @@ export default function ServiceApplianceManager({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDelete(appliance.id)}
+                            className="h-8 w-8 p-0"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
@@ -650,91 +686,235 @@ export default function ServiceApplianceManager({
                       )}
                     </div>
                   </div>
+                </div>
 
+                {/* Content Section */}
+                <div className="p-4 space-y-4">
+                  {/* Issue Reported */}
                   {appliance.issue_reported && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Issue
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Issue Reported
+                      </Label>
+                      <p className="text-sm leading-relaxed bg-muted/50 p-3 rounded-md">
+                        {appliance.issue_reported}
                       </p>
-                      <p className="text-sm">{appliance.issue_reported}</p>
                     </div>
                   )}
-                  <Separator className="my-4" />
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Labor Fee
-                    </p>
-                    {appliance.labor_is_free ? (
-                      <Badge variant="success">FREE</Badge>
-                    ) : (
-                      <div className="flex flex-col items-end gap-1">
-                        {(appliance.labor_discount_amount ||
-                          appliance.labor_discount_percentage) && (
-                          <span className="text-xs line-through text-muted-foreground">
-                            {formatCurrency(parseFloat(appliance.labor_fee))}
-                          </span>
-                        )}
-                        <span className="text-sm font-medium">
-                          {formatCurrency(
-                            parseFloat(
-                              appliance.discounted_labor_fee ||
-                                appliance.labor_fee,
-                            ),
+
+                  {/* Diagnosis Notes */}
+                  {appliance.diagnosis_notes && (
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Diagnosis Notes
+                      </Label>
+                      <p className="text-sm leading-relaxed bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-900">
+                        {appliance.diagnosis_notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Financial Summary */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Labor Fee Card */}
+                    <Card className="border-2">
+                      <CardContent>
+                        <div className="space-y-2">
+                          <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Labor Fee
+                          </Label>
+                          {appliance.labor_is_free ? (
+                            <Badge
+                              variant="success"
+                              className="text-base px-3 py-1"
+                            >
+                              FREE
+                            </Badge>
+                          ) : (
+                            <div className="space-y-1">
+                              {((appliance.labor_discount_amount &&
+                                parseFloat(appliance.labor_discount_amount) >
+                                  0) ||
+                                (appliance.labor_discount_percentage &&
+                                  parseFloat(
+                                    appliance.labor_discount_percentage,
+                                  ) > 0)) && (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm line-through text-muted-foreground">
+                                    {formatCurrency(
+                                      parseFloat(appliance.labor_fee),
+                                    )}
+                                  </span>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-green-600 border-green-600"
+                                  >
+                                    {appliance.labor_discount_percentage &&
+                                    parseFloat(
+                                      appliance.labor_discount_percentage,
+                                    ) > 0
+                                      ? `${appliance.labor_discount_percentage}% off`
+                                      : `₱${appliance.labor_discount_amount} off`}
+                                  </Badge>
+                                </div>
+                              )}
+                              <p className="text-2xl font-bold text-primary">
+                                {formatCurrency(
+                                  parseFloat(
+                                    appliance.discounted_labor_fee ||
+                                      appliance.labor_fee,
+                                  ),
+                                )}
+                              </p>
+                            </div>
                           )}
-                        </span>
-                        {(appliance.labor_discount_amount ||
-                          appliance.labor_discount_percentage) && (
-                          <span className="text-xs text-green-600">
-                            {appliance.labor_discount_percentage
-                              ? `${appliance.labor_discount_percentage}% off`
-                              : `\u20b1${appliance.labor_discount_amount} off`}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Parts Cost Card */}
+                    <Card className="border-2">
+                      <CardContent>
+                        <div className="space-y-2">
+                          <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                            Parts Cost
+                          </Label>
+                          {appliance.items_used &&
+                          appliance.items_used.length > 0 ? (
+                            <div className="space-y-1">
+                              {/* Check if any parts have discounts */}
+                              {(() => {
+                                const totalOriginal =
+                                  appliance.items_used.reduce(
+                                    (sum, part) =>
+                                      sum +
+                                      parseFloat(part.item_price) *
+                                        part.quantity,
+                                    0,
+                                  )
+                                const totalFinal = parseFloat(
+                                  appliance.total_parts_cost || "0",
+                                )
+                                const hasDiscount = totalOriginal > totalFinal
+
+                                return (
+                                  <>
+                                    {hasDiscount && (
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm line-through text-muted-foreground">
+                                          {formatCurrency(totalOriginal)}
+                                        </span>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-green-600 border-green-600 text-xs"
+                                        >
+                                          {formatCurrency(
+                                            totalOriginal - totalFinal,
+                                          )}{" "}
+                                          off
+                                        </Badge>
+                                      </div>
+                                    )}
+                                    <p className="text-2xl font-bold text-primary">
+                                      {formatCurrency(totalFinal)}
+                                    </p>
+                                  </>
+                                )
+                              })()}
+                              <p className="text-xs text-muted-foreground">
+                                {appliance.items_used.length}{" "}
+                                {appliance.items_used.length === 1
+                                  ? "item"
+                                  : "items"}{" "}
+                                used
+                              </p>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-muted-foreground">
+                              No parts used
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
 
-                  {appliance.items_used && appliance.items_used.length > 0 && (
-                    <>
-                      <div className="flex justify-between text-sm font-medium">
-                        <span className="text-muted-foreground">
-                          Parts ({appliance.items_used.length} items)
-                        </span>
-                        <span>
-                          {formatCurrency(
-                            parseFloat(appliance.total_parts_cost || "0"),
-                          )}
-                        </span>
-                      </div>
-                      {/* Show parts details */}
-                      <div className="ml-4 mt-1 space-y-1 text-xs">
-                        {appliance.items_used.map((part) => (
-                          <div
-                            key={part.id}
-                            className="flex justify-between text-muted-foreground"
-                          >
-                            <span>
-                              • {part.item_name} (x{part.quantity})
-                            </span>
-                            <span>{formatCurrency(part.line_total)}</span>
+                  {/* Parts List (when collapsed) */}
+                  {!expandedAppliances.has(appliance.id) &&
+                    appliance.items_used &&
+                    appliance.items_used.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Parts Summary
+                        </Label>
+                        <div className="bg-muted/30 rounded-md p-3">
+                          <div className="space-y-1.5">
+                            {appliance.items_used.map((part) => {
+                              const hasDiscount =
+                                (part.discount_amount &&
+                                  parseFloat(part.discount_amount) > 0) ||
+                                (part.discount_percentage &&
+                                  parseFloat(part.discount_percentage) > 0)
+
+                              return (
+                                <div
+                                  key={part.id}
+                                  className="flex justify-between items-center text-sm gap-2"
+                                >
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <span className="text-muted-foreground truncate">
+                                      {part.item_name}{" "}
+                                      <span className="text-xs">
+                                        (x{part.quantity})
+                                      </span>
+                                    </span>
+                                    {hasDiscount && (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-green-600 border-green-600 text-xs shrink-0"
+                                      >
+                                        {part.discount_percentage &&
+                                        parseFloat(part.discount_percentage) > 0
+                                          ? `${part.discount_percentage}% off`
+                                          : `₱${part.discount_amount} off`}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex flex-col items-end shrink-0">
+                                    {hasDiscount && (
+                                      <span className="text-xs line-through text-muted-foreground">
+                                        {formatCurrency(
+                                          parseFloat(part.item_price) *
+                                            part.quantity,
+                                        )}
+                                      </span>
+                                    )}
+                                    <span className="font-medium">
+                                      {formatCurrency(part.line_total)}
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            })}
                           </div>
-                        ))}
+                        </div>
                       </div>
-                    </>
-                  )}
+                    )}
                 </div>
 
                 {/* Expandable Parts Section */}
                 {expandedAppliances.has(appliance.id) && (
-                  <div className="p-4 border-t bg-muted/30">
-                    <AppliancePartsManager
-                      applianceId={appliance.id}
-                      serviceId={serviceId}
-                      disabled={!canManageParts}
-                    />
+                  <div className="border-t bg-muted/10">
+                    <div className="p-4">
+                      <AppliancePartsManager
+                        applianceId={appliance.id}
+                        serviceId={serviceId}
+                        disabled={!canManageParts}
+                      />
+                    </div>
                   </div>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
         ) : (
