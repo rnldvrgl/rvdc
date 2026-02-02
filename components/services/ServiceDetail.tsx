@@ -24,7 +24,9 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { Service } from "@/lib/constants/interface"
+import { useServicePermissions } from "@/lib/hooks/useServicePermissions"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
 import { formatCurrency, getBadgeVariant } from "@/lib/utils/helpers"
@@ -42,6 +44,7 @@ import {
   User,
   Wallet,
   Wrench,
+  XIcon,
 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -90,14 +93,58 @@ export default function ServiceDetail({
   const [paymentAmount, setPaymentAmount] = useState("")
   const [paymentType, setPaymentType] = useState("cash")
   const [paymentNotes, setPaymentNotes] = useState("")
-  const { completeService, recordPayment } = useServiceMutations()
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState("")
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false)
+  const [refundAmount, setRefundAmount] = useState("")
+  const [refundReason, setRefundReason] = useState("")
+  const [refundType, setRefundType] = useState<"full" | "partial">("partial")
+  const [refundMethod, setRefundMethod] = useState<
+    "cash" | "gcash" | "bank_transfer"
+  >("cash")
+  const [discountType, setDiscountType] = useState<
+    "none" | "percentage" | "fixed"
+  >("none")
+  const [discountValue, setDiscountValue] = useState("")
+  const [discountReason, setDiscountReason] = useState("")
+  const {
+    completeService,
+    recordPayment,
+    cancelService,
+    refundService,
+    updateService,
+  } = useServiceMutations()
   const { data: schedules = [], isLoading: schedulesLoading } =
     useSchedulesByService(service.id)
+
+  // Permission checks
+  const {
+    canEditServiceDetails,
+    canCompleteService,
+    canCancelService,
+    canProcessRefunds,
+    canApplyDiscounts,
+    canRecordPayments,
+    canEditAppliances,
+    canManageParts,
+  } = useServicePermissions()
 
   const canComplete =
     service.status === "pending" || service.status === "in_progress"
   const isCompleted = service.status === "completed"
   const isCarryIn = service.service_mode === "carry_in"
+
+  // Calculate discount amount
+  const calculateDiscount = () => {
+    if (discountType === "none" || !discountValue) return 0
+    const value = parseFloat(discountValue)
+    if (isNaN(value)) return 0
+
+    if (discountType === "percentage") {
+      return (parseFloat(service.total_revenue || "0") * value) / 100
+    }
+    return value
+  }
 
   // Check if all appliances are ready for completion
   const hasUnfinishedAppliances = service.appliances?.some(
@@ -141,6 +188,100 @@ export default function ServiceDetail({
     setPaymentDialogOpen(true)
   }
 
+  const handleCancelService = () => {
+    if (!cancelReason.trim()) {
+      toast.error("Please provide a reason for cancellation")
+      return
+    }
+
+    cancelService.mutate(
+      { id: service.id, reason: cancelReason },
+      {
+        onSuccess: () => {
+          setCancelDialogOpen(false)
+          setCancelReason("")
+          onRefresh?.()
+        },
+      },
+    )
+  }
+
+  const handleRefundService = () => {
+    const amount = parseFloat(refundAmount)
+    if (!amount || amount <= 0) {
+      toast.error("Please enter a valid refund amount")
+      return
+    }
+
+    const maxRefundable =
+      parseFloat(service.total_paid || "0") -
+      parseFloat(service.total_refunded || "0")
+    if (amount > maxRefundable) {
+      toast.error(
+        `Maximum refundable amount is ${formatCurrency(maxRefundable)}`,
+      )
+      return
+    }
+
+    if (!refundReason.trim()) {
+      toast.error("Please provide a reason for refund")
+      return
+    }
+
+    refundService.mutate(
+      {
+        id: service.id,
+        data: {
+          refund_amount: amount,
+          reason: refundReason,
+          refund_type: refundType,
+          refund_method: refundMethod,
+        },
+      },
+      {
+        onSuccess: () => {
+          setRefundDialogOpen(false)
+          setRefundAmount("")
+          setRefundReason("")
+          onRefresh?.()
+        },
+      },
+    )
+  }
+
+  const handleApplyDiscount = () => {
+    if (discountType === "none") {
+      toast.error("Please select a discount type")
+      return
+    }
+
+    if (!discountValue || parseFloat(discountValue) <= 0) {
+      toast.error("Please enter a valid discount value")
+      return
+    }
+
+    updateService.mutate(
+      {
+        id: service.id,
+        data: {
+          service_discount_amount:
+            discountType === "fixed" ? parseFloat(discountValue) : 0,
+          service_discount_percentage:
+            discountType === "percentage" ? parseFloat(discountValue) : 0,
+          discount_reason: discountReason,
+        },
+      },
+      {
+        onSuccess: () => {
+          setDiscountType("none")
+          setDiscountValue("")
+          setDiscountReason("")
+          onRefresh?.()
+        },
+      },
+    )
+  }
+
   const handlePaymentSubmit = () => {
     if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
       toast.error("Please enter a valid payment amount")
@@ -158,15 +299,11 @@ export default function ServiceDetail({
       },
       {
         onSuccess: () => {
-          toast.success("Payment recorded successfully!")
           setPaymentDialogOpen(false)
           setPaymentAmount("")
           setPaymentType("cash")
           setPaymentNotes("")
           onRefresh?.()
-        },
-        onError: () => {
-          toast.error("Failed to record payment")
         },
       },
     )
@@ -176,34 +313,67 @@ export default function ServiceDetail({
     <div className="space-y-4">
       {/* Action Buttons */}
       <div className="flex justify-end gap-2">
-        {!isCompleted && onEdit && (
+        {!isCompleted && onEdit && canEditServiceDetails && (
           <Button
             variant="outline"
             size="sm"
             onClick={onEdit}
           >
-            <Edit className="mr-2 h-4 w-4" />
+            <Edit className="mr-1 h-4 w-4" />
             Edit
           </Button>
         )}
-        {canComplete && (
+        {service.status !== "completed" &&
+          service.status !== "cancelled" &&
+          canCancelService && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setCancelDialogOpen(true)}
+            >
+              {/* CancelIcon */}
+              <XIcon className="mr-1 size-4" />
+              Cancel Service
+            </Button>
+          )}
+        {service.status === "completed" && canProcessRefunds && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setRefundDialogOpen(true)
+              const maxRefund =
+                parseFloat(service.total_paid || "0") -
+                parseFloat(service.total_refunded || "0")
+              setRefundAmount(maxRefund.toString())
+            }}
+          >
+            Process Refund
+          </Button>
+        )}
+        {canComplete && canCompleteService && (
           <Button
             size="sm"
             variant="success"
             onClick={() => setCompleteDialogOpen(true)}
           >
-            <CheckCircle className="mr-2 h-4 w-4" />
+            <CheckCircle className="mr-1 h-4 w-4" />
             Complete Service
           </Button>
         )}
       </div>
 
       {/* Status Badges */}
-      <div className="flex flex-wrap gap-2">
-        <Badge variant={getBadgeVariant(service.status)}>
-          {serviceStatusLabels[service.status] || service.status}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <Badge
+          variant={getBadgeVariant(service.status)}
+          className="w-full"
+        >
+          <Clock className="mr-1 h-3 w-3" />
+          Status: {serviceStatusLabels[service.status] || service.status}
         </Badge>
         <Badge
+          className="w-full"
           variant={
             ({
               repair: "warning",
@@ -220,9 +390,11 @@ export default function ServiceDetail({
               | "warning"
           }
         >
+          <Wrench className="mr-1 h-3 w-3" />
           {serviceTypeLabels[service.service_type] || service.service_type}
         </Badge>
         <Badge
+          className="w-full"
           variant={
             ({
               home_service: "default",
@@ -237,9 +409,14 @@ export default function ServiceDetail({
               | "warning"
           }
         >
+          <Truck className="mr-1 h-3 w-3" />
           {serviceModeLabels[service.service_mode] || service.service_mode}
         </Badge>
-        <Badge variant={getBadgeVariant(service.payment_status)}>
+        <Badge
+          variant={getBadgeVariant(service.payment_status)}
+          className="w-full"
+        >
+          <Wallet className="mr-1 h-3 w-3" />
           {paymentStatusLabels[service.payment_status] ||
             service.payment_status}
         </Badge>
@@ -652,8 +829,14 @@ export default function ServiceDetail({
           <ServiceApplianceManager
             serviceId={service.id}
             appliances={service.appliances || []}
+            serviceTechnicians={
+              service.technician_assignments
+                ?.filter((ta) => !ta.appliance)
+                .map((ta) => ta.technician) || []
+            }
             onUpdate={onRefresh}
-            disabled={isCompleted}
+            disabled={isCompleted || !canEditAppliances}
+            canManageParts={canManageParts && !isCompleted}
           />
 
           {!isCompleted &&
@@ -729,6 +912,145 @@ export default function ServiceDetail({
             </CardContent>
           </Card>
 
+          {/* Service Discount Card */}
+          {service.status !== "completed" &&
+            service.status !== "cancelled" &&
+            canApplyDiscounts && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Service Discount</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Discount Type</Label>
+                      <Select
+                        value={discountType}
+                        onValueChange={(
+                          value: "none" | "percentage" | "fixed",
+                        ) => setDiscountType(value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Discount</SelectItem>
+                          <SelectItem value="percentage">
+                            Percentage (%)
+                          </SelectItem>
+                          <SelectItem value="fixed">
+                            Fixed Amount (₱)
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Amount / Percentage</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={discountValue}
+                        onChange={(e) => setDiscountValue(e.target.value)}
+                        disabled={discountType === "none"}
+                        placeholder={
+                          discountType === "percentage" ? "0-100" : "0.00"
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Reason</Label>
+                    <Input
+                      placeholder="Senior Citizen, Loyalty, Promo, etc."
+                      value={discountReason}
+                      onChange={(e) => setDiscountReason(e.target.value)}
+                      disabled={discountType === "none"}
+                    />
+                  </div>
+
+                  {calculateDiscount() > 0 && (
+                    <div className="flex justify-between pt-2 border-t">
+                      <span className="text-sm font-medium">
+                        Discount Applied:
+                      </span>
+                      <span className="text-sm font-medium text-green-600">
+                        -{formatCurrency(calculateDiscount())}
+                      </span>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={handleApplyDiscount}
+                    disabled={
+                      discountType === "none" ||
+                      !discountValue ||
+                      updateService.isPending
+                    }
+                    className="w-full"
+                  >
+                    {updateService.isPending ? "Applying..." : "Apply Discount"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+          {/* Display Applied Discount */}
+          {((service.service_discount_amount &&
+            parseFloat(service.service_discount_amount.toString()) > 0) ||
+            (service.service_discount_percentage &&
+              parseFloat(service.service_discount_percentage.toString()) >
+                0)) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  Applied Discount
+                  <Badge variant="success">Active</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <p className="text-muted-foreground">Type</p>
+                  <p className="font-medium">
+                    {service.service_discount_percentage &&
+                    parseFloat(service.service_discount_percentage.toString()) >
+                      0
+                      ? `${service.service_discount_percentage}%`
+                      : `Fixed: ${formatCurrency(parseFloat((service.service_discount_amount || 0).toString()))}`}
+                  </p>
+                </div>
+                {service.discount_reason && (
+                  <div className="flex items-center justify-between text-sm">
+                    <p className="text-muted-foreground">Reason</p>
+                    <p className="font-medium">{service.discount_reason}</p>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">Discount Amount</p>
+                  <p className="text-lg font-bold text-green-600">
+                    -
+                    {formatCurrency(
+                      service.service_discount_amount &&
+                        parseFloat(service.service_discount_amount.toString()) >
+                          0
+                        ? parseFloat(service.service_discount_amount.toString())
+                        : (parseFloat(service.total_revenue || "0") *
+                            parseFloat(
+                              (
+                                service.service_discount_percentage || 0
+                              ).toString(),
+                            )) /
+                            100,
+                    )}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Payment Summary Card */}
           <Card>
             <CardHeader>
@@ -758,16 +1080,16 @@ export default function ServiceDetail({
           </Card>
 
           {/* Add Payment Button */}
-          {/* {!isCompleted && ( */}
-          <Button
-            className="w-full"
-            variant="outline"
-            onClick={handleAddPayment}
-          >
-            <Wallet className="mr-2 h-4 w-4" />
-            Record Payment
-          </Button>
-          {/* )} */}
+          {canRecordPayments && (
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={handleAddPayment}
+            >
+              <Wallet className="mr-2 h-4 w-4" />
+              Record Payment
+            </Button>
+          )}
         </TabsContent>
 
         {/* Schedule Tab */}
@@ -1036,6 +1358,151 @@ export default function ServiceDetail({
               disabled={recordPayment.isPending}
             >
               {recordPayment.isPending ? "Recording..." : "Record Payment"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Service Dialog */}
+      <Dialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Service</DialogTitle>
+            <DialogDescription>
+              This will return all unused parts to stock and void sales
+              transactions. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="cancel_reason">Reason for Cancellation *</Label>
+              <Textarea
+                id="cancel_reason"
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Enter reason for cancellation..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelService}
+              disabled={cancelService.isPending || !cancelReason.trim()}
+            >
+              {cancelService.isPending
+                ? "Cancelling..."
+                : "Confirm Cancellation"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Refund Service Dialog */}
+      <Dialog
+        open={refundDialogOpen}
+        onOpenChange={setRefundDialogOpen}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Process Refund</DialogTitle>
+            <DialogDescription>
+              Parts are NOT returned to stock (already used). Maximum
+              refundable: ₱
+              {formatCurrency(
+                parseFloat(service.total_paid || "0") -
+                  parseFloat(service.total_refunded || "0"),
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="refund_type">Refund Type</Label>
+                <Select
+                  value={refundType}
+                  onValueChange={(value: "full" | "partial") =>
+                    setRefundType(value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="partial">Partial</SelectItem>
+                    <SelectItem value="full">Full</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="refund_amount">Amount (₱) *</Label>
+                <Input
+                  id="refund_amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  max={
+                    parseFloat(service.total_paid || "0") -
+                    parseFloat(service.total_refunded || "0")
+                  }
+                  value={refundAmount}
+                  onChange={(e) => setRefundAmount(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="refund_method">Refund Method *</Label>
+              <Select
+                value={refundMethod}
+                onValueChange={(value: "cash" | "gcash" | "bank_transfer") =>
+                  setRefundMethod(value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="gcash">GCash</SelectItem>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="refund_reason">Reason *</Label>
+              <Textarea
+                id="refund_reason"
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                placeholder="Customer dissatisfaction, warranty issue, etc..."
+                rows={3}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setRefundDialogOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={handleRefundService}
+              disabled={
+                refundService.isPending || !refundAmount || !refundReason.trim()
+              }
+            >
+              {refundService.isPending ? "Processing..." : "Process Refund"}
             </Button>
           </div>
         </DialogContent>

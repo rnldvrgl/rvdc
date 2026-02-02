@@ -15,7 +15,15 @@ interface ApplianceItemUsed {
   free_quantity: number
   promo_name?: string
   charged_quantity: number
+  discount_amount?: string
+  discount_percentage?: string
+  discount_reason?: string
+  discounted_price?: string
   line_total: string
+  stall_stock_id?: number | null
+  expense?: number | null
+  is_cancelled?: boolean
+  cancelled_at?: string | null
 }
 
 export function useApplianceItems(applianceId?: number) {

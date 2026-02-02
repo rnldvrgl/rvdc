@@ -2,11 +2,14 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { MultiSelect } from "@/components/ui/multi-select"
 import { Textarea } from "@/components/ui/textarea"
 
+import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import AppliancePartsManager from "@/components/forms/AppliancePartsManager"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -21,7 +24,10 @@ import {
   ServiceAppliancePayload,
 } from "@/lib/constants/interface"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
-import { useApplianceTypeChoices } from "@/lib/queries/useChoices"
+import {
+  useApplianceTypeChoices,
+  useTechnicianChoices,
+} from "@/lib/queries/useChoices"
 import { formatCurrency } from "@/lib/utils/helpers"
 import {
   ChevronDown,
@@ -30,6 +36,7 @@ import {
   Plus,
   Save,
   Trash2,
+  User,
   X,
 } from "lucide-react"
 import { useState } from "react"
@@ -38,12 +45,15 @@ import { toast } from "sonner"
 interface ServiceApplianceManagerProps {
   serviceId: number
   appliances: ServiceAppliance[]
+  serviceTechnicians?: number[]
   onUpdate?: () => void
   disabled?: boolean
+  canManageParts?: boolean // Allow parts management even when appliance editing is disabled
 }
 
 interface EditingAppliance extends Partial<ServiceAppliancePayload> {
   tempId?: string
+  assigned_technicians?: number[] // For multi-select UI
 }
 
 const applianceStatusOptions: { value: ApplianceStatus; label: string }[] = [
@@ -58,10 +68,13 @@ const applianceStatusOptions: { value: ApplianceStatus; label: string }[] = [
 export default function ServiceApplianceManager({
   serviceId,
   appliances,
+  serviceTechnicians = [],
   onUpdate,
   disabled = false,
+  canManageParts = true,
 }: ServiceApplianceManagerProps) {
   const { data: applianceTypes = [] } = useApplianceTypeChoices()
+  const { data: users = [], isLoading: usersLoading } = useTechnicianChoices()
   const { addAppliance, updateAppliance, deleteAppliance } =
     useServiceApplianceMutations()
   const [editingAppliance, setEditingAppliance] =
@@ -71,6 +84,11 @@ export default function ServiceApplianceManager({
   const [expandedAppliances, setExpandedAppliances] = useState<Set<number>>(
     new Set(),
   )
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [applianceToDelete, setApplianceToDelete] = useState<number | null>(
+    null,
+  )
+  const [showLaborDiscount, setShowLaborDiscount] = useState(false)
 
   const toggleExpand = (id: number) => {
     const newExpanded = new Set(expandedAppliances)
@@ -94,6 +112,8 @@ export default function ServiceApplianceManager({
       labor_fee: 0,
       labor_is_free: false,
       labor_original_amount: 0,
+      // Pre-populate with service-level technicians if available
+      assigned_technicians: serviceTechnicians || [],
     })
     setIsAdding(true)
   }
@@ -112,6 +132,11 @@ export default function ServiceApplianceManager({
       labor_original_amount: appliance.labor_original_amount
         ? parseFloat(appliance.labor_original_amount)
         : 0,
+      // Convert single technician to array for multi-select
+      // If appliance has no technician, default to service-level technicians
+      assigned_technicians: appliance.assigned_technician
+        ? [appliance.assigned_technician]
+        : serviceTechnicians || [],
     })
     setEditingId(appliance.id)
     setIsAdding(false)
@@ -131,6 +156,13 @@ export default function ServiceApplianceManager({
       labor_fee: editingAppliance.labor_fee || 0,
       labor_is_free: editingAppliance.labor_is_free || false,
       labor_original_amount: editingAppliance.labor_original_amount || 0,
+      // Convert array back to single technician (backend supports single only)
+      // Use first technician in the array
+      assigned_technician:
+        editingAppliance.assigned_technicians &&
+        editingAppliance.assigned_technicians.length > 0
+          ? editingAppliance.assigned_technicians[0]
+          : null,
     }
 
     if (isAdding) {
@@ -173,16 +205,25 @@ export default function ServiceApplianceManager({
   }
 
   const handleDelete = (applianceId: number) => {
-    if (confirm("Are you sure you want to delete this appliance?")) {
+    setApplianceToDelete(applianceId)
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (applianceToDelete) {
       deleteAppliance.mutate(
-        { id: applianceId, serviceId },
+        { id: applianceToDelete, serviceId },
         {
           onSuccess: () => {
             toast.success("Appliance deleted successfully!")
+            setDeleteDialogOpen(false)
+            setApplianceToDelete(null)
             onUpdate?.()
           },
           onError: () => {
             toast.error("Failed to delete appliance")
+            setDeleteDialogOpen(false)
+            setApplianceToDelete(null)
           },
         },
       )
@@ -277,6 +318,33 @@ export default function ServiceApplianceManager({
                 </Select>
               </div>
 
+              <div className="space-y-2 col-span-2">
+                <label className="text-sm font-medium">
+                  Assigned Technicians
+                </label>
+                <MultiSelect
+                  options={users.map((tech) => ({
+                    value: tech.id.toString(),
+                    label: tech.full_name,
+                  }))}
+                  selected={
+                    editingAppliance.assigned_technicians
+                      ?.filter((id) => id !== undefined && id !== null)
+                      .map((id) => id.toString()) ?? []
+                  }
+                  onChange={(values: string[]) => {
+                    setEditingAppliance({
+                      ...editingAppliance,
+                      assigned_technicians: values.map((v: string) =>
+                        Number(v),
+                      ),
+                    })
+                  }}
+                  placeholder="Select technicians (optional)"
+                  disabled={usersLoading}
+                />
+              </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-medium">Brand</label>
                 <Input
@@ -322,24 +390,147 @@ export default function ServiceApplianceManager({
               </div>
 
               <div className="flex items-center space-x-2 pt-6">
-                <input
-                  type="checkbox"
+                <Checkbox
                   id="labor_is_free"
                   checked={editingAppliance.labor_is_free || false}
-                  onChange={(e) =>
+                  onCheckedChange={(checked) =>
                     setEditingAppliance({
                       ...editingAppliance,
-                      labor_is_free: e.target.checked,
+                      labor_is_free: checked === true,
                     })
                   }
-                  className="h-4 w-4"
                 />
                 <label
                   htmlFor="labor_is_free"
-                  className="text-sm font-medium"
+                  className="text-sm font-medium cursor-pointer"
                 >
                   Labor is Free
                 </label>
+              </div>
+
+              {/* Labor Discount Section */}
+              <div className="space-y-3 pt-3 border-t col-span-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowLaborDiscount(!showLaborDiscount)}
+                  className="text-sm p-0 h-auto"
+                >
+                  {showLaborDiscount ? (
+                    <ChevronUp className="h-4 w-4 mr-1" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 mr-1" />
+                  )}
+                  Labor Discount (Optional)
+                </Button>
+
+                {showLaborDiscount && (
+                  <div className="grid grid-cols-3 gap-3 pl-4 border-l-2">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium">Type</label>
+                      <Select
+                        value={
+                          editingAppliance.labor_discount_amount
+                            ? "fixed"
+                            : editingAppliance.labor_discount_percentage
+                              ? "percentage"
+                              : "none"
+                        }
+                        onValueChange={(value) => {
+                          if (value === "none") {
+                            setEditingAppliance({
+                              ...editingAppliance,
+                              labor_discount_amount: undefined,
+                              labor_discount_percentage: undefined,
+                              labor_discount_reason: undefined,
+                            })
+                          } else if (value === "fixed") {
+                            setEditingAppliance({
+                              ...editingAppliance,
+                              labor_discount_amount: 0,
+                              labor_discount_percentage: undefined,
+                            })
+                          } else {
+                            setEditingAppliance({
+                              ...editingAppliance,
+                              labor_discount_amount: undefined,
+                              labor_discount_percentage: 0,
+                            })
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          <SelectItem value="percentage">%</SelectItem>
+                          <SelectItem value="fixed">₱</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium">Amount</label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={
+                          editingAppliance.labor_discount_amount ??
+                          editingAppliance.labor_discount_percentage ??
+                          ""
+                        }
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value) || 0
+                          if (
+                            editingAppliance.labor_discount_amount !== undefined
+                          ) {
+                            setEditingAppliance({
+                              ...editingAppliance,
+                              labor_discount_amount: value,
+                            })
+                          } else if (
+                            editingAppliance.labor_discount_percentage !==
+                            undefined
+                          ) {
+                            setEditingAppliance({
+                              ...editingAppliance,
+                              labor_discount_percentage: value,
+                            })
+                          }
+                        }}
+                        disabled={
+                          editingAppliance.labor_discount_amount ===
+                            undefined &&
+                          editingAppliance.labor_discount_percentage ===
+                            undefined
+                        }
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium">Reason</label>
+                      <Input
+                        placeholder="Optional"
+                        value={editingAppliance.labor_discount_reason || ""}
+                        onChange={(e) =>
+                          setEditingAppliance({
+                            ...editingAppliance,
+                            labor_discount_reason: e.target.value,
+                          })
+                        }
+                        disabled={
+                          editingAppliance.labor_discount_amount ===
+                            undefined &&
+                          editingAppliance.labor_discount_percentage ===
+                            undefined
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -417,6 +608,12 @@ export default function ServiceApplianceManager({
                           {appliance.model && ` • ${appliance.model}`}
                         </p>
                       )}
+                      {appliance.assigned_technician_name && (
+                        <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                          <User className="h-3 w-3" />
+                          Technician: {appliance.assigned_technician_name}
+                        </p>
+                      )}
                     </div>
                     <div className="flex gap-1 shrink-0">
                       <Button
@@ -470,9 +667,30 @@ export default function ServiceApplianceManager({
                     {appliance.labor_is_free ? (
                       <Badge variant="success">FREE</Badge>
                     ) : (
-                      <span className="text-sm font-medium">
-                        {formatCurrency(parseFloat(appliance.labor_fee))}
-                      </span>
+                      <div className="flex flex-col items-end gap-1">
+                        {(appliance.labor_discount_amount ||
+                          appliance.labor_discount_percentage) && (
+                          <span className="text-xs line-through text-muted-foreground">
+                            {formatCurrency(parseFloat(appliance.labor_fee))}
+                          </span>
+                        )}
+                        <span className="text-sm font-medium">
+                          {formatCurrency(
+                            parseFloat(
+                              appliance.discounted_labor_fee ||
+                                appliance.labor_fee,
+                            ),
+                          )}
+                        </span>
+                        {(appliance.labor_discount_amount ||
+                          appliance.labor_discount_percentage) && (
+                          <span className="text-xs text-green-600">
+                            {appliance.labor_discount_percentage
+                              ? `${appliance.labor_discount_percentage}% off`
+                              : `\u20b1${appliance.labor_discount_amount} off`}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
 
@@ -512,7 +730,7 @@ export default function ServiceApplianceManager({
                     <AppliancePartsManager
                       applianceId={appliance.id}
                       serviceId={serviceId}
-                      disabled={disabled}
+                      disabled={!canManageParts}
                     />
                   </div>
                 )}
@@ -529,6 +747,14 @@ export default function ServiceApplianceManager({
           </div>
         )}
       </CardContent>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onCancel={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Appliance"
+        description="Are you sure you want to delete this appliance? This will also delete all associated parts and cannot be undone."
+      />
     </Card>
   )
 }

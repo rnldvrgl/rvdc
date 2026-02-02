@@ -21,7 +21,7 @@ export function useServiceMutations() {
   })
 
   const updateService = useApiMutation({
-    mutationFn: ({ id, data }: { id: number; data: ServicePayload }) =>
+    mutationFn: ({ id, data }: { id: number; data: Partial<ServicePayload> }) =>
       api.patch(`${url}${id}/`, data),
     successMessage: "Service updated successfully.",
     invalidateQueries: [
@@ -79,11 +79,52 @@ export function useServiceMutations() {
     },
   })
 
+  const cancelService = useApiMutation({
+    mutationFn: ({ id, reason }: { id: number; reason: string }) =>
+      api.post(`${url}${id}/cancel/`, { reason }),
+    successMessage: "Service cancelled successfully.",
+    invalidateQueries: [
+      { queryKey: ["services"] },
+      { queryKey: ["stocks"] },
+      { queryKey: ["sales-transactions"] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
+    },
+  })
+
+  const refundService = useApiMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number
+      data: {
+        refund_amount: number
+        reason: string
+        refund_type: "full" | "partial"
+        refund_method: "cash" | "gcash" | "bank_transfer"
+      }
+    }) => api.post(`${url}${id}/refund/`, data),
+    successMessage: "Refund processed successfully.",
+    invalidateQueries: [
+      { queryKey: ["services"] },
+      { queryKey: ["sales-transactions"] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
+    },
+  })
+
   return {
     addService,
     updateService,
     deleteService,
     completeService,
     recordPayment,
+    cancelService,
+    refundService,
   }
 }

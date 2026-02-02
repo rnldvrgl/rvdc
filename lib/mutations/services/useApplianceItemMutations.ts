@@ -10,6 +10,12 @@ interface ApplianceItemUsedPayload {
   quantity: number
   unit_price_at_time?: number
   stall_stock?: number
+  is_free?: boolean
+  free_quantity?: number
+  promo_name?: string
+  discount_amount?: number
+  discount_percentage?: number
+  discount_reason?: string
 }
 
 export function useApplianceItemMutations() {

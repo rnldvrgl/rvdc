@@ -27,6 +27,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Table,
   TableBody,
   TableCell,
@@ -64,6 +71,11 @@ export default function AppliancePartsManager({
   const [itemComboOpen, setItemComboOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<number | null>(null)
+  const [discountType, setDiscountType] = useState<
+    "none" | "percentage" | "fixed"
+  >("none")
+  const [discountValue, setDiscountValue] = useState("")
+  const [discountReason, setDiscountReason] = useState("")
 
   const { data: partsUsed = [], isLoading } = useApplianceItems(applianceId)
 
@@ -96,12 +108,20 @@ export default function AppliancePartsManager({
         appliance: applianceId,
         item: selectedItemId,
         quantity: qty,
+        discount_amount:
+          discountType === "fixed" ? parseFloat(discountValue || "0") : 0,
+        discount_percentage:
+          discountType === "percentage" ? parseFloat(discountValue || "0") : 0,
+        discount_reason: discountReason || undefined,
       },
       {
         onSuccess: () => {
           setDialogOpen(false)
           setSelectedItemId(null)
           setQuantity("1")
+          setDiscountType("none")
+          setDiscountValue("")
+          setDiscountReason("")
         },
         onSettled: () => {
           // Explicitly invalidate the specific service to update details
@@ -191,10 +211,33 @@ export default function AppliancePartsManager({
                         {part.quantity}
                       </TableCell>
                       <TableCell className="text-right">
-                        {formatCurrency(part.item_price)}
+                        {part.discount_amount || part.discount_percentage ? (
+                          <div className="flex flex-col items-end gap-1">
+                            <span className="line-through text-xs text-muted-foreground">
+                              {formatCurrency(part.item_price)}
+                            </span>
+                            <span className="text-green-600">
+                              {formatCurrency(
+                                part.discounted_price || part.item_price,
+                              )}
+                            </span>
+                          </div>
+                        ) : (
+                          formatCurrency(part.item_price)
+                        )}
                       </TableCell>
                       <TableCell className="text-right font-semibold">
-                        {formatCurrency(part.line_total)}
+                        <div className="flex flex-col items-end gap-1">
+                          <span>{formatCurrency(part.line_total)}</span>
+                          {(part.discount_amount ||
+                            part.discount_percentage) && (
+                            <span className="text-xs text-green-600">
+                              {part.discount_percentage
+                                ? `${part.discount_percentage}% off`
+                                : `₱${part.discount_amount} off`}
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       {!disabled && (
                         <TableCell>
@@ -244,6 +287,9 @@ export default function AppliancePartsManager({
             setSelectedItemId(null)
             setQuantity("1")
             setItemSearch("")
+            setDiscountType("none")
+            setDiscountValue("")
+            setDiscountReason("")
           }
         }}
       >
@@ -333,17 +379,100 @@ export default function AppliancePartsManager({
               />
             </div>
 
+            {/* Discount Section */}
+            <div className="space-y-3 pt-2 border-t">
+              <Label className="text-sm font-semibold">
+                Item Discount (Optional)
+              </Label>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-2">
+                  <Label className="text-xs">Type</Label>
+                  <Select
+                    value={discountType}
+                    onValueChange={(value: "none" | "percentage" | "fixed") =>
+                      setDiscountType(value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="percentage">%</SelectItem>
+                      <SelectItem value="fixed">\u20b1</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">Amount</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={discountValue}
+                    onChange={(e) => setDiscountValue(e.target.value)}
+                    disabled={discountType === "none"}
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs">Reason</Label>
+                  <Input
+                    placeholder="Optional"
+                    value={discountReason}
+                    onChange={(e) => setDiscountReason(e.target.value)}
+                    disabled={discountType === "none"}
+                  />
+                </div>
+              </div>
+            </div>
+
             {selectedItemId && (
-              <div className="rounded-lg bg-muted p-3 text-sm">
-                <p className="font-semibold">Estimated Cost:</p>
-                <p className="text-lg font-bold text-primary">
-                  {formatCurrency(
-                    Number(
-                      items.find((i) => i.id === selectedItemId)
-                        ?.retail_price || 0,
-                    ) * parseInt(quantity || "0"),
-                  )}
-                </p>
+              <div className="rounded-lg bg-muted p-3 text-sm space-y-2">
+                <div>
+                  <p className="font-semibold">Subtotal:</p>
+                  <p className="text-lg font-bold text-primary">
+                    {formatCurrency(
+                      Number(
+                        items.find((i) => i.id === selectedItemId)
+                          ?.retail_price || 0,
+                      ) * parseInt(quantity || "0"),
+                    )}
+                  </p>
+                </div>
+                {discountType !== "none" && discountValue && (
+                  <>
+                    <div className="border-t pt-2">
+                      <p className="font-semibold text-green-600">Discount:</p>
+                      <p className="text-sm">
+                        {discountType === "percentage"
+                          ? `${discountValue}% off`
+                          : `-${formatCurrency(parseFloat(discountValue))}`}
+                      </p>
+                    </div>
+                    <div className="border-t pt-2">
+                      <p className="font-semibold">Final Cost:</p>
+                      <p className="text-lg font-bold text-primary">
+                        {formatCurrency(
+                          (() => {
+                            const subtotal =
+                              Number(
+                                items.find((i) => i.id === selectedItemId)
+                                  ?.retail_price || 0,
+                              ) * parseInt(quantity || "0")
+                            const discount =
+                              discountType === "percentage"
+                                ? (subtotal * parseFloat(discountValue)) / 100
+                                : parseFloat(discountValue)
+                            return subtotal - discount
+                          })(),
+                        )}
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>

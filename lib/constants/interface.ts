@@ -729,9 +729,15 @@ export interface ServiceAppliance {
   issue_reported?: string
   diagnosis_notes?: string
   status: ApplianceStatus
+  assigned_technician?: number | null
+  assigned_technician_name?: string
   labor_fee: string
   labor_is_free: boolean
   labor_original_amount?: string
+  labor_discount_amount?: string
+  labor_discount_percentage?: string
+  labor_discount_reason?: string
+  discounted_labor_fee?: string
   items_used?: ApplianceItemUsed[]
   total_parts_cost?: string
 }
@@ -744,9 +750,13 @@ export interface ServiceAppliancePayload {
   issue_reported?: string
   diagnosis_notes?: string
   status?: ApplianceStatus
+  assigned_technician?: number | null
   labor_fee: number
   labor_is_free?: boolean
   labor_original_amount?: number
+  labor_discount_amount?: number
+  labor_discount_percentage?: number
+  labor_discount_reason?: string
 }
 
 // Appliance Item Used
@@ -762,9 +772,15 @@ export interface ApplianceItemUsed {
   free_quantity: number
   promo_name?: string
   charged_quantity: number
+  discount_amount?: string
+  discount_percentage?: string
+  discount_reason?: string
+  discounted_price?: string
   line_total: string
   stall_stock_id?: number | null
   expense?: number | null
+  is_cancelled?: boolean
+  cancelled_at?: string | null
 }
 
 export interface ApplianceItemUsedPayload {
@@ -775,6 +791,9 @@ export interface ApplianceItemUsedPayload {
   is_free?: boolean
   free_quantity?: number
   promo_name?: string
+  discount_amount?: number
+  discount_percentage?: number
+  discount_reason?: string
 }
 
 // Technician Assignment
@@ -818,6 +837,33 @@ export interface ServicePaymentPayload {
   notes?: string
 }
 
+// Service Refund
+export interface ServiceRefund {
+  id: number
+  service: number
+  refund_amount: string
+  refund_type: "full" | "partial"
+  refund_type_display?: string
+  reason: string
+  refund_date: string
+  processed_by?: number | null
+  processed_by_name?: string
+  refund_method: "cash" | "gcash" | "bank_transfer"
+  refund_method_display?: string
+  notes?: string
+  created_at: string
+}
+
+export interface ServiceRefundPayload {
+  service: number
+  refund_amount: number
+  refund_type: "full" | "partial"
+  reason: string
+  processed_by?: number
+  refund_method: "cash" | "gcash" | "bank_transfer"
+  notes?: string
+}
+
 // Service
 export interface Service {
   id: number
@@ -846,6 +892,18 @@ export interface Service {
   scheduled_end_time?: string
   total_paid?: string
   balance_due?: string
+  net_revenue?: string
+  has_refunds?: boolean
+  // Cancellation fields
+  cancellation_reason?: string | null
+  cancellation_date?: string | null
+  // Refund fields
+  total_refunded?: string
+  last_refund_date?: string | null
+  // Discount fields
+  service_discount_amount?: string
+  service_discount_percentage?: string
+  discount_reason?: string
   appliances?: ServiceAppliance[]
   technician_assignments?: TechnicianAssignment[]
   payments?: ServicePayment[]
@@ -866,6 +924,10 @@ export interface ServicePayload {
   status?: ServiceStatus
   remarks?: string
   notes?: string
+  cancellation_reason?: string
+  service_discount_amount?: number
+  service_discount_percentage?: number
+  discount_reason?: string
   technician_assignments?: TechnicianAssignmentPayload[]
 }
 
