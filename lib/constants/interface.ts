@@ -875,6 +875,7 @@ export interface ServicePayload {
   override_address?: string
   override_contact_person?: string
   override_contact_number?: string
+  appointment_datetime?: string
   pickup_date?: string
   delivery_date?: string
   received_at?: string

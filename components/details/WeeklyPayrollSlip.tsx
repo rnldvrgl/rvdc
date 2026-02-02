@@ -275,7 +275,7 @@ export function WeeklyPayrollSlip({
               <Button
                 size="sm"
                 variant="success"
-                className="col-span-3"
+                className="col-span-full"
                 onClick={async () => {
                   setIsProcessing(true)
                   await updateStatus.mutateAsync({

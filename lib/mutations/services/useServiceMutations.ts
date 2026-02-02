@@ -16,6 +16,7 @@ export function useServiceMutations() {
     successMessage: "Service created successfully.",
     invalidateQueries: [
       { queryKey: ["services"] },
+      { queryKey: ["calendar-events"] },
       ...analyticsKeys.map((key) => ({ queryKey: key })),
     ],
   })
@@ -26,6 +27,7 @@ export function useServiceMutations() {
     successMessage: "Service updated successfully.",
     invalidateQueries: [
       { queryKey: ["services"] },
+      { queryKey: ["calendar-events"] },
       ...analyticsKeys.map((key) => ({ queryKey: key })),
     ],
     onSuccess: (_, variables) => {
