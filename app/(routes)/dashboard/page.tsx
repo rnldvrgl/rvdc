@@ -1,5 +1,6 @@
 "use client"
 
+import { BirthdayGreeting } from "@/components/custom/dashboard/BirthdayGreeting"
 import { BirthdayReminders } from "@/components/custom/dashboard/BirthdayReminders"
 import { LeaveBalanceSummary } from "@/components/custom/dashboard/LeaveBalanceSummary"
 import { MyTasksCard } from "@/components/custom/dashboard/MyTasksCard"
@@ -57,6 +58,9 @@ const DashboardPage = () => {
 
   return (
     <Wrapper>
+      {/* Birthday Greeting Modal */}
+      <BirthdayGreeting />
+
       <PageHeader
         icon={BarChart3}
         title="Dashboard Overview"
@@ -113,11 +117,12 @@ const DashboardPage = () => {
 
         {/* Calendar - All Roles */}
         {(role === "technician" || role === "clerk") && (
-          <DashboardCalendar withSettings={false} />
+          <DashboardCalendar
+            withSettings={false}
+            withRefresh={false}
+          />
         )}
-        {(role === "admin" || role === "manager") && (
-          <DashboardCalendar withSettings={true} />
-        )}
+        {(role === "admin" || role === "manager") && <DashboardCalendar />}
 
         {/* Analytics - Admin & Manager Only */}
         {(role === "admin" || role === "manager") && (
