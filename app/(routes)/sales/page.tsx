@@ -93,7 +93,7 @@ export default function SalesTransactionsPage() {
 
       {/* Create Transaction Sheet */}
       <EntitySheet<SalesTransaction>
-        className="sm:min-w-2xl md:minx-w-3xl xl:min-w-4xl"
+        className="sm:max-w-3xl md:max-w-4xl lg:max-w-5xl"
         open={createSheet.open}
         onClose={closeCreate}
         title="New Sale"
@@ -106,7 +106,7 @@ export default function SalesTransactionsPage() {
 
       {/* Edit Transaction Sheet */}
       <EntitySheet<SalesTransaction>
-        className="sm:min-w-2xl md:minx-w-3xl xl:min-w-4xl"
+        className="sm:max-w-3xl md:max-w-4xl lg:max-w-5xl"
         open={editSheet.open}
         onClose={closeEdit}
         entity={editSheet.entity}
