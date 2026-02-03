@@ -2,6 +2,7 @@ import {
 	AirconBrands,
 	AirconModels,
 	AirconUnits,
+	WarrantyClaim,
 } from "@/lib/constants/interface";
 import type { PaginatedFilterProps } from "@/lib/constants/types";
 import { useFilters } from "@/lib/hooks/useFilters";
@@ -60,5 +61,20 @@ export function useAirconInstallationFilters() {
 	return useFilters(
 		"aircon-installation-filters",
 		`${installationsUrl}aircon-installations/filters/`,
+	);
+}
+
+export function useWarrantyClaims(props: PaginatedFilterProps = {}) {
+	return usePaginatedQuery<WarrantyClaim>({
+		...props,
+		url: `${installationsUrl}warranty-claims/`,
+		queryKeyBase: "warranty-claims",
+	});
+}
+
+export function useWarrantyClaimFilters() {
+	return useFilters(
+		"warranty-claim-filters",
+		`${installationsUrl}warranty-claims/filters/`,
 	);
 }

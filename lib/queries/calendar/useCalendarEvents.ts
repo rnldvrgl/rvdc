@@ -1,5 +1,5 @@
+import api from "@/lib/utils/api"
 import { useQuery } from "@tanstack/react-query"
-import axios from "axios"
 import { LucideIcon } from "lucide-react"
 
 export interface CalendarEvent {
@@ -17,9 +17,16 @@ export interface CalendarEvent {
     user_name?: string
     holiday_type?: string
     holiday_id?: number
-    service_type?: string
+    schedule_type?: string
+    schedule_type_display?: string
+    service_type?: string // Service type from linked Service (e.g., "REPAIR", "MAINTENANCE")
+    service_type_display?: string // Service type display name
     client_name?: string
+    client_id?: number
     technician_names?: string[]
+    technician_ids?: number[]
+    technician_display?: string
+    technician_count?: number
     schedule_id?: number
     notes?: string
     // Attendance specific props
@@ -63,7 +70,7 @@ export const useCalendarEvents = ({
       if (start) params.start = start
       if (end) params.end = end
 
-      const response = await axios.get("/api/analytics/calendar/events/", {
+      const response = await api.get("/analytics/calendar/events/", {
         params,
       })
       return response.data

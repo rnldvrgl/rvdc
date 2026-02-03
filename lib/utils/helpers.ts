@@ -154,10 +154,14 @@ export function safeCell(value: unknown): string {
   return String(value)
 }
 
-export function getBadgeVariant(source: string): badgeVariants {
+export function getBadgeVariant(
+  source: string | undefined | null,
+): badgeVariants {
+  if (!source) return "default"
   source = source.toLocaleLowerCase()
   const variants: Record<string, badgeVariants> = {
     paid: "success",
+    pending: "secondary",
     high_stock: "success",
     manual: "secondary",
     picked_up: "default",
@@ -169,6 +173,18 @@ export function getBadgeVariant(source: string): badgeVariants {
     unpaid: "destructive",
     inverter: "default",
     "non-inverter": "destructive",
+    // Service statuses
+    in_progress: "default",
+    completed: "success",
+    cancelled: "destructive",
+    // Appliance statuses
+    in_repair: "default",
+    ready_for_pickup: "success",
+    delivered: "success",
+    diagnosed: "default",
+    repaired: "success",
+    tested: "success",
+    ready: "success",
   }
 
   return variants[source] ?? "outline"
@@ -233,14 +249,6 @@ export function formatHours(value: number | string | undefined): string {
         : 0
   const safe = isNaN(num) ? 0 : num
   return `${safe.toFixed(2)} h`
-}
-
-export function formatDateDisplay(input?: string | Date): string {
-  if (!input) return "-"
-  const dt = input instanceof Date ? input : new Date(input)
-  // Fallback if invalid date
-  if (isNaN(dt.getTime())) return "-"
-  return dt.toLocaleDateString()
 }
 
 export function getWeekEnd(weekStart?: string): string | undefined {

@@ -9,6 +9,7 @@ import {
   Cake,
   CalendarDays,
   CheckCircle,
+  Plane,
   Store,
   Thermometer,
   Wrench,
@@ -106,6 +107,35 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
           className={cn(baseClasses, "text-orange-600 dark:text-orange-400")}
         />
       )
+    }
+    case "leave": {
+      const leaveType = event.extendedProps.leave_type
+      switch (leaveType) {
+        case "SICK":
+          return (
+            <Thermometer
+              className={cn(
+                baseClasses,
+                "text-purple-600 dark:text-purple-400",
+              )}
+            />
+          )
+        case "EMERGENCY":
+          return (
+            <AlertTriangle
+              className={cn(baseClasses, "text-amber-600 dark:text-amber-400")}
+            />
+          )
+        default:
+          return (
+            <Plane
+              className={cn(
+                baseClasses,
+                "text-indigo-600 dark:text-indigo-400",
+              )}
+            />
+          )
+      }
     }
     case "schedule": {
       const serviceType = event.extendedProps.service_type

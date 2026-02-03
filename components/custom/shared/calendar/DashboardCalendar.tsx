@@ -100,6 +100,7 @@ interface DashboardCalendarProps {
   onEventClick?: (event: CalendarEvent) => void
   onDateClick?: (date: Date) => void
   withSettings?: boolean
+  withRefresh?: boolean
   eventTypes?: EventType[]
 }
 
@@ -171,11 +172,6 @@ const EVENT_COLORS: Record<string, EventColors> = {
     border: "#d97706",
     text: "#ffffff",
   },
-  regularLeave: {
-    bg: "#6366f1",
-    border: "#4f46e5",
-    text: "#ffffff",
-  },
   schedule: {
     bg: "#0891b2",
     border: "#0e7490",
@@ -190,9 +186,23 @@ const EVENT_COLORS: Record<string, EventColors> = {
 
 const LEGEND_ITEMS = [
   { type: "birthday", label: "Birthdays", color: EVENT_COLORS.birthday.bg },
-  { type: "holiday", label: "Holidays", color: EVENT_COLORS.regularHoliday.bg },
-  { type: "service", label: "Services", color: "#3b82f6" },
+  {
+    type: "holiday",
+    label: "Regular Holidays",
+    color: EVENT_COLORS.regularHoliday.bg,
+  },
+  {
+    type: "holiday",
+    label: "Special Holidays",
+    color: EVENT_COLORS.specialHoliday.bg,
+  },
   { type: "schedule", label: "Schedules", color: EVENT_COLORS.schedule.bg },
+  { type: "leave", label: "Sick Leave", color: EVENT_COLORS.sickLeave.bg },
+  {
+    type: "leave",
+    label: "Emergency Leave",
+    color: EVENT_COLORS.emergencyLeave.bg,
+  },
 ] as const
 
 const ATTENDANCE_LEGEND_ITEMS: Array<{
@@ -238,7 +248,7 @@ const getEventColors = (event: CalendarEvent): EventColors => {
         case "EMERGENCY":
           return EVENT_COLORS.emergencyLeave
         default:
-          return EVENT_COLORS.regularLeave
+          return EVENT_COLORS.default
       }
     }
 
@@ -438,10 +448,10 @@ const EventDetailModal = ({
               </div>
               <div>
                 <h3 className="font-semibold">
-                  {extendedProps.service_type
-                    ?.replace("_", " ")
-                    .replace(/\b\w/g, (l) => l.toUpperCase())}{" "}
-                  Service
+                  {extendedProps.schedule_type_display ||
+                    extendedProps.schedule_type
+                      ?.replace("_", " ")
+                      .replace(/\b\w/g, (l) => l.toUpperCase())}
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   Scheduled Service
@@ -453,10 +463,19 @@ const EventDetailModal = ({
                 <User className="w-4 h-4 text-muted-foreground" />
                 <span>Client: {extendedProps.client_name}</span>
               </div>
+              {extendedProps.service_type_display && (
+                <div className="flex items-center gap-2 text-sm">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span>
+                    Service Type: {extendedProps.service_type_display}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center gap-2 text-sm">
                 <User className="w-4 h-4 text-muted-foreground" />
                 <span>
-                  Technician/s: {extendedProps.technician_names?.join(", ")}
+                  Technician/s:{" "}
+                  {extendedProps.technician_names?.join(", ") || "Unassigned"}
                 </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
@@ -589,6 +608,7 @@ const DashboardCalendar = ({
   onEventClick,
   onDateClick,
   withSettings = true,
+  withRefresh = true,
   eventTypes,
 }: DashboardCalendarProps) => {
   const { preferences, isLoaded } = useCalendarPreferences()
@@ -1052,9 +1072,9 @@ const DashboardCalendar = ({
 
     return (
       <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 p-4 bg-muted/30 rounded-lg">
-        {items.map((item) => (
+        {items.map((item, index) => (
           <div
-            key={item.type}
+            key={`${item.type}-${item.label}-${index}`}
             className="flex items-center gap-2"
           >
             <div
@@ -1158,18 +1178,22 @@ const DashboardCalendar = ({
                   "View birthdays, holidays, and scheduled services"}
               </CardDescription>
             </div>
-            <div className="flex flex-col md:flex-row items-center justify-center md:justify-end gap-2">
-              {withSettings && <CalendarSettings />}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => refetch()}
-                disabled={isLoading}
-                className="text-sm"
-              >
-                {isLoading ? "Loading..." : "Refresh"}
-              </Button>
-            </div>
+            {(withSettings || withRefresh) && (
+              <div className="flex flex-col md:flex-row items-center justify-center md:justify-end gap-2">
+                {withSettings && <CalendarSettings />}
+                {withRefresh && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => refetch()}
+                    disabled={isLoading}
+                    className="text-sm"
+                  >
+                    {isLoading ? "Loading..." : "Refresh"}
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </CardHeader>
 

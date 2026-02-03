@@ -1,6 +1,8 @@
 import {
 	AirconBrands,
 	AirconModels,
+	ApplianceType,
+	ExpenseCategory,
 	Item,
 	ProductCategory,
 	Stall,
@@ -106,5 +108,19 @@ export const useAirconModelsChoices = () => {
 	return useApiQuery<AirconModels[]>({
 		queryKey: ["aircon-models-choices"],
 		url: `${url}aircon-models/`,
+	});
+};
+
+export const useExpenseCategoryChoices = () => {
+	return useApiQuery<ExpenseCategory[]>({
+		queryKey: ["expense-category-choices"],
+		url: `${url}expense-categories/`,
+	});
+};
+
+export const useApplianceTypeChoices = () => {
+	return useApiQuery<ApplianceType[]>({
+		queryKey: ["appliance-type-choices"],
+		url: `${url}appliance-types/`,
 	});
 };

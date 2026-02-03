@@ -1,6 +1,6 @@
 "use client";
 
-import { getExpenseColumns } from "@/app/(routes)/expenses/columns";
+import { getExpenseColumns } from "@/app/(routes)/expenses/manage/columns";
 import EntitySheet from "@/components/custom/shared/EntitySheet";
 import PageHeader from "@/components/custom/shared/PageHeader";
 import { Wrapper } from "@/components/custom/shared/Wrapper";
@@ -18,9 +18,12 @@ import { useExpenseFilters, useExpenses } from "@/lib/queries/useExpenses";
 import { Plus, Coins } from "lucide-react";
 
 export default function ExpensesPage() {
-	const { role, isAdmin } = useCurrentUser();
+	const { role, isAdmin, assigned_stall } = useCurrentUser();
 	const { page, limit, search, filter, ordering } = useSearchParameters();
 	const { deleteExpense } = useExpenseMutations();
+
+	// Backend already handles role-based filtering via get_role_filtered_queryset
+	// No need to add stall filter here - it would conflict with backend filtering
 	const { data, isLoading, refetch } = useExpenses({
 		page,
 		limit,
@@ -66,16 +69,18 @@ export default function ExpensesPage() {
 			<PageHeader
 				icon={Coins}
 				title="Expense Management"
-				description="Track and manage all business expenses, monitor spending patterns, and maintain financial records."
+				description={
+					isAdmin
+						? "Track and manage all business expenses, monitor spending patterns, and maintain financial records."
+						: `Track and manage expenses for ${assigned_stall?.name || "your stall"}.`
+				}
 				breadcrumbs={["Dashboard", "Finance", "Expenses"]}
 				onRefresh={refetch}
 				actionButton={
-					isAdmin && (
-						<Button onClick={() => openAddSheet()}>
-							<Plus className="size-4 mr-2" />
-							Add Expense
-						</Button>
-					)
+					<Button onClick={() => openAddSheet()}>
+						<Plus className="size-4 mr-2" />
+						Add Expense
+					</Button>
 				}
 			/>
 			{/* View expense sheet */}

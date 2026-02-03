@@ -1,16 +1,16 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { User } from '@/lib/constants/interface'
+import { Button } from "@/components/ui/button"
+import { User } from "@/lib/constants/interface"
 import {
   cn,
   concatString,
   focusRing,
   getDisplayImage,
-} from '@/lib/utils/helpers'
-import { MoreVertical } from 'lucide-react'
-import { default as Image } from 'next/image'
-import { DropdownUserProfile } from './DropdownUserProfile'
+} from "@/lib/utils/helpers"
+import { MoreVertical } from "lucide-react"
+import { default as Image } from "next/image"
+import { DropdownUserProfile } from "./DropdownUserProfile"
 
 type Props = {
   user: User | null
@@ -26,12 +26,12 @@ export const UserProfile = ({ user }: Props) => {
         variant="ghost"
         className={cn(
           focusRing,
-          'group flex w-full items-center justify-between rounded-md p-5 text-sm font-medium ',
+          "group flex w-full items-center justify-between rounded-md text-sm font-medium ",
         )}
       >
         <span className="flex items-center gap-3">
           <Image
-            className="flex size-8 shrink-0 items-center justify-center rounded-full border"
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border"
             aria-hidden="true"
             src={`${displayImage}`}
             width={100}
@@ -39,7 +39,7 @@ export const UserProfile = ({ user }: Props) => {
             alt="user"
           />
           <span>
-            {user ? concatString(user.first_name, user.last_name) : 'Guest'}
+            {user ? concatString(user.first_name, user.last_name) : "Guest"}
           </span>
         </span>
         <MoreVertical

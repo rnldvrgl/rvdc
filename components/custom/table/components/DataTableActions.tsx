@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import {
   AlertDialog,
@@ -9,8 +9,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,10 +18,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import clsx from 'clsx'
-import { MoreVertical } from 'lucide-react'
-import { ReactNode, useCallback, useState } from 'react'
+} from "@/components/ui/dropdown-menu"
+import clsx from "clsx"
+import { LucideIcon, MoreVertical } from "lucide-react"
+import { useCallback, useState } from "react"
 
 interface DataTableActionsProps {
   label?: string
@@ -30,7 +30,7 @@ interface DataTableActionsProps {
 interface ActionItem {
   label: string
   onClick: () => void
-  icon?: ReactNode
+  icon?: LucideIcon
   destructive?: boolean
   confirmText?: string
   confirmDescription?: string
@@ -38,7 +38,7 @@ interface ActionItem {
 }
 
 export function DataTableActions({
-  label = 'Actions',
+  label = "Actions",
   items,
 }: DataTableActionsProps) {
   const [confirmItem, setConfirmItem] = useState<null | ActionItem>(null)
@@ -67,46 +67,47 @@ export function DataTableActions({
           <DropdownMenuLabel>{label}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {items.length > 0 ? (
-            items.map((item, idx) => (
-              <DropdownMenuItem
-                key={idx}
-                disabled={item.disabled} // ← new
-                onSelect={(e) => {
-                  if (item.disabled) return // prevent click if disabled
-                  if (item.destructive) {
-                    e.preventDefault()
-                    setConfirmItem(item)
-                  } else {
-                    item.onClick()
-                  }
-                }}
-                className={clsx(
-                  'flex items-center group',
-                  item.destructive &&
-                    'text-destructive/90 hover:bg-destructive/10',
-                  item.disabled && 'opacity-50 cursor-not-allowed',
-                )}
-              >
-                {item.icon && (
-                  <span
-                    className={clsx(
-                      'mr-2 transition-colors',
-                      item.destructive && 'group-hover:text-destructive',
-                    )}
-                  >
-                    {item.icon}
-                  </span>
-                )}
-                <span
+            items.map((item, idx) => {
+              const Icon = item.icon
+              return (
+                <DropdownMenuItem
+                  key={idx}
+                  disabled={item.disabled} // ← new
+                  onSelect={(e) => {
+                    if (item.disabled) return // prevent click if disabled
+                    if (item.destructive) {
+                      e.preventDefault()
+                      setConfirmItem(item)
+                    } else {
+                      item.onClick()
+                    }
+                  }}
                   className={clsx(
-                    'transition-colors',
-                    item.destructive && 'group-hover:text-destructive',
+                    "flex items-center group",
+                    item.destructive &&
+                      "text-destructive/90 hover:bg-destructive/10",
+                    item.disabled && "opacity-50 cursor-not-allowed",
                   )}
                 >
-                  {item.label}
-                </span>
-              </DropdownMenuItem>
-            ))
+                  {Icon && (
+                    <Icon
+                      className={clsx(
+                        "mr-2 transition-colors",
+                        item.destructive && "group-hover:text-destructive",
+                      )}
+                    />
+                  )}
+                  <span
+                    className={clsx(
+                      "transition-colors",
+                      item.destructive && "group-hover:text-destructive",
+                    )}
+                  >
+                    {item.label}
+                  </span>
+                </DropdownMenuItem>
+              )
+            })
           ) : (
             <DropdownMenuItem disabled>No actions available</DropdownMenuItem>
           )}
@@ -120,11 +121,11 @@ export function DataTableActions({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmItem?.confirmText ?? 'Are you sure?'}
+              {confirmItem?.confirmText ?? "Are you sure?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmItem?.confirmDescription ??
-                'This action cannot be undone.'}
+                "This action cannot be undone."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
