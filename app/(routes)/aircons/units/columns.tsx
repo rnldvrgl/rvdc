@@ -15,8 +15,28 @@ export function getAirconUnitsColumns({
   return [
     {
       accessorKey: "serial_number",
-      header: "Serial Number",
-      cell: ({ getValue }) => <span>{safeCell(getValue())}</span>,
+      header: "Indoor Serial Number",
+      cell: ({ getValue }) => (
+        <span className="font-mono font-medium">{safeCell(getValue())}</span>
+      ),
+    },
+    {
+      accessorKey: "outdoor_serial_number",
+      header: "Outdoor Serial Number",
+      cell: ({ getValue }) => {
+        const value = getValue()
+        return value ? (
+          <span className="font-mono font-medium">{safeCell(value)}</span>
+        ) : (
+          <span className="text-muted-foreground text-xs">N/A</span>
+        )
+      },
+    },
+    {
+      accessorKey: "model.brand.name",
+      header: "Brand",
+      cell: ({ row }: { row: Row<AirconUnits> }) =>
+        safeCell(row.original.model?.brand?.name),
     },
     {
       accessorKey: "model.name",
@@ -25,68 +45,24 @@ export function getAirconUnitsColumns({
         safeCell(row.original.model?.name),
     },
     {
-      accessorKey: "sale",
-      header: "Sale",
+      accessorKey: "model.aircon_type",
+      header: "Type",
       cell: ({ row }: { row: Row<AirconUnits> }) =>
-        row.original.sale ? (
-          <Badge variant="outline">Sold</Badge>
+        safeCell(row.original.model?.aircon_type),
+    },
+    {
+      accessorKey: "is_sold",
+      header: "Status",
+      cell: ({ row }: { row: Row<AirconUnits> }) =>
+        row.original.is_sold ? (
+          <Badge variant="secondary">Sold</Badge>
         ) : (
-          <Badge variant="secondary">Available</Badge>
-        ),
-    },
-    {
-      accessorKey: "installation",
-      header: "Installation",
-      cell: ({ row }: { row: Row<AirconUnits> }) =>
-        row.original.installation ? (
-          <Badge variant="outline">Installed</Badge>
-        ) : (
-          <Badge variant="secondary">Not Installed</Badge>
-        ),
-    },
-    {
-      accessorKey: "reserved_by",
-      header: "Reserved",
-      cell: ({ row }: { row: Row<AirconUnits> }) =>
-        row.original.reserved_by ? (
-          <Badge variant="warning">
-            Reserved by{" "}
-            {safeCell(row.original.reserved_by?.full_name || "Client")}
-          </Badge>
-        ) : (
-          <Badge variant="success">Not Reserved</Badge>
-        ),
-    },
-    {
-      accessorKey: "warranty_status",
-      header: "Warranty",
-      cell: ({ row }: { row: Row<AirconUnits> }) => {
-        const status = row.original.warranty_status
-        const variant =
-          status === "Under Warranty"
-            ? "success"
-            : status === "Expired"
-              ? "destructive"
-              : "secondary"
-        return <Badge variant={variant}>{status}</Badge>
-      },
-    },
-    {
-      accessorKey: "warranty_end_date",
-      header: "Warranty End",
-      cell: ({ row }: { row: Row<AirconUnits> }) =>
-        safeCell(
-          row.original.warranty_end_date
-            ? formatDate(
-                new Date(row.original.warranty_end_date as string),
-                "MMM dd, yyyy",
-              )
-            : null,
+          <Badge variant="success">Available</Badge>
         ),
     },
     {
       accessorKey: "created_at",
-      header: "Created At",
+      header: "Added Date",
       cell: ({ getValue }) =>
         safeCell(
           getValue()

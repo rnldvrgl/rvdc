@@ -621,6 +621,7 @@ export interface AirconUnits {
   id: number
   model: AirconModels
   serial_number: string
+  outdoor_serial_number?: string | null
   sale?: number | null
   installation?: number | null
   reserved_by?: Client | null
@@ -639,6 +640,7 @@ export interface AirconUnits {
 // Request type
 export type AirconUnitPayload = {
   serial_number: string
+  outdoor_serial_number?: string
   model_id: number
   sale?: number | null
   installation?: number | null

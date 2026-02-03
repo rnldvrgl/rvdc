@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { ComboBox } from '@/components/custom/inputs/ComboBox'
-import { Button } from '@/components/ui/button'
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -9,18 +9,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
-import { AirconUnitPayload } from '@/lib/constants/infers'
-import { AirconUnits } from '@/lib/constants/interface'
-import { AirconUnitSchema } from '@/lib/constants/schema'
-import { useAirconUnitMutations } from '@/lib/mutations/installations/useAirconUnitMutations'
-import { useAirconModels } from '@/lib/queries/useAircons'
-import { useClientChoices } from '@/lib/queries/useChoices'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
+import { AirconUnitPayload } from "@/lib/constants/infers"
+import { AirconUnits } from "@/lib/constants/interface"
+import { AirconUnitSchema } from "@/lib/constants/schema"
+import { useAirconUnitMutations } from "@/lib/mutations/installations/useAirconUnitMutations"
+import { useAirconModels } from "@/lib/queries/useAircons"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useEffect } from "react"
+import { useForm } from "react-hook-form"
 
 interface Props {
   initialData?: AirconUnits
@@ -31,16 +30,15 @@ export default function AirconUnitForm({ initialData, onClose }: Props) {
   const isEditing = !!initialData
   const { addUnit, updateUnit } = useAirconUnitMutations()
   const { data: models } = useAirconModels({ limit: 100 })
-  const { data: clients } = useClientChoices()
 
   const form = useForm<AirconUnitPayload>({
     resolver: zodResolver(AirconUnitSchema),
     defaultValues: {
-      serial_number: initialData?.serial_number ?? '',
+      serial_number: initialData?.serial_number ?? "",
+      outdoor_serial_number: initialData?.outdoor_serial_number ?? "",
       model_id: initialData?.model?.id ?? undefined,
-      reserved_by: initialData?.reserved_by?.id ?? null,
     },
-    mode: 'onSubmit',
+    mode: "onSubmit",
   })
 
   const { handleSubmit, control, reset } = form
@@ -50,16 +48,16 @@ export default function AirconUnitForm({ initialData, onClose }: Props) {
       reset({
         model_id: initialData.model?.id,
         serial_number: initialData.serial_number,
-        reserved_by: initialData.reserved_by?.id ?? null,
+        outdoor_serial_number: initialData.outdoor_serial_number ?? "",
       })
     }
   }, [initialData, reset])
 
   const handleFormSubmit = (data: AirconUnitPayload) => {
     const payload: AirconUnitPayload = {
-      serial_number: data.serial_number,
+      serial_number: data.serial_number.toUpperCase(),
+      outdoor_serial_number: data.outdoor_serial_number.toUpperCase(),
       model_id: data.model_id,
-      reserved_by: data.reserved_by ?? null,
     }
 
     if (isEditing && initialData) {
@@ -80,7 +78,7 @@ export default function AirconUnitForm({ initialData, onClose }: Props) {
       >
         {/* Basic Info */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Basic Information</h3>
+          <h3 className="text-lg font-semibold">Unit Information</h3>
           <Separator />
 
           <FormField
@@ -88,7 +86,7 @@ export default function AirconUnitForm({ initialData, onClose }: Props) {
             name="model_id"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Aircon Model</FormLabel>
+                <FormLabel required>Aircon Model</FormLabel>
                 <FormControl>
                   <ComboBox
                     value={field.value ?? null}
@@ -96,7 +94,7 @@ export default function AirconUnitForm({ initialData, onClose }: Props) {
                     options={
                       models?.results.map((m) => ({
                         value: m.id,
-                        label: m.name,
+                        label: `${m.brand?.name || ""} ${m.name}`,
                       })) ?? []
                     }
                     placeholder="Select aircon model"
@@ -112,41 +110,28 @@ export default function AirconUnitForm({ initialData, onClose }: Props) {
             name="serial_number"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Serial Number</FormLabel>
+                <FormLabel required>Indoor Unit Serial Number</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="Enter serial number"
+                    placeholder="Enter indoor serial number"
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-        </div>
-
-        {/* Reservation */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Reservation</h3>
-          <Separator />
 
           <FormField
             control={control}
-            name="reserved_by"
+            name="outdoor_serial_number"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Reserved By</FormLabel>
+                <FormLabel required>Outdoor Unit Serial Number</FormLabel>
                 <FormControl>
-                  <ComboBox
-                    value={field.value ?? null}
-                    onChange={(val) => field.onChange(val ?? undefined)}
-                    options={
-                      clients?.map((c) => ({
-                        value: c.id,
-                        label: `${c.full_name} (${c.contact_number})`,
-                      })) ?? []
-                    }
-                    placeholder="Select client (optional)"
+                  <Input
+                    {...field}
+                    placeholder="Enter outdoor serial number"
                   />
                 </FormControl>
                 <FormMessage />
@@ -158,7 +143,7 @@ export default function AirconUnitForm({ initialData, onClose }: Props) {
         {/* Submit */}
         <div className="sticky bottom-0 flex justify-end border-t bg-background pt-4 shadow-sm">
           <Button type="submit">
-            {isEditing ? 'Update Unit' : 'Add Unit'}
+            {isEditing ? "Update Unit" : "Add Unit"}
           </Button>
         </div>
       </form>

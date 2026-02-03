@@ -43,6 +43,7 @@ export function getServiceColumns({
   onDelete,
   onComplete,
 }: GetServiceColumnsProps): ColumnDef<Service>[] {
+  const canManageServices = role === "admin" || role === "manager"
   const columns: ColumnDef<Service>[] = [
     ...(role === "admin"
       ? [
@@ -188,13 +189,17 @@ export function getServiceColumns({
                 icon: Eye,
                 onClick: () => onView?.(service),
               },
-              {
-                label: "Edit",
-                icon: Edit,
-                onClick: () => onEdit?.(service),
-                disabled: service.status === "completed",
-              },
-              ...(canComplete && onComplete
+              ...(canManageServices
+                ? [
+                    {
+                      label: "Edit",
+                      icon: Edit,
+                      onClick: () => onEdit?.(service),
+                      disabled: service.status === "completed",
+                    },
+                  ]
+                : []),
+              ...(canComplete && canManageServices && onComplete
                 ? [
                     {
                       label: "Complete Service",
@@ -203,13 +208,17 @@ export function getServiceColumns({
                     },
                   ]
                 : []),
-              {
-                label: "Delete",
-                icon: Trash2,
-                onClick: () => onDelete?.(service),
-                destructive: true,
-                disabled: service.status === "completed",
-              },
+              ...(canManageServices
+                ? [
+                    {
+                      label: "Delete",
+                      icon: Trash2,
+                      onClick: () => onDelete?.(service),
+                      destructive: true,
+                      disabled: service.status === "completed",
+                    },
+                  ]
+                : []),
             ]}
           />
         )

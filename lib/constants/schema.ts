@@ -170,21 +170,18 @@ export const AirconModelSchema = z.object({
 export const AirconUnitSchema = z.object({
   serial_number: z
     .string()
-    .min(1, "Serial number is required")
-    .max(255, "Serial number too long"),
+    .min(1, "Indoor serial number is required")
+    .max(100, "Serial number too long")
+    .transform((val) => val.toUpperCase()),
 
-  // Always optional — backend decides if it's linked
-  model_id: z.number(),
+  outdoor_serial_number: z
+    .string()
+    .min(1, "Outdoor serial number is required")
+    .max(100, "Serial number too long")
+    .transform((val) => val.toUpperCase()),
 
-  // Required only when sold
-  sale: z.number().optional().nullable(),
-
-  // Required only when installed
-  installation: z.number().optional().nullable(),
-
-  // Reservation fields (optional, only needed if reserved)
-  reserved_by: z.number().optional().nullable(),
-
-  // Always present, default is false
-  free_cleaning_redeemed: z.boolean().optional(),
+  model_id: z.number({
+    required_error: "Model is required",
+    invalid_type_error: "Model must be selected",
+  }),
 })

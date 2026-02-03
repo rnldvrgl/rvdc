@@ -1,95 +1,88 @@
-import { Roles } from "@/lib/constants/types";
-import { useMemo } from "react";
+import { Roles } from "@/lib/constants/types"
+import { useMemo } from "react"
 
 export function useGetPermissions(role: Roles) {
-	return useMemo(() => {
-		const commonViewPermissions = [
-			"view_clients",
-			"view_employees",
-			"view_items",
-			"view_stallstocks",
-			"view_settings",
-			"view_expenses",
-			"view_sales",
-			"view_remittances",
-			"view_cheque_collections",
-			"view_expenses",
-			"view_services",
-		];
+  return useMemo(() => {
+    // Common permissions across multiple roles
+    const commonViewPermissions = [
+      "view_clients",
+      "view_items",
+      "view_stall_stocks",
+      "view_settings",
+      "view_sales",
+      "view_services",
+    ]
 
-		const commonEmployeePermissions = [
-			"manage_attendance",
-			"view_own_offenses",
-			"view_payroll",
-		];
+    const commonFinancialPermissions = [
+      "view_expenses",
+      //   "view_remittances",
+      //   "view_cheque_collections",
+    ]
 
-		const commonShortcuts = [
-			"shortcut_add_client",
-			"shortcut_add_expense",
-			"shortcut_add_sale",
-			"shortcut_add_remittance",
-			"shortcut_add_cheque_collection",
-		];
+    const commonAirconPermissions = [
+      "manage_aircon_brands",
+      "manage_aircon_models",
+      "manage_aircon_units",
+      "view_warranty_claims",
+    ]
 
-		const permissionsMap: Record<Roles, string[]> = {
-			admin: [
-				...commonViewPermissions,
-				...commonShortcuts,
-				"view_stockroom",
-				"view_categories",
-				"view_stalls",
-				"view_services",
-				"view_service_appliances",
-				"view_aircon_installations",
-				"view_motor_rewinds",
-				"view_home_service_schedules",
-				"view_service_status_history",
-				"shortcut_add_home_schedule",
-				"shortcut_add_service",
-				"view_aircon_brands",
-				"view_aircon_models",
-				"view_aircon_units",
-				"view_aircon_installations",
-				"manage_payroll",
-				"manage_government_benefits",
+    const commonEmployeePermissions = [
+      "view_employees",
+      "manage_attendance",
+      "view_own_offenses",
+      "view_payroll",
+    ]
 
-				"manage_payroll_settings",
-				"manage_holidays",
-				"manage_attendance_admin",
-				"manage_deductions",
-				"view_expense_categories",
-			],
-			manager: [
-				...commonViewPermissions,
-				...commonShortcuts,
-				...commonEmployeePermissions,
-				"manage_stock_transfer",
-				"shortcut_add_transfer",
-				"view_services",
-				"view_service_appliances",
-				"view_aircon_installations",
-				"view_motor_rewinds",
-				"view_home_service_schedules",
-				"view_service_status_history",
-				"shortcut_add_home_schedule",
-				"shortcut_add_service",
-				"view_aircon_brands",
-				"view_aircon_models",
-				"view_aircon_units",
-				"view_aircon_installations",
-				"manage_holidays",
-			],
-			clerk: [
-				...commonViewPermissions,
-				...commonShortcuts,
-				...commonEmployeePermissions,
-				"manage_stock_transfer",
-				"shortcut_add_transfer",
-			],
-			technician: [...commonEmployeePermissions],
-			guest: [],
-		};
+    const commonManagementPermissions = [
+      "manage_holidays",
+      "manage_cheque_collections",
+    ]
 
-		return permissionsMap[role] || [];
-	}, [role]);
+    const commonShortcuts = [
+      "shortcut_add_client",
+      "shortcut_add_expense",
+      "shortcut_add_sale",
+      "shortcut_add_remittance",
+      "shortcut_add_service",
+    ]
+
+    const permissionsMap: Record<Roles, string[]> = {
+      admin: [
+        ...commonViewPermissions,
+        ...commonFinancialPermissions,
+        ...commonAirconPermissions,
+        ...commonEmployeePermissions,
+        ...commonShortcuts,
+        ...commonManagementPermissions,
+        "manage_stockroom",
+        "manage_categories",
+        "manage_stalls",
+        "manage_expense_categories",
+        "manage_payroll",
+        "manage_payroll_settings",
+        "manage_deductions",
+        "manage_attendance_admin",
+        "manage_government_benefits",
+        "manage_tax_brackets",
+      ],
+      manager: [
+        ...commonViewPermissions,
+        ...commonFinancialPermissions,
+        ...commonAirconPermissions,
+        ...commonEmployeePermissions,
+        ...commonShortcuts,
+        ...commonManagementPermissions,
+      ],
+      clerk: [
+        ...commonViewPermissions,
+        ...commonFinancialPermissions,
+        ...commonEmployeePermissions,
+        ...commonShortcuts,
+      ],
+      technician: [...commonEmployeePermissions],
+      guest: [],
+    }
+
+    return permissionsMap[role] || []
+  }, [role])
 }
