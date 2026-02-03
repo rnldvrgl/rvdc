@@ -408,13 +408,40 @@ export interface SalesTransactionVoidingPayload {
 }
 
 export interface AnalyticsSummary {
-  total_sales: number // revenue
-  total_clients: number // clients_count
-  low_stock_items: number // low_stock_count
-  no_stock_items: number // no_stock_count
-  total_expense: number // expense
-  net_income: number // average revenue per transaction
-  expense_count: number // number of expense records
+  // Revenue metrics
+  total_sales: number // sales revenue only
+  service_revenue: number // service revenue
+  total_revenue: number // combined sales + services
+  net_income: number // revenue - expenses
+
+  // Outstanding balances
+  total_outstanding: number // total receivables
+  sales_outstanding: number // sales receivables
+  services_outstanding: number // services receivables
+
+  // Service performance
+  total_services: number // total services in period
+  active_services: number // pending/in-progress services
+  completed_services: number // completed services
+  service_completion_rate: number // completion percentage
+
+  // Schedule metrics
+  today_schedules: number // schedules today
+  pending_schedules: number // pending schedules today
+
+  // Client metrics
+  total_clients: number // total clients
+  new_clients: number // new clients in period
+
+  // Inventory
+  low_stock_items: number // low stock count
+  no_stock_items: number // out of stock count
+  inventory_alerts: number // combined alerts
+
+  // Expenses
+  total_expense: number // total expenses
+
+  // Top selling
   top_selling_item: {
     name: string | null // name of the top selling item (nullable)
     quantity: number // quantity sold
