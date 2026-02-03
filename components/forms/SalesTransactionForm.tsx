@@ -51,39 +51,57 @@ export default function SalesTransactionForm({
   onClose,
 }: SalesTransactionFormProps) {
   const { assigned_stall, role } = useCurrentUser()
-  const formSchema = z.object({
-    stall:
-      role === "admin"
-        ? z.number({
-            required_error: "Stall is required",
-            invalid_type_error: "Stall is required",
-          })
-        : z.number().nullable().optional(),
-    client_id: z
-      .number({
-        required_error: "Client is required",
-      })
-      .nullable(),
-    manual_receipt_number: z.string().optional(),
-    payments: z
-      .array(
-        z.object({
-          payment_type: z.string().min(1, "Payment type is required"),
-          amount: z.number().min(1, "Amount must be a positive number"),
-        }),
-      )
-      .min(1, "At least one payment is required"),
-    items: z
-      .array(
-        z.object({
-          item_id: z.number(),
-          quantity: z.number().min(1, "Quantity must be at least 1"),
-          final_price_per_unit: z.number().min(0),
-          print_price_per_unit: z.number().min(0).optional(),
-        }),
-      )
-      .min(1, "at least one item is required"),
-  })
+  const formSchema = z
+    .object({
+      stall:
+        role === "admin"
+          ? z.number({
+              required_error: "Stall is required",
+              invalid_type_error: "Stall is required",
+            })
+          : z.number().nullable().optional(),
+      client_id: z
+        .number({
+          required_error: "Client is required",
+        })
+        .nullable(),
+      manual_receipt_number: z.string().optional(),
+      payments: z
+        .array(
+          z.object({
+            payment_type: z.string().min(1, "Payment type is required"),
+            amount: z.number().min(1, "Amount must be a positive number"),
+          }),
+        )
+        .min(1, "At least one payment is required"),
+      items: z
+        .array(
+          z.object({
+            item_id: z.number(),
+            quantity: z.number().min(1, "Quantity must be at least 1"),
+            final_price_per_unit: z.number().min(0),
+            print_price_per_unit: z.number().min(0).optional(),
+          }),
+        )
+        .min(1, "at least one item is required"),
+    })
+    .refine(
+      (data) => {
+        const totalItems = data.items.reduce(
+          (sum, item) => sum + item.quantity * item.final_price_per_unit,
+          0,
+        )
+        const totalPayments = data.payments.reduce(
+          (sum, payment) => sum + payment.amount,
+          0,
+        )
+        return totalPayments <= totalItems
+      },
+      {
+        message: "Total payments cannot exceed total items amount",
+        path: ["payments"],
+      },
+    )
 
   type FormValues = z.infer<typeof formSchema>
 
@@ -435,7 +453,8 @@ export default function SalesTransactionForm({
             />
             {form.formState.errors.payments && (
               <p className="text-sm font-medium text-destructive mt-2">
-                {form.formState.errors.payments?.root?.message}
+                {form.formState.errors.payments?.message ||
+                  form.formState.errors.payments?.root?.message}
               </p>
             )}
           </div>
@@ -457,14 +476,34 @@ export default function SalesTransactionForm({
                 </span>
               </div>
 
-              <div className="flex justify-between items-center p-3 rounded-md bg-background/50 hover:bg-background/80 transition-colors">
+              <div
+                className={`flex justify-between items-center p-3 rounded-md transition-colors ${
+                  totalPayments > totalItemsAmount
+                    ? "bg-destructive/10 border border-destructive/30"
+                    : "bg-background/50 hover:bg-background/80"
+                }`}
+              >
                 <span className="text-muted-foreground font-medium">
                   Total Payments
                 </span>
-                <span className="font-semibold text-lg text-primary">
+                <span
+                  className={`font-semibold text-lg ${
+                    totalPayments > totalItemsAmount
+                      ? "text-destructive"
+                      : "text-primary"
+                  }`}
+                >
                   {formatCurrency(totalPayments)}
                 </span>
               </div>
+
+              {totalPayments > totalItemsAmount && (
+                <div className="p-3 rounded-md bg-destructive/10 border border-destructive/30">
+                  <p className="text-sm text-destructive font-medium">
+                    ⚠️ Payments exceed total items amount
+                  </p>
+                </div>
+              )}
 
               <div className="flex justify-between items-center p-4 rounded-md bg-background border-2 border-primary/20">
                 <span className="font-semibold text-base">Change / Due</span>
