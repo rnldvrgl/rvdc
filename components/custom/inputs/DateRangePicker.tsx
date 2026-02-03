@@ -1,44 +1,55 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
-import { cn } from '@/lib/utils/helpers'
-import { formatBackDate } from '@/lib/utils/helpers/date'
-import { startOfToday, subDays } from 'date-fns'
-import { CalendarIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { DateRange } from 'react-day-picker'
-import { useFormContext, useWatch } from 'react-hook-form'
+} from "@/components/ui/popover"
+import { cn } from "@/lib/utils/helpers"
+import { formatBackDate } from "@/lib/utils/helpers/date"
+import { startOfToday, subDays } from "date-fns"
+import { CalendarIcon } from "lucide-react"
+import { useEffect, useState } from "react"
+import { DateRange } from "react-day-picker"
+import { useFormContext, useWatch } from "react-hook-form"
 
 interface DateRangePickerProps {
   name?: string
   onChange?: (range: DateRange) => void
+  defaultValue?: DateRange
+  classNames?: string
 }
 
 const presets: { label: string; range: DateRange }[] = [
-  { label: 'Today', range: { from: startOfToday(), to: startOfToday() } },
   {
-    label: 'Last 7 Days',
+    label: "This Year",
+    range: {
+      from: new Date(new Date().getFullYear(), 0, 1),
+      to: new Date(new Date().getFullYear(), 11, 31),
+    },
+  },
+  { label: "Today", range: { from: startOfToday(), to: startOfToday() } },
+  {
+    label: "Last 7 Days",
     range: { from: subDays(startOfToday(), 6), to: startOfToday() },
   },
   {
-    label: 'Last 14 Days',
+    label: "Last 14 Days",
     range: { from: subDays(startOfToday(), 13), to: startOfToday() },
   },
   {
-    label: 'Last 30 Days',
+    label: "Last 30 Days",
     range: { from: subDays(startOfToday(), 29), to: startOfToday() },
   },
 ]
 
 export const DateRangePicker = ({
-  name = 'range',
+  name = "range",
   onChange,
+  defaultValue,
+  classNames,
 }: DateRangePickerProps) => {
   const { setValue } = useFormContext()
   const formRange = useWatch<{ [key: string]: DateRange }>({ name })
@@ -50,15 +61,15 @@ export const DateRangePicker = ({
 
   const [open, setOpen] = useState(false)
   const [date, setDate] = useState<DateRange>(
-    formRange?.from ? formRange : defaultRange,
+    formRange?.from ? formRange : (defaultValue ?? defaultRange),
   )
 
   useEffect(() => {
     const transformedRange = {
       from: date.from
-        ? new Date(formatBackDate(date.from, 'yyyy-MM-dd'))
+        ? new Date(formatBackDate(date.from, "yyyy-MM-dd"))
         : undefined,
-      to: date.to ? new Date(formatBackDate(date.to, 'yyyy-MM-dd')) : undefined,
+      to: date.to ? new Date(formatBackDate(date.to, "yyyy-MM-dd")) : undefined,
     }
     setValue(name, transformedRange, {
       shouldDirty: true,
@@ -90,13 +101,13 @@ export const DateRangePicker = ({
       <PopoverTrigger asChild>
         <Button
           variant="secondary"
-          className="max-w-[260px] justify-start text-left"
+          className={cn("max-w-[260px] justify-start text-left", classNames)}
         >
           <CalendarIcon className="mr-2 size-4" />
           {date.from && date.to ? (
             <>
-              {formatBackDate(date.from, 'LLL dd, y')} –{' '}
-              {formatBackDate(date.to, 'LLL dd, y')}
+              {formatBackDate(date.from, "LLL dd, y")} –{" "}
+              {formatBackDate(date.to, "LLL dd, y")}
             </>
           ) : (
             <span>Pick a date range</span>
@@ -133,8 +144,8 @@ export const DateRangePicker = ({
                     key={preset.label}
                     variant="ghost"
                     className={cn(
-                      'w-full justify-start text-sm',
-                      isActive && 'bg-secondary',
+                      "w-full justify-start text-sm",
+                      isActive && "bg-secondary",
                     )}
                     onClick={() => handlePreset(preset.range)}
                   >

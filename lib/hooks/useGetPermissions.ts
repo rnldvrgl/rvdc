@@ -1,72 +1,86 @@
-import { Roles } from '@/lib/constants/types'
-import { useMemo } from 'react'
+import { Roles } from "@/lib/constants/types"
+import { useMemo } from "react"
 
 export function useGetPermissions(role: Roles) {
   return useMemo(() => {
+    // Common permissions across multiple roles
     const commonViewPermissions = [
-      'view_clients',
-      'view_technicians',
-      'view_items',
-      'view_stallstocks',
-      'view_settings',
-      'view_expenses',
-      'view_sales',
-      'view_remittances',
-      'view_cheque_collections',
+      "view_clients",
+      "view_items",
+      "view_stall_stocks",
+      "view_settings",
+      "view_sales",
+      "view_services",
+    ]
+
+    const commonFinancialPermissions = [
+      "view_expenses",
+      //   "view_remittances",
+      //   "view_cheque_collections",
+    ]
+
+    const commonAirconPermissions = [
+      "manage_aircon_brands",
+      "manage_aircon_models",
+      "manage_aircon_units",
+      "view_warranty_claims",
+    ]
+
+    const commonEmployeePermissions = [
+      "view_employees",
+      "manage_attendance",
+      "view_own_offenses",
+      "view_payroll",
+    ]
+
+    const commonManagementPermissions = [
+      "manage_holidays",
+      "manage_cheque_collections",
     ]
 
     const commonShortcuts = [
-      'shortcut_add_client',
-      'shortcut_add_expense',
-      'shortcut_add_sale',
-      'shortcut_add_remittance',
-      'shortcut_add_cheque_collection',
+      "shortcut_add_client",
+      "shortcut_add_expense",
+      "shortcut_add_sale",
+      "shortcut_add_remittance",
+      "shortcut_add_service",
     ]
 
     const permissionsMap: Record<Roles, string[]> = {
       admin: [
         ...commonViewPermissions,
+        ...commonFinancialPermissions,
+        ...commonAirconPermissions,
+        ...commonEmployeePermissions,
         ...commonShortcuts,
-        'view_stockroom',
-        'view_categories',
-        'view_stalls',
-        'view_services',
-        'view_service_appliances',
-        'view_aircon_installations',
-        'view_motor_rewinds',
-        'view_home_service_schedules',
-        'view_service_status_history',
-        'shortcut_add_home_schedule',
-        'shortcut_add_service',
-        'view_aircon_brands',
-        'view_aircon_models',
-        'view_aircon_units',
-        'view_aircon_installations',
+        ...commonManagementPermissions,
+        "manage_stockroom",
+        "manage_categories",
+        "manage_stalls",
+        "manage_expense_categories",
+        "manage_payroll",
+        "manage_payroll_settings",
+        "manage_deductions",
+        "manage_attendance_admin",
+        "manage_government_benefits",
+        "manage_tax_brackets",
+        "manage_appliance_types",
       ],
       manager: [
         ...commonViewPermissions,
+        ...commonFinancialPermissions,
+        ...commonAirconPermissions,
+        ...commonEmployeePermissions,
         ...commonShortcuts,
-        'manage_stock_transfer',
-        'shortcut_add_transfer',
-        'view_services',
-        'view_service_appliances',
-        'view_aircon_installations',
-        'view_motor_rewinds',
-        'view_home_service_schedules',
-        'view_service_status_history',
-        'shortcut_add_home_schedule',
-        'shortcut_add_service',
-        'view_aircon_brands',
-        'view_aircon_models',
-        'view_aircon_units',
-        'view_aircon_installations',
+        ...commonManagementPermissions,
       ],
       clerk: [
         ...commonViewPermissions,
+        ...commonFinancialPermissions,
+        ...commonEmployeePermissions,
         ...commonShortcuts,
-        'manage_stock_transfer',
-        'shortcut_add_transfer',
       ],
+      technician: [...commonEmployeePermissions],
       guest: [],
     }
 

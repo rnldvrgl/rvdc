@@ -1,21 +1,25 @@
-'use client'
+"use client"
 
-import { getAirconBrandColumns } from '@/app/(routes)/aircons/brands/columns'
-import EntitySheet from '@/components/custom/shared/EntitySheet'
-import { DataTable } from '@/components/custom/table/DataTable'
-import AirconBrandForm from '@/components/forms/installations/AirconBrandForm'
-import { Button } from '@/components/ui/button'
-import { AirconBrands } from '@/lib/constants/interface'
-import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
-import useSearchParameters from '@/lib/hooks/useSearchParameters'
-import { useAirconBrandMutations } from '@/lib/mutations/installations/useAirconBrandMutations'
-import { useAirconBrands } from '@/lib/queries/useAircons'
-import { Plus } from 'lucide-react'
+import { getAirconBrandColumns } from "@/app/(routes)/aircons/brands/columns"
+import EntitySheet from "@/components/custom/shared/EntitySheet"
+import PageHeader from "@/components/custom/shared/PageHeader"
+import { Wrapper } from "@/components/custom/shared/Wrapper"
+import { DataTable } from "@/components/custom/table/DataTable"
+import AirconBrandForm from "@/components/forms/installations/AirconBrandForm"
+import { Button } from "@/components/ui/button"
+import { AirconBrands } from "@/lib/constants/interface"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
+import useSearchParameters from "@/lib/hooks/useSearchParameters"
+import { useAirconBrandMutations } from "@/lib/mutations/installations/useAirconBrandMutations"
+import { useAirconBrands } from "@/lib/queries/useAircons"
+import { Plus, Wind } from "lucide-react"
 
 export default function AirconBrandsPage() {
+  const { isAdmin, canManage } = useCurrentUser()
   const { page, limit, search, ordering, filter } = useSearchParameters()
   const { deleteBrand } = useAirconBrandMutations()
-  const { data, isLoading } = useAirconBrands({
+  const { data, isLoading, refetch } = useAirconBrands({
     page,
     limit,
     search,
@@ -35,19 +39,98 @@ export default function AirconBrandsPage() {
     closeEntity: closeAddSheet,
   } = useEntitySheet<AirconBrands>()
 
+  const {
+    entityState: { open: viewOpen, entity: viewEntity },
+    openEntity: openViewSheet,
+    closeEntity: closeViewSheet,
+  } = useEntitySheet<AirconBrands>()
+
   const handleDelete = (brand: AirconBrands) => {
     if (brand.id !== undefined) {
       deleteBrand.mutate(brand.id)
     }
   }
 
+  const handleView = (brand: AirconBrands) => {
+    openViewSheet(brand)
+  }
+
   const columns = getAirconBrandColumns({
     onEdit: openEditSheet,
     onDelete: handleDelete,
+    onView: handleView,
   })
 
   return (
-    <div className="container mx-auto">
+    <Wrapper>
+      <PageHeader
+        icon={Wind}
+        title="Aircon Brands"
+        description="Manage air conditioning equipment brands and manufacturer information for installation and service operations."
+        breadcrumbs={["Dashboard", "Aircons", "Brands"]}
+        onRefresh={refetch}
+        actionButton={
+          canManage && (
+            <Button onClick={() => openAddSheet()}>
+              <Plus className="size-4 mr-2" />
+              Add Brand
+            </Button>
+          )
+        }
+      />
+
+      {/* View Brand Sheet */}
+      <EntitySheet<AirconBrands>
+        open={viewOpen}
+        onClose={closeViewSheet}
+        entity={viewEntity}
+        title="Brand Details"
+        description="View detailed information about this aircon brand."
+        renderForm={({ onClose, entity }) =>
+          entity ? (
+            <div className="space-y-6 p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Brand Name
+                  </label>
+                  <p className="text-base font-medium">
+                    {entity.name || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Brand ID
+                  </label>
+                  <p className="text-base font-medium font-mono bg-muted px-2 py-1 rounded">
+                    {entity.id || "N/A"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                >
+                  Close
+                </Button>
+                {isAdmin && (
+                  <Button
+                    onClick={() => {
+                      onClose()
+                      openEditSheet(entity)
+                    }}
+                  >
+                    <Plus className="size-4 mr-2" />
+                    Edit Brand
+                  </Button>
+                )}
+              </div>
+            </div>
+          ) : null
+        }
+      />
+
       {/* Edit Aircon Brand Sheet */}
       <EntitySheet<AirconBrands>
         open={editOpen}
@@ -76,17 +159,22 @@ export default function AirconBrandsPage() {
         )}
       />
 
+      {/* Main Content */}
       <DataTable
+        title="Aircon Brands"
+        description="Manage air conditioning equipment manufacturers"
         isLoading={isLoading}
         columns={columns}
-        data={data || { count: 0, next: null, previous: null, results: [] }}
-        headerActions={
-          <Button onClick={() => openAddSheet()}>
-            <Plus className="size-4 mr-1" />
-            Add Brand
-          </Button>
+        data={
+          data || {
+            count: 0,
+            next: null,
+            previous: null,
+            results: [],
+          }
         }
+        withoutDateRangeFilter
       />
-    </div>
+    </Wrapper>
   )
 }

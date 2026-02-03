@@ -1,4 +1,4 @@
-import useUserProfileStore from '@/lib/store/useUserProfileStore'
+import useUserProfileStore from "@/lib/store/useUserProfileStore"
 
 export const useCurrentUser = () => {
   const userProfile = useUserProfileStore((state) => state.userProfile)
@@ -9,5 +9,7 @@ export const useCurrentUser = () => {
     assigned_stall: userProfile?.assigned_stall,
     first_name: userProfile?.first_name,
     last_name: userProfile?.last_name,
+    isAdmin: userProfile?.role === "admin",
+    canManage: userProfile?.role === "manager" || userProfile?.role === "admin",
   }
 }

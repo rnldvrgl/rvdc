@@ -1,28 +1,30 @@
-'use client'
+"use client"
 
-import { getSalesTransactionColumns } from '@/app/(routes)/sales/columns'
-import EntitySheet from '@/components/custom/shared/EntitySheet'
-import { SalesTransactionPrintContent } from '@/components/custom/shared/SalesTransactionPrintContent '
-import { DataTable } from '@/components/custom/table/DataTable'
-import { SalesTransactionDetails } from '@/components/details/SalesTransactionDetails'
-import SalesTransactionForm from '@/components/forms/SalesTransactionForm'
-import { Button } from '@/components/ui/button'
-import { SalesTransaction } from '@/lib/constants/interface'
-import { useCurrentUser } from '@/lib/hooks/useCurrentUser'
-import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
-import { usePrint } from '@/lib/hooks/usePrint'
-import useSearchParameters from '@/lib/hooks/useSearchParameters'
-import { useSalesTransactionMutations } from '@/lib/mutations/useSalesTransactionMutations'
+import { getSalesTransactionColumns } from "@/app/(routes)/sales/columns"
+import EntitySheet from "@/components/custom/shared/EntitySheet"
+import PageHeader from "@/components/custom/shared/PageHeader"
+import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTransactionPrintContent "
+import { Wrapper } from "@/components/custom/shared/Wrapper"
+import { DataTable } from "@/components/custom/table/DataTable"
+import { SalesTransactionDetails } from "@/components/details/SalesTransactionDetails"
+import SalesTransactionForm from "@/components/forms/SalesTransactionForm"
+import { Button } from "@/components/ui/button"
+import { SalesTransaction } from "@/lib/constants/interface"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
+import { usePrint } from "@/lib/hooks/usePrint"
+import useSearchParameters from "@/lib/hooks/useSearchParameters"
+import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
 import {
   useSalesTransactionFilters,
   useSalesTransactions,
-} from '@/lib/queries/sales/useSalesTransactions'
-import { Plus } from 'lucide-react'
+} from "@/lib/queries/sales/useSalesTransactions"
+import { Plus, ShoppingCart } from "lucide-react"
 
 export default function SalesTransactionsPage() {
   const { role } = useCurrentUser()
   const { page, limit, search, ordering, filter } = useSearchParameters()
-  const { data, isLoading } = useSalesTransactions({
+  const { data, isLoading, refetch } = useSalesTransactions({
     page,
     limit,
     search,
@@ -50,7 +52,7 @@ export default function SalesTransactionsPage() {
   } = useEntitySheet<SalesTransaction>()
 
   const { printRef, handlePrint, printData } = usePrint<SalesTransaction>({
-    documentTitle: 'Receipt',
+    documentTitle: "Receipt",
   })
 
   const columns = getSalesTransactionColumns({
@@ -60,11 +62,12 @@ export default function SalesTransactionsPage() {
     onDelete: (tx) => {
       if (tx?.id) deleteTransaction.mutate(tx.id)
     },
-    role: role ?? 'guest',
+    role: role ?? "guest",
   })
 
   return (
-    <>
+    <Wrapper>
+      {/* Hidden print component */}
       {printData && (
         <div className="hidden">
           <SalesTransactionPrintContent
@@ -75,8 +78,22 @@ export default function SalesTransactionsPage() {
         </div>
       )}
 
-      {/* Create sheet */}
+      <PageHeader
+        icon={ShoppingCart}
+        title="Sales Management"
+        description="Track sales transactions, manage customer orders, and monitor revenue performance across all stalls."
+        breadcrumbs={["Dashboard", "Sales", "Transactions"]}
+        actionButton={
+          <Button onClick={() => openCreate()}>
+            <Plus className="size-4 mr-2" />
+            New Sale
+          </Button>
+        }
+      />
+
+      {/* Create Transaction Sheet */}
       <EntitySheet<SalesTransaction>
+        className="sm:max-w-3xl md:max-w-4xl lg:max-w-5xl"
         open={createSheet.open}
         onClose={closeCreate}
         title="New Sale"
@@ -87,8 +104,9 @@ export default function SalesTransactionsPage() {
         )}
       />
 
-      {/* Edit sheet */}
+      {/* Edit Transaction Sheet */}
       <EntitySheet<SalesTransaction>
+        className="sm:max-w-3xl md:max-w-4xl lg:max-w-5xl"
         open={editSheet.open}
         onClose={closeEdit}
         entity={editSheet.entity}
@@ -103,13 +121,14 @@ export default function SalesTransactionsPage() {
         )}
       />
 
-      {/* View sheet */}
+      {/* View Transaction Sheet */}
       <EntitySheet<SalesTransaction>
+        className="sm:min-w-2xl md:min-w-3xl xl:min-w-4xl"
         open={viewSheet.open}
         onClose={closeView}
         entity={viewSheet.entity}
-        title="View Transaction"
-        description="This is read-only"
+        title="Transaction Details"
+        description="View detailed information about this sales transaction."
         renderForm={({ onClose, entity }) =>
           entity ? (
             <SalesTransactionDetails
@@ -120,21 +139,25 @@ export default function SalesTransactionsPage() {
         }
       />
 
-      {/* DataTable */}
+      {/* Main Content */}
       <DataTable
+        title="Sales Transactions"
+        description="Manage and track all sales transactions"
         isLoading={isLoading}
         columns={columns}
-        data={data ?? { count: 0, next: null, previous: null, results: [] }}
-        headerActions={
-          <Button onClick={() => openCreate()}>
-            <Plus className="size-4 mr-1" />
-            New Sale
-          </Button>
+        data={
+          data ?? {
+            count: 0,
+            next: null,
+            previous: null,
+            results: [],
+          }
         }
         defaultRangePreset="Today"
         filters={filters}
         orderingOptions={orderingOptions}
+        onRefresh={refetch}
       />
-    </>
+    </Wrapper>
   )
 }

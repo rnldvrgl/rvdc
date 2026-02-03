@@ -1,22 +1,25 @@
-'use client'
+"use client"
 
-import { getItemColumns } from '@/app/(routes)/inventory/items/columns'
-import EntitySheet from '@/components/custom/shared/EntitySheet'
-import { DataTable } from '@/components/custom/table/DataTable'
-import ItemForm from '@/components/forms/inventory/ItemForm'
-import { Button } from '@/components/ui/button'
-import { Item } from '@/lib/constants/interface'
-import { useEntitySheet } from '@/lib/hooks/useEntitySheet'
-import useSearchParameters from '@/lib/hooks/useSearchParameters'
-import { useItemMutations } from '@/lib/mutations/useItemMutations'
-import { useItemFilters, useItems } from '@/lib/queries/inventory/useItems'
-import useUserProfileStore from '@/lib/store/useUserProfileStore'
-import { Plus } from 'lucide-react'
+import { getItemColumns } from "@/app/(routes)/inventory/items/columns"
+import EntitySheet from "@/components/custom/shared/EntitySheet"
+import PageHeader from "@/components/custom/shared/PageHeader"
+import { Wrapper } from "@/components/custom/shared/Wrapper"
+import { DataTable } from "@/components/custom/table/DataTable"
+import ItemForm from "@/components/forms/inventory/ItemForm"
+import { Button } from "@/components/ui/button"
+import { Item } from "@/lib/constants/interface"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
+import useSearchParameters from "@/lib/hooks/useSearchParameters"
+import { useItemMutations } from "@/lib/mutations/useItemMutations"
+import { useItemFilters, useItems } from "@/lib/queries/inventory/useItems"
+import { Package, Plus } from "lucide-react"
 
 export default function ItemsPage() {
+  const { isAdmin, role } = useCurrentUser()
   const { page, limit, search, ordering, filter } = useSearchParameters()
   const { deleteItem } = useItemMutations()
-  const { data, isLoading } = useItems({
+  const { data, isLoading, refetch } = useItems({
     page,
     limit,
     search,
@@ -24,8 +27,6 @@ export default function ItemsPage() {
     filter,
   })
   const { filters, orderingOptions } = useItemFilters()
-  const userProfile = useUserProfileStore((state) => state.userProfile)
-  const role = userProfile?.role || 'guest'
 
   const {
     entityState: { open: editOpen, entity },
@@ -48,11 +49,27 @@ export default function ItemsPage() {
   const columns = getItemColumns({
     onEdit: openEditSheet,
     onDelete: handleDelete,
-    role,
+    role: role || "guest",
   })
 
   return (
-    <div className="container mx-auto">
+    <Wrapper>
+      <PageHeader
+        icon={Package}
+        title="Inventory Items"
+        description="Manage your product catalog, track item details, and monitor inventory levels across all categories."
+        breadcrumbs={["Dashboard", "Inventory", "Items"]}
+        actionButton={
+          isAdmin && (
+            <Button onClick={() => openAddSheet()}>
+              <Plus className="size-4 mr-2" />
+              Add Item
+            </Button>
+          )
+        }
+      />
+
+      {/* Edit Item Sheet */}
       <EntitySheet<Item>
         open={editOpen}
         onClose={closeEditSheet}
@@ -68,6 +85,7 @@ export default function ItemsPage() {
         )}
       />
 
+      {/* Add Item Sheet */}
       <EntitySheet<Item>
         open={addOpen}
         onClose={closeAddSheet}
@@ -77,21 +95,24 @@ export default function ItemsPage() {
         renderForm={({ forceClose }) => <ItemForm onClose={forceClose} />}
       />
 
+      {/* Main Content */}
       <DataTable
+        title="Inventory Items"
+        description="Manage your product catalog and inventory"
         isLoading={isLoading}
         columns={columns}
-        data={data || { count: 0, next: null, previous: null, results: [] }}
-        headerActions={
-          role === 'admin' && (
-            <Button onClick={() => openAddSheet()}>
-              <Plus className="size-4 mr-1" />
-              Add Item
-            </Button>
-          )
+        data={
+          data || {
+            count: 0,
+            next: null,
+            previous: null,
+            results: [],
+          }
         }
         filters={filters}
         orderingOptions={orderingOptions}
+        onRefresh={refetch}
       />
-    </div>
+    </Wrapper>
   )
 }

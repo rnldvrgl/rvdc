@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { ComboBox } from '@/components/custom/inputs/ComboBox'
-import { Button } from '@/components/ui/button'
-import { FormLabel } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import { Button } from "@/components/ui/button"
+import { FormLabel } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -11,10 +11,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Item, ItemEntry } from '@/lib/constants/interface'
-import { formatCurrency } from '@/lib/utils/helpers'
-import { Plus, Trash2 } from 'lucide-react'
+} from "@/components/ui/table"
+import { Item, ItemEntry } from "@/lib/constants/interface"
+import { formatCurrency } from "@/lib/utils/helpers"
+import { Plus, Trash2 } from "lucide-react"
 
 export default function ItemQuantitySelector({
   items,
@@ -84,7 +84,7 @@ export default function ItemQuantitySelector({
     const wholesale = Number(itm.item.wholesale_price) || 0
     const technician = Number(itm.item.technician_price) || 0
     const effective = allowPriceChange
-      ? itm.final_price_per_unit ?? retail
+      ? (itm.final_price_per_unit ?? retail)
       : retail
     return { retail, wholesale, technician, effective }
   }
@@ -118,37 +118,39 @@ export default function ItemQuantitySelector({
           <Table>
             <TableHeader>
               <TableRow className="bg-muted">
-                <TableHead className="w-1/4">Item</TableHead>
-                <TableHead className="w-40">Qty</TableHead>
+                <TableHead className="min-w-[250px]">Item</TableHead>
+                <TableHead className="min-w-[100px]">Qty</TableHead>
 
                 <TableHead
-                  className={`w-40 ${!allowPriceChange ? 'hidden' : ''}`}
+                  className={`min-w-[140px] ${!allowPriceChange ? "hidden" : ""}`}
                 >
                   Discounted Price
                 </TableHead>
 
                 <TableHead
-                  className={`w-40 ${!allowPriceChange ? 'hidden' : ''}`}
+                  className={`min-w-[140px] ${!allowPriceChange ? "hidden" : ""}`}
                 >
                   Print Price
                 </TableHead>
 
-                <TableHead className="w-40">Retail Price</TableHead>
+                <TableHead className="min-w-[120px]">Retail Price</TableHead>
 
                 <TableHead
-                  className={`w-40 ${!allowPriceChange ? 'hidden' : ''}`}
+                  className={`min-w-[140px] ${!allowPriceChange ? "hidden" : ""}`}
                 >
                   Wholesale Price
                 </TableHead>
 
                 <TableHead
-                  className={`w-40 ${!allowPriceChange ? 'hidden' : ''}`}
+                  className={`min-w-[140px] ${!allowPriceChange ? "hidden" : ""}`}
                 >
                   Technician Price
                 </TableHead>
 
-                <TableHead className="w-40 text-right">Total</TableHead>
-                <TableHead className="w-8" />
+                <TableHead className="min-w-[120px] text-right">
+                  Total
+                </TableHead>
+                <TableHead className="w-12" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -160,7 +162,7 @@ export default function ItemQuantitySelector({
                     const lineTotal = itm.quantity * effective
                     return (
                       <TableRow
-                        key={itm.item.id + '-' + idx}
+                        key={itm.item.id + "-" + idx}
                         className="hover:bg-muted/50 transition-colors"
                       >
                         <TableCell>
@@ -188,10 +190,11 @@ export default function ItemQuantitySelector({
                             onChange={(e) =>
                               handleUpdate(
                                 idx,
-                                'quantity',
+                                "quantity",
                                 parseInt(e.target.value) || 1,
                               )
                             }
+                            className="w-full"
                             disabled={disabled}
                           />
                         </TableCell>
@@ -205,7 +208,7 @@ export default function ItemQuantitySelector({
                                 onChange={(e) =>
                                   handleUpdate(
                                     idx,
-                                    'final_price_per_unit',
+                                    "final_price_per_unit",
                                     parseFloat(e.target.value) || 0,
                                   )
                                 }
@@ -224,7 +227,7 @@ export default function ItemQuantitySelector({
                                 onChange={(e) =>
                                   handleUpdate(
                                     idx,
-                                    'print_price_per_unit',
+                                    "print_price_per_unit",
                                     parseFloat(e.target.value) || 0,
                                   )
                                 }
@@ -302,7 +305,7 @@ export default function ItemQuantitySelector({
               const lineTotal = itm.quantity * effective
               return (
                 <div
-                  key={itm.item.id + '-' + idx}
+                  key={itm.item.id + "-" + idx}
                   className="rounded-xl border p-4 shadow-sm space-y-3"
                 >
                   <ComboBox
@@ -328,7 +331,7 @@ export default function ItemQuantitySelector({
                       onChange={(e) =>
                         handleUpdate(
                           idx,
-                          'quantity',
+                          "quantity",
                           parseInt(e.target.value) || 1,
                         )
                       }
@@ -346,7 +349,7 @@ export default function ItemQuantitySelector({
                           onChange={(e) =>
                             handleUpdate(
                               idx,
-                              'final_price_per_unit',
+                              "final_price_per_unit",
                               parseFloat(e.target.value) || 0,
                             )
                           }
@@ -362,7 +365,7 @@ export default function ItemQuantitySelector({
                           onChange={(e) =>
                             handleUpdate(
                               idx,
-                              'print_price_per_unit',
+                              "print_price_per_unit",
                               parseFloat(e.target.value) || 0,
                             )
                           }

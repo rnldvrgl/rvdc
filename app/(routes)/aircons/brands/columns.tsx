@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
-import { AirconBrands, GetColumnsProps } from '@/lib/constants/interface'
-import { ColumnDef } from '@tanstack/react-table'
-import { Edit, Trash2 } from 'lucide-react'
+import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
+import { AirconBrands, GetColumnsProps } from "@/lib/constants/interface"
+import { ColumnDef } from "@tanstack/react-table"
+import { Edit, Trash2 } from "lucide-react"
 
 export function getAirconBrandColumns({
   onEdit,
@@ -11,25 +11,25 @@ export function getAirconBrandColumns({
 }: GetColumnsProps<AirconBrands>): ColumnDef<AirconBrands>[] {
   return [
     {
-      accessorKey: 'name',
-      header: 'Brand Name',
+      accessorKey: "name",
+      header: "Brand Name",
     },
     {
-      accessorKey: 'action',
-      header: 'Action',
+      accessorKey: "action",
+      header: "Action",
       cell: ({ row }) => {
         const brand = row.original
         return (
           <DataTableActions
             items={[
               {
-                label: 'Edit',
-                icon: <Edit className="size-4" />,
+                label: "Edit",
+                icon: Edit,
                 onClick: () => onEdit(brand),
               },
               {
-                label: 'Delete',
-                icon: <Trash2 className="size-4 text-destructive" />,
+                label: "Delete",
+                icon: Trash2,
                 onClick: () => onDelete(brand),
                 destructive: true,
                 confirmText: `Delete ${brand.name}?`,

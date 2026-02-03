@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import clsx from 'clsx'
+import clsx from "clsx"
 import {
   AlertTriangle,
   Bell,
@@ -10,26 +10,26 @@ import {
   Receipt,
   Trash2,
   Truck,
-} from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
-import { useInView } from 'react-intersection-observer'
+} from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { useInView } from "react-intersection-observer"
 
-import NotificationSheet from '@/components/custom/shared/NotificationSheet'
-import { DataTableActions } from '@/components/custom/table/components/DataTableActions'
-import { Button } from '@/components/ui/button'
+import NotificationSheet from "@/components/custom/shared/NotificationSheet"
+import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import type { Notification } from '@/lib/constants/interface'
-import { useNotificationMutations } from '@/lib/mutations/useNotificationMutations'
+} from "@/components/ui/dropdown-menu"
+import type { Notification } from "@/lib/constants/interface"
+import { useNotificationMutations } from "@/lib/mutations/useNotificationMutations"
 import {
   useNotifications,
   useUnreadNotificationCount,
-} from '@/lib/queries/useNotifications'
+} from "@/lib/queries/useNotifications"
 
 const typeToIcon: Record<string, typeof Bell> = {
   expense_created: Receipt,
@@ -39,10 +39,10 @@ const typeToIcon: Record<string, typeof Bell> = {
   transfer_created: Truck,
 }
 
-const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
+const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
   const [open, setOpen] = useState(false)
   const [sheet, setSheet] = useState<{
-    type: 'expense_created' | 'transfer_created'
+    type: "expense_created" | "transfer_created"
     id: number
   } | null>(null)
 
@@ -70,28 +70,28 @@ const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
 
   const handleNotificationClick = (notif: Notification) => {
     switch (notif.type) {
-      case 'expense_created': {
+      case "expense_created": {
         const expenseId = notif.data?.expense_id
-        if (typeof expenseId === 'number') {
-          setSheet({ type: 'expense_created', id: expenseId })
+        if (typeof expenseId === "number") {
+          setSheet({ type: "expense_created", id: expenseId })
         } else {
-          console.error('Missing or invalid expense_id', notif)
+          console.error("Missing or invalid expense_id", notif)
         }
         break
       }
 
-      case 'transfer_created': {
+      case "transfer_created": {
         const transferId = notif.data?.transfer_id
-        if (typeof transferId === 'number') {
-          setSheet({ type: 'transfer_created', id: transferId })
+        if (typeof transferId === "number") {
+          setSheet({ type: "transfer_created", id: transferId })
         } else {
-          console.error('Missing or invalid transfer_id', notif)
+          console.error("Missing or invalid transfer_id", notif)
         }
         break
       }
 
       default:
-        console.warn('Unhandled notification type:', notif.type)
+        console.warn("Unhandled notification type:", notif.type)
     }
   }
 
@@ -148,8 +148,8 @@ const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
                     <div
                       key={n.id ?? `${n.summary}-${n.created_at}`}
                       className={clsx(
-                        'flex items-center p-3 rounded-lg hover:bg-accent transition relative cursor-pointer',
-                        !n.is_read && 'bg-muted/50',
+                        "flex items-center p-3 rounded-lg hover:bg-accent transition relative cursor-pointer",
+                        !n.is_read && "bg-muted/50",
                       )}
                       onClick={() => {
                         handleNotificationClick(n)
@@ -158,25 +158,25 @@ const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
                         }
                       }}
                     >
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         <Icon
                           className={clsx(
-                            'size-5',
-                            n.type === 'stock_low' &&
-                              'text-yellow-600 dark:text-yellow-400',
-                            n.type === 'expense_created' &&
-                              'text-blue-600 dark:text-blue-400',
-                            n.type === 'appointment_reminder' &&
-                              'text-green-600 dark:text-green-400',
-                            n.type === 'restock' &&
-                              'text-purple-600 dark:text-purple-400',
-                            n.type === 'transfer_created' &&
-                              'text-orange-600 dark:text-orange-400',
-                            !n.type && 'text-muted-foreground',
+                            "size-5",
+                            n.type === "stock_low" &&
+                              "text-yellow-600 dark:text-yellow-400",
+                            n.type === "expense_created" &&
+                              "text-blue-600 dark:text-blue-400",
+                            n.type === "appointment_reminder" &&
+                              "text-green-600 dark:text-green-400",
+                            n.type === "restock" &&
+                              "text-purple-600 dark:text-purple-400",
+                            n.type === "transfer_created" &&
+                              "text-orange-600 dark:text-orange-400",
+                            !n.type && "text-muted-foreground",
                           )}
                         />
                       </div>
-                      <div className="ml-3 flex-grow">
+                      <div className="ml-3 grow">
                         <p className="text-sm font-semibold">{n.summary}</p>
                         <p className="text-xs text-muted-foreground">
                           {n.relative_time}
@@ -190,21 +190,19 @@ const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
                           ...(!n.is_read
                             ? [
                                 {
-                                  label: 'Mark as read',
-                                  icon: <Check />,
+                                  label: "Mark as read",
+                                  icon: Check,
                                   onClick: () => markAsRead.mutate(n.id),
                                 },
                               ]
                             : []),
                           {
-                            label: 'Delete',
-                            icon: (
-                              <Trash2 className="size-4 text-destructive" />
-                            ),
+                            label: "Delete",
+                            icon: Trash2,
                             destructive: true,
                             onClick: () => deleteNotification.mutate(n.id),
-                            confirmText: 'Delete notification?',
-                            confirmDescription: 'This cannot be undone.',
+                            confirmText: "Delete notification?",
+                            confirmDescription: "This cannot be undone.",
                           },
                         ]}
                       />
@@ -216,7 +214,7 @@ const NotificationArea = ({ align }: { align: 'start' | 'end' | 'center' }) => {
                     ref={loadMoreRef}
                     className="flex w-full justify-center py-2 text-xs text-muted-foreground"
                   >
-                    {isFetchingNextPage ? 'Loading more...' : 'Load more...'}
+                    {isFetchingNextPage ? "Loading more..." : "Load more..."}
                   </div>
                 )}
               </>

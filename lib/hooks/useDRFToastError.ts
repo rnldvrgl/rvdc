@@ -1,49 +1,73 @@
-import { AxiosError } from 'axios'
-import { useCallback } from 'react'
-import toast from 'react-hot-toast'
+import { isAxiosError } from "axios"
+import { useCallback } from "react"
+import { toast } from "sonner"
 
-type DRFErrorData =
-  | string
-  | string[]
-  | Record<string, string | string[] | undefined>
-  | null
-  | undefined
+type DRFErrorData = string | string[] | Record<string, string | string[]>
 
-function extractDRFErrorMessages(errorData: DRFErrorData): string {
-  if (!errorData) return 'An unknown error occurred.'
+export function extractDRFErrorMessages(errorData: DRFErrorData): string {
+  if (!errorData) {
+    return "An unknown error occurred."
+  }
 
-  if (typeof errorData === 'string') {
+  // Plain string
+  if (typeof errorData === "string") {
     return errorData
   }
 
+  // Array of messages
   if (Array.isArray(errorData)) {
-    return errorData.join(', ')
+    return errorData.join(", ")
   }
 
-  if (typeof errorData === 'object') {
-    if (Array.isArray(errorData.non_field_errors)) {
-      return errorData.non_field_errors.join(', ')
+  // Object (most DRF responses)
+  if (typeof errorData === "object") {
+    // Common DRF pattern
+    if (typeof errorData.detail === "string") {
+      return errorData.detail
     }
 
-    const messages = Object.entries(errorData).map(([field, msgs]) => {
-      if (Array.isArray(msgs)) {
-        return `${field}: ${msgs.join(', ')}`
-      } else {
-        return `${field}: ${msgs}`
+    // Another common DRF pattern
+    if (Array.isArray(errorData.non_field_errors)) {
+      return errorData.non_field_errors.join(", ")
+    }
+
+    // Generic field errors
+    const messages: string[] = []
+
+    for (const [field, value] of Object.entries(errorData)) {
+      if (Array.isArray(value)) {
+        messages.push(`${field}: ${value.join(", ")}`)
+      } else if (typeof value === "string") {
+        messages.push(`${field}: ${value}`)
       }
-    })
-    return messages.join(' | ')
+    }
+
+    if (messages.length > 0) {
+      return messages.join(" | ")
+    }
   }
 
-  return 'An unexpected error occurred.'
+  return "An unexpected error occurred."
 }
 
 export function useDRFToastError() {
   const handleError = useCallback(
-    (err: unknown, fallback = 'Something went wrong.') => {
-      const axiosErr = err as AxiosError<DRFErrorData>
-      const msg = extractDRFErrorMessages(axiosErr?.response?.data) || fallback
-      toast.error(msg)
+    (err: unknown, fallback = "Something went wrong.") => {
+      let message = fallback
+
+      if (isAxiosError(err)) {
+        // Network / CORS / timeout
+        if (!err.response) {
+          message =
+            err.message || "Network error. Please check your connection."
+        } else {
+          message = extractDRFErrorMessages(err.response.data)
+        }
+      } else if (err instanceof Error) {
+        message = err.message
+      }
+
+      toast.error(message)
     },
     [],
   )

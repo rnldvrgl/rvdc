@@ -1,12 +1,12 @@
-import { AirconTypes, ChequeStatus } from '@/lib/constants/general'
+import { AirconTypes, ChequeStatus } from "@/lib/constants/general"
 import {
   Client,
   ComboboxOption,
   Roles,
   UnitChoice,
-} from '@/lib/constants/types'
-import { RemixiconComponentType } from '@remixicon/react'
-import { LucideIcon } from 'lucide-react'
+} from "@/lib/constants/types"
+import { RemixiconComponentType } from "@remixicon/react"
+import { LucideIcon } from "lucide-react"
 
 // ---------------------
 // API Mutations & Sheets
@@ -17,6 +17,10 @@ export interface UseApiMutationProps<TVariables, TData> {
   invalidateQueries?: { queryKey: string[] }[]
   onSuccess?: (data: TData, variables: TVariables) => void
   onError?: (error: unknown) => void
+  // Toast.promise configuration
+  usePromiseToast?: boolean // Enable toast.promise instead of toast.success/error
+  loadingMessage?: string // Message shown during loading
+  errorMessage?: string // Custom error message (overrides DRF error handling)
 }
 
 export interface GetColumnsProps<T> {
@@ -185,6 +189,8 @@ export interface Stock {
   track_stock: boolean
   stock_room_quantity: number
   stock_room_status: string
+  min_threshold?: number
+  max_threshold?: number
 }
 
 export interface StockPayload {
@@ -214,49 +220,6 @@ export interface StockRoomStockPayload {
 }
 
 // ---------------------
-// Stock Transfer
-// ---------------------
-export interface StockTransferItem {
-  id: number
-  transfer: number
-  item: Item
-  quantity: number
-}
-
-export interface StockTransfer {
-  id: number
-  from_stall: Stall | null
-  to_stall: Stall
-  transferred_by: User | null
-  technician: User | null
-  transfer_date: string
-  is_finalized: boolean
-  finalized_at: string | null
-  items: StockTransferItem[]
-  is_paid: boolean
-  paid_at: string | null
-  total_price: string | number
-  used_for: string
-}
-
-/**
- * This payload is for creating a transfer.
- * You can either transfer:
- * - from stock room stock (via from_stock_room_stock)
- * - or from another stall (via from_stall)
- */
-export interface StockTransferPayload {
-  from_stall: number | undefined
-  to_stall: number
-  technician: number
-  used_for: string
-  items: {
-    item: number
-    quantity: number
-  }[]
-}
-
-// ---------------------
 // Navigation
 // ---------------------
 export interface NavigationItemBase {
@@ -278,7 +241,7 @@ export interface NavigationGroup extends NavigationItemBase {
 }
 
 export interface BuildNavOptions {
-  role: 'admin' | 'manager' | 'clerk' | string
+  role: "admin" | "manager" | "clerk" | string
   permissions: string[]
 }
 
@@ -294,30 +257,86 @@ export interface Notification {
   summary: string
 }
 
+// Expense Category
+export interface ExpenseCategory {
+  id: number
+  name: string
+  description: string
+  monthly_budget: number
+  is_active: boolean
+  is_deleted: boolean
+  parent?: number
+  parent_name?: string
+  parent_data?: ExpenseCategory
+  subcategories?: ExpenseCategory[]
+  created_at: string
+  updated_at: string
+}
+
+export interface ExpenseCategoryPayload {
+  name: string
+  description?: string
+  monthly_budget?: number
+  is_active?: boolean
+  parent?: number
+}
+
+// Expense Item
+export interface ExpenseItem {
+  id: number
+  expense: number
+  item?: number
+  item_data?: Item
+  description: string
+  quantity: number
+  unit_price: number
+  total_price: number
+  created_at: string
+  updated_at: string
+}
+
+// Expense
 export interface Expense {
   id: number
   stall: number | string
   stall_data: Stall
+  category?: number
+  category_data?: ExpenseCategory
   total_price: number
   paid_amount: number
   is_paid: boolean
+  payment_status: "unpaid" | "partial" | "paid"
+  payment_method?: string
   description: string
-  source: 'manual' | 'transfer'
+  expense_date: string
+  reference_number?: string
+  vendor?: string
+  source: "manual" | "service"
+  is_deleted: boolean
+  deleted_at?: string
   created_by: { id: number; name: string }
   created_at: string
+  updated_at?: string
   paid_at?: string
-  transfer?: StockTransfer
+  items?: ExpenseItem[]
 }
 
 export interface ExpensePayload {
   stall?: number
+  category?: number
   total_price: number
   description: string
+  expense_date?: string
+  reference_number?: string
+  vendor?: string
+  payment_status?: "unpaid" | "partial" | "paid"
+  payment_method?: string
+  paid_amount?: number
 }
 
 // Payment enums
-export type PaymentType = 'cash' | 'gcash' | 'credit' | 'debit' | 'cheque'
-export type PaymentStatus = 'unpaid' | 'partial' | 'paid'
+export type PaymentType = "cash" | "gcash" | "credit" | "debit" | "cheque"
+export type PaymentStatus = "unpaid" | "partial" | "paid"
 
 // Payment
 export interface SalesPayment {
@@ -602,6 +621,7 @@ export interface AirconUnits {
   id: number
   model: AirconModels
   serial_number: string
+  outdoor_serial_number?: string | null
   sale?: number | null
   installation?: number | null
   reserved_by?: Client | null
@@ -620,9 +640,347 @@ export interface AirconUnits {
 // Request type
 export type AirconUnitPayload = {
   serial_number: string
+  outdoor_serial_number?: string
   model_id: number
   sale?: number | null
   installation?: number | null
   reserved_by?: number | null
   free_cleaning_redeemed?: boolean
+}
+
+// ---------------------
+// Services & Installations
+// ---------------------
+export type ServiceType =
+  | "repair"
+  | "inspection"
+  | "cleaning"
+  | "motor_rewind"
+  | "installation"
+export type ServiceMode = "carry_in" | "home_service" | "pull_out"
+export type ServiceStatus =
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+export type ApplianceStatus =
+  | "received"
+  | "diagnosed"
+  | "in_repair"
+  | "completed"
+  | "ready_for_pickup"
+  | "delivered"
+export type AssignmentType = "repair" | "pickup" | "delivery" | "inspect"
+
+// Appliance Type
+export interface ApplianceType {
+  id: number
+  name: string
+}
+
+// Service Appliance
+export interface ServiceAppliance {
+  id: number
+  service: number
+  appliance_type: ApplianceType | null
+  brand?: string
+  model?: string
+  issue_reported?: string
+  diagnosis_notes?: string
+  status: ApplianceStatus
+  assigned_technician?: number | null
+  assigned_technician_name?: string
+  labor_fee: string
+  labor_is_free: boolean
+  labor_original_amount?: string
+  labor_discount_amount?: string
+  labor_discount_percentage?: string
+  labor_discount_reason?: string
+  discounted_labor_fee?: string
+  items_used?: ApplianceItemUsed[]
+  total_parts_cost?: string
+}
+
+export interface ServiceAppliancePayload {
+  service?: number
+  appliance_type_id: number | null
+  brand?: string
+  model?: string
+  issue_reported?: string
+  diagnosis_notes?: string
+  status?: ApplianceStatus
+  assigned_technician?: number | null
+  labor_fee: number
+  labor_is_free?: boolean
+  labor_original_amount?: number
+  labor_discount_amount?: number
+  labor_discount_percentage?: number
+  labor_discount_reason?: string
+}
+
+// Appliance Item Used
+export interface ApplianceItemUsed {
+  id: number
+  appliance: number
+  item: number
+  item_name: string
+  item_sku: string
+  item_price: string
+  quantity: number
+  is_free: boolean
+  free_quantity: number
+  promo_name?: string
+  charged_quantity: number
+  discount_amount?: string
+  discount_percentage?: string
+  discount_reason?: string
+  discounted_price?: string
+  line_total: string
+  stall_stock_id?: number | null
+  expense?: number | null
+  is_cancelled?: boolean
+  cancelled_at?: string | null
+}
+
+export interface ApplianceItemUsedPayload {
+  appliance: number
+  item: number
+  quantity: number
+  stall_stock?: number | null
+  is_free?: boolean
+  free_quantity?: number
+  promo_name?: string
+  discount_amount?: number
+  discount_percentage?: number
+  discount_reason?: string
+}
+
+// Technician Assignment
+export interface TechnicianAssignment {
+  id: number
+  service: number
+  appliance?: number | null
+  technician: number // Backend returns ID, not full User object
+  technician_name?: string // Optional: technician's full name from backend
+  assignment_type: AssignmentType
+  note?: string
+}
+
+export interface TechnicianAssignmentPayload {
+  service?: number
+  appliance?: number | null
+  technician: number
+  assignment_type: AssignmentType
+  note?: string
+}
+
+// Service Payment
+export interface ServicePayment {
+  id: number
+  service: number
+  payment_type: PaymentType
+  amount: string
+  payment_date: string
+  received_by?: User | null
+  notes?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ServicePaymentPayload {
+  service: number
+  payment_type: PaymentType
+  amount: number
+  payment_date?: string
+  received_by?: number
+  notes?: string
+}
+
+// Service Refund
+export interface ServiceRefund {
+  id: number
+  service: number
+  refund_amount: string
+  refund_type: "full" | "partial"
+  refund_type_display?: string
+  reason: string
+  refund_date: string
+  processed_by?: number | null
+  processed_by_name?: string
+  refund_method: "cash" | "gcash" | "bank_transfer"
+  refund_method_display?: string
+  notes?: string
+  created_at: string
+}
+
+export interface ServiceRefundPayload {
+  service: number
+  refund_amount: number
+  refund_type: "full" | "partial"
+  reason: string
+  processed_by?: number
+  refund_method: "cash" | "gcash" | "bank_transfer"
+  notes?: string
+}
+
+// Service
+export interface Service {
+  id: number
+  client: Client
+  stall?: Stall | null
+  service_type: ServiceType
+  service_mode: ServiceMode
+  related_transaction?: number | null
+  description?: string
+  override_address?: string
+  override_contact_person?: string
+  override_contact_number?: string
+  appointment_datetime?: string
+  pickup_date?: string
+  delivery_date?: string
+  received_at?: string
+  status: ServiceStatus
+  remarks?: string
+  notes?: string
+  created_at: string
+  updated_at: string
+  main_stall_revenue: string
+  sub_stall_revenue: string
+  total_revenue: string
+  payment_status: PaymentStatus
+  total_cost?: string
+  scheduled_end_time?: string
+  total_paid?: string
+  balance_due?: string
+  net_revenue?: string
+  has_refunds?: boolean
+  // Cancellation fields
+  cancellation_reason?: string | null
+  cancellation_date?: string | null
+  // Refund fields
+  total_refunded?: string
+  last_refund_date?: string | null
+  // Discount fields
+  service_discount_amount?: string
+  service_discount_percentage?: string
+  discount_reason?: string
+  appliances?: ServiceAppliance[]
+  technician_assignments?: TechnicianAssignment[]
+  payments?: ServicePayment[]
+}
+
+export interface ServicePayload {
+  client: number
+  service_type: ServiceType
+  service_mode: ServiceMode
+  related_transaction?: number | null
+  description?: string
+  override_address?: string
+  override_contact_person?: string
+  override_contact_number?: string
+  appointment_datetime?: string
+  pickup_date?: string
+  delivery_date?: string
+  received_at?: string
+  status?: ServiceStatus
+  remarks?: string
+  notes?: string
+  cancellation_reason?: string
+  service_discount_amount?: number
+  service_discount_percentage?: number
+  discount_reason?: string
+  technician_assignments?: TechnicianAssignmentPayload[]
+}
+
+// Aircon Installation
+export interface AirconInstallation {
+  id: number
+  service: number
+  notes?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface AirconInstallationPayload {
+  service: number
+  notes?: string
+}
+
+// Warranty Claim
+export type ClaimStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+export type ClaimType = "repair" | "replacement" | "parts" | "inspection"
+
+export interface WarrantyClaim {
+  id: number
+  unit: AirconUnits
+  service?: number | null
+  claim_type: ClaimType
+  status: ClaimStatus
+  issue_description: string
+  customer_notes?: string
+  technician_assessment?: string
+  is_valid_claim: boolean
+  reviewed_by?: User | null
+  reviewed_at?: string
+  rejection_reason?: string
+  estimated_cost: string
+  actual_cost: string
+  claim_date: string
+  completed_at?: string
+  created_at: string
+  updated_at: string
+  is_pending?: boolean
+  is_approved?: boolean
+  warranty_days_remaining_at_claim?: number
+}
+
+export interface WarrantyClaimPayload {
+  unit: number
+  service?: number | null
+  claim_type: ClaimType
+  status?: ClaimStatus
+  issue_description: string
+  customer_notes?: string
+  technician_assessment?: string
+  is_valid_claim?: boolean
+  reviewed_by?: number | null
+  rejection_reason?: string
+  estimated_cost?: number
+  actual_cost?: number
+  claim_date?: string
+  completed_at?: string
+}
+
+// Schedule
+export type ScheduleType = "home_service" | "pull_out" | "return" | "on_site"
+export type ScheduleStatus =
+  | "pending"
+  | "confirmed"
+  | "in_progress"
+  | "completed"
+  | "cancelled"
+  | "rescheduled"
+
+export interface Schedule {
+  id: number
+  client: Client
+  service?: number
+  technicians?: User[]
+  schedule_type: ScheduleType
+  scheduled_date: string
+  scheduled_time: string
+  estimated_duration: number
+  status: ScheduleStatus
+  address?: string
+  contact_person?: string
+  contact_number?: string
+  notes?: string
+  created_at: string
+  updated_at: string
 }

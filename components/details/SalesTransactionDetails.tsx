@@ -1,8 +1,8 @@
-'use client'
+"use client"
 
-import { Detail } from '@/components/details/Detail'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Detail } from "@/components/details/Detail"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -10,10 +10,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { SalesTransaction } from '@/lib/constants/interface'
-import { formatCurrency, getBadgeVariant } from '@/lib/utils/helpers'
-import { formatDate } from '@/lib/utils/helpers/date'
+} from "@/components/ui/table"
+import { SalesTransaction } from "@/lib/constants/interface"
+import { formatCurrency, getBadgeVariant } from "@/lib/utils/helpers"
+import { formatDate } from "@/lib/utils/helpers/date"
 
 export function SalesTransactionDetails({
   entity,
@@ -26,8 +26,8 @@ export function SalesTransactionDetails({
     <div className="space-y-8">
       {/* Status badges */}
       <div className="flex items-center gap-4">
-        <Badge variant={entity.voided ? 'destructive' : 'success'}>
-          {entity.voided ? 'Voided' : 'Active'}
+        <Badge variant={entity.voided ? "destructive" : "success"}>
+          {entity.voided ? "Voided" : "Active"}
         </Badge>
         <Badge variant={getBadgeVariant(entity.payment_status)}>
           {entity.payment_status.toUpperCase()}
@@ -52,9 +52,9 @@ export function SalesTransactionDetails({
               entity.created_at
                 ? formatDate(
                     new Date(entity.created_at),
-                    'EEE, MMM dd yyyy • hh:mm a',
+                    "EEE, MMM dd yyyy • hh:mm a",
                   )
-                : 'N/A'
+                : "N/A"
             }
           />
           <Detail
@@ -62,7 +62,7 @@ export function SalesTransactionDetails({
             value={
               entity.manual_receipt_number ||
               entity.system_receipt_number ||
-              'N/A'
+              "N/A"
             }
           />
           <Detail
@@ -82,7 +82,7 @@ export function SalesTransactionDetails({
           {entity.voided && (
             <Detail
               label="Void Reason"
-              value={entity.void_reason ?? 'N/A'}
+              value={entity.void_reason ?? "N/A"}
             />
           )}
         </div>
@@ -110,10 +110,10 @@ export function SalesTransactionDetails({
                   >
                     <TableCell>
                       <div className="font-semibold">
-                        {item.item?.name ?? 'Unnamed'}
+                        {item.description || item.item?.name || "Unnamed"}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        SKU: {item.item?.sku ?? 'N/A'}
+                        SKU: {item.item?.sku ?? "N/A"}
                       </div>
                     </TableCell>
                     <TableCell>

@@ -1,12 +1,12 @@
-'use client'
+"use client"
 
-import { usePsgcForm } from '@/lib/hooks/usePsgcForm'
-import { useClientMutations } from '@/lib/mutations/useClientMutations'
-import { SubmitHandler, useForm } from 'react-hook-form'
+import { usePsgcForm } from "@/lib/hooks/usePsgcForm"
+import { useClientMutations } from "@/lib/mutations/useClientMutations"
+import { SubmitHandler, useForm } from "react-hook-form"
 
-import type { PsgcSelectProps } from '@/components/custom/inputs/PsgcSelect'
-import { PsgcSelect } from '@/components/custom/inputs/PsgcSelect'
-import { Button } from '@/components/ui/button'
+import type { PsgcSelectProps } from "@/components/custom/inputs/PsgcSelect"
+import { PsgcSelect } from "@/components/custom/inputs/PsgcSelect"
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -14,10 +14,10 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
-import { Client } from '@/lib/constants/types'
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Switch } from "@/components/ui/switch"
+import { Client } from "@/lib/constants/types"
 
 function LocationField({
   name,
@@ -72,12 +72,12 @@ interface ClientFormProps {
 export default function ClientForm({ client, onClose }: ClientFormProps) {
   const form = useForm<FormValues>({
     defaultValues: {
-      full_name: client?.full_name ?? '',
-      contact_number: client?.contact_number ?? '',
-      address: client?.address ?? '',
-      province: client?.province ?? '',
-      city: client?.city ?? '',
-      barangay: client?.barangay ?? '',
+      full_name: client?.full_name ?? "",
+      contact_number: client?.contact_number ?? "",
+      address: client?.address ?? "",
+      province: client?.province ?? "",
+      city: client?.city ?? "",
+      barangay: client?.barangay ?? "",
       is_blocklisted: client?.is_blocklisted ?? false,
     },
   })
@@ -102,13 +102,26 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
 
   const { addClient, updateClient } = useClientMutations()
 
+  const normalizeContactNumber = (
+    contact: string | undefined,
+  ): string | null => {
+    if (!contact) return null
+    let normalized = contact.trim()
+    // Convert +639 format to 09 format
+    if (normalized.startsWith("+639")) {
+      normalized = "09" + normalized.substring(4)
+    }
+    return normalized || null
+  }
+
   const handleSubmit: SubmitHandler<FormValues> = (data) => {
     const payload = {
       ...data,
+      full_name: data.full_name.toUpperCase(),
       province: provinceName,
       city: cityName,
       barangay: barangayName,
-      contact_number: data.contact_number?.trim() || null,
+      contact_number: normalizeContactNumber(data.contact_number),
       address: data.address?.trim() || null,
     }
 
@@ -136,13 +149,12 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
           <FormField
             control={form.control}
             name="full_name"
-            rules={{ required: 'Full name is required' }}
+            rules={{ required: "Full name is required" }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel required>Client Full Name</FormLabel>
                 <FormControl>
                   <Input
-                    className="uppercase"
                     {...field}
                     placeholder="Juan Dela Cruz"
                   />
@@ -155,13 +167,32 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
           <FormField
             control={form.control}
             name="contact_number"
+            rules={{
+              validate: (value) => {
+                if (!value || !value.trim()) return true // Optional field
+                let normalized = value.trim()
+                // Convert +639 format to 09 format for validation
+                if (normalized.startsWith("+639")) {
+                  normalized = "09" + normalized.substring(4)
+                }
+                // Check if it starts with 09 and has exactly 11 digits
+                if (!normalized.startsWith("09")) {
+                  return "Contact number must start with 09 or +639"
+                }
+                if (!/^09\d{9}$/.test(normalized)) {
+                  return "Contact number must be exactly 11 digits (09XXXXXXXXX)"
+                }
+                return true
+              },
+            }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Contact Number</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
-                    placeholder="09XX XXX XXXX"
+                    placeholder="09XX XXX XXXX or +639XX XXX XXXX"
+                    maxLength={13}
                   />
                 </FormControl>
                 <FormMessage />
@@ -190,7 +221,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
             name="province"
             label="Province"
             required
-            value={selectedProvince ?? ''}
+            value={selectedProvince ?? ""}
             options={sortedProvinces}
             onChange={handleProvinceChange}
             placeholder="Select Province"
@@ -202,7 +233,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
             name="city"
             label="City / Municipality"
             required
-            value={selectedCity ?? ''}
+            value={selectedCity ?? ""}
             options={sortedCities}
             onChange={handleCityChange}
             placeholder="Select City/Municipality"
@@ -214,7 +245,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
           <LocationField
             name="barangay"
             label="Barangay"
-            value={selectedBarangay ?? ''}
+            value={selectedBarangay ?? ""}
             options={sortedBarangays}
             onChange={handleBarangayChange}
             placeholder="Select Barangay"
