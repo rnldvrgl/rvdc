@@ -131,7 +131,7 @@ export function QuickClockInOut() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert>
+          <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               You are on {todayLeave.extendedProps.leave_type_display} leave
@@ -165,7 +165,7 @@ export function QuickClockInOut() {
               })}
             </p>
           </div>
-          <Alert>
+          <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Clock in/out is not yet available. You can clock in/out from 7:00

@@ -16,7 +16,11 @@ export function UpcomingScheduleCard() {
   })
 
   const schedules =
-    events?.filter((event) => event.extendedProps.type === "schedule") || []
+    events
+      ?.filter((event) => event.extendedProps.type === "schedule")
+      .sort((a, b) => {
+        return new Date(a.start).getTime() - new Date(b.start).getTime()
+      }) || []
 
   if (isLoading) {
     return (
@@ -80,6 +84,9 @@ export function UpcomingScheduleCard() {
       <CardContent>
         <div className="space-y-4">
           {Object.entries(schedulesByDate)
+            .sort(([dateA], [dateB]) => {
+              return new Date(dateA).getTime() - new Date(dateB).getTime()
+            })
             .slice(0, 5)
             .map(([dateKey, daySchedules]) => {
               const date = new Date(dateKey)

@@ -16,7 +16,13 @@ export function BirthdayReminders() {
   })
 
   const birthdays =
-    events?.filter((event) => event.extendedProps.type === "birthday") || []
+    events
+      ?.filter((event) => event.extendedProps.type === "birthday")
+      .sort((a, b) => {
+        const dateA = new Date(a.start).getTime()
+        const dateB = new Date(b.start).getTime()
+        return dateA - dateB
+      }) || []
 
   if (isLoading) {
     return (
