@@ -31,15 +31,20 @@ type DashboardFormValues = {
 
 const DashboardPage = () => {
   const { refetch } = useGetSummary({})
-  const { role } = useCurrentUser()
+  const { role, userProfile } = useCurrentUser()
+  const stallId = userProfile?.assigned_stall?.id || undefined
+
+  // Default to last 30 days
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
   const form = useForm<DashboardFormValues>({
     defaultValues: {
       range: {
-        from: new Date(),
+        from: thirtyDaysAgo,
         to: new Date(),
       },
-      stall: undefined,
+      stall: role !== "technician" ? stallId : undefined,
     },
   })
 
@@ -57,104 +62,98 @@ const DashboardPage = () => {
   }
 
   return (
-    <Wrapper>
-      {/* Birthday Greeting Modal */}
-      <BirthdayGreeting />
+    <FormProvider {...form}>
+      <Wrapper>
+        {/* Birthday Greeting Modal */}
+        <BirthdayGreeting />
 
-      <PageHeader
-        icon={BarChart3}
-        title="Dashboard Overview"
-        description={description[role || "guest"]}
-        breadcrumbs={["Dashboard"]}
-        onRefresh={
-          role === "admin" || role === "manager" ? () => refetch() : undefined
-        }
-      />
+        <PageHeader
+          icon={BarChart3}
+          title="Dashboard Overview"
+          description={description[role || "guest"]}
+          breadcrumbs={["Dashboard"]}
+          onRefresh={
+            role === "admin" || role === "manager" ? () => refetch() : undefined
+          }
+          actionButton={
+            role !== "technician" ? (
+              <DateRangePicker classNames="mx-auto" />
+            ) : undefined
+          }
+        />
 
-      <div className="space-y-6">
-        {/* Role-Based Dashboard Components */}
-        {role === "technician" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-rows-[auto_auto] gap-6">
-            <div className="row-span-2">
-              <UpcomingScheduleCard />
+        <div className="space-y-6">
+          {/* Role-Based Dashboard Components */}
+          {role === "technician" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-rows-[auto_auto] gap-6">
+              <div className="row-span-2">
+                <UpcomingScheduleCard />
+              </div>
+              <TodayScheduleCard />
+              <QuickClockInOut />
+              <MyTasksCard />
+              <LeaveBalanceSummary />
+              <div className="col-span-full">
+                <BirthdayReminders />
+              </div>
             </div>
-            <TodayScheduleCard />
-            <QuickClockInOut />
-            <MyTasksCard />
-            <LeaveBalanceSummary />
-            <div className="col-span-full">
+          )}
+
+          {role === "clerk" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <QuickClockInOut />
+              <LeaveBalanceSummary />
+              <RecentTransactions />
+              <SalesSummary />
+              <div className="col-span-full">
+                <BirthdayReminders />
+              </div>
+            </div>
+          )}
+
+          {role === "manager" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <QuickClockInOut />
+              <LeaveBalanceSummary />
+              <div className="col-span-full">
+                <BirthdayReminders />
+              </div>
+            </div>
+          )}
+
+          {role === "admin" && (
+            <div className="grid lg:grid-cols-2  gap-6">
+              <RemindersAlerts />
               <BirthdayReminders />
             </div>
-          </div>
-        )}
+          )}
 
-        {role === "clerk" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <QuickClockInOut />
-            <LeaveBalanceSummary />
-            <RecentTransactions />
-            <SalesSummary />
-            <div className="col-span-full">
-              <BirthdayReminders />
-            </div>
-          </div>
-        )}
+          {(role === "technician" || role === "clerk") && (
+            <DashboardCalendar
+              withSettings={false}
+              withRefresh={false}
+            />
+          )}
+          {(role === "admin" || role === "manager") && <DashboardCalendar />}
 
-        {role === "manager" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <QuickClockInOut />
-            <LeaveBalanceSummary />
-            <div className="col-span-full">
-              <BirthdayReminders />
-            </div>
-          </div>
-        )}
-
-        {role === "admin" && (
-          <div className="grid lg:grid-cols-2  gap-6">
-            <RemindersAlerts />
-            <BirthdayReminders />
-          </div>
-        )}
-
-        {(role === "technician" || role === "clerk") && (
-          <DashboardCalendar
-            withSettings={false}
-            withRefresh={false}
-          />
-        )}
-        {(role === "admin" || role === "manager") && <DashboardCalendar />}
-
-        {/* Analytics - Admin & Manager Only */}
-        {(role === "admin" || role === "manager") && (
-          <FormProvider {...form}>
+          {/* Analytics - Admin & Manager Only */}
+          {(role === "admin" || role === "manager") && (
             <div className="space-y-6">
               {/* Date Range Controls */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-1">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
-                    <TrendingUp className="size-5" />
-                    Analytics & Metrics
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Select a date range to view performance data
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <DateRangePicker />
-                </div>
-              </div>
-
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <TrendingUp className="size-5" />
+                Analytics & Metrics
+              </h2>
               {/* Summary Cards */}
               <SummaryCards />
 
               {/* Charts */}
               <DashboardCharts />
             </div>
-          </FormProvider>
-        )}
-      </div>
-    </Wrapper>
+          )}
+        </div>
+      </Wrapper>
+    </FormProvider>
   )
 }
 

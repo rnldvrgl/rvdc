@@ -1,11 +1,17 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import { useGetSummary } from "@/lib/queries/analytics/useGetAnalytics"
 import { DollarSign, TrendingUp } from "lucide-react"
 
 export function SalesSummary() {
-  const { data: summary, isLoading } = useGetSummary({})
+  const { start_date, end_date, stall } = useDateParamsFromForm()
+  const { data: summary, isLoading } = useGetSummary({
+    start_date,
+    end_date,
+    stall,
+  })
 
   if (isLoading) {
     return (
@@ -71,19 +77,19 @@ export function SalesSummary() {
 
           {summary && (
             <div className="pt-3 border-t space-y-2">
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-xs md:text-sm">
                 <span className="text-muted-foreground">Total Clients</span>
                 <span className="font-medium">
                   {summary.total_clients || 0}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-xs md:text-sm">
                 <span className="text-muted-foreground">Low Stock Items</span>
                 <span className="font-medium text-amber-600">
                   {summary.low_stock_items || 0}
                 </span>
               </div>
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-xs md:text-sm">
                 <span className="text-muted-foreground">Out of Stock</span>
                 <span className="font-medium text-red-600">
                   {summary.no_stock_items || 0}
