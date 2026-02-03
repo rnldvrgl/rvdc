@@ -816,8 +816,10 @@ const DashboardCalendar = ({
                     key={day.toDateString()}
                     className={cn(
                       "p-2 sm:p-3 cursor-pointer transition-colors overflow-hidden",
-                      !isCurrentMonth && "bg-muted/20 text-muted-foreground",
-                      isTodayDate && "ring-2 ring-primary ring-inset",
+                      !isCurrentMonth &&
+                        "bg-muted text-muted-foreground hover:bg-muted!",
+                      isTodayDate &&
+                        "ring-2 ring-primary ring-inset bg-primary/5",
                       dayBgColor || "hover:bg-muted/50",
                     )}
                     onClick={() => handleDayClick(day)}

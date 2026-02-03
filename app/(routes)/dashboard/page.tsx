@@ -93,9 +93,10 @@ const DashboardPage = () => {
             <QuickClockInOut />
             <LeaveBalanceSummary />
             <RecentTransactions />
-            <RemindersAlerts />
             <SalesSummary />
-            <BirthdayReminders />
+            <div className="col-span-full">
+              <BirthdayReminders />
+            </div>
           </div>
         )}
 
@@ -110,12 +111,12 @@ const DashboardPage = () => {
         )}
 
         {role === "admin" && (
-          <div className="grid grid-cols-1  gap-6">
+          <div className="grid lg:grid-cols-2  gap-6">
+            <RemindersAlerts />
             <BirthdayReminders />
           </div>
         )}
 
-        {/* Calendar - All Roles */}
         {(role === "technician" || role === "clerk") && (
           <DashboardCalendar
             withSettings={false}

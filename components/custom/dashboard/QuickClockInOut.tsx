@@ -203,8 +203,8 @@ export function QuickClockInOut() {
   }
 
   return (
-    <Card>
-      <CardHeader className="relative">
+    <Card className="relative">
+      <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Clock className="size-5" />
           Clock In/Out
@@ -212,6 +212,16 @@ export function QuickClockInOut() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="text-center">
+          <p className="text-3xl font-bold">{formatTime(currentTime)}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {currentTime.toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            })}
+          </p>
+        </div>
         {yesterdayAttendance?.auto_closed &&
           yesterdayAttendance.auto_close_warning_count > 0 && (
             <div className="flex items-center justify-center p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border-2 border-yellow-200 dark:border-yellow-800">
@@ -223,17 +233,6 @@ export function QuickClockInOut() {
               />
             </div>
           )}
-        <div className="text-center">
-          <p className="text-3xl font-bold">{formatTime(currentTime)}</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {currentTime.toLocaleDateString("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-        </div>
-
         {todayHoliday && (
           <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
@@ -283,41 +282,7 @@ export function QuickClockInOut() {
                   </span>
                 </div>
               )}
-              {/* Late Status */}
-              {attendanceStatus?.attendance?.is_late && (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
-                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
-                      Late Status
-                    </p>
-                    <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
-                      Late by{" "}
-                      {formatMinutesToHours(
-                        attendanceStatus.attendance.late_minutes,
-                      )}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {/* Late Penalty */}
-              {attendanceStatus?.attendance?.late_penalty_amount &&
-                parseFloat(attendanceStatus.attendance.late_penalty_amount) >
-                  0 && (
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
-                    <PhilippinePeso className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-red-600 dark:text-red-400">
-                        Late Penalty
-                      </p>
-                      <p className="text-sm font-medium text-red-900 dark:text-red-200">
-                        {parseFloat(
-                          attendanceStatus.attendance.late_penalty_amount,
-                        ).toFixed(0)}
-                      </p>
-                    </div>
-                  </div>
-                )}
+
               {attendance.total_hours && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Total Hours:</span>
@@ -326,7 +291,40 @@ export function QuickClockInOut() {
               )}
             </div>
           )}
-
+          {/* Late Status */}
+          {attendanceStatus?.attendance?.is_late && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  Late Status
+                </p>
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                  Late by{" "}
+                  {formatMinutesToHours(
+                    attendanceStatus.attendance.late_minutes,
+                  )}
+                </p>
+              </div>
+            </div>
+          )}
+          {/* Late Penalty */}
+          {attendanceStatus?.attendance?.late_penalty_amount &&
+            parseFloat(attendanceStatus.attendance.late_penalty_amount) > 0 && (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
+                <PhilippinePeso className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    Late Penalty
+                  </p>
+                  <p className="text-sm font-medium text-red-900 dark:text-red-200">
+                    {parseFloat(
+                      attendanceStatus.attendance.late_penalty_amount,
+                    ).toFixed(0)}
+                  </p>
+                </div>
+              </div>
+            )}
           {/* Completed Message */}
           {hasClockedOut && (
             <Alert
