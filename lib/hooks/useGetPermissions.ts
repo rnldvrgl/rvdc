@@ -27,7 +27,6 @@ export function useGetPermissions(role: Roles) {
     ]
 
     const commonEmployeePermissions = [
-      "view_employees",
       "manage_attendance",
       "view_own_offenses",
       "view_payroll",
@@ -51,9 +50,9 @@ export function useGetPermissions(role: Roles) {
         ...commonViewPermissions,
         ...commonFinancialPermissions,
         ...commonAirconPermissions,
-        ...commonEmployeePermissions,
         ...commonShortcuts,
         ...commonManagementPermissions,
+        "view_employees",
         "manage_stockroom",
         "manage_categories",
         "manage_stalls",
