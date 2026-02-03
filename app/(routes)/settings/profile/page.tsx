@@ -92,9 +92,20 @@ function buildProfilePayload(
     payload.profile_image = normalizedImage
   }
 
-  if (values.new_password) payload.new_password = values.new_password
-  if (values.current_password)
+  // Only include passwords if both current and new are provided and different
+  const hasCurrentPassword =
+    values.current_password && values.current_password.trim() !== ""
+  const hasNewPassword =
+    values.new_password && values.new_password.trim() !== ""
+
+  if (
+    hasCurrentPassword &&
+    hasNewPassword &&
+    values.current_password !== values.new_password
+  ) {
+    payload.new_password = values.new_password
     payload.current_password = values.current_password
+  }
 
   return payload
 }
@@ -173,12 +184,13 @@ export default function SettingsPage() {
       return
     }
 
-    // usePromiseToast returns data directly from the API response
-    const updatedUser = await updateUserProfile.mutateAsync(payload)
-    setUserProfile(updatedUser)
-    form.reset(mapProfileToForm(updatedUser))
+    // Mutation automatically invalidates queries and refetches data
+    await updateUserProfile.mutateAsync(payload)
     setLastSaveTime(new Date())
-    await refetch()
+
+    // Explicitly clear password fields after successful update
+    form.setValue("current_password", "")
+    form.setValue("new_password", "")
   }
 
   const handleResetClick = () => {
@@ -280,7 +292,7 @@ export default function SettingsPage() {
               </Info>
               <Info label="Birthday">
                 {userProfile.birthday
-                  ? new Date(userProfile.birthday).toLocaleDateString()
+                  ? formatDate(new Date(userProfile.birthday), "MMMM dd, yyyy")
                   : "Not provided"}
               </Info>
             </div>
