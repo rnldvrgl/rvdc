@@ -1,4 +1,5 @@
-import { ApplianceType, PaginatedResponse } from "@/lib/constants/interface"
+import { ApplianceType } from "@/lib/constants/interface"
+import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 
 const url = "/services/appliance-types/"
@@ -11,7 +12,7 @@ interface UseApplianceTypesParams {
 }
 
 export const useApplianceTypes = (params: UseApplianceTypesParams = {}) => {
-  return useApiQuery<PaginatedResponse<ApplianceType>>({
+  return useApiQuery<PaginatedResult<ApplianceType>>({
     queryKey: ["appliance-types", params],
     url,
     params: {
