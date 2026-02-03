@@ -4,6 +4,7 @@ import { Employee } from "@/lib/constants/types"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
 import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 
 export function useEmployeeMutations() {
   const queryClient = useQueryClient()
@@ -17,8 +18,32 @@ export function useEmployeeMutations() {
 
   const addEmployee = useApiMutation({
     mutationFn: (data: Employee) => api.post(url, data),
-    successMessage: "Employee created successfully.",
+    // Don't use default success message, we'll handle it in onSuccess
+    successMessage: "",
     invalidateQueries: sharedInvalidations,
+    onSuccess: (data: any) => {
+      // Show custom success message with credentials
+      const username = data.username || "N/A"
+      toast.success(
+        <div className="space-y-2">
+          <div className="font-semibold">Employee created successfully!</div>
+          <div className="text-sm space-y-1">
+            <div>
+              <span className="font-medium">Username:</span> <code className="bg-muted px-1.5 py-0.5 rounded">{username}</code>
+            </div>
+            <div>
+              <span className="font-medium">Password:</span> <code className="bg-muted px-1.5 py-0.5 rounded">rvdc12</code>
+            </div>
+            <div className="text-muted-foreground text-xs mt-1">
+              Please share these credentials with the employee. They can change them in their profile settings.
+            </div>
+          </div>
+        </div>,
+        {
+          duration: 10000, // Show for 10 seconds
+        }
+      )
+    },
   })
 
   const updateEmployee = useApiMutation({

@@ -5,14 +5,13 @@ import {
   AttendanceTypeBadge,
   AutoCloseWarningBadge,
 } from "@/components/custom/attendance/AttendanceBadges"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
+import { useClockInOut } from "@/lib/hooks/useClockInOut"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
-import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
 import {
-  useCurrentAttendanceStatus,
   useDailyAttendance,
   useLeaveRequests,
 } from "@/lib/queries/useAttendance"
@@ -31,7 +30,7 @@ import {
   User,
   XCircle,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 type ClockInOutProps = {
   date?: string
   yesterdayAttendance: ReturnType<typeof useDailyAttendance>["data"]
@@ -46,31 +45,22 @@ export function ClockInOut({
   const { user_id, role } = useCurrentUser()
   const [notes, setNotes] = useState("")
   const [showNotes, setShowNotes] = useState(false)
-  const [currentTime, setCurrentTime] = useState(new Date())
+
+  const {
+    currentTime,
+    attendanceStatus: currentStatus,
+    isLoading: statusLoading,
+    clockIn,
+    clockOut,
+    isWithinBusinessHours,
+    hasClockedIn: isClockedIn,
+    hasClockedOut: isClockedOut,
+    canClockInOutToday,
+  } = useClockInOut()
 
   const today = date || formatDate(new Date(), "yyyy-MM-dd")
   const canClock = canClockInOut(role || "")
 
-  // Update time every minute
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 60000)
-    return () => clearInterval(timer)
-  }, [])
-
-  // Business hours: 8 AM to 5 PM with 1 hour allowance
-  const BUSINESS_START_HOUR = 8
-  const BUSINESS_END_HOUR = 17
-  const ALLOWANCE_HOURS = 1
-
-  const currentHour = currentTime.getHours()
-  const isWithinBusinessHours =
-    currentHour >= BUSINESS_START_HOUR - ALLOWANCE_HOURS &&
-    currentHour < BUSINESS_END_HOUR + ALLOWANCE_HOURS
-
-  const { data: currentStatus, isLoading: statusLoading } =
-    useCurrentAttendanceStatus()
   // Check if user has approved leave for today
   const { data: todayLeave } = useLeaveRequests({
     filter: {
@@ -81,8 +71,6 @@ export function ClockInOut({
   })
 
   const approvedLeave = todayLeave?.results?.[0]
-
-  const { clockIn, clockOut } = useAttendanceMutations()
 
   const handleClockIn = async () => {
     if (!user_id) return
@@ -118,10 +106,6 @@ export function ClockInOut({
   }
 
   const isLoading = clockIn.isPending || clockOut.isPending
-  const isClockedIn =
-    currentStatus?.attendance && !currentStatus.attendance.clock_out
-  const isClockedOut =
-    currentStatus?.attendance && currentStatus.attendance.clock_out
 
   // Determine if clock buttons should be disabled based on leave
   const getCurrentHour = () => {
@@ -177,6 +161,9 @@ export function ClockInOut({
 
   const leaveMessage = getLeaveMessage()
   const clockDisabled = isClockDisabledByLeave()
+
+  // Show actions only if can clock in/out today and not disabled by leave
+  const showActions = canClockInOutToday && !clockDisabled
 
   if (!canClock || !user_id) {
     return (
@@ -457,106 +444,83 @@ export function ClockInOut({
           </div>
         )}
 
+        {/* Leave Message */}
+        {leaveMessage && (
+          <Alert variant="info">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>On Leave</AlertTitle>
+            <AlertDescription>{leaveMessage}</AlertDescription>
+          </Alert>
+        )}
+
         {/* Action Buttons */}
-        {!isClockedOut && (
-          <>
-            {/* Leave Message */}
-            {leaveMessage && (
-              <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900">
-                <AlertCircle className="h-5 w-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-purple-900 dark:text-purple-200">
-                    On Leave
-                  </p>
-                  <p className="text-xs text-purple-700 dark:text-purple-300 mt-0.5">
-                    {leaveMessage}
-                  </p>
-                </div>
-              </div>
-            )}
-            {!clockDisabled && (
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  onClick={handleClockIn}
-                  disabled={
-                    !!currentStatus?.attendance || isLoading || clockDisabled
-                  }
-                  className="h-11"
-                  size="lg"
-                  variant="success"
-                >
-                  {clockIn.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <LogIn className="mr-2 h-4 w-4" />
-                      Clock In
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={handleClockOut}
-                  disabled={!isClockedIn || isLoading || clockDisabled}
-                  variant="destructive"
-                  className="h-11"
-                  size="lg"
-                >
-                  {clockOut.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Clock Out
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
-          </>
+        {showActions && (
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              onClick={handleClockIn}
+              disabled={!!currentStatus?.attendance || isLoading}
+              className="h-11"
+              size="lg"
+              variant="success"
+            >
+              {clockIn.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Clock In
+                </>
+              )}
+            </Button>
+            <Button
+              onClick={handleClockOut}
+              disabled={!isClockedIn || isLoading}
+              variant="destructive"
+              className="h-11"
+              size="lg"
+            >
+              {clockOut.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Clock Out
+                </>
+              )}
+            </Button>
+          </div>
         )}
 
         {/* Completed Message */}
         {isClockedOut && (
-          <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900">
+          <Alert variant="success">
             <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-green-900 dark:text-green-200">
-                Attendance Recorded
-              </p>
-              <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
-                Your attendance for today has been recorded successfully
-              </p>
-            </div>
-          </div>
+            <AlertTitle className="font-medium">Attendance Recorded</AlertTitle>
+            <AlertDescription>
+              Your attendance for today has been recorded successfully.
+            </AlertDescription>
+          </Alert>
         )}
 
         {/* Error Messages */}
         {clockIn.isError && (
-          <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
-            <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-red-900 dark:text-red-200">
-                Clock In Failed
-              </p>
-              <p className="text-xs text-red-700 dark:text-red-300 mt-0.5">
-                Please try again or contact support if the issue persists
-              </p>
-            </div>
-          </div>
+          <Alert variant="destructive">
+            <XCircle className="h-4 w-4" />
+            <AlertTitle>Clock In Failed</AlertTitle>
+            <AlertDescription>
+              Please try again or contact support if the issue persists
+            </AlertDescription>
+          </Alert>
         )}
 
         {clockOut.isError && (
-          <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
-            <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-red-900 dark:text-red-200">
-                Clock Out Failed
-              </p>
-              <p className="text-xs text-red-700 dark:text-red-300 mt-0.5">
-                Please try again or contact support if the issue persists
-              </p>
-            </div>
-          </div>
+          <Alert variant="destructive">
+            <XCircle className="h-4 w-4" />
+            <AlertTitle>Clock Out Failed</AlertTitle>
+            <AlertDescription>
+              Please try again or contact support if the issue persists
+            </AlertDescription>
+          </Alert>
         )}
       </CardContent>
     </Card>
