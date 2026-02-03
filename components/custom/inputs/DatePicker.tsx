@@ -99,6 +99,10 @@ const DatePicker = ({
                 setOpen(false)
                 return
               }
+              // Fix timezone issue: set time to noon UTC to avoid date shifting
+              if (date) {
+                date.setHours(12, 0, 0, 0)
+              }
               field.onChange(date ?? undefined)
               setOpen(false)
             }}

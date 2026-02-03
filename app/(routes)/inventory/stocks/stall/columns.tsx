@@ -139,7 +139,6 @@ export function getStallStockColumns({
       "quantity",
       "low_stock_threshold",
       "status",
-      "action",
     ],
     clerk: [
       "item_name",
@@ -148,7 +147,6 @@ export function getStallStockColumns({
       "quantity",
       "low_stock_threshold",
       "status",
-      "action",
     ],
   }
 

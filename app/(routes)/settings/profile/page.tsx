@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/button"
 import { User } from "@/lib/constants/interface"
 import { userProfileSchema } from "@/lib/constants/schema"
 import { TUserProfile, UserProfilePayload } from "@/lib/constants/types"
-import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import useFileUpload from "@/lib/hooks/useFileUpload"
 import { useProfileSettingMutations } from "@/lib/mutations/useProfileSettingMutations"
 import { useUserProfile } from "@/lib/queries/useUserProfile"
@@ -138,7 +137,6 @@ function getChangeSummary(
 /* ------------------------------- component -------------------------------- */
 
 export default function SettingsPage() {
-  const { isAdmin } = useCurrentUser()
   const { data, isLoading, refetch } = useUserProfile()
   const { updateUserProfile } = useProfileSettingMutations()
 
@@ -222,7 +220,6 @@ export default function SettingsPage() {
         title="Account Settings"
         description="Manage your personal information, security settings, and account preferences."
         breadcrumbs={["Dashboard", "Settings"]}
-        isAdminOnly={!isAdmin}
       />
 
       {/* Action Bar */}

@@ -4,7 +4,7 @@ import { usePsgcForm } from "@/lib/hooks/usePsgcForm"
 import { SubmitHandler, useForm } from "react-hook-form"
 
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
-import { DateInput } from "@/components/custom/inputs/DateInput"
+import DatePicker from "@/components/custom/inputs/DatePicker"
 import ImageUpload from "@/components/custom/inputs/ImageUpload"
 import type { PsgcSelectProps } from "@/components/custom/inputs/PsgcSelect"
 import { PsgcSelect } from "@/components/custom/inputs/PsgcSelect"
@@ -50,9 +50,8 @@ const employeeToFormData = (employee?: Employee): Partial<EmployeeFormData> => {
   }
 }
 
-// Role options for ComboBox
+// Role options for ComboBox (admin not included - only for employees)
 const roleOptions: ComboboxOption[] = [
-  { value: "admin", label: "Administrator" },
   { value: "manager", label: "Manager" },
   { value: "clerk", label: "Clerk" },
   { value: "technician", label: "Technician" },
@@ -103,6 +102,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
     defaultValues: {
       first_name: formData.first_name ?? "",
       last_name: formData.last_name ?? "",
+      username: formData.username ?? "",
       contact_number: formData.contact_number ?? "",
       address: formData.address ?? "",
       province: "",
@@ -203,12 +203,12 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                <strong>Note:</strong> Username and password will be
-                automatically generated.
+                <strong>Note:</strong> Default password will be automatically
+                generated.
                 <br />
                 <span className="text-sm text-muted-foreground">
-                  Username will be created from name initials (e.g., Ronald
-                  Vergel Dela Cruz → rvdc).
+                  If you don&apos;t provide a username, it will be created from
+                  name initials (e.g., Ronald Vergel Dela Cruz → rvdc).
                   <br />
                   Default password will be:{" "}
                   <code className="font-mono bg-muted px-1 py-0.5 rounded">
@@ -259,7 +259,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                 Personal Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 grid">
               {/* Name Fields */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
@@ -278,7 +278,6 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                           className="h-11"
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -299,34 +298,61 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                           className="h-11"
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
 
-              {/* Birthday Field */}
-              <div className="grid">
+              {/* Username Field (optional for new employees) */}
+              {!employee && (
                 <FormField
                   control={form.control}
-                  name="birthday"
-                  rules={{
-                    required: "Birthday is required",
-                  }}
+                  name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel required>Birthday</FormLabel>
+                      <FormLabel>Username (Optional)</FormLabel>
                       <FormControl>
-                        <DateInput
-                          value={field.value || ""}
-                          setValue={field.onChange}
+                        <Input
+                          {...field}
+                          placeholder="Leave empty to auto-generate from initials"
+                          className="h-11"
                         />
                       </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
+              )}
+
+              {/* Birthday Field */}
+              <FormField
+                control={form.control}
+                name="birthday"
+                rules={{
+                  required: "Birthday is required",
+                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <DatePicker
+                        field={{
+                          value: field.value
+                            ? new Date(field.value)
+                            : undefined,
+                          onChange: (date: Date | undefined) => {
+                            field.onChange(
+                              date ? date.toISOString().split("T")[0] : "",
+                            )
+                          },
+                        }}
+                        required
+                        label="Birthday"
+                        placeholder="Select birthday"
+                        className="w-full"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
@@ -357,7 +383,6 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                         className="h-11"
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -376,7 +401,6 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                         className="h-11"
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -401,7 +425,6 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                             className="h-11"
                           />
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -418,50 +441,46 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                 Contact Information
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid">
-                <FormField
-                  control={form.control}
-                  name="contact_number"
-                  rules={{
-                    required: "Contact number is required",
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Contact Number</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="09XX XXX XXXX"
-                          className="h-11"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <CardContent className="grid space-y-6">
+              <FormField
+                control={form.control}
+                name="contact_number"
+                rules={{
+                  required: "Contact number is required",
+                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Contact Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="09XX XXX XXXX"
+                        className="h-11"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-                <FormField
-                  control={form.control}
-                  name="address"
-                  rules={{
-                    required: "Address is required",
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Address</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Street, Subdivision, etc."
-                          className="h-11"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="address"
+                rules={{
+                  required: "Address is required",
+                }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Address</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Street, Subdivision, etc."
+                        className="h-11"
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
 
