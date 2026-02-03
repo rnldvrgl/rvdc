@@ -62,13 +62,11 @@ export function LoginForm() {
       {/* Main Login Card */}
       <Card className="shadow-lg border-slate-200 dark:border-slate-800">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-foreground">Sign In</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Access your dashboard
-              </p>
-            </div>
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-foreground">Sign In</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Access your dashboard
+            </p>
           </div>
         </CardHeader>
 
