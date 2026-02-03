@@ -105,7 +105,19 @@ export function getDisplayImage(
   image?: string,
   fallback: string = "/default_image.jpg",
 ) {
-  return image && image.trim() !== "" ? image : fallback
+  if (!image || image.trim() === "") {
+    return fallback
+  }
+
+  // If image starts with /media/, prepend the backend URL
+  if (image.startsWith("/media/")) {
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
+    return `${backendUrl}${image}`
+  }
+
+  // For absolute URLs or other paths, return as-is
+  return image
 }
 
 export function formatDateToYMD(date: Date): string {
