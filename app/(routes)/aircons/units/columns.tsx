@@ -1,7 +1,6 @@
 "use client"
 
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
-import { Badge } from "@/components/ui/badge"
 import { AirconUnits, GetColumnsProps } from "@/lib/constants/interface"
 import { safeCell } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
@@ -49,16 +48,6 @@ export function getAirconUnitsColumns({
       header: "Type",
       cell: ({ row }: { row: Row<AirconUnits> }) =>
         safeCell(row.original.model?.aircon_type),
-    },
-    {
-      accessorKey: "is_sold",
-      header: "Status",
-      cell: ({ row }: { row: Row<AirconUnits> }) =>
-        row.original.is_sold ? (
-          <Badge variant="secondary">Sold</Badge>
-        ) : (
-          <Badge variant="success">Available</Badge>
-        ),
     },
     {
       accessorKey: "created_at",

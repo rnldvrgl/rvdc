@@ -56,6 +56,7 @@ interface ServiceApplianceManagerProps {
 interface EditingAppliance extends Partial<ServiceAppliancePayload> {
   tempId?: string
   assigned_technicians?: number[] // For multi-select UI
+  appliance_type?: number | null
 }
 
 const applianceStatusOptions: { value: ApplianceStatus; label: string }[] = [
@@ -199,7 +200,7 @@ export default function ServiceApplianceManager({
 
     const newAppliance: ServiceAppliancePayload = {
       service: serviceId,
-      appliance_type: editingAppliance.appliance_type ?? null,
+      appliance_type_id: editingAppliance.appliance_type ?? null,
       brand: editingAppliance.brand || "",
       model: editingAppliance.model || "",
       issue_reported: editingAppliance.issue_reported || "",
@@ -269,12 +270,8 @@ export default function ServiceApplianceManager({
       if (onUpdate) {
         await onUpdate()
       }
-    } catch (error) {
-      // Error is handled by useApiMutation
-      console.error("Failed to save appliance:", error)
-      toast.error(
-        isAdding ? "Failed to add appliance" : "Failed to update appliance",
-      )
+    } catch {
+      // Error is handled by useApiMutation (shows toast automatically)
     }
   }
 
@@ -315,10 +312,8 @@ export default function ServiceApplianceManager({
         if (onUpdate) {
           await onUpdate()
         }
-      } catch (error) {
-        // Error is handled by useApiMutation
-        console.error("Failed to delete appliance:", error)
-        toast.error("Failed to delete appliance")
+      } catch {
+        // Error is handled by useApiMutation (shows toast automatically)
         setDeleteDialogOpen(false)
         setApplianceToDelete(null)
       }
@@ -333,7 +328,15 @@ export default function ServiceApplianceManager({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Appliances</CardTitle>
+        <CardTitle className="flex items-center text-lg">
+          Appliances
+          <Badge
+            variant="secondary"
+            className="ml-2"
+          >
+            {appliances.length}
+          </Badge>
+        </CardTitle>
         {!disabled && !editingAppliance && (
           <Button
             type="button"
@@ -686,103 +689,100 @@ export default function ServiceApplianceManager({
             {appliances.map((appliance) => (
               <Card
                 key={appliance.id}
-                className="overflow-hidden hover:shadow-md transition-shadow"
+                className="overflow-hidden"
               >
                 {/* Header Section */}
-                <div className="bg-muted/30 px-4 py-3 border-b">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0 space-y-2">
-                      {/* Title Row */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="text-base font-semibold">
-                          {appliance.appliance_type?.name ||
-                            "Unknown Appliance"}
-                        </h4>
-                        <Badge
-                          variant="outline"
-                          className="font-medium"
-                        >
-                          {getStatusLabel(appliance.status)}
-                        </Badge>
-                      </div>
-
-                      {/* Brand/Model Row */}
-                      {(appliance.brand || appliance.model) && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-2">
-                          <Package className="h-3.5 w-3.5" />
-                          <span className="font-medium">
-                            {appliance.brand || "—"}
-                          </span>
-                          {appliance.model && (
-                            <>
-                              <span>•</span>
-                              <span>{appliance.model}</span>
-                            </>
-                          )}
-                        </p>
-                      )}
-
-                      {/* Technician Row */}
-                      {serviceTechnicians && serviceTechnicians.length > 0 && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-2">
-                          <User className="h-3.5 w-3.5" />
-                          <span>Assigned to:</span>
-                          <span className="font-medium">
-                            {serviceTechnicians
-                              .map((techId) => {
-                                const tech = users.find((u) => u.id === techId)
-                                return tech?.full_name
-                              })
-                              .filter(Boolean)
-                              .join(", ") || "—"}
-                          </span>
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-1 shrink-0">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleExpand(appliance.id)}
-                        className="h-8 w-8 p-0"
+                <CardHeader className="border-b flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0 space-y-2">
+                    {/* Title Row */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h4 className="text-base font-semibold">
+                        {appliance.appliance_type?.name || "Unknown Appliance"}
+                      </h4>
+                      <Badge
+                        variant="outline"
+                        className="font-medium"
                       >
-                        {expandedAppliances.has(appliance.id) ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </Button>
-                      {!disabled && (
-                        <>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(appliance)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(appliance.id)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </>
-                      )}
+                        {getStatusLabel(appliance.status)}
+                      </Badge>
                     </div>
+
+                    {/* Brand/Model Row */}
+                    {(appliance.brand || appliance.model) && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Package className="h-3.5 w-3.5" />
+                        <span className="font-medium">
+                          {appliance.brand || "—"}
+                        </span>
+                        {appliance.model && (
+                          <>
+                            <span>•</span>
+                            <span>{appliance.model}</span>
+                          </>
+                        )}
+                      </p>
+                    )}
+
+                    {/* Technician Row */}
+                    {serviceTechnicians && serviceTechnicians.length > 0 && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <User className="h-3.5 w-3.5" />
+                        <span>Assigned to:</span>
+                        <span className="font-medium">
+                          {serviceTechnicians
+                            .map((techId) => {
+                              const tech = users.find((u) => u.id === techId)
+                              return tech?.full_name
+                            })
+                            .filter(Boolean)
+                            .join(", ") || "—"}
+                        </span>
+                      </p>
+                    )}
                   </div>
-                </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-1 shrink-0">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleExpand(appliance.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      {expandedAppliances.has(appliance.id) ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                    {!disabled && (
+                      <>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(appliance)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(appliance.id)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </CardHeader>
 
                 {/* Content Section */}
-                <div className="p-4 space-y-4">
+                <CardContent className="space-y-4">
                   {/* Issue Reported */}
                   {appliance.issue_reported && (
                     <div className="space-y-2">
@@ -993,7 +993,7 @@ export default function ServiceApplianceManager({
                         </div>
                       </div>
                     )}
-                </div>
+                </CardContent>
 
                 {/* Expandable Parts Section */}
                 {expandedAppliances.has(appliance.id) && (

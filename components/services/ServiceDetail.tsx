@@ -1,5 +1,6 @@
 "use client"
 
+import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import ServiceApplianceManager from "@/components/forms/ServiceApplianceManager"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -118,6 +119,9 @@ export default function ServiceDetail({
   >("none")
   const [discountValue, setDiscountValue] = useState("")
   const [discountReason, setDiscountReason] = useState("")
+  const [scheduleDeliveryDialogOpen, setScheduleDeliveryDialogOpen] =
+    useState(false)
+  const [deliveryDate, setDeliveryDate] = useState<Date | undefined>()
   const {
     completeService,
     recordPayment,
@@ -244,6 +248,48 @@ export default function ServiceDetail({
         },
         onSettled: () => {
           onRefresh?.()
+        },
+      },
+    )
+  }
+
+  const handleScheduleDelivery = async () => {
+    if (!deliveryDate) {
+      toast.error("Please select a delivery date and time")
+      return
+    }
+
+    const formatDateForBackend = (date: Date): string => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, "0")
+      const day = String(date.getDate()).padStart(2, "0")
+      const hours = String(date.getHours()).padStart(2, "0")
+      const minutes = String(date.getMinutes()).padStart(2, "0")
+      const seconds = String(date.getSeconds()).padStart(2, "0")
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+    }
+
+    updateService.mutate(
+      {
+        id: service.id,
+        data: {
+          delivery_date: formatDateForBackend(deliveryDate),
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Delivery scheduled successfully")
+          setScheduleDeliveryDialogOpen(false)
+          setDeliveryDate(undefined)
+          if (onRefresh) onRefresh()
+        },
+        onError: (error: unknown) => {
+          const errorMessage =
+            error && typeof error === "object" && "response" in error
+              ? (error.response as { data?: { message?: string } })?.data
+                  ?.message
+              : undefined
+          toast.error(errorMessage || "Failed to schedule delivery")
         },
       },
     )
@@ -703,7 +749,6 @@ export default function ServiceDetail({
                       : 0
                     const hasPartsDiscount = partsOriginalCost > partsCost
 
-                    console.log(partsCost)
                     const applianceTotal = discountedLaborFee + partsCost
 
                     return (
@@ -1744,6 +1789,7 @@ export default function ServiceDetail({
                   <Button
                     className="w-full"
                     variant="outline"
+                    onClick={() => setScheduleDeliveryDialogOpen(true)}
                   >
                     <Truck className="mr-2 h-4 w-4" />
                     Schedule Delivery
@@ -1899,6 +1945,50 @@ export default function ServiceDetail({
               {cancelService.isPending
                 ? "Cancelling..."
                 : "Confirm Cancellation"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Schedule Delivery Dialog */}
+      <Dialog
+        open={scheduleDeliveryDialogOpen}
+        onOpenChange={setScheduleDeliveryDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schedule Delivery</DialogTitle>
+            <DialogDescription>
+              Set the date and time for delivering the repaired appliance back
+              to the customer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="delivery-date">Delivery Date & Time</Label>
+              <DateTimePicker
+                value={deliveryDate}
+                onChange={setDeliveryDate}
+                placeholder="Select delivery date and time"
+                disablePastDates={true}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setScheduleDeliveryDialogOpen(false)
+                setDeliveryDate(undefined)
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleScheduleDelivery}
+              disabled={!deliveryDate || updateService.status === "pending"}
+            >
+              Schedule Delivery
             </Button>
           </div>
         </DialogContent>

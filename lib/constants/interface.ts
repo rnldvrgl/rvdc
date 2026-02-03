@@ -703,7 +703,7 @@ export interface ServiceAppliance {
 
 export interface ServiceAppliancePayload {
   service?: number
-  appliance_type: number | null
+  appliance_type_id: number | null
   brand?: string
   model?: string
   issue_reported?: string
@@ -835,6 +835,7 @@ export interface Service {
   override_address?: string
   override_contact_person?: string
   override_contact_number?: string
+  appointment_datetime?: string
   pickup_date?: string
   delivery_date?: string
   received_at?: string

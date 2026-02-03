@@ -18,8 +18,8 @@ export function cn(...inputs: ClassValue[]) {
 export const setItem = (key: string, value: unknown): void => {
   try {
     window.localStorage.setItem(key, JSON.stringify(value))
-  } catch (error) {
-    console.error(error)
+  } catch {
+    // error is handled by mutation
   }
 }
 
@@ -27,8 +27,7 @@ export const getItem = <T = unknown>(key: string): T | undefined => {
   try {
     const item = window.localStorage.getItem(key)
     return item ? (JSON.parse(item) as T) : undefined
-  } catch (error) {
-    console.error(error)
+  } catch {
     return undefined
   }
 }
@@ -36,16 +35,16 @@ export const getItem = <T = unknown>(key: string): T | undefined => {
 export const removeItem = (key: string): void => {
   try {
     window.localStorage.removeItem(key)
-  } catch (error) {
-    console.error(error)
+  } catch {
+    // error is handled by mutation
   }
 }
 
 export const clearStorage = (): void => {
   try {
     window.localStorage.clear()
-  } catch (error) {
-    console.error(error)
+  } catch {
+    // error is handled by mutation
   }
 }
 

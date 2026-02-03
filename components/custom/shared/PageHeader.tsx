@@ -114,7 +114,7 @@ const PageHeader = ({
         />
       </div>
 
-      <CardContent className="relative z-10">
+      <CardContent className="relative z-10 px-0">
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && variant !== "compact" && (
           <nav

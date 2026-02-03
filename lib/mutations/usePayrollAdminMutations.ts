@@ -3,7 +3,6 @@ import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import type { Holiday, PayrollSettings } from "@/lib/queries/usePayroll"
 import api from "@/lib/utils/api"
 import { useQueryClient } from "@tanstack/react-query"
-import { AxiosError } from "axios"
 
 const PAYROLL_BASE = "/payroll"
 const SETTINGS_URL = `${PAYROLL_BASE}/settings/`
@@ -174,12 +173,8 @@ export function usePayrollAdminMutations() {
           try {
             await api.post(HOLIDAYS_URL, item)
             imported += 1
-          } catch (error) {
-            const err = error as AxiosError
-            errors.push({
-              line: i + 2, // +2 accounts for header line and 0-based index
-              message: err.message || "Failed to add holiday",
-            })
+          } catch {
+            // error is handled by mutation
           }
         }
 

@@ -64,6 +64,7 @@ export function useGetPermissions(role: Roles) {
         "manage_attendance_admin",
         "manage_government_benefits",
         "manage_tax_brackets",
+        "manage_appliance_types",
       ],
       manager: [
         ...commonViewPermissions,

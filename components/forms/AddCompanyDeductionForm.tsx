@@ -127,8 +127,8 @@ export function AddCompanyDeductionForm({
 
       form.reset()
       onOpenChange(false)
-    } catch (error) {
-      console.error("Failed to save deduction:", error)
+    } catch {
+      // error is handled by mutation
     }
   }
 

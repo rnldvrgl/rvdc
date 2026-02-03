@@ -88,11 +88,13 @@ type FormValues = z.infer<typeof serviceSchema>
 interface ServiceFormProps {
   initialData?: Service
   onClose: () => void
+  forceClose?: () => void
 }
 
 export default function ServiceForm({
   initialData,
   onClose,
+  forceClose,
 }: ServiceFormProps) {
   const { addService, updateService } = useServiceMutations()
 
@@ -108,7 +110,9 @@ export default function ServiceForm({
       override_address: initialData?.override_address ?? "",
       override_contact_person: initialData?.override_contact_person ?? "",
       override_contact_number: initialData?.override_contact_number ?? "",
-      appointment_datetime: null,
+      appointment_datetime: initialData?.appointment_datetime
+        ? new Date(initialData.appointment_datetime)
+        : null,
       pickup_date: initialData?.pickup_date
         ? new Date(initialData.pickup_date)
         : null,
@@ -189,6 +193,17 @@ export default function ServiceForm({
       }
     }
 
+    // Helper function to format date in local timezone (YYYY-MM-DDTHH:mm:ss)
+    const formatDateForBackend = (date: Date): string => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, "0")
+      const day = String(date.getDate()).padStart(2, "0")
+      const hours = String(date.getHours()).padStart(2, "0")
+      const minutes = String(date.getMinutes()).padStart(2, "0")
+      const seconds = String(date.getSeconds()).padStart(2, "0")
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+    }
+
     const payload: ServicePayload = {
       client: data.client,
       service_type: data.service_type,
@@ -200,16 +215,16 @@ export default function ServiceForm({
       override_contact_person: data.override_contact_person,
       override_contact_number: data.override_contact_number,
       pickup_date: data.pickup_date
-        ? data.pickup_date.toISOString()
+        ? formatDateForBackend(data.pickup_date)
         : undefined,
       delivery_date: data.delivery_date
-        ? data.delivery_date.toISOString()
+        ? formatDateForBackend(data.delivery_date)
         : undefined,
       received_at: data.received_at
-        ? data.received_at.toISOString()
+        ? formatDateForBackend(data.received_at)
         : undefined,
       appointment_datetime: data.appointment_datetime
-        ? data.appointment_datetime.toISOString()
+        ? formatDateForBackend(data.appointment_datetime)
         : undefined,
       remarks: data.remarks,
       notes: data.notes,
@@ -225,14 +240,22 @@ export default function ServiceForm({
         { id: initialData.id, data: payload },
         {
           onSuccess: () => {
-            onClose()
+            if (forceClose) {
+              forceClose()
+            } else {
+              onClose()
+            }
           },
         },
       )
     } else {
       addService.mutate(payload, {
         onSuccess: () => {
-          onClose()
+          if (forceClose) {
+            forceClose()
+          } else {
+            onClose()
+          }
         },
       })
     }

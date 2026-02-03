@@ -163,10 +163,11 @@ export default function ServicesPage() {
             : "Create a new service request"
         }
         entity={entityState.entity}
-        renderForm={({ onClose, entity }) => (
+        renderForm={({ onClose, entity, forceClose }) => (
           <ServiceForm
             initialData={entity as Service}
             onClose={onClose}
+            forceClose={forceClose}
           />
         )}
         withCloseConfirmation

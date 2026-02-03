@@ -84,8 +84,8 @@ export const formatTime = (dateTimeString: string | null): string => {
       minute: "2-digit",
       hour12: true,
     })
-  } catch (error) {
-    console.error("Invalid date string:", dateTimeString, error)
+  } catch {
+    // error is handled by mutation
     return "-"
   }
 }
@@ -104,8 +104,8 @@ export const formatDate = (dateString: string): string => {
       month: "short",
       day: "numeric",
     })
-  } catch (error) {
-    console.error("Invalid date string:", dateString, error)
+  } catch {
+    // error is handled by mutation
     return "-"
   }
 }

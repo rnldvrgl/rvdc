@@ -162,9 +162,8 @@ export default function AppliancePartsManager({
       if (onUpdate) {
         await onUpdate()
       }
-    } catch (error) {
-      // Error is handled by useApiMutation
-      console.error("Failed to save part:", error)
+    } catch {
+      // error is handled by mutation
     }
   }
 
@@ -220,9 +219,8 @@ export default function AppliancePartsManager({
         if (onUpdate) {
           await onUpdate()
         }
-      } catch (error) {
-        // Error is handled by useApiMutation
-        console.error("Failed to delete part:", error)
+      } catch {
+        // error is handled by mutation
       }
     }
   }

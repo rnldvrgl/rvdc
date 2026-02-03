@@ -242,6 +242,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: "view_settings",
       },
       {
+        name: "Appliance Types",
+        href: "/settings/appliance-types",
+        icon: Wrench,
+        permission: "manage_appliance_types",
+      },
+      {
         name: "Government Benefits",
         href: "/settings/government-benefits",
         icon: Banknote,

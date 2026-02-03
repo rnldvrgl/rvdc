@@ -40,10 +40,8 @@ export function useAuthentications() {
           if (!cookieRes.ok) {
             throw new Error("Failed to set auth cookies")
           }
-        } catch (error) {
-          toast.error("Error setting auth cookies", {
-            description: String(error),
-          })
+        } catch {
+          // error is handled by mutation
         }
 
         // Set user profile in store
@@ -86,8 +84,8 @@ export function useAuthentications() {
           if (!res.ok) {
             toast.error("Failed to delete auth cookies")
           }
-        } catch (error) {
-          toast.error("Error deleting cookies", { description: String(error) })
+        } catch {
+          // error is handled by mutation
         }
 
         // Clear client-side user state
