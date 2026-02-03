@@ -37,6 +37,11 @@ const nextConfig: NextConfig = {
 				port: "8000",
 				pathname: "/media/**",
 			},
+			{
+				protocol: "https",
+				hostname: "api-rvdcrefandaircon.duckdns.org",
+				pathname: "/media/**",
+			},
 		],
 	},
 };
