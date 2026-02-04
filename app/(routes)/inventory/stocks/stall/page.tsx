@@ -22,7 +22,7 @@ import { Eye, Package, Plus } from "lucide-react"
 export default function StocksPage() {
   const { isAdmin, role } = useCurrentUser()
   const { page, limit, search, ordering, filter } = useSearchParameters()
-  const { softDeleteStallStock, updateStallStock } = useStallStockMutations()
+  const { softDeleteStallStock } = useStallStockMutations()
 
   const { data, isLoading, refetch } = useStallStocks({
     page,
@@ -58,18 +58,6 @@ export default function StocksPage() {
     }
   }
 
-  const handleTrackingStock = (stock: Stock) => {
-    if (stock.id !== undefined && stock.stall?.id !== undefined) {
-      updateStallStock.mutate({
-        stock_id: stock.id,
-        data: {
-          ...stock,
-          track_stock: !stock.track_stock,
-        },
-      })
-    }
-  }
-
   const handleView = (stock: Stock) => {
     openViewSheet(stock)
   }
@@ -78,7 +66,6 @@ export default function StocksPage() {
     onEdit: openEditSheet,
     onDelete: handleDelete,
     onRestock: openRestockSheet,
-    onCustomAction: handleTrackingStock,
     onView: handleView,
     role,
   })

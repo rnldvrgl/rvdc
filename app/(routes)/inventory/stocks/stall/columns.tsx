@@ -7,12 +7,11 @@ import {
   safeCell,
 } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, PackageMinus, PackagePlus } from "lucide-react"
+import { Edit, PackagePlus } from "lucide-react"
 
 export function getStallStockColumns({
   onEdit,
   onRestock,
-  onCustomAction,
   role,
 }: GetColumnsProps<Stock>): ColumnDef<Stock>[] {
   const columnMap: Record<string, ColumnDef<Stock>> = {
@@ -62,18 +61,6 @@ export function getStallStockColumns({
         )
       },
     },
-    track_stock: {
-      accessorKey: "track_stock",
-      header: "Track Stock",
-      cell: ({ row }) => {
-        const { track_stock } = row.original
-        return (
-          <Badge variant={track_stock ? "success" : "destructive"}>
-            {track_stock ? "Yes" : "No"}
-          </Badge>
-        )
-      },
-    },
     status: {
       accessorKey: "status",
       header: "Status",
@@ -104,11 +91,6 @@ export function getStallStockColumns({
                   ]
                 : []),
               {
-                label: stock.track_stock ? "Untrack Stock" : "Track Stock",
-                onClick: () => onCustomAction?.(stock),
-                icon: stock.track_stock ? PackageMinus : PackagePlus,
-              },
-              {
                 label: "Edit",
                 icon: Edit,
                 onClick: () => onEdit(stock),
@@ -128,7 +110,6 @@ export function getStallStockColumns({
       "quantity",
       "low_stock_threshold",
       "stall_name",
-      "track_stock",
       "status",
       "action",
     ],
