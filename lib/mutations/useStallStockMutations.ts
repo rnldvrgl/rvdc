@@ -1,17 +1,17 @@
-'use client'
+"use client"
 
-import { StockPayload } from '@/lib/constants/interface'
-import { useApiMutation } from '@/lib/hooks/useApiMutation'
-import api from '@/lib/utils/api'
-import { useQueryClient } from '@tanstack/react-query'
+import { StockPayload } from "@/lib/constants/interface"
+import { useApiMutation } from "@/lib/hooks/useApiMutation"
+import api from "@/lib/utils/api"
+import { useQueryClient } from "@tanstack/react-query"
 
 export function useStallStockMutations() {
   const queryClient = useQueryClient()
 
-  const analyticsKeys = [['summary'], ['restocks_over_time']]
+  const analyticsKeys = [["summary"], ["restocks_over_time"]]
   const sharedInvalidations = [
-    { queryKey: ['stall-stocks'] },
-    { queryKey: ['stock-room-stocks'] },
+    { queryKey: ["stall-stocks"] },
+    { queryKey: ["stock-room-stocks"] },
     ...analyticsKeys.map((key) => ({ queryKey: key })),
   ]
 
@@ -23,11 +23,11 @@ export function useStallStockMutations() {
       stock_id: number
       data: StockPayload
     }) => api.patch(`/inventory/stocks/${stock_id}/`, data),
-    successMessage: 'Stall stock updated successfully.',
+    successMessage: "Stall stock updated successfully.",
     invalidateQueries: sharedInvalidations,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['stall-stocks', variables.stock_id],
+        queryKey: ["stall-stocks", variables.stock_id],
       })
     },
   })
@@ -37,11 +37,11 @@ export function useStallStockMutations() {
       api.patch(`/inventory/stocks/${stock_id}/`, {
         is_deleted: true,
       }),
-    successMessage: 'Stock deleted successfully.',
+    successMessage: "Stock deleted successfully.",
     invalidateQueries: sharedInvalidations,
     onSuccess: (_, stock_id) => {
       queryClient.invalidateQueries({
-        queryKey: ['stall-stocks', stock_id],
+        queryKey: ["stall-stocks", stock_id],
       })
     },
   })
@@ -57,14 +57,39 @@ export function useStallStockMutations() {
       api.post(`/inventory/stocks/${stock_id}/restock/`, {
         quantity,
       }),
-    successMessage: 'Stock restocked successfully.',
+    successMessage: "Stock restocked successfully.",
     invalidateQueries: sharedInvalidations,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['stall-stocks', variables.stock_id],
+        queryKey: ["stall-stocks", variables.stock_id],
       })
     },
   })
 
-  return { updateStallStock, softDeleteStallStock, restockStallStock }
+  const addStallStock = useApiMutation({
+    mutationFn: ({
+      stock_id,
+      quantity,
+    }: {
+      stock_id: number
+      quantity: number
+    }) =>
+      api.post(`/inventory/stocks/${stock_id}/add_stock/`, {
+        quantity,
+      }),
+    successMessage: "Stock added successfully.",
+    invalidateQueries: sharedInvalidations,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["stall-stocks", variables.stock_id],
+      })
+    },
+  })
+
+  return {
+    updateStallStock,
+    softDeleteStallStock,
+    restockStallStock,
+    addStallStock,
+  }
 }

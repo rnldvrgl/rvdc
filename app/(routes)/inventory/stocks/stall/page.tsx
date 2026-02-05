@@ -5,6 +5,7 @@ import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
+import AddStockForm from "@/components/forms/inventory/AddStockForm"
 import RestockForm from "@/components/forms/inventory/RestockForm"
 import StockThresholdForm from "@/components/forms/inventory/StockThresholdForm"
 import { Button } from "@/components/ui/button"
@@ -47,6 +48,12 @@ export default function StocksPage() {
   } = useEntitySheet<Stock>()
 
   const {
+    entityState: { open: addStockOpen, entity: addStockEntity },
+    openEntity: openAddStockSheet,
+    closeEntity: closeAddStockSheet,
+  } = useEntitySheet<Stock>()
+
+  const {
     entityState: { open: viewOpen, entity: viewEntity },
     openEntity: openViewSheet,
     closeEntity: closeViewSheet,
@@ -66,6 +73,7 @@ export default function StocksPage() {
     onEdit: openEditSheet,
     onDelete: handleDelete,
     onRestock: openRestockSheet,
+    onAddStock: openAddStockSheet,
     onView: handleView,
     role,
   })
@@ -227,6 +235,24 @@ export default function StocksPage() {
           entity ? (
             <RestockForm
               type="stall"
+              onClose={forceClose}
+              stock={entity}
+            />
+          ) : null
+        }
+      />
+
+      {/* Add Stock Sheet */}
+      <EntitySheet<Stock>
+        open={addStockOpen}
+        onClose={closeAddStockSheet}
+        entity={addStockEntity}
+        title="Add Stock (Direct)"
+        description="Directly add quantity to stall without stock room."
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) =>
+          entity ? (
+            <AddStockForm
               onClose={forceClose}
               stock={entity}
             />

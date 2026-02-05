@@ -7,11 +7,12 @@ import {
   safeCell,
 } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, PackagePlus } from "lucide-react"
+import { Edit, PackagePlus, Plus } from "lucide-react"
 
 export function getStallStockColumns({
   onEdit,
   onRestock,
+  onAddStock,
   role,
 }: GetColumnsProps<Stock>): ColumnDef<Stock>[] {
   const columnMap: Record<string, ColumnDef<Stock>> = {
@@ -81,6 +82,11 @@ export function getStallStockColumns({
         return (
           <DataTableActions
             items={[
+              {
+                label: "Add Stock",
+                icon: Plus,
+                onClick: () => onAddStock?.(stock),
+              },
               ...(role === "admin"
                 ? [
                     {
@@ -120,6 +126,7 @@ export function getStallStockColumns({
       "quantity",
       "low_stock_threshold",
       "status",
+      "action",
     ],
     clerk: [
       "item_name",
@@ -128,6 +135,7 @@ export function getStallStockColumns({
       "quantity",
       "low_stock_threshold",
       "status",
+      "action",
     ],
   }
 
