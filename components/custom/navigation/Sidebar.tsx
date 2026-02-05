@@ -12,10 +12,10 @@ import RemittanceForm from "@/components/forms/RemittanceForm"
 import SalesTransactionForm from "@/components/forms/SalesTransactionForm"
 import ServiceForm from "@/components/forms/ServiceForm"
 import useActivePath from "@/lib/hooks/useActivePath"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import { useGetPermissions } from "@/lib/hooks/useGetPermissions"
 import { useSidebarNavigation } from "@/lib/hooks/useSidebarNavigation"
-import useUserProfileStore from "@/lib/store/useUserProfileStore"
 
 // Define supported entities and metadata
 const ENTITY_CONFIG = {
@@ -49,13 +49,12 @@ const ENTITY_CONFIG = {
 type EntityType = keyof typeof ENTITY_CONFIG
 
 export function Sidebar() {
+  const { userProfile, role, payrollIncluded } = useCurrentUser()
   const pathname = usePathname()
   const isActive = useActivePath()
   const activePath = isActive ? pathname : ""
 
-  const user = useUserProfileStore((state) => state.userProfile)
-  const userRole = user?.role || "guest"
-  const userPermissions = useGetPermissions(userRole)
+  const userPermissions = useGetPermissions(role || "guest", payrollIncluded)
 
   const { navigation, shortcuts } = useSidebarNavigation({
     permissions: userPermissions,
@@ -114,7 +113,7 @@ export function Sidebar() {
               break
           }
         }}
-        user={user}
+        user={userProfile}
       />
     </>
   )

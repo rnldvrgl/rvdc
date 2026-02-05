@@ -99,6 +99,7 @@ export interface User {
   is_active?: boolean
   contact_number?: string
   role: Roles
+  include_in_payroll?: boolean
 }
 
 // ---------------------

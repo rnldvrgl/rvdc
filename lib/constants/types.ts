@@ -125,6 +125,8 @@ export type Employee = BaseEntity & {
   tin_number?: string
   philhealth_number?: string
   basic_salary?: number
+  include_in_payroll?: boolean
+  has_government_benefits?: boolean
   profile_image?: string
   assigned_stall?: Stall
 }

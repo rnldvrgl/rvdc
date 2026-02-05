@@ -62,10 +62,21 @@ export const useTechnicianChoices = () => {
 	});
 };
 
-export const useEmployeeChoices = () => {
+interface UseEmployeeChoicesOptions {
+	includeInPayroll?: boolean;
+}
+
+export const useEmployeeChoices = (options?: UseEmployeeChoicesOptions) => {
+	const params = new URLSearchParams();
+	
+	if (options?.includeInPayroll !== undefined) {
+		params.append('include_in_payroll', options.includeInPayroll.toString());
+	}
+	
+	const queryString = params.toString();
 	return useApiQuery<Employee[]>({
-		queryKey: ["employee-choices"],
-		url: `${url}employees/`,
+		queryKey: ["employee-choices", options],
+		url: `${url}employees/${queryString ? `?${queryString}` : ''}`,
 	});
 };
 

@@ -11,9 +11,11 @@ import { PsgcSelect } from "@/components/custom/inputs/PsgcSelect"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -112,6 +114,8 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
       tin_number: formData.tin_number ?? "",
       philhealth_number: formData.philhealth_number ?? "",
       basic_salary: formData.basic_salary ?? 0,
+      include_in_payroll: formData.include_in_payroll ?? true,
+      has_government_benefits: formData.has_government_benefits ?? true,
       profile_image: "",
       role: formData.role ?? "technician",
       birthday: formData.birthday ?? "",
@@ -592,6 +596,59 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                         />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <Separator className="my-4" />
+
+              {/* Payroll & Benefits Flags */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="include_in_payroll"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Include in Payroll Generation</FormLabel>
+                        <FormDescription>
+                          When enabled, this employee will appear in bulk
+                          payroll generation. Uncheck for owners or non-payroll
+                          staff.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="has_government_benefits"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          Apply Government Benefits Deductions
+                        </FormLabel>
+                        <FormDescription>
+                          When enabled, SSS, PhilHealth, Pag-IBIG, and Tax
+                          deductions will be applied. Uncheck for employees with
+                          separate benefit arrangements.
+                        </FormDescription>
+                      </div>
                     </FormItem>
                   )}
                 />

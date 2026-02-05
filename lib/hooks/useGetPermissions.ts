@@ -1,7 +1,10 @@
 import { Roles } from "@/lib/constants/types"
 import { useMemo } from "react"
 
-export function useGetPermissions(role: Roles) {
+export function useGetPermissions(
+  role: Roles,
+  includeInPayroll: boolean = true,
+) {
   return useMemo(() => {
     // Common permissions across multiple roles
     const commonViewPermissions = [
@@ -27,16 +30,16 @@ export function useGetPermissions(role: Roles) {
     ]
 
     const commonEmployeePermissions = [
-      "manage_attendance",
-      "view_own_offenses",
-      "view_payroll",
+      ...(includeInPayroll
+        ? ["view_payroll", "manage_attendance", "view_own_offenses"]
+        : []),
     ]
 
     const commonManagementPermissions = [
       "manage_holidays",
       "manage_cheque_collections",
       "manage_appliance_types",
-      "manage_payroll",
+      ...(includeInPayroll ? ["manage_payroll"] : []),
     ]
 
     const commonShortcuts = [
@@ -60,6 +63,7 @@ export function useGetPermissions(role: Roles) {
         "manage_categories",
         "manage_stalls",
         "manage_expense_categories",
+        // Admin always has access to payroll management regardless of includeInPayroll flag
         "manage_payroll_settings",
         "manage_deductions",
         "manage_attendance_admin",
@@ -85,5 +89,5 @@ export function useGetPermissions(role: Roles) {
     }
 
     return permissionsMap[role] || []
-  }, [role])
+  }, [role, includeInPayroll])
 }

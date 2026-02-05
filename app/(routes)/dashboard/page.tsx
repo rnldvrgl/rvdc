@@ -31,7 +31,7 @@ type DashboardFormValues = {
 
 const DashboardPage = () => {
   const { refetch } = useGetSummary({})
-  const { role, userProfile } = useCurrentUser()
+  const { role, userProfile, payrollIncluded } = useCurrentUser()
   const stallId = userProfile?.assigned_stall?.id || undefined
 
   // Default to last 30 days
@@ -90,9 +90,9 @@ const DashboardPage = () => {
                 <UpcomingScheduleCard />
               </div>
               <TodayScheduleCard />
-              <QuickClockInOut />
+              {payrollIncluded && <QuickClockInOut />}
               <MyTasksCard />
-              <LeaveBalanceSummary />
+              {payrollIncluded && <LeaveBalanceSummary />}
               <div className="col-span-full">
                 <BirthdayReminders />
               </div>
