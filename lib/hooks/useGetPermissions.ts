@@ -52,6 +52,7 @@ export function useGetPermissions(role: Roles) {
         ...commonAirconPermissions,
         ...commonShortcuts,
         ...commonManagementPermissions,
+        "manage_calendar_events",
         "view_employees",
         "manage_stockroom",
         "manage_categories",

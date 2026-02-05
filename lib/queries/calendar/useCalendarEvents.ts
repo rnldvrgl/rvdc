@@ -12,7 +12,13 @@ export interface CalendarEvent {
   borderColor?: string
   textColor?: string
   extendedProps: {
-    type: "birthday" | "holiday" | "schedule" | "attendance" | "leave"
+    type:
+      | "birthday"
+      | "holiday"
+      | "schedule"
+      | "attendance"
+      | "leave"
+      | "custom_event"
     user_id?: number
     user_name?: string
     holiday_type?: string
@@ -49,6 +55,17 @@ export interface CalendarEvent {
     shift_period?: string
     shift_period_display?: string
     reason?: string
+    // Custom event props
+    custom_event_id?: number
+    description?: string
+    event_type?:
+      | "holiday"
+      | "meeting"
+      | "maintenance"
+      | "training"
+      | "deadline"
+      | "other"
+    created_by?: string
   }
 }
 

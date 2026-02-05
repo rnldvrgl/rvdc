@@ -259,6 +259,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         icon: CircleDollarSign,
         permission: "manage_tax_brackets",
       },
+      {
+        name: "Calendar Events",
+        href: "/settings/calendar-events",
+        icon: CalendarDays,
+        permission: "manage_calendar_events",
+      },
     ],
   },
 }
