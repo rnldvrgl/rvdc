@@ -1,6 +1,6 @@
-'use server'
+"use server"
 
-import { cookies } from 'next/headers'
+import { cookies } from "next/headers"
 
 export const getCookie = async (name: string): Promise<string | null> => {
   const cookieStore = await cookies()
@@ -17,15 +17,16 @@ export async function setCookie(name: string, token: string, expires?: number) {
     name: name,
     value: token,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: "/",
     expires: new Date(Date.now() + (expires || 60 * 60 * 24 * 7) * 1000),
   })
 }
 
 export async function deleteCookie() {
   const cookieStore = await cookies()
-  cookieStore.delete('access')
-  cookieStore.delete('refresh')
+  cookieStore.delete("access")
+  cookieStore.delete("refresh")
+  cookieStore.delete("role")
 }
