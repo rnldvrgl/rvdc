@@ -2,6 +2,7 @@
 
 import NavList from "@/components/custom/navigation/NavList"
 import { UserProfile } from "@/components/custom/navigation/UserProfile"
+import { DeveloperCredit } from "@/components/custom/shared/DeveloperCredit"
 import { ModeToggle } from "@/components/custom/theme/ModeToggle"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -108,7 +109,7 @@ export default function SidebarNav({
           {renderUserHeader()}
           {renderNav()}
         </div>
-        <div className="mt-auto">
+        <div className="mt-auto space-y-4">
           <Button
             variant="default"
             className="w-full"
@@ -117,6 +118,10 @@ export default function SidebarNav({
             <LogOutIcon />
             Signout
           </Button>
+          <DeveloperCredit
+            variant="subtle"
+            size="sm"
+          />
           {/* <UserProfile user={user} /> */}
         </div>
       </aside>
@@ -233,8 +238,12 @@ export default function SidebarNav({
               </div>
             </div>
             {/* Footer */}
-            <div className="shrink-0 py-2 px-4 border-t border-border ">
+            <div className="shrink-0 py-2 px-4 border-t border-border space-y-3 mb-2">
               <UserProfile user={user} />
+              <DeveloperCredit
+                variant="subtle"
+                size="sm"
+              />
             </div>
           </motion.div>
         )}
