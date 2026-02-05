@@ -1,6 +1,7 @@
 "use client"
 
 import { PasswordField } from "@/components/custom/inputs/PasswordInput"
+import { DeveloperCredit } from "@/components/custom/shared/DeveloperCredit"
 import { Spinner } from "@/components/custom/shared/Spinner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -162,6 +163,12 @@ export function LoginForm() {
               </span>
             </div>
           </div>
+
+          {/* Developer Credit */}
+          <DeveloperCredit
+            variant="subtle"
+            size="sm"
+          />
         </CardContent>
       </Card>
     </div>

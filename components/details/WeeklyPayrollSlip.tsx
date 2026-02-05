@@ -1,5 +1,6 @@
 "use client"
 
+import { DeveloperCredit } from "@/components/custom/shared/DeveloperCredit"
 import { AddAdditionalEarningForm } from "@/components/forms/AddAdditionalEarningForm"
 import { AddManualDeductionForm } from "@/components/forms/AddManualDeductionForm"
 import {
@@ -707,6 +708,12 @@ export function WeeklyPayrollSlip({
             If you have questions about this payroll slip, please contact admin.
           </p>
         </div>
+
+        {/* Developer Credit */}
+        <DeveloperCredit
+          variant="default"
+          size="sm"
+        />
       </CardContent>
 
       {/* Dispute Dialog */}
