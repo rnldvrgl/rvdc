@@ -35,6 +35,8 @@ export function useGetPermissions(role: Roles) {
     const commonManagementPermissions = [
       "manage_holidays",
       "manage_cheque_collections",
+      "manage_appliance_types",
+      "manage_payroll",
     ]
 
     const commonShortcuts = [
@@ -58,13 +60,11 @@ export function useGetPermissions(role: Roles) {
         "manage_categories",
         "manage_stalls",
         "manage_expense_categories",
-        "manage_payroll",
         "manage_payroll_settings",
         "manage_deductions",
         "manage_attendance_admin",
         "manage_government_benefits",
         "manage_tax_brackets",
-        "manage_appliance_types",
       ],
       manager: [
         ...commonViewPermissions,
