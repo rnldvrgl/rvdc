@@ -188,7 +188,7 @@ export function DataTable<TData, TValue>({
               placeholder="Search..."
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="pl-9 pr-4"
+              className="pl-9 pr-4 bg-muted/50"
             />
             {localSearch && (
               <Button
