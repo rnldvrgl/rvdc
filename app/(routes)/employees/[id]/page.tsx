@@ -5,16 +5,24 @@ import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { Detail } from "@/components/details/Detail"
+import { EmployeeBenefitOverrideForm } from "@/components/forms/EmployeeBenefitOverrideForm"
 import EmployeeForm from "@/components/forms/EmployeeForm"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Employee } from "@/lib/constants/types"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
+import { useEmployeeBenefitOverrideMutations } from "@/lib/mutations/useEmployeeBenefitOverrideMutations"
+import { useEmployeeBenefitOverrides } from "@/lib/queries/useEmployeeBenefitOverrides"
 import { useEmployee } from "@/lib/queries/useEmployees"
+import { EmployeeBenefitOverride } from "@/lib/schemas/employeeBenefitOverrideSchema"
+import { formatDate } from "@/lib/utils/helpers/date"
+import { format } from "date-fns"
 import {
   ArrowLeft,
+  BadgeDollarSign,
   Calendar,
   Home,
   IdCard,
@@ -23,22 +31,38 @@ import {
   MapPin,
   Pencil,
   Phone,
+  Plus,
   Store,
+  Trash2,
   User,
   Wallet,
 } from "lucide-react"
 import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
+import { useState } from "react"
 
 const EmployeePage = () => {
   const params = useParams()
   const router = useRouter()
+  const { isAdmin } = useCurrentUser()
   const {
     data: employee,
     isLoading,
     error,
     refetch,
   } = useEmployee(`${params.id}`)
+
+  const { data: benefitOverridesData } = useEmployeeBenefitOverrides({
+    employee: Number(params.id),
+  })
+
+  const benefitOverrides = benefitOverridesData?.results || []
+
+  const { deleteOverride } = useEmployeeBenefitOverrideMutations()
+
+  const [benefitOverrideOpen, setBenefitOverrideOpen] = useState(false)
+  const [selectedOverride, setSelectedOverride] =
+    useState<EmployeeBenefitOverride | null>(null)
 
   const {
     entityState: { open },
@@ -231,10 +255,121 @@ const EmployeePage = () => {
               <Detail
                 icon={<Calendar className="size-4" />}
                 label="Birthday"
-                value={employee.birthday || "-"}
+                value={employee.birthday ? formatDate(employee.birthday, "MMMM d, yyyy") : "-"}
               />
             </CardContent>
           </Card>
+
+          {/* Government Benefit Overrides */}
+          {isAdmin && (
+            <Card className="col-span-full">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold">Benefit Overrides</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Custom government benefit amounts for this employee
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setSelectedOverride(null)
+                    setBenefitOverrideOpen(true)
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Override
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {benefitOverrides.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No benefit overrides configured. Standard rates apply.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {benefitOverrides.map((override) => (
+                      <div
+                        key={override.id}
+                        className="flex items-center justify-between p-4 border rounded-md"
+                      >
+                        <div className="flex items-start gap-3 flex-1">
+                          <BadgeDollarSign className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">
+                                {override.benefit_type_display}
+                              </p>
+                              {!override.is_active && (
+                                <Badge
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  Inactive
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                              <p>
+                                Employee: ₱
+                                {Number(
+                                  override.employee_share_amount,
+                                ).toLocaleString()}
+                                /week
+                                {override.employer_share_amount &&
+                                  ` • Employer: ₱${Number(override.employer_share_amount).toLocaleString()}/week`}
+                              </p>
+                              <p className="text-xs">
+                                {format(
+                                  new Date(override.effective_start),
+                                  "MMM d, yyyy",
+                                )}
+                                {override.effective_end &&
+                                  ` - ${format(new Date(override.effective_end), "MMM d, yyyy")}`}
+                                {!override.effective_end && " - Ongoing"}
+                              </p>
+                              {override.notes && (
+                                <p className="text-xs italic">
+                                  {override.notes}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedOverride(override)
+                              setBenefitOverrideOpen(true)
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (
+                                confirm(
+                                  `Delete ${override.benefit_type_display} override?`,
+                                )
+                              ) {
+                                deleteOverride.mutate(override.id)
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
@@ -251,6 +386,14 @@ const EmployeePage = () => {
             employee={entity}
           />
         )}
+      />
+
+      {/* BENEFIT OVERRIDE DIALOG */}
+      <EmployeeBenefitOverrideForm
+        open={benefitOverrideOpen}
+        onOpenChange={setBenefitOverrideOpen}
+        override={selectedOverride}
+        preselectedEmployee={employee.id}
       />
     </Wrapper>
   )

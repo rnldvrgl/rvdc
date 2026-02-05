@@ -11,7 +11,9 @@ export function getEmployeeColumns({
   onEdit,
   onDelete,
   onView,
-}: GetColumnsProps<Employee>): ColumnDef<Employee>[] {
+}: GetColumnsProps<Employee> & {
+  onManageBenefits?: (employee: Employee) => void
+}): ColumnDef<Employee>[] {
   return [
     {
       accessorKey: "first_name",
