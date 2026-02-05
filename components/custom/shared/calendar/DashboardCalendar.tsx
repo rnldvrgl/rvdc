@@ -177,6 +177,38 @@ const EVENT_COLORS: Record<string, EventColors> = {
     border: "#0e7490",
     text: "#ffffff",
   },
+  // Custom calendar event types - distinguished colors
+  meeting: {
+    bg: "#06b6d4", // cyan-500
+    border: "#0891b2",
+    text: "#ffffff",
+  },
+  maintenance: {
+    bg: "#eab308", // yellow-500
+    border: "#ca8a04",
+    text: "#ffffff",
+  },
+  training: {
+    bg: "#a855f7", // purple-500
+    border: "#9333ea",
+    text: "#ffffff",
+  },
+  deadline: {
+    bg: "#f43f5e", // rose-500
+    border: "#e11d48",
+    text: "#ffffff",
+  },
+  other: {
+    bg: "#64748b", // slate-500
+    border: "#475569",
+    text: "#ffffff",
+  },
+  // Delivery schedule
+  delivery: {
+    bg: "#14b8a6", // teal-500
+    border: "#0d9488",
+    text: "#ffffff",
+  },
   default: {
     bg: "#6b7280",
     border: "#4b5563",
@@ -203,6 +235,14 @@ const LEGEND_ITEMS = [
     label: "Emergency Leave",
     color: EVENT_COLORS.emergencyLeave.bg,
   },
+  { type: "custom_event", label: "Meetings", color: EVENT_COLORS.meeting.bg },
+  {
+    type: "custom_event",
+    label: "Maintenance",
+    color: EVENT_COLORS.maintenance.bg,
+  },
+  { type: "custom_event", label: "Training", color: EVENT_COLORS.training.bg },
+  { type: "custom_event", label: "Deadlines", color: EVENT_COLORS.deadline.bg },
 ] as const
 
 const ATTENDANCE_LEGEND_ITEMS: Array<{
@@ -254,6 +294,27 @@ const getEventColors = (event: CalendarEvent): EventColors => {
 
     case "schedule":
       return EVENT_COLORS.schedule
+
+    case "delivery":
+      return EVENT_COLORS.delivery
+
+    case "custom_event": {
+      const eventType = event.extendedProps.event_type
+      switch (eventType) {
+        case "meeting":
+          return EVENT_COLORS.meeting
+        case "maintenance":
+          return EVENT_COLORS.maintenance
+        case "training":
+          return EVENT_COLORS.training
+        case "deadline":
+          return EVENT_COLORS.deadline
+        case "other":
+          return EVENT_COLORS.other
+        default:
+          return EVENT_COLORS.default
+      }
+    }
 
     default:
       return EVENT_COLORS.default
@@ -323,8 +384,17 @@ const EventDetailModal = ({
               </div>
             </div>
             <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">
-                {format(new Date(event.start), "EEEE, MMMM dd, yyyy")}
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  {event.allDay
+                    ? format(new Date(event.start), "EEEE, MMMM dd, yyyy") +
+                      " (All Day)"
+                    : format(
+                        new Date(event.start),
+                        "EEEE, MMMM dd, yyyy 'at' hh:mm a",
+                      )}
+                </span>
               </div>
               {(extendedProps.checkIn || extendedProps.check_in) && (
                 <div className="text-sm">
@@ -367,8 +437,11 @@ const EventDetailModal = ({
                 </p>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {format(new Date(event.start), "EEEE, MMMM dd, yyyy")}
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground">
+                {format(new Date(event.start), "EEEE, MMMM dd, yyyy")} (All Day)
+              </span>
             </div>
           </div>
         )
@@ -398,8 +471,11 @@ const EventDetailModal = ({
                 </Badge>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {format(new Date(event.start), "EEEE, MMMM dd, yyyy")}
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              <span className="text-muted-foreground">
+                {format(new Date(event.start), "EEEE, MMMM dd, yyyy")} (All Day)
+              </span>
             </div>
           </div>
         )
@@ -420,11 +496,15 @@ const EventDetailModal = ({
               </div>
             </div>
             <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">
-                {format(new Date(event.start), "EEEE, MMMM dd, yyyy")}
-                {event.end && event.end !== event.start && (
-                  <> - {format(new Date(event.end), "EEEE, MMMM dd, yyyy")}</>
-                )}
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  {format(new Date(event.start), "EEEE, MMMM dd, yyyy")}
+                  {event.end && event.end !== event.start && (
+                    <> - {format(new Date(event.end), "EEEE, MMMM dd, yyyy")}</>
+                  )}
+                  {extendedProps.is_half_day ? " (Half Day)" : " (Full Day)"}
+                </span>
               </div>
               {extendedProps.reason && (
                 <div className="text-sm">
@@ -502,6 +582,139 @@ const EventDetailModal = ({
           </div>
         )
 
+      case "delivery":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                <EventIcon
+                  event={event}
+                  size="lg"
+                />
+              </div>
+              <div>
+                <h3 className="font-semibold">Delivery</h3>
+                <p className="text-sm text-muted-foreground">
+                  Service Delivery
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span>Client: {extendedProps.client_name}</span>
+              </div>
+              {extendedProps.service_type_display && (
+                <div className="flex items-center gap-2 text-sm">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <span>
+                    Service Type: {extendedProps.service_type_display}
+                  </span>
+                </div>
+              )}
+              {extendedProps.technician_names &&
+                extendedProps.technician_names.length > 0 && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="w-4 h-4 text-muted-foreground" />
+                    <span>
+                      Technician/s: {extendedProps.technician_names.join(", ")}
+                    </span>
+                  </div>
+                )}
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span>
+                  {event.allDay
+                    ? format(new Date(event.start), "EEEE, MMMM dd, yyyy") +
+                      " (All Day)"
+                    : format(
+                        new Date(event.start),
+                        "EEEE, MMMM dd, yyyy 'at' hh:mm a",
+                      )}
+                </span>
+              </div>
+              {extendedProps.notes && (
+                <div className="flex items-start gap-2 text-sm">
+                  <FileText className="w-4 h-4 mt-0.5 text-muted-foreground" />
+                  <div>
+                    <span className="font-medium">Notes: </span>
+                    <span className="text-muted-foreground">
+                      {extendedProps.notes}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+
+      case "custom_event": {
+        const eventTypeLabels: Record<string, string> = {
+          meeting: "Meeting",
+          maintenance: "Maintenance",
+          training: "Training",
+          deadline: "Deadline",
+          other: "Other",
+        }
+        const eventTypeColors: Record<string, string> = {
+          meeting: "bg-blue-100 dark:bg-blue-900/30",
+          maintenance: "bg-yellow-100 dark:bg-yellow-900/30",
+          training: "bg-purple-100 dark:bg-purple-900/30",
+          deadline: "bg-orange-100 dark:bg-orange-900/30",
+          other: "bg-gray-100 dark:bg-gray-900/30",
+        }
+        const eventType = extendedProps.event_type || "other"
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center",
+                  eventTypeColors[eventType] || eventTypeColors.other,
+                )}
+              >
+                <EventIcon
+                  event={event}
+                  size="lg"
+                />
+              </div>
+              <div>
+                <h3 className="font-semibold">{event.title}</h3>
+                <Badge variant="secondary">
+                  {eventTypeLabels[eventType] || "Other"}
+                </Badge>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  {event.allDay
+                    ? format(new Date(event.start), "EEEE, MMMM dd, yyyy") +
+                      " (All Day)"
+                    : format(
+                        new Date(event.start),
+                        "EEEE, MMMM dd, yyyy 'at' hh:mm a",
+                      )}
+                </span>
+              </div>
+              {extendedProps.description && (
+                <div className="text-sm">
+                  <span className="font-medium">Description:</span>{" "}
+                  {extendedProps.description}
+                </div>
+              )}
+              {extendedProps.created_by && (
+                <div className="text-sm">
+                  <span className="font-medium">Created by:</span>{" "}
+                  {extendedProps.created_by}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      }
+
       default:
         return null
     }
@@ -572,6 +785,10 @@ const DayEventsModal = ({
                       `${event.extendedProps.leave_type_display} Leave`}
                     {event.extendedProps.type === "schedule" &&
                       `${event.extendedProps.service_type?.replace("_", " ")} - ${event.extendedProps.client_name}`}
+                    {event.extendedProps.type === "delivery" &&
+                      `Service Delivery - ${event.extendedProps.client_name}`}
+                    {event.extendedProps.type === "custom_event" &&
+                      `${event.extendedProps.event_type?.charAt(0).toUpperCase()}${event.extendedProps.event_type?.slice(1)} Event`}
                   </p>
                   {event.extendedProps.type === "schedule" && !event.allDay && (
                     <p className="text-xs text-muted-foreground">

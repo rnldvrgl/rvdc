@@ -4,14 +4,19 @@ import { CalendarEvent } from "@/lib/queries/calendar/useCalendarEvents"
 import { cn } from "@/lib/utils/helpers"
 import {
   AlertTriangle,
+  Briefcase,
   Brush,
   Building,
   Cake,
+  Calendar,
   CalendarDays,
   CheckCircle,
+  GraduationCap,
+  Package,
   Plane,
   Store,
   Thermometer,
+  Timer,
   Wrench,
   XCircle,
 } from "lucide-react"
@@ -142,21 +147,72 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
       if (serviceType === "cleaning") {
         return (
           <Brush
-            className={cn(baseClasses, "text-blue-600 dark:text-blue-400")}
+            className={cn(baseClasses, "text-cyan-600 dark:text-cyan-400")}
           />
         )
       } else if (serviceType === "on_site") {
         return (
           <Wrench
-            className={cn(baseClasses, "text-blue-600 dark:text-blue-400")}
+            className={cn(baseClasses, "text-cyan-600 dark:text-cyan-400")}
           />
         )
       } else {
         return (
           <Store
-            className={cn(baseClasses, "text-blue-600 dark:text-blue-400")}
+            className={cn(baseClasses, "text-cyan-600 dark:text-cyan-400")}
           />
         )
+      }
+    }
+    case "delivery":
+      return (
+        <Package
+          className={cn(baseClasses, "text-teal-600 dark:text-teal-400")}
+        />
+      )
+    case "custom_event": {
+      const eventType = event.extendedProps.event_type
+      switch (eventType) {
+        case "meeting":
+          return (
+            <Briefcase
+              className={cn(baseClasses, "text-blue-600 dark:text-blue-400")}
+            />
+          )
+        case "maintenance":
+          return (
+            <Wrench
+              className={cn(
+                baseClasses,
+                "text-yellow-600 dark:text-yellow-400",
+              )}
+            />
+          )
+        case "training":
+          return (
+            <GraduationCap
+              className={cn(
+                baseClasses,
+                "text-purple-600 dark:text-purple-400",
+              )}
+            />
+          )
+        case "deadline":
+          return (
+            <Timer
+              className={cn(
+                baseClasses,
+                "text-orange-600 dark:text-orange-400",
+              )}
+            />
+          )
+        case "other":
+        default:
+          return (
+            <Calendar
+              className={cn(baseClasses, "text-gray-600 dark:text-gray-400")}
+            />
+          )
       }
     }
     default:

@@ -100,6 +100,66 @@ export function EventTooltipContent({ event }: EventTooltipContentProps) {
     </div>
   )
 
+  const renderDeliveryDetails = () => (
+    <div className="text-xs text-primary-foreground mt-1">
+      <div className="flex items-center">
+        <User className="size-3 md:size-4" />
+        <span className="ml-1">
+          <span className="font-semibold">Client: </span>
+          {event.extendedProps.client_name}
+        </span>
+      </div>
+      {event.extendedProps.service_type_display && (
+        <div>
+          <span className="font-semibold">Service: </span>
+          {event.extendedProps.service_type_display}
+        </div>
+      )}
+      {event.extendedProps.technician_names &&
+        event.extendedProps.technician_names.length > 0 && (
+          <div className="flex items-center">
+            <UserCog className="size-3 md:size-4" />
+            <span className="ml-1">
+              <span className="font-semibold">Technician/s: </span>
+              {event.extendedProps.technician_names?.join(", ")}
+            </span>
+          </div>
+        )}
+    </div>
+  )
+
+  const renderCustomEventDetails = () => {
+    const eventTypeLabels: Record<string, string> = {
+      meeting: "Meeting",
+      maintenance: "Maintenance",
+      training: "Training",
+      deadline: "Deadline",
+      other: "Other",
+    }
+    const eventType = event.extendedProps.event_type || "other"
+
+    return (
+      <div className="text-xs text-primary-foreground mt-1">
+        <div>
+          <span className="font-semibold">Type: </span>
+          {eventTypeLabels[eventType] || "Other"}
+        </div>
+        {event.extendedProps.description && (
+          <div>
+            <span className="font-semibold">Description: </span>
+            {event.extendedProps.description}
+          </div>
+        )}
+        {event.extendedProps.created_by && (
+          <div>
+            <span className="font-semibold">Created by: </span>
+            {event.extendedProps.created_by}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-xs">
       <div className="font-medium">{event.title}</div>
@@ -108,7 +168,9 @@ export function EventTooltipContent({ event }: EventTooltipContentProps) {
       {type === "birthday" && renderBirthdayDetails()}
       {type === "holiday" && renderHolidayDetails()}
       {type === "schedule" && renderScheduleDetails()}
+      {type === "delivery" && renderDeliveryDetails()}
       {type === "leave" && renderLeaveDetails()}
+      {type === "custom_event" && renderCustomEventDetails()}
 
       <div className="mt-1 flex items-center ">
         <Clock className="size-3 md:size-4" />

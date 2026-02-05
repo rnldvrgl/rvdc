@@ -16,6 +16,7 @@ export interface CalendarEvent {
       | "birthday"
       | "holiday"
       | "schedule"
+      | "delivery"
       | "attendance"
       | "leave"
       | "custom_event"
