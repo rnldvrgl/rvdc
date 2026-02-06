@@ -69,6 +69,7 @@ export function useGetPermissions(
         "manage_attendance_admin",
         "manage_government_benefits",
         "manage_tax_brackets",
+        "manage_system_settings",
       ],
       manager: [
         ...commonViewPermissions,

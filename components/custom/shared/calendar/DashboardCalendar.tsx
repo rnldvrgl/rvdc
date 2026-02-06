@@ -41,8 +41,9 @@ import {
   Plane,
   User,
 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
+import { useIsMobile } from "@/lib/hooks"
 import { useCalendarPreferences } from "@/lib/hooks/useCalendarPreferences"
 import {
   CalendarEvent,
@@ -828,9 +829,10 @@ const DashboardCalendar = ({
   withRefresh = true,
   eventTypes,
 }: DashboardCalendarProps) => {
+  const isMobile = useIsMobile()
   const { preferences, isLoaded } = useCalendarPreferences()
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [view, setView] = useState<CalendarView>("month")
+  const [view, setView] = useState<CalendarView>(isMobile ? "week" : "month")
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
@@ -840,6 +842,12 @@ const DashboardCalendar = ({
   const [isDayEventsModalOpen, setIsDayEventsModalOpen] = useState(false)
 
   const effectiveWeekStartsOn = weekStartsOn ?? preferences.weekStartsOn
+
+  useEffect(() => {
+    if (isMobile) {
+      setView("week")
+    }
+  }, [isMobile])
 
   // ============================================================================
   // DATA FETCHING & PROCESSING

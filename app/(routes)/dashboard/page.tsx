@@ -85,14 +85,14 @@ const DashboardPage = () => {
         <div className="space-y-6">
           {/* Role-Based Dashboard Components */}
           {role === "technician" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 grid-rows-[auto_auto] gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 grid-rows-[auto_auto] gap-6">
               <div className="row-span-2">
                 <UpcomingScheduleCard />
               </div>
-              <TodayScheduleCard />
               {payrollIncluded && <QuickClockInOut />}
-              <MyTasksCard />
               {payrollIncluded && <LeaveBalanceSummary />}
+              <TodayScheduleCard />
+              <MyTasksCard />
               <div className="col-span-full">
                 <BirthdayReminders />
               </div>
@@ -100,7 +100,7 @@ const DashboardPage = () => {
           )}
 
           {role === "clerk" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <QuickClockInOut />
               <LeaveBalanceSummary />
               <RecentTransactions />
@@ -112,7 +112,7 @@ const DashboardPage = () => {
           )}
 
           {role === "manager" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               <QuickClockInOut />
               <LeaveBalanceSummary />
               <div className="col-span-full">
