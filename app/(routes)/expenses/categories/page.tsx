@@ -4,6 +4,8 @@ import EntitySheet from "@/components/custom/shared/EntitySheet";
 import PageHeader from "@/components/custom/shared/PageHeader";
 import { Wrapper } from "@/components/custom/shared/Wrapper";
 import { DataTable } from "@/components/custom/table/DataTable";
+import { ExpenseCategoryDetails } from "@/components/details/ExpenseCategoryDetails";
+import ExpenseCategoryForm from "@/components/forms/ExpenseCategoryForm";
 import { Button } from "@/components/ui/button";
 import { ExpenseCategory } from "@/lib/constants/interface";
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser";
@@ -15,9 +17,29 @@ import {
 	useExpenseCategoryFilters,
 } from "@/lib/queries/useExpenseCategories";
 import { Layers, Plus } from "lucide-react";
-import ExpenseCategoryForm from "@/components/forms/ExpenseCategoryForm";
-import { ExpenseCategoryDetails } from "@/components/details/ExpenseCategoryDetails";
 import { getExpenseCategoryColumns } from "./columns";
+
+// Helper function to sort categories with subcategories grouped under their parents
+const sortCategoriesWithSubcategories = (categories: ExpenseCategory[]): ExpenseCategory[] => {
+	const parentCategories = categories.filter(cat => !cat.parent);
+	const subcategories = categories.filter(cat => cat.parent);
+	
+	const sorted: ExpenseCategory[] = [];
+	
+	parentCategories.forEach(parent => {
+		sorted.push(parent);
+		// Add all subcategories of this parent
+		const childCategories = subcategories.filter(sub => sub.parent === parent.id);
+		sorted.push(...childCategories);
+	});
+	
+	// Add any orphaned subcategories (if parent is not in the list)
+	const addedSubIds = new Set(sorted.filter(c => c.parent).map(c => c.id));
+	const orphanedSubs = subcategories.filter(sub => !addedSubIds.has(sub.id));
+	sorted.push(...orphanedSubs);
+	
+	return sorted;
+};
 
 export default function ExpenseCategoriesPage() {
 	const { isAdmin } = useCurrentUser();
@@ -147,7 +169,10 @@ export default function ExpenseCategoriesPage() {
 				isLoading={isLoading}
 				columns={columns}
 				data={
-					data || {
+					data ? {
+						...data,
+						results: sortCategoriesWithSubcategories(data.results),
+					} : {
 						count: 0,
 						next: null,
 						previous: null,
