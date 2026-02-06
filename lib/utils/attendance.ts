@@ -6,6 +6,7 @@ import {
   LeaveStatus,
   LeaveType,
 } from "@/lib/constants/types"
+import { formatDateToYMD } from "@/lib/utils/helpers"
 
 // Status badge variants
 export const getAttendanceStatusVariant = (
@@ -171,7 +172,7 @@ export const createClockInPayload = (
 ) => {
   return {
     employee_id: employeeId,
-    date: date.toISOString().split("T")[0],
+    date: formatDateToYMD(date),
     clock_in: new Date().toISOString(),
   }
 }

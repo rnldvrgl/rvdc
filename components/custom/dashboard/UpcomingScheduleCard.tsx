@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCalendarEvents } from "@/lib/queries/calendar/useCalendarEvents"
+import { formatDateToYMD } from "@/lib/utils/helpers"
 import { addDays, format } from "date-fns"
 import { Calendar } from "lucide-react"
 
@@ -11,8 +12,8 @@ export function UpcomingScheduleCard() {
   const nextWeek = addDays(today, 7)
 
   const { data: events, isLoading } = useCalendarEvents({
-    start: addDays(today, 1).toISOString().split("T")[0],
-    end: nextWeek.toISOString().split("T")[0],
+    start: formatDateToYMD(addDays(today, 1)),
+    end: formatDateToYMD(nextWeek),
   })
 
   const schedules =

@@ -24,6 +24,7 @@ import {
 } from "@/lib/mutations/useOvertimeMutations"
 import { useOvertimeRequests } from "@/lib/queries/useOvertimeRequests"
 import { OvertimeRequestFormData } from "@/lib/schemas/overtimeRequestSchema"
+import { formatDateToYMD } from "@/lib/utils/helpers"
 
 export default function MyOvertimePage() {
   const { user_id } = useCurrentUser()
@@ -40,7 +41,7 @@ export default function MyOvertimePage() {
 
     const input: CreateOvertimeRequestInput = {
       employee: user_id,
-      date: formData.date.toISOString().split("T")[0],
+      date: formatDateToYMD(formData.date),
       time_start: formData.time_start.toISOString(),
       time_end: formData.time_end.toISOString(),
       reason: formData.reason,

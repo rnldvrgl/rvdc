@@ -3,14 +3,16 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCalendarEvents } from "@/lib/queries/calendar/useCalendarEvents"
+import { formatDateToYMD } from "@/lib/utils/helpers"
 import { format } from "date-fns"
 import { CalendarDays, MapPin } from "lucide-react"
 
 export function TodayScheduleCard() {
   const today = new Date()
+  const todayStr = formatDateToYMD(today)
   const { data: events, isLoading } = useCalendarEvents({
-    start: today.toISOString().split("T")[0],
-    end: today.toISOString().split("T")[0],
+    start: todayStr,
+    end: todayStr,
   })
 
   const schedules =

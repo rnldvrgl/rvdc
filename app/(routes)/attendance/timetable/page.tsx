@@ -14,16 +14,17 @@ import { useAttendanceStats } from "@/lib/hooks/useAttendanceStats"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useDailyAttendances } from "@/lib/queries/useAttendance"
 import { convertAttendanceForCalendar } from "@/lib/utils/attendance"
+import { formatDateToYMD } from "@/lib/utils/helpers"
 import { Users } from "lucide-react"
 import { useState } from "react"
 
 const AttendancePage = () => {
   const { user_id } = useCurrentUser()
   const [dateRange] = useState({
-    start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      .toISOString()
-      .split("T")[0],
-    end_date: new Date().toISOString().split("T")[0],
+    start_date: formatDateToYMD(
+      new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    ),
+    end_date: formatDateToYMD(new Date()),
   })
 
   // Fetch attendance data from API

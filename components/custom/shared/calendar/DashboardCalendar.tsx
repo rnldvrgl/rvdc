@@ -49,7 +49,7 @@ import {
   CalendarEvent,
   useCalendarEvents,
 } from "@/lib/queries/calendar/useCalendarEvents"
-import { cn } from "@/lib/utils/helpers"
+import { cn, formatDateToYMD } from "@/lib/utils/helpers"
 import { CalendarEventItem } from "./CalendarEventItem"
 import CalendarSettings from "./CalendarSettings"
 import { DayViewEventItem } from "./DayViewEventItem"
@@ -909,8 +909,8 @@ const DashboardCalendar = ({
     error,
     refetch,
   } = useCalendarEvents({
-    start: dateRange.start.toISOString().split("T")[0],
-    end: dateRange.end.toISOString().split("T")[0],
+    start: formatDateToYMD(dateRange.start),
+    end: formatDateToYMD(dateRange.end),
     enabled: !useCustomData,
   })
 

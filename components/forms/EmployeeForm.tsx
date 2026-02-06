@@ -27,6 +27,7 @@ import type { ComboboxOption, Employee } from "@/lib/constants/types"
 import useFileUpload from "@/lib/hooks/useFileUpload"
 import { useEmployeeMutations } from "@/lib/mutations/useEmployeeMutations"
 import { useStallChoices } from "@/lib/queries/useChoices"
+import { formatDateToYMD } from "@/lib/utils/helpers"
 import {
   Briefcase,
   CreditCard,
@@ -343,9 +344,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                             ? new Date(field.value)
                             : undefined,
                           onChange: (date: Date | undefined) => {
-                            field.onChange(
-                              date ? date.toISOString().split("T")[0] : "",
-                            )
+                            field.onChange(date ? formatDateToYMD(date) : "")
                           },
                         }}
                         required

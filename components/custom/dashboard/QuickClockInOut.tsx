@@ -10,7 +10,7 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useCalendarEvents } from "@/lib/queries/calendar/useCalendarEvents"
 import { useDailyAttendances } from "@/lib/queries/useAttendance"
 import { useUserProfile } from "@/lib/queries/useUserProfile"
-import { formatMinutesToHours } from "@/lib/utils/helpers"
+import { formatDateToYMD, formatMinutesToHours } from "@/lib/utils/helpers"
 import {
   AlertCircle,
   CheckCircle,
@@ -46,9 +46,10 @@ export function QuickClockInOut() {
   const yesterdayAttendance = attendanceData?.results[1] || null
 
   const today = new Date()
+  const todayStr = formatDateToYMD(today)
   const { data: events } = useCalendarEvents({
-    start: today.toISOString().split("T")[0],
-    end: today.toISOString().split("T")[0],
+    start: todayStr,
+    end: todayStr,
   })
 
   // Check if today is a holiday
@@ -87,7 +88,7 @@ export function QuickClockInOut() {
     const now = new Date()
     clockIn.mutate({
       employee_id: profile.id,
-      date: now.toISOString().split("T")[0],
+      date: formatDateToYMD(now),
       clock_in: now.toISOString(),
     })
   }

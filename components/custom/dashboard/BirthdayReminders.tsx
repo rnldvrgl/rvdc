@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCalendarEvents } from "@/lib/queries/calendar/useCalendarEvents"
+import { formatDateToYMD } from "@/lib/utils/helpers"
 import { format } from "date-fns"
 import { Cake } from "lucide-react"
 
@@ -11,8 +12,8 @@ export function BirthdayReminders() {
   nextWeek.setDate(today.getDate() + 7)
 
   const { data: events, isLoading } = useCalendarEvents({
-    start: today.toISOString().split("T")[0],
-    end: nextWeek.toISOString().split("T")[0],
+    start: formatDateToYMD(today),
+    end: formatDateToYMD(nextWeek),
   })
 
   const birthdays =
