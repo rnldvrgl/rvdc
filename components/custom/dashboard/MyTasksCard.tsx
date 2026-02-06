@@ -2,18 +2,26 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useServices } from "@/lib/queries/services/useServices"
 import { CheckCircle2, Clock, Wrench } from "lucide-react"
 
 export function MyTasksCard() {
+  const { user_id } = useCurrentUser()
   const { data: servicesData, isLoading } = useServices()
   const services = servicesData?.results || []
 
-  // Filter services assigned to current user (will be filtered by backend based on role)
-  const pendingServices = services.filter(
+  // Filter services assigned to current user as technician
+  const myServices = services.filter((service) =>
+    service.technician_assignments?.some(
+      (assignment) => assignment.technician === user_id,
+    ),
+  )
+
+  const pendingServices = myServices.filter(
     (s) => s.status === "pending" || s.status === "in_progress",
   )
-  const completedToday = services.filter((s) => {
+  const completedToday = myServices.filter((s) => {
     if (s.status !== "completed") return false
     const completedDate = new Date(s.updated_at)
     const today = new Date()

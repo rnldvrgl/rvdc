@@ -1,5 +1,6 @@
 "use client"
 
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MultiSelect } from "@/components/ui/multi-select"
@@ -11,13 +12,6 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   ApplianceStatus,
   ServiceAppliance,
@@ -358,61 +352,46 @@ export default function ServiceApplianceManager({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Appliance Type</Label>
-                <Select
+                <ComboBox
+                  options={[{ value: "none", label: "N/A" }].concat(
+                    applianceTypes.map((type) => ({
+                      value: type.id.toString(),
+                      label: type.name,
+                    })),
+                  )}
                   value={
                     editingAppliance.appliance_type
                       ? editingAppliance.appliance_type.toString()
                       : "none"
                   }
-                  onValueChange={(value) =>
+                  onChange={(value) =>
                     setEditingAppliance({
                       ...editingAppliance,
-                      appliance_type: value === "none" ? null : parseInt(value),
+                      appliance_type: value === "none" ? null : Number(value),
                     })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">N/A</SelectItem>
-                    {applianceTypes.map((type) => (
-                      <SelectItem
-                        key={type.id}
-                        value={type.id.toString()}
-                      >
-                        {type.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Select type"
+                  searchPlaceholder="Search appliance types..."
+                />
               </div>
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Status</Label>
-                <Select
+                <ComboBox
+                  options={applianceStatusOptions.map((option) => ({
+                    value: option.value,
+                    label: option.label,
+                  }))}
                   value={editingAppliance.status || "received"}
-                  onValueChange={(value: ApplianceStatus) =>
+                  onChange={(value) =>
                     setEditingAppliance({
                       ...editingAppliance,
-                      status: value,
+                      status: value as ApplianceStatus,
                     })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {applianceStatusOptions.map((option) => (
-                      <SelectItem
-                        key={option.value}
-                        value={option.value}
-                      >
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Select status"
+                  searchPlaceholder="Search status..."
+                />
               </div>
 
               <div className="space-y-2 col-span-2">
@@ -527,7 +506,12 @@ export default function ServiceApplianceManager({
                   <div className="grid grid-cols-3 gap-3 pl-4 border-l-2">
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Type</Label>
-                      <Select
+                      <ComboBox
+                        options={[
+                          { value: "none", label: "None" },
+                          { value: "percentage", label: "%" },
+                          { value: "fixed", label: "₱" },
+                        ]}
                         value={
                           editingAppliance.labor_discount_amount !== undefined
                             ? "fixed"
@@ -536,7 +520,7 @@ export default function ServiceApplianceManager({
                               ? "percentage"
                               : "none"
                         }
-                        onValueChange={(value) => {
+                        onChange={(value) => {
                           if (value === "none") {
                             setEditingAppliance({
                               ...editingAppliance,
@@ -558,16 +542,8 @@ export default function ServiceApplianceManager({
                             })
                           }
                         }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          <SelectItem value="percentage">%</SelectItem>
-                          <SelectItem value="fixed">₱</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        placeholder="Select type"
+                      />
                     </div>
 
                     <div className="space-y-2">

@@ -59,7 +59,7 @@ export default function PayslipDetailPage() {
         description="View detailed breakdown of your payslip"
         icon={PhilippinePesoIcon}
         actionButton={
-          <div className="flex gap-2">
+          <>
             {payroll && (
               <Button
                 variant="default"
@@ -76,7 +76,7 @@ export default function PayslipDetailPage() {
               <ArrowLeft className="size-4 mr-2" />
               Back
             </Button>
-          </div>
+          </>
         }
       />
 

@@ -329,7 +329,7 @@ export function WeeklyPayrollSlip({
 
       <CardContent className="space-y-3">
         {/* Company & Employee Info - Compact Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid md:grid-cols-2 gap-3">
           <div className="rounded-lg border bg-card p-3">
             <div className="flex items-center gap-2 mb-2">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -386,7 +386,7 @@ export function WeeklyPayrollSlip({
             <Clock className="h-4 w-4 text-primary" />
             <h3 className="text-sm sm:text-base font-semibold">Time Summary</h3>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-2">
             <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-900/40 border">
               <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
                 {regularHours.toFixed(1)}

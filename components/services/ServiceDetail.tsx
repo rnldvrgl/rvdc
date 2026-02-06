@@ -709,6 +709,48 @@ export default function ServiceDetail({
                     {serviceStatusLabels[service.status] || service.status}
                   </Badge>
                 </div>
+                {/* Show pickup date for pull-out services */}
+                {service.service_mode === "pull_out" && service.pickup_date && (
+                  <div className="flex justify-between">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Pickup Date
+                    </p>
+                    <p className="text-sm flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(new Date(service.pickup_date), "PPp")}
+                    </p>
+                  </div>
+                )}
+                {/* Show delivery date for pull-out services */}
+                {service.service_mode === "pull_out" &&
+                  service.delivery_date && (
+                    <div className="flex justify-between">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Delivery Date
+                      </p>
+                      <p className="text-sm flex items-center gap-1">
+                        <Truck className="h-3 w-3" />
+                        {formatDate(new Date(service.delivery_date), "PPp")}
+                      </p>
+                    </div>
+                  )}
+                {/* Show schedule info for home services */}
+                {service.service_mode === "home_service" &&
+                  schedules.length > 0 &&
+                  schedules[0].scheduled_date && (
+                    <div className="flex justify-between">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Scheduled
+                      </p>
+                      <p className="text-sm flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {formatDate(
+                          new Date(schedules[0].scheduled_date),
+                          "PPp",
+                        )}
+                      </p>
+                    </div>
+                  )}
               </CardContent>
             </Card>
 
@@ -1646,11 +1688,47 @@ export default function ServiceDetail({
                   <p className="text-xs text-muted-foreground">
                     {formatDate(
                       new Date(service.created_at),
-                      "EEEE, MMMM d, yyyy",
+                      "EEEE, MMMM d, yyyy 'at' h:mm a",
                     )}
                   </p>
                 </div>
               </div>
+
+              {/* Pickup Date (Pull-Out) */}
+              {service.service_mode === "pull_out" && service.pickup_date && (
+                <div className="flex items-start gap-3 rounded-md border p-3 bg-blue-50 dark:bg-blue-950">
+                  <Truck className="mt-1 h-5 w-5 text-blue-600" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      Scheduled Pickup
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                      {formatDate(
+                        new Date(service.pickup_date),
+                        "EEEE, MMMM d, yyyy 'at' h:mm a",
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Delivery Date (Pull-Out) */}
+              {service.service_mode === "pull_out" && service.delivery_date && (
+                <div className="flex items-start gap-3 rounded-md border p-3 bg-green-50 dark:bg-green-950">
+                  <Truck className="mt-1 h-5 w-5 text-green-600" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                      Scheduled Delivery
+                    </p>
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      {formatDate(
+                        new Date(service.delivery_date),
+                        "EEEE, MMMM d, yyyy 'at' h:mm a",
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Received At (Carry-In) */}
               {service.received_at && (
@@ -1661,7 +1739,7 @@ export default function ServiceDetail({
                     <p className="text-xs text-muted-foreground">
                       {formatDate(
                         new Date(service.received_at),
-                        "EEEE, MMMM d, yyyy",
+                        "EEEE, MMMM d, yyyy 'at' h:mm a",
                       )}
                     </p>
                   </div>
