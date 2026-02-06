@@ -10,6 +10,7 @@ export interface SystemSettings {
   birthday_greeting_show_emojis: boolean
   birthday_greeting_male_emojis: string
   birthday_greeting_female_emojis: string
+  birthday_greeting_variant: string
   updated_at: string
 }
 

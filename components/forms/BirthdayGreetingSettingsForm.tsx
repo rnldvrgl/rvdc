@@ -11,6 +11,13 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useBirthdayGreetingSettingsMutations } from "@/lib/mutations/useBirthdayGreetingSettingsMutations"
@@ -35,6 +42,7 @@ const birthdayGreetingSettingsSchema = z.object({
   birthday_greeting_female_emojis: z
     .string()
     .min(1, "Female emojis are required"),
+  birthday_greeting_variant: z.string(),
 })
 
 type BirthdayGreetingSettingsFormValues = z.infer<
@@ -61,6 +69,7 @@ export function BirthdayGreetingSettingsForm({
       birthday_greeting_show_emojis: settings.birthday_greeting_show_emojis,
       birthday_greeting_male_emojis: settings.birthday_greeting_male_emojis,
       birthday_greeting_female_emojis: settings.birthday_greeting_female_emojis,
+      birthday_greeting_variant: settings.birthday_greeting_variant,
     },
   })
 
@@ -78,6 +87,7 @@ export function BirthdayGreetingSettingsForm({
         birthday_greeting_male_emojis: settings.birthday_greeting_male_emojis,
         birthday_greeting_female_emojis:
           settings.birthday_greeting_female_emojis,
+        birthday_greeting_variant: settings.birthday_greeting_variant,
       })
     }
   }, [settings, form])
@@ -277,6 +287,39 @@ export function BirthdayGreetingSettingsForm({
               <FormDescription>
                 Comma-separated emojis for female employees (e.g.,
                 🎈,🎊,🎁,🎉,💐,🎂)
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Design Variant Selection */}
+        <FormField
+          control={form.control}
+          name="birthday_greeting_variant"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Design Variant</FormLabel>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value}
+                disabled={!form.watch("birthday_greeting_enabled")}
+              >
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a design variant" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="default">Default</SelectItem>
+                  <SelectItem value="minimalist">Modern Minimalist</SelectItem>
+                  <SelectItem value="celebration">Celebration Theme</SelectItem>
+                  <SelectItem value="elegant">Elegant Professional</SelectItem>
+                  <SelectItem value="playful">Playful & Fun</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormDescription>
+                Choose the visual style for the birthday greeting card
               </FormDescription>
               <FormMessage />
             </FormItem>
