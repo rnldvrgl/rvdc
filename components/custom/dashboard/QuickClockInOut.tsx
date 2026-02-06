@@ -15,6 +15,7 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  Loader2,
   LogIn,
   LogOut,
   PhilippinePeso,
@@ -113,8 +114,8 @@ export function QuickClockInOut() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         </CardContent>
       </Card>
@@ -155,8 +156,8 @@ export function QuickClockInOut() {
             <RedirectRoute href={timetableRoute} />
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-center">
+        <CardContent className="space-y-6">
+          <div className="text-center py-4">
             <p className="text-3xl font-bold">{formatTime(currentTime)}</p>
             <p className="text-sm text-muted-foreground mt-1">
               {currentTime.toLocaleDateString("en-US", {
@@ -166,11 +167,11 @@ export function QuickClockInOut() {
               })}
             </p>
           </div>
-          <Alert variant="info">
+          <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Clock in/out is not yet available. You can clock in/out from 7:00
-              AM to 6:00 PM.
+              AM to 6:00 PM (until 11:00 PM for allowance time).
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -212,8 +213,8 @@ export function QuickClockInOut() {
           <RedirectRoute href={timetableRoute} />
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="text-center">
+      <CardContent className="space-y-6">
+        <div className="text-center py-4">
           <p className="text-3xl font-bold">{formatTime(currentTime)}</p>
           <p className="text-sm text-muted-foreground mt-1">
             {currentTime.toLocaleDateString("en-US", {
@@ -234,16 +235,18 @@ export function QuickClockInOut() {
               />
             </div>
           )}
+        {/* Holiday Alert */}
         {todayHoliday && (
           <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Holiday</AlertTitle>
             <AlertDescription>
-              Today is {todayHoliday.title} (Holiday). Work today is voluntary
-              and will be compensated accordingly.
+              Today is {todayHoliday.title}. Enjoy your day off!
             </AlertDescription>
           </Alert>
         )}
 
+        {/* Half Day Leave Alert */}
         {isHalfDay && (
           <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
@@ -255,43 +258,53 @@ export function QuickClockInOut() {
         )}
 
         <div className="space-y-3">
-          {attendance && (
-            <div className="p-3 rounded-lg border bg-muted/50 space-y-2">
-              {attendance.clock_in && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Clocked In:</span>
-                  <span className="font-medium">
-                    {" "}
-                    {attendanceStatus?.attendance?.clock_in
-                      ? formatTime(
-                          new Date(attendanceStatus.attendance.clock_in),
-                        )
-                      : "—"}
-                  </span>
+          {attendance ? (
+            <div className="grid gap-3">
+              {/* Clock Times */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                  <LogIn className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">Clock In</p>
+                    <p className="text-sm font-medium">
+                      {attendanceStatus?.attendance?.clock_in
+                        ? formatTime(
+                            new Date(attendanceStatus.attendance.clock_in),
+                          )
+                        : "—"}
+                    </p>
+                  </div>
                 </div>
-              )}
-              {attendance.clock_out && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Clocked Out:</span>
-                  <span className="font-medium">
-                    {" "}
-                    {attendanceStatus?.attendance?.clock_out
-                      ? formatTime(
-                          new Date(attendanceStatus.attendance.clock_out),
-                        )
-                      : "—"}
-                  </span>
-                </div>
-              )}
 
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                  <LogOut className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">Clock Out</p>
+                    <p className="text-sm font-medium">
+                      {attendanceStatus?.attendance?.clock_out
+                        ? formatTime(
+                            new Date(attendanceStatus.attendance.clock_out),
+                          )
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Hours */}
               {attendance.total_hours && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Total Hours:</span>
-                  <span className="font-medium">{attendance.total_hours}h</span>
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                  <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">Total Hours</p>
+                    <p className="text-sm font-medium">
+                      {attendance.total_hours}h
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
-          )}
+          ) : null}
           {/* Late Status */}
           {attendanceStatus?.attendance?.is_late && (
             <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
@@ -328,12 +341,11 @@ export function QuickClockInOut() {
             )}
           {/* Completed Message */}
           {hasClockedOut && (
-            <Alert
-              variant="success"
-              className="col-span-full"
-            >
-              <CheckCircle className="h-4 w-4" />
-              <AlertTitle>Attendance Recorded</AlertTitle>
+            <Alert variant="success">
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+              <AlertTitle className="font-medium">
+                Attendance Recorded
+              </AlertTitle>
               <AlertDescription>
                 Your attendance for today has been recorded successfully.
               </AlertDescription>
@@ -342,10 +354,7 @@ export function QuickClockInOut() {
 
           {/* Error Messages */}
           {clockIn.isError && (
-            <Alert
-              variant="destructive"
-              className="col-span-full"
-            >
+            <Alert variant="destructive">
               <XCircle className="h-4 w-4" />
               <AlertTitle>Clock In Failed</AlertTitle>
               <AlertDescription>
@@ -355,10 +364,7 @@ export function QuickClockInOut() {
           )}
 
           {clockOut.isError && (
-            <Alert
-              variant="destructive"
-              className="col-span-full"
-            >
+            <Alert variant="destructive">
               <XCircle className="h-4 w-4" />
               <AlertTitle>Clock Out Failed</AlertTitle>
               <AlertDescription>
@@ -371,21 +377,34 @@ export function QuickClockInOut() {
               <Button
                 onClick={handleClockIn}
                 disabled={hasClockedIn || clockIn.isPending}
-                className="w-full"
+                className="h-11"
                 size="lg"
+                variant="success"
               >
-                <LogIn className="size-4 mr-2" />
-                {clockIn.isPending ? "Clocking In..." : "Clock In"}
+                {clockIn.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Clock In
+                  </>
+                )}
               </Button>
               <Button
                 onClick={handleClockOut}
                 disabled={!hasClockedIn || hasClockedOut || clockOut.isPending}
-                variant="outline"
-                className="w-full"
+                variant="destructive"
+                className="h-11"
                 size="lg"
               >
-                <LogOut className="size-4 mr-2" />
-                {clockOut.isPending ? "Clocking Out..." : "Clock Out"}
+                {clockOut.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Clock Out
+                  </>
+                )}
               </Button>
             </div>
           )}

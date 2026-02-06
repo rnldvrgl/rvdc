@@ -17,9 +17,9 @@ export function useClockInOut() {
     return () => clearInterval(timer)
   }, [])
 
-  // Business hours: 8 AM to 5 PM with 1 hour allowance
+  // Business hours: 8 AM to 10 PM with 1 hour allowance
   const BUSINESS_START_HOUR = 8
-  const BUSINESS_END_HOUR = 17
+  const BUSINESS_END_HOUR = 22
   const ALLOWANCE_HOURS = 1
 
   const currentHour = currentTime.getHours()

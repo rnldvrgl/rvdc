@@ -11,12 +11,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { useClockInOut } from "@/lib/hooks/useClockInOut"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import useCalendarEvents from "@/lib/queries/calendar/useCalendarEvents"
 import {
   useDailyAttendance,
   useLeaveRequests,
 } from "@/lib/queries/useAttendance"
 import { canClockInOut, formatTime } from "@/lib/utils/attendance"
-import { formatMinutesToHours } from "@/lib/utils/helpers"
+import { formatDateToYMD, formatMinutesToHours } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import {
   AlertCircle,
@@ -46,6 +47,21 @@ export function ClockInOut({
   const [notes, setNotes] = useState("")
   const [showNotes, setShowNotes] = useState(false)
 
+  // Get today's date first
+  const today = date || formatDate(new Date(), "yyyy-MM-dd")
+  const todayStr = formatDateToYMD(new Date(today))
+
+  // Fetch calendar events for today
+  const { data: events } = useCalendarEvents({
+    start: todayStr,
+    end: todayStr,
+  })
+
+  // Check if today is a holiday
+  const todayHoliday = events?.find(
+    (event) => event.extendedProps.type === "holiday",
+  )
+
   const {
     currentTime,
     attendanceStatus: currentStatus,
@@ -58,7 +74,6 @@ export function ClockInOut({
     canClockInOutToday,
   } = useClockInOut()
 
-  const today = date || formatDate(new Date(), "yyyy-MM-dd")
   const canClock = canClockInOut(role || "")
 
   // Check if user has approved leave for today
@@ -222,7 +237,7 @@ export function ClockInOut({
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Clock in/out is not yet available. You can clock in/out from 7:00
-              AM to 6:00 PM.
+              AM to 6:00 PM (until 11:00 PM for allowance time).
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -245,6 +260,17 @@ export function ClockInOut({
               />
             </div>
           )}
+        
+        {/* Holiday Alert */}
+        {todayHoliday && (
+          <Alert variant="info">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Holiday</AlertTitle>
+            <AlertDescription>
+              Today is {todayHoliday.title}. Enjoy your day off!
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Header */}
         <div className="flex flex-col lg:flex-row space-y-3 items-center justify-between">
