@@ -77,6 +77,7 @@ export function UpcomingScheduleCard() {
           <Badge
             variant="secondary"
             className="ml-auto"
+            suppressHydrationWarning
           >
             {schedules.length}
           </Badge>

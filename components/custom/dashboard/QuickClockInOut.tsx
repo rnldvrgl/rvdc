@@ -135,7 +135,7 @@ export function QuickClockInOut() {
         <CardContent>
           <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
+            <AlertDescription suppressHydrationWarning>
               You are on {todayLeave.extendedProps.leave_type_display} leave
               today. Attendance is not required.
             </AlertDescription>
@@ -201,7 +201,7 @@ export function QuickClockInOut() {
         <CardContent>
           <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
+            <AlertDescription suppressHydrationWarning>
               You have {shiftPeriod === "AM" ? "morning" : "afternoon"} leave
               today. Clock in will be available during your working hours (
               {shiftPeriod === "AM" ? "after 12:00 PM" : "before 12:00 PM"}).
@@ -256,7 +256,7 @@ export function QuickClockInOut() {
           <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Holiday</AlertTitle>
-            <AlertDescription>
+            <AlertDescription suppressHydrationWarning>
               Today is {todayHoliday.title}. Enjoy your day off!
             </AlertDescription>
           </Alert>
@@ -266,7 +266,7 @@ export function QuickClockInOut() {
         {isHalfDay && (
           <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
+            <AlertDescription suppressHydrationWarning>
               You have {shiftPeriod === "AM" ? "morning" : "afternoon"} leave
               today.
             </AlertDescription>

@@ -65,6 +65,7 @@ export function RemindersAlerts() {
             <Badge
               variant="destructive"
               className="ml-auto"
+              suppressHydrationWarning
             >
               {totalAlerts}
             </Badge>
@@ -87,7 +88,10 @@ export function RemindersAlerts() {
                       <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
                         Pending Leave Approvals
                       </p>
-                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                      <p
+                        className="text-xs text-amber-700 dark:text-amber-300 mt-1"
+                        suppressHydrationWarning
+                      >
                         {pendingLeaves.length} leave request
                         {pendingLeaves.length > 1 ? "s" : ""} awaiting approval
                       </p>
@@ -105,7 +109,10 @@ export function RemindersAlerts() {
                     <p className="text-sm font-medium text-red-900 dark:text-red-100">
                       Overdue Services
                     </p>
-                    <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                    <p
+                      className="text-xs text-red-700 dark:text-red-300 mt-1"
+                      suppressHydrationWarning
+                    >
                       {overdueServices.length} service
                       {overdueServices.length > 1 ? "s" : ""} past target
                       completion date
@@ -123,7 +130,10 @@ export function RemindersAlerts() {
                     <p className="text-sm font-medium text-orange-900 dark:text-orange-100">
                       Unpaid Services
                     </p>
-                    <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                    <p
+                      className="text-xs text-orange-700 dark:text-orange-300 mt-1"
+                      suppressHydrationWarning
+                    >
                       {unpaidServices.length} completed service
                       {unpaidServices.length > 1 ? "s" : ""} awaiting payment
                     </p>

@@ -214,7 +214,10 @@ export function ClockInOut({
                 <h3 className="font-semibold text-sm sm:text-base">
                   Attendance Clock
                 </h3>
-                <p className="text-xs text-muted-foreground">
+                <p
+                  className="text-xs text-muted-foreground"
+                  suppressHydrationWarning
+                >
                   {formatDate(new Date(), "EEEE, MMMM dd, yyyy")}
                 </p>
               </div>
@@ -274,7 +277,7 @@ export function ClockInOut({
           <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Holiday</AlertTitle>
-            <AlertDescription>
+            <AlertDescription suppressHydrationWarning>
               Today is {todayHoliday.title}. Enjoy your day off!
             </AlertDescription>
           </Alert>
@@ -294,7 +297,10 @@ export function ClockInOut({
               <h3 className="font-semibold text-sm sm:text-base">
                 Attendance Clock
               </h3>
-              <p className="text-xs text-muted-foreground">
+              <p
+                className="text-xs text-muted-foreground"
+                suppressHydrationWarning
+              >
                 {formatDate(new Date(), "EEEE, MMMM dd, yyyy")}
               </p>
             </div>
@@ -485,7 +491,9 @@ export function ClockInOut({
           <Alert variant="info">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>On Leave</AlertTitle>
-            <AlertDescription>{leaveMessage}</AlertDescription>
+            <AlertDescription suppressHydrationWarning>
+              {leaveMessage}
+            </AlertDescription>
           </Alert>
         )}
 

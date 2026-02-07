@@ -61,8 +61,9 @@ export function TodayScheduleCard() {
           <CalendarDays className="size-5" />
           Today&apos;s Schedule
           <Badge
-            variant="secondary"
+            // variant="secondary"
             className="ml-auto"
+            suppressHydrationWarning
           >
             {schedules.length}
           </Badge>

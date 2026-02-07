@@ -61,7 +61,10 @@ export function MyTasksCard() {
               <Clock className="size-4 text-amber-600" />
               <span className="text-xs text-muted-foreground">Pending</span>
             </div>
-            <p className="text-2xl font-bold text-amber-600">
+            <p
+              className="text-2xl font-bold text-amber-600"
+              suppressHydrationWarning
+            >
               {pendingServices.length}
             </p>
           </div>
@@ -70,7 +73,10 @@ export function MyTasksCard() {
               <CheckCircle2 className="size-4 text-green-600" />
               <span className="text-xs text-muted-foreground">Completed</span>
             </div>
-            <p className="text-2xl font-bold text-green-600">
+            <p
+              className="text-2xl font-bold text-green-600"
+              suppressHydrationWarning
+            >
               {completedToday.length}
             </p>
           </div>
