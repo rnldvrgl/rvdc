@@ -116,7 +116,10 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
       philhealth_number: formData.philhealth_number ?? "",
       basic_salary: formData.basic_salary ?? 0,
       include_in_payroll: formData.include_in_payroll ?? true,
-      has_government_benefits: formData.has_government_benefits ?? true,
+      has_sss: formData.has_sss ?? true,
+      has_philhealth: formData.has_philhealth ?? true,
+      has_pagibig: formData.has_pagibig ?? true,
+      has_bir_tax: formData.has_bir_tax ?? true,
       profile_image: "",
       role: formData.role ?? "technician",
       birthday: formData.birthday ?? "",
@@ -629,7 +632,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
 
                 <FormField
                   control={form.control}
-                  name="has_government_benefits"
+                  name="has_sss"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                       <FormControl>
@@ -639,13 +642,80 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          Apply Government Benefits Deductions
-                        </FormLabel>
+                        <FormLabel>Apply SSS Deductions</FormLabel>
                         <FormDescription>
-                          When enabled, SSS, PhilHealth, Pag-IBIG, and Tax
-                          deductions will be applied. Uncheck for employees with
-                          separate benefit arrangements.
+                          When enabled, Social Security System (SSS)
+                          contributions will be deducted from this
+                          employee&apos;s payroll.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="has_philhealth"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Apply PhilHealth Deductions</FormLabel>
+                        <FormDescription>
+                          When enabled, Philippine Health Insurance (PhilHealth)
+                          contributions will be deducted from this
+                          employee&apos;s payroll.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="has_pagibig"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Apply Pag-IBIG Deductions</FormLabel>
+                        <FormDescription>
+                          When enabled, Home Development Mutual Fund (Pag-IBIG)
+                          contributions will be deducted from this
+                          employee&apos;s payroll.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="has_bir_tax"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Apply BIR Tax Deductions</FormLabel>
+                        <FormDescription>
+                          When enabled, Bureau of Internal Revenue (BIR)
+                          withholding tax will be deducted from this
+                          employee&apos;s payroll.
                         </FormDescription>
                       </div>
                     </FormItem>

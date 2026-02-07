@@ -126,7 +126,10 @@ export type Employee = BaseEntity & {
   philhealth_number?: string
   basic_salary?: number
   include_in_payroll?: boolean
-  has_government_benefits?: boolean
+  has_sss?: boolean
+  has_philhealth?: boolean
+  has_pagibig?: boolean
+  has_bir_tax?: boolean
   profile_image?: string
   assigned_stall?: Stall
 }
