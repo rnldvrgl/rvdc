@@ -74,6 +74,18 @@ export function getEmployeeColumns({
       },
     },
     {
+      accessorKey: "cash_ban_balance",
+      header: "Cash Ban Balance",
+      cell: ({ getValue }) => {
+        const balance = getValue<number>()
+        return (
+          <span className="font-medium text-green-600">
+            ₱{balance.toLocaleString()}
+          </span>
+        )
+      },
+    },
+    {
       accessorKey: "action",
       header: "Action",
       cell: ({ row }) => {

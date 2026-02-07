@@ -13,7 +13,14 @@ export interface AdditionalEarning {
     last_name: string
   }
   earning_date: string
-  category: "installation_pct" | "custom"
+  category:
+    | "bonus"
+    | "commission"
+    | "tip"
+    | "performance"
+    | "installation_pct"
+    | "allowance"
+    | "other"
   amount: string | number
   description: string
   reference: string
@@ -26,7 +33,14 @@ export interface AdditionalEarning {
 export interface AdditionalEarningFormData {
   employee: number
   earning_date: string
-  category: "installation_pct" | "custom"
+  category:
+    | "bonus"
+    | "commission"
+    | "tip"
+    | "performance"
+    | "installation_pct"
+    | "allowance"
+    | "other"
   amount: number
   description?: string
   reference?: string
@@ -39,22 +53,39 @@ export const useCreateAdditionalEarning = (payrollId?: number) => {
   return useApiMutation<AdditionalEarningFormData, AdditionalEarning>({
     mutationFn: (data) => api.post("/payroll/additional-earnings/", data),
     successMessage: "Additional earning created successfully",
+    usePromiseToast: true,
+    loadingMessage: "Creating additional earning...",
     invalidateQueries: [
       { queryKey: ["additional-earnings"] },
-      { queryKey: ["weekly-payroll"] },
+      { queryKey: ["payroll", "weekly-payroll"] },
     ],
     onSuccess: async () => {
       // If payrollId is provided, auto-recompute the payroll to include the new earning
       if (payrollId) {
         try {
-          await api.post(`/payroll/weekly-payrolls/${payrollId}/recompute/`, {})
-          // Invalidate the specific payroll query to refresh the UI
+          const { data } = await api.post(
+            `/payroll/weekly-payrolls/${payrollId}/recompute/`,
+            {},
+          )
+          
+          // Invalidate and refetch all related queries aggressively
+          await queryClient.invalidateQueries({
+            queryKey: ["payroll", "weekly-payrolls"],
+            refetchType: "active",
+          })
+
           await queryClient.invalidateQueries({
             queryKey: ["payroll", "weekly-payroll", payrollId],
+            refetchType: "active",
           })
+
+          // Also set the query data directly to ensure immediate update
+          queryClient.setQueryData(["payroll", "weekly-payroll", payrollId], data)
+          
           toast.success("Payroll recalculated with new earning")
-        } catch {
-          // error is handled by mutation
+        } catch (error) {
+          toast.error("Failed to recalculate payroll. Please try manually.")
+          console.error("Recompute error:", error)
         }
       }
     },
@@ -72,7 +103,7 @@ export const useUpdateAdditionalEarning = () => {
     invalidateQueries: [
       { queryKey: ["additional-earnings"] },
       { queryKey: ["additional-earning"] },
-      { queryKey: ["weekly-payroll"] },
+      { queryKey: ["payroll", "weekly-payroll"] },
     ],
   })
 }
@@ -83,22 +114,39 @@ export const useDeleteAdditionalEarning = (payrollId?: number) => {
   return useApiMutation<number, unknown>({
     mutationFn: (id) => api.delete(`/payroll/additional-earnings/${id}/`),
     successMessage: "Additional earning deleted successfully",
+    usePromiseToast: true,
+    loadingMessage: "Deleting additional earning...",
     invalidateQueries: [
       { queryKey: ["additional-earnings"] },
-      { queryKey: ["weekly-payroll"] },
+      { queryKey: ["payroll", "weekly-payroll"] },
     ],
     onSuccess: async () => {
       // If payrollId is provided, auto-recompute the payroll to update totals
       if (payrollId) {
         try {
-          await api.post(`/payroll/weekly-payrolls/${payrollId}/recompute/`, {})
-          // Invalidate the specific payroll query to refresh the UI
+          const { data } = await api.post(
+            `/payroll/weekly-payrolls/${payrollId}/recompute/`,
+            {},
+          )
+          
+          // Invalidate and refetch all related queries aggressively
+          await queryClient.invalidateQueries({
+            queryKey: ["payroll", "weekly-payrolls"],
+            refetchType: "active",
+          })
+
           await queryClient.invalidateQueries({
             queryKey: ["payroll", "weekly-payroll", payrollId],
+            refetchType: "active",
           })
+
+          // Also set the query data directly to ensure immediate update
+          queryClient.setQueryData(["payroll", "weekly-payroll", payrollId], data)
+          
           toast.success("Payroll recalculated after deletion")
-        } catch {
-          // error is handled by mutation
+        } catch (error) {
+          toast.error("Failed to recalculate payroll. Please try manually.")
+          console.error("Recompute error:", error)
         }
       }
     },
@@ -113,7 +161,7 @@ export const useApproveAdditionalEarning = () => {
     invalidateQueries: [
       { queryKey: ["additional-earnings"] },
       { queryKey: ["additional-earning"] },
-      { queryKey: ["weekly-payroll"] },
+      { queryKey: ["payroll", "weekly-payroll"] },
     ],
   })
 }

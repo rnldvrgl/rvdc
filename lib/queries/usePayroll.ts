@@ -145,6 +145,9 @@ export type PayrollSettings = {
   special_holiday_no_work_pays: boolean
   overtime_multiplier: string | number
   night_diff_multiplier: string | number
+  payroll_cutoff_day: number
+  cash_ban_contribution_amount: string | number
+  cash_ban_enabled: boolean
   updated_at: string
 }
 

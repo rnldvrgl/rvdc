@@ -126,7 +126,7 @@ export function WeeklyPayrollSlip({
   payrollId,
 }: WeeklyPayrollSlipProps) {
   const { data: payroll, isLoading } = useWeeklyPayroll(payrollId)
-  const { userProfile, isAdmin } = useCurrentUser()
+  const { userProfile, isAdmin, canManage } = useCurrentUser()
   const { updateStatus, markAsReceived, disputePayroll } = usePayrollMutations()
   const recomputePayroll = useRecomputeWeeklyPayroll(payrollId)
   const deleteManualDeduction = useDeleteManualDeduction(payrollId)
@@ -186,7 +186,8 @@ export function WeeklyPayrollSlip({
   const allowances = toNumber(payroll.allowances)
   const additionalEarnings = toNumber(payroll.additional_earnings_total)
 
-  const totalEarnings = grossPay + additionalEarnings
+  // gross_pay already includes additional_earnings_total from backend
+  const totalEarnings = grossPay
   const totalDeductions = toNumber(payroll.total_deductions)
   const netPay = toNumber(payroll.net_pay)
 
@@ -436,7 +437,7 @@ export function WeeklyPayrollSlip({
               </h3>
             </div>
             <div className="space-y-1.5">
-              {/* Basic Pay - Regular hours + per-day overtime (>8hrs) */}
+              {/* Basic Pay - Regular hours only */}
               <div className="flex justify-between text-xs sm:text-sm">
                 <span className="text-muted-foreground">Basic Pay</span>
                 <span className="font-medium">
@@ -445,7 +446,9 @@ export function WeeklyPayrollSlip({
                     grossPay -
                     nightDiffPay -
                     approvedOtPay -
-                    holidayPayTotal
+                    holidayPayTotal -
+                    allowances -
+                    additionalEarnings
                   ).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -509,18 +512,77 @@ export function WeeklyPayrollSlip({
                 </div>
               )}
 
-              {/* Additional Earnings */}
+              {/* Additional Earnings - Show each with details if available */}
               {additionalEarnings > 0 && (
-                <div className="flex justify-between text-xs sm:text-sm">
-                  <span className="text-muted-foreground">Other</span>
-                  <span className="font-medium">
-                    ₱
-                    {additionalEarnings.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
+                <>
+                  {payroll.additional_earnings_details &&
+                  payroll.additional_earnings_details.length > 0 ? (
+                    payroll.additional_earnings_details.map((earning) => {
+                      const earningAmount = toNumber(earning.amount)
+                      const canDelete = isAdmin && payroll.status === "draft"
+
+                      return (
+                        <div
+                          key={earning.id}
+                          className="flex justify-between items-start text-xs sm:text-sm gap-2 group"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              {canManage && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs px-1.5 py-0 capitalize"
+                                >
+                                  {earning.category}
+                                </Badge>
+                              )}
+                              <span className="text-muted-foreground truncate">
+                                {earning.description ||
+                                  earning.reference ||
+                                  "Additional Earning"}
+                              </span>
+                            </div>
+                            {earning.description && earning.reference && (
+                              <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+                                Ref: {earning.reference}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="font-medium">
+                              ₱
+                              {earningAmount.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                            {canDelete && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="h-6 w-6 p-0 print:hidden opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => setDeleteEarningId(earning.id)}
+                              >
+                                <X className="size-3" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <div className="flex justify-between text-xs sm:text-sm">
+                      <span className="text-muted-foreground">Other</span>
+                      <span className="font-medium">
+                        ₱
+                        {additionalEarnings.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
             <Separator className="my-2 mt-auto" />
@@ -580,8 +642,13 @@ export function WeeklyPayrollSlip({
                         key={key}
                         className="flex justify-between items-center text-xs sm:text-sm group"
                       >
-                        <span className="text-muted-foreground flex items-center gap-1.5">
-                          {metadata?.category && (
+                        <span
+                          className={cn(
+                            "text-muted-foreground flex items-center gap-1.5",
+                            label === "Sss" && "uppercase",
+                          )}
+                        >
+                          {metadata?.category && canManage && (
                             <Badge
                               className={cn(
                                 "text-xs sm:text-sm px-1.5 py-0 border",

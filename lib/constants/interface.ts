@@ -101,6 +101,33 @@ export interface User {
   role: Roles
   include_in_payroll?: boolean
   gender?: string
+  basic_salary?: string
+  cash_ban_balance?: string
+  has_cash_ban?: boolean
+}
+
+// ---------------------
+// Cash Advance
+// ---------------------
+export interface CashAdvance {
+  id: number
+  employee: number
+  employee_name: string
+  amount: string
+  date: string
+  reason?: string
+  created_by?: number
+  created_by_name?: string
+  remaining_balance: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CashAdvancePayload {
+  employee: number
+  amount: string | number
+  date: string
+  reason?: string
 }
 
 // ---------------------

@@ -4,17 +4,22 @@ import { ErrorState } from "@/components/custom/ErrorState"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
+import { DataTable } from "@/components/custom/table/DataTable"
 import { Detail } from "@/components/details/Detail"
+import { CashAdvanceForm } from "@/components/forms/CashAdvanceForm"
 import { EmployeeBenefitOverrideForm } from "@/components/forms/EmployeeBenefitOverrideForm"
 import EmployeeForm from "@/components/forms/EmployeeForm"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { CashAdvance } from "@/lib/constants/interface"
 import { Employee } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
+import { useCashAdvanceMutations } from "@/lib/mutations/useCashAdvanceMutations"
 import { useEmployeeBenefitOverrideMutations } from "@/lib/mutations/useEmployeeBenefitOverrideMutations"
+import { useCashAdvances } from "@/lib/queries/useCashAdvances"
 import { useEmployeeBenefitOverrides } from "@/lib/queries/useEmployeeBenefitOverrides"
 import { useEmployee } from "@/lib/queries/useEmployees"
 import { EmployeeBenefitOverride } from "@/lib/schemas/employeeBenefitOverrideSchema"
@@ -24,6 +29,7 @@ import {
   ArrowLeft,
   BadgeDollarSign,
   Calendar,
+  History,
   Home,
   IdCard,
   KeyRound,
@@ -40,11 +46,12 @@ import {
 import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
 import { useState } from "react"
+import { getCashAdvanceColumns } from "./cashAdvanceColumns"
 
 const EmployeePage = () => {
   const params = useParams()
   const router = useRouter()
-  const { isAdmin } = useCurrentUser()
+  const { isAdmin, canManage: canManageCashAdvance } = useCurrentUser()
   const {
     data: employee,
     isLoading,
@@ -58,11 +65,21 @@ const EmployeePage = () => {
 
   const benefitOverrides = benefitOverridesData?.results || []
 
+  const { data: cashAdvancesData, isLoading: isLoadingCashAdvances } =
+    useCashAdvances({
+      employee: Number(params.id),
+      ordering: "-date,-created_at",
+    })
+
+  const cashAdvances = cashAdvancesData?.results || []
+
   const { deleteOverride } = useEmployeeBenefitOverrideMutations()
+  const { deleteCashAdvance } = useCashAdvanceMutations()
 
   const [benefitOverrideOpen, setBenefitOverrideOpen] = useState(false)
   const [selectedOverride, setSelectedOverride] =
     useState<EmployeeBenefitOverride | null>(null)
+  const [showCashAdvanceForm, setShowCashAdvanceForm] = useState(false)
 
   const {
     entityState: { open },
@@ -243,6 +260,11 @@ const EmployeePage = () => {
                 value={`₱${Number(employee.basic_salary).toLocaleString()}`}
               />
               <Detail
+                icon={<BadgeDollarSign className="size-4" />}
+                label="Cash Ban Balance"
+                value={`₱${Number(employee.cash_ban_balance || 0).toLocaleString()}`}
+              />
+              <Detail
                 icon={<IdCard className="size-4" />}
                 label="Philhealth #"
                 value={employee.philhealth_number || "-"}
@@ -255,8 +277,92 @@ const EmployeePage = () => {
               <Detail
                 icon={<Calendar className="size-4" />}
                 label="Birthday"
-                value={employee.birthday ? formatDate(employee.birthday, "MMMM d, yyyy") : "-"}
+                value={
+                  employee.birthday
+                    ? formatDate(employee.birthday, "MMMM d, yyyy")
+                    : "-"
+                }
               />
+            </CardContent>
+          </Card>
+
+          {/* CASH ADVANCE SECTION */}
+          <Card className="col-span-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <div>
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Wallet className="h-5 w-5" />
+                  Cash Ban Advances
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Available Balance: ₱
+                  {Number(employee.cash_ban_balance || 0).toLocaleString()}
+                </p>
+              </div>
+              {canManageCashAdvance && (
+                <Button
+                  size="sm"
+                  onClick={() => setShowCashAdvanceForm(!showCashAdvanceForm)}
+                  variant={showCashAdvanceForm ? "outline" : "default"}
+                >
+                  {showCashAdvanceForm ? (
+                    "Hide Form"
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Record Cash Advance
+                    </>
+                  )}
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Cash Advance Form */}
+              {canManageCashAdvance && showCashAdvanceForm && (
+                <div className="border rounded-lg p-4 bg-muted/50">
+                  <CashAdvanceForm
+                    employee={employee}
+                    onSuccess={() => setShowCashAdvanceForm(false)}
+                  />
+                </div>
+              )}
+
+              {/* Cash Advance History */}
+              <div>
+                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <History className="h-4 w-4" />
+                  Transaction History
+                </h3>
+                {cashAdvances.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No cash advances recorded yet.
+                  </p>
+                ) : (
+                  <DataTable
+                    isLoading={isLoadingCashAdvances}
+                    columns={getCashAdvanceColumns({
+                      onDelete: (cashAdvance: CashAdvance) => {
+                        if (
+                          confirm(
+                            `Delete this cash advance of ₱${Number(cashAdvance.amount).toLocaleString()}? The balance will be restored.`,
+                          )
+                        ) {
+                          deleteCashAdvance.mutate(cashAdvance.id)
+                        }
+                      },
+                      canManage: canManageCashAdvance,
+                    })}
+                    data={
+                      cashAdvancesData || {
+                        count: 0,
+                        next: null,
+                        previous: null,
+                        results: [],
+                      }
+                    }
+                  />
+                )}
+              </div>
             </CardContent>
           </Card>
 

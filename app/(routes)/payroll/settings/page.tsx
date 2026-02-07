@@ -336,6 +336,67 @@ export default function PayrollSettingsPage() {
             </FieldGroup>
           </div>
 
+          {/* Cash Ban Contribution */}
+          <FieldGroup
+            icon={<Calculator className="size-5" />}
+            title="Cash Ban Fund Contribution"
+            description="Configure automatic cash ban fund contributions for employees when payroll is approved."
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <FormField
+                label="Contribution Amount"
+                description="Fixed amount to contribute per employee per payroll period (e.g., 100.00)"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">₱</span>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    value={Number(
+                      form.cash_ban_contribution_amount ??
+                        effective.cash_ban_contribution_amount ??
+                        100,
+                    )}
+                    onChange={(e) =>
+                      setField(
+                        "cash_ban_contribution_amount",
+                        Number(e.target.value || 0),
+                      )
+                    }
+                    disabled={!canEdit}
+                  />
+                </div>
+              </FormField>
+
+              <FormField
+                label="Enable Cash Ban Contributions"
+                description="Automatically add contributions when approving payroll (only for employees with cash ban enabled)"
+              >
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={
+                      Boolean(
+                        form.cash_ban_enabled ?? effective.cash_ban_enabled,
+                      ) || false
+                    }
+                    onCheckedChange={(checked) =>
+                      setField("cash_ban_enabled", checked)
+                    }
+                    disabled={!canEdit}
+                  />
+                  <span className="text-sm">
+                    {Boolean(
+                      form.cash_ban_enabled ?? effective.cash_ban_enabled,
+                    )
+                      ? "Enabled"
+                      : "Disabled"}
+                  </span>
+                </div>
+              </FormField>
+            </div>
+          </FieldGroup>
+
           {/* Holiday Pay Configuration */}
           <FieldGroup
             icon={<Calendar className="size-5" />}

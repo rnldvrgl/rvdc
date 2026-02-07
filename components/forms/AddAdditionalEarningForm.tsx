@@ -35,7 +35,15 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 const additionalEarningSchema = z.object({
-  category: z.enum(["installation_pct", "custom"]),
+  category: z.enum([
+    "bonus",
+    "commission",
+    "tip",
+    "performance",
+    "installation_pct",
+    "allowance",
+    "other",
+  ]),
   amount: z.coerce.number().positive("Amount must be greater than zero"),
   earning_date: z.date().optional(),
   description: z.string().optional(),
@@ -63,12 +71,21 @@ export function AddAdditionalEarningForm({
   weekEnd,
   payrollId,
 }: AddAdditionalEarningFormProps) {
+  const additionalEarningCategories = [
+    { value: "bonus", label: "Bonus" },
+    { value: "commission", label: "Commission" },
+    { value: "tip", label: "Customer Tip" },
+    { value: "performance", label: "Performance Incentive" },
+    { value: "installation_pct", label: "Installation %" },
+    { value: "allowance", label: "Special Allowance" },
+    { value: "other", label: "Other" },
+  ]
   const createMutation = useCreateAdditionalEarning(payrollId)
 
   const form = useForm<AdditionalEarningFormData>({
     resolver: zodResolver(additionalEarningSchema),
     defaultValues: {
-      category: "custom",
+      category: "other",
       amount: 0,
       earning_date: undefined,
       description: "",
@@ -113,9 +130,19 @@ export function AddAdditionalEarningForm({
     if (weekStart && weekEnd) {
       const periodText = `${format(new Date(weekStart), "MMM dd")} - ${format(new Date(weekEnd), "MMM dd, yyyy")}`
       switch (cat) {
+        case "bonus":
+          return `One-time bonus payment for the period ${periodText}`
+        case "commission":
+          return `Sales or service commission for the period ${periodText}`
+        case "tip":
+          return `Customer tips received during the period ${periodText}`
+        case "performance":
+          return `Performance-based incentive for the period ${periodText}`
         case "installation_pct":
           return `Installation commission/percentage for the period ${periodText}`
-        case "custom":
+        case "allowance":
+          return `Special allowance (travel, meal, etc.) for the period ${periodText}`
+        case "other":
           return `Custom additional earning for the period ${periodText}`
         default:
           return ""
@@ -159,10 +186,14 @@ export function AddAdditionalEarningForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="installation_pct">
-                        Installation Percentage
-                      </SelectItem>
-                      <SelectItem value="custom">Custom Earning</SelectItem>
+                      {additionalEarningCategories.map((cat) => (
+                        <SelectItem
+                          key={cat.value}
+                          value={cat.value}
+                        >
+                          {cat.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormDescription className="text-xs">
@@ -272,10 +303,10 @@ export function AddAdditionalEarningForm({
                 Examples:
               </p>
               <ul className="list-disc list-inside space-y-1 text-blue-800 dark:text-blue-200">
-                <li>
-                  Installation %: ₱2,500 commission from installation project
-                </li>
-                <li>Custom: ₱1,000 performance bonus</li>
+                <li>Bonus: ₱1,000 holiday bonus</li>
+                <li>Commission: ₱2,500 from sales or installations</li>
+                <li>Customer Tip: ₱300 received from satisfied clients</li>
+                <li>Performance: ₱1,500 for exceeding targets</li>
               </ul>
             </div>
 

@@ -120,6 +120,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
       has_philhealth: formData.has_philhealth ?? true,
       has_pagibig: formData.has_pagibig ?? true,
       has_bir_tax: formData.has_bir_tax ?? true,
+      has_cash_ban: formData.has_cash_ban ?? true,
       profile_image: "",
       role: formData.role ?? "technician",
       birthday: formData.birthday ?? "",
@@ -716,6 +717,29 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                           When enabled, Bureau of Internal Revenue (BIR)
                           withholding tax will be deducted from this
                           employee&apos;s payroll.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="has_cash_ban"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Include in Cash Ban Fund</FormLabel>
+                        <FormDescription>
+                          When enabled, this employee will contribute to and can
+                          access the cash ban fund for advances during payroll
+                          processing.
                         </FormDescription>
                       </div>
                     </FormItem>

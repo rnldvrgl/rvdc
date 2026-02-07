@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Settings, Shield, User as UserIcon } from "lucide-react"
+import { Settings, Shield, User as UserIcon, Wallet } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 
@@ -291,6 +291,12 @@ export default function SettingsPage() {
                 {userProfile.birthday
                   ? formatDate(new Date(userProfile.birthday), "MMMM dd, yyyy")
                   : "Not provided"}
+              </Info>
+              <Info label="Cash Ban Balance">
+                <span className="inline-flex items-center gap-1.5 font-semibold text-green-600 dark:text-green-400">
+                  <Wallet className="size-3" />₱
+                  {Number(userProfile.cash_ban_balance || 0).toLocaleString()}
+                </span>
               </Info>
             </div>
           )}

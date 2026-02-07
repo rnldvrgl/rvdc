@@ -125,11 +125,13 @@ export type Employee = BaseEntity & {
   tin_number?: string
   philhealth_number?: string
   basic_salary?: number
+  cash_ban_balance?: number
   include_in_payroll?: boolean
   has_sss?: boolean
   has_philhealth?: boolean
   has_pagibig?: boolean
   has_bir_tax?: boolean
+  has_cash_ban?: boolean
   profile_image?: string
   assigned_stall?: Stall
 }
@@ -265,6 +267,14 @@ export type WeeklyPayroll = {
   allowances: string | number
 
   additional_earnings_total: string | number
+  additional_earnings_details?: Array<{
+    id: number
+    date: string
+    category: string
+    amount: string
+    description: string
+    reference: string
+  }>
 
   gross_pay: string | number
 
