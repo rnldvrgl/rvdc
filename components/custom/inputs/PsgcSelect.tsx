@@ -1,17 +1,11 @@
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import {
   FormControl,
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Control, FieldPath, FieldValues } from 'react-hook-form'
+} from "@/components/ui/form"
+import { Control, FieldPath, FieldValues } from "react-hook-form"
 
 export interface Option {
   code: string
@@ -45,29 +39,19 @@ export function PsgcSelect<T extends FieldValues>({
     <FormItem>
       <FormLabel required={required}>{label}</FormLabel>
       <FormControl>
-        <Select
-          onValueChange={onChange}
-          value={value}
+        <ComboBox
+          onChange={(val) => onChange(val?.toString() || "")}
+          value={value || null}
           disabled={disabled || loading}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue
-              placeholder={
-                loading ? `Loading ${label.toLowerCase()}...` : placeholder
-              }
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {options.map((opt) => (
-              <SelectItem
-                key={opt.code}
-                value={opt.code}
-              >
-                {opt.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          options={options.map((opt) => ({
+            value: opt.code,
+            label: opt.name,
+          }))}
+          placeholder={
+            loading ? `Loading ${label.toLowerCase()}...` : placeholder
+          }
+          searchPlaceholder={`Search ${label.toLowerCase()}...`}
+        />
       </FormControl>
       <FormMessage />
     </FormItem>

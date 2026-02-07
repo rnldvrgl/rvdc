@@ -1,22 +1,16 @@
 "use client"
 
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
 } from "@/components/ui/form"
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { usePayrollMutations } from "@/lib/mutations/usePayrollMutations"
 import { useEmployeeChoices } from "@/lib/queries/useChoices"
@@ -103,34 +97,23 @@ export default function PayrollForm({ onClose }: PayrollFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Employee</FormLabel>
-                <Select
-                  disabled={isLoading}
-                  value={field.value?.toString()}
-                  onValueChange={(value) => field.onChange(Number(value))}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue
-                        placeholder="Select employee"
-                        className="capitalize"
-                      />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="max-h-[300px]">
-                    {employees?.map((employee) => (
-                      <SelectItem
-                        key={employee.id}
-                        value={employee.id.toString()}
-                        className="capitalize"
-                      >
-                        {employee.first_name} {employee.last_name}
-                        <span className="capitalize">
-                          {employee.role && ` (${employee.role})`}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <ComboBox
+                    disabled={isLoading}
+                    value={field.value?.toString() || null}
+                    onChange={(value) =>
+                      field.onChange(value ? Number(value) : null)
+                    }
+                    options={
+                      employees?.map((employee) => ({
+                        value: employee.id.toString(),
+                        label: `${employee.first_name} ${employee.last_name}${employee.role ? ` (${employee.role})` : ""}`,
+                      })) || []
+                    }
+                    placeholder="Select employee"
+                    searchPlaceholder="Search employees..."
+                  />
+                </FormControl>
                 <FormDescription>
                   Select the employee for payroll generation
                 </FormDescription>
