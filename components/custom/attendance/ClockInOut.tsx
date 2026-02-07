@@ -68,7 +68,7 @@ export function ClockInOut({
     isLoading: statusLoading,
     clockIn,
     clockOut,
-    isWithinBusinessHours,
+    canClockInNow,
     hasClockedIn: isClockedIn,
     hasClockedOut: isClockedOut,
     canClockInOutToday,
@@ -200,8 +200,8 @@ export function ClockInOut({
     )
   }
 
-  // Outside business hours
-  if (!isWithinBusinessHours) {
+  // Outside clock in window - only prevent if haven't clocked in yet
+  if (!canClockInNow && !isClockedIn) {
     return (
       <Card className="border-0 shadow-sm">
         <CardContent className="space-y-4 sm:space-y-6">

@@ -37,7 +37,7 @@ export function QuickClockInOut() {
     isLoading,
     clockIn,
     clockOut,
-    isWithinBusinessHours,
+    canClockInNow,
     hasClockedIn,
     hasClockedOut,
     canClockInOutToday,
@@ -145,8 +145,8 @@ export function QuickClockInOut() {
     )
   }
 
-  // Outside business hours
-  if (!isWithinBusinessHours) {
+  // Outside clock in window - only prevent if haven't clocked in yet
+  if (!canClockInNow && !hasClockedIn) {
     return (
       <Card className="relative">
         <CardHeader>

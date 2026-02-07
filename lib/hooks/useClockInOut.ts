@@ -2,11 +2,13 @@
 
 import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
 import { useCurrentAttendanceStatus } from "@/lib/queries/useAttendance"
+import { usePayrollSettings } from "@/lib/queries/usePayroll"
 import { useEffect, useState } from "react"
 
 export function useClockInOut() {
   const [currentTime, setCurrentTime] = useState(new Date())
   const { data: attendanceStatus, isLoading } = useCurrentAttendanceStatus()
+  const { data: settings } = usePayrollSettings()
   const { clockIn, clockOut } = useAttendanceMutations()
 
   // Update time every minute
@@ -17,15 +19,42 @@ export function useClockInOut() {
     return () => clearInterval(timer)
   }, [])
 
-  // Business hours: 8 AM to 10 PM with 1 hour allowance
-  const BUSINESS_START_HOUR = 8
-  const BUSINESS_END_HOUR = 22
+  // Get shift times from settings or use defaults
+  const getHourFromTime = (timeStr?: string): number => {
+    if (!timeStr) return 0
+    const [hours] = timeStr.split(":")
+    return parseInt(hours, 10)
+  }
+
+  const BUSINESS_START_HOUR = settings?.shift_start
+    ? getHourFromTime(settings.shift_start)
+    : 8
+  const BUSINESS_END_HOUR = settings?.shift_end
+    ? getHourFromTime(settings.shift_end)
+    : 18
+
+  // Allowance hours for flexible clock in/out (extends business hours window)
+  // This makes clock in/out available earlier and later than shift times
   const ALLOWANCE_HOURS = 1
 
+  // Additional tolerance for late clock out (e.g., travel time after work)
+  // This allows employees to clock out several hours after business hours end
+  const LATE_CLOCK_OUT_TOLERANCE_HOURS = 4
+
   const currentHour = currentTime.getHours()
-  const isWithinBusinessHours =
+
+  // Separate windows for clock in vs clock out
+  const canClockInNow =
     currentHour >= BUSINESS_START_HOUR - ALLOWANCE_HOURS &&
     currentHour < BUSINESS_END_HOUR + ALLOWANCE_HOURS
+
+  const canClockOutNow =
+    currentHour >= BUSINESS_START_HOUR - ALLOWANCE_HOURS &&
+    currentHour <
+      BUSINESS_END_HOUR + ALLOWANCE_HOURS + LATE_CLOCK_OUT_TOLERANCE_HOURS
+
+  // For backward compatibility, isWithinBusinessHours checks clock out window
+  const isWithinBusinessHours = canClockOutNow
 
   const attendance = attendanceStatus?.attendance
   const hasClockedIn = !!attendance?.clock_in
@@ -49,6 +78,8 @@ export function useClockInOut() {
     clockIn,
     clockOut,
     isWithinBusinessHours,
+    canClockInNow,
+    canClockOutNow,
     hasClockedIn,
     hasClockedOut,
     canClockInOutToday,
