@@ -63,6 +63,7 @@ export function ComboBox({
       <PopoverContent
         style={{ width: triggerWidth }}
         className="p-0"
+        align="start"
       >
         <Command>
           <CommandInput
