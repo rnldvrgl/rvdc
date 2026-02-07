@@ -1,6 +1,15 @@
 "use client"
 
 import { DeveloperCredit } from "@/components/custom/shared/DeveloperCredit"
+import { DeductionsSection } from "@/components/details/payroll/DeductionsSection"
+import { EarningsSection } from "@/components/details/payroll/EarningsSection"
+import { PayrollActions } from "@/components/details/payroll/PayrollActions"
+import {
+  CompanyInfoCard,
+  EmployeeInfoCard,
+} from "@/components/details/payroll/PayrollInfoCards"
+import { StatusBadge } from "@/components/details/payroll/StatusBadge"
+import { TimeSummary } from "@/components/details/payroll/TimeSummary"
 import { AddAdditionalEarningForm } from "@/components/forms/AddAdditionalEarningForm"
 import { AddManualDeductionForm } from "@/components/forms/AddManualDeductionForm"
 import {
@@ -13,7 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -30,95 +38,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import { SHOP_INFO } from "@/lib/constants/meta"
-import { PayrollStatus } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useRecomputeWeeklyPayroll } from "@/lib/mutations/payroll/usePayrollMutations"
 import { useDeleteAdditionalEarning } from "@/lib/mutations/useAdditionalEarningMutations"
 import { useDeleteManualDeduction } from "@/lib/mutations/useManualDeductionMutations"
 import { usePayrollMutations } from "@/lib/mutations/usePayrollMutations"
 import { useWeeklyPayroll } from "@/lib/queries/usePayroll"
+import { formatCurrency, toNumber } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
-import {
-  AlertCircle,
-  Banknote,
-  Building,
-  CheckCircle,
-  Clock,
-  FileText,
-  Loader2,
-  LucideIcon,
-  Minus,
-  PhilippinePesoIcon,
-  Plus,
-  RefreshCw,
-  User,
-  X,
-} from "lucide-react"
+import { AlertCircle, FileText, Loader2 } from "lucide-react"
 import { useState } from "react"
 
 interface WeeklyPayrollSlipProps {
   className?: string
   payrollId: number
-}
-
-const CATEGORY_COLOR_MAP: Record<string, string> = {
-  late_penalty:
-    "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-300 dark:border-red-600",
-  government:
-    "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border-orange-300 dark:border-orange-600",
-  manual:
-    "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 border-green-300 dark:border-green-600",
-  other:
-    "bg-gray-100 text-gray-700 dark:bg-gray-900/40 dark:text-gray-300 border-gray-300 dark:border-gray-600",
-}
-
-const getCategoryBadgeColor = (category?: string): string => {
-  if (!category) return CATEGORY_COLOR_MAP.other
-  const key = category.toLowerCase()
-  return (
-    Object.entries(CATEGORY_COLOR_MAP).find(([k]) => key === k)?.[1] ||
-    CATEGORY_COLOR_MAP.other
-  )
-}
-
-const STATUS_CONFIG: Record<
-  PayrollStatus,
-  { color: string; icon: LucideIcon; label: string }
-> = {
-  draft: {
-    color:
-      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-600",
-    icon: FileText,
-    label: "Draft",
-  },
-  approved: {
-    color:
-      "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-300 dark:border-green-600",
-    icon: CheckCircle,
-    label: "Approved",
-  },
-  paid: {
-    color:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-blue-300 dark:border-blue-600",
-    icon: Banknote,
-    label: "Paid",
-  },
-  received: {
-    color:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 border-purple-300 dark:border-purple-600",
-    icon: CheckCircle,
-    label: "Received",
-  },
-  cancelled: {
-    color:
-      "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-300 dark:border-red-600",
-    icon: AlertCircle,
-    label: "Cancelled",
-  },
 }
 
 export function WeeklyPayrollSlip({
@@ -164,15 +99,10 @@ export function WeeklyPayrollSlip({
     )
   }
 
-  const statusConfig = STATUS_CONFIG[payroll.status]
-  const StatusIcon = statusConfig.icon
   const weekStartDate = new Date(payroll.week_start)
   const weekEndDate = new Date(payroll.week_end || payroll.week_start)
 
-  // Convert string values to numbers for display
-  const toNumber = (value: string | number | undefined) =>
-    typeof value === "string" ? parseFloat(value) || 0 : value || 0
-
+  // Convert values
   const regularHours = toNumber(payroll.regular_hours)
   const approvedOtHours = toNumber(payroll.approved_ot_hours)
   const nightDiffHours = toNumber(payroll.night_diff_hours)
@@ -185,18 +115,32 @@ export function WeeklyPayrollSlip({
   const approvedOtPay = toNumber(payroll.approved_ot_pay)
   const allowances = toNumber(payroll.allowances)
   const additionalEarnings = toNumber(payroll.additional_earnings_total)
-
-  // gross_pay already includes additional_earnings_total from backend
   const totalEarnings = grossPay
   const totalDeductions = toNumber(payroll.total_deductions)
   const netPay = toNumber(payroll.net_pay)
 
-  // Get employee info from backend
+  // Calculate basic pay (gross - other components)
+  const basicPay =
+    grossPay -
+    nightDiffPay -
+    approvedOtPay -
+    holidayPayTotal -
+    allowances -
+    additionalEarnings
+
+  // Calculate holiday hours
+  const holidayHours = (holidayPayRegular + holidayPaySpecial) / toNumber(payroll.hourly_rate)
+
+  // Employee info
   const employeeName =
     payroll.employee_name || payroll.employee_detail?.full_name || "N/A"
   const employeeRole = payroll.employee_detail?.role || "N/A"
   const employeeDailyRate = toNumber(payroll.employee_detail?.daily_rate) || 0
   const employeeHourlyRate = toNumber(payroll.employee_detail?.hourly_rate) || 0
+
+  // Permission checks
+  const canDelete = isAdmin && payroll.status === "draft"
+  const isEmployee = userProfile?.id === payroll.employee
 
   return (
     <Card className={cn("mx-auto w-full shadow-lg", className)}>
@@ -212,500 +156,94 @@ export function WeeklyPayrollSlip({
               {format(weekEndDate, "MMM dd, yyyy")}
             </CardDescription>
           </div>
-          <Badge className={cn("gap-1.5 shrink-0", statusConfig.color)}>
-            <StatusIcon className="h-3 w-3" />
-            <span className="text-xs">{statusConfig.label}</span>
-          </Badge>
+          <StatusBadge status={payroll.status} />
         </div>
 
         {/* Action Buttons */}
-        {isAdmin && (
-          <div className="grid md:grid-cols-4 gap-3 print:hidden">
-            {payroll.status === "draft" && (
-              <>
-                <Button
-                  size="sm"
-                  variant="success"
-                  onClick={() => setAdditionalEarningDialogOpen(true)}
-                  disabled={isProcessing}
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  Add Earning
-                </Button>
-                <Button
-                  size="sm"
-                  variant="warning"
-                  onClick={() => setManualDeductionDialogOpen(true)}
-                  disabled={isProcessing}
-                >
-                  <PhilippinePesoIcon className="h-3.5 w-3.5 mr-1.5" />
-                  Add Deduction
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={async () => {
-                    setIsProcessing(true)
-                    await recomputePayroll.mutateAsync({})
-                    setIsProcessing(false)
-                  }}
-                  disabled={isProcessing || recomputePayroll.isPending}
-                >
-                  <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
-                  Recompute
-                </Button>
-
-                <Button
-                  size="sm"
-                  variant="success"
-                  onClick={async () => {
-                    setIsProcessing(true)
-                    await updateStatus.mutateAsync({
-                      id: payrollId,
-                      status: "approved",
-                    })
-                    setIsProcessing(false)
-                  }}
-                  disabled={isProcessing || updateStatus.isPending}
-                >
-                  <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
-                  Approve
-                </Button>
-              </>
-            )}
-            {payroll.status === "approved" && (
-              <Button
-                size="sm"
-                variant="success"
-                className="col-span-full"
-                onClick={async () => {
-                  setIsProcessing(true)
-                  await updateStatus.mutateAsync({
-                    id: payrollId,
-                    status: "paid",
-                  })
-                  setIsProcessing(false)
-                }}
-                disabled={isProcessing || updateStatus.isPending}
-              >
-                <Banknote className="h-3.5 w-3.5 mr-1.5" />
-                Mark as Paid
-              </Button>
-            )}
-          </div>
-        )}
-
-        {!isAdmin &&
-          userProfile?.id === payroll.employee &&
-          payroll.status === "paid" &&
-          !payroll.disputed && (
-            <div className="grid md:grid-cols-2 gap-2 print:hidden">
-              <Button
-                size="sm"
-                variant="success"
-                onClick={async () => {
-                  setIsProcessing(true)
-                  await markAsReceived.mutateAsync({
-                    id: payrollId,
-                  })
-                  setIsProcessing(false)
-                }}
-                disabled={isProcessing || markAsReceived.isPending}
-              >
-                <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
-                Mark Received
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => setDisputeDialogOpen(true)}
-                disabled={isProcessing}
-              >
-                <AlertCircle className="h-3.5 w-3.5 mr-1.5" />
-                Dispute
-              </Button>
-            </div>
-          )}
+        <PayrollActions
+          status={payroll.status}
+          isAdmin={isAdmin}
+          isEmployee={isEmployee}
+          isProcessing={isProcessing}
+          disputed={payroll.disputed || false}
+          onApprove={async () => {
+            setIsProcessing(true)
+            await updateStatus.mutateAsync({
+              id: payrollId,
+              status: "approved",
+            })
+            setIsProcessing(false)
+          }}
+          onMarkPaid={async () => {
+            setIsProcessing(true)
+            await updateStatus.mutateAsync({
+              id: payrollId,
+              status: "paid",
+            })
+            setIsProcessing(false)
+          }}
+          onMarkReceived={async () => {
+            setIsProcessing(true)
+            await markAsReceived.mutateAsync({
+              id: payrollId,
+            })
+            setIsProcessing(false)
+          }}
+          onDispute={() => setDisputeDialogOpen(true)}
+          onRecompute={async () => {
+            setIsProcessing(true)
+            await recomputePayroll.mutateAsync({})
+            setIsProcessing(false)
+          }}
+          onAddEarning={() => setAdditionalEarningDialogOpen(true)}
+          onAddDeduction={() => setManualDeductionDialogOpen(true)}
+        />
       </CardHeader>
 
       <CardContent className="space-y-3">
-        {/* Company & Employee Info - Compact Cards */}
+        {/* Company & Employee Info */}
         <div className="grid md:grid-cols-2 gap-3">
-          <div className="rounded-lg border bg-card p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <Building className="h-4 w-4 text-primary" />
-              </div>
-              <h3 className="text-sm sm:text-base font-semibold">Company</h3>
-            </div>
-            <div className="space-y-0.5 text-xs sm:text-sm text-muted-foreground">
-              <p className="font-medium text-foreground">{SHOP_INFO.name}</p>
-              <p>{SHOP_INFO.address}</p>
-              <p>{SHOP_INFO.contactEmail}</p>
-            </div>
-          </div>
-
-          <div className="rounded-lg border bg-card p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-4 w-4 text-primary" />
-              </div>
-              <h3 className="text-sm sm:text-base font-semibold">Employee</h3>
-            </div>
-            <div className="space-y-0.5 text-xs sm:text-sm">
-              <div className="flex justify-between gap-2">
-                <span className="text-muted-foreground">Name:</span>
-                <span className="font-medium text-right truncate">
-                  {employeeName}
-                </span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span className="text-muted-foreground">Position:</span>
-                <span className="text-right capitalize truncate">
-                  {employeeRole}
-                </span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span className="text-muted-foreground">Daily:</span>
-                <span className="font-medium">
-                  ₱{employeeDailyRate.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span className="text-muted-foreground">Hourly:</span>
-                <span className="font-medium">
-                  ₱{employeeHourlyRate.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
+          <CompanyInfoCard />
+          <EmployeeInfoCard
+            name={employeeName}
+            role={employeeRole}
+            dailyRate={employeeDailyRate}
+            hourlyRate={employeeHourlyRate}
+          />
         </div>
 
-        {/* Time Summary - Compact Grid */}
-        <div className="rounded-lg border p-3">
-          <div className="flex items-center gap-2 mb-2.5">
-            <Clock className="h-4 w-4 text-primary" />
-            <h3 className="text-sm sm:text-base font-semibold">Time Summary</h3>
-          </div>
-          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-2">
-            <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-900/40 border">
-              <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                {regularHours.toFixed(1)}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                Regular
-              </p>
-            </div>
-            <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-900/40 border">
-              <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
-                {approvedOtHours.toFixed(1)}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                Approved OT
-              </p>
-            </div>
-            <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-900/40 border">
-              <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                {(
-                  (holidayPayRegular + holidayPaySpecial) /
-                  toNumber(payroll.hourly_rate)
-                ).toFixed(1)}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                Holiday
-              </p>
-            </div>
-            <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-900/40 border">
-              <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                {nightDiffHours.toFixed(1)}
-              </p>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                Night Diff
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Time Summary */}
+        <TimeSummary
+          regularHours={regularHours}
+          approvedOtHours={approvedOtHours}
+          holidayHours={holidayHours}
+          nightDiffHours={nightDiffHours}
+        />
 
-        {/* Earnings and Deductions - Side by Side */}
+        {/* Earnings and Deductions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {/* Earnings */}
-          <div className="rounded-lg border border-green-200/60 dark:border-green-900/40 bg-linear-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/10 dark:to-emerald-950/10 p-3 flex flex-col">
-            <div className="flex items-center gap-2 mb-2.5">
-              <Plus className="h-4 w-4 text-green-600 dark:text-green-400" />
-              <h3 className="text-sm sm:text-base font-semibold text-green-700 dark:text-green-400">
-                Earnings
-              </h3>
-            </div>
-            <div className="space-y-1.5">
-              {/* Basic Pay - Regular hours only */}
-              <div className="flex justify-between text-xs sm:text-sm">
-                <span className="text-muted-foreground">Basic Pay</span>
-                <span className="font-medium">
-                  ₱
-                  {(
-                    grossPay -
-                    nightDiffPay -
-                    approvedOtPay -
-                    holidayPayTotal -
-                    allowances -
-                    additionalEarnings
-                  ).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
+          <EarningsSection
+            basicPay={basicPay}
+            approvedOtPay={approvedOtPay}
+            holidayPayTotal={holidayPayTotal}
+            nightDiffPay={nightDiffPay}
+            allowances={allowances}
+            additionalEarnings={additionalEarnings}
+            additionalEarningsDetails={payroll.additional_earnings_details}
+            totalEarnings={totalEarnings}
+            canDelete={canDelete}
+            canManage={canManage}
+            onDeleteEarning={setDeleteEarningId}
+          />
 
-              {/* Approved Overtime - Show only if > 0 */}
-              {approvedOtPay > 0 && (
-                <div className="flex justify-between text-xs sm:text-sm">
-                  <span className="text-muted-foreground">Overtime</span>
-                  <span className="font-medium">
-                    ₱
-                    {approvedOtPay.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-              )}
-
-              {/* Holiday Pay */}
-              {holidayPayTotal > 0 && (
-                <div className="flex justify-between text-xs sm:text-sm">
-                  <span className="text-muted-foreground">Holiday</span>
-                  <span className="font-medium">
-                    ₱
-                    {holidayPayTotal.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-              )}
-
-              {/* Night Differential */}
-              {nightDiffPay > 0 && (
-                <div className="flex justify-between text-xs sm:text-sm">
-                  <span className="text-muted-foreground">Night Diff</span>
-                  <span className="font-medium">
-                    ₱
-                    {nightDiffPay.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-              )}
-
-              {/* Allowances */}
-              {allowances > 0 && (
-                <div className="flex justify-between text-xs sm:text-sm">
-                  <span className="text-muted-foreground">Allowances</span>
-                  <span className="font-medium">
-                    ₱
-                    {allowances.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-              )}
-
-              {/* Additional Earnings - Show each with details if available */}
-              {additionalEarnings > 0 && (
-                <>
-                  {payroll.additional_earnings_details &&
-                  payroll.additional_earnings_details.length > 0 ? (
-                    payroll.additional_earnings_details.map((earning) => {
-                      const earningAmount = toNumber(earning.amount)
-                      const canDelete = isAdmin && payroll.status === "draft"
-
-                      return (
-                        <div
-                          key={earning.id}
-                          className="flex justify-between items-start text-xs sm:text-sm gap-2 group"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1.5">
-                              {canManage && (
-                                <Badge
-                                  variant="outline"
-                                  className="text-xs px-1.5 py-0 capitalize"
-                                >
-                                  {earning.category}
-                                </Badge>
-                              )}
-                              <span className="text-muted-foreground truncate">
-                                {earning.description ||
-                                  earning.reference ||
-                                  "Additional Earning"}
-                              </span>
-                            </div>
-                            {earning.description && earning.reference && (
-                              <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                                Ref: {earning.reference}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="font-medium">
-                              ₱
-                              {earningAmount.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </span>
-                            {canDelete && (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                className="h-6 w-6 p-0 print:hidden opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => setDeleteEarningId(earning.id)}
-                              >
-                                <X className="size-3" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })
-                  ) : (
-                    <div className="flex justify-between text-xs sm:text-sm">
-                      <span className="text-muted-foreground">Other</span>
-                      <span className="font-medium">
-                        ₱
-                        {additionalEarnings.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-            <Separator className="my-2 mt-auto" />
-            <div className="flex justify-between font-semibold text-green-700 dark:text-green-400 text-sm">
-              <span>Total</span>
-              <span>
-                ₱
-                {totalEarnings.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </span>
-            </div>
-          </div>
-
-          {/* Deductions - Use structured items if available, fallback to JSON */}
-          <div className="rounded-lg border border-red-200/60 dark:border-red-900/40 bg-linear-to-br from-red-50/30 to-rose-50/30 dark:from-red-950/10 dark:to-rose-950/10 p-3 flex flex-col">
-            <div className="flex items-center gap-2 mb-2.5">
-              <Minus className="h-4 w-4 text-red-600 dark:text-red-400" />
-              <h3 className="text-sm sm:text-base font-semibold text-red-700 dark:text-red-400">
-                Deductions
-              </h3>
-            </div>
-            {totalDeductions > 0 ? (
-              <div className="space-y-1.5">
-                {/* Use deductions JSON with metadata */}
-                {Object.entries(payroll.deductions || {})
-                  .sort(([keyA], [keyB]) => {
-                    const catA =
-                      payroll.deduction_metadata?.[keyA]?.category ?? ""
-                    const catB =
-                      payroll.deduction_metadata?.[keyB]?.category ?? ""
-
-                    return catA.localeCompare(catB)
-                  })
-                  .map(([key, value]) => {
-                    const amount = toNumber(value)
-                    if (amount <= 0) return null
-
-                    const metadata = payroll.deduction_metadata?.[key]
-                    const isManualDeduction =
-                      metadata?.source_type === "ManualDeduction" &&
-                      metadata?.source_id
-                    const canDelete =
-                      isAdmin && payroll.status === "draft" && isManualDeduction
-
-                    const label = key
-                      .split("_")
-                      .map(
-                        (word) => word.charAt(0).toUpperCase() + word.slice(1),
-                      )
-                      .join(" ")
-                      .replace("_", " ")
-
-                    return (
-                      <div
-                        key={key}
-                        className="flex justify-between items-center text-xs sm:text-sm group"
-                      >
-                        <span
-                          className={cn(
-                            "text-muted-foreground flex items-center gap-1.5",
-                            label === "Sss" && "uppercase",
-                          )}
-                        >
-                          {metadata?.category && canManage && (
-                            <Badge
-                              className={cn(
-                                "text-xs sm:text-sm px-1.5 py-0 border",
-                                getCategoryBadgeColor(metadata.category),
-                              )}
-                            >
-                              {metadata.category.replace(/_/g, " ")}
-                            </Badge>
-                          )}
-                          {label}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">
-                            ₱
-                            {amount.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </span>
-                          {canDelete && (
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              className="h-6 w-6 p-0 print:hidden"
-                              onClick={() =>
-                                setDeleteDeductionId(metadata.source_id!)
-                              }
-                            >
-                              <X className="size-3" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center grow">
-                <p className="text-xs text-muted-foreground ">No deductions</p>
-              </div>
-            )}
-            {totalDeductions > 0 && (
-              <>
-                <Separator className="my-2" />
-                <div className="flex justify-between font-semibold text-red-700 dark:text-red-400 text-xs sm:text-sm">
-                  <span>Total Deductions</span>
-                  <span>
-                    ₱
-                    {totalDeductions.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
+          <DeductionsSection
+            deductions={payroll.deductions || {}}
+            deductionMetadata={payroll.deduction_metadata}
+            totalDeductions={totalDeductions}
+            canDelete={canDelete}
+            canManage={canManage}
+            onDeleteDeduction={setDeleteDeductionId}
+          />
         </div>
 
         {/* Net Pay Summary - Prominent but Compact */}
@@ -715,11 +253,7 @@ export function WeeklyPayrollSlip({
               Net Pay
             </p>
             <p className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
-              ₱ {""}
-              {netPay.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              ₱ {formatCurrency(netPay)}
             </p>
           </div>
         </div>
