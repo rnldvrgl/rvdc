@@ -27,6 +27,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+    permission: "view_dashboard",
   },
   sales: {
     name: "Sales",

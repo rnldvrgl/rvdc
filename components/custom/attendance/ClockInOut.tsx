@@ -221,13 +221,13 @@ export function ClockInOut({
             </div>
           </div>
           <div className="text-center py-3 sm:py-4">
-            <p className="text-2xl sm:text-3xl font-bold">
+            <p className="text-2xl sm:text-3xl font-bold" suppressHydrationWarning>
               {currentTime.toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
             </p>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1" suppressHydrationWarning>
               {currentTime.toLocaleDateString("en-US", {
                 weekday: "long",
                 month: "long",

@@ -158,10 +158,10 @@ export function QuickClockInOut() {
         </CardHeader>
         <CardContent className="space-y-4 sm:space-y-6">
           <div className="text-center py-3 sm:py-4">
-            <p className="text-2xl sm:text-3xl font-bold">
+            <p className="text-2xl sm:text-3xl font-bold" suppressHydrationWarning>
               {formatTime(currentTime)}
             </p>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1" suppressHydrationWarning>
               {currentTime.toLocaleDateString("en-US", {
                 weekday: "long",
                 month: "long",
@@ -217,10 +217,10 @@ export function QuickClockInOut() {
       </CardHeader>
       <CardContent className="space-y-4 sm:space-y-6">
         <div className="text-center py-3 sm:py-4">
-          <p className="text-2xl sm:text-3xl font-bold">
+          <p className="text-2xl sm:text-3xl font-bold" suppressHydrationWarning>
             {formatTime(currentTime)}
           </p>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1" suppressHydrationWarning>
             {currentTime.toLocaleDateString("en-US", {
               weekday: "long",
               month: "long",
