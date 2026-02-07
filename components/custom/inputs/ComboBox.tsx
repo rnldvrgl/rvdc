@@ -32,12 +32,27 @@ export function ComboBox({
   const [open, setOpen] = React.useState(false)
   const [triggerWidth, setTriggerWidth] = React.useState<number>()
   const triggerRef = React.useRef<HTMLButtonElement>(null)
+  const listRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     if (triggerRef.current) {
       setTriggerWidth(triggerRef.current.offsetWidth)
     }
   }, [open, options.length])
+
+  function handleScrollWheel(e: React.WheelEvent) {
+    if (listRef.current) {
+      const viewport = listRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      )
+      if (viewport) {
+        viewport.scrollTop += e.deltaY
+      } else {
+        // Fallback for direct scroll
+        listRef.current.scrollTop += e.deltaY
+      }
+    }
+  }
 
   const selectedLabel =
     options.find((option) => option.value === value)?.label ?? placeholder
@@ -70,9 +85,9 @@ export function ComboBox({
             placeholder={searchPlaceholder}
             className="border-b"
           />
-          <CommandList>
+          <CommandList ref={listRef}>
             <CommandEmpty>No results found.</CommandEmpty>
-            <CommandGroup>
+            <CommandGroup onWheel={handleScrollWheel}>
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
