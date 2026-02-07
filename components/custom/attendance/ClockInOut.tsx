@@ -204,28 +204,30 @@ export function ClockInOut({
   if (!isWithinBusinessHours) {
     return (
       <Card className="border-0 shadow-sm">
-        <CardContent className="space-y-6">
-          <div className="flex flex-col lg:flex-row space-y-3 items-center justify-between">
-            <div className="flex flex-col lg:flex-row items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-900">
-                <Clock className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+        <CardContent className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-3 items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+              <div className="p-2 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-gray-900">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600 dark:text-gray-400" />
               </div>
-              <div className="text-center lg:text-left">
-                <h3 className="font-semibold ">Attendance Clock</h3>
+              <div className="text-center sm:text-left">
+                <h3 className="font-semibold text-sm sm:text-base">
+                  Attendance Clock
+                </h3>
                 <p className="text-xs text-muted-foreground">
                   {formatDate(new Date(), "EEEE, MMMM dd, yyyy")}
                 </p>
               </div>
             </div>
           </div>
-          <div className="text-center py-4">
-            <p className="text-3xl font-bold">
+          <div className="text-center py-3 sm:py-4">
+            <p className="text-2xl sm:text-3xl font-bold">
               {currentTime.toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
               })}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               {currentTime.toLocaleDateString("en-US", {
                 weekday: "long",
                 month: "long",
@@ -247,11 +249,11 @@ export function ClockInOut({
 
   return (
     <Card className="border-0 shadow-sm">
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4 sm:space-y-6">
         {/* Auto-Close Warning Badge */}
         {yesterdayAttendance?.auto_closed &&
           yesterdayAttendance.auto_close_warning_count > 0 && (
-            <div className="flex items-center justify-center p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border-2 border-yellow-200 dark:border-yellow-800">
+            <div className="flex items-center justify-center p-3 sm:p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border-2 border-yellow-200 dark:border-yellow-800">
               <AutoCloseWarningBadge
                 autoCloseWarningCount={
                   yesterdayAttendance.auto_close_warning_count
@@ -260,7 +262,7 @@ export function ClockInOut({
               />
             </div>
           )}
-        
+
         {/* Holiday Alert */}
         {todayHoliday && (
           <Alert variant="info">
@@ -273,23 +275,25 @@ export function ClockInOut({
         )}
 
         {/* Header */}
-        <div className="flex flex-col lg:flex-row space-y-3 items-center justify-between">
-          <div className="flex flex-col lg:flex-row items-center gap-3">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-3 items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
             <div
-              className={`p-2.5 rounded-xl ${isClockedOut ? "bg-green-100 dark:bg-green-950" : isClockedIn ? "bg-blue-100 dark:bg-blue-950" : "bg-gray-100 dark:bg-gray-900"}`}
+              className={`p-2 sm:p-2.5 rounded-xl ${isClockedOut ? "bg-green-100 dark:bg-green-950" : isClockedIn ? "bg-blue-100 dark:bg-blue-950" : "bg-gray-100 dark:bg-gray-900"}`}
             >
               <Clock
-                className={`h-5 w-5 ${isClockedOut ? "text-green-600 dark:text-green-400" : isClockedIn ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"}`}
+                className={`h-4 w-4 sm:h-5 sm:w-5 ${isClockedOut ? "text-green-600 dark:text-green-400" : isClockedIn ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"}`}
               />
             </div>
-            <div className="text-center lg:text-left">
-              <h3 className="font-semibold ">Attendance Clock</h3>
+            <div className="text-center sm:text-left">
+              <h3 className="font-semibold text-sm sm:text-base">
+                Attendance Clock
+              </h3>
               <p className="text-xs text-muted-foreground">
                 {formatDate(new Date(), "EEEE, MMMM dd, yyyy")}
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
             <AttendanceStatusBadge
               status={
                 !currentStatus?.attendance?.status
@@ -315,7 +319,7 @@ export function ClockInOut({
           <div className="space-y-3">
             <div className="grid gap-3">
               {/* Employee */}
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
                 <User className="h-4 w-4 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-muted-foreground">Employee</p>
@@ -326,8 +330,8 @@ export function ClockInOut({
               </div>
 
               {/* Clock Times */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
                   <LogIn className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">Clock In</p>
@@ -339,7 +343,7 @@ export function ClockInOut({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
                   <LogOut className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">Clock Out</p>
@@ -354,7 +358,7 @@ export function ClockInOut({
 
               {/* Late Status */}
               {currentStatus.attendance.is_late && (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
+                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
                   <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-amber-600 dark:text-amber-400">
@@ -372,7 +376,7 @@ export function ClockInOut({
 
               {/* Paid Hours */}
               {currentStatus.attendance.paid_hours && (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
                   <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">Paid Hours</p>
@@ -387,7 +391,7 @@ export function ClockInOut({
               {currentStatus.attendance.late_penalty_amount &&
                 parseFloat(currentStatus.attendance.late_penalty_amount) >
                   0 && (
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
+                  <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
                     <PhilippinePeso className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-red-600 dark:text-red-400">
@@ -404,7 +408,7 @@ export function ClockInOut({
 
               {/* Notes */}
               {currentStatus.attendance.notes && (
-                <div className="flex items-start gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                <div className="flex items-start gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
                   <FileText className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground mb-1">Notes</p>
@@ -415,9 +419,9 @@ export function ClockInOut({
             </div>
           </div>
         ) : (
-          <div className="text-center py-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-3">
-              <Clock className="h-8 w-8 text-muted-foreground" />
+          <div className="text-center py-6 sm:py-8">
+            <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted mb-3">
+              <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground">
               No attendance record for today
@@ -481,11 +485,11 @@ export function ClockInOut({
 
         {/* Action Buttons */}
         {showActions && (
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Button
               onClick={handleClockIn}
               disabled={!!currentStatus?.attendance || isLoading}
-              className="h-11"
+              className="h-10 sm:h-11"
               size="lg"
               variant="success"
             >
@@ -502,7 +506,7 @@ export function ClockInOut({
               onClick={handleClockOut}
               disabled={!isClockedIn || isLoading}
               variant="destructive"
-              className="h-11"
+              className="h-10 sm:h-11"
               size="lg"
             >
               {clockOut.isPending ? (

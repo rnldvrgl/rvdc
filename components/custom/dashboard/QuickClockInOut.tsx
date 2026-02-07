@@ -156,10 +156,12 @@ export function QuickClockInOut() {
             <RedirectRoute href={timetableRoute} />
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="text-center py-4">
-            <p className="text-3xl font-bold">{formatTime(currentTime)}</p>
-            <p className="text-sm text-muted-foreground mt-1">
+        <CardContent className="space-y-4 sm:space-y-6">
+          <div className="text-center py-3 sm:py-4">
+            <p className="text-2xl sm:text-3xl font-bold">
+              {formatTime(currentTime)}
+            </p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               {currentTime.toLocaleDateString("en-US", {
                 weekday: "long",
                 month: "long",
@@ -213,10 +215,12 @@ export function QuickClockInOut() {
           <RedirectRoute href={timetableRoute} />
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="text-center py-4">
-          <p className="text-3xl font-bold">{formatTime(currentTime)}</p>
-          <p className="text-sm text-muted-foreground mt-1">
+      <CardContent className="space-y-4 sm:space-y-6">
+        <div className="text-center py-3 sm:py-4">
+          <p className="text-2xl sm:text-3xl font-bold">
+            {formatTime(currentTime)}
+          </p>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             {currentTime.toLocaleDateString("en-US", {
               weekday: "long",
               month: "long",
@@ -226,7 +230,7 @@ export function QuickClockInOut() {
         </div>
         {yesterdayAttendance?.auto_closed &&
           yesterdayAttendance.auto_close_warning_count > 0 && (
-            <div className="flex items-center justify-center p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border-2 border-yellow-200 dark:border-yellow-800">
+            <div className="flex items-center justify-center p-3 sm:p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border-2 border-yellow-200 dark:border-yellow-800">
               <AutoCloseWarningBadge
                 autoCloseWarningCount={
                   yesterdayAttendance.auto_close_warning_count
@@ -261,8 +265,8 @@ export function QuickClockInOut() {
           {attendance ? (
             <div className="grid gap-3">
               {/* Clock Times */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
                   <LogIn className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">Clock In</p>
@@ -276,7 +280,7 @@ export function QuickClockInOut() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
                   <LogOut className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">Clock Out</p>
@@ -293,7 +297,7 @@ export function QuickClockInOut() {
 
               {/* Total Hours */}
               {attendance.total_hours && (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
                   <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs text-muted-foreground">Total Hours</p>
@@ -307,7 +311,7 @@ export function QuickClockInOut() {
           ) : null}
           {/* Late Status */}
           {attendanceStatus?.attendance?.is_late && (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
+            <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
               <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-amber-600 dark:text-amber-400">
@@ -325,7 +329,7 @@ export function QuickClockInOut() {
           {/* Late Penalty */}
           {attendanceStatus?.attendance?.late_penalty_amount &&
             parseFloat(attendanceStatus.attendance.late_penalty_amount) > 0 && (
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
+              <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
                 <PhilippinePeso className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-red-600 dark:text-red-400">
@@ -373,11 +377,11 @@ export function QuickClockInOut() {
             </Alert>
           )}
           {showActions && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button
                 onClick={handleClockIn}
                 disabled={hasClockedIn || clockIn.isPending}
-                className="h-11"
+                className="h-10 sm:h-11"
                 size="lg"
                 variant="success"
               >
@@ -394,7 +398,7 @@ export function QuickClockInOut() {
                 onClick={handleClockOut}
                 disabled={!hasClockedIn || hasClockedOut || clockOut.isPending}
                 variant="destructive"
-                className="h-11"
+                className="h-10 sm:h-11"
                 size="lg"
               >
                 {clockOut.isPending ? (
