@@ -309,13 +309,13 @@ export function QuickClockInOut() {
               </div>
 
               {/* Total Hours */}
-              {attendance.total_hours && (
+              {attendance.paid_hours && (
                 <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
                   <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">Total Hours</p>
+                    <p className="text-xs text-muted-foreground">Paid Hours</p>
                     <p className="text-sm font-medium">
-                      {attendance.total_hours}h
+                      {attendance.paid_hours}h
                     </p>
                   </div>
                 </div>
