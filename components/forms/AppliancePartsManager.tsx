@@ -122,9 +122,13 @@ export default function AppliancePartsManager({
       item: selectedItemId,
       quantity: qty,
       discount_amount:
-        discountType === "fixed" ? parseFloat(discountValue || "0") : 0,
+        discountType === "fixed"
+          ? Math.round(parseFloat(discountValue || "0") * 100) / 100
+          : 0,
       discount_percentage:
-        discountType === "percentage" ? parseFloat(discountValue || "0") : 0,
+        discountType === "percentage"
+          ? Math.round(parseFloat(discountValue || "0") * 100) / 100
+          : 0,
       discount_reason: discountReason || undefined,
     }
 

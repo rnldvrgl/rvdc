@@ -205,19 +205,20 @@ export default function ServiceApplianceManager({
       issue_reported: editingAppliance.issue_reported || "",
       diagnosis_notes: editingAppliance.diagnosis_notes || "",
       status: editingAppliance.status || "received",
-      labor_fee: editingAppliance.labor_fee || 0,
+      labor_fee: Math.round((editingAppliance.labor_fee || 0) * 100) / 100,
       labor_is_free: editingAppliance.labor_is_free || false,
-      labor_original_amount: editingAppliance.labor_original_amount || 0,
+      labor_original_amount:
+        Math.round((editingAppliance.labor_original_amount || 0) * 100) / 100,
       // Send 0 to clear numeric fields, empty string for reason
       labor_discount_amount:
         editingAppliance.labor_discount_amount !== undefined &&
         editingAppliance.labor_discount_amount > 0
-          ? editingAppliance.labor_discount_amount
+          ? Math.round(editingAppliance.labor_discount_amount * 100) / 100
           : 0,
       labor_discount_percentage:
         editingAppliance.labor_discount_percentage !== undefined &&
         editingAppliance.labor_discount_percentage > 0
-          ? editingAppliance.labor_discount_percentage
+          ? Math.round(editingAppliance.labor_discount_percentage * 100) / 100
           : 0,
       labor_discount_reason:
         editingAppliance.labor_discount_amount !== undefined &&

@@ -322,11 +322,13 @@ export default function ServiceDetail({
       return
     }
 
+    const roundedAmount = Math.round(amount * 100) / 100
+
     refundService.mutate(
       {
         id: service.id,
         data: {
-          refund_amount: amount,
+          refund_amount: roundedAmount,
           reason: refundReason,
           refund_type: refundType,
           refund_method: refundMethod,
@@ -390,9 +392,13 @@ export default function ServiceDetail({
         id: service.id,
         data: {
           service_discount_amount:
-            discountType === "fixed" ? parseFloat(discountValue) : 0,
+            discountType === "fixed"
+              ? Math.round(parseFloat(discountValue) * 100) / 100
+              : 0,
           service_discount_percentage:
-            discountType === "percentage" ? parseFloat(discountValue) : 0,
+            discountType === "percentage"
+              ? Math.round(parseFloat(discountValue) * 100) / 100
+              : 0,
           discount_reason: discountReason,
         },
       },
@@ -416,12 +422,14 @@ export default function ServiceDetail({
       return
     }
 
+    const roundedAmount = Math.round(parseFloat(paymentAmount) * 100) / 100
+
     recordPayment.mutate(
       {
         id: service.id,
         data: {
           payment_type: paymentType,
-          amount: paymentAmount,
+          amount: roundedAmount.toString(),
           notes: paymentNotes || undefined,
         },
       },
