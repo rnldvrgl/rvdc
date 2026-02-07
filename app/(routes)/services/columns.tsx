@@ -1,14 +1,9 @@
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
 import { Badge } from "@/components/ui/badge"
 import { GetColumnsProps, Service } from "@/lib/constants/interface"
-import {
-  formatCurrency,
-  getBadgeVariant,
-  getHashedStallBadgeClass,
-  safeCell,
-} from "@/lib/utils/helpers"
+import { formatCurrency, getBadgeVariant, safeCell } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
-import { ColumnDef, Row } from "@tanstack/react-table"
+import { ColumnDef } from "@tanstack/react-table"
 import { CheckCircle, Edit, Eye, Trash2 } from "lucide-react"
 
 const serviceTypeLabels: Record<string, string> = {
@@ -45,24 +40,6 @@ export function getServiceColumns({
 }: GetServiceColumnsProps): ColumnDef<Service>[] {
   const canManageServices = role === "admin" || role === "manager"
   const columns: ColumnDef<Service>[] = [
-    ...(role === "admin"
-      ? [
-          {
-            accessorKey: "stall.name",
-            header: "Stall",
-            cell: ({ row }: { row: Row<Service> }) => {
-              const stallName = safeCell(row.original.stall?.name)
-              return stallName ? (
-                <Badge className={getHashedStallBadgeClass(stallName)}>
-                  {stallName}
-                </Badge>
-              ) : (
-                <span className="text-muted-foreground text-sm">N/A</span>
-              )
-            },
-          },
-        ]
-      : []),
     {
       accessorKey: "id",
       header: "Service #",
@@ -164,8 +141,36 @@ export function getServiceColumns({
       ),
     },
     {
+      accessorKey: "appointment_datetime",
+      header: "Schedule",
+      cell: ({ getValue }) => {
+        const value = getValue()
+        return value ? (
+          <span className="text-sm">
+            {formatDate(new Date(value as string), "MMM dd, yyyy h:mm a")}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-sm">—</span>
+        )
+      },
+    },
+    {
+      accessorKey: "delivery_date",
+      header: "Delivery",
+      cell: ({ getValue }) => {
+        const value = getValue()
+        return value ? (
+          <span className="text-sm">
+            {formatDate(new Date(value as string), "MMM dd, yyyy")}
+          </span>
+        ) : (
+          <span className="text-muted-foreground text-sm">—</span>
+        )
+      },
+    },
+    {
       accessorKey: "created_at",
-      header: "Created",
+      header: "Added date",
       cell: ({ getValue }) =>
         safeCell(
           getValue()
