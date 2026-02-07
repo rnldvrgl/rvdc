@@ -2,20 +2,16 @@
 
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
-import { Badge } from "@/components/ui/badge"
+import { StatusBadge } from "@/components/details/payroll/StatusBadge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { PayrollStatus } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useWeeklyPayrolls } from "@/lib/queries/usePayroll"
+import { formatCurrency } from "@/lib/utils/currency"
 import { format } from "date-fns"
-import {
-  AlertCircle,
-  Banknote,
-  CheckCircle2,
-  Eye,
-  FilePenLine,
-  PhilippinePesoIcon,
-} from "lucide-react"
+import { Calendar, Eye, Loader2, TrendingDown, TrendingUp } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 /**
@@ -30,55 +26,24 @@ export default function MyPayrollPage() {
     ordering: "-week_start",
   })
 
-  const getStatusBadge = (status: string) => {
-    const config: Record<
-      string,
-      { color: string; label: string; icon: React.ReactNode }
-    > = {
-      draft: {
-        color:
-          "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-600",
-        label: "Draft",
-        icon: <FilePenLine className="h-3 w-3 mr-1" />,
-      },
-      approved: {
-        color:
-          "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-300 dark:border-green-600",
-        label: "Approved",
-        icon: <CheckCircle2 className="h-3 w-3 mr-1" />,
-      },
-      paid: {
-        color:
-          "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-blue-300 dark:border-blue-600",
-        label: "Paid",
-        icon: <Banknote className="h-3 w-3 mr-1" />,
-      },
-      received: {
-        color:
-          "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 border-purple-300 dark:border-purple-600",
-        label: "Received",
-        icon: <CheckCircle2 className="h-3 w-3 mr-1" />,
-      },
-      cancelled: {
-        color:
-          "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-300 dark:border-red-600",
-        label: "Cancelled",
-        icon: <AlertCircle className="h-3 w-3 mr-1" />,
-      },
-    }
-
-    const { color, label, icon } = config[status] || config.draft
-
+  if (isLoading) {
     return (
-      <Badge
-        variant="outline"
-        className={`${color} flex items-center w-fit`}
-      >
-        {icon}
-        {label}
-      </Badge>
+      <Wrapper>
+        <div className="space-y-4 md:space-y-6">
+          <PageHeader
+            title="My Payroll"
+            description="View your payroll history and payment details"
+            icon={Calendar}
+          />
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      </Wrapper>
     )
   }
+
+  const payrolls = data?.results || []
 
   return (
     <Wrapper>
@@ -86,83 +51,103 @@ export default function MyPayrollPage() {
         <PageHeader
           title="My Payroll"
           description="View your payroll history and payment details"
-          icon={PhilippinePesoIcon}
+          icon={Calendar}
         />
 
-        {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">
-            Loading your payroll records...
-          </div>
-        ) : data?.results && data.results.length > 0 ? (
-          <div className="grid gap-4">
-            {data.results.map((payroll) => (
+        {payrolls.length > 0 ? (
+          <div className="grid gap-3 sm:gap-4">
+            {payrolls.map((payroll) => (
               <Card
                 key={payroll.id}
-                className="hover:shadow-md transition-shadow"
+                className="hover:shadow-lg transition-all duration-200 hover:border-primary/50 py-2"
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">
-                      Pay Period:{" "}
-                      {format(new Date(payroll.week_start), "MMM dd")} -{" "}
-                      {payroll.week_end
-                        ? format(new Date(payroll.week_end), "MMM dd, yyyy")
-                        : ""}
-                    </CardTitle>
-                    {getStatusBadge(payroll.status)}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Gross Pay</p>
-                      <p className="text-lg font-semibold">
-                        ₱{Number(payroll.gross_pay).toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Deductions
-                      </p>
-                      <p className="text-lg font-semibold text-red-600">
-                        ₱{Number(payroll.total_deductions).toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Net Pay</p>
-                      <p className="text-lg font-semibold text-green-600">
-                        ₱{Number(payroll.net_pay).toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">
-                        Total Hours
-                      </p>
-                      <p className="text-lg font-semibold">
-                        {Number(payroll.regular_hours) +
-                          Number(payroll.approved_ot_hours)}
-                        h
-                      </p>
+                <CardContent className="p-4 sm:p-6">
+                  {/* Header Section */}
+                  <div className="flex flex-col gap-2 mb-4 pb-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2 min-w-0 flex-1">
+                        <Calendar className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                        <span className="font-semibold text-sm sm:text-base">
+                          {format(new Date(payroll.week_start), "MMM dd")} -{" "}
+                          {payroll.week_end
+                            ? format(new Date(payroll.week_end), "MMM dd, yyyy")
+                            : ""}
+                        </span>
+                      </div>
+                      <div className="shrink-0">
+                        <StatusBadge status={payroll.status as PayrollStatus} />
+                      </div>
                     </div>
                   </div>
+
+                  <Separator className="mb-4" />
+
+                  {/* Payment Details */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                    {/* Gross Pay */}
+                    <div className="text-center p-3 rounded-lg bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 border border-blue-200/50 dark:border-blue-800/50">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <TrendingUp className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                        <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
+                          Gross Pay
+                        </p>
+                      </div>
+                      <p className="text-base sm:text-lg font-bold text-blue-700 dark:text-blue-300">
+                        ₱{formatCurrency(payroll.gross_pay)}
+                      </p>
+                    </div>
+
+                    {/* Deductions */}
+                    <div className="text-center p-3 rounded-lg bg-linear-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 border border-red-200/50 dark:border-red-800/50">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <TrendingDown className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                        <p className="text-xs text-red-700 dark:text-red-300 font-medium">
+                          Deductions
+                        </p>
+                      </div>
+                      <p className="text-base sm:text-lg font-bold text-red-700 dark:text-red-300">
+                        ₱{formatCurrency(payroll.total_deductions)}
+                      </p>
+                    </div>
+
+                    {/* Net Pay */}
+                    <div className="text-center p-3 rounded-lg bg-linear-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 border border-green-200/50 dark:border-green-800/50">
+                      <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">
+                        Net Pay
+                      </p>
+                      <p className="text-base sm:text-lg font-bold text-green-700 dark:text-green-300">
+                        ₱{formatCurrency(payroll.net_pay)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => router.push(`/payroll/slip/${payroll.id}`)}
-                    className="w-full md:w-auto"
+                    className="w-full hover:bg-primary hover:text-primary-foreground transition-colors text-sm"
                   >
                     <Eye className="size-4 mr-2" />
-                    View Payslip
+                    <span className="hidden sm:inline">
+                      View Detailed Payslip
+                    </span>
+                    <span className="sm:hidden">View Payslip</span>
                   </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              No payroll records found. Payroll records will appear here once
-              generated by management.
+          <Card className="border-dashed">
+            <CardContent className="py-8 sm:py-12 px-4 text-center">
+              <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 sm:mb-4 text-muted-foreground/50" />
+              <p className="text-sm sm:text-base text-muted-foreground font-medium mb-1">
+                No payroll records found
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Payroll records will appear here once generated by management
+              </p>
             </CardContent>
           </Card>
         )}
