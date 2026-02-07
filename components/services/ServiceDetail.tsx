@@ -26,6 +26,11 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Service } from "@/lib/constants/interface"
 import { useServicePermissions } from "@/lib/hooks/useServicePermissions"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
@@ -479,53 +484,83 @@ export default function ServiceDetail({
       {/* Action Buttons */}
       <div className="flex justify-end gap-2">
         {!isCompleted && onEdit && canEditServiceDetails && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onEdit}
-          >
-            <Edit className="mr-1 h-4 w-4" />
-            Edit
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onEdit}
+              >
+                <Edit className="mr-1 h-4 w-4" />
+                Edit
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Edit service details, client info, and schedules</p>
+            </TooltipContent>
+          </Tooltip>
         )}
         {service.status !== "completed" &&
           service.status !== "cancelled" &&
           canCancelService && (
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setCancelDialogOpen(true)}
-            >
-              {/* CancelIcon */}
-              <XIcon className="mr-1 size-4" />
-              Cancel Service
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setCancelDialogOpen(true)}
+                >
+                  {/* CancelIcon */}
+                  <XIcon className="mr-1 size-4" />
+                  Cancel Service
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Cancel this service and provide a reason</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         {service.status === "completed" && canProcessRefunds && (
-          <Button
-            variant="warning"
-            size="sm"
-            onClick={() => {
-              setRefundDialogOpen(true)
-              const maxRefund =
-                parseFloat(service.total_paid || "0") -
-                parseFloat(service.total_refunded || "0")
-              setRefundAmount(maxRefund.toString())
-            }}
-          >
-            <Info className="mr-1 h-4 w-4" />
-            Process Refund
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="warning"
+                size="sm"
+                onClick={() => {
+                  setRefundDialogOpen(true)
+                  const maxRefund =
+                    parseFloat(service.total_paid || "0") -
+                    parseFloat(service.total_refunded || "0")
+                  setRefundAmount(maxRefund.toString())
+                }}
+              >
+                <Info className="mr-1 h-4 w-4" />
+                Process Refund
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Issue a full or partial refund to the customer</p>
+            </TooltipContent>
+          </Tooltip>
         )}
         {canComplete && canCompleteService && (
-          <Button
-            size="sm"
-            variant="success"
-            onClick={() => setCompleteDialogOpen(true)}
-          >
-            <CheckCircle className="mr-1 h-4 w-4" />
-            Complete Service
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                variant="success"
+                onClick={() => setCompleteDialogOpen(true)}
+              >
+                <CheckCircle className="mr-1 h-4 w-4" />
+                Complete Service
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                Finalize service, create transactions, and mark as completed
+              </p>
+            </TooltipContent>
+          </Tooltip>
         )}
       </div>
 

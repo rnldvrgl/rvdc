@@ -41,6 +41,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { ApplianceItemUsed } from "@/lib/constants/interface"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useApplianceItemMutations } from "@/lib/mutations/services/useApplianceItemMutations"
@@ -320,22 +325,36 @@ export default function AppliancePartsManager({
                       {!disabled && (
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleEditPart(part)}
-                              disabled={disabled}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleDeletePart(part.id)}
-                              disabled={disabled}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleEditPart(part)}
+                                  disabled={disabled}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Edit part quantity or apply discount</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleDeletePart(part.id)}
+                                  disabled={disabled}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Remove part and return to stock</p>
+                              </TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       )}
