@@ -1,29 +1,29 @@
-'use client'
+"use client"
 
-import { Filter as FilterIcon, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Filter as FilterIcon, Trash2 } from "lucide-react"
+import { useEffect, useState } from "react"
 
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
+} from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select"
 
-import { FilterDefinition } from '@/lib/constants/interface'
-import { useNavigation } from '@/lib/hooks/useNavigation'
-import useSearchParameters from '@/lib/hooks/useSearchParameters'
-import { cn } from '@/lib/utils/helpers'
+import { FilterDefinition } from "@/lib/constants/interface"
+import { useNavigation } from "@/lib/hooks/useNavigation"
+import useSearchParameters from "@/lib/hooks/useSearchParameters"
+import { cn } from "@/lib/utils/helpers"
 
-const EXCLUDED_KEYS = new Set(['start_date', 'end_date'])
+const EXCLUDED_KEYS = new Set(["start_date", "end_date"])
 
 interface Props {
   filters: FilterDefinition[]
@@ -50,7 +50,7 @@ export function DataTableFilterDropdown({ filters, className }: Props) {
       setEntries(initial)
       setDraft(initial)
     }
-  }, [filter])
+  }, [filter, entries])
 
   const applyFilters = () => {
     const newFilters = Object.fromEntries(draft.map((e) => [e.key, e.value]))
@@ -65,7 +65,7 @@ export function DataTableFilterDropdown({ filters, className }: Props) {
   const handleKeyChange = (index: number, newKey: string) => {
     const next = [...draft]
     const defaultValue =
-      filters.find((f) => f.key === newKey)?.options[0]?.value ?? ''
+      filters.find((f) => f.key === newKey)?.options[0]?.value ?? ""
     next[index] = { key: newKey, value: defaultValue }
     setDraft(next)
   }
@@ -88,7 +88,7 @@ export function DataTableFilterDropdown({ filters, className }: Props) {
     if (!firstUnused) return
     const newEntry = {
       key: firstUnused.key,
-      value: firstUnused.options[0]?.value ?? '',
+      value: firstUnused.options[0]?.value ?? "",
     }
     setDraft([...draft, newEntry])
   }
@@ -137,17 +137,17 @@ export function DataTableFilterDropdown({ filters, className }: Props) {
       >
         <div className="flex flex-col gap-1">
           <h4 className="font-medium leading-none">
-            {draft.length > 0 ? 'Filter by' : 'No filters applied'}
+            {draft.length > 0 ? "Filter by" : "No filters applied"}
           </h4>
           <p
             className={cn(
-              'text-muted-foreground text-sm',
-              draft.length > 0 && 'sr-only',
+              "text-muted-foreground text-sm",
+              draft.length > 0 && "sr-only",
             )}
           >
             {draft.length > 0
-              ? 'Modify filters to narrow down results.'
-              : 'Add filters to narrow down results.'}
+              ? "Modify filters to narrow down results."
+              : "Add filters to narrow down results."}
           </p>
         </div>
 

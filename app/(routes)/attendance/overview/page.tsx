@@ -52,7 +52,7 @@ const AttendanceOverviewPage = () => {
     push({
       filter: { ...filter, employee_id: selectedEmployee?.employee_id },
     })
-  }, [selectedEmployee])
+  }, [selectedEmployee, filter, push])
 
   return (
     <Wrapper>

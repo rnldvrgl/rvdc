@@ -1,14 +1,14 @@
-import { Button } from '@/components/ui/button'
-import { useNavigation } from '@/lib/hooks/useNavigation'
-import useSearchParameters from '@/lib/hooks/useSearchParameters'
-import { cn } from '@/lib/utils/helpers'
+import { Button } from "@/components/ui/button"
+import { useNavigation } from "@/lib/hooks/useNavigation"
+import useSearchParameters from "@/lib/hooks/useSearchParameters"
+import { cn } from "@/lib/utils/helpers"
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronsLeftIcon,
   ChevronsRightIcon,
-} from 'lucide-react'
-import React, { useCallback, useMemo } from 'react'
+} from "lucide-react"
+import React, { useCallback, useMemo } from "react"
 
 interface DataTablePaginationProps {
   hasNextPage: boolean
@@ -52,47 +52,24 @@ export function DataTablePagination({
     [push, limit, ordering, search, totalPages, filter],
   )
 
-  const pageButtons = useMemo(() => {
-    if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1).map((p) =>
-        renderPageButton(p),
+  const renderPageButton = useCallback(
+    (pageNumber: number) => {
+      return (
+        <Button
+          key={pageNumber}
+          variant={pageNumber === safePage ? "default" : "outline"}
+          size="icon"
+          className="size-8"
+          onClick={() => goToPage(pageNumber)}
+        >
+          {pageNumber}
+        </Button>
       )
-    }
+    },
+    [safePage, goToPage],
+  )
 
-    const items: React.ReactNode[] = []
-    items.push(renderPageButton(1))
-
-    if (safePage > 3) items.push(renderEllipsis('left'))
-
-    const startPage = Math.max(2, safePage - 1)
-    const endPage = Math.min(totalPages - 1, safePage + 1)
-
-    for (let p = startPage; p <= endPage; p++) {
-      items.push(renderPageButton(p))
-    }
-
-    if (safePage < totalPages - 2) items.push(renderEllipsis('right'))
-
-    items.push(renderPageButton(totalPages))
-
-    return items
-  }, [totalPages, safePage])
-
-  function renderPageButton(pageNumber: number) {
-    return (
-      <Button
-        key={pageNumber}
-        variant={pageNumber === safePage ? 'default' : 'outline'}
-        size="icon"
-        className="size-8"
-        onClick={() => goToPage(pageNumber)}
-      >
-        {pageNumber}
-      </Button>
-    )
-  }
-
-  function renderEllipsis(key: string) {
+  const renderEllipsis = useCallback((key: string) => {
     return (
       <Button
         key={key}
@@ -104,10 +81,36 @@ export function DataTablePagination({
         ...
       </Button>
     )
-  }
+  }, [])
+
+  const pageButtons = useMemo(() => {
+    if (totalPages <= 5) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1).map((p) =>
+        renderPageButton(p),
+      )
+    }
+
+    const items: React.ReactNode[] = []
+    items.push(renderPageButton(1))
+
+    if (safePage > 3) items.push(renderEllipsis("left"))
+
+    const startPage = Math.max(2, safePage - 1)
+    const endPage = Math.min(totalPages - 1, safePage + 1)
+
+    for (let p = startPage; p <= endPage; p++) {
+      items.push(renderPageButton(p))
+    }
+
+    if (safePage < totalPages - 2) items.push(renderEllipsis("right"))
+
+    items.push(renderPageButton(totalPages))
+
+    return items
+  }, [totalPages, safePage, renderPageButton, renderEllipsis])
 
   return (
-    <div className={cn('flex items-center justify-between px-2', className)}>
+    <div className={cn("flex items-center justify-between px-2", className)}>
       <div className="flex items-center space-x-6 lg:space-x-8">
         <div className="flex items-center space-x-2">
           <Button

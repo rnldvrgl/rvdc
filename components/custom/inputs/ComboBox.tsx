@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react'
-import * as React from 'react'
+import { CheckIcon, ChevronsUpDownIcon } from "lucide-react"
+import * as React from "react"
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button"
 import {
   Command,
   CommandEmpty,
@@ -11,21 +11,21 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command'
+} from "@/components/ui/command"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
-import { ComboBoxProps } from '@/lib/constants/interface'
-import { cn } from '@/lib/utils/helpers'
+} from "@/components/ui/popover"
+import { ComboBoxProps } from "@/lib/constants/interface"
+import { cn } from "@/lib/utils/helpers"
 
 export function ComboBox({
   options,
   value,
   onChange,
-  placeholder = 'Select option...',
-  searchPlaceholder = 'Search...',
+  placeholder = "Select option...",
+  searchPlaceholder = "Search...",
   className,
   disabled,
 }: ComboBoxProps) {
@@ -37,7 +37,7 @@ export function ComboBox({
     if (triggerRef.current) {
       setTriggerWidth(triggerRef.current.offsetWidth)
     }
-  }, [triggerRef.current, open, options.length])
+  }, [open, options.length])
 
   const selectedLabel =
     options.find((option) => option.value === value)?.label ?? placeholder
@@ -54,7 +54,7 @@ export function ComboBox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn('justify-between w-full', className)}
+          className={cn("justify-between w-full", className)}
         >
           {selectedLabel}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -83,8 +83,8 @@ export function ComboBox({
                 >
                   <CheckIcon
                     className={cn(
-                      'mr-2 h-4 w-4',
-                      value === option.value ? 'opacity-100' : 'opacity-0',
+                      "mr-2 h-4 w-4",
+                      value === option.value ? "opacity-100" : "opacity-0",
                     )}
                   />
                   {option.label}
