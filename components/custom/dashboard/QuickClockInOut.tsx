@@ -9,6 +9,7 @@ import { useClockInOut } from "@/lib/hooks/useClockInOut"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useCalendarEvents } from "@/lib/queries/calendar/useCalendarEvents"
 import { useDailyAttendances } from "@/lib/queries/useAttendance"
+import { usePayrollSettings } from "@/lib/queries/usePayroll"
 import { useUserProfile } from "@/lib/queries/useUserProfile"
 import { formatDateToYMD, formatMinutesToHours } from "@/lib/utils/helpers"
 import {
@@ -29,6 +30,7 @@ export function QuickClockInOut() {
   const { data: attendanceData } = useDailyAttendances({
     filter: { employee_id: user_id },
   })
+  const { data: settings } = usePayrollSettings()
 
   const {
     currentTime,
@@ -66,16 +68,32 @@ export function QuickClockInOut() {
   const isHalfDay = todayLeave?.extendedProps.is_half_day
   const shiftPeriod = todayLeave?.extendedProps.shift_period
 
+  // Calculate half-day cutoff time (midpoint between shift start and end)
+  const getHalfDayCutoffHour = () => {
+    if (!settings?.shift_start || !settings?.shift_end) return 13 // Default 1 PM
+
+    const parseHour = (timeStr: string) => {
+      const [hours] = timeStr.split(":")
+      return parseInt(hours, 10)
+    }
+
+    const startHour = parseHour(settings.shift_start)
+    const endHour = parseHour(settings.shift_end)
+    return Math.floor((startHour + endHour) / 2)
+  }
+
+  const halfDayCutoff = getHalfDayCutoffHour()
+
   // For half day leave, check if it's their working period
   const canClockInHalfDay = () => {
     if (!isHalfDay) return true
     const currentHour = currentTime.getHours()
     if (shiftPeriod === "AM") {
-      // Can work in PM (after 12 PM)
-      return currentHour >= 12
+      // Can work in PM (after cutoff)
+      return currentHour >= halfDayCutoff
     } else if (shiftPeriod === "PM") {
-      // Can work in AM (before 12 PM)
-      return currentHour < 12
+      // Can work in AM (before cutoff)
+      return currentHour < halfDayCutoff
     }
     return false
   }
@@ -190,6 +208,13 @@ export function QuickClockInOut() {
 
   // Half day leave - check if in working period
   if (isHalfDay && !canClockInHalfDay()) {
+    const formatCutoffTime = (hour: number) => {
+      return hour === 12
+        ? "12:00 PM"
+        : `${hour > 12 ? hour - 12 : hour}:00 ${hour >= 12 ? "PM" : "AM"}`
+    }
+    const cutoffTime = formatCutoffTime(halfDayCutoff)
+
     return (
       <Card className="relative">
         <CardHeader>
@@ -205,7 +230,10 @@ export function QuickClockInOut() {
             <AlertDescription suppressHydrationWarning>
               You have {shiftPeriod === "AM" ? "morning" : "afternoon"} leave
               today. Clock in will be available during your working hours (
-              {shiftPeriod === "AM" ? "after 12:00 PM" : "before 12:00 PM"}).
+              {shiftPeriod === "AM"
+                ? `after ${cutoffTime}`
+                : `before ${cutoffTime}`}
+              ).
             </AlertDescription>
           </Alert>
         </CardContent>

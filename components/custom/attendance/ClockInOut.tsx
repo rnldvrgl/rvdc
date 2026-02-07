@@ -16,6 +16,7 @@ import {
   useDailyAttendance,
   useLeaveRequests,
 } from "@/lib/queries/useAttendance"
+import { usePayrollSettings } from "@/lib/queries/usePayroll"
 import { canClockInOut, formatTime } from "@/lib/utils/attendance"
 import { formatDateToYMD, formatMinutesToHours } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
@@ -50,6 +51,9 @@ export function ClockInOut({
   // Get today's date first
   const today = date || formatDate(new Date(), "yyyy-MM-dd")
   const todayStr = formatDateToYMD(new Date(today))
+
+  // Fetch payroll settings for half-day cutoff calculation
+  const { data: settings } = usePayrollSettings()
 
   // Fetch calendar events for today
   const { data: events } = useCalendarEvents({
@@ -86,6 +90,22 @@ export function ClockInOut({
   })
 
   const approvedLeave = todayLeave?.results?.[0]
+
+  // Calculate half-day cutoff time (midpoint between shift start and end)
+  const getHalfDayCutoffHour = () => {
+    if (!settings?.shift_start || !settings?.shift_end) return 13 // Default 1 PM
+
+    const parseHour = (timeStr: string) => {
+      const [hours] = timeStr.split(":")
+      return parseInt(hours, 10)
+    }
+
+    const startHour = parseHour(settings.shift_start)
+    const endHour = parseHour(settings.shift_end)
+    return Math.floor((startHour + endHour) / 2)
+  }
+
+  const halfDayCutoff = getHalfDayCutoffHour()
 
   const handleClockIn = async () => {
     if (!user_id) return
@@ -135,14 +155,14 @@ export function ClockInOut({
       return true
     }
 
-    // Half day morning (leaving at 12 PM) - disable after 1 PM (13:00)
+    // Half day morning (on leave AM) - disable after cutoff
     if (approvedLeave.shift_period === "AM") {
-      return getCurrentHour() >= 13
+      return getCurrentHour() >= halfDayCutoff
     }
 
-    // Half day afternoon (leaving at 5 PM) - disable before 1 PM (13:00)
+    // Half day afternoon (on leave PM) - disable before cutoff
     if (approvedLeave.shift_period === "PM") {
-      return getCurrentHour() < 13
+      return getCurrentHour() < halfDayCutoff
     }
 
     return false
@@ -155,20 +175,34 @@ export function ClockInOut({
       return `You are on ${approvedLeave.leave_type_display.toLowerCase()} today (Full Day). Clock in/out is not available.`
     }
 
+    const formatCutoffTime = (hour: number) => {
+      return hour === 12
+        ? "12:00 PM"
+        : `${hour > 12 ? hour - 12 : hour}:00 ${hour >= 12 ? "PM" : "AM"}`
+    }
+
+    const shiftEndTime = settings?.shift_end
+      ? settings.shift_end.slice(0, 5)
+      : "6:00 PM"
+    const cutoffTime = formatCutoffTime(halfDayCutoff)
+
     if (approvedLeave.shift_period === "AM") {
-      // On leave in the morning, works afternoon shift (1pm-6pm)
-      if (getCurrentHour() >= 13) {
-        return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Morning). You can clock in/out for your afternoon shift (1:00 PM - 6:00 PM).`
+      // On leave in the morning, works afternoon shift
+      if (getCurrentHour() >= halfDayCutoff) {
+        return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Morning). You can clock in/out for your afternoon shift (${cutoffTime} - ${shiftEndTime}).`
       }
-      return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Morning). Your afternoon shift starts at 1:00 PM.`
+      return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Morning). Your afternoon shift starts at ${cutoffTime}.`
     }
 
     if (approvedLeave.shift_period === "PM") {
-      // On leave in the afternoon, works morning shift (8am-1pm)
-      if (getCurrentHour() >= 13) {
-        return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Afternoon). Your morning shift has ended at 1:00 PM.`
+      // On leave in the afternoon, works morning shift
+      const shiftStartTime = settings?.shift_start
+        ? settings.shift_start.slice(0, 5)
+        : "8:00 AM"
+      if (getCurrentHour() >= halfDayCutoff) {
+        return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Afternoon). Your morning shift has ended at ${cutoffTime}.`
       }
-      return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Afternoon). You can clock in/out for your morning shift (8:00 AM - 1:00 PM).`
+      return `You are on ${approvedLeave.leave_type_display.toLowerCase()} (Half Day - Afternoon). You can clock in/out for your morning shift (${shiftStartTime} - ${cutoffTime}).`
     }
 
     return null
