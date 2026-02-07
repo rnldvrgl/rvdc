@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { User } from "@/lib/constants/interface"
 import { useAuthentications } from "@/lib/mutations/useAuthentication"
+import { getDisplayImage } from "@/lib/utils/helpers"
 import { getToken } from "@/lib/utils/tokens"
 import { RemixiconComponentType } from "@remixicon/react"
 import { AnimatePresence, motion } from "framer-motion"
 import { LogOutIcon, LucideIcon, Menu, X } from "lucide-react"
+import Image from "next/image"
 import { useState } from "react"
 
 type SidebarItem = {
@@ -42,6 +44,9 @@ export default function SidebarNav({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { useLogout } = useAuthentications()
   const logout = useLogout()
+  const displayImage = getDisplayImage(user?.profile_image)
+  const hasCustomImage =
+    user?.profile_image && !user.profile_image.includes("default_image")
 
   const renderUserHeader = () => (
     <div className="flex items-center justify-between rounded-lg bg-primary/10 dark:bg-muted/50 p-3 border border-border/50">
@@ -55,9 +60,19 @@ export default function SidebarNav({
             transition={{ duration: 0.4 }}
             className="flex items-center gap-3"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold text-sm">
-              {user?.first_name?.[0]?.toUpperCase()}
-            </div>
+            {hasCustomImage ? (
+              <Image
+                src={displayImage}
+                alt={`${user?.first_name} ${user?.last_name}`}
+                width={36}
+                height={36}
+                className="h-9 w-9 rounded-full object-cover border border-border"
+              />
+            ) : (
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold text-sm">
+                {user?.first_name?.[0]?.toUpperCase()}
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground">Welcome back</p>
               <p className="text-sm font-semibold text-foreground truncate">
@@ -139,9 +154,19 @@ export default function SidebarNav({
                 transition={{ duration: 0.4 }}
                 className="flex items-center gap-3"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/30 text-primary font-semibold text-sm">
-                  {user?.first_name?.[0]?.toUpperCase()}
-                </div>
+                {hasCustomImage ? (
+                  <Image
+                    src={displayImage}
+                    alt={`${user?.first_name} ${user?.last_name}`}
+                    width={36}
+                    height={36}
+                    className="h-9 w-9 rounded-full object-cover border border-border"
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/30 text-primary font-semibold text-sm">
+                    {user?.first_name?.[0]?.toUpperCase()}
+                  </div>
+                )}
                 <span className="font-semibold text-sm">
                   {user?.first_name} {user?.last_name}
                 </span>
@@ -180,11 +205,20 @@ export default function SidebarNav({
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0 bg-primary/5">
               <div className="flex items-center gap-3">
-                {user && (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/30 text-primary font-semibold text-lg">
-                    {user?.first_name?.[0]?.toUpperCase()}
-                  </div>
-                )}
+                {user &&
+                  (hasCustomImage ? (
+                    <Image
+                      src={displayImage}
+                      alt={`${user?.first_name} ${user?.last_name}`}
+                      width={40}
+                      height={40}
+                      className="h-10 w-10 rounded-full object-cover border border-border"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/30 text-primary font-semibold text-lg">
+                      {user?.first_name?.[0]?.toUpperCase()}
+                    </div>
+                  ))}
                 <div>
                   <p className="text-sm font-semibold">
                     {user?.first_name} {user?.last_name}
