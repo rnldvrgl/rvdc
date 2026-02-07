@@ -11,6 +11,7 @@ export function useApiQuery<T>({
   params,
   options,
   staleTime,
+  refetchInterval,
   enabled,
 }: {
   queryKey: readonly unknown[]
@@ -18,6 +19,7 @@ export function useApiQuery<T>({
   params?: Record<string, unknown>
   options?: Partial<UseQueryOptions<T, Error, T, readonly unknown[]>>
   staleTime?: number
+  refetchInterval?: number
   enabled?: boolean
 }): UseQueryResult<T> {
   return useQuery<T, Error, T>({
@@ -27,6 +29,7 @@ export function useApiQuery<T>({
       return res.data
     },
     staleTime: staleTime || 1000 * 60 * 5,
+    refetchInterval: refetchInterval || 15000,
     ...options,
     select: options?.select,
     enabled: enabled !== undefined ? enabled : options?.enabled,
