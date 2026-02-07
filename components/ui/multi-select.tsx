@@ -70,7 +70,7 @@ export function MultiSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between",
+            "w-full justify-between h-fit",
             !selected.length && "text-muted-foreground",
             className,
           )}
@@ -82,13 +82,13 @@ export function MultiSelect({
             ) : (
               selectedLabels.map((label) => (
                 <Badge
-                  variant="secondary"
+                  variant="default"
                   key={label}
                   className="mr-1 cursor-pointer"
                 >
                   {label}
                   <span
-                    className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 inline-flex items-center"
+                    className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 inline-flex group items-center hover:bg-destructive/50 transition-colors p-0.5 -mr-1"
                     onClick={(e) => {
                       e.stopPropagation()
                       const option = options.find((opt) => opt.label === label)
@@ -114,7 +114,7 @@ export function MultiSelect({
                     tabIndex={0}
                     aria-label={`Remove ${label}`}
                   >
-                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                    <X className="h-3 w-3 text-muted-foreground group-hover:text-white transition-colors" />
                   </span>
                 </Badge>
               ))
