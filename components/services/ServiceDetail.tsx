@@ -949,22 +949,31 @@ export default function ServiceDetail({
                                             • {part.item_name} (x{part.quantity}
                                             )
                                           </span>
-                                          {partHasDiscount && (
+                                          {part.is_free ? (
                                             <Badge
-                                              variant="outline"
-                                              className="text-green-600 border-green-600 text-xs px-1 py-0"
+                                              variant="success"
+                                              className="text-xs"
                                             >
-                                              {part.discount_percentage &&
-                                              parseFloat(
-                                                part.discount_percentage,
-                                              ) > 0
-                                                ? `${part.discount_percentage}%`
-                                                : `₱${part.discount_amount}`}
+                                              FREE
                                             </Badge>
+                                          ) : (
+                                            partHasDiscount && (
+                                              <Badge
+                                                variant="outline"
+                                                className="text-green-600 border-green-600 text-xs px-1 py-0"
+                                              >
+                                                {part.discount_percentage &&
+                                                parseFloat(
+                                                  part.discount_percentage,
+                                                ) > 0
+                                                  ? `${part.discount_percentage}%`
+                                                  : `₱${part.discount_amount}`}
+                                              </Badge>
+                                            )
                                           )}
                                         </div>
                                         <div className="flex flex-col items-end">
-                                          {partHasDiscount && (
+                                          {!part.is_free && partHasDiscount && (
                                             <span className="text-xs line-through">
                                               {formatCurrency(
                                                 parseFloat(part.item_price) *

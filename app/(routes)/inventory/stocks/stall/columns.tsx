@@ -1,11 +1,7 @@
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
 import { Badge } from "@/components/ui/badge"
 import { GetColumnsProps, Stock } from "@/lib/constants/interface"
-import {
-  getBadgeVariant,
-  getHashedStallBadgeClass,
-  safeCell,
-} from "@/lib/utils/helpers"
+import { getBadgeVariant, safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
 import { Edit, PackagePlus, Plus } from "lucide-react"
 
@@ -36,10 +32,41 @@ export function getStallStockColumns({
     },
     quantity: {
       accessorKey: "quantity",
-      header: "Quantity",
+      header: "Total Qty",
       cell: ({ row }) => {
         const { quantity, item } = row.original
         return safeCell(`${quantity} ${item.unit_of_measure}`)
+      },
+    },
+    reserved_quantity: {
+      accessorKey: "reserved_quantity",
+      header: "Reserved",
+      cell: ({ row }) => {
+        const { reserved_quantity, item } = row.original
+        return (
+          <span className="text-yellow-500 font-medium">
+            {reserved_quantity} {item.unit_of_measure}
+          </span>
+        )
+      },
+    },
+    available_quantity: {
+      accessorKey: "available_quantity",
+      header: "Available",
+      cell: ({ row }) => {
+        const { available_quantity, item } = row.original
+        const isLow = available_quantity === 0
+        return (
+          <span
+            className={
+              isLow
+                ? "text-destructive font-semibold"
+                : "text-success font-medium"
+            }
+          >
+            {available_quantity} {item.unit_of_measure}
+          </span>
+        )
       },
     },
     low_stock_threshold: {
@@ -48,18 +75,6 @@ export function getStallStockColumns({
       cell: ({ row }) => {
         const { low_stock_threshold, item } = row.original
         return safeCell(`${low_stock_threshold} ${item.unit_of_measure}`)
-      },
-    },
-    stall_name: {
-      accessorKey: "stall_name",
-      header: "Stall",
-      cell: ({ row }) => {
-        const stallName = safeCell(row.original.stall?.name)
-        return (
-          <Badge className={getHashedStallBadgeClass(stallName)}>
-            {stallName}
-          </Badge>
-        )
       },
     },
     status: {
@@ -114,8 +129,9 @@ export function getStallStockColumns({
       "item_sku",
       "category_name",
       "quantity",
+      "reserved_quantity",
+      "available_quantity",
       "low_stock_threshold",
-      "stall_name",
       "status",
       "action",
     ],
@@ -124,6 +140,8 @@ export function getStallStockColumns({
       "item_sku",
       "category_name",
       "quantity",
+      "reserved_quantity",
+      "available_quantity",
       "low_stock_threshold",
       "status",
       "action",
@@ -133,6 +151,8 @@ export function getStallStockColumns({
       "item_sku",
       "category_name",
       "quantity",
+      "reserved_quantity",
+      "available_quantity",
       "low_stock_threshold",
       "status",
       "action",

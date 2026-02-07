@@ -1,8 +1,10 @@
 "use client"
 
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Command,
   CommandEmpty,
@@ -90,6 +92,7 @@ export default function AppliancePartsManager({
   >("none")
   const [discountValue, setDiscountValue] = useState("")
   const [discountReason, setDiscountReason] = useState("")
+  const [isFree, setIsFree] = useState(false)
 
   const { data: partsUsed = [], isLoading } = useApplianceItems(applianceId)
 
@@ -121,15 +124,16 @@ export default function AppliancePartsManager({
       appliance: applianceId,
       item: selectedItemId,
       quantity: qty,
+      is_free: isFree,
       discount_amount:
-        discountType === "fixed"
+        !isFree && discountType === "fixed"
           ? Math.round(parseFloat(discountValue || "0") * 100) / 100
           : 0,
       discount_percentage:
-        discountType === "percentage"
+        !isFree && discountType === "percentage"
           ? Math.round(parseFloat(discountValue || "0") * 100) / 100
           : 0,
-      discount_reason: discountReason || undefined,
+      discount_reason: isFree ? undefined : discountReason || undefined,
     }
 
     const resetForm = () => {
@@ -137,6 +141,7 @@ export default function AppliancePartsManager({
       setEditingPartId(null)
       setSelectedItemId(null)
       setQuantity("1")
+      setIsFree(false)
       setDiscountType("none")
       setDiscountValue("")
       setDiscountReason("")
@@ -180,6 +185,7 @@ export default function AppliancePartsManager({
     setEditingPartId(part.id)
     setSelectedItemId(part.item)
     setQuantity(part.quantity.toString())
+    setIsFree(part.is_free || false)
 
     // Set discount values
     if (part.discount_percentage && parseFloat(part.discount_percentage) > 0) {
@@ -286,16 +292,33 @@ export default function AppliancePartsManager({
                   {partsUsed.map((part) => (
                     <TableRow key={part.id}>
                       <TableCell className="font-medium">
-                        {part.item_name}
+                        <div className="flex items-center gap-2">
+                          {part.item_name}
+                          {part.is_free && (
+                            <Badge
+                              variant="success"
+                              className="text-xs"
+                            >
+                              FREE
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         {part.quantity}
                       </TableCell>
                       <TableCell className="text-right">
-                        {(part.discount_amount &&
-                          parseFloat(part.discount_amount) > 0) ||
-                        (part.discount_percentage &&
-                          parseFloat(part.discount_percentage) > 0) ? (
+                        {part.is_free ? (
+                          <Badge
+                            variant="success"
+                            className="text-xs"
+                          >
+                            FREE
+                          </Badge>
+                        ) : (part.discount_amount &&
+                            parseFloat(part.discount_amount) > 0) ||
+                          (part.discount_percentage &&
+                            parseFloat(part.discount_percentage) > 0) ? (
                           <div className="flex flex-col items-end gap-1">
                             <span className="line-through text-xs text-muted-foreground">
                               {formatCurrency(part.item_price)}
@@ -313,17 +336,18 @@ export default function AppliancePartsManager({
                       <TableCell className="text-right font-semibold">
                         <div className="flex flex-col items-end gap-1">
                           <span>{formatCurrency(part.line_total)}</span>
-                          {((part.discount_amount &&
-                            parseFloat(part.discount_amount) > 0) ||
-                            (part.discount_percentage &&
-                              parseFloat(part.discount_percentage) > 0)) && (
-                            <span className="text-xs text-green-600">
-                              {part.discount_percentage &&
-                              parseFloat(part.discount_percentage) > 0
-                                ? `${part.discount_percentage}% off`
-                                : `₱${part.discount_amount} off`}
-                            </span>
-                          )}
+                          {!part.is_free &&
+                            ((part.discount_amount &&
+                              parseFloat(part.discount_amount) > 0) ||
+                              (part.discount_percentage &&
+                                parseFloat(part.discount_percentage) > 0)) && (
+                              <span className="text-xs text-green-600">
+                                {part.discount_percentage &&
+                                parseFloat(part.discount_percentage) > 0
+                                  ? `${part.discount_percentage}% off`
+                                  : `₱${part.discount_amount} off`}
+                              </span>
+                            )}
                         </div>
                       </TableCell>
                       {!disabled && (
@@ -398,6 +422,7 @@ export default function AppliancePartsManager({
             setEditingPartId(null)
             setSelectedItemId(null)
             setQuantity("1")
+            setIsFree(false)
             setItemSearch("")
             setDiscountType("none")
             setDiscountValue("")
@@ -495,54 +520,84 @@ export default function AppliancePartsManager({
               />
             </div>
 
+            {/* Is Free Checkbox */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="parts_is_free"
+                checked={isFree}
+                onCheckedChange={(checked) => {
+                  setIsFree(checked === true)
+                  // Clear discounts when marking as free
+                  if (checked === true) {
+                    setDiscountType("none")
+                    setDiscountValue("")
+                    setDiscountReason("")
+                  }
+                }}
+                className="cursor-pointer"
+              />
+              <Label
+                htmlFor="parts_is_free"
+                className="text-sm font-medium cursor-pointer"
+              >
+                Part is Free (Warranty/Complementary)
+              </Label>
+            </div>
+
             {/* Discount Section */}
             <div className="space-y-3 pt-2 border-t">
               <Label className="text-sm font-semibold">
                 Item Discount (Optional)
               </Label>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="space-y-2">
-                  <Label className="text-xs">Type</Label>
-                  <Select
-                    value={discountType}
-                    onValueChange={(value: "none" | "percentage" | "fixed") =>
-                      setDiscountType(value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      <SelectItem value="percentage">%</SelectItem>
-                      <SelectItem value="fixed">₱</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              {isFree ? (
+                <p className="text-xs text-muted-foreground">
+                  Discount not applicable for free parts
+                </p>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="space-y-2">
+                    <Label className="text-xs">Type</Label>
+                    <Select
+                      value={discountType}
+                      onValueChange={(value: "none" | "percentage" | "fixed") =>
+                        setDiscountType(value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None</SelectItem>
+                        <SelectItem value="percentage">%</SelectItem>
+                        <SelectItem value="fixed">₱</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs">Amount</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={discountValue}
-                    onChange={(e) => setDiscountValue(e.target.value)}
-                    disabled={discountType === "none"}
-                    placeholder="0"
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">Amount</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={discountValue}
+                      onChange={(e) => setDiscountValue(e.target.value)}
+                      disabled={discountType === "none"}
+                      placeholder="0"
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className="text-xs">Reason</Label>
-                  <Input
-                    placeholder="Optional"
-                    value={discountReason}
-                    onChange={(e) => setDiscountReason(e.target.value)}
-                    disabled={discountType === "none"}
-                  />
+                  <div className="space-y-2">
+                    <Label className="text-xs">Reason</Label>
+                    <Input
+                      placeholder="Optional"
+                      value={discountReason}
+                      onChange={(e) => setDiscountReason(e.target.value)}
+                      disabled={discountType === "none"}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {selectedItemId && (

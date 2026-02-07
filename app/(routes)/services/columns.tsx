@@ -141,30 +141,36 @@ export function getServiceColumns({
       ),
     },
     {
-      accessorKey: "appointment_datetime",
+      accessorKey: "pickup_date",
       header: "Schedule",
-      cell: ({ getValue }) => {
-        const value = getValue()
-        return value ? (
-          <span className="text-sm">
-            {formatDate(new Date(value as string), "MMM dd, yyyy h:mm a")}
-          </span>
-        ) : (
-          <span className="text-muted-foreground text-sm">—</span>
-        )
-      },
-    },
-    {
-      accessorKey: "delivery_date",
-      header: "Delivery",
-      cell: ({ getValue }) => {
-        const value = getValue()
-        return value ? (
-          <span className="text-sm">
-            {formatDate(new Date(value as string), "MMM dd, yyyy")}
-          </span>
-        ) : (
-          <span className="text-muted-foreground text-sm">—</span>
+      cell: ({ row }) => {
+        const service = row.original
+        const pickup = service.pickup_date
+        const delivery = service.delivery_date
+
+        if (!pickup && !delivery) {
+          return <span className="text-muted-foreground text-sm">—</span>
+        }
+
+        return (
+          <div className="text-sm space-y-0.5">
+            {pickup && (
+              <div>
+                <span className="text-xs text-muted-foreground">
+                  Pull out:{" "}
+                </span>
+                {formatDate(new Date(pickup), "MMM dd, h:mm a")}
+              </div>
+            )}
+            {delivery && (
+              <div>
+                <span className="text-xs text-muted-foreground">
+                  Delivery:{" "}
+                </span>
+                {formatDate(new Date(delivery), "MMM dd, h:mm a")}
+              </div>
+            )}
+          </div>
         )
       },
     },

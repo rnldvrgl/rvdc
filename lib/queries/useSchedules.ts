@@ -9,7 +9,7 @@ export function useSchedulesByService(serviceId: number | undefined) {
     queryKey: ["schedules", "service", serviceId],
     queryFn: async () => {
       if (!serviceId) return []
-      const { data } = await api.get("/schedules/schedules/", {
+      const { data } = await api.get("/schedules/", {
         params: {
           service: serviceId,
           ordering: "-scheduled_date",
@@ -27,7 +27,7 @@ export function useSchedule(scheduleId: number | undefined) {
     queryKey: ["schedule", scheduleId],
     queryFn: async () => {
       if (!scheduleId) throw new Error("Schedule ID is required")
-      const { data } = await api.get(`/schedules/schedules/${scheduleId}/`)
+      const { data } = await api.get(`/schedules/${scheduleId}/`)
       return data
     },
     enabled: !!scheduleId,

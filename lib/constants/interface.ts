@@ -183,6 +183,8 @@ export interface Stock {
   item: Item
   stall: Stall | null
   quantity: number
+  reserved_quantity: number
+  available_quantity: number
   low_stock_threshold: number
   status: string
   type_display: string
@@ -339,7 +341,7 @@ export interface ExpensePayload {
 
 // Payment enums
 export type PaymentType = "cash" | "gcash" | "credit" | "debit" | "cheque"
-export type PaymentStatus = "unpaid" | "partial" | "paid"
+export type PaymentStatus = "unpaid" | "partial" | "paid" | "refunded" | "n/a"
 
 // Payment
 export interface SalesPayment {
@@ -894,6 +896,9 @@ export interface Service {
   service_discount_amount?: string
   service_discount_percentage?: string
   discount_reason?: string
+  // Complementary service fields
+  is_complementary?: boolean
+  complementary_reason?: string
   appliances?: ServiceAppliance[]
   technician_assignments?: TechnicianAssignment[]
   payments?: ServicePayment[]
@@ -919,6 +924,9 @@ export interface ServicePayload {
   service_discount_amount?: number
   service_discount_percentage?: number
   discount_reason?: string
+  // Complementary service fields
+  is_complementary?: boolean
+  complementary_reason?: string
   technician_assignments?: TechnicianAssignmentPayload[]
 }
 
