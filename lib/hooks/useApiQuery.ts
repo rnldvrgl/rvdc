@@ -29,7 +29,7 @@ export function useApiQuery<T>({
       return res.data
     },
     staleTime: staleTime || 1000 * 60 * 5,
-    refetchInterval: refetchInterval || 15000,
+    refetchInterval: refetchInterval,
     ...options,
     select: options?.select,
     enabled: enabled !== undefined ? enabled : options?.enabled,
