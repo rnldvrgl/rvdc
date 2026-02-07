@@ -178,8 +178,9 @@ export function QuickClockInOut() {
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Clock in/out is not yet available. You can clock in/out from 7:00
-              AM to 6:00 PM (until 11:00 PM for allowance time).
+              Clock in/out is available from 7:00 AM to 11:00 PM. Standard
+              shift: 8:00 AM - 6:00 PM (flexibility may apply for full-day
+              credit).
             </AlertDescription>
           </Alert>
         </CardContent>
