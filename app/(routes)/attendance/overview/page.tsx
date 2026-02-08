@@ -33,13 +33,34 @@ const AttendanceOverviewPage = () => {
     useState<SelectedEmployeeType>(undefined)
 
   const employeeChoices = employeeChoicesData || []
+
+  // Get current month date range for filtering
+  const now = new Date()
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+  const monthFilter = {
+    ...filter,
+    date_after: firstDayOfMonth.toISOString().split("T")[0],
+    date_before: lastDayOfMonth.toISOString().split("T")[0],
+  }
+
   const {
     data: attendanceData,
     isLoading,
     refetch,
-  } = useDailyAttendances({ filter })
+  } = useDailyAttendances({ filter: monthFilter })
+
+  // Separate query for recent activity (not limited to current month)
+  const { data: recentAttendanceData, isLoading: isLoadingRecent } =
+    useDailyAttendances({
+      filter,
+      limit: 10,
+      ordering: "-date,-created_at", // Most recent first
+    })
 
   const attendanceRecords = attendanceData?.results || []
+  const recentRecords = recentAttendanceData?.results || []
 
   // Convert to calendar format
   const calendarEvents = convertAttendanceForCalendar(attendanceRecords)
@@ -135,8 +156,8 @@ const AttendanceOverviewPage = () => {
 
         {/* Recent Records */}
         <RecentActivitySection
-          records={attendanceRecords}
-          isLoading={isLoading}
+          records={recentRecords}
+          isLoading={isLoadingRecent}
           showEmployeeCount={!selectedEmployee}
         />
       </div>

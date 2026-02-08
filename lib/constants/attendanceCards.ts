@@ -8,7 +8,12 @@ export const STAT_CARD_CONFIGS = [
     iconBgColor: "bg-blue-50 dark:bg-blue-950",
     iconColor: "text-blue-600 dark:text-blue-400",
     valueColor: "text-blue-600 dark:text-blue-400",
-    getSubtitle: () => "Records this month",
+    getSubtitle: () => {
+      const monthName = new Date().toLocaleDateString("en-US", {
+        month: "long",
+      })
+      return `${monthName} records`
+    },
   },
   {
     key: "approved",

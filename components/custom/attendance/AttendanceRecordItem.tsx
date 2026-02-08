@@ -14,7 +14,7 @@ interface AttendanceRecordItemProps {
 export const AttendanceRecordItem = ({ record }: AttendanceRecordItemProps) => {
   // Extract leave information from notes if attendance_type is LEAVE
   const isLeave = record.attendance_type === "LEAVE"
-  const leaveInfo = isLeave && record.notes ? record.notes : null
+  const hasNotes = record.notes && record.notes.trim().length > 0
 
   return (
     <div className="border-b last:border-b-0 border-slate-200 dark:border-slate-800">
@@ -33,9 +33,9 @@ export const AttendanceRecordItem = ({ record }: AttendanceRecordItemProps) => {
                 day: "numeric",
               })}
             </div>
-            {isLeave && leaveInfo && (
-              <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                {leaveInfo}
+            {hasNotes && (
+              <div className="text-xs mt-1 line-clamp-2 text-primary">
+                {record.notes}
               </div>
             )}
           </div>
