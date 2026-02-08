@@ -282,8 +282,9 @@ export function ClockInOut({
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
               Clock in/out is available from 7:00 AM to 11:00 PM. Standard
-              shift: 8:00 AM - 6:00 PM (flexibility may apply for full-day
-              credit).
+              shift: 8:00 AM - 6:00 PM (
+              {settings?.clock_in_allowance_minutes || 60}-minute early clock-in
+              allowed, paid hours count from shift start).
             </AlertDescription>
           </Alert>
         </CardContent>

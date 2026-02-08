@@ -136,6 +136,7 @@ export type PayrollSettings = {
   shift_start: string
   shift_end: string
   grace_minutes: number
+  clock_in_allowance_minutes: number
   clock_out_tolerance_minutes: number
   auto_close_enabled: boolean
   holiday_day_hours: string | number

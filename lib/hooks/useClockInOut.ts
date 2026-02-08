@@ -33,25 +33,29 @@ export function useClockInOut() {
     ? getHourFromTime(settings.shift_end)
     : 18
 
-  // Allowance hours for flexible clock in/out (extends business hours window)
-  // This makes clock in/out available earlier and later than shift times
-  const ALLOWANCE_HOURS = 1
+  // Clock-in allowance from settings (minutes before shift_start)
+  // Converts to hours for window calculation
+  const CLOCK_IN_ALLOWANCE_HOURS = settings?.clock_in_allowance_minutes
+    ? Math.floor(settings.clock_in_allowance_minutes / 60)
+    : 1
 
   // Additional tolerance for late clock out (e.g., travel time after work)
   // This allows employees to clock out several hours after business hours end
-  const LATE_CLOCK_OUT_TOLERANCE_HOURS = 4
+  const LATE_CLOCK_OUT_TOLERANCE_HOURS = 5
 
   const currentHour = currentTime.getHours()
 
-  // Separate windows for clock in vs clock out
+  // Clock in window: from (shift_start - allowance) until shift_end
+  // Example: 7 AM - 6 PM with 60-min allowance
   const canClockInNow =
-    currentHour >= BUSINESS_START_HOUR - ALLOWANCE_HOURS &&
-    currentHour < BUSINESS_END_HOUR + ALLOWANCE_HOURS
+    currentHour >= BUSINESS_START_HOUR - CLOCK_IN_ALLOWANCE_HOURS &&
+    currentHour < BUSINESS_END_HOUR
 
+  // Clock out window: from (shift_start - allowance) until late evening
+  // Example: 7 AM - 11 PM
   const canClockOutNow =
-    currentHour >= BUSINESS_START_HOUR - ALLOWANCE_HOURS &&
-    currentHour <
-      BUSINESS_END_HOUR + ALLOWANCE_HOURS + LATE_CLOCK_OUT_TOLERANCE_HOURS
+    currentHour >= BUSINESS_START_HOUR - CLOCK_IN_ALLOWANCE_HOURS &&
+    currentHour <= BUSINESS_END_HOUR + LATE_CLOCK_OUT_TOLERANCE_HOURS
 
   // For backward compatibility, isWithinBusinessHours checks clock out window
   const isWithinBusinessHours = canClockOutNow
