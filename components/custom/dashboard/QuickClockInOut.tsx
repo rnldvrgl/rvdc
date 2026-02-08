@@ -44,6 +44,7 @@ export function QuickClockInOut() {
     hasClockedOut,
     canClockInOutToday,
     formatTime,
+    isMarkedAbsent,
   } = useClockInOut()
 
   const yesterdayAttendance = attendanceData?.results[1] || null
@@ -98,9 +99,58 @@ export function QuickClockInOut() {
     return false
   }
 
+  const getLeaveMessage = () => {
+    if (!todayLeave) return null
+
+    const leaveType =
+      todayLeave.extendedProps?.leave_type_display?.toLowerCase() ?? "leave"
+
+    if (!isHalfDay) {
+      // Full day leave
+      return `You are on ${leaveType} today (Full Day). Clock in/out is not available.`
+    }
+
+    const formatCutoffTime = (hour: number) => {
+      return hour === 12
+        ? "12:00 PM"
+        : `${hour > 12 ? hour - 12 : hour}:00 ${hour >= 12 ? "PM" : "AM"}`
+    }
+
+    const shiftEndTime = settings?.shift_end
+      ? settings.shift_end.slice(0, 5)
+      : "6:00 PM"
+    const cutoffTime = formatCutoffTime(halfDayCutoff)
+
+    if (shiftPeriod === "AM") {
+      // On leave in the morning, works afternoon shift
+      const currentHour = currentTime.getHours()
+      if (currentHour >= halfDayCutoff) {
+        return `You are on ${leaveType} (Half Day - Morning). You can clock in/out for your afternoon shift (${cutoffTime} - ${shiftEndTime}).`
+      }
+      return `You are on ${leaveType} (Half Day - Morning). Your afternoon shift starts at ${cutoffTime}.`
+    }
+
+    if (shiftPeriod === "PM") {
+      // On leave in the afternoon, works morning shift
+      const shiftStartTime = settings?.shift_start
+        ? settings.shift_start.slice(0, 5)
+        : "8:00 AM"
+      const currentHour = currentTime.getHours()
+      if (currentHour >= halfDayCutoff) {
+        return `You are on ${leaveType} (Half Day - Afternoon). Your morning shift has ended at ${cutoffTime}.`
+      }
+      return `You are on ${leaveType} (Half Day - Afternoon). You can clock in/out for your morning shift (${shiftStartTime} - ${cutoffTime}).`
+    }
+
+    return null
+  }
+
+  const isClockDisabledByLeave =
+    todayLeave && (!isHalfDay || !canClockInHalfDay())
+
   // Determine if actions should be shown
   const showActions =
-    canClockInOutToday && (!todayLeave || (isHalfDay && canClockInHalfDay()))
+    canClockInOutToday && !isClockDisabledByLeave && !isMarkedAbsent
 
   const handleClockIn = () => {
     if (!profile?.id) return
@@ -121,6 +171,7 @@ export function QuickClockInOut() {
       })
     }
   }
+  const leaveMessage = getLeaveMessage()
 
   if (isLoading) {
     return (
@@ -135,29 +186,6 @@ export function QuickClockInOut() {
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  // Full day leave - no attendance allowed
-  if (todayLeave && !isHalfDay) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Clock className="size-5" />
-            Clock In/Out
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="info">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription suppressHydrationWarning>
-              You are on {todayLeave.extendedProps.leave_type_display} leave
-              today. Attendance is not required.
-            </AlertDescription>
-          </Alert>
         </CardContent>
       </Card>
     )
@@ -199,41 +227,6 @@ export function QuickClockInOut() {
               Clock in/out is available from 7:00 AM to 11:00 PM. Standard
               shift: 8:00 AM - 6:00 PM (flexibility may apply for full-day
               credit).
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  // Half day leave - check if in working period
-  if (isHalfDay && !canClockInHalfDay()) {
-    const formatCutoffTime = (hour: number) => {
-      return hour === 12
-        ? "12:00 PM"
-        : `${hour > 12 ? hour - 12 : hour}:00 ${hour >= 12 ? "PM" : "AM"}`
-    }
-    const cutoffTime = formatCutoffTime(halfDayCutoff)
-
-    return (
-      <Card className="relative">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Clock className="size-5" />
-            Clock In/Out
-            <RedirectRoute href={timetableRoute} />
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Alert variant="info">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription suppressHydrationWarning>
-              You have {shiftPeriod === "AM" ? "morning" : "afternoon"} leave
-              today. Clock in will be available during your working hours (
-              {shiftPeriod === "AM"
-                ? `after ${cutoffTime}`
-                : `before ${cutoffTime}`}
-              ).
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -287,17 +280,6 @@ export function QuickClockInOut() {
             <AlertTitle>Holiday</AlertTitle>
             <AlertDescription suppressHydrationWarning>
               Today is {todayHoliday.title}. Enjoy your day off!
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Half Day Leave Alert */}
-        {isHalfDay && (
-          <Alert variant="info">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription suppressHydrationWarning>
-              You have {shiftPeriod === "AM" ? "morning" : "afternoon"} leave
-              today.
             </AlertDescription>
           </Alert>
         )}
@@ -397,26 +379,31 @@ export function QuickClockInOut() {
             </Alert>
           )}
 
-          {/* Error Messages */}
-          {clockIn.isError && (
-            <Alert variant="destructive">
-              <XCircle className="h-4 w-4" />
-              <AlertTitle>Clock In Failed</AlertTitle>
-              <AlertDescription>
-                Please try again or contact support if the issue persists
+          {/* Leave Message */}
+          {leaveMessage && (
+            <Alert variant="info">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>On Leave</AlertTitle>
+              <AlertDescription suppressHydrationWarning>
+                {leaveMessage}
               </AlertDescription>
             </Alert>
           )}
 
-          {clockOut.isError && (
+          {/* Absent Message */}
+          {isMarkedAbsent && (
             <Alert variant="destructive">
-              <XCircle className="h-4 w-4" />
-              <AlertTitle>Clock Out Failed</AlertTitle>
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Marked as Absent</AlertTitle>
               <AlertDescription>
-                Please try again or contact support if the issue persists
+                You have been marked as absent for today. Clock in/out is not
+                available. Please contact your supervisor if you believe this is
+                an error.
               </AlertDescription>
             </Alert>
           )}
+
+          {/* Action Buttons */}
           {showActions && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Button
@@ -452,6 +439,27 @@ export function QuickClockInOut() {
                 )}
               </Button>
             </div>
+          )}
+
+          {/* Error Messages */}
+          {clockIn.isError && (
+            <Alert variant="destructive">
+              <XCircle className="h-4 w-4" />
+              <AlertTitle>Clock In Failed</AlertTitle>
+              <AlertDescription>
+                Please try again or contact support if the issue persists
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {clockOut.isError && (
+            <Alert variant="destructive">
+              <XCircle className="h-4 w-4" />
+              <AlertTitle>Clock Out Failed</AlertTitle>
+              <AlertDescription>
+                Please try again or contact support if the issue persists
+              </AlertDescription>
+            </Alert>
           )}
         </div>
       </CardContent>

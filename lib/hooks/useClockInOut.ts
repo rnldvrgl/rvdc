@@ -25,7 +25,8 @@ export function useClockInOut() {
     const [hours] = timeStr.split(":")
     return parseInt(hours, 10)
   }
-
+  const isMarkedAbsent =
+    attendanceStatus?.attendance?.attendance_type === "ABSENT"
   const BUSINESS_START_HOUR = settings?.shift_start
     ? getHourFromTime(settings.shift_start)
     : 8
@@ -88,5 +89,6 @@ export function useClockInOut() {
     hasClockedOut,
     canClockInOutToday,
     formatTime,
+    isMarkedAbsent,
   }
 }
