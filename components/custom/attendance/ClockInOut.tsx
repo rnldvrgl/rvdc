@@ -211,8 +211,11 @@ export function ClockInOut({
   const leaveMessage = getLeaveMessage()
   const clockDisabled = isClockDisabledByLeave()
 
-  // Show actions only if can clock in/out today and not disabled by leave
-  const showActions = canClockInOutToday && !clockDisabled
+  // Check if already marked as ABSENT today
+  const isMarkedAbsent = currentStatus?.attendance?.attendance_type === "ABSENT"
+
+  // Show actions only if can clock in/out today, not disabled by leave, and not marked as absent
+  const showActions = canClockInOutToday && !clockDisabled && !isMarkedAbsent
 
   if (!canClock || !user_id) {
     return (
@@ -529,6 +532,19 @@ export function ClockInOut({
             <AlertTitle>On Leave</AlertTitle>
             <AlertDescription suppressHydrationWarning>
               {leaveMessage}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Absent Message */}
+        {isMarkedAbsent && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Marked as Absent</AlertTitle>
+            <AlertDescription>
+              You have been marked as absent for today. Clock in/out is not
+              available. Please contact your supervisor if you believe this is
+              an error.
             </AlertDescription>
           </Alert>
         )}
