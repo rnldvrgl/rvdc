@@ -139,6 +139,7 @@ export type PayrollSettings = {
   clock_in_allowance_minutes: number
   clock_out_tolerance_minutes: number
   auto_close_enabled: boolean
+  attendance_system_start_date: string | null
   holiday_day_hours: string | number
   holiday_regular_pct: string | number
   holiday_special_pct: string | number

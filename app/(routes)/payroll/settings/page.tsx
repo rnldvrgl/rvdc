@@ -1,5 +1,6 @@
 "use client"
 
+import DatePicker from "@/components/custom/inputs/DatePicker"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { Button } from "@/components/ui/button"
@@ -280,6 +281,53 @@ export default function PayrollSettingsPage() {
                         : "Disabled"}
                     </span>
                   </div>
+                </FormField>
+
+                <FormField
+                  label="Attendance System Start Date"
+                  description="Date when attendance tracking began (absences won't be marked before this date)"
+                >
+                  <DatePicker
+                    field={{
+                      value:
+                        (form.attendance_system_start_date as
+                          | string
+                          | undefined) ||
+                        (effective.attendance_system_start_date as
+                          | string
+                          | null)
+                          ? new Date(
+                              (form.attendance_system_start_date as
+                                | string
+                                | undefined) ??
+                                (effective.attendance_system_start_date as
+                                  | string
+                                  | null) ??
+                                "",
+                            )
+                          : undefined,
+                      onChange: (date: Date | undefined) => {
+                        if (!date) {
+                          setField("attendance_system_start_date", null)
+                          return
+                        }
+                        // Format as YYYY-MM-DD using local time
+                        const year = date.getFullYear()
+                        const month = String(date.getMonth() + 1).padStart(
+                          2,
+                          "0",
+                        )
+                        const day = String(date.getDate()).padStart(2, "0")
+                        setField(
+                          "attendance_system_start_date",
+                          `${year}-${month}-${day}`,
+                        )
+                      },
+                    }}
+                    placeholder="Select start date"
+                    disabled={!canEdit}
+                    withoutLabel
+                  />
                 </FormField>
               </div>
             </FieldGroup>
