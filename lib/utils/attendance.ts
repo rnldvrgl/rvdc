@@ -196,7 +196,7 @@ export const convertAttendanceForCalendar = (
     id: attendance.id.toString(),
     employeeName: attendance.employee_name,
     date: attendance.date,
-    status: mapAttendanceTypeToCalendarStatus(attendance.attendance_type),
+    status: mapAttendanceToCalendarStatus(attendance),
     checkIn: attendance.clock_in ? formatTime(attendance.clock_in) : undefined,
     checkOut: attendance.clock_out
       ? formatTime(attendance.clock_out)
@@ -208,15 +208,19 @@ export const convertAttendanceForCalendar = (
   }))
 }
 
-// Map AttendanceType to calendar status
-const mapAttendanceTypeToCalendarStatus = (
-  type: AttendanceType,
+// Map attendance record to calendar status (checks is_late field, not just attendance_type)
+const mapAttendanceToCalendarStatus = (
+  attendance: DailyAttendance,
 ): CalendarAttendanceStatus => {
-  switch (type) {
+  // If actually late (based on backend calculation), show as late
+  if (attendance.is_late) {
+    return "late"
+  }
+
+  // Otherwise map by attendance type
+  switch (attendance.attendance_type) {
     case "FULL_DAY":
-      return "present"
     case "HALF_DAY":
-      return "late"
     case "PARTIAL":
       return "present"
     case "ABSENT":
