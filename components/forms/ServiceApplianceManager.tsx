@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   Tooltip,
   TooltipContent,
@@ -488,40 +489,102 @@ export default function ServiceApplianceManager({
               {/* Aircon Installation Fields */}
               {isInstallation && (
                 <>
+                  {/* Unit Type Selector */}
                   <div className="space-y-3 pt-3 border-t col-span-2">
-                    <Label className="text-sm font-medium">
-                      Select Aircon Unit
-                    </Label>
-                    <ComboBox
-                      value={editingAppliance.unit_id?.toString() || null}
-                      onChange={(value) => {
-                        const unitId = value ? Number(value) : undefined
-                        const selectedUnit = availableUnits?.results.find(
-                          (u) => u.id === unitId,
-                        )
+                    <Label className="text-sm font-medium">Unit Type</Label>
+                    <RadioGroup
+                      value={editingAppliance.unit_type || "brand_new"}
+                      onValueChange={(value: "brand_new" | "second_hand") => {
                         setEditingAppliance({
                           ...editingAppliance,
-                          unit_id: unitId,
-                          unit_type: "brand_new",
-                          // Auto-fill brand, model, serial from selected unit
-                          brand: selectedUnit?.model?.brand?.name || "",
-                          model: selectedUnit?.model?.name || "",
-                          serial_number: selectedUnit?.serial_number || "",
+                          unit_type: value,
+                          // Clear fields when switching types
+                          unit_id: undefined,
+                          brand: "",
+                          model: "",
+                          serial_number: "",
                         })
                       }}
-                      options={
-                        availableUnits?.results.map((unit) => ({
-                          value: unit.id.toString(),
-                          label: `${unit.model?.brand?.name || ""} ${unit.model?.name || ""} - SN: ${unit.serial_number}`,
-                        })) || []
-                      }
-                      placeholder="Select unit from inventory"
-                      searchPlaceholder="Search units..."
-                    />
+                      className="grid grid-cols-2 gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="brand_new"
+                          id="brand_new"
+                          className="mt-0.5"
+                        />
+                        <Label
+                          htmlFor="brand_new"
+                          className="flex-1 cursor-pointer"
+                        >
+                          <div>
+                            <div className="font-medium">Brand New</div>
+                            <div className="text-xs text-muted-foreground">
+                              Select from inventory
+                            </div>
+                          </div>
+                        </Label>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="second_hand"
+                          id="second_hand"
+                          className="mt-0.5"
+                        />
+                        <Label
+                          htmlFor="second_hand"
+                          className="flex-1 cursor-pointer"
+                        >
+                          <div>
+                            <div className="font-medium">Second Hand</div>
+                            <div className="text-xs text-muted-foreground">
+                              Enter details manually
+                            </div>
+                          </div>
+                        </Label>
+                      </div>
+                    </RadioGroup>
                   </div>
 
+                  {/* Brand New Unit Selector */}
+                  {editingAppliance.unit_type === "brand_new" && (
+                    <div className="space-y-3 col-span-2">
+                      <Label className="text-sm font-medium">
+                        Select Aircon Unit
+                      </Label>
+                      <ComboBox
+                        value={editingAppliance.unit_id?.toString() || null}
+                        onChange={(value) => {
+                          const unitId = value ? Number(value) : undefined
+                          const selectedUnit = availableUnits?.results.find(
+                            (u) => u.id === unitId,
+                          )
+                          setEditingAppliance({
+                            ...editingAppliance,
+                            unit_id: unitId,
+                            unit_type: "brand_new",
+                            // Auto-fill brand, model, serial from selected unit
+                            brand: selectedUnit?.model?.brand?.name || "",
+                            model: selectedUnit?.model?.name || "",
+                            serial_number: selectedUnit?.serial_number || "",
+                          })
+                        }}
+                        options={
+                          availableUnits?.results.map((unit) => ({
+                            value: unit.id.toString(),
+                            label: `${unit.model?.brand?.name || ""} ${unit.model?.name || ""} - SN: ${unit.serial_number}`,
+                          })) || []
+                        }
+                        placeholder="Select unit from inventory"
+                        searchPlaceholder="Search units..."
+                      />
+                    </div>
+                  )}
+
                   {/* Display selected unit details */}
-                  {editingAppliance.unit_id &&
+                  {editingAppliance.unit_type === "brand_new" &&
+                    editingAppliance.unit_id &&
                     (() => {
                       const selectedUnit = availableUnits?.results.find(
                         (u) => u.id === editingAppliance.unit_id,
@@ -574,6 +637,58 @@ export default function ServiceApplianceManager({
                         </div>
                       )
                     })()}
+
+                  {/* Second Hand Manual Entry Fields */}
+                  {editingAppliance.unit_type === "second_hand" && (
+                    <>
+                      <div className="space-y-2 col-span-2">
+                        <Label className="text-sm font-medium">Brand</Label>
+                        <Input
+                          value={editingAppliance.brand || ""}
+                          onChange={(e) =>
+                            setEditingAppliance({
+                              ...editingAppliance,
+                              brand: e.target.value,
+                            })
+                          }
+                          placeholder="e.g., Samsung, LG, Carrier"
+                        />
+                      </div>
+
+                      <div className="space-y-2 col-span-2">
+                        <Label className="text-sm font-medium">Model</Label>
+                        <Input
+                          value={editingAppliance.model || ""}
+                          onChange={(e) =>
+                            setEditingAppliance({
+                              ...editingAppliance,
+                              model: e.target.value,
+                            })
+                          }
+                          placeholder="Model number"
+                        />
+                      </div>
+
+                      <div className="space-y-2 col-span-2">
+                        <Label className="text-sm font-medium">
+                          Serial Number{" "}
+                          <span className="text-muted-foreground text-xs">
+                            (optional)
+                          </span>
+                        </Label>
+                        <Input
+                          value={editingAppliance.serial_number || ""}
+                          onChange={(e) =>
+                            setEditingAppliance({
+                              ...editingAppliance,
+                              serial_number: e.target.value,
+                            })
+                          }
+                          placeholder="Serial number of unit"
+                        />
+                      </div>
+                    </>
+                  )}
 
                   <Separator className="col-span-2" />
                 </>
