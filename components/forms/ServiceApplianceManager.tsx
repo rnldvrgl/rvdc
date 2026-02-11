@@ -4,6 +4,7 @@ import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { MultiSelect } from "@/components/ui/multi-select"
+import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
@@ -18,11 +19,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
+  AirconUnits,
   ApplianceStatus,
   ServiceAppliance,
   ServiceAppliancePayload,
 } from "@/lib/constants/interface"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
+import { useAirconUnits } from "@/lib/queries/useAircons"
 import {
   useApplianceTypeChoices,
   useTechnicianChoices,
@@ -45,7 +48,9 @@ import { toast } from "sonner"
 
 interface ServiceApplianceManagerProps {
   serviceId: number
+  serviceType?: string
   appliances: ServiceAppliance[]
+  installationUnits?: AirconUnits[]
   serviceTechnicians?: number[]
   onUpdate?: () => void | Promise<void>
   disabled?: boolean
@@ -56,6 +61,9 @@ interface EditingAppliance extends Partial<ServiceAppliancePayload> {
   tempId?: string
   assigned_technicians?: number[] // For multi-select UI
   appliance_type?: number | null
+  // Aircon installation fields
+  unit_type?: "brand_new" | "second_hand"
+  unit_id?: number
 }
 
 const applianceStatusOptions: { value: ApplianceStatus; label: string }[] = [
@@ -69,7 +77,9 @@ const applianceStatusOptions: { value: ApplianceStatus; label: string }[] = [
 
 export default function ServiceApplianceManager({
   serviceId,
+  serviceType,
   appliances,
+  installationUnits = [],
   serviceTechnicians = [],
   onUpdate,
   disabled = false,
@@ -78,6 +88,22 @@ export default function ServiceApplianceManager({
   const queryClient = useQueryClient()
   const { data: applianceTypes = [] } = useApplianceTypeChoices()
   const { data: users = [], isLoading: usersLoading } = useTechnicianChoices()
+
+  const isInstallation = serviceType === "installation"
+
+  // Filter status options for installations
+  const availableStatusOptions = isInstallation
+    ? applianceStatusOptions.filter((opt) =>
+        ["received", "completed", "delivered"].includes(opt.value),
+      )
+    : applianceStatusOptions
+
+  // Fetch available aircon units for installation services
+  const { data: availableUnits } = useAirconUnits({
+    filter: { is_available_for_sale: true },
+    limit: 100,
+  })
+
   const { addAppliance, updateAppliance, deleteAppliance } =
     useServiceApplianceMutations()
   const [editingAppliance, setEditingAppliance] =
@@ -115,8 +141,15 @@ export default function ServiceApplianceManager({
       labor_fee: 0,
       labor_is_free: false,
       labor_original_amount: 0,
+      labor_warranty_months: 0,
+      unit_warranty_months: 0,
+      warranty_notes: "",
       // Pre-populate with service-level technicians if available
       assigned_technicians: serviceTechnicians || [],
+      // Initialize installation fields
+      ...(isInstallation && {
+        unit_type: "brand_new",
+      }),
     })
     setIsAdding(true)
   }
@@ -143,6 +176,10 @@ export default function ServiceApplianceManager({
         ? parseFloat(appliance.labor_discount_percentage)
         : undefined,
       labor_discount_reason: appliance.labor_discount_reason || undefined,
+      // Include warranty fields
+      labor_warranty_months: appliance.labor_warranty_months || 0,
+      unit_warranty_months: appliance.unit_warranty_months || 0,
+      warranty_notes: appliance.warranty_notes || "",
       // Default to service-level technicians, or just the assigned technician if different
       assigned_technicians:
         serviceTechnicians && serviceTechnicians.length > 0
@@ -228,6 +265,10 @@ export default function ServiceApplianceManager({
               editingAppliance.labor_discount_percentage > 0
             ? editingAppliance.labor_discount_reason || ""
             : "",
+      // Warranty fields
+      labor_warranty_months: editingAppliance.labor_warranty_months || 0,
+      unit_warranty_months: editingAppliance.unit_warranty_months || 0,
+      warranty_notes: editingAppliance.warranty_notes || "",
       // Convert array back to single technician (backend supports single only)
       // Use first technician in the array
       assigned_technician:
@@ -235,6 +276,15 @@ export default function ServiceApplianceManager({
         editingAppliance.assigned_technicians.length > 0
           ? editingAppliance.assigned_technicians[0]
           : null,
+      serial_number: editingAppliance.serial_number || undefined,
+      // Include aircon installation data for installation services
+      ...(isInstallation &&
+        editingAppliance.unit_id && {
+          aircon_installation_data: {
+            unit_type: editingAppliance.unit_type || "brand_new",
+            unit_id: editingAppliance.unit_id,
+          },
+        }),
     }
 
     try {
@@ -321,7 +371,7 @@ export default function ServiceApplianceManager({
   }
 
   const getStatusLabel = (status: ApplianceStatus) => {
-    const option = applianceStatusOptions.find((o) => o.value === status)
+    const option = availableStatusOptions.find((o) => o.value === status)
     return option?.label || status
   }
 
@@ -329,7 +379,7 @@ export default function ServiceApplianceManager({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center text-lg">
-          Appliances
+          {isInstallation ? "Units" : "Appliances"}
           <Badge
             variant="secondary"
             className="ml-2"
@@ -344,7 +394,7 @@ export default function ServiceApplianceManager({
             onClick={handleAdd}
           >
             <Plus className="mr-2 h-4 w-4" />
-            Add Appliance
+            {isInstallation ? "Add Unit" : "Add Appliance"}
           </Button>
         )}
       </CardHeader>
@@ -352,39 +402,47 @@ export default function ServiceApplianceManager({
         {editingAppliance ? (
           <div className="space-y-4 rounded-lg border p-4">
             <h4 className="font-medium">
-              {isAdding ? "Add New Appliance" : "Edit Appliance"}
+              {isAdding
+                ? isInstallation
+                  ? "Add Unit"
+                  : "Add Appliance"
+                : isInstallation
+                  ? "Edit Unit"
+                  : "Edit Appliance"}
             </h4>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Appliance Type</Label>
-                <ComboBox
-                  options={[{ value: "none", label: "N/A" }].concat(
-                    applianceTypes.map((type) => ({
-                      value: type.id.toString(),
-                      label: type.name,
-                    })),
-                  )}
-                  value={
-                    editingAppliance.appliance_type
-                      ? editingAppliance.appliance_type.toString()
-                      : "none"
-                  }
-                  onChange={(value) =>
-                    setEditingAppliance({
-                      ...editingAppliance,
-                      appliance_type: value === "none" ? null : Number(value),
-                    })
-                  }
-                  placeholder="Select type"
-                  searchPlaceholder="Search appliance types..."
-                />
-              </div>
+              {!isInstallation && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Appliance Type</Label>
+                  <ComboBox
+                    options={[{ value: "none", label: "N/A" }].concat(
+                      applianceTypes.map((type) => ({
+                        value: type.id.toString(),
+                        label: type.name,
+                      })),
+                    )}
+                    value={
+                      editingAppliance.appliance_type
+                        ? editingAppliance.appliance_type.toString()
+                        : "none"
+                    }
+                    onChange={(value) =>
+                      setEditingAppliance({
+                        ...editingAppliance,
+                        appliance_type: value === "none" ? null : Number(value),
+                      })
+                    }
+                    placeholder="Select type"
+                    searchPlaceholder="Search appliance types..."
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Status</Label>
                 <ComboBox
-                  options={applianceStatusOptions.map((option) => ({
+                  options={availableStatusOptions.map((option) => ({
                     value: option.value,
                     label: option.label,
                   }))}
@@ -427,36 +485,155 @@ export default function ServiceApplianceManager({
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Brand</Label>
-                <Input
-                  value={editingAppliance.brand || ""}
-                  onChange={(e) =>
-                    setEditingAppliance({
-                      ...editingAppliance,
-                      brand: e.target.value,
-                    })
-                  }
-                  placeholder="e.g., Samsung, LG"
-                />
-              </div>
+              {/* Aircon Installation Fields */}
+              {isInstallation && (
+                <>
+                  <div className="space-y-3 pt-3 border-t col-span-2">
+                    <Label className="text-sm font-medium">
+                      Select Aircon Unit
+                    </Label>
+                    <ComboBox
+                      value={editingAppliance.unit_id?.toString() || null}
+                      onChange={(value) => {
+                        const unitId = value ? Number(value) : undefined
+                        const selectedUnit = availableUnits?.results.find(
+                          (u) => u.id === unitId,
+                        )
+                        setEditingAppliance({
+                          ...editingAppliance,
+                          unit_id: unitId,
+                          unit_type: "brand_new",
+                          // Auto-fill brand, model, serial from selected unit
+                          brand: selectedUnit?.model?.brand?.name || "",
+                          model: selectedUnit?.model?.name || "",
+                          serial_number: selectedUnit?.serial_number || "",
+                        })
+                      }}
+                      options={
+                        availableUnits?.results.map((unit) => ({
+                          value: unit.id.toString(),
+                          label: `${unit.model?.brand?.name || ""} ${unit.model?.name || ""} - SN: ${unit.serial_number}`,
+                        })) || []
+                      }
+                      placeholder="Select unit from inventory"
+                      searchPlaceholder="Search units..."
+                    />
+                  </div>
+
+                  {/* Display selected unit details */}
+                  {editingAppliance.unit_id &&
+                    (() => {
+                      const selectedUnit = availableUnits?.results.find(
+                        (u) => u.id === editingAppliance.unit_id,
+                      )
+                      if (!selectedUnit) return null
+
+                      return (
+                        <div className="col-span-2 rounded-lg border bg-muted/50 p-4 space-y-2">
+                          <h4 className="text-sm font-semibold mb-3">
+                            Unit Details
+                          </h4>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                              <p className="text-muted-foreground">Brand</p>
+                              <p className="font-medium">
+                                {selectedUnit.model?.brand?.name || "N/A"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Model</p>
+                              <p className="font-medium">
+                                {selectedUnit.model?.name || "N/A"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">
+                                Serial Number
+                              </p>
+                              <p className="font-medium">
+                                {selectedUnit.serial_number || "N/A"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Type</p>
+                              <p className="font-medium">
+                                {selectedUnit.model?.aircon_type?.name || "N/A"}
+                              </p>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-muted-foreground">
+                                Retail Price
+                              </p>
+                              <p className="text-lg font-bold text-primary">
+                                {selectedUnit.model?.retail_price
+                                  ? `₱${parseFloat(selectedUnit.model.retail_price).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                  : "N/A"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                  <Separator className="col-span-2" />
+                </>
+              )}
+
+              {!isInstallation && (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Brand</Label>
+                    <Input
+                      value={editingAppliance.brand || ""}
+                      onChange={(e) =>
+                        setEditingAppliance({
+                          ...editingAppliance,
+                          brand: e.target.value,
+                        })
+                      }
+                      placeholder="e.g., Samsung, LG"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Model</Label>
+                    <Input
+                      value={editingAppliance.model || ""}
+                      onChange={(e) =>
+                        setEditingAppliance({
+                          ...editingAppliance,
+                          model: e.target.value,
+                        })
+                      }
+                      placeholder="Model number"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Serial Number{" "}
+                      <span className="text-muted-foreground text-xs">
+                        (optional)
+                      </span>
+                    </Label>
+                    <Input
+                      value={editingAppliance.serial_number || ""}
+                      onChange={(e) =>
+                        setEditingAppliance({
+                          ...editingAppliance,
+                          serial_number: e.target.value,
+                        })
+                      }
+                      placeholder="Serial number of appliance"
+                    />
+                  </div>
+                </>
+              )}
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Model</Label>
-                <Input
-                  value={editingAppliance.model || ""}
-                  onChange={(e) =>
-                    setEditingAppliance({
-                      ...editingAppliance,
-                      model: e.target.value,
-                    })
-                  }
-                  placeholder="Model number"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">Labor Fee (₱)</Label>
+                <Label className="text-sm font-medium">
+                  {isInstallation ? "Installation Fee (₱)" : "Labor Fee (₱)"}
+                </Label>
                 <Input
                   type="number"
                   min="0"
@@ -615,34 +792,98 @@ export default function ServiceApplianceManager({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Issue Reported</Label>
-              <Textarea
-                value={editingAppliance.issue_reported || ""}
-                onChange={(e) =>
-                  setEditingAppliance({
-                    ...editingAppliance,
-                    issue_reported: e.target.value,
-                  })
-                }
-                placeholder="Describe the issue reported by the client"
-                rows={2}
-              />
-            </div>
+            {!isInstallation && (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Issue Reported</Label>
+                  <Textarea
+                    value={editingAppliance.issue_reported || ""}
+                    onChange={(e) =>
+                      setEditingAppliance({
+                        ...editingAppliance,
+                        issue_reported: e.target.value,
+                      })
+                    }
+                    placeholder="Describe the issue reported by the client"
+                    rows={2}
+                  />
+                </div>
 
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Diagnosis Notes</Label>
-              <Textarea
-                value={editingAppliance.diagnosis_notes || ""}
-                onChange={(e) =>
-                  setEditingAppliance({
-                    ...editingAppliance,
-                    diagnosis_notes: e.target.value,
-                  })
-                }
-                placeholder="Technician's diagnosis and findings"
-                rows={2}
-              />
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Diagnosis Notes</Label>
+                  <Textarea
+                    value={editingAppliance.diagnosis_notes || ""}
+                    onChange={(e) =>
+                      setEditingAppliance({
+                        ...editingAppliance,
+                        diagnosis_notes: e.target.value,
+                      })
+                    }
+                    placeholder="Technician's diagnosis and findings"
+                    rows={2}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Warranty Information */}
+            <div className="space-y-3 pt-3 border-t">
+              <h5 className="text-sm font-semibold">Warranty Information</h5>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Labor Warranty (months)
+                  </Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={editingAppliance.labor_warranty_months || 0}
+                    onChange={(e) =>
+                      setEditingAppliance({
+                        ...editingAppliance,
+                        labor_warranty_months: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="0 for no warranty"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Unit Warranty (months)
+                  </Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={editingAppliance.unit_warranty_months || 0}
+                    onChange={(e) =>
+                      setEditingAppliance({
+                        ...editingAppliance,
+                        unit_warranty_months: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    placeholder="0 for no warranty"
+                  />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label className="text-sm font-medium">
+                    Warranty Notes
+                    <span className="text-muted-foreground text-xs ml-1">
+                      (e.g., compressor warranty, parts coverage)
+                    </span>
+                  </Label>
+                  <Textarea
+                    value={editingAppliance.warranty_notes || ""}
+                    onChange={(e) =>
+                      setEditingAppliance({
+                        ...editingAppliance,
+                        warranty_notes: e.target.value,
+                      })
+                    }
+                    placeholder="Additional warranty details..."
+                    rows={2}
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2">
@@ -679,7 +920,10 @@ export default function ServiceApplianceManager({
                     {/* Title Row */}
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="text-base font-semibold">
-                        {appliance.appliance_type?.name || "Unknown Appliance"}
+                        {appliance.appliance_type?.name ||
+                          (appliance.brand && appliance.model
+                            ? `${appliance.brand} ${appliance.model}`
+                            : "Unknown Appliance")}
                       </h4>
                       <Badge
                         variant="outline"
@@ -817,7 +1061,7 @@ export default function ServiceApplianceManager({
                   )}
 
                   {/* Financial Summary */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     {/* Labor Fee Card */}
                     <Card className="border-2">
                       <CardContent>
@@ -873,6 +1117,49 @@ export default function ServiceApplianceManager({
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Unit Price Card - For Installation Services */}
+                    {isInstallation &&
+                      (() => {
+                        // Find matching unit by serial number
+                        const matchingUnit = appliance.serial_number
+                          ? installationUnits.find(
+                              (unit) =>
+                                unit.serial_number === appliance.serial_number,
+                            )
+                          : null
+
+                        return (
+                          <Card className="border-2">
+                            <CardContent>
+                              <div className="space-y-2">
+                                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                                  Unit Price
+                                </Label>
+                                {matchingUnit && matchingUnit.model ? (
+                                  <div className="space-y-1">
+                                    <p className="text-2xl font-bold text-primary">
+                                      {formatCurrency(
+                                        parseFloat(
+                                          matchingUnit.model.promo_price || "0",
+                                        ),
+                                      )}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {matchingUnit.model.brand?.name}{" "}
+                                      {matchingUnit.model.name}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-muted-foreground">
+                                    No unit linked
+                                  </p>
+                                )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )
+                      })()}
 
                     {/* Parts Cost Card */}
                     <Card className="border-2">
@@ -940,6 +1227,101 @@ export default function ServiceApplianceManager({
                       </CardContent>
                     </Card>
                   </div>
+
+                  {/* Warranty Information */}
+                  {(appliance.labor_warranty_months ||
+                    appliance.unit_warranty_months ||
+                    appliance.warranty_notes) && (
+                    <Card className="border-2 border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+                      <CardContent>
+                        <div className="space-y-3">
+                          <Label className="text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                            Warranty Information
+                          </Label>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {appliance.labor_warranty_months > 0 && (
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground">
+                                  Labor Warranty
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold">
+                                    {appliance.labor_warranty_months} months
+                                  </p>
+                                  {appliance.is_labor_warranty_active && (
+                                    <Badge
+                                      variant="success"
+                                      className="text-xs"
+                                    >
+                                      Active
+                                    </Badge>
+                                  )}
+                                </div>
+                                {appliance.labor_warranty_end_date && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Until:{" "}
+                                    {new Date(
+                                      appliance.labor_warranty_end_date,
+                                    ).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {appliance.unit_warranty_months > 0 && (
+                              <div className="space-y-1">
+                                <p className="text-xs text-muted-foreground">
+                                  Unit Warranty
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold">
+                                    {appliance.unit_warranty_months} months
+                                  </p>
+                                  {appliance.is_unit_warranty_active && (
+                                    <Badge
+                                      variant="success"
+                                      className="text-xs"
+                                    >
+                                      Active
+                                    </Badge>
+                                  )}
+                                </div>
+                                {appliance.unit_warranty_end_date && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Until:{" "}
+                                    {new Date(
+                                      appliance.unit_warranty_end_date,
+                                    ).toLocaleDateString()}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {appliance.warranty_notes && (
+                            <div className="space-y-1 pt-2 border-t border-blue-200 dark:border-blue-800">
+                              <p className="text-xs text-muted-foreground">
+                                Notes
+                              </p>
+                              <p className="text-sm leading-relaxed">
+                                {appliance.warranty_notes}
+                              </p>
+                            </div>
+                          )}
+
+                          {appliance.warranty_start_date && (
+                            <p className="text-xs text-muted-foreground pt-1">
+                              Warranty started:{" "}
+                              {new Date(
+                                appliance.warranty_start_date,
+                              ).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Parts List (when collapsed) */}
                   {!expandedAppliances.has(appliance.id) &&

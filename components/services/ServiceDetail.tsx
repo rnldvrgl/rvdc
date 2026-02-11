@@ -459,6 +459,9 @@ export default function ServiceDetail({
         return total + laborFee + partsCost
       }, 0) || 0
 
+    // Add unit prices for installation services
+    const unitPricesTotal = calculateTotalUnitPrice()
+
     const discountAmount = parseFloat(service.service_discount_amount || "0")
     const discountPercentage = parseFloat(
       service.service_discount_percentage || "0",
@@ -466,10 +469,32 @@ export default function ServiceDetail({
 
     let actualDiscount = discountAmount
     if (discountPercentage > 0 && discountAmount === 0) {
-      actualDiscount = (appliancesSubtotal * discountPercentage) / 100
+      actualDiscount =
+        ((appliancesSubtotal + unitPricesTotal) * discountPercentage) / 100
     }
 
-    return appliancesSubtotal - actualDiscount
+    return appliancesSubtotal + unitPricesTotal - actualDiscount
+  }
+
+  // Helper function to calculate total unit price for installation services
+  const calculateTotalUnitPrice = () => {
+    if (
+      service.service_type !== "installation" ||
+      !service.installation_units
+    ) {
+      return 0
+    }
+
+    return service.installation_units.reduce((total, unit) => {
+      // Use sale_price (which includes discount) from unit, or model's promo_price/retail_price
+      const price = parseFloat(
+        unit.sale_price ||
+          unit.model?.promo_price ||
+          unit.model?.retail_price ||
+          "0",
+      )
+      return total + price
+    }, 0)
   }
 
   const OverPaymentWarning = () => {
@@ -647,8 +672,12 @@ export default function ServiceDetail({
             value="appliances"
             className="text-xs sm:text-sm"
           >
-            <span className="hidden sm:inline">Appliances</span>
-            <span className="inline sm:hidden">Items</span>
+            <span className="hidden sm:inline">
+              {service.service_type === "installation" ? "Units" : "Appliances"}
+            </span>
+            <span className="inline sm:hidden">
+              {service.service_type === "installation" ? "Units" : "Items"}
+            </span>
             {service.appliances && service.appliances.length > 0 && (
               <span className="ml-1 sm:ml-2 rounded-full bg-primary px-1.5 sm:px-2 py-0.5 text-xs text-primary-foreground">
                 {service.appliances.length}
@@ -845,13 +874,20 @@ export default function ServiceDetail({
                           <div>
                             <p className="font-medium text-sm">
                               {appliance.appliance_type?.name ||
-                                "Unknown Appliance"}
+                                (appliance.brand && appliance.model
+                                  ? `${appliance.brand} ${appliance.model}`
+                                  : "Unknown Appliance")}
                             </p>
                             {(appliance.brand || appliance.model) && (
                               <p className="text-xs text-muted-foreground">
                                 {[appliance.brand, appliance.model]
                                   .filter(Boolean)
                                   .join(" ")}
+                              </p>
+                            )}
+                            {appliance.serial_number && (
+                              <p className="text-xs text-muted-foreground">
+                                SN: {appliance.serial_number}
                               </p>
                             )}
                           </div>
@@ -991,10 +1027,35 @@ export default function ServiceDetail({
                                 </div>
                               </>
                             )}
+                          {/* Show unit price for installation services */}
+                          {service.service_type === "installation" &&
+                            service.installation_units &&
+                            service.installation_units.length > 0 && (
+                              <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">
+                                  Unit Price (
+                                  {service.installation_units.length} unit
+                                  {service.installation_units.length > 1
+                                    ? "s"
+                                    : ""}
+                                  )
+                                </span>
+                                <span className="font-medium">
+                                  {formatCurrency(calculateTotalUnitPrice())}
+                                </span>
+                              </div>
+                            )}
                           <Separator />
                           <div className="flex justify-between font-semibold">
                             <span>Subtotal</span>
-                            <span>{formatCurrency(applianceTotal)}</span>
+                            <span>
+                              {formatCurrency(
+                                applianceTotal +
+                                  (service.service_type === "installation"
+                                    ? calculateTotalUnitPrice()
+                                    : 0),
+                              )}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1037,7 +1098,12 @@ export default function ServiceDetail({
                               return total + laborFee + partsCost
                             }, 0) || 0
 
-                          return formatCurrency(appliancesSubtotal)
+                          // Add unit prices for installation services
+                          const unitPricesTotal = calculateTotalUnitPrice()
+
+                          return formatCurrency(
+                            appliancesSubtotal + unitPricesTotal,
+                          )
                         })()}
                       </p>
                     </div>
@@ -1084,8 +1150,13 @@ export default function ServiceDetail({
                                   0,
                                 ) || 0
 
+                              // Add unit prices for installation services
+                              const unitPricesTotal = calculateTotalUnitPrice()
+
                               const calculatedDiscount =
-                                (appliancesSubtotal * discountPercentage) / 100
+                                ((appliancesSubtotal + unitPricesTotal) *
+                                  discountPercentage) /
+                                100
                               return formatCurrency(calculatedDiscount)
                             }
 
@@ -1294,14 +1365,16 @@ export default function ServiceDetail({
             )}
         </TabsContent>
 
-        {/* Appliances Tab */}
+        {/* Appliances/Units Tab */}
         <TabsContent
           value="appliances"
           className="space-y-4"
         >
           <ServiceApplianceManager
             serviceId={service.id}
+            serviceType={service.service_type}
             appliances={service.appliances || []}
+            installationUnits={service.installation_units || []}
             serviceTechnicians={
               service.technician_assignments
                 ?.filter((ta) => !ta.appliance)
@@ -1318,8 +1391,9 @@ export default function ServiceDetail({
                 <CardContent className="p-6 text-center">
                   <Wrench className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">
-                    No appliances added yet. Add appliances to generate sales
-                    when completing this service.
+                    {service.service_type === "installation"
+                      ? "No units added yet. Add aircon units for installation."
+                      : "No appliances added yet. Add appliances to generate sales when completing this service."}
                   </p>
                 </CardContent>
               </Card>
@@ -2116,7 +2190,7 @@ export default function ServiceDetail({
             </Button>
             <Button
               onClick={handleScheduleDelivery}
-              disabled={!deliveryDate || updateService.status === "pending"}
+              disabled={!deliveryDate || updateService.isPending}
             >
               Schedule Delivery
             </Button>

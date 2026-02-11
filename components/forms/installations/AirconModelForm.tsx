@@ -1,9 +1,9 @@
-'use client'
+"use client"
 
-import { ComboBox } from '@/components/custom/inputs/ComboBox'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
@@ -11,20 +11,21 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Control, Resolver, useForm, useWatch } from 'react-hook-form'
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Control, Resolver, useForm, useWatch } from "react-hook-form"
 
-import { AirconModelPayload } from '@/lib/constants/infers'
-import { AirconModels } from '@/lib/constants/interface'
-import { AirconModelSchema, DiscountOnlySchema } from '@/lib/constants/schema'
-import { useAirconModelMutations } from '@/lib/mutations/installations/useAirconModelMutations'
+import { AirconModelPayload } from "@/lib/constants/infers"
+import { AirconModels } from "@/lib/constants/interface"
+import { AirconModelSchema, DiscountOnlySchema } from "@/lib/constants/schema"
+import { useAirconModelMutations } from "@/lib/mutations/installations/useAirconModelMutations"
 import {
   useAirconBrandsChoices,
   useAirconTypesChoices,
-} from '@/lib/queries/useChoices'
-import { formatCurrency } from '@/lib/utils/helpers'
+  useHorsePowerChoices,
+} from "@/lib/queries/useChoices"
+import { formatCurrency } from "@/lib/utils/helpers"
 
 interface Props {
   initialData?: AirconModels
@@ -34,7 +35,7 @@ interface Props {
 
 const clampDiscount = (value?: number | string) => {
   const n =
-    value === '' || value === undefined ? undefined : Math.floor(Number(value))
+    value === "" || value === undefined ? undefined : Math.floor(Number(value))
   if (n === undefined || Number.isNaN(n)) return undefined
   return Math.min(Math.max(n, 0), 100)
 }
@@ -47,7 +48,7 @@ function DiscountFields({
   control: Control<AirconModelPayload> // 👈 unified type
   retailPrice: string | undefined
 }) {
-  const discount = useWatch({ control, name: 'discount_percentage' })
+  const discount = useWatch({ control, name: "discount_percentage" })
   const promoPrice =
     retailPrice && discount !== undefined
       ? Number(retailPrice) * (1 - Number(discount) / 100)
@@ -69,15 +70,15 @@ function DiscountFields({
                 min={0}
                 max={100}
                 placeholder="Leave blank if no discount"
-                value={field.value ?? ''}
+                value={field.value ?? ""}
                 onChange={(e) => {
                   const clamped = clampDiscount(e.target.value)
-                  e.target.value = clamped?.toString() ?? ''
+                  e.target.value = clamped?.toString() ?? ""
                   field.onChange(clamped)
                 }}
                 onBlur={(e) => {
                   const clamped = clampDiscount(e.target.value)
-                  e.target.value = clamped?.toString() ?? ''
+                  e.target.value = clamped?.toString() ?? ""
                   field.onChange(clamped)
                 }}
               />
@@ -105,11 +106,13 @@ function ModelFields({
   control,
   airconBrands,
   airconTypes,
+  horsePowerOptions,
   retailPrice,
 }: {
   control: Control<AirconModelPayload> // 👈 unified type
   airconBrands?: { id: number; name: string }[]
   airconTypes?: { value: string | number; label: string }[]
+  horsePowerOptions?: { value: string | number; label: string }[]
   retailPrice: string | undefined
 }) {
   return (
@@ -181,6 +184,30 @@ function ModelFields({
                         })) ?? []
                       }
                       placeholder="Select type"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={control}
+              name="horsepower"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Horsepower</FormLabel>
+                  <FormControl>
+                    <ComboBox
+                      value={field.value ?? null}
+                      onChange={(val) => field.onChange(val ?? undefined)}
+                      options={
+                        horsePowerOptions?.map((hp) => ({
+                          value: hp.value,
+                          label: hp.label,
+                        })) ?? []
+                      }
+                      placeholder="Select horsepower"
                     />
                   </FormControl>
                   <FormMessage />
@@ -276,6 +303,7 @@ export default function AirconModelForm({
   const { addModel, updateModel } = useAirconModelMutations()
   const { data: airconTypes } = useAirconTypesChoices()
   const { data: airconBrands } = useAirconBrandsChoices()
+  const { data: horsePowerOptions } = useHorsePowerChoices()
 
   const form = useForm<AirconModelPayload>({
     resolver: zodResolver(
@@ -283,20 +311,21 @@ export default function AirconModelForm({
     ) as unknown as Resolver<AirconModelPayload>,
     defaultValues: {
       brand_id: initialData?.brand?.id ?? undefined,
-      name: initialData?.name ?? '',
-      retail_price: initialData?.retail_price ?? '',
+      name: initialData?.name ?? "",
+      retail_price: initialData?.retail_price ?? "",
       discount_percentage:
         initialData?.discount_percentage !== undefined
           ? Number(initialData.discount_percentage)
           : undefined,
       aircon_type: initialData?.aircon_type ?? undefined,
+      horsepower: initialData?.horsepower ?? undefined,
       is_inverter: initialData?.is_inverter ?? false,
     },
-    mode: 'onSubmit',
+    mode: "onSubmit",
   })
 
   const { handleSubmit, control } = form
-  const retailPrice = useWatch({ control, name: 'retail_price' })
+  const retailPrice = useWatch({ control, name: "retail_price" })
 
   const handleFormSubmit = (data: AirconModelPayload) => {
     const payload: Partial<AirconModels> = {
@@ -318,7 +347,7 @@ export default function AirconModelForm({
         { onSuccess: onClose },
       )
     } else {
-      addModel.mutate(payload as Omit<AirconModels, 'id'>, {
+      addModel.mutate(payload as Omit<AirconModels, "id">, {
         onSuccess: onClose,
       })
     }
@@ -340,6 +369,7 @@ export default function AirconModelForm({
             control={control}
             airconBrands={airconBrands}
             airconTypes={airconTypes}
+            horsePowerOptions={horsePowerOptions}
             retailPrice={retailPrice}
           />
         )}
@@ -348,11 +378,11 @@ export default function AirconModelForm({
           <Button type="submit">
             {isAddingDiscount
               ? initialData?.discount_percentage
-                ? 'Update Discount'
-                : 'Add Discount'
+                ? "Update Discount"
+                : "Add Discount"
               : isEditing
-              ? 'Update Model'
-              : 'Save Model'}
+                ? "Update Model"
+                : "Save Model"}
           </Button>
         </div>
       </form>

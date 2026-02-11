@@ -164,6 +164,7 @@ export const AirconModelSchema = z.object({
   retail_price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price"),
   discount_percentage: z.number().min(0).max(100).optional(),
   aircon_type: z.nativeEnum(AirconTypes),
+  horsepower: z.string().optional(),
   is_inverter: z.boolean(),
 })
 
