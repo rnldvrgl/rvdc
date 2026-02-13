@@ -11,6 +11,7 @@ import {
   Calendar,
   CalendarDays,
   CheckCircle,
+  Clock4,
   GraduationCap,
   Package,
   Plane,
@@ -215,6 +216,12 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
           )
       }
     }
+    case "half_day":
+      return (
+        <Clock4
+          className={cn(baseClasses, "text-orange-600 dark:text-orange-400")}
+        />
+      )
     default:
       return null
   }

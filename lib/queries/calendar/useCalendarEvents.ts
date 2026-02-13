@@ -20,6 +20,7 @@ export interface CalendarEvent {
       | "attendance"
       | "leave"
       | "custom_event"
+      | "half_day"
     user_id?: number
     user_name?: string
     holiday_type?: string
@@ -67,6 +68,8 @@ export interface CalendarEvent {
       | "deadline"
       | "other"
     created_by?: string
+    // Half-day schedule props
+    half_day_id?: number
   }
 }
 
