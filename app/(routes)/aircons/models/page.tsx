@@ -16,7 +16,7 @@ import {
   useAirconModelFilters,
   useAirconModels,
 } from "@/lib/queries/useAircons"
-import { Eye, Monitor, Percent, Plus } from "lucide-react"
+import { Monitor, Percent, Plus } from "lucide-react"
 
 export default function AirconModelsPage() {
   const { isAdmin, canManage } = useCurrentUser()
@@ -153,27 +153,16 @@ export default function AirconModelsPage() {
                   Close
                 </Button>
                 {isAdmin && (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        onClose()
-                        openDiscountSheet(entity)
-                      }}
-                    >
-                      <Percent className="size-4 mr-2" />
-                      {entity.discount_percentage ? "Update" : "Add"} Discount
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        onClose()
-                        openEditSheet(entity)
-                      }}
-                    >
-                      <Eye className="size-4 mr-2" />
-                      Edit Model
-                    </Button>
-                  </>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      onClose()
+                      openDiscountSheet(entity)
+                    }}
+                  >
+                    <Percent className="size-4 mr-2" />
+                    {entity.discount_percentage ? "Update" : "Add"} Discount
+                  </Button>
                 )}
               </div>
             </div>

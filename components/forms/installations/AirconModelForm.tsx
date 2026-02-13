@@ -108,12 +108,14 @@ function ModelFields({
   airconTypes,
   horsePowerOptions,
   retailPrice,
+  isEditing = false,
 }: {
   control: Control<AirconModelPayload> // 👈 unified type
   airconBrands?: { id: number; name: string }[]
   airconTypes?: { value: string | number; label: string }[]
   horsePowerOptions?: { value: string | number; label: string }[]
   retailPrice: string | undefined
+  isEditing?: boolean
 }) {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -216,48 +218,12 @@ function ModelFields({
             />
           </CardContent>
         </Card>
-      </div>
-
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Pricing</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Retail price and optional discount
-            </p>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            <FormField
-              control={control}
-              name="retail_price"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Retail Price</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="number"
-                      step={0.01}
-                      placeholder="0.00"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DiscountFields
-              control={control}
-              retailPrice={retailPrice}
-            />
-          </CardContent>
-        </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Specs</CardTitle>
+            <CardTitle>Specifications</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Technical attributes for classification
+              Technical attributes
             </p>
           </CardHeader>
           <CardContent>
@@ -286,6 +252,46 @@ function ModelFields({
                 </FormItem>
               )}
             />
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Pricing</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Set retail price{" "}
+              {isEditing ? "" : "and optional promotional discount"}
+            </p>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <FormField
+              control={control}
+              name="retail_price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Retail Price</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      step={0.01}
+                      placeholder="0.00"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="pt-2 border-t">
+              <h4 className="text-sm font-medium mb-3">Promotional Discount</h4>
+              <DiscountFields
+                control={control}
+                retailPrice={retailPrice}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -371,6 +377,7 @@ export default function AirconModelForm({
             airconTypes={airconTypes}
             horsePowerOptions={horsePowerOptions}
             retailPrice={retailPrice}
+            isEditing={isEditing}
           />
         )}
 

@@ -11,12 +11,11 @@ import {
   safeCell,
 } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, Percent, Trash2 } from "lucide-react"
+import { Edit, Trash2 } from "lucide-react"
 
 export function getAirconModelColumns({
   onEdit,
   onDelete,
-  onCustomAction,
 }: GetColumnsProps<AirconModels>): ColumnDef<AirconModels>[] {
   return [
     {
@@ -93,13 +92,6 @@ export function getAirconModelColumns({
                 label: "Edit",
                 icon: Edit,
                 onClick: () => onEdit(model),
-              },
-              {
-                label: model.discount_percentage
-                  ? "Update Promo Discount"
-                  : "Add Promo Discount",
-                icon: Percent,
-                onClick: () => onCustomAction?.(model),
               },
               {
                 label: "Delete",
