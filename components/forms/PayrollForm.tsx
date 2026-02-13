@@ -1,6 +1,7 @@
 "use client"
 
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import DatePicker from "@/components/custom/inputs/DatePicker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,17 +16,29 @@ import { Textarea } from "@/components/ui/textarea"
 import { usePayrollMutations } from "@/lib/mutations/usePayrollMutations"
 import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { format } from "date-fns"
 import { Info, Loader2, PhilippinePesoIcon } from "lucide-react"
 import { useEffect, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 
-const payrollFormSchema = z.object({
-  employee: z.coerce.number({
-    required_error: "Please select an employee",
-  }),
-  notes: z.string().optional(),
-})
+const payrollFormSchema = z
+  .object({
+    employee: z.coerce.number({
+      required_error: "Please select an employee",
+    }),
+    week_start: z.date({
+      required_error: "Please select a week start date",
+    }),
+    week_end: z.date({
+      required_error: "Please select a week end date",
+    }),
+    notes: z.string().optional(),
+  })
+  .refine((data) => data.week_end >= data.week_start, {
+    message: "Week end must be on or after week start",
+    path: ["week_end"],
+  })
 
 type PayrollFormValues = z.infer<typeof payrollFormSchema>
 
@@ -47,6 +60,8 @@ export default function PayrollForm({ onClose }: PayrollFormProps) {
     resolver: zodResolver(payrollFormSchema),
     defaultValues: {
       employee: employeesData?.[0]?.id ?? 0,
+      week_start: undefined,
+      week_end: undefined,
       notes: "",
     },
   })
@@ -61,6 +76,8 @@ export default function PayrollForm({ onClose }: PayrollFormProps) {
   const onSubmit = async (data: PayrollFormValues) => {
     const payload = {
       employee_id: data.employee,
+      week_start: format(data.week_start, "yyyy-MM-dd"),
+      week_end: format(data.week_end, "yyyy-MM-dd"),
       notes: data.notes || "",
       include_unapproved: false,
     }
@@ -84,8 +101,8 @@ export default function PayrollForm({ onClose }: PayrollFormProps) {
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Payroll will be automatically generated for the most recent
-            completed week based on your payroll cutoff settings.
+            Select the payroll period dates and the employee to generate payroll
+            for.
           </AlertDescription>
         </Alert>
 
@@ -118,6 +135,39 @@ export default function PayrollForm({ onClose }: PayrollFormProps) {
                   Select the employee for payroll generation
                 </FormDescription>
               </FormItem>
+            )}
+          />
+
+          {/* Week Start Date */}
+          <FormField
+            control={form.control}
+            name="week_start"
+            render={({ field }) => (
+              <DatePicker
+                field={field}
+                label="Week Start"
+                description="Start date of the payroll period"
+                placeholder="Select week start date"
+                disabled={isLoading}
+                maxDate={new Date()}
+              />
+            )}
+          />
+
+          {/* Week End Date */}
+          <FormField
+            control={form.control}
+            name="week_end"
+            render={({ field }) => (
+              <DatePicker
+                field={field}
+                label="Week End"
+                description="End date of the payroll period"
+                placeholder="Select week end date"
+                disabled={isLoading}
+                minDate={form.watch("week_start") || undefined}
+                maxDate={new Date()}
+              />
             )}
           />
 

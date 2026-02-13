@@ -6,6 +6,7 @@ import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
+import BulkGeneratePayrollForm from "@/components/forms/BulkGeneratePayrollForm"
 import PayrollForm from "@/components/forms/PayrollForm"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,7 +19,7 @@ import {
   useWeeklyPayrollFilters,
   useWeeklyPayrolls,
 } from "@/lib/queries/usePayroll"
-import { FileText, PhilippinePesoIcon, Plus } from "lucide-react"
+import { FileText, PhilippinePesoIcon, Plus, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -38,6 +39,8 @@ export default function PayrollPage() {
   })
   const { deletePayroll } = usePayrollMutations()
   const { filters, orderingOptions } = useWeeklyPayrollFilters()
+
+  const [bulkGenerateOpen, setBulkGenerateOpen] = useState(false)
 
   const {
     entityState: { open: addOpen },
@@ -90,10 +93,19 @@ export default function PayrollPage() {
           icon={PhilippinePesoIcon}
           onRefresh={refetch}
           actionButton={
-            <Button onClick={() => openAdd()}>
-              <Plus className="size-4 mr-2" />
-              Generate Payroll
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setBulkGenerateOpen(true)}
+              >
+                <Users className="size-4 mr-2" />
+                Bulk Generate
+              </Button>
+              <Button onClick={() => openAdd()}>
+                <Plus className="size-4 mr-2" />
+                Generate Payroll
+              </Button>
+            </div>
           }
           isAdminOnly
         />
@@ -184,6 +196,17 @@ export default function PayrollPage() {
         title="Generate Payroll"
         description="Create a new weekly payroll record for an employee"
         renderForm={() => <PayrollForm onClose={closeAdd} />}
+      />
+
+      {/* Bulk Generate Payroll Sheet */}
+      <EntitySheet
+        open={bulkGenerateOpen}
+        onClose={() => setBulkGenerateOpen(false)}
+        title="Bulk Generate Payroll"
+        description="Generate payroll for multiple employees at once"
+        renderForm={() => (
+          <BulkGeneratePayrollForm onClose={() => setBulkGenerateOpen(false)} />
+        )}
       />
 
       {/* Delete Confirmation */}
