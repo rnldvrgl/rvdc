@@ -71,7 +71,7 @@ type EventType =
   | "schedule"
   | "service"
   | "half_day"
-
+  | "custom_event"
 interface EventColors {
   bg: string
   border: string
