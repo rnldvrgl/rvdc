@@ -49,7 +49,7 @@ export default function SidebarNav({
     user?.profile_image && !user.profile_image.includes("default_image")
 
   const renderUserHeader = () => (
-    <div className="flex items-center justify-between rounded-lg bg-primary/10 dark:bg-muted/50 p-3 border border-border/50">
+    <div className="flex items-center justify-between rounded-lg bg-muted/60 dark:bg-muted/50 p-3 border border-border/50">
       <AnimatePresence>
         {user ? (
           <motion.div
@@ -119,7 +119,7 @@ export default function SidebarNav({
   return (
     <>
       {/* Large screens */}
-      <aside className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:w-80 lg:flex-col border-r bg-primary/5 border-border px-6 py-10 h-full overflow-y-auto">
+      <aside className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:w-80 lg:flex-col border-r bg-sidebar border-sidebar-border px-6 py-10 h-full overflow-y-auto">
         <div className="flex flex-col gap-y-8 w-full pb-4">
           {renderUserHeader()}
           {renderNav()}
@@ -142,7 +142,7 @@ export default function SidebarNav({
       </aside>
 
       {/* Small screens - Full screen mobile menu */}
-      <div className="lg:hidden flex h-16 items-center justify-between  bg-primary/5 border-b border-border px-6">
+      <div className="lg:hidden flex h-16 items-center justify-between bg-sidebar border-b border-sidebar-border px-6">
         <div className="flex items-center gap-3">
           <AnimatePresence>
             {user ? (
@@ -203,7 +203,7 @@ export default function SidebarNav({
             className="lg:hidden fixed inset-0 z-50 bg-background flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border shrink-0 bg-primary/5">
+            <div className="flex items-center justify-between p-4 border-b border-sidebar-border shrink-0 bg-sidebar">
               <div className="flex items-center gap-3">
                 {user &&
                   (hasCustomImage ? (

@@ -3,13 +3,10 @@
 import { BirthdayGreeting } from "@/components/custom/dashboard/BirthdayGreeting"
 import { BirthdayReminders } from "@/components/custom/dashboard/BirthdayReminders"
 import { LeaveBalanceSummary } from "@/components/custom/dashboard/LeaveBalanceSummary"
-import { MyTasksCard } from "@/components/custom/dashboard/MyTasksCard"
 import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
 import { RecentTransactions } from "@/components/custom/dashboard/RecentTransactions"
 import { RemindersAlerts } from "@/components/custom/dashboard/RemindersAlerts"
 import { SalesSummary } from "@/components/custom/dashboard/SalesSummary"
-import { TodayScheduleCard } from "@/components/custom/dashboard/TodayScheduleCard"
-import { UpcomingScheduleCard } from "@/components/custom/dashboard/UpcomingScheduleCard"
 import DateRangePicker from "@/components/custom/inputs/DateRangePicker"
 import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
 import DashboardCharts from "@/components/custom/shared/charts/DashboardCharts"
@@ -85,14 +82,9 @@ const DashboardPage = () => {
         <div className="space-y-6">
           {/* Role-Based Dashboard Components */}
           {role === "technician" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 grid-rows-[auto_auto] gap-6">
-              <div className="row-span-2">
-                <UpcomingScheduleCard />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {payrollIncluded && <QuickClockInOut />}
               {payrollIncluded && <LeaveBalanceSummary />}
-              <TodayScheduleCard />
-              <MyTasksCard />
               <div className="col-span-full">
                 <BirthdayReminders />
               </div>
@@ -132,6 +124,7 @@ const DashboardPage = () => {
             <DashboardCalendar
               withSettings={false}
               withRefresh={false}
+              eventTypes={["birthday", "custom_event", "holiday", "half_day"]}
             />
           )}
           {(role === "admin" || role === "manager") && <DashboardCalendar />}

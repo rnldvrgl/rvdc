@@ -36,8 +36,8 @@ const PageHeader = ({
 }: PageHeaderProps) => {
   const themeStyles = {
     default: {
-      container: "bg-linear-to-br from-background to-muted/50 border-border",
-      accent: "bg-primary/10 text-primary border-primary/20",
+      container: "bg-card border-border/60",
+      accent: "bg-primary/8 text-primary border-primary/15",
       text: "text-foreground",
       description: "text-muted-foreground",
     },
@@ -103,10 +103,10 @@ const PageHeader = ({
       )}
     >
       {/* Subtle background pattern */}
-      <div className="absolute inset-0 opacity-40">
-        <div className="absolute inset-0 bg-linear-to-br from-transparent dark:via-white/5 dark:to-white/10 via-primary/5 to-primary/10" />
+      <div className="absolute inset-0 opacity-15 dark:opacity-40">
+        <div className="absolute inset-0 bg-linear-to-br from-transparent dark:via-white/5 dark:to-white/10 via-primary/2 to-primary/4" />
         <div
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-15 dark:opacity-30"
           style={{
             backgroundImage: `radial-gradient(circle at 25% 25%, currentColor 1px, transparent 1px)`,
             backgroundSize: "24px 24px",

@@ -70,6 +70,7 @@ type EventType =
   | "leave"
   | "schedule"
   | "service"
+  | "half_day"
 
 interface EventColors {
   bg: string
@@ -210,6 +211,12 @@ const EVENT_COLORS: Record<string, EventColors> = {
     border: "#0d9488",
     text: "#ffffff",
   },
+  // Half-day schedule
+  halfDay: {
+    bg: "#f97316", // orange-500
+    border: "#ea580c",
+    text: "#ffffff",
+  },
   default: {
     bg: "#6b7280",
     border: "#4b5563",
@@ -244,6 +251,7 @@ const LEGEND_ITEMS = [
   },
   { type: "custom_event", label: "Training", color: EVENT_COLORS.training.bg },
   { type: "custom_event", label: "Deadlines", color: EVENT_COLORS.deadline.bg },
+  { type: "half_day", label: "Half Days", color: EVENT_COLORS.halfDay.bg },
 ] as const
 
 const ATTENDANCE_LEGEND_ITEMS: Array<{
@@ -298,6 +306,9 @@ const getEventColors = (event: CalendarEvent): EventColors => {
 
     case "delivery":
       return EVENT_COLORS.delivery
+
+    case "half_day":
+      return EVENT_COLORS.halfDay
 
     case "custom_event": {
       const eventType = event.extendedProps.event_type
@@ -716,6 +727,47 @@ const EventDetailModal = ({
         )
       }
 
+      case "half_day":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                <EventIcon
+                  event={event}
+                  size="lg"
+                />
+              </div>
+              <div>
+                <h3 className="font-semibold">{event.title}</h3>
+                <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200">
+                  Half Day
+                </Badge>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  {format(new Date(event.start), "EEEE, MMMM dd, yyyy")} (All
+                  Day)
+                </span>
+              </div>
+              {extendedProps.reason && (
+                <div className="text-sm">
+                  <span className="font-medium">Reason:</span>{" "}
+                  {extendedProps.reason}
+                </div>
+              )}
+              {extendedProps.created_by && (
+                <div className="text-sm">
+                  <span className="font-medium">Set by:</span>{" "}
+                  {extendedProps.created_by}
+                </div>
+              )}
+            </div>
+          </div>
+        )
+
       default:
         return null
     }
@@ -790,6 +842,8 @@ const DayEventsModal = ({
                       `Service Delivery - ${event.extendedProps.client_name}`}
                     {event.extendedProps.type === "custom_event" &&
                       `${event.extendedProps.event_type?.charAt(0).toUpperCase()}${event.extendedProps.event_type?.slice(1)} Event`}
+                    {event.extendedProps.type === "half_day" &&
+                      `Half Day${event.extendedProps.reason ? ` - ${event.extendedProps.reason}` : ""}`}
                   </p>
                   {event.extendedProps.type === "schedule" && !event.allDay && (
                     <p className="text-xs text-muted-foreground">
