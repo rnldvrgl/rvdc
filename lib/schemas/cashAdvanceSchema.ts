@@ -1,8 +1,11 @@
 import { z } from "zod"
 
-export const cashAdvanceSchema = z.object({
+export const cashAdvanceMovementSchema = z.object({
   employee: z.number({
     required_error: "Employee is required",
+  }),
+  movement_type: z.enum(["credit", "debit"], {
+    required_error: "Movement type is required",
   }),
   amount: z
     .string()
@@ -13,7 +16,10 @@ export const cashAdvanceSchema = z.object({
   date: z.date({
     required_error: "Date is required",
   }),
-  reason: z.string().optional(),
+  description: z.string().optional(),
+  reference: z.string().optional(),
 })
 
-export type CashAdvanceFormValues = z.infer<typeof cashAdvanceSchema>
+export type CashAdvanceMovementFormValues = z.infer<
+  typeof cashAdvanceMovementSchema
+>

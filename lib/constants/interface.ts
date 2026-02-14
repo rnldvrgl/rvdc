@@ -107,15 +107,21 @@ export interface User {
 }
 
 // ---------------------
-// Cash Advance
+// Cash Advance Movement
 // ---------------------
-export interface CashAdvance {
+export type CashAdvanceMovementType = "credit" | "debit"
+
+export interface CashAdvanceMovement {
   id: number
   employee: number
   employee_name: string
+  movement_type: CashAdvanceMovementType
   amount: string
+  balance_after: string
   date: string
-  reason?: string
+  description?: string
+  reference?: string
+  is_pending?: boolean
   created_by?: number
   created_by_name?: string
   remaining_balance: string
@@ -123,11 +129,14 @@ export interface CashAdvance {
   updated_at: string
 }
 
-export interface CashAdvancePayload {
+export interface CashAdvanceMovementPayload {
   employee: number
+  movement_type: CashAdvanceMovementType
   amount: string | number
   date: string
-  reason?: string
+  description?: string
+  reference?: string
+  is_pending?: boolean
 }
 
 // ---------------------
