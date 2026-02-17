@@ -141,6 +141,22 @@ export default function AirconUnitForm({ initialData, onClose }: Props) {
                       {selectedModel.is_inverter ? "Yes" : "No"}
                     </span>
                   </div>
+                  <div>
+                    <span className="text-muted-foreground">
+                      Parts Warranty:
+                    </span>{" "}
+                    <span className="font-medium">
+                      {selectedModel.parts_warranty_years ?? 5} yr(s)
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">
+                      Labor Warranty:
+                    </span>{" "}
+                    <span className="font-medium">
+                      {selectedModel.labor_warranty_years ?? 1} yr(s)
+                    </span>
+                  </div>
                 </div>
               </div>
             )}

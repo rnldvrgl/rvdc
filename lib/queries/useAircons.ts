@@ -26,9 +26,13 @@ export function useAirconModels(props: PaginatedFilterProps = {}) {
   })
 }
 
-export function useAirconUnits(props: PaginatedFilterProps = {}) {
+export function useAirconUnits(
+  props: PaginatedFilterProps & { enabled?: boolean } = {},
+) {
+  const { enabled, ...rest } = props
   return usePaginatedQuery<AirconUnits>({
-    ...props,
+    ...rest,
+    enabled,
     url: `${installationsUrl}aircon-units/`,
     queryKeyBase: "aircon-units",
   })

@@ -128,6 +128,31 @@ export function formatDateToYMD(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
+/**
+ * Format time string to 12-hour format
+ * @param timeString - Time string in HH:MM:SS or HH:MM format
+ * @returns Formatted time in 12-hour format (e.g., "2:30 PM")
+ */
+export function formatTimeTo12Hour(
+  timeString: string | null | undefined,
+): string {
+  if (!timeString) return ""
+
+  // Extract hours and minutes from time string (ignore seconds and microseconds)
+  const timeParts = timeString.split(":")
+  if (timeParts.length < 2) return timeString
+
+  const hours = parseInt(timeParts[0], 10)
+  const minutes = timeParts[1].padStart(2, "0")
+
+  if (isNaN(hours)) return timeString
+
+  const period = hours >= 12 ? "PM" : "AM"
+  const displayHours = hours % 12 || 12 // Convert 0 to 12 for midnight
+
+  return `${displayHours}:${minutes} ${period}`
+}
+
 export function normalizeProfileImage(image?: string | null) {
   if (image === "") return ""
   if (!image) return undefined

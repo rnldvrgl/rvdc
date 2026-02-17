@@ -294,6 +294,81 @@ function ModelFields({
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Warranty Configuration</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Set warranty durations for this model
+            </p>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <FormField
+              control={control}
+              name="parts_warranty_months"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Parts Warranty (months)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      min={0}
+                      step={1}
+                      placeholder="60"
+                      value={field.value ?? 60}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? 0
+                            : parseInt(e.target.value, 10),
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    {field.value
+                      ? `${(Number(field.value) / 12).toFixed(1)} year(s)`
+                      : "5.0 year(s)"}
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={control}
+              name="labor_warranty_months"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Labor Warranty (months)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="number"
+                      min={0}
+                      step={1}
+                      placeholder="12"
+                      value={field.value ?? 12}
+                      onChange={(e) =>
+                        field.onChange(
+                          e.target.value === ""
+                            ? 0
+                            : parseInt(e.target.value, 10),
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    {field.value
+                      ? `${(Number(field.value) / 12).toFixed(1)} year(s)`
+                      : "1.0 year(s)"}
+                  </p>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )
@@ -326,6 +401,8 @@ export default function AirconModelForm({
       aircon_type: initialData?.aircon_type ?? undefined,
       horsepower: initialData?.horsepower ?? undefined,
       is_inverter: initialData?.is_inverter ?? false,
+      parts_warranty_months: initialData?.parts_warranty_months ?? 60,
+      labor_warranty_months: initialData?.labor_warranty_months ?? 12,
     },
     mode: "onSubmit",
   })

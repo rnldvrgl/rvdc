@@ -35,7 +35,11 @@ import { Service } from "@/lib/constants/interface"
 import { useServicePermissions } from "@/lib/hooks/useServicePermissions"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
-import { formatCurrency, getBadgeVariant } from "@/lib/utils/helpers"
+import {
+  formatCurrency,
+  formatTimeTo12Hour,
+  getBadgeVariant,
+} from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import {
   AlertCircle,
@@ -456,11 +460,27 @@ export default function ServiceDetail({
           appliance.discounted_labor_fee || appliance.labor_fee || "0",
         )
         const partsCost = parseFloat(appliance.total_parts_cost || "0")
-        return total + laborFee + partsCost
+        // Per-appliance unit price: match brand_new units by serial or use second-hand unit_price
+        const linkedUnit =
+          service.service_type === "installation" &&
+          service.installation_units &&
+          appliance.serial_number
+            ? service.installation_units.find(
+                (u) => u.serial_number === appliance.serial_number,
+              )
+            : null
+        const unitPrice = linkedUnit
+          ? parseFloat(
+              linkedUnit.sale_price ||
+                linkedUnit.model?.promo_price ||
+                linkedUnit.model?.retail_price ||
+                "0",
+            )
+          : appliance.unit_price
+            ? parseFloat(appliance.unit_price)
+            : 0
+        return total + laborFee + partsCost + unitPrice
       }, 0) || 0
-
-    // Add unit prices for installation services
-    const unitPricesTotal = calculateTotalUnitPrice()
 
     const discountAmount = parseFloat(service.service_discount_amount || "0")
     const discountPercentage = parseFloat(
@@ -469,32 +489,10 @@ export default function ServiceDetail({
 
     let actualDiscount = discountAmount
     if (discountPercentage > 0 && discountAmount === 0) {
-      actualDiscount =
-        ((appliancesSubtotal + unitPricesTotal) * discountPercentage) / 100
+      actualDiscount = (appliancesSubtotal * discountPercentage) / 100
     }
 
-    return appliancesSubtotal + unitPricesTotal - actualDiscount
-  }
-
-  // Helper function to calculate total unit price for installation services
-  const calculateTotalUnitPrice = () => {
-    if (
-      service.service_type !== "installation" ||
-      !service.installation_units
-    ) {
-      return 0
-    }
-
-    return service.installation_units.reduce((total, unit) => {
-      // Use sale_price (which includes discount) from unit, or model's promo_price/retail_price
-      const price = parseFloat(
-        unit.sale_price ||
-          unit.model?.promo_price ||
-          unit.model?.retail_price ||
-          "0",
-      )
-      return total + price
-    }, 0)
+    return appliancesSubtotal - actualDiscount
   }
 
   const OverPaymentWarning = () => {
@@ -863,7 +861,28 @@ export default function ServiceDetail({
                       : 0
                     const hasPartsDiscount = partsOriginalCost > partsCost
 
-                    const applianceTotal = discountedLaborFee + partsCost
+                    // Find the installation unit linked to this appliance (by serial number)
+                    const linkedUnit =
+                      service.service_type === "installation" &&
+                      service.installation_units &&
+                      appliance.serial_number
+                        ? service.installation_units.find(
+                            (u) => u.serial_number === appliance.serial_number,
+                          )
+                        : null
+                    const applianceUnitPrice = linkedUnit
+                      ? parseFloat(
+                          linkedUnit.sale_price ||
+                            linkedUnit.model?.promo_price ||
+                            linkedUnit.model?.retail_price ||
+                            "0",
+                        )
+                      : appliance.unit_price
+                        ? parseFloat(appliance.unit_price)
+                        : 0
+
+                    const applianceTotal =
+                      discountedLaborFee + partsCost + applianceUnitPrice
 
                     return (
                       <div
@@ -1027,35 +1046,24 @@ export default function ServiceDetail({
                                 </div>
                               </>
                             )}
-                          {/* Show unit price for installation services */}
-                          {service.service_type === "installation" &&
-                            service.installation_units &&
-                            service.installation_units.length > 0 && (
-                              <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">
-                                  Unit Price (
-                                  {service.installation_units.length} unit
-                                  {service.installation_units.length > 1
-                                    ? "s"
-                                    : ""}
-                                  )
-                                </span>
-                                <span className="font-medium">
-                                  {formatCurrency(calculateTotalUnitPrice())}
-                                </span>
-                              </div>
-                            )}
+                          {/* Show unit price for this appliance */}
+                          {applianceUnitPrice > 0 && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground">
+                                Unit Price
+                                {linkedUnit?.model
+                                  ? ` (${linkedUnit.model.brand?.name || ""} ${linkedUnit.model.name || ""})`
+                                  : ""}
+                              </span>
+                              <span className="font-medium">
+                                {formatCurrency(applianceUnitPrice)}
+                              </span>
+                            </div>
+                          )}
                           <Separator />
                           <div className="flex justify-between font-semibold">
                             <span>Subtotal</span>
-                            <span>
-                              {formatCurrency(
-                                applianceTotal +
-                                  (service.service_type === "installation"
-                                    ? calculateTotalUnitPrice()
-                                    : 0),
-                              )}
-                            </span>
+                            <span>{formatCurrency(applianceTotal)}</span>
                           </div>
                         </div>
                       </div>
@@ -1095,15 +1103,31 @@ export default function ServiceDetail({
                               const partsCost = parseFloat(
                                 appliance.total_parts_cost || "0",
                               )
-                              return total + laborFee + partsCost
+                              // Per-appliance unit price (brand_new linked by serial or second-hand)
+                              const linkedUnit =
+                                service.service_type === "installation" &&
+                                service.installation_units &&
+                                appliance.serial_number
+                                  ? service.installation_units.find(
+                                      (u) =>
+                                        u.serial_number ===
+                                        appliance.serial_number,
+                                    )
+                                  : null
+                              const unitPrice = linkedUnit
+                                ? parseFloat(
+                                    linkedUnit.sale_price ||
+                                      linkedUnit.model?.promo_price ||
+                                      linkedUnit.model?.retail_price ||
+                                      "0",
+                                  )
+                                : appliance.unit_price
+                                  ? parseFloat(appliance.unit_price)
+                                  : 0
+                              return total + laborFee + partsCost + unitPrice
                             }, 0) || 0
 
-                          // Add unit prices for installation services
-                          const unitPricesTotal = calculateTotalUnitPrice()
-
-                          return formatCurrency(
-                            appliancesSubtotal + unitPricesTotal,
-                          )
+                          return formatCurrency(appliancesSubtotal)
                         })()}
                       </p>
                     </div>
@@ -1145,18 +1169,36 @@ export default function ServiceDetail({
                                     const partsCost = parseFloat(
                                       appliance.total_parts_cost || "0",
                                     )
-                                    return total + laborFee + partsCost
+                                    // Per-appliance unit price
+                                    const linkedUnit =
+                                      service.service_type === "installation" &&
+                                      service.installation_units &&
+                                      appliance.serial_number
+                                        ? service.installation_units.find(
+                                            (u) =>
+                                              u.serial_number ===
+                                              appliance.serial_number,
+                                          )
+                                        : null
+                                    const unitPrice = linkedUnit
+                                      ? parseFloat(
+                                          linkedUnit.sale_price ||
+                                            linkedUnit.model?.promo_price ||
+                                            linkedUnit.model?.retail_price ||
+                                            "0",
+                                        )
+                                      : appliance.unit_price
+                                        ? parseFloat(appliance.unit_price)
+                                        : 0
+                                    return (
+                                      total + laborFee + partsCost + unitPrice
+                                    )
                                   },
                                   0,
                                 ) || 0
 
-                              // Add unit prices for installation services
-                              const unitPricesTotal = calculateTotalUnitPrice()
-
                               const calculatedDiscount =
-                                ((appliancesSubtotal + unitPricesTotal) *
-                                  discountPercentage) /
-                                100
+                                (appliancesSubtotal * discountPercentage) / 100
                               return formatCurrency(calculatedDiscount)
                             }
 
@@ -1936,8 +1978,9 @@ export default function ServiceDetail({
                           </div>
                           <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
-                            <span>{schedule.scheduled_time}</span>
-                            <span>({schedule.estimated_duration} mins)</span>
+                            <span>
+                              {formatTimeTo12Hour(schedule.scheduled_time)}
+                            </span>
                           </div>
                           {schedule.technicians &&
                             schedule.technicians.length > 0 && (

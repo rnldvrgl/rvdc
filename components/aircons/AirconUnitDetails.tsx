@@ -1,8 +1,10 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { AirconUnits } from "@/lib/constants/interface"
-import { Eye } from "lucide-react"
+import { AirconUnits, WarrantyClaim } from "@/lib/constants/interface"
+import { useWarrantyClaims } from "@/lib/queries/useAircons"
+import { formatDate } from "date-fns"
+import { Eye, ShieldCheck } from "lucide-react"
 
 interface AirconUnitDetailsProps {
   unit: AirconUnits
@@ -17,10 +19,59 @@ export function AirconUnitDetails({
   onEdit,
   showEditButton = false,
 }: AirconUnitDetailsProps) {
+  // Fetch warranty claims for this unit
+  const { data: claimsData } = useWarrantyClaims({
+    limit: 50,
+    filter: { unit: unit.id },
+  })
+  const warrantyClaims: WarrantyClaim[] = claimsData?.results ?? []
+
+  const claimStatusConfig: Record<
+    string,
+    { label: string; bg: string; text: string; ring: string }
+  > = {
+    pending: {
+      label: "Pending",
+      bg: "bg-yellow-50",
+      text: "text-yellow-700",
+      ring: "ring-yellow-600/20",
+    },
+    approved: {
+      label: "Approved",
+      bg: "bg-blue-50",
+      text: "text-blue-700",
+      ring: "ring-blue-700/10",
+    },
+    rejected: {
+      label: "Rejected",
+      bg: "bg-red-50",
+      text: "text-red-700",
+      ring: "ring-red-600/20",
+    },
+    in_progress: {
+      label: "In Progress",
+      bg: "bg-purple-50",
+      text: "text-purple-700",
+      ring: "ring-purple-600/20",
+    },
+    completed: {
+      label: "Completed",
+      bg: "bg-green-50",
+      text: "text-green-700",
+      ring: "ring-green-600/20",
+    },
+    cancelled: {
+      label: "Cancelled",
+      bg: "bg-gray-50",
+      text: "text-gray-500",
+      ring: "ring-gray-500/10",
+    },
+  }
+
   return (
     <div className="space-y-6 p-6">
       {/* Quick Summary */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+      <div className="bg-linear-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
         <div className="flex items-start justify-between">
           <div>
             <h4 className="font-semibold text-lg text-gray-900">
@@ -31,23 +82,47 @@ export function AirconUnitDetails({
             </p>
           </div>
           <div>
-            {unit.installation_service ? (
-              <span className="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                For Installation
-              </span>
-            ) : unit.is_sold ? (
-              <span className="inline-flex items-center rounded-md bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                Sold
-              </span>
-            ) : unit.is_reserved ? (
-              <span className="inline-flex items-center rounded-md bg-yellow-50 px-3 py-1.5 text-sm font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
-                Reserved
-              </span>
-            ) : (
-              <span className="inline-flex items-center rounded-md bg-gray-50 px-3 py-1.5 text-sm font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
-                Available
-              </span>
-            )}
+            {(() => {
+              const status = unit.unit_status ?? "Available"
+              const variants: Record<
+                string,
+                { bg: string; text: string; ring: string }
+              > = {
+                Installed: {
+                  bg: "bg-emerald-50",
+                  text: "text-emerald-700",
+                  ring: "ring-emerald-600/20",
+                },
+                "For Installation": {
+                  bg: "bg-blue-50",
+                  text: "text-blue-700",
+                  ring: "ring-blue-700/10",
+                },
+                Sold: {
+                  bg: "bg-green-50",
+                  text: "text-green-700",
+                  ring: "ring-green-600/20",
+                },
+                Reserved: {
+                  bg: "bg-yellow-50",
+                  text: "text-yellow-800",
+                  ring: "ring-yellow-600/20",
+                },
+                Available: {
+                  bg: "bg-gray-50",
+                  text: "text-gray-600",
+                  ring: "ring-gray-500/10",
+                },
+              }
+              const v = variants[status] ?? variants.Available
+              return (
+                <span
+                  className={`inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium ring-1 ring-inset ${v.bg} ${v.text} ${v.ring}`}
+                >
+                  {status}
+                </span>
+              )
+            })()}
           </div>
         </div>
         {unit.model?.retail_price && (
@@ -164,23 +239,47 @@ export function AirconUnitDetails({
               Current Status
             </label>
             <div className="mt-1">
-              {unit.installation_service ? (
-                <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-sm font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                  For Installation
-                </span>
-              ) : unit.is_sold ? (
-                <span className="inline-flex items-center rounded-md bg-green-50 px-2.5 py-1 text-sm font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                  Sold
-                </span>
-              ) : unit.is_reserved ? (
-                <span className="inline-flex items-center rounded-md bg-yellow-50 px-2.5 py-1 text-sm font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">
-                  Reserved
-                </span>
-              ) : (
-                <span className="inline-flex items-center rounded-md bg-gray-50 px-2.5 py-1 text-sm font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
-                  Available
-                </span>
-              )}
+              {(() => {
+                const status = unit.unit_status ?? "Available"
+                const variants: Record<
+                  string,
+                  { bg: string; text: string; ring: string }
+                > = {
+                  Installed: {
+                    bg: "bg-emerald-50",
+                    text: "text-emerald-700",
+                    ring: "ring-emerald-600/20",
+                  },
+                  "For Installation": {
+                    bg: "bg-blue-50",
+                    text: "text-blue-700",
+                    ring: "ring-blue-700/10",
+                  },
+                  Sold: {
+                    bg: "bg-green-50",
+                    text: "text-green-700",
+                    ring: "ring-green-600/20",
+                  },
+                  Reserved: {
+                    bg: "bg-yellow-50",
+                    text: "text-yellow-800",
+                    ring: "ring-yellow-600/20",
+                  },
+                  Available: {
+                    bg: "bg-gray-50",
+                    text: "text-gray-600",
+                    ring: "ring-gray-500/10",
+                  },
+                }
+                const v = variants[status] ?? variants.Available
+                return (
+                  <span
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-sm font-medium ring-1 ring-inset ${v.bg} ${v.text} ${v.ring}`}
+                  >
+                    {status}
+                  </span>
+                )
+              })()}
             </div>
           </div>
           <div>
@@ -288,7 +387,9 @@ export function AirconUnitDetails({
                 Status
               </label>
               <p className="text-base font-medium text-blue-600">
-                Scheduled for Installation
+                {unit.unit_status === "Installed"
+                  ? "Installed"
+                  : "For Installation"}
               </p>
             </div>
           </div>
@@ -352,69 +453,218 @@ export function AirconUnitDetails({
         )}
 
       {/* Warranty Information */}
-      {(unit.warranty_status || unit.warranty_start_date) && (
+      {(unit.warranty_status ||
+        unit.warranty_start_date ||
+        unit.model?.parts_warranty_months ||
+        unit.model?.labor_warranty_months) && (
         <div className="border-t pt-4">
           <h3 className="text-lg font-semibold mb-3">Warranty</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {unit.warranty_status && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Warranty Status
-                </label>
-                <p className="text-base font-medium">{unit.warranty_status}</p>
+
+          {/* Parts & Labor Warranty Cards — with per-type remaining days */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            {/* Parts Warranty */}
+            <div className="rounded-lg border border-blue-200 bg-blue-100 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="size-2 rounded-full bg-blue-600" />
+                <h4 className="text-sm font-semibold text-blue-950">
+                  Parts Warranty
+                </h4>
+                {unit.parts_warranty_status && (
+                  <span
+                    className={`ml-auto inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                      unit.parts_warranty_status === "Active"
+                        ? "bg-green-50 text-green-700 ring-green-600/20"
+                        : unit.parts_warranty_status === "Expired"
+                          ? "bg-red-50 text-red-700 ring-red-600/20"
+                          : "bg-gray-50 text-gray-600 ring-gray-500/10"
+                    }`}
+                  >
+                    {unit.parts_warranty_status}
+                  </span>
+                )}
               </div>
-            )}
-            {unit.warranty_start_date && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Warranty Start
-                </label>
-                <p className="text-base font-medium">
-                  {new Date(unit.warranty_start_date).toLocaleDateString()}
+              <p className="text-lg font-bold text-blue-900">
+                {unit.model?.parts_warranty_months
+                  ? `${unit.model.parts_warranty_months} months`
+                  : "N/A"}
+              </p>
+              {unit.model?.parts_warranty_years && (
+                <p className="text-xs text-blue-800">
+                  ({unit.model.parts_warranty_years}{" "}
+                  {unit.model.parts_warranty_years === 1 ? "year" : "years"})
                 </p>
-              </div>
-            )}
-            {unit.warranty_end_date && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Warranty End
-                </label>
-                <p className="text-base font-medium">
-                  {new Date(unit.warranty_end_date).toLocaleDateString()}
+              )}
+              {unit.parts_warranty_days_left !== undefined &&
+                unit.parts_warranty_days_left > 0 && (
+                  <p className="text-xs font-medium text-blue-700 mt-1">
+                    {unit.parts_warranty_days_left} days remaining
+                  </p>
+                )}
+              {unit.parts_warranty_end_date && (
+                <p className="text-xs text-blue-800 mt-0.5">
+                  Until:{" "}
+                  {new Date(unit.parts_warranty_end_date).toLocaleDateString()}
                 </p>
+              )}
+            </div>
+
+            {/* Labor Warranty */}
+            <div className="rounded-lg border border-amber-200 bg-amber-100 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="size-2 rounded-full bg-amber-600" />
+                <h4 className="text-sm font-semibold text-amber-950">
+                  Labor Warranty
+                </h4>
+                {unit.labor_warranty_status && (
+                  <span
+                    className={`ml-auto inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                      unit.labor_warranty_status === "Active"
+                        ? "bg-green-50 text-green-700 ring-green-600/20"
+                        : unit.labor_warranty_status === "Expired"
+                          ? "bg-red-50 text-red-700 ring-red-600/20"
+                          : "bg-gray-50 text-gray-600 ring-gray-500/10"
+                    }`}
+                  >
+                    {unit.labor_warranty_status}
+                  </span>
+                )}
               </div>
-            )}
-            {unit.warranty_days_left !== undefined &&
-              unit.warranty_days_left > 0 && (
+              <p className="text-lg font-bold text-amber-900">
+                {unit.model?.labor_warranty_months
+                  ? `${unit.model.labor_warranty_months} months`
+                  : "N/A"}
+              </p>
+              {unit.model?.labor_warranty_years && (
+                <p className="text-xs text-amber-800">
+                  ({unit.model.labor_warranty_years}{" "}
+                  {unit.model.labor_warranty_years === 1 ? "year" : "years"})
+                </p>
+              )}
+              {unit.labor_warranty_days_left !== undefined &&
+                unit.labor_warranty_days_left > 0 && (
+                  <p className="text-xs font-medium text-amber-700 mt-1">
+                    {unit.labor_warranty_days_left} days remaining
+                  </p>
+                )}
+              {unit.labor_warranty_end_date && (
+                <p className="text-xs text-amber-800 mt-0.5">
+                  Until:{" "}
+                  {new Date(unit.labor_warranty_end_date).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Warranty Dates */}
+          {(unit.warranty_start_date || unit.warranty_end_date) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {unit.warranty_start_date && (
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
-                    Days Remaining
+                    Warranty Start
                   </label>
                   <p className="text-base font-medium">
-                    {unit.warranty_days_left} days
+                    {new Date(unit.warranty_start_date).toLocaleDateString()}
                   </p>
                 </div>
               )}
-            {unit.warranty_period_months && (
-              <div>
+            </div>
+          )}
+
+          {/* Free Cleaning Status */}
+          {unit.free_cleaning_redeemed !== undefined && (
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-2">
                 <label className="text-sm font-medium text-muted-foreground">
-                  Warranty Period
+                  Free Cleaning:
                 </label>
-                <p className="text-base font-medium">
-                  {unit.warranty_period_months} months
-                </p>
+                <span
+                  className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
+                    unit.free_cleaning_status === "available"
+                      ? "bg-green-50 text-green-700 ring-green-600/20"
+                      : unit.free_cleaning_status === "pending"
+                        ? "bg-blue-50 text-blue-700 ring-blue-600/20"
+                        : unit.free_cleaning_status === "redeemed"
+                          ? "bg-gray-50 text-gray-600 ring-gray-500/10"
+                          : "bg-gray-50 text-gray-600 ring-gray-500/10"
+                  }`}
+                >
+                  {unit.free_cleaning_status
+                    ? unit.free_cleaning_status.charAt(0).toUpperCase() +
+                      unit.free_cleaning_status.slice(1)
+                    : unit.free_cleaning_redeemed
+                      ? "Redeemed"
+                      : "Available"}
+                </span>
               </div>
-            )}
-            {unit.free_cleaning_redeemed !== undefined && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">
-                  Free Cleaning
-                </label>
-                <p className="text-base font-medium">
-                  {unit.free_cleaning_redeemed ? "Redeemed" : "Available"}
-                </p>
-              </div>
-            )}
+              {unit.free_cleaning_redeemed &&
+                unit.free_cleaning_redemption_date && (
+                  <div className="text-xs text-muted-foreground pl-[110px]">
+                    <p>
+                      Redeemed on:{" "}
+                      {new Date(
+                        unit.free_cleaning_redemption_date,
+                      ).toLocaleDateString()}
+                    </p>
+                    {unit.free_cleaning_service_id && (
+                      <p>Service ID: #{unit.free_cleaning_service_id}</p>
+                    )}
+                  </div>
+                )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Warranty Claims */}
+      {warrantyClaims.length > 0 && (
+        <div className="border-t pt-4">
+          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <ShieldCheck className="size-5" />
+            Warranty Claims ({warrantyClaims.length})
+          </h3>
+          <div className="space-y-2">
+            {warrantyClaims.map((claim) => {
+              const sc =
+                claimStatusConfig[claim.status] ?? claimStatusConfig.pending
+              return (
+                <div
+                  key={claim.id}
+                  className="rounded-lg border p-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium capitalize">
+                          {claim.claim_type?.replace(/_/g, " ")}
+                        </p>
+                        <span
+                          className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${sc.bg} ${sc.text} ${sc.ring}`}
+                        >
+                          {sc.label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {claim.issue_description}
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-2 shrink-0">
+                      {claim.claim_date
+                        ? formatDate(new Date(claim.claim_date), "MMM dd, yyyy")
+                        : "—"}
+                    </p>
+                  </div>
+                  {claim.technician_assessment && (
+                    <div className="mt-2 pt-2 border-t">
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-medium">Assessment:</span>{" "}
+                        {claim.technician_assessment}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

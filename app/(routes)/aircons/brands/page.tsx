@@ -13,7 +13,7 @@ import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useAirconBrandMutations } from "@/lib/mutations/installations/useAirconBrandMutations"
 import { useAirconBrands } from "@/lib/queries/useAircons"
-import { Plus, Wind } from "lucide-react"
+import { Pencil, Plus, Wind } from "lucide-react"
 
 export default function AirconBrandsPage() {
   const { isAdmin, canManage } = useCurrentUser()
@@ -89,24 +89,48 @@ export default function AirconBrandsPage() {
         renderForm={({ onClose, entity }) =>
           entity ? (
             <div className="space-y-6 p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Brand Name
-                  </label>
-                  <p className="text-base font-medium">
-                    {entity.name || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Brand ID
-                  </label>
-                  <p className="text-base font-medium font-mono bg-muted px-2 py-1 rounded">
-                    {entity.id || "N/A"}
-                  </p>
+              {/* Brand Header Card */}
+              <div className="rounded-lg border bg-linear-to-br from-blue-50 to-indigo-50 p-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex size-14 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                    <Wind className="size-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {entity.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground font-mono">
+                      ID: #{entity.id}
+                    </p>
+                  </div>
                 </div>
               </div>
+
+              {/* Brand Info */}
+              <div className="rounded-lg border p-4">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  Brand Information
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Brand Name
+                    </label>
+                    <p className="text-base font-semibold mt-0.5">
+                      {entity.name}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">
+                      System ID
+                    </label>
+                    <p className="text-base font-medium font-mono mt-0.5 bg-muted inline-block px-2 py-0.5 rounded">
+                      {entity.id}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button
                   variant="outline"
@@ -114,14 +138,14 @@ export default function AirconBrandsPage() {
                 >
                   Close
                 </Button>
-                {isAdmin && (
+                {canManage && (
                   <Button
                     onClick={() => {
                       onClose()
                       openEditSheet(entity)
                     }}
                   >
-                    <Plus className="size-4 mr-2" />
+                    <Pencil className="size-4 mr-2" />
                     Edit Brand
                   </Button>
                 )}

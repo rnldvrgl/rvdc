@@ -68,6 +68,32 @@ export function getAirconModelColumns({
       },
     },
     {
+      accessorKey: "parts_warranty_months",
+      header: "Parts Warranty",
+      cell: ({ row }) => {
+        const months = row.original.parts_warranty_months ?? 60
+        const years = (months / 12).toFixed(1)
+        return (
+          <span className="text-sm">
+            {years} yr{Number(years) !== 1 ? "s" : ""}
+          </span>
+        )
+      },
+    },
+    {
+      accessorKey: "labor_warranty_months",
+      header: "Labor Warranty",
+      cell: ({ row }) => {
+        const months = row.original.labor_warranty_months ?? 12
+        const years = (months / 12).toFixed(1)
+        return (
+          <span className="text-sm">
+            {years} yr{Number(years) !== 1 ? "s" : ""}
+          </span>
+        )
+      },
+    },
+    {
       accessorKey: "has_discount",
       header: "Has Discount",
       cell: ({ row }) => (

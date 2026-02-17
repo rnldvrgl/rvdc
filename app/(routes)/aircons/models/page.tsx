@@ -16,7 +16,16 @@ import {
   useAirconModelFilters,
   useAirconModels,
 } from "@/lib/queries/useAircons"
-import { Monitor, Percent, Plus } from "lucide-react"
+import {
+  Monitor,
+  Pencil,
+  Percent,
+  Plus,
+  ShieldCheck,
+  ThermometerSun,
+  Wrench,
+  Zap,
+} from "lucide-react"
 
 export default function AirconModelsPage() {
   const { isAdmin, canManage } = useCurrentUser()
@@ -103,48 +112,175 @@ export default function AirconModelsPage() {
         description="View detailed information about this aircon model."
         renderForm={({ onClose, entity }) =>
           entity ? (
-            <div className="space-y-6 p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Model Name
-                  </label>
-                  <p className="text-base font-medium">
-                    {entity.name || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Brand
-                  </label>
-                  <p className="text-base font-medium">
-                    {entity.brand?.name || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Price
-                  </label>
-                  <p className="text-base font-medium">
-                    ₱{entity.retail_price?.toLocaleString() || "0.00"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Discount
-                  </label>
-                  <p className="text-base font-medium">
-                    {entity.discount_percentage ? (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                        <Percent className="size-3" />
-                        {entity.discount_percentage}% OFF
-                      </span>
-                    ) : (
-                      "No discount"
-                    )}
-                  </p>
+            <div className="space-y-5 p-6">
+              {/* Model Header */}
+              <div className="rounded-lg border bg-linear-to-br from-slate-50 to-blue-50 p-5">
+                <div className="flex items-center gap-4">
+                  <div className="flex size-14 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                    <Monitor className="size-7" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {entity.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {entity.brand?.name || "Unknown Brand"}
+                    </p>
+                  </div>
+                  {entity.is_inverter && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                      <Zap className="size-3" /> Inverter
+                    </span>
+                  )}
                 </div>
               </div>
+
+              {/* Specifications */}
+              <div className="rounded-lg border p-4">
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  <Wrench className="size-3.5" /> Specifications
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Type
+                    </label>
+                    <p className="text-sm font-semibold capitalize mt-0.5">
+                      {entity.aircon_type || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Horsepower
+                    </label>
+                    <p className="text-sm font-semibold mt-0.5">
+                      <span className="inline-flex items-center gap-1">
+                        <ThermometerSun className="size-3.5 text-orange-500" />
+                        {entity.horsepower || "N/A"} HP
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Inverter
+                    </label>
+                    <p className="text-sm font-semibold mt-0.5">
+                      {entity.is_inverter ? "Yes" : "No"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pricing */}
+              <div className="rounded-lg border p-4">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  Pricing
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Retail Price
+                    </label>
+                    <p className="text-lg font-bold mt-0.5">
+                      \u20B1
+                      {parseFloat(entity.retail_price || "0").toLocaleString(
+                        "en-US",
+                        { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                      )}
+                    </p>
+                  </div>
+                  {entity.has_discount &&
+                  entity.discount_percentage &&
+                  parseFloat(entity.discount_percentage) > 0 ? (
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Promo Price
+                      </label>
+                      <div className="mt-0.5">
+                        <p className="text-lg font-bold text-green-600">
+                          \u20B1
+                          {(
+                            parseFloat(entity.retail_price || "0") *
+                            (1 - parseFloat(entity.discount_percentage) / 100)
+                          ).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                          <Percent className="size-3" />
+                          {entity.discount_percentage}% OFF
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Discount
+                      </label>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        No discount
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Warranty Configuration */}
+              <div className="rounded-lg border p-4">
+                <h4 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                  <ShieldCheck className="size-3.5" /> Warranty Configuration
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-lg border bg-blue-50/50 p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="size-2 rounded-full bg-blue-500" />
+                      <span className="text-xs font-semibold text-blue-900">
+                        Parts Warranty
+                      </span>
+                    </div>
+                    <p className="text-lg font-bold text-blue-700">
+                      {entity.parts_warranty_months ?? 60} months
+                    </p>
+                    <p className="text-xs text-blue-600">
+                      (
+                      {entity.parts_warranty_years ??
+                        ((entity.parts_warranty_months ?? 60) / 12).toFixed(
+                          1,
+                        )}{" "}
+                      {(entity.parts_warranty_years ??
+                        (entity.parts_warranty_months ?? 60) / 12) === 1
+                        ? "year"
+                        : "years"}
+                      )
+                    </p>
+                  </div>
+                  <div className="rounded-lg border bg-amber-50/50 p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="size-2 rounded-full bg-amber-500" />
+                      <span className="text-xs font-semibold text-amber-900">
+                        Labor Warranty
+                      </span>
+                    </div>
+                    <p className="text-lg font-bold text-amber-700">
+                      {entity.labor_warranty_months ?? 12} months
+                    </p>
+                    <p className="text-xs text-amber-600">
+                      (
+                      {entity.labor_warranty_years ??
+                        ((entity.labor_warranty_months ?? 12) / 12).toFixed(
+                          1,
+                        )}{" "}
+                      {(entity.labor_warranty_years ??
+                        (entity.labor_warranty_months ?? 12) / 12) === 1
+                        ? "year"
+                        : "years"}
+                      )
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-end gap-2 pt-4 border-t">
                 <Button
                   variant="outline"
@@ -152,17 +288,28 @@ export default function AirconModelsPage() {
                 >
                   Close
                 </Button>
-                {isAdmin && (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      onClose()
-                      openDiscountSheet(entity)
-                    }}
-                  >
-                    <Percent className="size-4 mr-2" />
-                    {entity.discount_percentage ? "Update" : "Add"} Discount
-                  </Button>
+                {canManage && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        onClose()
+                        openDiscountSheet(entity)
+                      }}
+                    >
+                      <Percent className="size-4 mr-2" />
+                      {entity.discount_percentage ? "Update" : "Add"} Discount
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        onClose()
+                        openEditSheet(entity)
+                      }}
+                    >
+                      <Pencil className="size-4 mr-2" />
+                      Edit Model
+                    </Button>
+                  </>
                 )}
               </div>
             </div>

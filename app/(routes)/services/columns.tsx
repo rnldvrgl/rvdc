@@ -1,7 +1,12 @@
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
 import { Badge } from "@/components/ui/badge"
 import { GetColumnsProps, Service } from "@/lib/constants/interface"
-import { formatCurrency, getBadgeVariant, safeCell } from "@/lib/utils/helpers"
+import {
+  formatCurrency,
+  formatTimeTo12Hour,
+  getBadgeVariant,
+  safeCell,
+} from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef } from "@tanstack/react-table"
 import { CheckCircle, Edit, Eye, Trash2 } from "lucide-react"
@@ -147,27 +152,71 @@ export function getServiceColumns({
         const service = row.original
         const pickup = service.pickup_date
         const delivery = service.delivery_date
+        const schedule = service.next_schedule
 
-        if (!pickup && !delivery) {
+        const hasAny = schedule || pickup || delivery
+        if (!hasAny) {
           return <span className="text-muted-foreground text-sm">—</span>
         }
 
         return (
           <div className="text-sm space-y-0.5">
-            {pickup && (
+            {/* Home Service / Installation schedule */}
+            {schedule && schedule.schedule_type === "home_service" && (
               <div>
                 <span className="text-xs text-muted-foreground">
-                  Pull out:{" "}
+                  Home Service:{" "}
                 </span>
-                {formatDate(new Date(pickup), "MMM dd, h:mm a")}
+                {formatDate(new Date(schedule.scheduled_date), "MMM dd, yyyy")}
+                {schedule.scheduled_time && (
+                  <span className="ml-1 text-muted-foreground">
+                    {formatTimeTo12Hour(schedule.scheduled_time)}
+                  </span>
+                )}
               </div>
             )}
+            {/* Pull-Out schedule */}
+            {(schedule?.schedule_type === "pull_out" || pickup) && (
+              <div>
+                <span className="text-xs text-muted-foreground">
+                  Pull Out:{" "}
+                </span>
+                {schedule?.schedule_type === "pull_out" ? (
+                  <>
+                    {formatDate(
+                      new Date(schedule.scheduled_date),
+                      "MMM dd, yyyy",
+                    )}
+                    {schedule.scheduled_time && (
+                      <span className="ml-1 text-muted-foreground">
+                        {formatTimeTo12Hour(schedule.scheduled_time)}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  pickup && formatDate(new Date(pickup), "MMM dd, h:mm a")
+                )}
+              </div>
+            )}
+            {/* Delivery date */}
             {delivery && (
               <div>
                 <span className="text-xs text-muted-foreground">
                   Delivery:{" "}
                 </span>
                 {formatDate(new Date(delivery), "MMM dd, h:mm a")}
+              </div>
+            )}
+            {/* Return schedule */}
+            {schedule && schedule.schedule_type === "return" && (
+              <div>
+                <span className="text-xs text-muted-foreground">Return: </span>
+                {formatDate(new Date(schedule.scheduled_date), "MMM dd, yyyy")}
+                {schedule.scheduled_time && (
+                  <span className="ml-1 text-muted-foreground">
+                    {formatTimeTo12Hour(schedule.scheduled_time)}
+                  </span>
+                )}
               </div>
             )}
           </div>
