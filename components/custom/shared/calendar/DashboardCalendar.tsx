@@ -1012,12 +1012,29 @@ const DashboardCalendar = ({
       // add the event to each day in the range
       const startDate = new Date(event.start)
       const endDate = event.end ? new Date(event.end) : startDate
+
+      // Normalize dates to start of day (ignore time component)
+      const startDateOnly = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate(),
+      )
+      const endDateOnly = new Date(
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate(),
+      )
+
       const isMultiDay =
-        event.extendedProps?.is_multi_day ||
-        (event.allDay && startDate.toDateString() !== endDate.toDateString())
+        (event.extendedProps?.type !== "attendance" &&
+          event.extendedProps?.is_multi_day) ||
+        (event.allDay && startDateOnly.getTime() !== endDateOnly.getTime())
 
       if (isMultiDay) {
-        const days = eachDayOfInterval({ start: startDate, end: endDate })
+        const days = eachDayOfInterval({
+          start: startDateOnly,
+          end: endDateOnly,
+        })
         for (const day of days) {
           const dateKey = day.toDateString()
           if (!acc[dateKey]) acc[dateKey] = []
