@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useServices } from "@/lib/queries/services/useServices"
 import { usePendingLeaveApprovals } from "@/lib/queries/useAttendance"
-import { AlertCircle, Bell, CalendarDays, CreditCard, TimerOff } from "lucide-react"
+import { Bell, CalendarDays, CreditCard, TimerOff } from "lucide-react"
 import Link from "next/link"
 
 export function RemindersAlerts() {
@@ -102,9 +102,12 @@ export function RemindersAlerts() {
                             className="text-xs text-amber-600 dark:text-amber-400 truncate"
                           >
                             • {leave.employee_name} —{" "}
-                            {leave.leave_type_display || leave.leave_type}{" "}
-                            ({leave.days_count} day{parseFloat(leave.days_count) !== 1 ? "s" : ""})
-                            {leave.start_date && leave.end_date && leave.start_date !== leave.end_date
+                            {leave.leave_type_display || leave.leave_type} (
+                            {leave.days_count} day
+                            {parseFloat(leave.days_count) !== 1 ? "s" : ""})
+                            {leave.start_date &&
+                            leave.end_date &&
+                            leave.start_date !== leave.end_date
                               ? ` (${leave.start_date} to ${leave.end_date})`
                               : leave.start_date
                                 ? ` on ${leave.start_date}`
@@ -147,7 +150,9 @@ export function RemindersAlerts() {
                             className="text-xs text-red-600 dark:text-red-400 truncate"
                           >
                             • #{service.id}
-                            {service.client?.full_name ? ` — ${service.client.full_name}` : ""}
+                            {service.client?.full_name
+                              ? ` — ${service.client.full_name}`
+                              : ""}
                           </p>
                         ))}
                         {overdueServices.length > 3 && (
@@ -185,8 +190,12 @@ export function RemindersAlerts() {
                             className="text-xs text-orange-600 dark:text-orange-400 truncate"
                           >
                             • #{service.id}
-                            {service.client?.full_name ? ` — ${service.client.full_name}` : ""}
-                            {service.payment_status === "partial" ? " (Partial)" : " (Unpaid)"}
+                            {service.client?.full_name
+                              ? ` — ${service.client.full_name}`
+                              : ""}
+                            {service.payment_status === "partial"
+                              ? " (Partial)"
+                              : " (Unpaid)"}
                           </p>
                         ))}
                         {unpaidServices.length > 3 && (

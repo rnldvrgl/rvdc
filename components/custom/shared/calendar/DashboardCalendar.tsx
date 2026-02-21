@@ -511,7 +511,9 @@ const EventDetailModal = ({
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <span className="text-muted-foreground">
-                  {extendedProps.is_multi_day && event.end && event.start !== event.end ? (
+                  {extendedProps.is_multi_day &&
+                  event.end &&
+                  event.start !== event.end ? (
                     <>
                       {format(new Date(event.start), "EEEE, MMMM dd")} -{" "}
                       {format(new Date(event.end), "EEEE, MMMM dd, yyyy")}
@@ -847,7 +849,8 @@ const DayEventsModal = ({
                       `${event.extendedProps.holiday_type === "regular" ? "Regular" : "Special"} Holiday`}
                     {event.extendedProps.type === "leave" &&
                       `${event.extendedProps.leave_type_display} Leave${
-                        event.extendedProps.is_multi_day && event.extendedProps.days_count
+                        event.extendedProps.is_multi_day &&
+                        event.extendedProps.days_count
                           ? ` (${event.extendedProps.days_count} Days)`
                           : event.extendedProps.is_half_day
                             ? " (Half Day)"

@@ -102,7 +102,8 @@ export function EventTooltipContent({ event }: EventTooltipContentProps) {
         {isMultiDay && event.end && event.start !== event.end && (
           <div>
             <span className="font-semibold">Period: </span>
-            {format(new Date(event.start), "MMM dd")} - {format(new Date(event.end), "MMM dd, yyyy")}
+            {format(new Date(event.start), "MMM dd")} -{" "}
+            {format(new Date(event.end), "MMM dd, yyyy")}
           </div>
         )}
         {event.extendedProps.reason && (
