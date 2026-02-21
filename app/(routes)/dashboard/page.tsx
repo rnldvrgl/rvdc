@@ -124,7 +124,7 @@ const DashboardPage = () => {
             <DashboardCalendar
               withSettings={false}
               withRefresh={false}
-              eventTypes={["birthday", "custom_event", "holiday", "half_day"]}
+              eventTypes={["birthday", "custom_event", "holiday", "half_day", "leave"]}
             />
           )}
           {(role === "admin" || role === "manager") && <DashboardCalendar />}

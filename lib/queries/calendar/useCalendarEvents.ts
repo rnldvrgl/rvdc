@@ -54,6 +54,8 @@ export interface CalendarEvent {
     leave_type?: "SICK" | "EMERGENCY"
     leave_type_display?: string
     is_half_day?: boolean
+    is_multi_day?: boolean
+    days_count?: string
     shift_period?: string
     shift_period_display?: string
     reason?: string

@@ -433,6 +433,8 @@ export type LeaveRequest = BaseEntity & {
   employee_name: string
   leave_type: LeaveType
   leave_type_display: string
+  start_date: string | null
+  end_date: string | null
   date: string
   is_half_day: boolean
   shift_period: ShiftPeriod
@@ -450,10 +452,28 @@ export type LeaveRequest = BaseEntity & {
 export type LeaveRequestPayload = {
   employee?: number // Optional for admin/manager, auto-set for others
   leave_type: LeaveType
-  date: string
+  start_date: string
+  end_date: string
   is_half_day: boolean
   shift_period: ShiftPeriod
   reason: string
+}
+
+export type ValidateLeaveBalancePayload = {
+  employee?: number
+  leave_type: LeaveType
+  start_date: string
+  end_date: string
+  is_half_day: boolean
+}
+
+export type ValidateLeaveBalanceResponse = {
+  valid: boolean
+  days_requested: number
+  remaining_balance: number
+  has_sufficient_balance: boolean
+  conflicting_dates: string[]
+  leave_type: LeaveType
 }
 
 export type ApproveLeavePayload = {

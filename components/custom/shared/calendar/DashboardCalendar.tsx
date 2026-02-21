@@ -511,12 +511,23 @@ const EventDetailModal = ({
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <span className="text-muted-foreground">
-                  {format(new Date(event.start), "EEEE, MMMM dd, yyyy")}
-                  {event.end && event.end !== event.start && (
-                    <> - {format(new Date(event.end), "EEEE, MMMM dd, yyyy")}</>
+                  {extendedProps.is_multi_day && event.end && event.start !== event.end ? (
+                    <>
+                      {format(new Date(event.start), "EEEE, MMMM dd")} -{" "}
+                      {format(new Date(event.end), "EEEE, MMMM dd, yyyy")}
+                    </>
+                  ) : (
+                    format(new Date(event.start), "EEEE, MMMM dd, yyyy")
                   )}
-                  {extendedProps.is_half_day ? " (Half Day)" : " (Full Day)"}
                 </span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <span className="font-medium">Duration:</span>{" "}
+                {extendedProps.is_multi_day && extendedProps.days_count
+                  ? `${extendedProps.days_count} Day${parseFloat(extendedProps.days_count) !== 1 ? "s" : ""}`
+                  : extendedProps.is_half_day
+                    ? `Half Day - ${extendedProps.shift_period_display || "Morning"}`
+                    : "Full Day"}
               </div>
               {extendedProps.reason && (
                 <div className="text-sm">
@@ -835,7 +846,13 @@ const DayEventsModal = ({
                     {event.extendedProps.type === "holiday" &&
                       `${event.extendedProps.holiday_type === "regular" ? "Regular" : "Special"} Holiday`}
                     {event.extendedProps.type === "leave" &&
-                      `${event.extendedProps.leave_type_display} Leave`}
+                      `${event.extendedProps.leave_type_display} Leave${
+                        event.extendedProps.is_multi_day && event.extendedProps.days_count
+                          ? ` (${event.extendedProps.days_count} Days)`
+                          : event.extendedProps.is_half_day
+                            ? " (Half Day)"
+                            : " (Full Day)"
+                      }`}
                     {event.extendedProps.type === "schedule" &&
                       `${event.extendedProps.service_type?.replace("_", " ")} - ${event.extendedProps.client_name}`}
                     {event.extendedProps.type === "delivery" &&
@@ -980,16 +997,34 @@ const DashboardCalendar = ({
     if (!events || events.length === 0) return {}
 
     return events.reduce((acc: Record<string, CalendarEvent[]>, event) => {
-      const dateKey = new Date(event.start).toDateString()
-      if (!acc[dateKey]) acc[dateKey] = []
-
       const colors = getEventColors(event)
-      acc[dateKey].push({
+      const coloredEvent = {
         ...event,
         backgroundColor: colors.bg,
         borderColor: colors.border,
         textColor: colors.text,
-      })
+      }
+
+      // For multi-day events (e.g. leave requests spanning multiple days),
+      // add the event to each day in the range
+      const startDate = new Date(event.start)
+      const endDate = event.end ? new Date(event.end) : startDate
+      const isMultiDay =
+        event.extendedProps?.is_multi_day ||
+        (event.allDay && startDate.toDateString() !== endDate.toDateString())
+
+      if (isMultiDay) {
+        const days = eachDayOfInterval({ start: startDate, end: endDate })
+        for (const day of days) {
+          const dateKey = day.toDateString()
+          if (!acc[dateKey]) acc[dateKey] = []
+          acc[dateKey].push(coloredEvent)
+        }
+      } else {
+        const dateKey = startDate.toDateString()
+        if (!acc[dateKey]) acc[dateKey] = []
+        acc[dateKey].push(coloredEvent)
+      }
 
       return acc
     }, {})

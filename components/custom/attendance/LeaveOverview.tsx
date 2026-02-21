@@ -108,6 +108,26 @@ const getLeaveTypeBadge = (leaveType: string) => {
 	);
 };
 
+const formatLeaveDate = (leave: LeaveRequest) => {
+	if (leave.start_date && leave.end_date && leave.start_date !== leave.end_date) {
+		return `${formatDate(leave.start_date)} - ${formatDate(leave.end_date)}`;
+	}
+	return formatDate(leave.start_date || leave.date);
+};
+
+const formatLeaveDuration = (leave: LeaveRequest) => {
+	const days = parseFloat(leave.days_count || "1");
+	if (days === 0.5) {
+		return `Half Day (${leave.shift_period === "AM" ? "Morning" : "Afternoon"})`;
+	}
+	if (days === 1) {
+		return leave.shift_period === "FULL"
+			? "Full Day"
+			: `Half Day (${leave.shift_period === "AM" ? "Morning" : "Afternoon"})`;
+	}
+	return `${days} Day(s)`;
+};
+
 export function LeaveOverview() {
 	const { role, user_id } = useCurrentUser();
 	const { filter, page, limit } = useSearchParameters();
@@ -371,12 +391,10 @@ export function LeaveOverview() {
 											)}
 										</TableCell>
 										<TableCell>
-											{formatDate(leave.date)}
+											{formatLeaveDate(leave)}
 										</TableCell>
 										<TableCell>
-											{leave.shift_period === "FULL"
-												? "Full Day"
-												: `Half Day (${leave.shift_period === "AM" ? "Morning" : "Afternoon"})`}
+											{formatLeaveDuration(leave)}
 										</TableCell>
 										<TableCell className="max-w-xs truncate">
 											{leave.reason || "—"}
@@ -603,13 +621,10 @@ export function LeaveOverview() {
 														)}
 													</TableCell>
 													<TableCell>
-														{formatDate(leave.date)}
+														{formatLeaveDate(leave)}
 													</TableCell>
 													<TableCell>
-														{leave.shift_period ===
-														"FULL"
-															? "Full Day"
-															: `Half Day (${leave.shift_period === "AM" ? "Morning" : "Afternoon"})`}
+														{formatLeaveDuration(leave)}
 													</TableCell>
 													<TableCell>
 														{getLeaveStatusBadge(

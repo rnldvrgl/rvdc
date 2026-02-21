@@ -10,6 +10,8 @@ import {
   RejectAttendancePayload,
   RejectLeavePayload,
   UpdateUniformPenaltiesPayload,
+  ValidateLeaveBalancePayload,
+  ValidateLeaveBalanceResponse,
 } from "@/lib/constants/types"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
@@ -270,6 +272,14 @@ export function useLeaveRequestMutations() {
     },
   })
 
+  const validateLeaveBalance = useApiMutation<
+    ValidateLeaveBalancePayload,
+    ValidateLeaveBalanceResponse
+  >({
+    mutationFn: (data: ValidateLeaveBalancePayload) =>
+      api.post(`${leaveRequestUrl}validate_leave_balance/`, data),
+  })
+
   return {
     createLeaveRequest,
     approveLeave,
@@ -277,6 +287,7 @@ export function useLeaveRequestMutations() {
     cancelLeave,
     updateLeaveRequest,
     deleteLeaveRequest,
+    validateLeaveBalance,
   }
 }
 
