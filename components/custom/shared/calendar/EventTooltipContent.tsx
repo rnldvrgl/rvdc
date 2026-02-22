@@ -81,24 +81,40 @@ export function EventTooltipContent({ event }: EventTooltipContentProps) {
     </div>
   )
 
-  const renderLeaveDetails = () => (
-    <div className="text-xs text-primary-foreground mt-1">
-      <div>
-        <span className="font-semibold">Type: </span>
-        {event.extendedProps.leave_type_display}
-      </div>
-      <div>
-        <span className="font-semibold">Duration: </span>
-        {event.extendedProps.is_half_day ? "Half Day" : "Full Day"}
-      </div>
-      {event.extendedProps.reason && (
+  const renderLeaveDetails = () => {
+    const isMultiDay = event.extendedProps.is_multi_day
+    const daysCount = event.extendedProps.days_count
+
+    return (
+      <div className="text-xs text-primary-foreground mt-1">
         <div>
-          <span className="font-semibold">Reason: </span>
-          {event.extendedProps.reason}
+          <span className="font-semibold">Type: </span>
+          {event.extendedProps.leave_type_display}
         </div>
-      )}
-    </div>
-  )
+        <div>
+          <span className="font-semibold">Duration: </span>
+          {isMultiDay
+            ? `${daysCount} Day${daysCount && parseFloat(daysCount) !== 1 ? "s" : ""}`
+            : event.extendedProps.is_half_day
+              ? "Half Day"
+              : "Full Day"}
+        </div>
+        {isMultiDay && event.end && event.start !== event.end && (
+          <div>
+            <span className="font-semibold">Period: </span>
+            {format(new Date(event.start), "MMM dd")} -{" "}
+            {format(new Date(event.end), "MMM dd, yyyy")}
+          </div>
+        )}
+        {event.extendedProps.reason && (
+          <div>
+            <span className="font-semibold">Reason: </span>
+            {event.extendedProps.reason}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   const renderDeliveryDetails = () => (
     <div className="text-xs text-primary-foreground mt-1">
@@ -176,6 +192,12 @@ export function EventTooltipContent({ event }: EventTooltipContentProps) {
         <Clock className="size-3 md:size-4" />
         <span className="text-xs text-primary-foreground italic ml-1">
           {format(new Date(event.start), "MMM dd, yyyy")}
+          {event.end &&
+            event.start !== event.end &&
+            new Date(event.start).toDateString() !==
+              new Date(event.end).toDateString() && (
+              <span> - {format(new Date(event.end), "MMM dd, yyyy")}</span>
+            )}
           {!event.allDay && (
             <span> at {format(new Date(event.start), "h:mm a")}</span>
           )}

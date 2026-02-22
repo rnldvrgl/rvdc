@@ -1,46 +1,61 @@
-import type { CashAdvance, CashAdvancePayload } from "@/lib/constants/interface"
+import type {
+  CashAdvanceMovement,
+  CashAdvanceMovementPayload,
+} from "@/lib/constants/interface"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
 
-const baseUrl = "/users/cash-advances/"
+const baseUrl = "/users/cash-advance-movements/"
 
 export const useCashAdvanceMutations = () => {
-  const createCashAdvance = useApiMutation<CashAdvancePayload, CashAdvance>({
+  const createMovement = useApiMutation<
+    CashAdvanceMovementPayload,
+    CashAdvanceMovement
+  >({
     mutationFn: (data) => api.post(baseUrl, data),
-    successMessage: "Cash advance recorded successfully",
+    successMessage: "Cash advance movement recorded successfully",
     invalidateQueries: [
-      { queryKey: ["cash-advances"] },
+      { queryKey: ["cash-advance-movements"] },
       { queryKey: ["employees"] },
+      { queryKey: ["employee"] },
       { queryKey: ["users"] },
+      { queryKey: ["weekly-payroll"] },
+      { queryKey: ["payroll"] },
     ],
   })
 
-  const updateCashAdvance = useApiMutation<
-    { id: number; data: Partial<CashAdvancePayload> },
-    CashAdvance
+  const updateMovement = useApiMutation<
+    { id: number; data: Partial<CashAdvanceMovementPayload> },
+    CashAdvanceMovement
   >({
     mutationFn: ({ id, data }) => api.patch(`${baseUrl}${id}/`, data),
-    successMessage: "Cash advance updated successfully",
+    successMessage: "Cash advance movement updated successfully",
     invalidateQueries: [
-      { queryKey: ["cash-advances"] },
+      { queryKey: ["cash-advance-movements"] },
       { queryKey: ["employees"] },
+      { queryKey: ["employee"] },
       { queryKey: ["users"] },
+      { queryKey: ["weekly-payroll"] },
+      { queryKey: ["payroll"] },
     ],
   })
 
-  const deleteCashAdvance = useApiMutation<number, unknown>({
+  const deleteMovement = useApiMutation<number, unknown>({
     mutationFn: (id) => api.delete(`${baseUrl}${id}/`),
-    successMessage: "Cash advance deleted and balance restored",
+    successMessage: "Movement deleted and balance restored",
     invalidateQueries: [
-      { queryKey: ["cash-advances"] },
+      { queryKey: ["cash-advance-movements"] },
       { queryKey: ["employees"] },
+      { queryKey: ["employee"] },
       { queryKey: ["users"] },
+      { queryKey: ["weekly-payroll"] },
+      { queryKey: ["payroll"] },
     ],
   })
 
   return {
-    createCashAdvance,
-    updateCashAdvance,
-    deleteCashAdvance,
+    createMovement,
+    updateMovement,
+    deleteMovement,
   }
 }

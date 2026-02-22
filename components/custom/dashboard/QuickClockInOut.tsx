@@ -63,7 +63,9 @@ export function QuickClockInOut() {
 
   // Check if user has leave today
   const todayLeave = events?.find(
-    (event) => event.extendedProps.type === "leave",
+    (event) =>
+      event.extendedProps.type === "leave" &&
+      event.extendedProps.employee_id === user_id,
   )
 
   const isHalfDay = todayLeave?.extendedProps.is_half_day

@@ -13,13 +13,13 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { CashAdvance } from "@/lib/constants/interface"
+import { CashAdvanceMovement } from "@/lib/constants/interface"
 import { Employee } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import { useCashAdvanceMutations } from "@/lib/mutations/useCashAdvanceMutations"
 import { useEmployeeBenefitOverrideMutations } from "@/lib/mutations/useEmployeeBenefitOverrideMutations"
-import { useCashAdvances } from "@/lib/queries/useCashAdvances"
+import { useCashAdvanceMovements } from "@/lib/queries/useCashAdvances"
 import { useEmployeeBenefitOverrides } from "@/lib/queries/useEmployeeBenefitOverrides"
 import { useEmployee } from "@/lib/queries/useEmployees"
 import { EmployeeBenefitOverride } from "@/lib/schemas/employeeBenefitOverrideSchema"
@@ -66,15 +66,15 @@ const EmployeePage = () => {
   const benefitOverrides = benefitOverridesData?.results || []
 
   const { data: cashAdvancesData, isLoading: isLoadingCashAdvances } =
-    useCashAdvances({
+    useCashAdvanceMovements({
       employee: Number(params.id),
-      ordering: "-date,-created_at",
+      ordering: "-created_at",
     })
 
   const cashAdvances = cashAdvancesData?.results || []
 
   const { deleteOverride } = useEmployeeBenefitOverrideMutations()
-  const { deleteCashAdvance } = useCashAdvanceMutations()
+  const { deleteMovement } = useCashAdvanceMutations()
 
   const [benefitOverrideOpen, setBenefitOverrideOpen] = useState(false)
   const [selectedOverride, setSelectedOverride] =
@@ -263,6 +263,11 @@ const EmployeePage = () => {
                 icon={<BadgeDollarSign className="size-4" />}
                 label="Cash Ban Balance"
                 value={`₱${Number(employee.cash_ban_balance || 0).toLocaleString()}`}
+                className={
+                  Number(employee.cash_ban_balance || 0) > 0
+                    ? "text-green-600"
+                    : "text-muted-foreground"
+                }
               />
               <Detail
                 icon={<IdCard className="size-4" />}
@@ -292,11 +297,21 @@ const EmployeePage = () => {
               <div>
                 <h2 className="text-lg font-semibold flex items-center gap-2">
                   <Wallet className="h-5 w-5" />
-                  Cash Ban Advances
+                  Cash Ban
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Available Balance: ₱
-                  {Number(employee.cash_ban_balance || 0).toLocaleString()}
+                <p className="text-sm mt-1">
+                  <span className="text-muted-foreground">
+                    Available Balance:{" "}
+                  </span>
+                  <span
+                    className={
+                      Number(employee.cash_ban_balance || 0) > 0
+                        ? "text-green-600 font-semibold"
+                        : "text-muted-foreground font-semibold"
+                    }
+                  >
+                    ₱{Number(employee.cash_ban_balance || 0).toLocaleString()}
+                  </span>
                 </p>
               </div>
               {canManageCashAdvance && (
@@ -310,7 +325,7 @@ const EmployeePage = () => {
                   ) : (
                     <>
                       <Plus className="h-4 w-4 mr-2" />
-                      Record Cash Advance
+                      Record Movement
                     </>
                   )}
                 </Button>
@@ -335,19 +350,19 @@ const EmployeePage = () => {
                 </h3>
                 {cashAdvances.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
-                    No cash advances recorded yet.
+                    No cash ban movements recorded yet.
                   </p>
                 ) : (
                   <DataTable
                     isLoading={isLoadingCashAdvances}
                     columns={getCashAdvanceColumns({
-                      onDelete: (cashAdvance: CashAdvance) => {
+                      onDelete: (movement: CashAdvanceMovement) => {
                         if (
                           confirm(
-                            `Delete this cash advance of ₱${Number(cashAdvance.amount).toLocaleString()}? The balance will be restored.`,
+                            `Delete this ${movement.movement_type} movement of ₱${Number(movement.amount).toLocaleString()}? The balance will be reversed.`,
                           )
                         ) {
-                          deleteCashAdvance.mutate(cashAdvance.id)
+                          deleteMovement.mutate(movement.id)
                         }
                       },
                       canManage: canManageCashAdvance,

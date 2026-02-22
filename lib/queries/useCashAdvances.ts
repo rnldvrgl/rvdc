@@ -1,36 +1,41 @@
-import { CashAdvance } from "@/lib/constants/interface"
+import { CashAdvanceMovement } from "@/lib/constants/interface"
 import api from "@/lib/utils/api"
 import { useQuery } from "@tanstack/react-query"
 
-interface CashAdvancesResponse {
+interface CashAdvanceMovementsResponse {
   count: number
   next: string | null
   previous: string | null
-  results: CashAdvance[]
+  results: CashAdvanceMovement[]
 }
 
-interface UseCashAdvancesParams {
+interface UseCashAdvanceMovementsParams {
   employee?: number
   date?: string
+  movement_type?: string
   page?: number
   ordering?: string
 }
 
-export const useCashAdvances = (params?: UseCashAdvancesParams) => {
-  return useQuery<CashAdvancesResponse>({
-    queryKey: ["cash-advances", params],
+export const useCashAdvanceMovements = (
+  params?: UseCashAdvanceMovementsParams,
+) => {
+  return useQuery<CashAdvanceMovementsResponse>({
+    queryKey: ["cash-advance-movements", params],
     queryFn: async () => {
-      const response = await api.get("/users/cash-advances/", { params })
+      const response = await api.get("/users/cash-advance-movements/", {
+        params,
+      })
       return response.data
     },
   })
 }
 
-export const useCashAdvance = (id: string | number) => {
-  return useQuery<CashAdvance>({
-    queryKey: ["cash-advances", id],
+export const useCashAdvanceMovement = (id: string | number) => {
+  return useQuery<CashAdvanceMovement>({
+    queryKey: ["cash-advance-movements", id],
     queryFn: async () => {
-      const response = await api.get(`/users/cash-advances/${id}/`)
+      const response = await api.get(`/users/cash-advance-movements/${id}/`)
       return response.data
     },
     enabled: !!id,

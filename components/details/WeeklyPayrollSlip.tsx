@@ -11,6 +11,7 @@ import {
 import { StatusBadge } from "@/components/details/payroll/StatusBadge"
 import { TimeSummary } from "@/components/details/payroll/TimeSummary"
 import { AddAdditionalEarningForm } from "@/components/forms/AddAdditionalEarningForm"
+import { AddCashAdvanceDeductionForm } from "@/components/forms/AddCashAdvanceDeductionForm"
 import { AddManualDeductionForm } from "@/components/forms/AddManualDeductionForm"
 import {
   AlertDialog,
@@ -44,6 +45,7 @@ import { useRecomputeWeeklyPayroll } from "@/lib/mutations/payroll/usePayrollMut
 import { useDeleteAdditionalEarning } from "@/lib/mutations/useAdditionalEarningMutations"
 import { useDeleteManualDeduction } from "@/lib/mutations/useManualDeductionMutations"
 import { usePayrollMutations } from "@/lib/mutations/usePayrollMutations"
+import { useEmployee } from "@/lib/queries/useEmployees"
 import { useWeeklyPayroll } from "@/lib/queries/usePayroll"
 import { formatCurrency, toNumber } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
@@ -61,6 +63,9 @@ export function WeeklyPayrollSlip({
   payrollId,
 }: WeeklyPayrollSlipProps) {
   const { data: payroll, isLoading } = useWeeklyPayroll(payrollId)
+  const { data: employeeData } = useEmployee(
+    payroll?.employee?.toString() ?? "",
+  )
   const { userProfile, isAdmin, canManage } = useCurrentUser()
   const { updateStatus, markAsReceived, disputePayroll } = usePayrollMutations()
   const recomputePayroll = useRecomputeWeeklyPayroll(payrollId)
@@ -71,6 +76,7 @@ export function WeeklyPayrollSlip({
   const [isProcessing, setIsProcessing] = useState(false)
   const [manualDeductionDialogOpen, setManualDeductionDialogOpen] =
     useState(false)
+  const [cashAdvanceDialogOpen, setCashAdvanceDialogOpen] = useState(false)
   const [additionalEarningDialogOpen, setAdditionalEarningDialogOpen] =
     useState(false)
   const [deleteDeductionId, setDeleteDeductionId] = useState<number | null>(
@@ -129,7 +135,8 @@ export function WeeklyPayrollSlip({
     additionalEarnings
 
   // Calculate holiday hours
-  const holidayHours = (holidayPayRegular + holidayPaySpecial) / toNumber(payroll.hourly_rate)
+  const holidayHours =
+    (holidayPayRegular + holidayPaySpecial) / toNumber(payroll.hourly_rate)
 
   // Employee info
   const employeeName =
@@ -197,6 +204,7 @@ export function WeeklyPayrollSlip({
           }}
           onAddEarning={() => setAdditionalEarningDialogOpen(true)}
           onAddDeduction={() => setManualDeductionDialogOpen(true)}
+          onAddCashAdvance={() => setCashAdvanceDialogOpen(true)}
         />
       </CardHeader>
 
@@ -391,6 +399,18 @@ export function WeeklyPayrollSlip({
         onOpenChange={setManualDeductionDialogOpen}
         employeeId={payroll.employee}
         employeeName={employeeName}
+        weekStart={payroll.week_start}
+        weekEnd={payroll.week_end}
+        payrollId={payroll.id}
+      />
+
+      {/* Cash Advance Deduction Dialog */}
+      <AddCashAdvanceDeductionForm
+        open={cashAdvanceDialogOpen}
+        onOpenChange={setCashAdvanceDialogOpen}
+        employeeId={payroll.employee}
+        employeeName={employeeName}
+        cashBanBalance={Number(employeeData?.cash_ban_balance || 0)}
         weekStart={payroll.week_start}
         weekEnd={payroll.week_end}
         payrollId={payroll.id}

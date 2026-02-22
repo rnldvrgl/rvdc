@@ -8,8 +8,8 @@ const WEEKLY_PAYROLLS = `${PAYROLL_BASE}/weekly-payrolls/`
 
 export interface GeneratePayrollInput {
   employee_id: number
-  week_start?: string
-  week_end?: string
+  week_start: string
+  week_end: string
   notes?: string
   include_unapproved?: boolean
 }
@@ -55,8 +55,8 @@ export interface UpdateStatusInput {
 
 export interface BulkGeneratePayrollInput {
   employee_ids?: number[]
-  week_start?: string
-  week_end?: string
+  week_start: string
+  week_end: string
   notes?: string
   include_unapproved?: boolean
 }

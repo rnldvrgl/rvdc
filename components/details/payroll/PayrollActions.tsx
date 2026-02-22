@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Banknote,
   CheckCircle,
+  CreditCard,
   PhilippinePesoIcon,
   Plus,
   RefreshCw,
@@ -22,6 +23,7 @@ interface PayrollActionsProps {
   onRecompute: () => void
   onAddEarning: () => void
   onAddDeduction: () => void
+  onAddCashAdvance?: () => void
 }
 
 export function PayrollActions({
@@ -37,10 +39,11 @@ export function PayrollActions({
   onRecompute,
   onAddEarning,
   onAddDeduction,
+  onAddCashAdvance,
 }: PayrollActionsProps) {
   if (isAdmin) {
     return (
-      <div className="grid md:grid-cols-4 gap-3 print:hidden">
+      <div className="grid md:grid-cols-5 gap-3 print:hidden">
         {status === "draft" && (
           <>
             <Button
@@ -61,6 +64,17 @@ export function PayrollActions({
               <PhilippinePesoIcon className="h-3.5 w-3.5 mr-1.5" />
               Add Deduction
             </Button>
+            {onAddCashAdvance && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={onAddCashAdvance}
+                disabled={isProcessing}
+              >
+                <CreditCard className="h-3.5 w-3.5 mr-1.5" />
+                Cash Advance
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"
