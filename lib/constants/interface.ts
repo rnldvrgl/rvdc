@@ -759,6 +759,7 @@ export type AirconUnitPayload = {
 // ---------------------
 export type ServiceType =
   | "repair"
+  | "dismantle"
   | "inspection"
   | "cleaning"
   | "motor_rewind"

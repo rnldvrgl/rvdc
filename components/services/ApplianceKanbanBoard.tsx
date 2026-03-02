@@ -16,6 +16,7 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
+  TouchSensor,
   useDroppable,
   useSensor,
   useSensors,
@@ -312,6 +313,9 @@ export default function ApplianceKanbanBoard({
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
   )
 
   // Determine if this is an installation service based on appliance statuses
@@ -399,8 +403,37 @@ export default function ApplianceKanbanBoard({
 
   if (appliances.length === 0) {
     return (
-      <div className="text-center py-6 text-sm text-muted-foreground">
-        No appliances to display.
+      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+        <div className="flex items-center justify-center size-14 rounded-xl bg-muted/60 text-muted-foreground">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="size-7"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect
+              width="18"
+              height="18"
+              x="3"
+              y="3"
+              rx="2"
+            />
+            <path d="M3 9h18" />
+            <path d="M9 21V9" />
+          </svg>
+        </div>
+        <div className="space-y-1">
+          <p className="text-base font-medium text-foreground">
+            No appliances to display
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Add appliances to this service to see them here
+          </p>
+        </div>
       </div>
     )
   }
@@ -430,20 +463,24 @@ export default function ApplianceKanbanBoard({
       )}
 
       <div
-        className="grid gap-3"
+        className="flex gap-3 overflow-x-auto pb-2 md:grid md:overflow-visible"
         style={{
           gridTemplateColumns: `repeat(${Math.min(visibleColumns.length, 6)}, minmax(0, 1fr))`,
         }}
       >
         {visibleColumns.map((column) => (
-          <DroppableColumn
+          <div
             key={column.id}
-            column={column}
-            appliances={groupedAppliances[column.id] || []}
-            isOver={overColumnId === column.id}
-            isDragging={!!activeId}
-            isValidTarget={validTargets.has(column.id)}
-          />
+            className="min-w-[220px] md:min-w-0"
+          >
+            <DroppableColumn
+              column={column}
+              appliances={groupedAppliances[column.id] || []}
+              isOver={overColumnId === column.id}
+              isDragging={!!activeId}
+              isValidTarget={validTargets.has(column.id)}
+            />
+          </div>
         ))}
       </div>
 

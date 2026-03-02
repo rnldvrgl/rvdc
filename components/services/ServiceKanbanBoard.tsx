@@ -25,6 +25,7 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
+  TouchSensor,
   useDroppable,
   useSensor,
   useSensors,
@@ -488,6 +489,9 @@ export default function ServiceKanbanBoard({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
     }),
   )
 

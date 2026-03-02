@@ -29,6 +29,7 @@ import {
 // --- Labels ---
 export const serviceTypeLabels: Record<string, string> = {
   repair: "Repair",
+  dismantle: "Dismantle",
   inspection: "Inspection",
   cleaning: "Cleaning",
   motor_rewind: "Motor Rewind",
@@ -252,6 +253,8 @@ export const applianceStatusLabels: Record<string, string> = {
 export const serviceTypeColors: Record<string, string> = {
   repair:
     "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
+  dismantle:
+    "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800",
   inspection:
     "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-sky-400 dark:border-sky-800",
   cleaning:

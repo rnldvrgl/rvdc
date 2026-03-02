@@ -73,6 +73,7 @@ interface ServiceDetailProps {
 
 const serviceTypeLabels: Record<string, string> = {
   repair: "Repair",
+  dismantle: "Dismantle",
   inspection: "Inspection",
   cleaning: "Cleaning",
   motor_rewind: "Motor Rewind",
@@ -523,6 +524,7 @@ export default function ServiceDetail({
             variant={
               ({
                 repair: "warning",
+                dismantle: "warning",
                 inspection: "default",
                 cleaning: "success",
                 motor_rewind: "destructive",

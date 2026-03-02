@@ -7,6 +7,7 @@ import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import ServiceForm from "@/components/forms/ServiceForm"
+import ServiceFormWizard from "@/components/forms/ServiceFormWizard"
 import ServiceDetail from "@/components/services/ServiceDetail"
 import ServiceKanbanBoard from "@/components/services/ServiceKanbanBoard"
 import { Button } from "@/components/ui/button"
@@ -282,6 +283,9 @@ export default function ServicesPage() {
           isLoading={isLoading}
           filters={filterDefs ?? []}
           orderingOptions={orderingOptions ?? []}
+          emptyIcon={Wrench}
+          emptyTitle="No services found"
+          emptyDescription="Create your first service request to get started"
         />
       ) : (
         <ServiceKanbanBoard
@@ -303,13 +307,20 @@ export default function ServicesPage() {
             : "Create a new service request"
         }
         entity={entityState.entity}
-        renderForm={({ onClose, entity, forceClose }) => (
-          <ServiceForm
-            initialData={entity as Service}
-            onClose={onClose}
-            forceClose={forceClose}
-          />
-        )}
+        renderForm={({ onClose, entity, forceClose }) =>
+          entity ? (
+            <ServiceForm
+              initialData={entity as Service}
+              onClose={onClose}
+              forceClose={forceClose}
+            />
+          ) : (
+            <ServiceFormWizard
+              onClose={onClose}
+              forceClose={forceClose}
+            />
+          )
+        }
         withCloseConfirmation
       />
 
