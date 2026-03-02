@@ -8,6 +8,8 @@ import {
   CircleDollarSign,
   Clock,
   Coins,
+  CreditCard,
+  FileSpreadsheet,
   FileText,
   Layers,
   LayoutDashboard,
@@ -51,6 +53,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         icon: FileText,
         permission: "view_cheque_collections",
       },
+      {
+        name: "Payment Collection",
+        href: "/receivables/collection",
+        icon: CreditCard,
+        permission: "view_remittances",
+      },
     ],
   },
   expenses: {
@@ -76,6 +84,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     href: "/clients",
     icon: Users,
     permission: "view_clients",
+  },
+  reports: {
+    name: "Reports",
+    href: "/reports",
+    icon: FileSpreadsheet,
+    permission: "view_reports",
   },
   payroll: {
     name: "Payroll",
@@ -294,6 +308,7 @@ export const orderedNavigation: NavigationEntry[] = [
   baseNavigation.payroll,
   baseNavigation.attendance,
   // System Management
+  baseNavigation.reports,
   baseNavigation.settings,
 ]
 

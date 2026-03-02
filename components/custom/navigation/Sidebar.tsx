@@ -4,7 +4,9 @@ import { usePathname } from "next/navigation"
 import { useState } from "react"
 
 import SidebarNav from "@/components/custom/navigation/SidebarNav"
+import { CommandPalette } from "@/components/custom/shared/CommandPalette"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
+import ChequeCollectionForm from "@/components/forms/ChequeCollectionForm"
 import ClientForm from "@/components/forms/ClientForm"
 import ExpenseForm from "@/components/forms/ExpenseForm"
 import RemittanceForm from "@/components/forms/RemittanceForm"
@@ -44,6 +46,11 @@ const ENTITY_CONFIG = {
     description: "Fill out the form below to add a new service.",
     Form: ServiceForm,
   },
+  chequeCollection: {
+    title: "Add Cheque Collection",
+    description: "Fill out the form below to record a cheque collection.",
+    Form: ChequeCollectionForm,
+  },
 } as const
 
 type EntityType = keyof typeof ENTITY_CONFIG
@@ -78,6 +85,31 @@ export function Sidebar() {
 
   return (
     <>
+      <CommandPalette
+        onAction={(action) => {
+          switch (action) {
+            case "addSale":
+              handleOpenEntity("sale")
+              break
+            case "addClient":
+              handleOpenEntity("client")
+              break
+            case "addExpense":
+              handleOpenEntity("expense")
+              break
+            case "addRemittance":
+              handleOpenEntity("remittance")
+              break
+            case "addService":
+              handleOpenEntity("service")
+              break
+            case "addChequeCollection":
+              handleOpenEntity("chequeCollection")
+              break
+          }
+        }}
+      />
+
       <EntitySheet
         open={open}
         onClose={closeEntity}
@@ -108,8 +140,12 @@ export function Sidebar() {
               break
             case "addRemittance":
               handleOpenEntity("remittance")
+              break
             case "addService":
               handleOpenEntity("service")
+              break
+            case "addChequeCollection":
+              handleOpenEntity("chequeCollection")
               break
           }
         }}

@@ -38,6 +38,8 @@ export function useGetPermissions(
       "manage_aircon_units",
       "view_warranty_claims",
       "view_cheque_collections",
+      "view_remittances",
+      "view_reports",
     ]
 
     // Admin, Manager, and Clerk permissions for shortcuts
