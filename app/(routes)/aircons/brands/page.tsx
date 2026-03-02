@@ -16,7 +16,7 @@ import { useAirconBrands } from "@/lib/queries/useAircons"
 import { Pencil, Plus, Wind } from "lucide-react"
 
 export default function AirconBrandsPage() {
-  const { isAdmin, canManage } = useCurrentUser()
+  const { canManage } = useCurrentUser()
   const { page, limit, search, ordering, filter } = useSearchParameters()
   const { deleteBrand } = useAirconBrandMutations()
   const { data, isLoading, refetch } = useAirconBrands({
