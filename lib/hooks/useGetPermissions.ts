@@ -38,6 +38,7 @@ export function useGetPermissions(
       "manage_aircon_units",
       "view_warranty_claims",
       "view_cheque_collections",
+      "view_payment_collection",
       "view_remittances",
       "view_reports",
     ]

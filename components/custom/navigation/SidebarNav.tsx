@@ -7,13 +7,27 @@ import { DeveloperCredit } from "@/components/custom/shared/DeveloperCredit"
 import { ModeToggle } from "@/components/custom/theme/ModeToggle"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { User } from "@/lib/constants/interface"
+import { useSidebarCollapse } from "@/lib/hooks/useSidebarCollapse"
 import { useAuthentications } from "@/lib/mutations/useAuthentication"
-import { getDisplayImage } from "@/lib/utils/helpers"
+import { cn, getDisplayImage } from "@/lib/utils/helpers"
 import { getToken } from "@/lib/utils/tokens"
 import { RemixiconComponentType } from "@remixicon/react"
 import { AnimatePresence, motion } from "framer-motion"
-import { LogOutIcon, LucideIcon, Menu, X } from "lucide-react"
+import {
+  LogOutIcon,
+  LucideIcon,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  X,
+} from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 
@@ -48,6 +62,7 @@ export default function SidebarNav({
   const displayImage = getDisplayImage(user?.profile_image)
   const hasCustomImage =
     user?.profile_image && !user.profile_image.includes("default_image")
+  const { collapsed, toggle } = useSidebarCollapse()
 
   const renderUserHeader = () => (
     <div className="flex items-center justify-between rounded-lg bg-muted/60 dark:bg-muted/50 p-3 border border-border/50">
@@ -74,26 +89,34 @@ export default function SidebarNav({
                 {user?.first_name?.[0]?.toUpperCase()}
               </div>
             )}
-            <div className="flex-1 min-w-0">
-              <p className="text-xs text-muted-foreground">Welcome back</p>
-              <p className="text-sm font-semibold text-foreground truncate">
-                {user?.first_name}
-              </p>
-            </div>
+            {!collapsed && (
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground">Welcome back</p>
+                <p className="text-sm font-semibold text-foreground truncate">
+                  {user?.first_name}
+                </p>
+              </div>
+            )}
           </motion.div>
         ) : (
           <div className="flex items-center gap-3">
             <Skeleton className="h-9 w-9 rounded-full" />
-            <div className="flex flex-col space-y-1">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-3 w-24" />
-            </div>
+            {!collapsed && (
+              <div className="flex flex-col space-y-1">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            )}
           </div>
         )}
       </AnimatePresence>
 
-      <ModeToggle />
-      <NotificationArea align="start" />
+      {!collapsed && (
+        <>
+          <ModeToggle />
+          <NotificationArea align="start" />
+        </>
+      )}
     </div>
   )
 
@@ -116,27 +139,113 @@ export default function SidebarNav({
   )
 
   return (
-    <>
+    <TooltipProvider delayDuration={0}>
       {/* Large screens */}
-      <aside className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:w-80 lg:flex-col border-r bg-sidebar border-sidebar-border px-6 py-10 h-full overflow-y-auto">
+      <aside
+        className={cn(
+          "hidden lg:flex lg:inset-y-0 lg:z-50 lg:flex-col border-r bg-sidebar border-sidebar-border py-10 h-full overflow-y-auto transition-all duration-300",
+          collapsed ? "lg:w-[72px] px-2" : "lg:w-80 px-6",
+        )}
+      >
         <div className="flex flex-col gap-y-8 w-full pb-4">
           {renderUserHeader()}
-          {renderNav()}
+          {collapsed ? (
+            // Collapsed: icon-only nav with tooltips
+            <div className="flex flex-col items-center gap-1">
+              {sections
+                .flatMap((s) => s.items)
+                .map((item) => (
+                  <Tooltip key={item.name}>
+                    <TooltipTrigger asChild>
+                      {item.href ? (
+                        <a
+                          href={item.href}
+                          title={item.name}
+                          className={cn(
+                            "flex items-center justify-center size-10 rounded-lg transition-colors",
+                            activePath.startsWith(item.href)
+                              ? "bg-muted text-primary"
+                              : "text-muted-foreground hover:bg-muted hover:text-primary",
+                          )}
+                        >
+                          <item.icon className="size-5" />
+                        </a>
+                      ) : item.action ? (
+                        <button
+                          onClick={() => {
+                            onAction?.(item.action!)
+                          }}
+                          title={item.name}
+                          className="flex items-center justify-center size-10 rounded-lg text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
+                        >
+                          <item.icon className="size-5" />
+                        </button>
+                      ) : item.children ? (
+                        // Parent with children: show first child or just the icon
+                        <div className="flex items-center justify-center size-10 rounded-lg text-muted-foreground hover:bg-muted hover:text-primary transition-colors cursor-pointer">
+                          <item.icon className="size-5" />
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center size-10 rounded-lg text-muted-foreground">
+                          <item.icon className="size-5" />
+                        </div>
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      <p>{item.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+            </div>
+          ) : (
+            renderNav()
+          )}
         </div>
         <div className="mt-auto space-y-4">
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="default"
+                  size="icon"
+                  className="w-full"
+                  onClick={() => logout.mutateAsync(refresh)}
+                >
+                  <LogOutIcon className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>Sign out</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <>
+              <Button
+                variant="default"
+                className="w-full"
+                onClick={() => logout.mutateAsync(refresh)}
+              >
+                <LogOutIcon />
+                Signout
+              </Button>
+              <DeveloperCredit
+                variant="subtle"
+                size="sm"
+              />
+            </>
+          )}
           <Button
-            variant="default"
+            variant="ghost"
+            size="icon"
             className="w-full"
-            onClick={() => logout.mutateAsync(refresh)}
+            onClick={toggle}
           >
-            <LogOutIcon />
-            Signout
+            {collapsed ? (
+              <PanelLeftOpen className="size-4" />
+            ) : (
+              <PanelLeftClose className="size-4" />
+            )}
           </Button>
-          <DeveloperCredit
-            variant="subtle"
-            size="sm"
-          />
-          {/* <UserProfile user={user} /> */}
         </div>
       </aside>
 
@@ -281,6 +390,6 @@ export default function SidebarNav({
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </TooltipProvider>
   )
 }

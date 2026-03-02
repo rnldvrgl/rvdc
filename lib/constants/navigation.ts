@@ -55,7 +55,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
       },
       {
         name: "Payment Collection",
-        href: "/receivables/collection",
+        href: "/receivables/payment-collection",
         icon: CreditCard,
         permission: "view_payment_collection",
       },

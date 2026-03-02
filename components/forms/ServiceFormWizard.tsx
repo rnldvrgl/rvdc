@@ -191,7 +191,30 @@ export default function ServiceFormWizard({
         ])
         return valid
       }
-      case 1:
+      case 1: {
+        const mode = form.getValues("service_mode")
+        if (mode === "home_service") {
+          const appt = form.getValues("appointment_datetime")
+          if (!appt) {
+            form.setError("appointment_datetime", {
+              type: "manual",
+              message: "Appointment date & time is required for home service",
+            })
+            return false
+          }
+        }
+        if (mode === "pull_out") {
+          const pickup = form.getValues("pickup_date")
+          if (!pickup) {
+            form.setError("pickup_date", {
+              type: "manual",
+              message: "Pickup date is required for pull-out service",
+            })
+            return false
+          }
+        }
+        return true
+      }
       case 2:
         return true
       default:

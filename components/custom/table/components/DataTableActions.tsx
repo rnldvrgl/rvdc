@@ -56,14 +56,18 @@ export function DataTableActions({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="h-8 w-8 p-0"
+            size="sm"
+            className="h-8 w-8 p-0 data-[state=open]:bg-muted"
           >
             <span className="sr-only">Open menu</span>
             <MoreVertical className="size-4" />
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent
+          align="end"
+          className="w-40"
+        >
           <DropdownMenuLabel>{label}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {items.length > 0 ? (
@@ -72,9 +76,9 @@ export function DataTableActions({
               return (
                 <DropdownMenuItem
                   key={idx}
-                  disabled={item.disabled} // ← new
+                  disabled={item.disabled}
                   onSelect={(e) => {
-                    if (item.disabled) return // prevent click if disabled
+                    if (item.disabled) return
                     if (item.destructive) {
                       e.preventDefault()
                       setConfirmItem(item)
@@ -83,28 +87,14 @@ export function DataTableActions({
                     }
                   }}
                   className={clsx(
-                    "flex items-center group",
+                    "flex items-center gap-2 cursor-pointer",
                     item.destructive &&
-                      "text-destructive/90 hover:bg-destructive/10",
+                      "text-destructive focus:text-destructive focus:bg-destructive/10",
                     item.disabled && "opacity-50 cursor-not-allowed",
                   )}
                 >
-                  {Icon && (
-                    <Icon
-                      className={clsx(
-                        "mr-2 transition-colors",
-                        item.destructive && "group-hover:text-destructive",
-                      )}
-                    />
-                  )}
-                  <span
-                    className={clsx(
-                      "transition-colors",
-                      item.destructive && "group-hover:text-destructive",
-                    )}
-                  >
-                    {item.label}
-                  </span>
+                  {Icon && <Icon className="size-4" />}
+                  <span>{item.label}</span>
                 </DropdownMenuItem>
               )
             })

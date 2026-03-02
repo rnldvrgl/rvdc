@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils/helpers"
 import {
   ArrowUpDown,
   Database,
+  Download,
   Filter,
   LucideIcon,
   RefreshCw,
@@ -67,6 +68,9 @@ interface DataTableProps<TData, TValue> {
   emptyDescription?: string
   enableRowSelection?: boolean
   bulkActions?: BulkAction<TData>[]
+  onRowClick?: (row: TData) => void
+  enableExport?: boolean
+  exportFileName?: string
 }
 
 export function DataTable<TData, TValue>({
@@ -84,6 +88,9 @@ export function DataTable<TData, TValue>({
   emptyDescription,
   enableRowSelection = false,
   bulkActions,
+  onRowClick,
+  enableExport = false,
+  exportFileName = "export",
 }: DataTableProps<TData, TValue>) {
   const {
     page,
@@ -201,6 +208,132 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
   })
 
+  const handleExportCSV = React.useCallback(() => {
+    const rows = data.results ?? []
+    if (rows.length === 0) return
+
+    // Get visible columns (exclude select & action columns)
+    const visibleCols = table
+      .getVisibleLeafColumns()
+      .filter(
+        (col) =>
+          !["_select", "action", "actions"].includes(col.id) &&
+          col.id !== "select",
+      )
+
+    const headers = visibleCols.map((col) =>
+      typeof col.columnDef.header === "string"
+        ? col.columnDef.header
+        : col.id.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+    )
+
+    const csvRows = rows.map((row, rowIndex) =>
+      visibleCols.map((col) => {
+        let value: unknown
+
+        // Try to get value using column's accessorKey or accessorFn
+        const columnDef = col.columnDef as ColumnDef<TData, TValue> & {
+          accessorKey?: string
+          accessorFn?: (row: TData, index: number) => unknown
+        }
+        if (columnDef.accessorFn) {
+          value = columnDef.accessorFn(row, rowIndex)
+        } else if (columnDef.accessorKey) {
+          // Handle nested properties like "client.full_name"
+          const keys = String(columnDef.accessorKey).split(".")
+          value = keys.reduce<unknown>(
+            (obj: unknown, key: string) =>
+              obj && typeof obj === "object" && key in obj
+                ? (obj as Record<string, unknown>)[key]
+                : undefined,
+            row,
+          )
+        } else {
+          value = (row as Record<string, unknown>)[col.id]
+        }
+
+        // If we still don't have a value and there's a cell renderer, use it
+        if (value == null && typeof columnDef.cell === "function") {
+          try {
+            const cellValue = columnDef.cell({
+              getValue: () => value,
+              row: { original: row },
+            } as never)
+            // Extract text content from React elements
+            if (typeof cellValue === "object" && cellValue?.props?.children) {
+              value = cellValue.props.children
+            } else {
+              value = cellValue
+            }
+          } catch {
+            // Ignore cell render errors during export
+          }
+        }
+
+        if (value == null) return ""
+
+        // Handle objects (like dates)
+        let str: string
+        if (value instanceof Date) {
+          // Format date as readable string without time
+          str = value.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+          })
+        } else if (
+          typeof value === "string" &&
+          /^\d{4}-\d{2}-\d{2}T/.test(value)
+        ) {
+          // Handle ISO date strings
+          const date = new Date(value)
+          if (!isNaN(date.getTime())) {
+            str = date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })
+          } else {
+            str = String(value)
+          }
+        } else if (typeof value === "object") {
+          str = JSON.stringify(value)
+        } else {
+          str = String(value)
+        }
+
+        // Clean up HTML tags and extra whitespace
+        str = str.replace(/<[^>]*>/g, "").trim()
+
+        // Remove currency symbols and formatting for numeric values
+        // This handles ₱1,234.56 → 1234.56
+        if (/^[₱$€£¥₹]/.test(str)) {
+          str = str
+            .replace(/^[₱$€£¥₹]/, "") // Remove currency symbol
+            .replace(/,/g, "") // Remove thousand separators
+            .trim()
+        }
+
+        // Escape quotes and wrap in quotes if contains comma/quote/newline
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`
+        }
+        return str
+      }),
+    )
+
+    const csv = [headers.join(","), ...csvRows.map((r) => r.join(","))].join(
+      "\n",
+    )
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${exportFileName}-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }, [data.results, exportFileName, table])
+
   const hasActiveFilters = React.useMemo(() => {
     return Boolean(
       search || ordering || (filter && Object.keys(filter).length > 0),
@@ -249,30 +382,32 @@ export function DataTable<TData, TValue>({
       )}
 
       {/* Toolbar */}
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        {/* Left side: Search, Sort, Filters */}
-        <div className="flex flex-1 items-center gap-2">
-          <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col gap-3">
+        {/* Top Row: Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+          {/* Search */}
+          <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search..."
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="pl-9 pr-4 bg-muted/50"
+              className="pl-9 pr-9 bg-muted/50 h-9"
             />
             {localSearch && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute right-1 top-1/2 size-6 -translate-y-1/2 p-0 hover:bg-transparent"
+                className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 hover:bg-transparent"
                 onClick={() => setLocalSearch("")}
               >
-                <X className="size-3" />
+                <X className="size-3.5" />
               </Button>
             )}
           </div>
 
-          <div className="flex items-center gap-2 ml-auto xl:ml-0">
+          {/* Sort and Filter Controls */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             {orderingOptions && orderingOptions.length > 0 && (
               <DataTableSortDropdown
                 options={orderingOptions}
@@ -290,57 +425,75 @@ export function DataTable<TData, TValue>({
                 variant="ghost"
                 size="sm"
                 onClick={clearFilters}
-                className="px-2 lg:px-3"
+                className="px-2 h-9"
               >
                 Clear
-                <X className="ml-1 size-3" />
+                <X className="ml-1.5 size-3.5" />
+              </Button>
+            )}
+          </div>
+
+          {/* Right side: Date filter and Export */}
+          <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
+            {!withoutDateRangeFilter && (
+              <DataTableDateRangeFilter
+                defaultRangePreset={defaultRangePreset}
+                className="flex-1 sm:flex-initial"
+              />
+            )}
+            {enableExport && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleExportCSV}
+                disabled={(data.results ?? []).length === 0}
+                className="gap-1.5 h-9 shrink-0"
+              >
+                <Download className="size-4" />
+                <span className="hidden sm:inline">Export</span>
               </Button>
             )}
           </div>
         </div>
-
-        {/* Right side: Date filter, Refresh, Actions */}
-        {!withoutDateRangeFilter && (
-          <div className="flex items-center gap-2">
-            <DataTableDateRangeFilter
-              defaultRangePreset={defaultRangePreset}
-              className="w-full! max-w-full!"
-            />
-          </div>
-        )}
       </div>
 
       {/* Active Filters Display */}
       {hasActiveFilters && (
-        <div className="flex flex-wrap items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Filters:</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Active:
+          </span>
           {search && (
             <Badge
               variant="secondary"
-              className="gap-1"
+              className="gap-1.5 h-7"
             >
               <Search className="size-3" />
-              {search}
+              <span className="text-xs">{search}</span>
             </Badge>
           )}
           {sortingState.length > 0 && (
             <Badge
               variant="secondary"
-              className="gap-1"
+              className="gap-1.5 h-7"
             >
               <ArrowUpDown className="size-3" />
-              {sortingState.length} sort
-              {sortingState.length !== 1 ? "s" : ""}
+              <span className="text-xs">
+                {sortingState.length} sort
+                {sortingState.length !== 1 ? "s" : ""}
+              </span>
             </Badge>
           )}
           {filter && Object.keys(filter).length > 0 && (
             <Badge
               variant="secondary"
-              className="gap-1"
+              className="gap-1.5 h-7"
             >
               <Filter className="size-3" />
-              {Object.keys(filter).length} filter
-              {Object.keys(filter).length !== 1 ? "s" : ""}
+              <span className="text-xs">
+                {Object.keys(filter).length} filter
+                {Object.keys(filter).length !== 1 ? "s" : ""}
+              </span>
             </Badge>
           )}
         </div>
@@ -348,30 +501,34 @@ export function DataTable<TData, TValue>({
 
       {/* Data Display Info */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <div>
+        <div className="font-medium">
           {totalCount > 0 ? (
             <span>
               Showing {startIndex} to {endIndex} of{" "}
-              {totalCount.toLocaleString()} results
+              <span className="font-semibold text-foreground">
+                {totalCount.toLocaleString()}
+              </span>{" "}
+              results
             </span>
           ) : (
             <span>No results found</span>
           )}
         </div>
         {totalCount > 0 && (
-          <div className="flex items-center gap-2">
-            <Database className="size-3" />
-            <span>{totalCount.toLocaleString()} total</span>
+          <div className="flex items-center gap-2 text-xs">
+            <Database className="size-3.5" />
+            <span className="font-semibold">{totalCount.toLocaleString()}</span>
+            <span>total</span>
           </div>
         )}
       </div>
 
       {/* Table Container */}
-      <div className="relative overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      <div className="relative overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/60">
+              <TableRow className="bg-muted/30 hover:bg-muted/50 border-b border-border/40">
                 {table.getHeaderGroups()[0]?.headers.map((header) => {
                   const colId = header.column.id
                   const isActionColumn = ["action", "actions"].includes(colId)
@@ -381,9 +538,9 @@ export function DataTable<TData, TValue>({
                     <TableHead
                       key={header.id}
                       className={cn(
-                        "h-12 px-4 font-semibold",
-                        isActionColumn && "w-[100px]",
-                        isSelectColumn && "w-10 px-3",
+                        "h-11 px-4 font-semibold text-xs uppercase tracking-wider",
+                        isActionColumn && "w-24 text-center",
+                        isSelectColumn && "w-12 px-3",
                       )}
                     >
                       <div className="flex items-center gap-2">
@@ -406,9 +563,9 @@ export function DataTable<TData, TValue>({
                     {allColumns.map((_, j) => (
                       <TableCell
                         key={`skeleton-cell-${i}-${j}`}
-                        className="h-12 px-4"
+                        className="h-14 px-4"
                       >
-                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-5 w-full" />
                       </TableCell>
                     ))}
                   </TableRow>
@@ -424,21 +581,37 @@ export function DataTable<TData, TValue>({
                       exit={{ opacity: 0, y: -10 }}
                       transition={{
                         duration: 0.2,
-                        delay: i * 0.02,
+                        delay: Math.min(i * 0.02, 0.3),
                       }}
-                      className="border-b border-border/50 transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                      className={cn(
+                        "border-b border-border/40 transition-all hover:bg-muted/40 data-[state=selected]:bg-muted/60",
+                        onRowClick && "cursor-pointer hover:shadow-sm",
+                      )}
+                      onClick={() => onRowClick?.(row.original)}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className="h-12 px-4 py-2"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </TableCell>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const colId = cell.column.id
+                        const isActionColumn = ["action", "actions"].includes(
+                          colId,
+                        )
+                        const isSelectColumn = colId === "_select"
+
+                        return (
+                          <TableCell
+                            key={cell.id}
+                            className={cn(
+                              "h-14 px-4 py-2.5 text-sm",
+                              isActionColumn && "text-center",
+                              isSelectColumn && "px-3",
+                            )}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        )
+                      })}
                     </motion.tr>
                   ))}
                 </AnimatePresence>
@@ -447,21 +620,21 @@ export function DataTable<TData, TValue>({
                 <TableRow>
                   <TableCell
                     colSpan={allColumns.length}
-                    className="h-48 text-center p-6"
+                    className="h-56 text-center p-6"
                   >
                     <div className="flex flex-col items-center gap-3">
-                      <div className="flex items-center justify-center size-14 rounded-xl bg-muted/60 text-muted-foreground">
+                      <div className="flex items-center justify-center size-16 rounded-2xl bg-muted/50 text-muted-foreground">
                         {EmptyIcon ? (
-                          <EmptyIcon className="size-7" />
+                          <EmptyIcon className="size-8" />
                         ) : (
-                          <Database className="size-7" />
+                          <Database className="size-8" />
                         )}
                       </div>
-                      <div className="space-y-1">
-                        <p className="text-base font-medium text-foreground">
+                      <div className="space-y-1.5">
+                        <p className="text-base font-semibold text-foreground">
                           {emptyTitle ?? "No data found"}
                         </p>
-                        <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                        <p className="text-sm text-muted-foreground max-w-sm mx-auto">
                           {hasActiveFilters
                             ? "Try adjusting your search or filters"
                             : (emptyDescription ?? "No records to display")}
@@ -472,7 +645,7 @@ export function DataTable<TData, TValue>({
                           variant="outline"
                           size="sm"
                           onClick={clearFilters}
-                          className="mt-1"
+                          className="mt-2"
                         >
                           Clear filters
                         </Button>
@@ -487,9 +660,9 @@ export function DataTable<TData, TValue>({
 
         {/* Loading overlay */}
         {isLoading && (
-          <div className="absolute inset-0 bg-background/50 backdrop-blur-sm">
+          <div className="absolute inset-0 bg-background/60 backdrop-blur-sm">
             <div className="flex items-center justify-center h-full">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2.5 text-sm font-medium text-muted-foreground bg-card px-4 py-2.5 rounded-xl border shadow-sm">
                 <RefreshCw className="size-4 animate-spin" />
                 Loading data...
               </div>
@@ -501,9 +674,9 @@ export function DataTable<TData, TValue>({
       {/* Pagination */}
       {totalCount > 0 && (
         <>
-          <Separator />
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-muted-foreground">
+          <Separator className="bg-border/60" />
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-1">
+            <div className="text-sm font-medium text-muted-foreground">
               Page {page} of {pageCount}
             </div>
             <DataTablePagination
@@ -525,13 +698,13 @@ export function DataTable<TData, TValue>({
             transition={{ duration: 0.2 }}
             className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
           >
-            <div className="flex items-center gap-3 rounded-xl border bg-card px-4 py-2.5 shadow-lg">
-              <span className="text-sm font-medium whitespace-nowrap">
+            <div className="flex items-center gap-3 rounded-2xl border border-border/80 bg-card px-5 py-3 shadow-xl backdrop-blur-sm">
+              <span className="text-sm font-semibold whitespace-nowrap">
                 {selectedCount} selected
               </span>
               <Separator
                 orientation="vertical"
-                className="h-5"
+                className="h-6"
               />
               <div className="flex items-center gap-2">
                 {bulkActions.map((action) => {
@@ -545,6 +718,7 @@ export function DataTable<TData, TValue>({
                         action.onClick(selectedRows)
                         setRowSelection({})
                       }}
+                      className="h-9"
                     >
                       {ActionIcon && <ActionIcon className="size-4 mr-1.5" />}
                       {action.label}
@@ -555,10 +729,10 @@ export function DataTable<TData, TValue>({
               <Button
                 variant="ghost"
                 size="sm"
-                className="size-7 p-0"
+                className="size-8 p-0 ml-1"
                 onClick={() => setRowSelection({})}
               >
-                <X className="size-3.5" />
+                <X className="size-4" />
               </Button>
             </div>
           </motion.div>

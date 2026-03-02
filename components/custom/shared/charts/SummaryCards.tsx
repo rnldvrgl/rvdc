@@ -7,8 +7,6 @@ import { useGetSummary } from "@/lib/queries/analytics/useGetAnalytics"
 import { formatCurrency, formatNumber } from "@/lib/utils/helpers"
 import {
   AlertCircle,
-  Ban,
-  Calendar,
   CheckCircle2,
   Clock,
   DollarSign,
@@ -30,6 +28,7 @@ interface CardConfig {
     value: number
     label: string
   }
+  href?: string
 }
 
 type SummaryGroup = {
@@ -64,8 +63,9 @@ function buildCard(
   icon: LucideIcon,
   variant: "default" | "success" | "warning" | "danger" | "info",
   trend?: { value: number; label: string },
+  href?: string,
 ): CardConfig {
-  return { title, value, icon, variant, trend }
+  return { title, value, icon, variant, trend, href }
 }
 
 function getSummaryGroups(
@@ -88,6 +88,7 @@ function getSummaryGroups(
           DollarSign,
           "success",
           trend(data.total_revenue, prev?.total_revenue),
+          "/reports",
         ),
         buildCard(
           "Net Income",
@@ -95,6 +96,7 @@ function getSummaryGroups(
           TrendingUp,
           data.net_income >= 0 ? "success" : "danger",
           trend(data.net_income, prev?.net_income),
+          "/reports",
         ),
         buildCard(
           "Outstanding Receivables",
@@ -102,6 +104,7 @@ function getSummaryGroups(
           AlertCircle,
           data.total_outstanding > 50000 ? "warning" : "info",
           trend(data.total_outstanding, prev?.total_outstanding),
+          "/receivables/payment-collection",
         ),
         buildCard(
           "Total Expenses",
@@ -109,6 +112,7 @@ function getSummaryGroups(
           Receipt,
           "danger",
           trend(data.total_expense, prev?.total_expense),
+          "/expenses",
         ),
       ],
     },
@@ -121,6 +125,7 @@ function getSummaryGroups(
           Clock,
           "info",
           trend(data.active_services, prev?.active_services),
+          "/services",
         ),
         buildCard(
           "Service Completion Rate",
@@ -128,30 +133,7 @@ function getSummaryGroups(
           CheckCircle2,
           data.service_completion_rate >= 80 ? "success" : "warning",
           trend(data.service_completion_rate, prev?.service_completion_rate),
-        ),
-        buildCard(
-          "Today's Schedules",
-          `${data.pending_schedules} / ${data.today_schedules}`,
-          Calendar,
-          data.pending_schedules > 0 ? "warning" : "success",
-        ),
-        buildCard(
-          "Inventory Alerts",
-          <div className="space-y-1">
-            <div className="text-xl font-bold text-foreground">
-              {formatNumber(data.inventory_alerts)}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {formatNumber(data.no_stock_items)} out of stock,{" "}
-              {formatNumber(data.low_stock_items)} low stock
-            </div>
-          </div>,
-          Ban,
-          data.no_stock_items > 0
-            ? "danger"
-            : data.low_stock_items > 0
-              ? "warning"
-              : "success",
+          "/services",
         ),
       ],
     },
@@ -164,6 +146,7 @@ function getSummaryGroups(
           Users,
           "info",
           trend(data.total_clients, prev?.total_clients),
+          "/clients",
         ),
         buildCard(
           "New Clients",
@@ -171,6 +154,7 @@ function getSummaryGroups(
           UserPlus,
           "success",
           trend(data.new_clients, prev?.new_clients),
+          "/clients",
         ),
       ],
     },
@@ -236,15 +220,11 @@ const SummaryCards = () => {
                   <StatsCard
                     key={j}
                     title={card.title}
-                    value={
-                      typeof card.value === "string" ||
-                      typeof card.value === "number"
-                        ? card.value
-                        : "N/A"
-                    }
+                    value={card.value}
                     icon={card.icon}
                     variant={card.variant}
                     trend={card.trend}
+                    href={card.href}
                   />
                 ))}
               </div>

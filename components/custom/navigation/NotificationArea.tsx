@@ -11,6 +11,7 @@ import {
   Trash2,
   Truck,
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { useInView } from "react-intersection-observer"
 
@@ -39,7 +40,33 @@ const typeToIcon: Record<string, typeof Bell> = {
   transfer_created: Truck,
 }
 
+/** Group notifications by "Today", "Yesterday", "Older" */
+function groupByDate(notifications: Notification[]) {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today.getTime() - 86_400_000)
+
+  const groups: { label: string; items: Notification[] }[] = [
+    { label: "Today", items: [] },
+    { label: "Yesterday", items: [] },
+    { label: "Older", items: [] },
+  ]
+
+  for (const n of notifications) {
+    const created = new Date(n.created_at)
+    if (created >= today) {
+      groups[0].items.push(n)
+    } else if (created >= yesterday) {
+      groups[1].items.push(n)
+    } else {
+      groups[2].items.push(n)
+    }
+  }
+  return groups.filter((g) => g.items.length > 0)
+}
+
 const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [sheet, setSheet] = useState<{
     type: "expense_created" | "transfer_created"
@@ -68,6 +95,8 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
     [notifications],
   )
 
+  const grouped = useMemo(() => groupByDate(notifications), [notifications])
+
   const handleNotificationClick = (notif: Notification) => {
     switch (notif.type) {
       case "expense_created": {
@@ -75,7 +104,8 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
         if (typeof expenseId === "number") {
           setSheet({ type: "expense_created", id: expenseId })
         } else {
-          console.error("Missing or invalid expense_id", notif)
+          router.push("/expenses")
+          setOpen(false)
         }
         break
       }
@@ -85,13 +115,33 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
         if (typeof transferId === "number") {
           setSheet({ type: "transfer_created", id: transferId })
         } else {
-          console.error("Missing or invalid transfer_id", notif)
+          router.push("/inventory/stocks/stockroom")
+          setOpen(false)
         }
         break
       }
 
+      case "appointment_reminder": {
+        const serviceId = notif.data?.service_id
+        if (typeof serviceId === "number") {
+          router.push(`/services/${serviceId}`)
+        } else {
+          router.push("/services")
+        }
+        setOpen(false)
+        break
+      }
+
+      case "stock_low":
+      case "restock": {
+        router.push("/inventory/stocks/stockroom")
+        setOpen(false)
+        break
+      }
+
       default:
-        console.warn("Unhandled notification type:", notif.type)
+        router.push("/")
+        setOpen(false)
     }
   }
 
@@ -139,76 +189,90 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
 
           <DropdownMenuSeparator />
 
-          <div className="max-h-64 overflow-y-auto flex flex-col gap-1">
-            {notifications.length > 0 ? (
+          <div className="max-h-96 overflow-y-auto flex flex-col">
+            {grouped.length > 0 ? (
               <>
-                {notifications.map((n) => {
-                  const Icon = typeToIcon[n.type] ?? Bell
-                  return (
-                    <div
-                      key={n.id ?? `${n.summary}-${n.created_at}`}
-                      className={clsx(
-                        "flex items-center p-3 rounded-lg hover:bg-accent transition relative cursor-pointer",
-                        !n.is_read && "bg-muted/50",
-                      )}
-                      onClick={() => {
-                        handleNotificationClick(n)
-                        if (!n.is_read) {
-                          markAsRead.mutate(n.id)
-                        }
-                      }}
-                    >
-                      <div className="shrink-0">
-                        <Icon
-                          className={clsx(
-                            "size-5",
-                            n.type === "stock_low" &&
-                              "text-yellow-600 dark:text-yellow-400",
-                            n.type === "expense_created" &&
-                              "text-blue-600 dark:text-blue-400",
-                            n.type === "appointment_reminder" &&
-                              "text-green-600 dark:text-green-400",
-                            n.type === "restock" &&
-                              "text-purple-600 dark:text-purple-400",
-                            n.type === "transfer_created" &&
-                              "text-orange-600 dark:text-orange-400",
-                            !n.type && "text-muted-foreground",
-                          )}
-                        />
-                      </div>
-                      <div className="ml-3 grow">
-                        <p className="text-sm font-semibold">{n.summary}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {n.relative_time}
-                        </p>
-                      </div>
-                      {!n.is_read && (
-                        <span className="absolute top-1/2 right-2 inline-block size-2 rounded-full bg-destructive -translate-y-1/2" />
-                      )}
-                      <DataTableActions
-                        items={[
-                          ...(!n.is_read
-                            ? [
-                                {
-                                  label: "Mark as read",
-                                  icon: Check,
-                                  onClick: () => markAsRead.mutate(n.id),
-                                },
-                              ]
-                            : []),
-                          {
-                            label: "Delete",
-                            icon: Trash2,
-                            destructive: true,
-                            onClick: () => deleteNotification.mutate(n.id),
-                            confirmText: "Delete notification?",
-                            confirmDescription: "This cannot be undone.",
-                          },
-                        ]}
-                      />
+                {grouped.map((group) => (
+                  <div key={group.label}>
+                    <div className="sticky top-0 z-10 bg-popover px-3 py-1.5">
+                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        {group.label}
+                      </span>
                     </div>
-                  )
-                })}
+                    <div className="flex flex-col gap-1 px-1">
+                      {group.items.map((n) => {
+                        const Icon = typeToIcon[n.type] ?? Bell
+                        return (
+                          <div
+                            key={n.id ?? `${n.summary}-${n.created_at}`}
+                            className={clsx(
+                              "flex items-center p-3 rounded-lg hover:bg-accent transition relative cursor-pointer",
+                              !n.is_read && "bg-muted/50",
+                            )}
+                            onClick={() => {
+                              handleNotificationClick(n)
+                              if (!n.is_read) {
+                                markAsRead.mutate(n.id)
+                              }
+                            }}
+                          >
+                            <div className="shrink-0">
+                              <Icon
+                                className={clsx(
+                                  "size-5",
+                                  n.type === "stock_low" &&
+                                    "text-yellow-600 dark:text-yellow-400",
+                                  n.type === "expense_created" &&
+                                    "text-blue-600 dark:text-blue-400",
+                                  n.type === "appointment_reminder" &&
+                                    "text-green-600 dark:text-green-400",
+                                  n.type === "restock" &&
+                                    "text-purple-600 dark:text-purple-400",
+                                  n.type === "transfer_created" &&
+                                    "text-orange-600 dark:text-orange-400",
+                                  !n.type && "text-muted-foreground",
+                                )}
+                              />
+                            </div>
+                            <div className="ml-3 grow">
+                              <p className="text-sm font-semibold">
+                                {n.summary}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {n.relative_time}
+                              </p>
+                            </div>
+                            {!n.is_read && (
+                              <span className="absolute top-1/2 right-2 inline-block size-2 rounded-full bg-destructive -translate-y-1/2" />
+                            )}
+                            <DataTableActions
+                              items={[
+                                ...(!n.is_read
+                                  ? [
+                                      {
+                                        label: "Mark as read",
+                                        icon: Check,
+                                        onClick: () => markAsRead.mutate(n.id),
+                                      },
+                                    ]
+                                  : []),
+                                {
+                                  label: "Delete",
+                                  icon: Trash2,
+                                  destructive: true,
+                                  onClick: () =>
+                                    deleteNotification.mutate(n.id),
+                                  confirmText: "Delete notification?",
+                                  confirmDescription: "This cannot be undone.",
+                                },
+                              ]}
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
                 {hasNextPage && (
                   <div
                     ref={loadMoreRef}

@@ -465,8 +465,7 @@ export default function ServiceApplianceManager({
   // ─── Shared field updater ───────────────────────────────────────────────────
 
   const setField = (key: keyof ApplianceFormValues, value: unknown) =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setValue(key, value as any, { shouldValidate: true })
+    setValue(key, value as never, { shouldValidate: true })
 
   // ─── Render ─────────────────────────────────────────────────────────────────
 

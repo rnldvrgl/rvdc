@@ -153,6 +153,8 @@ export default function SalesTransactionsPage() {
             results: [],
           }
         }
+        enableExport
+        exportFileName="sales_transactions"
         defaultRangePreset="Today"
         filters={filters}
         orderingOptions={orderingOptions}
