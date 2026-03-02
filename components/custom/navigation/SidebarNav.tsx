@@ -20,14 +20,7 @@ import { cn, getDisplayImage } from "@/lib/utils/helpers"
 import { getToken } from "@/lib/utils/tokens"
 import { RemixiconComponentType } from "@remixicon/react"
 import { AnimatePresence, motion } from "framer-motion"
-import {
-  LogOutIcon,
-  LucideIcon,
-  Menu,
-  PanelLeftClose,
-  PanelLeftOpen,
-  X,
-} from "lucide-react"
+import { ChevronLeft, LogOutIcon, LucideIcon, Menu, X } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 
@@ -62,49 +55,82 @@ export default function SidebarNav({
   const displayImage = getDisplayImage(user?.profile_image)
   const hasCustomImage =
     user?.profile_image && !user.profile_image.includes("default_image")
-  const { collapsed, toggle } = useSidebarCollapse()
+  const { collapsed, setCollapsed, toggle } = useSidebarCollapse()
 
   const renderUserHeader = () => (
-    <div className="flex items-center justify-between rounded-lg bg-muted/60 dark:bg-muted/50 p-3 border border-border/50">
-      <AnimatePresence>
+    <div
+      className={cn(
+        "flex items-center shrink-0",
+        collapsed ? "justify-center" : "justify-between px-2",
+      )}
+    >
+      <AnimatePresence mode="wait">
         {user ? (
           <motion.div
             key="userLoaded"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.4 }}
-            className="flex items-center gap-3"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className={cn(
+              "flex items-center",
+              collapsed ? "justify-center" : "gap-3",
+            )}
           >
             {hasCustomImage ? (
               <Image
                 src={displayImage}
                 alt={`${user?.first_name} ${user?.last_name}`}
-                width={36}
-                height={36}
-                className="h-9 w-9 rounded-full object-cover border border-border"
+                width={collapsed ? 32 : 34}
+                height={collapsed ? 32 : 34}
+                className={cn(
+                  "rounded-full object-cover ring-2 ring-primary/10 shrink-0",
+                  collapsed ? "h-8 w-8" : "h-[34px] w-[34px]",
+                )}
               />
             ) : (
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold text-sm">
+              <div
+                className={cn(
+                  "flex items-center justify-center rounded-full bg-primary/10 text-primary font-semibold shrink-0",
+                  collapsed ? "h-8 w-8 text-xs" : "h-[34px] w-[34px] text-sm",
+                )}
+              >
                 {user?.first_name?.[0]?.toUpperCase()}
               </div>
             )}
             {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-muted-foreground">Welcome back</p>
-                <p className="text-sm font-semibold text-foreground truncate">
+              <motion.div
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.15, delay: 0.03 }}
+                className="flex-1 min-w-0"
+              >
+                <p className="text-[10px] text-muted-foreground/60 font-medium leading-tight">
+                  Welcome back
+                </p>
+                <p className="text-sm font-semibold text-foreground truncate leading-tight">
                   {user?.first_name}
                 </p>
-              </div>
+              </motion.div>
             )}
           </motion.div>
         ) : (
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-9 w-9 rounded-full" />
+          <div
+            className={cn(
+              "flex items-center",
+              collapsed ? "justify-center" : "gap-3",
+            )}
+          >
+            <Skeleton
+              className={cn(
+                "rounded-full shrink-0",
+                collapsed ? "h-8 w-8" : "h-[34px] w-[34px]",
+              )}
+            />
             {!collapsed && (
-              <div className="flex flex-col space-y-1">
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-2 w-14" />
                 <Skeleton className="h-3 w-20" />
-                <Skeleton className="h-3 w-24" />
               </div>
             )}
           </div>
@@ -112,16 +138,16 @@ export default function SidebarNav({
       </AnimatePresence>
 
       {!collapsed && (
-        <>
-          <ModeToggle />
+        <div className="flex items-center gap-0.5 shrink-0">
           <NotificationArea align="start" />
-        </>
+          <ModeToggle />
+        </div>
       )}
     </div>
   )
 
   const renderNav = (close?: () => void) => (
-    <div className="flex-1 flex flex-col space-y-6">
+    <div className="flex-1 flex flex-col space-y-3">
       {sections.length > 0 &&
         sections.map((section, i) =>
           section.items.length > 0 ? (
@@ -141,113 +167,176 @@ export default function SidebarNav({
   return (
     <TooltipProvider delayDuration={0}>
       {/* Large screens */}
-      <aside
-        className={cn(
-          "hidden lg:flex lg:inset-y-0 lg:z-50 lg:flex-col border-r bg-sidebar border-sidebar-border py-10 h-full overflow-y-auto transition-all duration-300",
-          collapsed ? "lg:w-[72px] px-2" : "lg:w-80 px-6",
-        )}
+      <motion.aside
+        animate={{ width: collapsed ? 64 : 288 }}
+        transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+        className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:flex-col bg-sidebar border-r border-sidebar-border/50 h-full relative"
       >
-        <div className="flex flex-col gap-y-8 w-full pb-4">
-          {renderUserHeader()}
-          {collapsed ? (
-            // Collapsed: icon-only nav with tooltips
-            <div className="flex flex-col items-center gap-1">
-              {sections
-                .flatMap((s) => s.items)
-                .map((item) => (
-                  <Tooltip key={item.name}>
-                    <TooltipTrigger asChild>
-                      {item.href ? (
-                        <a
-                          href={item.href}
-                          title={item.name}
-                          className={cn(
-                            "flex items-center justify-center size-10 rounded-lg transition-colors",
-                            activePath.startsWith(item.href)
-                              ? "bg-muted text-primary"
-                              : "text-muted-foreground hover:bg-muted hover:text-primary",
-                          )}
-                        >
-                          <item.icon className="size-5" />
-                        </a>
-                      ) : item.action ? (
-                        <button
-                          onClick={() => {
-                            onAction?.(item.action!)
-                          }}
-                          title={item.name}
-                          className="flex items-center justify-center size-10 rounded-lg text-muted-foreground hover:bg-muted hover:text-primary transition-colors"
-                        >
-                          <item.icon className="size-5" />
-                        </button>
-                      ) : item.children ? (
-                        // Parent with children: show first child or just the icon
-                        <div className="flex items-center justify-center size-10 rounded-lg text-muted-foreground hover:bg-muted hover:text-primary transition-colors cursor-pointer">
-                          <item.icon className="size-5" />
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center size-10 rounded-lg text-muted-foreground">
-                          <item.icon className="size-5" />
-                        </div>
-                      )}
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      <p>{item.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
-            </div>
-          ) : (
-            renderNav()
+        {/* Edge toggle button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={toggle}
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="absolute -right-3 top-7 z-10 flex size-6 items-center justify-center rounded-full border border-border/80 bg-background text-muted-foreground/80 hover:text-foreground hover:bg-muted shadow-sm transition-colors"
+            >
+              <motion.div
+                animate={{ rotate: collapsed ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center justify-center"
+              >
+                <ChevronLeft className="size-3" />
+              </motion.div>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent
+            side="right"
+            sideOffset={10}
+          >
+            <p>{collapsed ? "Expand" : "Collapse"}</p>
+          </TooltipContent>
+        </Tooltip>
+
+        {/* Content */}
+        <div
+          className={cn(
+            "flex flex-col h-full overflow-hidden transition-[padding] duration-200",
+            collapsed ? "px-2 py-4" : "px-3 py-4",
           )}
-        </div>
-        <div className="mt-auto space-y-4">
-          {collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
+        >
+          {/* User */}
+          {renderUserHeader()}
+
+          {/* Navigation */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden mt-4 min-h-0">
+            <AnimatePresence
+              mode="wait"
+              initial={false}
+            >
+              {collapsed ? (
+                <motion.div
+                  key="collapsed-nav"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                  className="flex flex-col items-center gap-0.5"
+                >
+                  {sections
+                    .flatMap((s) => s.items)
+                    .map((item) => (
+                      <Tooltip key={item.name}>
+                        <TooltipTrigger asChild>
+                          {item.href ? (
+                            <a
+                              href={item.href}
+                              title={item.name}
+                              className={cn(
+                                "flex items-center justify-center size-9 rounded-lg transition-all duration-150",
+                                activePath.startsWith(item.href)
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                              )}
+                            >
+                              <item.icon className="size-[18px]" />
+                            </a>
+                          ) : item.action ? (
+                            <button
+                              onClick={() => onAction?.(item.action!)}
+                              title={item.name}
+                              className="flex items-center justify-center size-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150"
+                            >
+                              <item.icon className="size-[18px]" />
+                            </button>
+                          ) : item.children ? (
+                            <button
+                              onClick={() => setCollapsed(false)}
+                              title={item.name}
+                              className={cn(
+                                "flex items-center justify-center size-9 rounded-lg transition-all duration-150 cursor-pointer",
+                                item.children.some(
+                                  (c) =>
+                                    c.href && activePath.startsWith(c.href),
+                                )
+                                  ? "bg-primary/10 text-primary"
+                                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                              )}
+                            >
+                              <item.icon className="size-[18px]" />
+                            </button>
+                          ) : (
+                            <div className="flex items-center justify-center size-9 rounded-lg text-muted-foreground">
+                              <item.icon className="size-[18px]" />
+                            </div>
+                          )}
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="right"
+                          sideOffset={8}
+                        >
+                          <p>{item.name}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ))}
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="expanded-nav"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.12 }}
+                >
+                  {renderNav()}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Bottom actions */}
+          <div className="shrink-0 pt-2">
+            {collapsed ? (
+              <div className="flex flex-col items-center gap-0.5">
+                <ModeToggle />
+                <NotificationArea align="start" />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => logout.mutateAsync(refresh)}
+                      title="Sign out"
+                      className="flex items-center justify-center size-9 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-150"
+                    >
+                      <LogOutIcon className="size-[18px]" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="right"
+                    sideOffset={8}
+                  >
+                    <p>Sign out</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
                 <Button
-                  variant="default"
-                  size="icon"
-                  className="w-full"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8"
                   onClick={() => logout.mutateAsync(refresh)}
                 >
-                  <LogOutIcon className="size-4" />
+                  <LogOutIcon className="size-3.5" />
+                  <span className="ml-2 text-xs">Sign out</span>
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <p>Sign out</p>
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <>
-              <Button
-                variant="default"
-                className="w-full"
-                onClick={() => logout.mutateAsync(refresh)}
-              >
-                <LogOutIcon />
-                Signout
-              </Button>
-              <DeveloperCredit
-                variant="subtle"
-                size="sm"
-              />
-            </>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-full"
-            onClick={toggle}
-          >
-            {collapsed ? (
-              <PanelLeftOpen className="size-4" />
-            ) : (
-              <PanelLeftClose className="size-4" />
+                <DeveloperCredit
+                  variant="subtle"
+                  size="sm"
+                />
+              </div>
             )}
-          </Button>
+          </div>
         </div>
-      </aside>
+      </motion.aside>
 
       {/* Small screens - Full screen mobile menu */}
       <div className="lg:hidden flex h-16 items-center justify-between bg-sidebar border-b border-sidebar-border px-6">

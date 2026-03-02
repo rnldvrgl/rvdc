@@ -1,12 +1,12 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { NavItem, NavListItem } from '@/lib/constants/types'
-import { getLinkClasses } from '@/lib/utils/helpers'
-import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronRight } from 'lucide-react'
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { Button } from "@/components/ui/button"
+import { NavItem, NavListItem } from "@/lib/constants/types"
+import { getLinkClasses } from "@/lib/utils/helpers"
+import { AnimatePresence, motion } from "framer-motion"
+import { ChevronRight } from "lucide-react"
+import Link from "next/link"
+import { useEffect, useState } from "react"
 
 export default function NavList({
   items,
@@ -25,7 +25,7 @@ export default function NavList({
       for (const item of items) {
         if (
           item.children?.some((child) =>
-            activePath.startsWith(child.href ?? ''),
+            activePath.startsWith(child.href ?? ""),
           )
         ) {
           newOpenMenus[item.name] = true
@@ -54,18 +54,18 @@ export default function NavList({
   return (
     <>
       {title && level === 0 && (
-        <p className="mb-2 px-3 text-xs font-semibold text-muted-foreground">
+        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
           {title}
         </p>
       )}
-      <ul className="space-y-1">
+      <ul className="space-y-0.5">
         {items.map((item) => {
           const isOpen = openMenus[item.name]
           const isParent = !!item.children
           const isActive =
             (item.href && activePath.startsWith(item.href)) ||
             isChildActive(item)
-          const paddingLeft = `${level * 1.5 + 1}rem`
+          const paddingLeft = `${level * 1.25 + 0.75}rem`
 
           let content
 
@@ -92,7 +92,7 @@ export default function NavList({
                 }}
                 variant="ghost"
                 style={{ paddingLeft }}
-                className="w-full justify-start hover:bg-muted hover:text-primary text-muted-foreground focus:outline-none focus:ring-0"
+                className="w-full justify-start rounded-lg hover:bg-muted hover:text-foreground text-muted-foreground transition-all duration-150 focus:outline-none focus:ring-0"
               >
                 <item.icon className="size-4" />
                 <span className="ml-2">{item.name}</span>
@@ -105,17 +105,17 @@ export default function NavList({
                 variant="ghost"
                 onClick={() => toggleMenu(item.name)}
                 style={{ paddingLeft }}
-                className={`flex items-center w-full justify-between group
-                  text-sm font-medium transition-colors
-                  text-muted-foreground hover:bg-muted hover:text-primary
-                  ${isActive ? 'text-primary bg-muted' : ''}
+                className={`flex items-center w-full justify-between group rounded-lg
+                  text-sm font-medium transition-all duration-150
+                  text-muted-foreground hover:bg-muted hover:text-foreground
+                  ${isActive ? "text-primary bg-primary/10" : ""}
                   focus:outline-none focus:ring-0
                 `}
               >
                 <div className="flex items-center gap-x-3">
                   <item.icon
                     className={`size-4 transition-colors 
-                      ${isActive ? 'text-primary' : 'text-muted-foreground'}
+                      ${isActive ? "text-primary" : "text-muted-foreground"}
                       group-hover:text-primary`}
                   />
                   <span className="ml-2">{item.name}</span>
@@ -132,10 +132,7 @@ export default function NavList({
           }
 
           return (
-            <li
-              key={item.name}
-              className="mt-2"
-            >
+            <li key={item.name}>
               {content}
 
               {isParent && (
@@ -143,9 +140,9 @@ export default function NavList({
                   {isOpen && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
+                      animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: 'easeInOut' }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
                       <NavList

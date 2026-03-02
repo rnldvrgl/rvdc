@@ -56,11 +56,11 @@ export const focusRing = [
 export const concatString = (...args: string[]) => args.join(" ")
 
 export function getLinkClasses(active: boolean) {
-  return `flex items-center gap-x-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
+  return `flex items-center gap-x-3 rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-150
     ${
       active
-        ? "bg-muted text-primary"
-        : "hover:bg-muted hover:text-primary text-muted-foreground"
+        ? "bg-primary/10 text-primary"
+        : "text-muted-foreground hover:bg-muted hover:text-foreground"
     }
 `
 }
