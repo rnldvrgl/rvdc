@@ -1,6 +1,6 @@
 import { showPrintDelayToast } from '@/components/custom/shared/PrintDelayToast'
 import { useCallback, useRef, useState } from 'react'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import { useReactToPrint } from 'react-to-print'
 
 interface UsePrintOptions<T> {

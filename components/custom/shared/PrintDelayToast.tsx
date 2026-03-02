@@ -1,16 +1,16 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Clock } from 'lucide-react' // optional: add icon for context
+import { Clock } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Toast, toast } from 'react-hot-toast'
+import { toast } from 'sonner'
 
 interface CountdownToastProps {
-  t: Toast
+  toastId: string | number
   delay: number
   onCancel: () => void
 }
 
-const CountdownToast = ({ t, delay, onCancel }: CountdownToastProps) => {
+const CountdownToast = ({ toastId, delay, onCancel }: CountdownToastProps) => {
   const [remaining, setRemaining] = useState(delay / 1000)
 
   useEffect(() => {
@@ -43,7 +43,7 @@ const CountdownToast = ({ t, delay, onCancel }: CountdownToastProps) => {
         <div className="flex justify-end mt-1">
           <Button
             onClick={() => {
-              toast.dismiss(t.id)
+              toast.dismiss(toastId)
               onCancel()
             }}
             variant="destructive"
@@ -59,9 +59,9 @@ const CountdownToast = ({ t, delay, onCancel }: CountdownToastProps) => {
 
 export const showPrintDelayToast = (delay: number, onCancel: () => void) => {
   const toastId = toast.custom(
-    (t) => (
+    (id) => (
       <CountdownToast
-        t={t}
+        toastId={id}
         delay={delay}
         onCancel={onCancel}
       />

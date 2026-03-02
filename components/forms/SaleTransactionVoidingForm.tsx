@@ -15,7 +15,7 @@ import { SalesTransaction } from '@/lib/constants/interface'
 import { useSalesTransactionMutations } from '@/lib/mutations/useSalesTransactionMutations'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
 const voidSchema = z.object({
