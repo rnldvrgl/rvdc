@@ -196,7 +196,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: "manage_aircon_units",
       },
       {
-        name: "Warranty Claims",
+        name: "Warranty & Cleaning",
         href: "/warranty-claims",
         icon: ShieldCheck,
         permission: "view_warranty_claims",

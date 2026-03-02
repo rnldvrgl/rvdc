@@ -8,8 +8,23 @@ import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import ServiceForm from "@/components/forms/ServiceForm"
 import ServiceDetail from "@/components/services/ServiceDetail"
+import ServiceKanbanBoard from "@/components/services/ServiceKanbanBoard"
 import { Button } from "@/components/ui/button"
-import { Service } from "@/lib/constants/interface"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { Service, ServiceStatus } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
@@ -20,13 +35,16 @@ import {
   useServiceFilters,
   useServices,
 } from "@/lib/queries/services/useServices"
-import { Plus, Wrench } from "lucide-react"
+import { Kanban, List, Plus, Wrench } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
+
+type ViewMode = "table" | "kanban"
 
 export default function ServicesPage() {
   const { role } = useCurrentUser()
   const canAddService = role === "admin" || role === "manager"
+  const [viewMode, setViewMode] = useState<ViewMode>("table")
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -35,6 +53,18 @@ export default function ServicesPage() {
   const [serviceToComplete, setServiceToComplete] = useState<Service | null>(
     null,
   )
+
+  // Cancel dialog state (for drag-to-cancel and inline cancel)
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState("")
+  const [serviceToCancel, setServiceToCancel] = useState<Service | null>(null)
+
+  // Status change state (for confirming transitions)
+  const [statusChangeDialogOpen, setStatusChangeDialogOpen] = useState(false)
+  const [statusChangeTarget, setStatusChangeTarget] = useState<{
+    service: Service
+    newStatus: string
+  } | null>(null)
 
   // Search params
   const { filter, ordering, search, page, limit } = useSearchParameters()
@@ -55,7 +85,8 @@ export default function ServicesPage() {
   const { filters: filterDefs, orderingOptions } = useServiceFilters()
 
   // Mutations
-  const { deleteService, completeService } = useServiceMutations()
+  const { deleteService, completeService, cancelService, updateService } =
+    useServiceMutations()
 
   // Entity sheet for create/edit
   const { entityState, openEntity, closeEntity } = useEntitySheet<Service>()
@@ -99,12 +130,81 @@ export default function ServicesPage() {
     if (serviceToComplete) {
       completeService.mutate(serviceToComplete.id, {
         onSuccess: () => {
-          toast.success("Service completed successfully!")
           setCompleteDialogOpen(false)
           setServiceToComplete(null)
+          refetch()
         },
       })
     }
+  }
+
+  // ── Status change handler (from both table inline buttons & kanban drag) ──
+  const handleStatusChange = (service: Service, newStatus: string) => {
+    if (newStatus === "cancelled") {
+      // Need cancel reason dialog
+      setServiceToCancel(service)
+      setCancelReason("")
+      setCancelDialogOpen(true)
+      return
+    }
+
+    if (newStatus === "completed") {
+      // Use existing complete flow
+      handleComplete(service)
+      return
+    }
+
+    if (newStatus === "in_progress") {
+      // Confirm start progress
+      setStatusChangeTarget({ service, newStatus })
+      setStatusChangeDialogOpen(true)
+      return
+    }
+  }
+
+  const confirmStatusChange = () => {
+    if (!statusChangeTarget) return
+
+    const { service, newStatus } = statusChangeTarget
+
+    updateService.mutate(
+      { id: service.id, data: { status: newStatus as ServiceStatus } },
+      {
+        onSuccess: () => {
+          setStatusChangeDialogOpen(false)
+          setStatusChangeTarget(null)
+          refetch()
+        },
+        onError: () => {
+          toast.error("Failed to update service status")
+          setStatusChangeDialogOpen(false)
+          setStatusChangeTarget(null)
+        },
+      },
+    )
+  }
+
+  const confirmCancel = () => {
+    if (!serviceToCancel) return
+    if (!cancelReason.trim()) {
+      toast.error("Please provide a reason for cancellation")
+      return
+    }
+
+    cancelService.mutate(
+      { id: serviceToCancel.id, reason: cancelReason },
+      {
+        onSuccess: () => {
+          setCancelDialogOpen(false)
+          setServiceToCancel(null)
+          setCancelReason("")
+          refetch()
+        },
+        onError: () => {
+          toast.error("Failed to cancel service")
+        },
+      },
+    )
   }
 
   const columns = getServiceColumns({
@@ -113,6 +213,7 @@ export default function ServicesPage() {
     onEdit: handleEdit,
     onDelete: handleDelete,
     onComplete: handleComplete,
+    onStatusChange: handleStatusChange,
   })
 
   return (
@@ -122,38 +223,77 @@ export default function ServicesPage() {
         title="Services"
         description="Manage repair, installation, and maintenance services"
         actionButton={
-          canAddService && (
-            <Button
-              onClick={() => openEntity()}
-              size="sm"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              New Service
-            </Button>
-          )
+          <div className="flex items-center gap-2">
+            {/* View toggle */}
+            <div className="flex items-center rounded-lg border bg-muted p-0.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={viewMode === "table" ? "default" : "ghost"}
+                    aria-label="Table view"
+                    onClick={() => setViewMode("table")}
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Table view</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={viewMode === "kanban" ? "default" : "ghost"}
+                    aria-label="Kanban board view"
+                    onClick={() => setViewMode("kanban")}
+                  >
+                    <Kanban className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Kanban board</TooltipContent>
+              </Tooltip>
+            </div>
+
+            {canAddService && (
+              <Button
+                onClick={() => openEntity()}
+                size="sm"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Service
+              </Button>
+            )}
+          </div>
         }
         onRefresh={refetch}
       />
 
-      <DataTable<Service, unknown>
-        columns={columns}
-        data={
-          services ??
-          ({
-            count: 0,
-            next: null,
-            previous: null,
-            results: [],
-          } as PaginatedResult<Service>)
-        }
-        isLoading={isLoading}
-        filters={filterDefs ?? []}
-        orderingOptions={orderingOptions ?? []}
-      />
+      {/* Conditional view rendering */}
+      {viewMode === "table" ? (
+        <DataTable<Service, unknown>
+          columns={columns}
+          data={
+            services ??
+            ({
+              count: 0,
+              next: null,
+              previous: null,
+              results: [],
+            } as PaginatedResult<Service>)
+          }
+          isLoading={isLoading}
+          filters={filterDefs ?? []}
+          orderingOptions={orderingOptions ?? []}
+        />
+      ) : (
+        <ServiceKanbanBoard
+          services={services?.results ?? []}
+          onView={handleView}
+          onStatusChange={handleStatusChange}
+        />
+      )}
 
       {/* Create/Edit Sheet */}
       <EntitySheet
-        className="sm:min-w-2xl md:minx-w-3xl xl:min-w-3xl"
+        className="sm:min-w-2xl md:min-w-3xl xl:min-w-4xl"
         open={entityState.open}
         onClose={closeEntity}
         title={entityState.entity ? "Edit Service" : "Create New Service"}
@@ -177,7 +317,7 @@ export default function ServicesPage() {
       {detailsOpen && selectedService && (
         <EntitySheet
           withCloseConfirmation
-          className="sm:min-w-2xl md:minx-w-3xl xl:min-w-3xl"
+          className="sm:min-w-4xl md:min-w-5xl xl:min-w-6xl"
           open={detailsOpen}
           onClose={() => {
             setDetailsOpen(false)
@@ -228,6 +368,71 @@ export default function ServicesPage() {
         onConfirm={confirmComplete}
         confirmText="Complete"
       />
+
+      {/* Status Change Confirmation Dialog (for pending → in_progress) */}
+      <ConfirmDialog
+        open={statusChangeDialogOpen}
+        onCancel={() => {
+          setStatusChangeDialogOpen(false)
+          setStatusChangeTarget(null)
+        }}
+        title="Start Service"
+        description={
+          statusChangeTarget
+            ? `Move service #${statusChangeTarget.service.id} to "In Progress"? This indicates work has started.`
+            : ""
+        }
+        onConfirm={confirmStatusChange}
+        confirmText="Start Progress"
+      />
+
+      {/* Cancel Service Dialog (with reason) */}
+      <Dialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Service</DialogTitle>
+            <DialogDescription>
+              {serviceToCancel
+                ? `Cancel service #${serviceToCancel.id}? Please provide a reason.`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label htmlFor="cancel-reason">Cancellation Reason</Label>
+              <Textarea
+                id="cancel-reason"
+                placeholder="Enter the reason for cancellation..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCancelDialogOpen(false)
+                  setServiceToCancel(null)
+                  setCancelReason("")
+                }}
+              >
+                Keep Service
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={confirmCancel}
+                disabled={!cancelReason.trim()}
+              >
+                Cancel Service
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Wrapper>
   )
 }

@@ -156,6 +156,25 @@ export default function ServiceForm({
       ? serviceModeOptions.filter((mode) => mode.value === "carry_in")
       : serviceModeOptions
 
+  // Filter status options based on service type
+  // For installation services, only show: Pending, Completed, Cancelled
+  const availableStatusOptions =
+    selectedServiceType === "installation"
+      ? serviceStatusOptions.filter((status) =>
+          ["pending", "completed", "cancelled"].includes(status.value),
+        )
+      : serviceStatusOptions
+
+  // Set default installation mode for installation service type
+  useEffect(() => {
+    if (
+      selectedServiceType === "installation" &&
+      selectedMode !== "home_service"
+    ) {
+      form.setValue("service_mode", "home_service")
+    }
+  }, [selectedServiceType, selectedMode, form])
+
   // Auto-fill client address and contact when client is selected
   useEffect(() => {
     if (selectedClient && !initialData) {
@@ -354,7 +373,7 @@ export default function ServiceForm({
               <FormItem>
                 <FormLabel>Status</FormLabel>
                 <ComboBox
-                  options={serviceStatusOptions}
+                  options={availableStatusOptions}
                   value={field.value ?? null}
                   onChange={field.onChange}
                   placeholder="Select status"

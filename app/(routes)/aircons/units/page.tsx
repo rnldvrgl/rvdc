@@ -1,11 +1,13 @@
 "use client"
 
 import { getAirconUnitsColumns } from "@/app/(routes)/aircons/units/columns"
+import { AirconUnitDetails } from "@/components/aircons/AirconUnitDetails"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import AirconUnitForm from "@/components/forms/installations/AirconUnitForm"
+import ScheduleInstallationForm from "@/components/forms/installations/ScheduleInstallationForm"
 import { Button } from "@/components/ui/button"
 import { AirconUnits } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -13,7 +15,7 @@ import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useAirconUnitMutations } from "@/lib/mutations/installations/useAirconUnitMutations"
 import { useAirconUnitFilters, useAirconUnits } from "@/lib/queries/useAircons"
-import { Eye, Plus, Snowflake } from "lucide-react"
+import { Plus, Snowflake } from "lucide-react"
 
 export default function AirconUnitsPage() {
   const { isAdmin } = useCurrentUser()
@@ -49,6 +51,13 @@ export default function AirconUnitsPage() {
     closeEntity: closeViewSheet,
   } = useEntitySheet<AirconUnits>()
 
+  // Install sheet
+  const {
+    entityState: { open: installOpen, entity: installEntity },
+    openEntity: openInstallSheet,
+    closeEntity: closeInstallSheet,
+  } = useEntitySheet<AirconUnits>()
+
   const handleDelete = (unit: AirconUnits) => {
     if (unit.id !== undefined) {
       deleteUnit.mutate(unit.id)
@@ -59,10 +68,15 @@ export default function AirconUnitsPage() {
     openViewSheet(unit)
   }
 
+  const handleInstall = (unit: AirconUnits) => {
+    openInstallSheet(unit)
+  }
+
   const columns = getAirconUnitsColumns({
     onEdit: openEditSheet,
     onDelete: handleDelete,
     onView: handleView,
+    onInstall: handleInstall,
   })
 
   return (
@@ -90,71 +104,12 @@ export default function AirconUnitsPage() {
         description="View detailed information about this aircon unit."
         renderForm={({ onClose, entity }) =>
           entity ? (
-            <div className="space-y-6 p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Indoor Serial Number
-                  </label>
-                  <p className="text-base font-medium font-mono bg-muted px-2 py-1 rounded">
-                    {entity.serial_number || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Outdoor Serial Number
-                  </label>
-                  <p className="text-base font-medium font-mono bg-muted px-2 py-1 rounded">
-                    {entity.outdoor_serial_number || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Model
-                  </label>
-                  <p className="text-base font-medium">
-                    {entity.model?.name || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Brand
-                  </label>
-                  <p className="text-base font-medium">
-                    {entity.model?.brand?.name || "N/A"}
-                  </p>
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Created Date
-                  </label>
-                  <p className="text-base font-medium">
-                    {entity.created_at
-                      ? new Date(entity.created_at).toLocaleDateString()
-                      : "N/A"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                >
-                  Close
-                </Button>
-                {isAdmin && (
-                  <Button
-                    onClick={() => {
-                      onClose()
-                      openEditSheet(entity)
-                    }}
-                  >
-                    <Eye className="size-4 mr-2" />
-                    Edit Unit
-                  </Button>
-                )}
-              </div>
-            </div>
+            <AirconUnitDetails
+              unit={entity}
+              onClose={onClose}
+              onEdit={openEditSheet}
+              showEditButton={isAdmin}
+            />
           ) : null
         }
       />
@@ -183,6 +138,26 @@ export default function AirconUnitsPage() {
         description="Fill out the form below to add a new aircon unit."
         withCloseConfirmation
         renderForm={({ forceClose }) => <AirconUnitForm onClose={forceClose} />}
+      />
+
+      {/* Schedule Installation Sheet */}
+      <EntitySheet<AirconUnits>
+        open={installOpen}
+        onClose={closeInstallSheet}
+        entity={installEntity}
+        title="Schedule Installation"
+        description="Create an installation service for this unit."
+        withCloseConfirmation
+        renderForm={({ forceClose, entity }) =>
+          entity ? (
+            <ScheduleInstallationForm
+              unitId={entity.id}
+              unitSerialNumber={entity.serial_number}
+              isUnitSold={entity.is_sold || false}
+              onClose={forceClose}
+            />
+          ) : null
+        }
       />
 
       {/* Main Content */}

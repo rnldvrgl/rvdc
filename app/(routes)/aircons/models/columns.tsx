@@ -7,16 +7,15 @@ import {
   capitalize,
   formatCurrency,
   getBadgeVariant,
-  getBoolBadgeVariant,
   safeCell,
 } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, Percent, Trash2 } from "lucide-react"
+import { Edit, Eye, Trash2 } from "lucide-react"
 
 export function getAirconModelColumns({
   onEdit,
   onDelete,
-  onCustomAction,
+  onView,
 }: GetColumnsProps<AirconModels>): ColumnDef<AirconModels>[] {
   return [
     {
@@ -69,19 +68,6 @@ export function getAirconModelColumns({
       },
     },
     {
-      accessorKey: "has_discount",
-      header: "Has Discount",
-      cell: ({ row }) => (
-        <Badge
-          variant={getBoolBadgeVariant({
-            status: row.original.has_discount ?? false,
-          })}
-        >
-          {row.original.has_discount ? "Yes" : "No"}
-        </Badge>
-      ),
-    },
-    {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
@@ -90,16 +76,14 @@ export function getAirconModelColumns({
           <DataTableActions
             items={[
               {
+                label: "View",
+                icon: Eye,
+                onClick: () => onView?.(model),
+              },
+              {
                 label: "Edit",
                 icon: Edit,
                 onClick: () => onEdit(model),
-              },
-              {
-                label: model.discount_percentage
-                  ? "Update Promo Discount"
-                  : "Add Promo Discount",
-                icon: Percent,
-                onClick: () => onCustomAction?.(model),
               },
               {
                 label: "Delete",

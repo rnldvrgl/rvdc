@@ -672,6 +672,20 @@ export interface AirconBrands {
   name: string
 }
 
+export interface ModelPriceHistory {
+  id: number
+  aircon_model: number
+  retail_price: string
+  discount_percentage: string
+  old_retail_price?: string | null
+  old_discount_percentage?: string | null
+  effective_price: string
+  price_change_amount?: string | null
+  change_type: "initial" | "price" | "discount" | "price_and_discount"
+  notes: string
+  changed_at: string
+}
+
 export interface AirconModels {
   id: number
   brand?: AirconBrands
@@ -680,8 +694,15 @@ export interface AirconModels {
   retail_price: string
   discount_percentage?: string
   aircon_type: AirconTypes
+  horsepower?: string
   is_inverter: boolean
   has_discount?: boolean
+  promo_price?: string
+  parts_warranty_months?: number
+  labor_warranty_months?: number
+  parts_warranty_years?: number
+  labor_warranty_years?: number
+  price_history?: ModelPriceHistory[]
 }
 
 // Response type
@@ -691,17 +712,33 @@ export interface AirconUnits {
   serial_number: string
   outdoor_serial_number?: string | null
   sale?: number | null
-  installation?: number | null
+  installation_service?: number | null
   reserved_by?: Client | null
   reserved_at?: string | null
   warranty_start_date?: string | null
   warranty_period_months?: number
   free_cleaning_redeemed?: boolean
+  is_sold?: boolean
   warranty_end_date?: string
   warranty_status?: string
   warranty_days_left?: number
+  parts_warranty_end_date?: string | null
+  labor_warranty_end_date?: string | null
+  parts_warranty_days_left?: number
+  labor_warranty_days_left?: number
+  parts_warranty_status?: string
+  labor_warranty_status?: string
+  free_cleaning_status?: string
+  free_cleaning_service?: number | null
+  free_cleaning_redemption_date?: string | null
+  free_cleaning_service_id?: number | null
   is_reserved?: boolean
   is_available_for_sale?: boolean
+  unit_status?: string
+  sale_price?: string
+  client_name?: string | null
+  sold_date?: string | null
+  installed_date?: string | null
   created_at?: string
 }
 
@@ -710,8 +747,9 @@ export type AirconUnitPayload = {
   serial_number: string
   outdoor_serial_number?: string
   model_id: number
+  warranty_period_months?: number
   sale?: number | null
-  installation?: number | null
+  installation_service?: number | null
   reserved_by?: number | null
   free_cleaning_redeemed?: boolean
 }
@@ -738,6 +776,8 @@ export type ApplianceStatus =
   | "completed"
   | "ready_for_pickup"
   | "delivered"
+  | "reserved"
+  | "installed"
 export type AssignmentType = "repair" | "pickup" | "delivery" | "inspect"
 
 // Appliance Type
@@ -753,6 +793,7 @@ export interface ServiceAppliance {
   appliance_type: ApplianceType | null
   brand?: string
   model?: string
+  serial_number?: string
   issue_reported?: string
   diagnosis_notes?: string
   status: ApplianceStatus
@@ -764,8 +805,18 @@ export interface ServiceAppliance {
   labor_discount_amount?: string
   labor_discount_percentage?: string
   labor_discount_reason?: string
+  unit_price?: string | null
+  labor_warranty_months?: number
+  unit_warranty_months?: number
+  warranty_notes?: string
+  warranty_start_date?: string
+  labor_warranty_end_date?: string
+  unit_warranty_end_date?: string
+  is_labor_warranty_active?: boolean
+  is_unit_warranty_active?: boolean
   discounted_labor_fee?: string
   items_used?: ApplianceItemUsed[]
+  technician_assignments?: TechnicianAssignment[]
   total_parts_cost?: string
 }
 
@@ -774,6 +825,7 @@ export interface ServiceAppliancePayload {
   appliance_type_id: number | null
   brand?: string
   model?: string
+  serial_number?: string
   issue_reported?: string
   diagnosis_notes?: string
   status?: ApplianceStatus
@@ -784,6 +836,16 @@ export interface ServiceAppliancePayload {
   labor_discount_amount?: number
   labor_discount_percentage?: number
   labor_discount_reason?: string
+  unit_price?: number | null
+  labor_warranty_months?: number
+  unit_warranty_months?: number
+  warranty_notes?: string
+  // Aircon installation data (optional, only for installation services)
+  aircon_installation_data?: {
+    unit_type: "brand_new" | "second_hand"
+    unit_id?: number
+    unit_price?: number | null
+  }
 }
 
 // Appliance Item Used
@@ -936,8 +998,16 @@ export interface Service {
   is_complementary?: boolean
   complementary_reason?: string
   appliances?: ServiceAppliance[]
+  installation_units?: AirconUnits[]
   technician_assignments?: TechnicianAssignment[]
   payments?: ServicePayment[]
+  next_schedule?: {
+    id: number
+    schedule_type: string
+    scheduled_date: string
+    scheduled_time: string | null
+    status: string
+  } | null
 }
 
 export interface ServicePayload {
@@ -970,7 +1040,9 @@ export interface ServicePayload {
 export interface AirconInstallation {
   id: number
   service: number
+  aircon_unit?: AirconUnits[]
   notes?: string
+  installation_fee?: number
   created_at: string
   updated_at: string
 }
@@ -978,6 +1050,24 @@ export interface AirconInstallation {
 export interface AirconInstallationPayload {
   service: number
   notes?: string
+}
+
+export interface AirconInstallationCreatePayload {
+  unit_id: number
+  client_id?: number
+  scheduled_date?: string
+  scheduled_time?: string
+  labor_fee?: number
+  labor_is_free?: boolean
+  sell_unit_now?: boolean
+  payment_type?: "cash" | "gcash" | "credit" | "debit" | "cheque"
+}
+
+export interface AirconInstallationCreateResponse {
+  service_id: number
+  installation_id: number
+  unit_id: number
+  appliance_id: number
 }
 
 // Warranty Claim
@@ -992,15 +1082,20 @@ export type ClaimType = "repair" | "replacement" | "parts" | "inspection"
 
 export interface WarrantyClaim {
   id: number
-  unit: AirconUnits
+  unit: number
+  unit_serial_number?: string
+  unit_model_name?: string
+  client_name?: string
   service?: number | null
+  service_id?: number | null
   claim_type: ClaimType
   status: ClaimStatus
   issue_description: string
   customer_notes?: string
   technician_assessment?: string
   is_valid_claim: boolean
-  reviewed_by?: User | null
+  reviewed_by?: number | null
+  reviewed_by_name?: string
   reviewed_at?: string
   rejection_reason?: string
   estimated_cost: string
@@ -1012,6 +1107,13 @@ export interface WarrantyClaim {
   is_pending?: boolean
   is_approved?: boolean
   warranty_days_remaining_at_claim?: number
+}
+
+export interface WarrantyClaimCreatePayload {
+  unit_id: number
+  claim_type: ClaimType
+  issue_description: string
+  customer_notes?: string
 }
 
 export interface WarrantyClaimPayload {
@@ -1029,6 +1131,21 @@ export interface WarrantyClaimPayload {
   actual_cost?: number
   claim_date?: string
   completed_at?: string
+}
+
+export interface FreeCleaningRedemptionPayload {
+  unit_id: number
+  scheduled_date?: string
+  scheduled_time?: string
+  technician_ids?: number[]
+}
+
+export interface FreeCleaningBatchPayload {
+  client_id: number
+  unit_ids: number[]
+  scheduled_date?: string
+  scheduled_time?: string
+  technician_ids?: number[]
 }
 
 // Schedule

@@ -282,7 +282,7 @@ export default function PayrollSettingsPage() {
                             type="number"
                             min={0}
                             max={60}
-                            {...field}
+                            value={field.value ?? ""}
                             onChange={(e) =>
                               field.onChange(Number(e.target.value || 0))
                             }
@@ -308,7 +308,7 @@ export default function PayrollSettingsPage() {
                             type="number"
                             min={0}
                             max={60}
-                            {...field}
+                            value={field.value ?? ""}
                             onChange={(e) =>
                               field.onChange(Number(e.target.value || 0))
                             }
@@ -413,7 +413,7 @@ export default function PayrollSettingsPage() {
                             step="0.01"
                             min={1}
                             max={5}
-                            {...field}
+                            value={field.value ?? ""}
                             onChange={(e) =>
                               field.onChange(Number(e.target.value))
                             }
@@ -440,7 +440,7 @@ export default function PayrollSettingsPage() {
                             step="0.01"
                             min={0}
                             max={1}
-                            {...field}
+                            value={field.value ?? ""}
                             onChange={(e) =>
                               field.onChange(Number(e.target.value))
                             }
@@ -478,7 +478,7 @@ export default function PayrollSettingsPage() {
                             type="number"
                             step="0.01"
                             min={0}
-                            {...field}
+                            value={field.value ?? ""}
                             onChange={(e) =>
                               field.onChange(Number(e.target.value || 0))
                             }
@@ -541,7 +541,7 @@ export default function PayrollSettingsPage() {
                           step="0.25"
                           min={1}
                           max={12}
-                          {...field}
+                          value={field.value ?? ""}
                           onChange={(e) =>
                             field.onChange(Number(e.target.value || 0))
                           }
@@ -568,7 +568,7 @@ export default function PayrollSettingsPage() {
                           step="0.01"
                           min={0}
                           max={5}
-                          {...field}
+                          value={field.value ?? ""}
                           onChange={(e) =>
                             field.onChange(Number(e.target.value))
                           }
@@ -594,7 +594,7 @@ export default function PayrollSettingsPage() {
                           step="0.01"
                           min={0}
                           max={2}
-                          {...field}
+                          value={field.value ?? ""}
                           onChange={(e) =>
                             field.onChange(Number(e.target.value))
                           }

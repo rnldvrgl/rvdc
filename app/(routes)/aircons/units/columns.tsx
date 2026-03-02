@@ -10,6 +10,7 @@ export function getAirconUnitsColumns({
   onEdit,
   onDelete,
   onView,
+  onInstall,
 }: GetColumnsProps<AirconUnits>): ColumnDef<AirconUnits>[] {
   return [
     {
@@ -50,6 +51,100 @@ export function getAirconUnitsColumns({
         safeCell(row.original.model?.aircon_type),
     },
     {
+      accessorKey: "client_name",
+      header: "Client",
+      cell: ({ row }: { row: Row<AirconUnits> }) => {
+        const name = row.original.client_name
+        return name ? (
+          <span className="font-medium">{name}</span>
+        ) : (
+          <span className="text-muted-foreground text-xs">—</span>
+        )
+      },
+    },
+    {
+      accessorKey: "unit_status",
+      header: "Status",
+      cell: ({ row }: { row: Row<AirconUnits> }) => {
+        const status = row.original.unit_status ?? "Available"
+
+        const variants: Record<
+          string,
+          { bg: string; text: string; ring: string }
+        > = {
+          Installed: {
+            bg: "bg-emerald-50",
+            text: "text-emerald-700",
+            ring: "ring-emerald-600/20",
+          },
+          "For Installation": {
+            bg: "bg-blue-50",
+            text: "text-blue-700",
+            ring: "ring-blue-700/10",
+          },
+          Sold: {
+            bg: "bg-green-50",
+            text: "text-green-700",
+            ring: "ring-green-600/20",
+          },
+          Reserved: {
+            bg: "bg-yellow-50",
+            text: "text-yellow-800",
+            ring: "ring-yellow-600/20",
+          },
+          Available: {
+            bg: "bg-gray-50",
+            text: "text-gray-600",
+            ring: "ring-gray-500/10",
+          },
+        }
+
+        const v = variants[status] ?? variants.Available
+        const isSold = row.original.is_sold
+
+        return (
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${v.bg} ${v.text} ${v.ring}`}
+            >
+              {status}
+            </span>
+            {status === "Installed" && isSold && (
+              <span
+                className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${variants.Sold.bg} ${variants.Sold.text} ${variants.Sold.ring}`}
+              >
+                Sold
+              </span>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "sold_date",
+      header: "Sold Date",
+      cell: ({ row }: { row: Row<AirconUnits> }) => {
+        const date = row.original.sold_date
+        return date ? (
+          safeCell(formatDate(new Date(date), "MMM dd, yyyy"))
+        ) : (
+          <span className="text-muted-foreground text-xs">—</span>
+        )
+      },
+    },
+    {
+      accessorKey: "installed_date",
+      header: "Installed Date",
+      cell: ({ row }: { row: Row<AirconUnits> }) => {
+        const date = row.original.installed_date
+        return date ? (
+          safeCell(formatDate(new Date(date), "MMM dd, yyyy"))
+        ) : (
+          <span className="text-muted-foreground text-xs">—</span>
+        )
+      },
+    },
+    {
       accessorKey: "created_at",
       header: "Added Date",
       cell: ({ getValue }) =>
@@ -67,6 +162,14 @@ export function getAirconUnitsColumns({
 
         const actions = [
           ...(onView ? [{ label: "View", onClick: () => onView(unit) }] : []),
+          ...(onInstall && unit.is_sold
+            ? [
+                {
+                  label: "Schedule Installation",
+                  onClick: () => onInstall(unit),
+                },
+              ]
+            : []),
           ...(onEdit ? [{ label: "Edit", onClick: () => onEdit(unit) }] : []),
           ...(onDelete
             ? [
