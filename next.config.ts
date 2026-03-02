@@ -1,16 +1,6 @@
 import type { NextConfig } from "next"
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
-
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${BASE_URL}/api/:path*`,
-      },
-    ]
-  },
   turbopack: {
     rules: {
       "*.svg": {
