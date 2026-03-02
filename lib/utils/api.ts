@@ -4,9 +4,10 @@ import { getToken, removeToken, setToken } from "@/lib/utils/tokens"
 import axios from "axios"
 import { toast } from "sonner"
 
-const baseURL = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"}/api`
+const baseURL = "/api"
 const api = axios.create({
   baseURL,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
