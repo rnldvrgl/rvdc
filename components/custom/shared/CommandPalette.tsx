@@ -115,7 +115,7 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedQuery, setDebouncedQuery] = useState("")
   const router = useRouter()
-  const debounceRef = useRef<NodeJS.Timeout>()
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const navItems = useMemo(() => flattenNavigation(), [])
 
@@ -124,7 +124,9 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
     debounceRef.current = setTimeout(() => {
       setDebouncedQuery(searchQuery)
     }, 300)
-    return () => clearTimeout(debounceRef.current)
+    return () => {
+      if (debounceRef.current !== null) clearTimeout(debounceRef.current)
+    }
   }, [searchQuery])
 
   // Reset search when dialog closes
@@ -156,8 +158,10 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
   const clients = enableSearch ? (clientsData?.results ?? []) : []
   const services = enableSearch ? (servicesData?.results ?? []) : []
   const sales = enableSearch ? (salesData?.results ?? []) : []
-  const isSearching = enableSearch && (clientsLoading || servicesLoading || salesLoading)
-  const hasSearchResults = clients.length > 0 || services.length > 0 || sales.length > 0
+  const isSearching =
+    enableSearch && (clientsLoading || servicesLoading || salesLoading)
+  const hasSearchResults =
+    clients.length > 0 || services.length > 0 || sales.length > 0
 
   // Listen for Ctrl+K / Cmd+K
   useEffect(() => {
@@ -253,7 +257,9 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
                     <div className="flex flex-col">
                       <span>{client.full_name}</span>
                       {client.contact_number && (
-                        <span className="text-xs text-muted-foreground">{client.contact_number}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {client.contact_number}
+                        </span>
                       )}
                     </div>
                   </CommandItem>
@@ -265,7 +271,7 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
                 {services.map((service) => (
                   <CommandItem
                     key={`service-${service.id}`}
-                    value={`service ${service.id} ${service.client?.first_name} ${service.client?.last_name}`}
+                    value={`service ${service.id} ${service.client?.full_name}`}
                     onSelect={() => handleNavigate(`/services`)}
                     className="gap-3"
                   >
@@ -275,7 +281,8 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
                     <div className="flex flex-col">
                       <span>Service #{service.id}</span>
                       <span className="text-xs text-muted-foreground">
-                        {service.client?.first_name} {service.client?.last_name} &middot; {service.status}
+                        {service.client?.full_name}{" "}
+                        &middot; {service.status}
                       </span>
                     </div>
                   </CommandItem>
@@ -287,7 +294,7 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
                 {sales.map((sale) => (
                   <CommandItem
                     key={`sale-${sale.id}`}
-                    value={`sale ${sale.manual_receipt_number || sale.system_receipt_number} ${sale.client?.first_name} ${sale.client?.last_name}`}
+                    value={`sale ${sale.manual_receipt_number || sale.system_receipt_number} ${sale.client?.full_name}`}
                     onSelect={() => handleNavigate(`/sales`)}
                     className="gap-3"
                   >
@@ -297,7 +304,8 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
                     <div className="flex flex-col">
                       <span>{sale.manual_receipt_number || `#${sale.id}`}</span>
                       <span className="text-xs text-muted-foreground">
-                        {sale.client?.first_name} {sale.client?.last_name} &middot; {sale.payment_status}
+                        {sale.client?.full_name}{" "}
+                        &middot; {sale.payment_status}
                       </span>
                     </div>
                   </CommandItem>

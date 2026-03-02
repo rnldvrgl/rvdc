@@ -37,6 +37,26 @@ type SummaryGroup = {
   cards: CardConfig[]
 }
 
+/** Calculate percentage change, returning 0 when previous is 0 */
+function pctChange(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0
+  return Math.round(((current - previous) / Math.abs(previous)) * 100)
+}
+
+/** Compute previous period dates (same duration, shifted back) */
+function getPreviousPeriod(startDate?: string, endDate?: string) {
+  if (!startDate || !endDate) return { prev_start: undefined, prev_end: undefined }
+  const start = new Date(startDate)
+  const end = new Date(endDate)
+  const durationMs = end.getTime() - start.getTime()
+  const prevEnd = new Date(start.getTime() - 1) // day before current start
+  const prevStart = new Date(prevEnd.getTime() - durationMs)
+  return {
+    prev_start: prevStart.toISOString().split("T")[0],
+    prev_end: prevEnd.toISOString().split("T")[0],
+  }
+}
+
 function buildCard(
   title: string,
   value: string | React.ReactNode,
@@ -47,7 +67,16 @@ function buildCard(
   return { title, value, icon, variant, trend }
 }
 
-function getSummaryGroups(data: AnalyticsSummary): SummaryGroup[] {
+function getSummaryGroups(
+  data: AnalyticsSummary,
+  prev?: AnalyticsSummary | null,
+): SummaryGroup[] {
+  const trendLabel = "vs prev period"
+
+  const trend = (current: number, previous?: number) =>
+    previous !== undefined
+      ? { value: pctChange(current, previous), label: trendLabel }
+      : undefined
   return [
     {
       title: "Financial Health",
@@ -57,24 +86,28 @@ function getSummaryGroups(data: AnalyticsSummary): SummaryGroup[] {
           formatCurrency(data.total_revenue),
           DollarSign,
           "success",
+          trend(data.total_revenue, prev?.total_revenue),
         ),
         buildCard(
           "Net Income",
           formatCurrency(data.net_income),
           TrendingUp,
           data.net_income >= 0 ? "success" : "danger",
+          trend(data.net_income, prev?.net_income),
         ),
         buildCard(
           "Outstanding Receivables",
           formatCurrency(data.total_outstanding),
           AlertCircle,
           data.total_outstanding > 50000 ? "warning" : "info",
+          trend(data.total_outstanding, prev?.total_outstanding),
         ),
         buildCard(
           "Total Expenses",
           formatCurrency(data.total_expense),
           Receipt,
           "danger",
+          trend(data.total_expense, prev?.total_expense),
         ),
       ],
     },
@@ -86,12 +119,14 @@ function getSummaryGroups(data: AnalyticsSummary): SummaryGroup[] {
           formatNumber(data.active_services),
           Clock,
           "info",
+          trend(data.active_services, prev?.active_services),
         ),
         buildCard(
           "Service Completion Rate",
           `${data.service_completion_rate}%`,
           CheckCircle2,
           data.service_completion_rate >= 80 ? "success" : "warning",
+          trend(data.service_completion_rate, prev?.service_completion_rate),
         ),
         buildCard(
           "Today's Schedules",
@@ -127,12 +162,14 @@ function getSummaryGroups(data: AnalyticsSummary): SummaryGroup[] {
           formatNumber(data.total_clients),
           Users,
           "info",
+          trend(data.total_clients, prev?.total_clients),
         ),
         buildCard(
           "New Clients",
           formatNumber(data.new_clients),
           UserPlus,
           "success",
+          trend(data.new_clients, prev?.new_clients),
         ),
       ],
     },
@@ -143,10 +180,23 @@ const SummaryCards = () => {
   const { start_date, end_date, stall } = useDateParamsFromForm()
   const { data, isLoading } = useGetSummary({ start_date, end_date, stall })
 
+  // Compute previous period (same duration, shifted back)
+  const { prev_start, prev_end } = useMemo(
+    () => getPreviousPeriod(start_date, end_date),
+    [start_date, end_date],
+  )
+
+  const { data: prevData } = useGetSummary({
+    start_date: prev_start,
+    end_date: prev_end,
+    stall,
+    enabled: !!prev_start && !!prev_end,
+  })
+
   const summaryGroups = useMemo(() => {
     if (!data) return []
-    return getSummaryGroups(data)
-  }, [data])
+    return getSummaryGroups(data, prevData)
+  }, [data, prevData])
 
   return (
     <div className="space-y-8">

@@ -32,10 +32,11 @@ const buildQueryString = (params: Partial<useGetAnalyticsOptions>): string => {
 }
 
 // Summary
-export const useGetSummary = (options: useGetAnalyticsOptions) =>
+export const useGetSummary = (options: useGetAnalyticsOptions & { enabled?: boolean }) =>
   useApiQuery<AnalyticsSummary>({
     queryKey: ['summary', options],
     url: `${baseUrl}summary/${buildQueryString(options)}`,
+    enabled: options.enabled,
   })
 
 // Sales Over Time
