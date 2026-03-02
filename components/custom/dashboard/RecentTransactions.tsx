@@ -1,5 +1,6 @@
 "use client"
 
+import { ListCardSkeleton } from "@/components/custom/shared/skeletons"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
@@ -12,21 +13,7 @@ export function RecentTransactions() {
   const recentTransactions = transactions?.results?.slice(0, 5) || []
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <DollarSign className="size-5" />
-            Recent Transactions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-          </div>
-        </CardContent>
-      </Card>
-    )
+    return <ListCardSkeleton rows={5} />
   }
 
   if (recentTransactions.length === 0) {

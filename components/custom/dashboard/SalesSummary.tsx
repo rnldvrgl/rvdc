@@ -1,5 +1,6 @@
 "use client"
 
+import { StatCardSkeleton } from "@/components/custom/shared/skeletons"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import { useGetSummary } from "@/lib/queries/analytics/useGetAnalytics"
@@ -14,21 +15,7 @@ export function SalesSummary() {
   })
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <DollarSign className="size-5" />
-            Sales Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-          </div>
-        </CardContent>
-      </Card>
-    )
+    return <StatCardSkeleton rows={3} />
   }
 
   const totalSales = summary?.total_sales || 0

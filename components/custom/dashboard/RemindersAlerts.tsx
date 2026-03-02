@@ -1,5 +1,6 @@
 "use client"
 
+import { ListCardSkeleton } from "@/components/custom/shared/skeletons"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useServices } from "@/lib/queries/services/useServices"
@@ -38,21 +39,7 @@ export function RemindersAlerts() {
     unpaidServices.length
 
   if (loadingLeaves || loadingServices) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Bell className="size-5" />
-            Reminders & Alerts
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-          </div>
-        </CardContent>
-      </Card>
-    )
+    return <ListCardSkeleton rows={3} />
   }
 
   return (
