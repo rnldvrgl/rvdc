@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertTriangle, RefreshCw, Home } from "lucide-react"
+import { AlertTriangle, Home, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { useEffect } from "react"
 
@@ -37,11 +37,17 @@ export default function Error({
             </pre>
           )}
           <div className="flex items-center justify-center gap-3 pt-2">
-            <Button onClick={reset} variant="default">
+            <Button
+              onClick={reset}
+              variant="default"
+            >
               <RefreshCw className="size-4 mr-2" />
               Try Again
             </Button>
-            <Button variant="outline" asChild>
+            <Button
+              variant="outline"
+              asChild
+            >
               <Link href="/dashboard">
                 <Home className="size-4 mr-2" />
                 Dashboard

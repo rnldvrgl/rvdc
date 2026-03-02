@@ -45,7 +45,8 @@ function pctChange(current: number, previous: number): number {
 
 /** Compute previous period dates (same duration, shifted back) */
 function getPreviousPeriod(startDate?: string, endDate?: string) {
-  if (!startDate || !endDate) return { prev_start: undefined, prev_end: undefined }
+  if (!startDate || !endDate)
+    return { prev_start: undefined, prev_end: undefined }
   const start = new Date(startDate)
   const end = new Date(endDate)
   const durationMs = end.getTime() - start.getTime()

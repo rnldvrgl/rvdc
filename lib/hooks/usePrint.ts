@@ -1,7 +1,7 @@
-import { showPrintDelayToast } from '@/components/custom/shared/PrintDelayToast'
-import { useCallback, useRef, useState } from 'react'
-import { toast } from 'sonner'
-import { useReactToPrint } from 'react-to-print'
+import { showPrintDelayToast } from "@/components/custom/shared/PrintDelayToast"
+import { useCallback, useRef, useState } from "react"
+import { useReactToPrint } from "react-to-print"
+import { toast } from "sonner"
 
 interface UsePrintOptions<T> {
   documentTitle?: string
@@ -22,7 +22,7 @@ export function usePrint<TData, TRef extends HTMLDivElement = HTMLDivElement>(
 
   const reactToPrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: options?.documentTitle ?? 'Document',
+    documentTitle: options?.documentTitle ?? "Document",
     onBeforePrint: async () => {
       if (options?.onBeforePrint) {
         await options.onBeforePrint(printData)
@@ -43,7 +43,7 @@ export function usePrint<TData, TRef extends HTMLDivElement = HTMLDivElement>(
       const toastId = showPrintDelayToast(3000, () => {
         cancelledRef.current = true
         toast.dismiss(toastId)
-        toast.success('Print cancelled.')
+        toast.success("Print cancelled.")
       })
 
       if (options?.requireConfirmation) {

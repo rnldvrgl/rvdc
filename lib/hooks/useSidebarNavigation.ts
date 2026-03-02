@@ -1,5 +1,5 @@
 import { NavigationGroup, NavigationLink } from "@/lib/constants/interface"
-import { baseShortcuts, orderedNavigation } from "@/lib/constants/navigation"
+import { orderedNavigation } from "@/lib/constants/navigation"
 import { useMemo } from "react"
 
 type UseNavigationProps = {
@@ -38,12 +38,5 @@ export function useSidebarNavigation({ permissions }: UseNavigationProps) {
     )
   }, [permissions])
 
-  const shortcuts = useMemo(() => {
-    return baseShortcuts.filter(
-      (shortcut) =>
-        !shortcut.permission || permissions.includes(shortcut.permission),
-    )
-  }, [permissions])
-
-  return { navigation, shortcuts }
+  return { navigation }
 }

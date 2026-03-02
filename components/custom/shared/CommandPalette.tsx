@@ -281,8 +281,7 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
                     <div className="flex flex-col">
                       <span>Service #{service.id}</span>
                       <span className="text-xs text-muted-foreground">
-                        {service.client?.full_name}{" "}
-                        &middot; {service.status}
+                        {service.client?.full_name} &middot; {service.status}
                       </span>
                     </div>
                   </CommandItem>
@@ -304,8 +303,7 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
                     <div className="flex flex-col">
                       <span>{sale.manual_receipt_number || `#${sale.id}`}</span>
                       <span className="text-xs text-muted-foreground">
-                        {sale.client?.full_name}{" "}
-                        &middot; {sale.payment_status}
+                        {sale.client?.full_name} &middot; {sale.payment_status}
                       </span>
                     </div>
                   </CommandItem>

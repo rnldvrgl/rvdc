@@ -12,7 +12,10 @@ export default function DashboardLoading() {
       {/* Alert cards */}
       <div className="grid lg:grid-cols-2 gap-6">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-48 rounded-xl" />
+          <Skeleton
+            key={i}
+            className="h-48 rounded-xl"
+          />
         ))}
       </div>
 
@@ -21,7 +24,10 @@ export default function DashboardLoading() {
         <Skeleton className="h-6 w-40" />
         <div className="grid sm:grid-cols-2 gap-6">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-xl" />
+            <Skeleton
+              key={i}
+              className="h-28 rounded-xl"
+            />
           ))}
         </div>
       </div>

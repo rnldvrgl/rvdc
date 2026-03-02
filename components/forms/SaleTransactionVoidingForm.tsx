@@ -1,7 +1,7 @@
-'use client'
+"use client"
 
-import { Detail } from '@/components/details/Detail'
-import { Button } from '@/components/ui/button'
+import { Detail } from "@/components/details/Detail"
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -9,17 +9,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Textarea } from '@/components/ui/textarea'
-import { SalesTransaction } from '@/lib/constants/interface'
-import { useSalesTransactionMutations } from '@/lib/mutations/useSalesTransactionMutations'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
-import { z } from 'zod'
+} from "@/components/ui/form"
+import { Textarea } from "@/components/ui/textarea"
+import { SalesTransaction } from "@/lib/constants/interface"
+import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { toast } from "sonner"
+import { z } from "zod"
 
 const voidSchema = z.object({
-  void_reason: z.string().min(1, 'Void reason is required.'),
+  void_reason: z.string().min(1, "Void reason is required."),
 })
 
 type FormValues = z.infer<typeof voidSchema>
@@ -36,13 +36,13 @@ const SaleTransactionVoidingForm = ({
   const form = useForm<FormValues>({
     resolver: zodResolver(voidSchema),
     defaultValues: {
-      void_reason: '',
+      void_reason: "",
     },
   })
 
   const handleVoid = async (values: FormValues) => {
     if (!entity) {
-      toast.error('Failed to void transaction. Please try again.')
+      toast.error("Failed to void transaction. Please try again.")
       return
     }
     voidTransaction.mutate(
@@ -53,7 +53,7 @@ const SaleTransactionVoidingForm = ({
 
   const handleUnvoid = () => {
     if (!entity) {
-      toast.error('Failed to unvoid transaction. Please try again.')
+      toast.error("Failed to unvoid transaction. Please try again.")
       return
     }
     unvoidTransaction.mutate(entity.id, { onSuccess: onClose })
@@ -64,18 +64,18 @@ const SaleTransactionVoidingForm = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-[15px]">
         <Detail
           label="Client"
-          value={entity?.client?.full_name ?? 'N/A'}
+          value={entity?.client?.full_name ?? "N/A"}
         />
         <Detail
           label="Stall"
-          value={entity?.stall?.name ?? 'N/A'}
+          value={entity?.stall?.name ?? "N/A"}
         />
         <Detail
           label="Total Amount"
           value={`₱ ${
             entity?.computed_total
               ? parseFloat(entity.computed_total).toLocaleString()
-              : '0.00'
+              : "0.00"
           }`}
         />
         <Detail
@@ -83,7 +83,7 @@ const SaleTransactionVoidingForm = ({
           value={
             entity?.manual_receipt_number ||
             entity?.system_receipt_number ||
-            'N/A'
+            "N/A"
           }
         />
       </div>
@@ -120,7 +120,7 @@ const SaleTransactionVoidingForm = ({
                 className="w-full"
                 disabled={form.formState.isSubmitting}
               >
-                {form.formState.isSubmitting ? 'Voiding...' : 'Confirm Void'}
+                {form.formState.isSubmitting ? "Voiding..." : "Confirm Void"}
               </Button>
               <Button
                 type="button"
@@ -137,7 +137,7 @@ const SaleTransactionVoidingForm = ({
       ) : (
         <div className="space-y-6">
           <p className="text-center text-lg font-medium text-muted-foreground">
-            This sale is currently{' '}
+            This sale is currently{" "}
             <span className="text-destructive font-bold">VOIDED</span>.
           </p>
           <div className="grid gap-4 border-t mt-6 pt-6">
@@ -149,8 +149,8 @@ const SaleTransactionVoidingForm = ({
               disabled={unvoidTransaction.isPending}
             >
               {unvoidTransaction.isPending
-                ? 'Restoring...'
-                : 'Unvoid Transaction'}
+                ? "Restoring..."
+                : "Unvoid Transaction"}
             </Button>
             <Button
               type="button"

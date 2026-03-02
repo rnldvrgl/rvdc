@@ -28,7 +28,10 @@ export default function GlobalError({
               A critical error occurred. Please try refreshing the page.
             </p>
           </div>
-          <Button onClick={reset} size="lg">
+          <Button
+            onClick={reset}
+            size="lg"
+          >
             <RefreshCw className="size-4 mr-2" />
             Try Again
           </Button>

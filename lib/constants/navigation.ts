@@ -1,4 +1,4 @@
-import { NavigationEntry, ShortcutEntry } from "@/lib/constants/types"
+import { NavigationEntry } from "@/lib/constants/types"
 import {
   AlertTriangle,
   Banknote,
@@ -57,7 +57,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         name: "Payment Collection",
         href: "/receivables/collection",
         icon: CreditCard,
-        permission: "view_remittances",
+        permission: "view_payment_collection",
       },
     ],
   },
@@ -310,49 +310,4 @@ export const orderedNavigation: NavigationEntry[] = [
   // System Management
   baseNavigation.reports,
   baseNavigation.settings,
-]
-
-export const baseShortcuts: ShortcutEntry[] = [
-  {
-    name: "New Sale",
-    action: "addSale",
-    icon: CircleDollarSign,
-    permission: "shortcut_add_sale",
-  },
-  {
-    name: "New Service",
-    action: "addService",
-    icon: Wrench,
-    permission: "shortcut_add_service",
-  },
-  {
-    name: "Log Expense",
-    action: "addExpense",
-    icon: Coins,
-    permission: "shortcut_add_expense",
-  },
-  {
-    name: "Record Remittance",
-    action: "addRemittance",
-    icon: Banknote,
-    permission: "shortcut_add_remittance",
-  },
-  {
-    name: "Record Cheque Collection",
-    action: "addChequeCollection",
-    icon: FileText,
-    permission: "shortcut_add_cheque_collection",
-  },
-  {
-    name: "New Client",
-    action: "addClient",
-    icon: Users,
-    permission: "shortcut_add_client",
-  },
-  {
-    name: "New Stock Transfer",
-    action: "addTransfer",
-    icon: Repeat,
-    permission: "shortcut_add_transfer",
-  },
 ]

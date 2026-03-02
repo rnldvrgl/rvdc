@@ -6,8 +6,8 @@ import {
   TopClients,
   TopSellingItems,
   UnpaidSalesStatus,
-} from '@/lib/constants/interface'
-import { useApiQuery } from '@/lib/hooks/useApiQuery'
+} from "@/lib/constants/interface"
+import { useApiQuery } from "@/lib/hooks/useApiQuery"
 
 interface useGetAnalyticsOptions {
   start_date?: string
@@ -16,8 +16,8 @@ interface useGetAnalyticsOptions {
   limit?: number
 }
 
-const baseUrl = '/analytics/'
-const chartsUrl = '/analytics/charts/'
+const baseUrl = "/analytics/"
+const chartsUrl = "/analytics/charts/"
 
 // Convert object to query string, skipping undefined/null
 const buildQueryString = (params: Partial<useGetAnalyticsOptions>): string => {
@@ -28,13 +28,15 @@ const buildQueryString = (params: Partial<useGetAnalyticsOptions>): string => {
     }
   })
   const str = query.toString()
-  return str ? `?${str}` : ''
+  return str ? `?${str}` : ""
 }
 
 // Summary
-export const useGetSummary = (options: useGetAnalyticsOptions & { enabled?: boolean }) =>
+export const useGetSummary = (
+  options: useGetAnalyticsOptions & { enabled?: boolean },
+) =>
   useApiQuery<AnalyticsSummary>({
-    queryKey: ['summary', options],
+    queryKey: ["summary", options],
     url: `${baseUrl}summary/${buildQueryString(options)}`,
     enabled: options.enabled,
   })
@@ -42,41 +44,41 @@ export const useGetSummary = (options: useGetAnalyticsOptions & { enabled?: bool
 // Sales Over Time
 export const useSalesOverTime = (options: useGetAnalyticsOptions) =>
   useApiQuery<SalesOvertime[]>({
-    queryKey: ['sales_over_time', options],
+    queryKey: ["sales_over_time", options],
     url: `${chartsUrl}sales-over-time/${buildQueryString(options)}`,
   })
 
 // Expenses Over Time
 export const useExpensesOverTime = (options: useGetAnalyticsOptions) =>
   useApiQuery<ExpensesOvertime[]>({
-    queryKey: ['expenses_over_time', options],
+    queryKey: ["expenses_over_time", options],
     url: `${chartsUrl}expenses-over-time/${buildQueryString(options)}`,
   })
 
 // Top Selling Items
 export const useTopSellingItems = (options: useGetAnalyticsOptions) =>
   useApiQuery<TopSellingItems[]>({
-    queryKey: ['top_selling_items', options],
+    queryKey: ["top_selling_items", options],
     url: `${chartsUrl}top-selling-items/${buildQueryString(options)}`,
   })
 
 // Cash Flow (income + expense per day)
 export const useCashFlow = (options: useGetAnalyticsOptions) =>
   useApiQuery<CashFlow[]>({
-    queryKey: ['cash_flow', options],
+    queryKey: ["cash_flow", options],
     url: `${chartsUrl}cash-flow/${buildQueryString(options)}`,
   })
 
 // Top Clients
 export const useTopClients = (options: useGetAnalyticsOptions) =>
   useApiQuery<TopClients[]>({
-    queryKey: ['top_clients', options],
+    queryKey: ["top_clients", options],
     url: `${chartsUrl}top-clients/${buildQueryString(options)}`,
   })
 
 // Unpaid Sales Status
 export const useUnpaidSalesStatus = (options: useGetAnalyticsOptions) =>
   useApiQuery<UnpaidSalesStatus[]>({
-    queryKey: ['unpaid_sales_status', options],
+    queryKey: ["unpaid_sales_status", options],
     url: `${chartsUrl}unpaid-sales-status/${buildQueryString(options)}`,
   })

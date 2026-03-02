@@ -14,7 +14,10 @@ export default function ReportsLoading() {
       <Skeleton className="h-10 w-96" />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-24 rounded-xl" />
+          <Skeleton
+            key={i}
+            className="h-24 rounded-xl"
+          />
         ))}
       </div>
       <Skeleton className="h-[400px] rounded-xl" />
