@@ -548,12 +548,18 @@ export function LeaveOverview() {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : myLeavesList.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Plane className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No leave requests found.</p>
-              <p className="text-sm mt-1">
-                Submit a new leave request to see it here.
-              </p>
+            <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+              <div className="flex items-center justify-center size-14 rounded-xl bg-muted/60 text-muted-foreground">
+                <Plane className="size-7" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-base font-medium text-foreground">
+                  No leave requests found
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Submit a new leave request to see it here
+                </p>
+              </div>
             </div>
           ) : (
             <>

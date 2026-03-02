@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button"
 import { AirconUnits, WarrantyClaim } from "@/lib/constants/interface"
 import { useWarrantyClaims } from "@/lib/queries/useAircons"
+import { cn } from "@/lib/utils/helpers"
 import { formatDate } from "date-fns"
-import { Eye, ShieldCheck } from "lucide-react"
+import { Check, Eye, ShieldCheck } from "lucide-react"
 
 interface AirconUnitDetailsProps {
   unit: AirconUnits
@@ -294,6 +295,100 @@ export function AirconUnitDetails({
           </div>
         </div>
       </div>
+
+      {/* Lifecycle Timeline */}
+      {(() => {
+        const lifecycleSteps = [
+          { key: "Available", label: "Available", date: null },
+          {
+            key: "Reserved",
+            label: "Reserved",
+            date: unit.reserved_at
+              ? formatDate(new Date(unit.reserved_at), "MMM d, yyyy")
+              : null,
+          },
+          {
+            key: "Sold",
+            label: "Sold",
+            date: unit.sold_date
+              ? formatDate(new Date(unit.sold_date), "MMM d, yyyy")
+              : null,
+          },
+          { key: "For Installation", label: "For Installation", date: null },
+          {
+            key: "Installed",
+            label: "Installed",
+            date: unit.installed_date
+              ? formatDate(new Date(unit.installed_date), "MMM d, yyyy")
+              : null,
+          },
+        ]
+
+        const currentStatus = unit.unit_status ?? "Available"
+        const currentIdx = lifecycleSteps.findIndex(
+          (s) => s.key === currentStatus,
+        )
+
+        return (
+          <div className="border-t pt-4">
+            <h3 className="text-lg font-semibold mb-4">Lifecycle</h3>
+            <div className="flex items-start justify-between gap-0">
+              {lifecycleSteps.map((step, i) => {
+                const isDone = i < currentIdx
+                const isCurrent = i === currentIdx
+                return (
+                  <div
+                    key={step.key}
+                    className="flex flex-1 flex-col items-center relative"
+                  >
+                    {/* Connector line */}
+                    {i > 0 && (
+                      <div
+                        className={cn(
+                          "absolute top-3.5 right-1/2 w-full h-0.5",
+                          isDone || isCurrent ? "bg-primary" : "bg-border",
+                        )}
+                      />
+                    )}
+                    {/* Circle */}
+                    <div
+                      className={cn(
+                        "relative z-10 flex items-center justify-center size-7 rounded-full border-2 text-xs font-bold transition-all",
+                        isDone &&
+                          "bg-primary border-primary text-primary-foreground",
+                        isCurrent &&
+                          "bg-primary/15 border-primary text-primary ring-4 ring-primary/10",
+                        !isDone &&
+                          !isCurrent &&
+                          "bg-muted border-border text-muted-foreground",
+                      )}
+                    >
+                      {isDone ? <Check className="size-3.5" /> : i + 1}
+                    </div>
+                    <span
+                      className={cn(
+                        "mt-2 text-xs text-center font-medium leading-tight",
+                        isCurrent
+                          ? "text-primary font-semibold"
+                          : isDone
+                            ? "text-foreground"
+                            : "text-muted-foreground",
+                      )}
+                    >
+                      {step.label}
+                    </span>
+                    {step.date && (
+                      <span className="text-[10px] text-muted-foreground mt-0.5">
+                        {step.date}
+                      </span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Sale Details */}
       {unit.sale && (

@@ -4,8 +4,8 @@ export const LoadingState = () => {
   return (
     <div className="text-center py-12 md:py-16">
       <div className="flex flex-col items-center gap-3">
-        <div className="p-4 rounded-full bg-slate-100 dark:bg-slate-800 animate-pulse">
-          <Clock className="h-8 w-8 text-slate-400" />
+        <div className="flex items-center justify-center size-14 rounded-xl bg-muted/60 text-muted-foreground animate-pulse">
+          <Clock className="size-7" />
         </div>
         <p className="text-sm text-muted-foreground">Loading records...</p>
       </div>
@@ -17,14 +17,14 @@ export const EmptyState = () => {
   return (
     <div className="text-center py-12 md:py-16">
       <div className="flex flex-col items-center gap-3">
-        <div className="p-4 rounded-full bg-slate-100 dark:bg-slate-800">
-          <Users className="h-8 w-8 text-slate-400" />
+        <div className="flex items-center justify-center size-14 rounded-xl bg-muted/60 text-muted-foreground">
+          <Users className="size-7" />
         </div>
-        <div>
-          <p className="text-sm md:text-base font-medium text-slate-900 dark:text-slate-100">
+        <div className="space-y-1">
+          <p className="text-base font-medium text-foreground">
             No attendance records found
           </p>
-          <p className="text-xs md:text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground">
             Records will appear here once created
           </p>
         </div>
