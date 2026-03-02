@@ -3,7 +3,7 @@
 import { getSalesTransactionColumns } from "@/app/(routes)/sales/columns"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
-import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTransactionPrintContent "
+import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTransactionPrintContent"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import { SalesTransactionDetails } from "@/components/details/SalesTransactionDetails"
@@ -157,6 +157,9 @@ export default function SalesTransactionsPage() {
         filters={filters}
         orderingOptions={orderingOptions}
         onRefresh={refetch}
+        emptyIcon={ShoppingCart}
+        emptyTitle="No sales transactions found"
+        emptyDescription="Record your first sale to start tracking revenue"
       />
     </Wrapper>
   )

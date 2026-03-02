@@ -37,11 +37,6 @@ export function getSalesTransactionColumns({
         ]
       : []),
     {
-      accessorKey: "manual_receipt_number",
-      header: "Receipt #",
-      cell: ({ row }) => safeCell(row.original.manual_receipt_number),
-    },
-    {
       accessorKey: "client.full_name",
       header: "Client",
       cell: ({ row }) =>
