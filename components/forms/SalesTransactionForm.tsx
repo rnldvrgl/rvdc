@@ -5,7 +5,7 @@ import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntityDialog from "@/components/custom/shared/EntityDialog"
 import ItemQuantitySelector from "@/components/custom/shared/ItemQuantitySelector"
 import PaymentMethodSelector from "@/components/custom/shared/PaymentMethodSelector"
-import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTransactionPrintContent "
+import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTransactionPrintContent"
 import SaleTransactionVoidingForm from "@/components/forms/SaleTransactionVoidingForm"
 import { Button } from "@/components/ui/button"
 import {

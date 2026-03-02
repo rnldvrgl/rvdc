@@ -1,0 +1,920 @@
+"use client"
+
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { MultiSelect } from "@/components/ui/multi-select"
+import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
+import { AssignmentType, ServicePayload } from "@/lib/constants/interface"
+import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
+import {
+  useClientChoices,
+  useTechnicianChoices,
+} from "@/lib/queries/useChoices"
+import { cn } from "@/lib/utils/helpers"
+import { zodResolver } from "@hookform/resolvers/zod"
+import {
+  ArrowLeft,
+  ArrowRight,
+  Calendar,
+  Check,
+  ClipboardList,
+  Save,
+  User,
+  Users,
+  Wrench,
+} from "lucide-react"
+import React, { useEffect, useState } from "react"
+import { useForm, useWatch } from "react-hook-form"
+import * as z from "zod"
+
+// ── Options ──────────────────────────────────────────────────────────────
+
+const serviceTypeOptions = [
+  { label: "Repair", value: "repair" },
+  { label: "Dismantle", value: "dismantle" },
+  { label: "Inspection", value: "inspection" },
+  { label: "Cleaning", value: "cleaning" },
+  { label: "Motor Rewind", value: "motor_rewind" },
+  { label: "Installation", value: "installation" },
+]
+
+const serviceModeOptions = [
+  { label: "Carry-In", value: "carry_in" },
+  { label: "Home Service", value: "home_service" },
+  { label: "Pull-Out", value: "pull_out" },
+]
+
+const serviceSchema = z.object({
+  client: z.number({ required_error: "Client is required" }),
+  service_type: z.enum(
+    [
+      "repair",
+      "dismantle",
+      "inspection",
+      "cleaning",
+      "motor_rewind",
+      "installation",
+    ],
+    { required_error: "Service type is required" },
+  ),
+  service_mode: z.enum(["carry_in", "home_service", "pull_out"], {
+    required_error: "Service mode is required",
+  }),
+  description: z.string().optional(),
+  override_address: z.string().optional(),
+  override_contact_person: z.string().optional(),
+  override_contact_number: z.string().optional(),
+  appointment_datetime: z.date().nullable().optional(),
+  pickup_date: z.date().nullable().optional(),
+  delivery_date: z.date().nullable().optional(),
+  received_at: z.date().nullable().optional(),
+  remarks: z.string().optional(),
+  notes: z.string().optional(),
+  technicians: z.array(z.number()).optional(),
+})
+
+type FormValues = z.infer<typeof serviceSchema>
+
+// ── Step definitions ─────────────────────────────────────────────────────
+
+const steps = [
+  { id: 0, title: "Client & Type", icon: User },
+  { id: 1, title: "Schedule", icon: Calendar },
+  { id: 2, title: "Team & Notes", icon: Users },
+  { id: 3, title: "Review", icon: ClipboardList },
+]
+
+// ── Component ────────────────────────────────────────────────────────────
+
+interface ServiceFormWizardProps {
+  onClose: () => void
+  forceClose?: () => void
+}
+
+export default function ServiceFormWizard({
+  onClose,
+  forceClose,
+}: ServiceFormWizardProps) {
+  const [currentStep, setCurrentStep] = useState(0)
+  const { addService } = useServiceMutations()
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(serviceSchema),
+    defaultValues: {
+      client: undefined,
+      service_type: undefined,
+      service_mode: "carry_in",
+      description: "",
+      override_address: "",
+      override_contact_person: "",
+      override_contact_number: "",
+      appointment_datetime: null,
+      pickup_date: null,
+      delivery_date: null,
+      received_at: null,
+      remarks: "",
+      notes: "",
+      technicians: [],
+    },
+    mode: "onChange",
+  })
+
+  const { data: clients = [] } = useClientChoices()
+  const { data: technicians = [] } = useTechnicianChoices()
+
+  const selectedMode = useWatch({ control: form.control, name: "service_mode" })
+  const selectedServiceType = useWatch({
+    control: form.control,
+    name: "service_type",
+  })
+  const selectedClient = useWatch({ control: form.control, name: "client" })
+
+  // Filter modes based on type
+  const availableServiceModes =
+    selectedServiceType === "motor_rewind"
+      ? serviceModeOptions.filter((m) => m.value === "carry_in")
+      : serviceModeOptions
+
+  // Auto-set mode for installation / motor_rewind
+  useEffect(() => {
+    if (
+      selectedServiceType === "installation" &&
+      selectedMode !== "home_service"
+    ) {
+      form.setValue("service_mode", "home_service")
+    }
+  }, [selectedServiceType, selectedMode, form])
+
+  useEffect(() => {
+    if (selectedServiceType === "motor_rewind" && selectedMode !== "carry_in") {
+      form.setValue("service_mode", "carry_in")
+    }
+  }, [selectedServiceType, selectedMode, form])
+
+  // Auto-fill client address
+  useEffect(() => {
+    if (selectedClient) {
+      const client = clients.find((c) => c.id === selectedClient)
+      if (client) {
+        if (!form.getValues("override_address"))
+          form.setValue("override_address", client.address || "")
+        if (!form.getValues("override_contact_person"))
+          form.setValue("override_contact_person", client.full_name || "")
+        if (!form.getValues("override_contact_number"))
+          form.setValue("override_contact_number", client.contact_number || "")
+      }
+    }
+  }, [selectedClient, clients, form])
+
+  // ── Validation per step ──────────────────────────────────────────────
+
+  const canAdvance = async (step: number): Promise<boolean> => {
+    switch (step) {
+      case 0: {
+        const valid = await form.trigger([
+          "client",
+          "service_type",
+          "service_mode",
+        ])
+        return valid
+      }
+      case 1:
+      case 2:
+        return true
+      default:
+        return true
+    }
+  }
+
+  const goNext = async () => {
+    if (await canAdvance(currentStep)) {
+      setCurrentStep((s) => Math.min(s + 1, steps.length - 1))
+    }
+  }
+
+  const goPrev = () => setCurrentStep((s) => Math.max(s - 1, 0))
+
+  // ── Submit ─────────────────────────────────────────────────────────────
+
+  const formatDateForBackend = (date: Date): string => {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, "0")
+    const d = String(date.getDate()).padStart(2, "0")
+    const h = String(date.getHours()).padStart(2, "0")
+    const mi = String(date.getMinutes()).padStart(2, "0")
+    const s = String(date.getSeconds()).padStart(2, "0")
+    return `${y}-${m}-${d}T${h}:${mi}:${s}`
+  }
+
+  const onSubmit = (data: FormValues) => {
+    const getAssignmentType = (): AssignmentType => {
+      return data.service_mode === "pull_out" ? "pickup" : "repair"
+    }
+
+    const payload: ServicePayload = {
+      client: data.client,
+      service_type: data.service_type,
+      service_mode: data.service_mode,
+      description: data.description,
+      override_address: data.override_address,
+      override_contact_person: data.override_contact_person,
+      override_contact_number: data.override_contact_number,
+      pickup_date: data.pickup_date
+        ? formatDateForBackend(data.pickup_date)
+        : undefined,
+      delivery_date: data.delivery_date
+        ? formatDateForBackend(data.delivery_date)
+        : undefined,
+      received_at: data.received_at
+        ? formatDateForBackend(data.received_at)
+        : undefined,
+      appointment_datetime: data.appointment_datetime
+        ? formatDateForBackend(data.appointment_datetime)
+        : undefined,
+      remarks: data.remarks,
+      notes: data.notes,
+      technician_assignments: data.technicians?.map((techId) => ({
+        technician: techId,
+        assignment_type: getAssignmentType(),
+        appliance: null,
+      })),
+    }
+
+    addService.mutate(payload, {
+      onSuccess: () => {
+        if (forceClose) {
+          forceClose()
+        } else {
+          onClose()
+        }
+      },
+    })
+  }
+
+  const isSubmitting = addService.status === "pending"
+
+  // ── Helpers for Review step ────────────────────────────────────────────
+
+  const clientName = React.useMemo(() => {
+    const c = clients.find((cl) => cl.id === form.getValues("client"))
+    return c ? `${c.full_name} (${c.contact_number})` : "—"
+  }, [clients, form, currentStep]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const technicianNames = React.useMemo(() => {
+    const ids = form.getValues("technicians") ?? []
+    return ids
+      .map((id) => technicians.find((t) => t.id === id)?.full_name)
+      .filter(Boolean)
+  }, [technicians, form, currentStep]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const typeLabel = serviceTypeOptions.find(
+    (o) => o.value === form.getValues("service_type"),
+  )?.label
+  const modeLabel = serviceModeOptions.find(
+    (o) => o.value === form.getValues("service_mode"),
+  )?.label
+
+  // ── Render ─────────────────────────────────────────────────────────────
+
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-6"
+      >
+        {/* Step indicators */}
+        <nav className="flex items-center justify-between gap-2">
+          {steps.map((step, i) => {
+            const StepIcon = step.icon
+            const isActive = i === currentStep
+            const isDone = i < currentStep
+            return (
+              <React.Fragment key={step.id}>
+                {i > 0 && (
+                  <div
+                    className={cn(
+                      "h-px flex-1 transition-colors",
+                      isDone ? "bg-primary" : "bg-border",
+                    )}
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isDone) setCurrentStep(i)
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all whitespace-nowrap",
+                    isActive &&
+                      "bg-primary/10 text-primary ring-1 ring-primary/20",
+                    isDone &&
+                      "bg-primary/5 text-primary cursor-pointer hover:bg-primary/10",
+                    !isActive && !isDone && "text-muted-foreground",
+                  )}
+                  disabled={!isDone && !isActive}
+                >
+                  <div
+                    className={cn(
+                      "flex items-center justify-center size-6 rounded-full text-xs font-bold shrink-0",
+                      isActive && "bg-primary text-primary-foreground",
+                      isDone && "bg-primary text-primary-foreground",
+                      !isActive && !isDone && "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {isDone ? (
+                      <Check className="size-3.5" />
+                    ) : (
+                      <StepIcon className="size-3.5" />
+                    )}
+                  </div>
+                  <span className="hidden sm:inline">{step.title}</span>
+                </button>
+              </React.Fragment>
+            )
+          })}
+        </nav>
+
+        <Separator />
+
+        {/* ── Step 0: Client & Type ──────────────────────────────────── */}
+        {currentStep === 0 && (
+          <div className="space-y-4">
+            <FormField
+              name="client"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel required>Client</FormLabel>
+                  <ComboBox
+                    options={clients.map((c) => ({
+                      value: c.id,
+                      label: `${c.full_name} (${c.contact_number})`,
+                    }))}
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                    placeholder="Search and select a client"
+                    disabled={isSubmitting}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                name="service_type"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Service Type</FormLabel>
+                    <ComboBox
+                      options={serviceTypeOptions}
+                      value={field.value ?? null}
+                      onChange={field.onChange}
+                      placeholder="Select type"
+                      disabled={isSubmitting}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                name="service_mode"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Service Mode</FormLabel>
+                    <ComboBox
+                      options={availableServiceModes}
+                      value={field.value ?? null}
+                      onChange={field.onChange}
+                      placeholder="Select mode"
+                      disabled={isSubmitting}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              name="description"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Describe the service or issue"
+                      disabled={isSubmitting}
+                      rows={3}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+
+        {/* ── Step 1: Schedule & Location ─────────────────────────────── */}
+        {currentStep === 1 && (
+          <div className="space-y-4">
+            {/* Carry-In */}
+            {selectedMode === "carry_in" && (
+              <div className="space-y-4 rounded-lg border p-4">
+                <h3 className="font-medium text-sm flex items-center gap-2">
+                  <Wrench className="size-4" />
+                  Carry-In Details
+                </h3>
+                <FormField
+                  name="received_at"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Received At (Optional)</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          value={field.value ?? undefined}
+                          onChange={field.onChange}
+                          disabled={isSubmitting}
+                          placeholder="When customer dropped off unit"
+                          disablePastDates={false}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {/* Home Service */}
+            {selectedMode === "home_service" && (
+              <div className="space-y-4 rounded-lg border p-4">
+                <h3 className="font-medium text-sm flex items-center gap-2">
+                  <Calendar className="size-4" />
+                  Home Service Details
+                </h3>
+                <FormField
+                  name="appointment_datetime"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>Appointment Date & Time</FormLabel>
+                      <FormControl>
+                        <DateTimePicker
+                          value={field.value ?? undefined}
+                          onChange={field.onChange}
+                          disabled={isSubmitting}
+                          placeholder="Select appointment date and time"
+                          disablePastDates={true}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="override_address"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Service Address</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          placeholder="Auto-filled from client or enter custom address"
+                          disabled={isSubmitting}
+                          rows={2}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    name="override_contact_person"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Person</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Auto-filled from client"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="override_contact_number"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Number</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Auto-filled from client"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Pull-Out */}
+            {selectedMode === "pull_out" && (
+              <div className="space-y-4 rounded-lg border p-4">
+                <h3 className="font-medium text-sm flex items-center gap-2">
+                  <Calendar className="size-4" />
+                  Pull-Out Details
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    name="pickup_date"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel required>Pickup Date & Time</FormLabel>
+                        <FormControl>
+                          <DateTimePicker
+                            value={field.value ?? undefined}
+                            onChange={field.onChange}
+                            disabled={isSubmitting}
+                            placeholder="Select pickup date and time"
+                            disablePastDates={true}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="delivery_date"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Delivery Date (Optional)</FormLabel>
+                        <FormControl>
+                          <DateTimePicker
+                            value={field.value ?? undefined}
+                            onChange={field.onChange}
+                            disabled={isSubmitting}
+                            placeholder="Select delivery date and time"
+                            disablePastDates={false}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  name="override_address"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pickup Address</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          placeholder="Auto-filled from client or enter custom address"
+                          disabled={isSubmitting}
+                          rows={2}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    name="override_contact_person"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Person</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Auto-filled from client"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    name="override_contact_number"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Contact Number</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Auto-filled from client"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            )}
+
+            {selectedMode === "carry_in" && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No scheduling needed for carry-in services. You can proceed to
+                the next step.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ── Step 2: Technicians & Notes ─────────────────────────────── */}
+        {currentStep === 2 && (
+          <div className="space-y-4">
+            <FormField
+              name="technicians"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assign Technicians</FormLabel>
+                  <MultiSelect
+                    options={technicians.map((tech) => ({
+                      value: tech.id.toString(),
+                      label: tech.full_name,
+                    }))}
+                    selected={
+                      field.value
+                        ?.filter((id) => id !== undefined && id !== null)
+                        .map((id) => id.toString()) ?? []
+                    }
+                    onChange={(values: string[]) => {
+                      field.onChange(values.map((v: string) => Number(v)))
+                    }}
+                    placeholder="Select technicians"
+                    disabled={isSubmitting}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              name="remarks"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Remarks</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Additional remarks"
+                      disabled={isSubmitting}
+                      rows={2}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              name="notes"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Internal Notes</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      placeholder="Internal notes (not visible to client)"
+                      disabled={isSubmitting}
+                      rows={2}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+
+        {/* ── Step 3: Review ──────────────────────────────────────────── */}
+        {currentStep === 3 && (
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <h4 className="text-sm font-semibold flex items-center gap-2">
+                  <User className="size-4" /> Client & Service
+                </h4>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Client</span>
+                    <p className="font-medium">{clientName}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Type</span>
+                    <p className="font-medium">{typeLabel ?? "—"}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Mode</span>
+                    <p className="font-medium">{modeLabel ?? "—"}</p>
+                  </div>
+                  {form.getValues("description") && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">Description</span>
+                      <p className="font-medium">
+                        {form.getValues("description")}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Schedule info */}
+            {(selectedMode === "home_service" ||
+              selectedMode === "pull_out") && (
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <Calendar className="size-4" /> Schedule & Location
+                  </h4>
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                    {selectedMode === "home_service" &&
+                      form.getValues("appointment_datetime") && (
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground">
+                            Appointment
+                          </span>
+                          <p className="font-medium">
+                            {form
+                              .getValues("appointment_datetime")
+                              ?.toLocaleString("en-PH")}
+                          </p>
+                        </div>
+                      )}
+                    {selectedMode === "pull_out" &&
+                      form.getValues("pickup_date") && (
+                        <div>
+                          <span className="text-muted-foreground">Pickup</span>
+                          <p className="font-medium">
+                            {form
+                              .getValues("pickup_date")
+                              ?.toLocaleString("en-PH")}
+                          </p>
+                        </div>
+                      )}
+                    {selectedMode === "pull_out" &&
+                      form.getValues("delivery_date") && (
+                        <div>
+                          <span className="text-muted-foreground">
+                            Delivery
+                          </span>
+                          <p className="font-medium">
+                            {form
+                              .getValues("delivery_date")
+                              ?.toLocaleString("en-PH")}
+                          </p>
+                        </div>
+                      )}
+                    {form.getValues("override_address") && (
+                      <div className="col-span-2">
+                        <span className="text-muted-foreground">Address</span>
+                        <p className="font-medium">
+                          {form.getValues("override_address")}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Technicians */}
+            {technicianNames.length > 0 && (
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <Users className="size-4" /> Assigned Technicians
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {technicianNames.map((name) => (
+                      <Badge
+                        key={name}
+                        variant="secondary"
+                      >
+                        {name}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Notes */}
+            {(form.getValues("remarks") || form.getValues("notes")) && (
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <ClipboardList className="size-4" /> Notes
+                  </h4>
+                  <div className="space-y-2 text-sm">
+                    {form.getValues("remarks") && (
+                      <div>
+                        <span className="text-muted-foreground">Remarks</span>
+                        <p className="font-medium">
+                          {form.getValues("remarks")}
+                        </p>
+                      </div>
+                    )}
+                    {form.getValues("notes") && (
+                      <div>
+                        <span className="text-muted-foreground">
+                          Internal Notes
+                        </span>
+                        <p className="font-medium">{form.getValues("notes")}</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <p className="text-xs text-muted-foreground text-center">
+              After creating this service, you can add appliances and inventory
+              items from the service details page.
+            </p>
+          </div>
+        )}
+
+        <Separator />
+
+        {/* Navigation buttons */}
+        <div className="flex items-center justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={goPrev}
+            disabled={currentStep === 0 || isSubmitting}
+          >
+            <ArrowLeft className="size-4 mr-1.5" />
+            Back
+          </Button>
+
+          {currentStep < steps.length - 1 ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={goNext}
+            >
+              Next
+              <ArrowRight className="size-4 ml-1.5" />
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isSubmitting}
+            >
+              <Save className="size-4 mr-1.5" />
+              {isSubmitting ? "Creating…" : "Create Service"}
+            </Button>
+          )}
+        </div>
+      </form>
+    </Form>
+  )
+}

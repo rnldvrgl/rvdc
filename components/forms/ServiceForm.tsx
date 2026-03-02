@@ -36,6 +36,7 @@ import * as z from "zod"
 
 const serviceTypeOptions = [
   { label: "Repair", value: "repair" },
+  { label: "Dismantle", value: "dismantle" },
   { label: "Inspection", value: "inspection" },
   { label: "Cleaning", value: "cleaning" },
   { label: "Motor Rewind", value: "motor_rewind" },
@@ -58,7 +59,14 @@ const serviceStatusOptions = [
 const serviceSchema = z.object({
   client: z.number({ required_error: "Client is required" }),
   service_type: z.enum(
-    ["repair", "inspection", "cleaning", "motor_rewind", "installation"],
+    [
+      "repair",
+      "dismantle",
+      "inspection",
+      "cleaning",
+      "motor_rewind",
+      "installation",
+    ],
     {
       required_error: "Service type is required",
     },
