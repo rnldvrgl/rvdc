@@ -12,7 +12,7 @@ import ExpenseForm from "@/components/forms/ExpenseForm"
 import RemittanceForm from "@/components/forms/RemittanceForm"
 
 import SalesTransactionForm from "@/components/forms/SalesTransactionForm"
-import ServiceForm from "@/components/forms/ServiceForm"
+import ServiceFormWizard from "@/components/forms/ServiceFormWizard"
 import useActivePath from "@/lib/hooks/useActivePath"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
@@ -25,6 +25,7 @@ const ENTITY_CONFIG = {
     title: "Add Sale",
     description: "Fill out the form below to add a new sale.",
     Form: SalesTransactionForm,
+    className: "sm:max-w-3xl md:max-w-4xl lg:max-w-5xl",
   },
   client: {
     title: "Add Client",
@@ -42,9 +43,10 @@ const ENTITY_CONFIG = {
     Form: RemittanceForm,
   },
   service: {
-    title: "Add Service",
-    description: "Fill out the form below to add a new service.",
-    Form: ServiceForm,
+    title: "Create New Service",
+    description: "Create a new service request",
+    Form: ServiceFormWizard,
+    className: "sm:min-w-2xl md:min-w-3xl xl:min-w-4xl",
   },
   chequeCollection: {
     title: "Add Cheque Collection",
@@ -63,7 +65,7 @@ export function Sidebar() {
 
   const userPermissions = useGetPermissions(role || "guest", payrollIncluded)
 
-  const { navigation, shortcuts } = useSidebarNavigation({
+  const { navigation } = useSidebarNavigation({
     permissions: userPermissions,
   })
 
@@ -111,6 +113,7 @@ export function Sidebar() {
       />
 
       <EntitySheet
+        className={(entityConfig as { className?: string })?.className}
         open={open}
         onClose={closeEntity}
         withCloseConfirmation
@@ -122,10 +125,7 @@ export function Sidebar() {
       />
 
       <SidebarNav
-        sections={[
-          { title: "Navigation", items: navigation },
-          { title: "Shortcuts", items: shortcuts },
-        ]}
+        sections={[{ title: "Navigation", items: navigation }]}
         activePath={activePath}
         onAction={(action) => {
           switch (action) {
