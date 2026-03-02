@@ -136,7 +136,7 @@ export const ChequeCollectionSchema = z
       [
         ChequeStatus.PENDING,
         ChequeStatus.DEPOSITED,
-        ChequeStatus.ENCAHSED,
+        ChequeStatus.ENCASHED,
         ChequeStatus.RETURNED,
         ChequeStatus.BOUNCED,
         ChequeStatus.CANCELLED,
@@ -146,7 +146,7 @@ export const ChequeCollectionSchema = z
   })
   .refine(
     (data) =>
-      ![ChequeStatus.DEPOSITED, ChequeStatus.ENCAHSED].includes(data.status) ||
+      ![ChequeStatus.DEPOSITED, ChequeStatus.ENCASHED].includes(data.status) ||
       (data.deposit_bank && data.deposit_bank.trim().length > 0),
     {
       message: "Deposit bank is required when status is encashed or deposited",

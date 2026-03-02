@@ -1,9 +1,11 @@
-import { PaginatedFilterProps, PaginatedResult } from '@/lib/constants/types'
-import { useApiQuery } from '@/lib/hooks/useApiQuery'
-import qs from 'qs'
+import { PaginatedFilterProps, PaginatedResult } from "@/lib/constants/types"
+import { useApiQuery } from "@/lib/hooks/useApiQuery"
+import qs from "qs"
 
-interface UsePaginatedQueryOptions<T, TSelect = PaginatedResult<T>>
-  extends PaginatedFilterProps {
+interface UsePaginatedQueryOptions<
+  T,
+  TSelect = PaginatedResult<T>,
+> extends PaginatedFilterProps {
   url: string
   queryKeyBase: string
   enabled?: boolean
@@ -17,6 +19,8 @@ export function usePaginatedQuery<T>({
   limit = 10,
   search,
   ordering,
+  start_date,
+  end_date,
   filter = {},
   enabled = true,
   select,
@@ -30,8 +34,10 @@ export function usePaginatedQuery<T>({
       queryKeyBase,
       page,
       limit,
-      search || '',
-      ordering || '',
+      search || "",
+      ordering || "",
+      start_date || "",
+      end_date || "",
       serializedFilter,
     ],
     url,
@@ -40,6 +46,8 @@ export function usePaginatedQuery<T>({
       limit,
       search: search || undefined,
       ordering: ordering || undefined,
+      start_date: start_date || undefined,
+      end_date: end_date || undefined,
       ...filter,
     },
     options: {
