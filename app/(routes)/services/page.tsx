@@ -228,33 +228,25 @@ export default function ServicesPage() {
             <div className="flex items-center rounded-lg border bg-muted p-0.5">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
+                    variant={viewMode === "table" ? "default" : "ghost"}
                     aria-label="Table view"
                     onClick={() => setViewMode("table")}
-                    className={`inline-flex items-center justify-center rounded-md px-2.5 py-1.5 text-sm transition-colors ${
-                      viewMode === "table"
-                        ? "bg-background shadow-sm text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
                   >
                     <List className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>Table view</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
+                    variant={viewMode === "kanban" ? "default" : "ghost"}
                     aria-label="Kanban board view"
                     onClick={() => setViewMode("kanban")}
-                    className={`inline-flex items-center justify-center rounded-md px-2.5 py-1.5 text-sm transition-colors ${
-                      viewMode === "kanban"
-                        ? "bg-background shadow-sm text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
                   >
                     <Kanban className="h-4 w-4" />
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>Kanban board</TooltipContent>
               </Tooltip>
@@ -301,7 +293,7 @@ export default function ServicesPage() {
 
       {/* Create/Edit Sheet */}
       <EntitySheet
-        className="sm:min-w-2xl md:minx-w-3xl xl:min-w-3xl"
+        className="sm:min-w-2xl md:min-w-3xl xl:min-w-4xl"
         open={entityState.open}
         onClose={closeEntity}
         title={entityState.entity ? "Edit Service" : "Create New Service"}
@@ -325,7 +317,7 @@ export default function ServicesPage() {
       {detailsOpen && selectedService && (
         <EntitySheet
           withCloseConfirmation
-          className="sm:min-w-2xl md:minx-w-3xl xl:min-w-3xl"
+          className="sm:min-w-4xl md:min-w-5xl xl:min-w-6xl"
           open={detailsOpen}
           onClose={() => {
             setDetailsOpen(false)

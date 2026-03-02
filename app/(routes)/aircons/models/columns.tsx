@@ -7,15 +7,15 @@ import {
   capitalize,
   formatCurrency,
   getBadgeVariant,
-  getBoolBadgeVariant,
   safeCell,
 } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, Trash2 } from "lucide-react"
+import { Edit, Eye, Trash2 } from "lucide-react"
 
 export function getAirconModelColumns({
   onEdit,
   onDelete,
+  onView,
 }: GetColumnsProps<AirconModels>): ColumnDef<AirconModels>[] {
   return [
     {
@@ -68,45 +68,6 @@ export function getAirconModelColumns({
       },
     },
     {
-      accessorKey: "parts_warranty_months",
-      header: "Parts Warranty",
-      cell: ({ row }) => {
-        const months = row.original.parts_warranty_months ?? 60
-        const years = (months / 12).toFixed(1)
-        return (
-          <span className="text-sm">
-            {years} yr{Number(years) !== 1 ? "s" : ""}
-          </span>
-        )
-      },
-    },
-    {
-      accessorKey: "labor_warranty_months",
-      header: "Labor Warranty",
-      cell: ({ row }) => {
-        const months = row.original.labor_warranty_months ?? 12
-        const years = (months / 12).toFixed(1)
-        return (
-          <span className="text-sm">
-            {years} yr{Number(years) !== 1 ? "s" : ""}
-          </span>
-        )
-      },
-    },
-    {
-      accessorKey: "has_discount",
-      header: "Has Discount",
-      cell: ({ row }) => (
-        <Badge
-          variant={getBoolBadgeVariant({
-            status: row.original.has_discount ?? false,
-          })}
-        >
-          {row.original.has_discount ? "Yes" : "No"}
-        </Badge>
-      ),
-    },
-    {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => {
@@ -114,6 +75,11 @@ export function getAirconModelColumns({
         return (
           <DataTableActions
             items={[
+              {
+                label: "View",
+                icon: Eye,
+                onClick: () => onView?.(model),
+              },
               {
                 label: "Edit",
                 icon: Edit,

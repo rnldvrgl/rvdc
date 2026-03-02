@@ -37,7 +37,10 @@ import { Client } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useWarrantyClaimMutations } from "@/lib/mutations/installations/useWarrantyClaimMutations"
 import { useAirconUnits, useWarrantyClaims } from "@/lib/queries/useAircons"
-import { useClientChoices } from "@/lib/queries/useChoices"
+import {
+  useClientChoices,
+  useTechnicianChoices,
+} from "@/lib/queries/useChoices"
 import { formatDate } from "date-fns"
 import {
   CheckCircle2,
@@ -832,9 +835,11 @@ function ExistingClaimsList() {
 // ─── Free Cleaning Tab ───────────────────────────────────────────────
 function FreeCleaningTab() {
   const { data: clientsData } = useClientChoices()
+  const { data: techniciansData } = useTechnicianChoices()
   const { redeemFreeCleaningBatch } = useWarrantyClaimMutations()
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null)
   const [selectedUnits, setSelectedUnits] = useState<number[]>([])
+  const [selectedTechnicians, setSelectedTechnicians] = useState<number[]>([])
   const [scheduledDateTime, setScheduledDateTime] = useState<Date | undefined>(
     undefined,
   )
@@ -901,10 +906,13 @@ function FreeCleaningTab() {
         unit_ids: selectedUnits,
         scheduled_date,
         scheduled_time,
+        technician_ids:
+          selectedTechnicians.length > 0 ? selectedTechnicians : undefined,
       })
 
       // Reset form
       setSelectedUnits([])
+      setSelectedTechnicians([])
       setScheduledDateTime(undefined)
       setSelectedClientId(null)
     } finally {
@@ -951,6 +959,40 @@ function FreeCleaningTab() {
               placeholder="Pick schedule date and time..."
               disablePastDates
             />
+          </div>
+          <div>
+            <Label>Assign Technician(s)</Label>
+            <div className="flex flex-wrap gap-2 mt-1.5">
+              {techniciansData?.map((tech) => {
+                const isSelected = selectedTechnicians.includes(tech.id)
+                return (
+                  <button
+                    key={tech.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedTechnicians((prev) =>
+                        isSelected
+                          ? prev.filter((id) => id !== tech.id)
+                          : [...prev, tech.id],
+                      )
+                    }
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors cursor-pointer ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border hover:bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {isSelected && <CheckCircle2 className="size-3" />}
+                    {tech.full_name}
+                  </button>
+                )
+              })}
+              {(!techniciansData || techniciansData.length === 0) && (
+                <p className="text-xs text-muted-foreground">
+                  No technicians available
+                </p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

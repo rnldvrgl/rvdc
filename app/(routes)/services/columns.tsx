@@ -347,6 +347,10 @@ export function getServiceColumns({
         const transitions: { label: string; status: string }[] = []
         if (value === "pending") {
           transitions.push({ label: "Start Progress", status: "in_progress" })
+          // Cleaning services can go directly to completed
+          if (service.service_type === "cleaning") {
+            transitions.push({ label: "Complete", status: "completed" })
+          }
         }
         if (value === "in_progress") {
           transitions.push({ label: "Complete", status: "completed" })

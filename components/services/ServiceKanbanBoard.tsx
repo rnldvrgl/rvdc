@@ -75,8 +75,30 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   cancelled: [],
 }
 
-function isTransitionAllowed(from: string, to: string): boolean {
-  return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false
+// Cleaning services have a simpler flow: can go directly from pending/in_progress to completed
+const CLEANING_TRANSITIONS: Record<string, string[]> = {
+  pending: ["in_progress", "completed", "cancelled"],
+  in_progress: ["completed", "cancelled"],
+  completed: [],
+  cancelled: [],
+}
+
+function getTransitionsForService(service: Service): string[] {
+  const transitions =
+    service.service_type === "cleaning"
+      ? CLEANING_TRANSITIONS
+      : ALLOWED_TRANSITIONS
+  return transitions[service.status] || []
+}
+
+function isTransitionAllowed(
+  from: string,
+  to: string,
+  serviceType?: string,
+): boolean {
+  const transitions =
+    serviceType === "cleaning" ? CLEANING_TRANSITIONS : ALLOWED_TRANSITIONS
+  return transitions[from]?.includes(to) ?? false
 }
 
 // --- Kanban columns config ---
@@ -522,7 +544,14 @@ export default function ServiceKanbanBoard({
 
       if (!COLUMNS.some((c) => c.id === targetColumnId)) return
       if (serviceData.status === targetColumnId) return
-      if (!isTransitionAllowed(serviceData.status, targetColumnId)) return
+      if (
+        !isTransitionAllowed(
+          serviceData.status,
+          targetColumnId,
+          serviceData.service_type,
+        )
+      )
+        return
 
       onStatusChange?.(serviceData, targetColumnId)
     },
@@ -536,13 +565,17 @@ export default function ServiceKanbanBoard({
 
   const canDropOnHovered = useMemo(() => {
     if (!activeService || !overColumnId) return false
-    return isTransitionAllowed(activeService.status, overColumnId)
+    return isTransitionAllowed(
+      activeService.status,
+      overColumnId,
+      activeService.service_type,
+    )
   }, [activeService, overColumnId])
 
   // Compute which columns are valid drop targets for the active service
   const validTargets = useMemo(() => {
     if (!activeService) return new Set<string>()
-    return new Set(ALLOWED_TRANSITIONS[activeService.status] || [])
+    return new Set(getTransitionsForService(activeService))
   }, [activeService])
 
   return (
@@ -563,7 +596,7 @@ export default function ServiceKanbanBoard({
         >
           <AlertCircle className="h-4 w-4" />
           Drop on a column to change status. Allowed:{" "}
-          {ALLOWED_TRANSITIONS[activeService.status]
+          {getTransitionsForService(activeService)
             .map((s) => serviceStatusLabels[s])
             .join(", ") || "None"}
         </motion.div>

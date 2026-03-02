@@ -3,6 +3,7 @@
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import ServiceApplianceManager from "@/components/forms/ServiceApplianceManager"
+import ApplianceKanbanBoard from "@/components/services/ApplianceKanbanBoard"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Service } from "@/lib/constants/interface"
 import { useServicePermissions } from "@/lib/hooks/useServicePermissions"
+import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
 import {
@@ -49,6 +51,8 @@ import {
   Clock,
   Edit,
   Info,
+  Kanban,
+  List,
   MapPin,
   Package,
   Phone,
@@ -131,6 +135,7 @@ export default function ServiceDetail({
   const [scheduleDeliveryDialogOpen, setScheduleDeliveryDialogOpen] =
     useState(false)
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>()
+  const [applianceView, setApplianceView] = useState<"list" | "kanban">("list")
   const {
     completeService,
     recordPayment,
@@ -138,6 +143,7 @@ export default function ServiceDetail({
     refundService,
     updateService,
   } = useServiceMutations()
+  const { updateAppliance } = useServiceApplianceMutations()
   const { data: schedules = [], isLoading: schedulesLoading } =
     useSchedulesByService(service.id)
 
@@ -201,7 +207,8 @@ export default function ServiceDetail({
     (appliance) =>
       appliance.status !== "completed" &&
       appliance.status !== "ready_for_pickup" &&
-      appliance.status !== "delivered",
+      appliance.status !== "delivered" &&
+      appliance.status !== "installed",
   )
 
   const handleComplete = () => {
@@ -512,146 +519,125 @@ export default function ServiceDetail({
 
   return (
     <div className="space-y-4">
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-2">
-        {!isCompleted && onEdit && canEditServiceDetails && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onEdit}
-              >
-                <Edit className="mr-1 h-4 w-4" />
-                Edit
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Edit service details, client info, and schedules</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-        {service.status !== "completed" &&
-          service.status !== "cancelled" &&
-          canCancelService && (
+      {/* Header: Badges + Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        {/* Status Badges — compact inline pills */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge
+            variant={getBadgeVariant(service.status)}
+            className="text-[11px] px-2 py-0.5"
+          >
+            {serviceStatusLabels[service.status] || service.status}
+          </Badge>
+          <Badge
+            className="text-[11px] px-2 py-0.5"
+            variant={
+              ({
+                repair: "warning",
+                inspection: "default",
+                cleaning: "success",
+                motor_rewind: "destructive",
+                installation: "default",
+              }[service.service_type] || "outline") as
+                | "success"
+                | "default"
+                | "destructive"
+                | "outline"
+                | "secondary"
+                | "warning"
+            }
+          >
+            {serviceTypeLabels[service.service_type] || service.service_type}
+          </Badge>
+          <Badge
+            className="text-[11px] px-2 py-0.5"
+            variant="secondary"
+          >
+            {serviceModeLabels[service.service_mode] || service.service_mode}
+          </Badge>
+          <Badge
+            variant={getBadgeVariant(service.payment_status)}
+            className="text-[11px] px-2 py-0.5"
+          >
+            {paymentStatusLabels[service.payment_status] ||
+              service.payment_status}
+          </Badge>
+        </div>
+
+        {/* Action Buttons — icon-only on small screens */}
+        <div className="flex items-center gap-1.5">
+          {!isCompleted && onEdit && canEditServiceDetails && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setCancelDialogOpen(true)}
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={onEdit}
                 >
-                  {/* CancelIcon */}
-                  <XIcon className="mr-1 size-4" />
-                  Cancel Service
+                  <Edit className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Edit</TooltipContent>
+            </Tooltip>
+          )}
+          {service.status !== "completed" &&
+            service.status !== "cancelled" &&
+            canCancelService && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => setCancelDialogOpen(true)}
+                  >
+                    <XIcon className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Cancel Service</TooltipContent>
+              </Tooltip>
+            )}
+          {service.status === "completed" && canProcessRefunds && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="warning"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => {
+                    setRefundDialogOpen(true)
+                    const maxRefund =
+                      parseFloat(service.total_paid || "0") -
+                      parseFloat(service.total_refunded || "0")
+                    setRefundAmount(maxRefund.toString())
+                  }}
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Process Refund</TooltipContent>
+            </Tooltip>
+          )}
+          {canComplete && canCompleteService && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="success"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => setCompleteDialogOpen(true)}
+                >
+                  <CheckCircle className="mr-1 h-3.5 w-3.5" />
+                  Complete
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Cancel this service and provide a reason</p>
+                Finalize service, create transactions, and mark as completed
               </TooltipContent>
             </Tooltip>
           )}
-        {service.status === "completed" && canProcessRefunds && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="warning"
-                size="sm"
-                onClick={() => {
-                  setRefundDialogOpen(true)
-                  const maxRefund =
-                    parseFloat(service.total_paid || "0") -
-                    parseFloat(service.total_refunded || "0")
-                  setRefundAmount(maxRefund.toString())
-                }}
-              >
-                <Info className="mr-1 h-4 w-4" />
-                Process Refund
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Issue a full or partial refund to the customer</p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-        {canComplete && canCompleteService && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="sm"
-                variant="success"
-                onClick={() => setCompleteDialogOpen(true)}
-              >
-                <CheckCircle className="mr-1 h-4 w-4" />
-                Complete Service
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                Finalize service, create transactions, and mark as completed
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
-
-      {/* Status Badges */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        <Badge
-          variant={getBadgeVariant(service.status)}
-          className="w-full"
-        >
-          <Clock className="mr-1 h-3 w-3" />
-          Status: {serviceStatusLabels[service.status] || service.status}
-        </Badge>
-        <Badge
-          className="w-full"
-          variant={
-            ({
-              repair: "warning",
-              inspection: "default",
-              cleaning: "success",
-              motor_rewind: "destructive",
-              installation: "default",
-            }[service.service_type] || "outline") as
-              | "success"
-              | "default"
-              | "destructive"
-              | "outline"
-              | "secondary"
-              | "warning"
-          }
-        >
-          <Wrench className="mr-1 h-3 w-3" />
-          {serviceTypeLabels[service.service_type] || service.service_type}
-        </Badge>
-        <Badge
-          className="w-full"
-          variant={
-            ({
-              home_service: "default",
-              carry_in: "secondary",
-              pull_out: "outline",
-            }[service.service_mode] || "secondary") as
-              | "success"
-              | "default"
-              | "destructive"
-              | "outline"
-              | "secondary"
-              | "warning"
-          }
-        >
-          <Truck className="mr-1 h-3 w-3" />
-          {serviceModeLabels[service.service_mode] || service.service_mode}
-        </Badge>
-        <Badge
-          variant={getBadgeVariant(service.payment_status)}
-          className="w-full"
-        >
-          <Wallet className="mr-1 h-3 w-3" />
-          {paymentStatusLabels[service.payment_status] ||
-            service.payment_status}
-        </Badge>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -659,7 +645,7 @@ export default function ServiceDetail({
         defaultValue="overview"
         className="w-full"
       >
-        <TabsList className="grid w-full space-x-2 grid-cols-4 h-auto">
+        <TabsList className="grid w-full grid-cols-4 h-auto">
           <TabsTrigger
             value="overview"
             className="text-xs sm:text-sm"
@@ -1412,20 +1398,86 @@ export default function ServiceDetail({
           value="appliances"
           className="space-y-4"
         >
-          <ServiceApplianceManager
-            serviceId={service.id}
-            serviceType={service.service_type}
-            appliances={service.appliances || []}
-            installationUnits={service.installation_units || []}
-            serviceTechnicians={
-              service.technician_assignments
-                ?.filter((ta) => !ta.appliance)
-                .map((ta) => ta.technician) || []
-            }
-            onUpdate={onRefresh}
-            disabled={isCompleted || !canEditAppliances}
-            canManageParts={canManageParts && !isCompleted}
-          />
+          {/* View toggle + kanban board */}
+          {service.appliances && service.appliances.length > 0 && (
+            <div className="flex items-center justify-end gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    aria-label="List view"
+                    onClick={() => setApplianceView("list")}
+                    className={`inline-flex items-center justify-center h-7 w-7 rounded transition-colors ${
+                      applianceView === "list"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <List className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>List view</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    aria-label="Kanban board view"
+                    onClick={() => setApplianceView("kanban")}
+                    className={`inline-flex items-center justify-center h-7 w-7 rounded transition-colors ${
+                      applianceView === "kanban"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Kanban className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Kanban board</TooltipContent>
+              </Tooltip>
+            </div>
+          )}
+
+          {applianceView === "kanban" &&
+            service.appliances &&
+            service.appliances.length > 0 && (
+              <ApplianceKanbanBoard
+                appliances={service.appliances}
+                onStatusChange={(appliance, newStatus) => {
+                  updateAppliance.mutate(
+                    {
+                      id: appliance.id,
+                      // PATCH only sends these fields; cast needed since mutation type expects full payload
+                      data: {
+                        status: newStatus,
+                        service: service.id,
+                      } as Parameters<typeof updateAppliance.mutate>[0]["data"],
+                    },
+                    {
+                      onSuccess: () => {
+                        onRefresh?.()
+                      },
+                    },
+                  )
+                }}
+                isUpdating={updateAppliance.isPending}
+              />
+            )}
+
+          {applianceView === "list" && (
+            <ServiceApplianceManager
+              serviceId={service.id}
+              serviceType={service.service_type}
+              appliances={service.appliances || []}
+              installationUnits={service.installation_units || []}
+              serviceTechnicians={
+                service.technician_assignments
+                  ?.filter((ta) => !ta.appliance)
+                  .map((ta) => ta.technician) || []
+              }
+              onUpdate={onRefresh}
+              disabled={isCompleted || !canEditAppliances}
+              canManageParts={canManageParts && !isCompleted}
+            />
+          )}
 
           {!isCompleted &&
             (!service.appliances || service.appliances.length === 0) && (

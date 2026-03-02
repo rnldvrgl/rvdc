@@ -672,6 +672,20 @@ export interface AirconBrands {
   name: string
 }
 
+export interface ModelPriceHistory {
+  id: number
+  aircon_model: number
+  retail_price: string
+  discount_percentage: string
+  old_retail_price?: string | null
+  old_discount_percentage?: string | null
+  effective_price: string
+  price_change_amount?: string | null
+  change_type: "initial" | "price" | "discount" | "price_and_discount"
+  notes: string
+  changed_at: string
+}
+
 export interface AirconModels {
   id: number
   brand?: AirconBrands
@@ -688,6 +702,7 @@ export interface AirconModels {
   labor_warranty_months?: number
   parts_warranty_years?: number
   labor_warranty_years?: number
+  price_history?: ModelPriceHistory[]
 }
 
 // Response type
@@ -801,6 +816,7 @@ export interface ServiceAppliance {
   is_unit_warranty_active?: boolean
   discounted_labor_fee?: string
   items_used?: ApplianceItemUsed[]
+  technician_assignments?: TechnicianAssignment[]
   total_parts_cost?: string
 }
 
@@ -1121,6 +1137,7 @@ export interface FreeCleaningRedemptionPayload {
   unit_id: number
   scheduled_date?: string
   scheduled_time?: string
+  technician_ids?: number[]
 }
 
 export interface FreeCleaningBatchPayload {
@@ -1128,6 +1145,7 @@ export interface FreeCleaningBatchPayload {
   unit_ids: number[]
   scheduled_date?: string
   scheduled_time?: string
+  technician_ids?: number[]
 }
 
 // Schedule
