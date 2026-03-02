@@ -1416,7 +1416,7 @@ function ApplianceCard({
                 {appliance.labor_is_free ? (
                   <Badge
                     variant="success"
-                    className="text-base px-3 py-1"
+                    className="ml-2"
                   >
                     FREE
                   </Badge>
