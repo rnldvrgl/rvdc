@@ -1388,37 +1388,29 @@ export default function ServiceDetail({
           className="space-y-4"
         >
           {/* View toggle + kanban board */}
-          {service.appliances && service.appliances.length > 0 && (
+          {canManage && service.appliances && service.appliances.length > 0 && (
             <div className="flex items-center justify-end gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
                     aria-label="List view"
                     onClick={() => setApplianceView("list")}
-                    className={`inline-flex items-center justify-center h-7 w-7 rounded transition-colors ${
-                      applianceView === "list"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:text-foreground"
-                    }`}
+                    variant={applianceView === "list" ? "default" : "plain"}
                   >
                     <List className="h-3.5 w-3.5" />
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>List view</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button
+                  <Button
                     aria-label="Kanban board view"
+                    variant={applianceView === "kanban" ? "default" : "plain"}
                     onClick={() => setApplianceView("kanban")}
-                    className={`inline-flex items-center justify-center h-7 w-7 rounded transition-colors ${
-                      applianceView === "kanban"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground hover:text-foreground"
-                    }`}
                   >
                     <Kanban className="h-3.5 w-3.5" />
-                  </button>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>Kanban board</TooltipContent>
               </Tooltip>
