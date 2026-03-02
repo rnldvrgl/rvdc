@@ -5,14 +5,38 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils/helpers"
 import { ChevronRight, LucideIcon, RefreshCw } from "lucide-react"
+import Link from "next/link"
 import React from "react"
 import { toast } from "sonner"
+
+type BreadcrumbItem = string | { label: string; href?: string }
+
+// Auto-resolve breadcrumb labels to routes (used when breadcrumbs are plain strings)
+const breadcrumbRouteMap: Record<string, string> = {
+  Dashboard: "/dashboard",
+  Sales: "/sales",
+  Services: "/services",
+  Receivables: "/receivables/remittances",
+  Finance: "/expenses/manage",
+  Expenses: "/expenses/manage",
+  Clients: "/clients",
+  Reports: "/reports",
+  Staff: "/employees",
+  Employees: "/employees",
+  Payroll: "/payroll/weekly",
+  Attendance: "/attendance/overview",
+  Inventory: "/inventory/items",
+  Stocks: "/inventory/stocks/stockroom",
+  Aircons: "/aircons/units",
+  Settings: "/settings/profile",
+}
+
 interface PageHeaderProps {
   icon?: LucideIcon
   title?: string
   description?: string
   isAdminOnly?: boolean
-  breadcrumbs?: string[]
+  breadcrumbs?: BreadcrumbItem[]
   variant?: "default" | "compact" | "hero"
   theme?: "default" | "primary" | "secondary" | "accent"
   className?: string
@@ -36,7 +60,7 @@ const PageHeader = ({
 }: PageHeaderProps) => {
   const themeStyles = {
     default: {
-      container: "bg-card border-border/60",
+      container: "bg-card border-border",
       accent: "bg-primary/8 text-primary border-primary/15",
       text: "text-foreground",
       description: "text-muted-foreground",
@@ -122,27 +146,47 @@ const PageHeader = ({
             aria-label="Breadcrumb"
           >
             <ol className="flex items-center gap-2 text-sm">
-              {breadcrumbs.map((crumb, index) => (
-                <li
-                  key={index}
-                  className="flex items-center gap-2"
-                >
-                  {index > 0 && <ChevronRight className="size-3 opacity-60" />}
-                  <span
-                    className={cn(
-                      "transition-colors duration-200",
-                      index === breadcrumbs.length - 1
-                        ? cn("font-semibold", currentTheme.text)
-                        : cn(
-                            "font-medium hover:opacity-80",
-                            currentTheme.description,
-                          ),
-                    )}
+              {breadcrumbs.map((crumb, index) => {
+                const isLast = index === breadcrumbs.length - 1
+                const label = typeof crumb === "string" ? crumb : crumb.label
+                const href =
+                  typeof crumb === "string"
+                    ? breadcrumbRouteMap[crumb]
+                    : crumb.href
+
+                return (
+                  <li
+                    key={index}
+                    className="flex items-center gap-2"
                   >
-                    {crumb}
-                  </span>
-                </li>
-              ))}
+                    {index > 0 && (
+                      <ChevronRight className="size-3 opacity-60" />
+                    )}
+                    {!isLast && href ? (
+                      <Link
+                        href={href}
+                        className={cn(
+                          "transition-colors duration-200 font-medium hover:underline underline-offset-4",
+                          currentTheme.description,
+                        )}
+                      >
+                        {label}
+                      </Link>
+                    ) : (
+                      <span
+                        className={cn(
+                          "transition-colors duration-200",
+                          isLast
+                            ? cn("font-semibold", currentTheme.text)
+                            : cn("font-medium", currentTheme.description),
+                        )}
+                      >
+                        {label}
+                      </span>
+                    )}
+                  </li>
+                )
+              })}
             </ol>
           </nav>
         )}

@@ -2,6 +2,7 @@
 
 import {
   ColumnDef,
+  RowSelectionState,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -15,6 +16,7 @@ import { DataTablePagination } from "@/components/custom/table/components/DataTa
 import { DataTableSortDropdown } from "@/components/custom/table/components/DataTableSortDropdown"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -36,10 +38,18 @@ import {
   ArrowUpDown,
   Database,
   Filter,
+  LucideIcon,
   RefreshCw,
   Search,
   X,
 } from "lucide-react"
+
+export interface BulkAction<TData> {
+  label: string
+  icon?: LucideIcon
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost"
+  onClick: (selectedRows: TData[]) => void
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -52,6 +62,11 @@ interface DataTableProps<TData, TValue> {
   title?: string
   description?: string
   onRefresh?: () => void
+  emptyIcon?: LucideIcon
+  emptyTitle?: string
+  emptyDescription?: string
+  enableRowSelection?: boolean
+  bulkActions?: BulkAction<TData>[]
 }
 
 export function DataTable<TData, TValue>({
@@ -64,6 +79,11 @@ export function DataTable<TData, TValue>({
   withoutDateRangeFilter = false,
   title,
   description,
+  emptyIcon: EmptyIcon,
+  emptyTitle,
+  emptyDescription,
+  enableRowSelection = false,
+  bulkActions,
 }: DataTableProps<TData, TValue>) {
   const {
     page,
@@ -79,6 +99,43 @@ export function DataTable<TData, TValue>({
   const pageCount = Math.max(1, Math.ceil(totalCount / limit))
   const hasNextPage = !!data?.next
   const hasPrevPage = !!data?.previous
+
+  const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
+
+  // Reset selection when page/data changes
+  React.useEffect(() => {
+    setRowSelection({})
+  }, [page, data])
+
+  // Build columns with optional selection checkbox
+  const allColumns = React.useMemo(() => {
+    if (!enableRowSelection) return columns
+    const selectCol: ColumnDef<TData, TValue> = {
+      id: "_select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+          className="translate-y-0.5"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+          className="translate-y-0.5"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    }
+    return [selectCol, ...columns]
+  }, [columns, enableRowSelection])
 
   const [localSearch, setLocalSearch] = React.useState(search || "")
   const debouncedSearch = useDebounce(localSearch, 500)
@@ -112,18 +169,21 @@ export function DataTable<TData, TValue>({
 
   const table = useReactTable({
     data: data.results ?? [],
-    columns,
+    columns: allColumns,
     pageCount,
     manualPagination: true,
     manualSorting: true,
     enableMultiSort: true,
+    enableRowSelection,
     state: {
       pagination: {
         pageIndex: page - 1,
         pageSize: limit,
       },
       sorting: sortingState,
+      rowSelection,
     },
+    onRowSelectionChange: setRowSelection,
     onPaginationChange: (updater) => {
       const nextPage =
         typeof updater === "function"
@@ -161,6 +221,16 @@ export function DataTable<TData, TValue>({
 
   const startIndex = (page - 1) * limit + 1
   const endIndex = Math.min(page * limit, totalCount)
+
+  const selectedRows = React.useMemo(() => {
+    const results = data?.results ?? []
+    return Object.keys(rowSelection)
+      .filter((key) => rowSelection[key])
+      .map((key) => results[Number(key)])
+      .filter(Boolean)
+  }, [rowSelection, data])
+
+  const selectedCount = selectedRows.length
 
   return (
     <div className="space-y-4">
@@ -297,14 +367,15 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Table Container */}
-      <div className="relative overflow-hidden rounded-lg border border-border bg-background shadow-sm">
+      <div className="relative overflow-hidden rounded-lg border border-border bg-card shadow-sm">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/30 hover:bg-muted/40">
+              <TableRow className="bg-muted/50 hover:bg-muted/60">
                 {table.getHeaderGroups()[0]?.headers.map((header) => {
                   const colId = header.column.id
                   const isActionColumn = ["action", "actions"].includes(colId)
+                  const isSelectColumn = colId === "_select"
 
                   return (
                     <TableHead
@@ -312,6 +383,7 @@ export function DataTable<TData, TValue>({
                       className={cn(
                         "h-12 px-4 font-semibold",
                         isActionColumn && "w-[100px]",
+                        isSelectColumn && "w-10 px-3",
                       )}
                     >
                       <div className="flex items-center gap-2">
@@ -331,7 +403,7 @@ export function DataTable<TData, TValue>({
                 // Loading skeleton rows
                 Array.from({ length: limit }).map((_, i) => (
                   <TableRow key={`skeleton-${i}`}>
-                    {columns.map((_, j) => (
+                    {allColumns.map((_, j) => (
                       <TableCell
                         key={`skeleton-cell-${i}-${j}`}
                         className="h-12 px-4"
@@ -374,17 +446,25 @@ export function DataTable<TData, TValue>({
                 // Empty state
                 <TableRow>
                   <TableCell
-                    colSpan={columns.length}
-                    className="h-32 text-center p-6"
+                    colSpan={allColumns.length}
+                    className="h-48 text-center p-6"
                   >
-                    <div className="flex flex-col items-center gap-3 text-muted-foreground">
-                      <Database className="size-8" />
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex items-center justify-center size-14 rounded-xl bg-muted/60 text-muted-foreground">
+                        {EmptyIcon ? (
+                          <EmptyIcon className="size-7" />
+                        ) : (
+                          <Database className="size-7" />
+                        )}
+                      </div>
                       <div className="space-y-1">
-                        <p className="text-sm font-medium">No data found</p>
-                        <p className="text-xs">
+                        <p className="text-base font-medium text-foreground">
+                          {emptyTitle ?? "No data found"}
+                        </p>
+                        <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                           {hasActiveFilters
                             ? "Try adjusting your search or filters"
-                            : "No records to display"}
+                            : (emptyDescription ?? "No records to display")}
                         </p>
                       </div>
                       {hasActiveFilters && (
@@ -392,7 +472,7 @@ export function DataTable<TData, TValue>({
                           variant="outline"
                           size="sm"
                           onClick={clearFilters}
-                          className="mt-2"
+                          className="mt-1"
                         >
                           Clear filters
                         </Button>
@@ -434,6 +514,56 @@ export function DataTable<TData, TValue>({
           </div>
         </>
       )}
+
+      {/* Bulk Action Bar */}
+      <AnimatePresence>
+        {selectedCount > 0 && bulkActions && bulkActions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50"
+          >
+            <div className="flex items-center gap-3 rounded-xl border bg-card px-4 py-2.5 shadow-lg">
+              <span className="text-sm font-medium whitespace-nowrap">
+                {selectedCount} selected
+              </span>
+              <Separator
+                orientation="vertical"
+                className="h-5"
+              />
+              <div className="flex items-center gap-2">
+                {bulkActions.map((action) => {
+                  const ActionIcon = action.icon
+                  return (
+                    <Button
+                      key={action.label}
+                      variant={action.variant ?? "outline"}
+                      size="sm"
+                      onClick={() => {
+                        action.onClick(selectedRows)
+                        setRowSelection({})
+                      }}
+                    >
+                      {ActionIcon && <ActionIcon className="size-4 mr-1.5" />}
+                      {action.label}
+                    </Button>
+                  )
+                })}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="size-7 p-0"
+                onClick={() => setRowSelection({})}
+              >
+                <X className="size-3.5" />
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -43,6 +43,7 @@ import {
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
+import { Skeleton } from "@/components/ui/skeleton"
 import { useIsMobile } from "@/lib/hooks"
 import { useCalendarPreferences } from "@/lib/hooks/useCalendarPreferences"
 import {
@@ -1458,8 +1459,29 @@ const DashboardCalendar = ({
           <CardDescription>Loading calendar preferences...</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-8 w-32" />
+              <div className="flex gap-1">
+                <Skeleton className="size-8 rounded" />
+                <Skeleton className="size-8 rounded" />
+                <Skeleton className="size-8 rounded" />
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <Skeleton
+                  key={`h-${i}`}
+                  className="h-6 w-full"
+                />
+              ))}
+              {Array.from({ length: 35 }).map((_, i) => (
+                <Skeleton
+                  key={`d-${i}`}
+                  className="h-10 w-full"
+                />
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
