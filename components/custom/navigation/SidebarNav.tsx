@@ -1,6 +1,7 @@
 "use client"
 
 import NavList from "@/components/custom/navigation/NavList"
+import NotificationArea from "@/components/custom/navigation/NotificationArea"
 import { UserProfile } from "@/components/custom/navigation/UserProfile"
 import { DeveloperCredit } from "@/components/custom/shared/DeveloperCredit"
 import { ModeToggle } from "@/components/custom/theme/ModeToggle"
@@ -92,9 +93,7 @@ export default function SidebarNav({
       </AnimatePresence>
 
       <ModeToggle />
-      {/* Notifications dropdown */}
-      {/* DISABLED */}
-      {/* <NotificationArea align="start" /> */}
+      <NotificationArea align="start" />
     </div>
   )
 
@@ -181,7 +180,7 @@ export default function SidebarNav({
         </div>
 
         <div className="flex items-center gap-2">
-          {/* <NotificationArea align="end" /> */}
+          <NotificationArea align="end" />
           <Button
             size="icon"
             className="rounded-lg"
