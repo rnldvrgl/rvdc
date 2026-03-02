@@ -112,6 +112,9 @@ export default function ItemsPage() {
         filters={filters}
         orderingOptions={orderingOptions}
         onRefresh={refetch}
+        emptyIcon={Package}
+        emptyTitle="No inventory items found"
+        emptyDescription="Add your first product to build your catalog"
       />
     </Wrapper>
   )

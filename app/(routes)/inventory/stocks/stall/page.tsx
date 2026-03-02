@@ -278,6 +278,9 @@ export default function StocksPage() {
         orderingOptions={orderingOptions}
         onRefresh={refetch}
         withoutDateRangeFilter
+        emptyIcon={Package}
+        emptyTitle="No stall stock found"
+        emptyDescription="Transfer items from stockroom to populate stall inventory"
       />
     </Wrapper>
   )

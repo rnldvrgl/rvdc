@@ -204,11 +204,18 @@ export default function PayrollSettingsPage() {
         </Card>
       ) : !settings ? (
         <Card>
-          <CardContent className="flex items-center justify-center py-12">
-            <div className="text-center space-y-2">
-              <Settings className="size-8 mx-auto text-muted-foreground" />
-              <div className="text-sm text-muted-foreground">
-                No settings found.
+          <CardContent className="flex items-center justify-center py-10">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <div className="flex items-center justify-center size-14 rounded-xl bg-muted/60 text-muted-foreground">
+                <Settings className="size-7" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-base font-medium text-foreground">
+                  No settings found
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Payroll settings will be initialized on first configuration
+                </p>
               </div>
             </div>
           </CardContent>

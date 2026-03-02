@@ -227,6 +227,9 @@ export default function CalendarEventsPage() {
               }
             }
             withoutDateRangeFilter
+            emptyIcon={CalendarDays}
+            emptyTitle="No calendar events"
+            emptyDescription="Add events to manage company holidays and closures"
           />
         </TabsContent>
 
@@ -243,6 +246,9 @@ export default function CalendarEventsPage() {
               }
             }
             withoutDateRangeFilter
+            emptyIcon={Clock4}
+            emptyTitle="No half-day schedules"
+            emptyDescription="Add half-day schedules for special work periods"
           />
         </TabsContent>
       </Tabs>

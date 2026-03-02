@@ -233,12 +233,18 @@ export default function HolidaysAdminPage() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <CalendarDays className="size-12 text-muted-foreground/50 mb-4" />
-              <h3 className="font-semibold text-lg mb-1">No holidays found</h3>
-              <p className="text-sm text-muted-foreground">
-                Add your first holiday using the form above
-              </p>
+            <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+              <div className="flex items-center justify-center size-14 rounded-xl bg-muted/60 text-muted-foreground">
+                <CalendarDays className="size-7" />
+              </div>
+              <div className="space-y-1">
+                <p className="text-base font-medium text-foreground">
+                  No holidays found
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Add your first holiday using the form above
+                </p>
+              </div>
             </div>
           )}
         </CardContent>

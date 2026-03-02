@@ -186,6 +186,9 @@ export default function PayrollPage() {
           isLoading={isLoading}
           filters={filters}
           orderingOptions={orderingOptions}
+          emptyIcon={FileText}
+          emptyTitle="No payroll records found"
+          emptyDescription="Generate your first weekly payroll to get started"
         />
       </div>
 

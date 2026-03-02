@@ -142,6 +142,9 @@ export default function ApplianceTypesPage() {
           { label: "Name (A-Z)", value: "name" },
           { label: "Name (Z-A)", value: "-name" },
         ]}
+        emptyIcon={Wrench}
+        emptyTitle="No appliance types found"
+        emptyDescription="Register your first appliance type to categorize services"
       />
     </Wrapper>
   )

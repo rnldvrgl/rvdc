@@ -128,6 +128,9 @@ export default function HalfDaySchedulesPage() {
           }
         }
         withoutDateRangeFilter
+        emptyIcon={CalendarClock}
+        emptyTitle="No half-day schedules"
+        emptyDescription="Create schedules to define half-day work periods"
       />
     </Wrapper>
   )
