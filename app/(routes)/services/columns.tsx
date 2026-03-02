@@ -1,5 +1,10 @@
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
 import { Badge } from "@/components/ui/badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { GetColumnsProps, Service } from "@/lib/constants/interface"
 import {
   formatCurrency,
@@ -9,9 +14,20 @@ import {
 } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef } from "@tanstack/react-table"
-import { CheckCircle, Edit, Eye, Trash2 } from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
+import {
+  Calendar,
+  CheckCircle,
+  Edit,
+  Eye,
+  Shield,
+  Sparkles,
+  Trash2,
+  Truck,
+} from "lucide-react"
 
-const serviceTypeLabels: Record<string, string> = {
+// --- Labels ---
+export const serviceTypeLabels: Record<string, string> = {
   repair: "Repair",
   inspection: "Inspection",
   cleaning: "Cleaning",
@@ -19,21 +35,238 @@ const serviceTypeLabels: Record<string, string> = {
   installation: "Installation",
 }
 
-const serviceModeLabels: Record<string, string> = {
+export const serviceModeLabels: Record<string, string> = {
   home_service: "Home Service",
   carry_in: "Carry In",
   pull_out: "Pull-Out",
 }
 
-const serviceStatusLabels: Record<string, string> = {
+export const serviceStatusLabels: Record<string, string> = {
   pending: "Pending",
   in_progress: "In Progress",
   completed: "Completed",
   cancelled: "Cancelled",
 }
 
+// --- Helpers ---
+
+function extractTimeFromDatetime(datetime: string): string | null {
+  try {
+    const date = new Date(datetime)
+    if (isNaN(date.getTime())) return null
+    const hours = String(date.getHours()).padStart(2, "0")
+    const minutes = String(date.getMinutes()).padStart(2, "0")
+    if (hours === "00" && minutes === "00") return null
+    return `${hours}:${minutes}`
+  } catch {
+    return null
+  }
+}
+
+function relativeTime(dateString: string): string {
+  try {
+    return formatDistanceToNow(new Date(dateString), { addSuffix: true })
+  } catch {
+    return ""
+  }
+}
+
+function hasActiveWarranty(service: Service): boolean {
+  return (
+    service.appliances?.some(
+      (a) => a.is_labor_warranty_active || a.is_unit_warranty_active,
+    ) ?? false
+  )
+}
+
+function hasFreeCleaningAvailable(service: Service): boolean {
+  return (
+    service.installation_units?.some(
+      (u) =>
+        u.free_cleaning_redeemed === false &&
+        u.free_cleaning_status === "available",
+    ) ?? false
+  )
+}
+
+function getPrimarySchedule(service: Service): {
+  label: string
+  date: string
+  time: string | null
+  icon: "calendar" | "truck" | "truck-green" | "truck-blue"
+} | null {
+  const schedule = service.next_schedule
+  const pickup = service.pickup_date
+  const delivery = service.delivery_date
+
+  if (schedule) {
+    const dateStr = formatDate(new Date(schedule.scheduled_date), "MMM dd")
+    const time = schedule.scheduled_time
+      ? formatTimeTo12Hour(schedule.scheduled_time)
+      : null
+    const typeMap: Record<string, string> = {
+      home_service: "Home Svc",
+      pull_out: "Pull Out",
+      return: "Return",
+    }
+    const iconMap: Record<
+      string,
+      "calendar" | "truck" | "truck-green" | "truck-blue"
+    > = {
+      home_service: "calendar",
+      pull_out: "truck",
+      return: "truck-blue",
+    }
+    return {
+      label: typeMap[schedule.schedule_type] || schedule.schedule_type,
+      date: dateStr,
+      time,
+      icon: iconMap[schedule.schedule_type] || "calendar",
+    }
+  }
+
+  if (pickup) {
+    const time = extractTimeFromDatetime(pickup)
+    return {
+      label: "Pickup",
+      date: formatDate(new Date(pickup), "MMM dd"),
+      time: time ? formatTimeTo12Hour(time) : null,
+      icon: "truck",
+    }
+  }
+
+  if (delivery) {
+    const time = extractTimeFromDatetime(delivery)
+    return {
+      label: "Delivery",
+      date: formatDate(new Date(delivery), "MMM dd"),
+      time: time ? formatTimeTo12Hour(time) : null,
+      icon: "truck-green",
+    }
+  }
+
+  return null
+}
+
+function getScheduleTooltipLines(service: Service): string[] {
+  const lines: string[] = []
+  const schedule = service.next_schedule
+  const pickup = service.pickup_date
+  const delivery = service.delivery_date
+
+  if (schedule?.schedule_type === "home_service") {
+    const time = schedule.scheduled_time
+      ? ` at ${formatTimeTo12Hour(schedule.scheduled_time)}`
+      : ""
+    lines.push(
+      `Home Service: ${formatDate(new Date(schedule.scheduled_date), "MMM dd, yyyy")}${time}`,
+    )
+  }
+  if (schedule?.schedule_type === "pull_out" || pickup) {
+    if (schedule?.schedule_type === "pull_out") {
+      const time = schedule.scheduled_time
+        ? ` at ${formatTimeTo12Hour(schedule.scheduled_time)}`
+        : ""
+      lines.push(
+        `Pull-Out: ${formatDate(new Date(schedule.scheduled_date), "MMM dd, yyyy")}${time}`,
+      )
+    } else if (pickup) {
+      const time = extractTimeFromDatetime(pickup)
+      const timeStr = time ? ` at ${formatTimeTo12Hour(time)}` : ""
+      lines.push(
+        `Pickup: ${formatDate(new Date(pickup), "MMM dd, yyyy")}${timeStr}`,
+      )
+    }
+  }
+  if (delivery) {
+    const time = extractTimeFromDatetime(delivery)
+    const timeStr = time ? ` at ${formatTimeTo12Hour(time)}` : ""
+    lines.push(
+      `Delivery: ${formatDate(new Date(delivery), "MMM dd, yyyy")}${timeStr}`,
+    )
+  }
+  if (schedule?.schedule_type === "return") {
+    const time = schedule.scheduled_time
+      ? ` at ${formatTimeTo12Hour(schedule.scheduled_time)}`
+      : ""
+    lines.push(
+      `Return: ${formatDate(new Date(schedule.scheduled_date), "MMM dd, yyyy")}${time}`,
+    )
+  }
+  return lines
+}
+
+// --- Status colours (used by Kanban too) ---
+export const statusConfig: Record<
+  string,
+  {
+    label: string
+    color: string
+    bgColor: string
+    borderColor: string
+    dotColor: string
+  }
+> = {
+  pending: {
+    label: "Pending",
+    color: "text-amber-700 dark:text-amber-400",
+    bgColor: "bg-amber-50 dark:bg-amber-950/30",
+    borderColor: "border-amber-200 dark:border-amber-800",
+    dotColor: "bg-amber-500",
+  },
+  in_progress: {
+    label: "In Progress",
+    color: "text-blue-700 dark:text-blue-400",
+    bgColor: "bg-blue-50 dark:bg-blue-950/30",
+    borderColor: "border-blue-200 dark:border-blue-800",
+    dotColor: "bg-blue-500",
+  },
+  completed: {
+    label: "Completed",
+    color: "text-emerald-700 dark:text-emerald-400",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
+    borderColor: "border-emerald-200 dark:border-emerald-800",
+    dotColor: "bg-emerald-500",
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "text-red-700 dark:text-red-400",
+    bgColor: "bg-red-50 dark:bg-red-950/30",
+    borderColor: "border-red-200 dark:border-red-800",
+    dotColor: "bg-red-500",
+  },
+}
+
+export const applianceStatusLabels: Record<string, string> = {
+  received: "Received",
+  diagnosed: "Diagnosed",
+  in_repair: "In Repair",
+  completed: "Completed",
+  ready_for_pickup: "Ready",
+  delivered: "Delivered",
+  reserved: "Reserved",
+  installed: "Installed",
+}
+
+// --- Service type color mapping ---
+export const serviceTypeColors: Record<string, string> = {
+  repair:
+    "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
+  inspection:
+    "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-sky-400 dark:border-sky-800",
+  cleaning:
+    "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800",
+  motor_rewind:
+    "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800",
+  installation:
+    "bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:border-violet-800",
+}
+
+// --- Column definition ---
+
 interface GetServiceColumnsProps extends GetColumnsProps<Service> {
   onComplete?: (service: Service) => void
+  onStatusChange?: (service: Service, newStatus: string) => void
 }
 
 export function getServiceColumns({
@@ -42,200 +275,249 @@ export function getServiceColumns({
   onEdit,
   onDelete,
   onComplete,
+  onStatusChange,
 }: GetServiceColumnsProps): ColumnDef<Service>[] {
   const canManageServices = role === "admin" || role === "manager"
+
   const columns: ColumnDef<Service>[] = [
-    {
-      accessorKey: "id",
-      header: "Service #",
-      cell: ({ getValue }) => (
-        <span className="font-mono text-sm">
-          #{String(getValue()).padStart(4, "0")}
-        </span>
-      ),
-    },
+    // -- Client --
     {
       accessorKey: "client.full_name",
       header: "Client",
-      cell: ({ row }) =>
-        safeCell(row.original.client?.full_name || "Unknown Client"),
-    },
-    {
-      accessorKey: "service_type",
-      header: "Type",
-      cell: ({ getValue }) => {
-        const value = getValue() as string
-        const typeVariants: Record<
-          string,
-          | "default"
-          | "secondary"
-          | "outline"
-          | "destructive"
-          | "success"
-          | "warning"
-        > = {
-          repair: "warning",
-          inspection: "default",
-          cleaning: "success",
-          motor_rewind: "destructive",
-          installation: "default",
-        }
+      cell: ({ row }) => {
+        const service = row.original
+        const warranty = hasActiveWarranty(service)
+        const freeCleaning = hasFreeCleaningAvailable(service)
+        const applianceCount = service.appliances?.length || 0
+
         return (
-          <Badge variant={typeVariants[value] || "outline"}>
-            {serviceTypeLabels[value] || safeCell(value)}
-          </Badge>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1">
+              <span className="font-medium text-sm truncate max-w-32">
+                {safeCell(service.client?.full_name || "Unknown")}
+              </span>
+              {warranty && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Shield className="h-3 w-3 text-blue-500 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>Active warranty</TooltipContent>
+                </Tooltip>
+              )}
+              {freeCleaning && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Sparkles className="h-3 w-3 text-emerald-500 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>Free cleaning available</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            {applianceCount > 0 && (
+              <span className="text-[10px] text-muted-foreground">
+                {applianceCount} appliance{applianceCount > 1 ? "s" : ""}
+              </span>
+            )}
+          </div>
         )
       },
     },
-    {
-      accessorKey: "service_mode",
-      header: "Mode",
-      cell: ({ getValue }) => {
-        const value = getValue() as string
-        const modeVariants: Record<
-          string,
-          | "default"
-          | "secondary"
-          | "outline"
-          | "destructive"
-          | "success"
-          | "warning"
-        > = {
-          home_service: "default",
-          carry_in: "secondary",
-          pull_out: "outline",
-        }
-        return (
-          <Badge variant={modeVariants[value] || "secondary"}>
-            {serviceModeLabels[value] || safeCell(value)}
-          </Badge>
-        )
-      },
-    },
+
+    // -- Status (interactive) --
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ getValue }) => {
-        const value = getValue() as string
+      cell: ({ row }) => {
+        const service = row.original
+        const value = service.status
+        const config = statusConfig[value]
+        const isTerminal = value === "completed" || value === "cancelled"
+
+        if (isTerminal || !canManageServices || !onStatusChange) {
+          return (
+            <Badge
+              variant={getBadgeVariant(value)}
+              className="text-[11px]"
+            >
+              {serviceStatusLabels[value] || safeCell(value)}
+            </Badge>
+          )
+        }
+
+        const transitions: { label: string; status: string }[] = []
+        if (value === "pending") {
+          transitions.push({ label: "Start Progress", status: "in_progress" })
+        }
+        if (value === "in_progress") {
+          transitions.push({ label: "Complete", status: "completed" })
+        }
+
         return (
-          <Badge variant={getBadgeVariant(value)}>
-            {serviceStatusLabels[value] || safeCell(value)}
-          </Badge>
+          <div className="flex items-center gap-1">
+            <Badge
+              variant={getBadgeVariant(value)}
+              className="text-[11px] cursor-default"
+            >
+              {serviceStatusLabels[value] || safeCell(value)}
+            </Badge>
+            {transitions.map((t) => (
+              <Tooltip key={t.status}>
+                <TooltipTrigger asChild>
+                  <button
+                    aria-label={t.label}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onStatusChange(service, t.status)
+                    }}
+                    className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-muted hover:bg-primary/10 transition-colors cursor-pointer"
+                  >
+                    <CheckCircle
+                      className={`h-3 w-3 ${config?.color || "text-muted-foreground"}`}
+                    />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{t.label}</TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
         )
       },
     },
+
+    // -- Type / Mode (combined) --
+    {
+      accessorKey: "service_type",
+      header: "Service",
+      cell: ({ row }) => {
+        const service = row.original
+        const typeColor = serviceTypeColors[service.service_type] || ""
+        return (
+          <div className="flex flex-wrap gap-0.5">
+            <Badge
+              variant="outline"
+              className={`text-[10px] px-1.5 py-0 ${typeColor}`}
+            >
+              {serviceTypeLabels[service.service_type] ||
+                safeCell(service.service_type)}
+            </Badge>
+            <Badge
+              variant="secondary"
+              className="text-[10px] px-1.5 py-0"
+            >
+              {serviceModeLabels[service.service_mode] ||
+                safeCell(service.service_mode)}
+            </Badge>
+          </div>
+        )
+      },
+    },
+
+    // -- Schedule (compact single line with tooltip) --
+    {
+      accessorKey: "pickup_date",
+      header: "Schedule",
+      cell: ({ row }) => {
+        const service = row.original
+        const primary = getPrimarySchedule(service)
+        if (!primary) {
+          return <span className="text-muted-foreground text-xs">—</span>
+        }
+
+        const tooltipLines = getScheduleTooltipLines(service)
+        const iconEl =
+          primary.icon === "calendar" ? (
+            <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
+          ) : primary.icon === "truck-green" ? (
+            <Truck className="h-3 w-3 text-emerald-500 shrink-0" />
+          ) : primary.icon === "truck-blue" ? (
+            <Truck className="h-3 w-3 text-blue-500 shrink-0" />
+          ) : (
+            <Truck className="h-3 w-3 text-muted-foreground shrink-0" />
+          )
+
+        return (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 text-xs cursor-default whitespace-nowrap">
+                {iconEl}
+                <span className="text-muted-foreground">{primary.label}:</span>
+                <span className="font-medium">{primary.date}</span>
+                {primary.time && (
+                  <span className="text-muted-foreground">{primary.time}</span>
+                )}
+              </div>
+            </TooltipTrigger>
+            {tooltipLines.length > 0 && (
+              <TooltipContent className="text-xs">
+                <div className="space-y-0.5">
+                  {tooltipLines.map((line, i) => (
+                    <div key={i}>{line}</div>
+                  ))}
+                </div>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        )
+      },
+    },
+
+    // -- Revenue --
     {
       accessorKey: "total_revenue",
       header: "Revenue",
       cell: ({ getValue }) => {
         const value = getValue()
         return value ? (
-          formatCurrency(Number(value))
+          <span className="font-medium tabular-nums text-sm">
+            {formatCurrency(Number(value))}
+          </span>
         ) : (
-          <span className="text-muted-foreground">₱0.00</span>
+          <span className="text-muted-foreground text-sm">₱0</span>
         )
       },
     },
+
+    // -- Payment Status --
     {
       accessorKey: "payment_status",
       header: "Payment",
       cell: ({ getValue }) => (
-        <Badge variant={getBadgeVariant(getValue() as string)}>
+        <Badge
+          variant={getBadgeVariant(getValue() as string)}
+          className="text-[11px]"
+        >
           {safeCell(getValue())}
         </Badge>
       ),
     },
-    {
-      accessorKey: "pickup_date",
-      header: "Schedule",
-      cell: ({ row }) => {
-        const service = row.original
-        const pickup = service.pickup_date
-        const delivery = service.delivery_date
-        const schedule = service.next_schedule
 
-        const hasAny = schedule || pickup || delivery
-        if (!hasAny) {
-          return <span className="text-muted-foreground text-sm">—</span>
-        }
+    // -- Created date (compact relative) --
+    {
+      accessorKey: "created_at",
+      header: "Added",
+      cell: ({ getValue }) => {
+        const value = getValue() as string
+        if (!value) return <span className="text-muted-foreground">—</span>
 
         return (
-          <div className="text-sm space-y-0.5">
-            {/* Home Service / Installation schedule */}
-            {schedule && schedule.schedule_type === "home_service" && (
-              <div>
-                <span className="text-xs text-muted-foreground">
-                  Home Service:{" "}
-                </span>
-                {formatDate(new Date(schedule.scheduled_date), "MMM dd, yyyy")}
-                {schedule.scheduled_time && (
-                  <span className="ml-1 text-muted-foreground">
-                    {formatTimeTo12Hour(schedule.scheduled_time)}
-                  </span>
-                )}
-              </div>
-            )}
-            {/* Pull-Out schedule */}
-            {(schedule?.schedule_type === "pull_out" || pickup) && (
-              <div>
-                <span className="text-xs text-muted-foreground">
-                  Pull Out:{" "}
-                </span>
-                {schedule?.schedule_type === "pull_out" ? (
-                  <>
-                    {formatDate(
-                      new Date(schedule.scheduled_date),
-                      "MMM dd, yyyy",
-                    )}
-                    {schedule.scheduled_time && (
-                      <span className="ml-1 text-muted-foreground">
-                        {formatTimeTo12Hour(schedule.scheduled_time)}
-                      </span>
-                    )}
-                  </>
-                ) : (
-                  pickup && formatDate(new Date(pickup), "MMM dd, h:mm a")
-                )}
-              </div>
-            )}
-            {/* Delivery date */}
-            {delivery && (
-              <div>
-                <span className="text-xs text-muted-foreground">
-                  Delivery:{" "}
-                </span>
-                {formatDate(new Date(delivery), "MMM dd, h:mm a")}
-              </div>
-            )}
-            {/* Return schedule */}
-            {schedule && schedule.schedule_type === "return" && (
-              <div>
-                <span className="text-xs text-muted-foreground">Return: </span>
-                {formatDate(new Date(schedule.scheduled_date), "MMM dd, yyyy")}
-                {schedule.scheduled_time && (
-                  <span className="ml-1 text-muted-foreground">
-                    {formatTimeTo12Hour(schedule.scheduled_time)}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-xs text-muted-foreground cursor-default whitespace-nowrap">
+                {relativeTime(value)}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              {formatDate(new Date(value), "EEEE, MMMM dd, yyyy 'at' h:mm a")}
+            </TooltipContent>
+          </Tooltip>
         )
       },
     },
-    {
-      accessorKey: "created_at",
-      header: "Added date",
-      cell: ({ getValue }) =>
-        safeCell(
-          getValue()
-            ? formatDate(new Date(getValue() as string), "MMM dd, yyyy")
-            : null,
-        ),
-    },
+
+    // -- Actions --
     {
       id: "actions",
-      header: "Actions",
+      header: "",
       cell: ({ row }) => {
         const service = row.original
         const canComplete =
