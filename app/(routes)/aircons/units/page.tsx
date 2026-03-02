@@ -177,6 +177,9 @@ export default function AirconUnitsPage() {
         filters={filters}
         orderingOptions={orderingOptions}
         onRefresh={refetch}
+        emptyIcon={Snowflake}
+        emptyTitle="No aircon units found"
+        emptyDescription="Add units to start tracking your inventory"
       />
     </Wrapper>
   )

@@ -19,7 +19,7 @@ import { useDailyAttendances } from "@/lib/queries/useAttendance"
 import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { convertAttendanceForCalendar } from "@/lib/utils/attendance"
 import { Users } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 type SelectedEmployeeType =
   | (Record<"employee_id", number | string> & Record<"employee_name", string>)
@@ -69,11 +69,14 @@ const AttendanceOverviewPage = () => {
   const stats = useAttendanceStats(attendanceRecords, calendarEvents)
 
   // Update URL when employee selection changes
+  const prevEmployeeId = useRef(selectedEmployee?.employee_id)
   useEffect(() => {
+    if (prevEmployeeId.current === selectedEmployee?.employee_id) return
+    prevEmployeeId.current = selectedEmployee?.employee_id
     push({
       filter: { ...filter, employee_id: selectedEmployee?.employee_id },
     })
-  }, [selectedEmployee, filter, push])
+  }, [selectedEmployee?.employee_id])
 
   return (
     <Wrapper>

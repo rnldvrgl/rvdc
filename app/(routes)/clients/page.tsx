@@ -122,6 +122,9 @@ export default function ClientsPage() {
         }
         filters={filters}
         orderingOptions={orderingOptions}
+        emptyIcon={Users}
+        emptyTitle="No clients found"
+        emptyDescription="Add your first client to build your customer database"
       />
     </Wrapper>
   )

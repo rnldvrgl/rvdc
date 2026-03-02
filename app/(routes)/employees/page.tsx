@@ -120,6 +120,9 @@ export default function EmployeesPage() {
           }
         }
         withoutDateRangeFilter
+        emptyIcon={Users}
+        emptyTitle="No employees found"
+        emptyDescription="Add your first employee to manage staff records"
       />
     </Wrapper>
   )

@@ -2,11 +2,13 @@
 
 import { BirthdayGreeting } from "@/components/custom/dashboard/BirthdayGreeting"
 import { BirthdayReminders } from "@/components/custom/dashboard/BirthdayReminders"
+import { InventoryReorderAlerts } from "@/components/custom/dashboard/InventoryReorderAlerts"
 import { LeaveBalanceSummary } from "@/components/custom/dashboard/LeaveBalanceSummary"
 import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
 import { RecentTransactions } from "@/components/custom/dashboard/RecentTransactions"
 import { RemindersAlerts } from "@/components/custom/dashboard/RemindersAlerts"
 import { SalesSummary } from "@/components/custom/dashboard/SalesSummary"
+import { WarrantyExpirationAlerts } from "@/components/custom/dashboard/WarrantyExpirationAlerts"
 import DateRangePicker from "@/components/custom/inputs/DateRangePicker"
 import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
 import DashboardCharts from "@/components/custom/shared/charts/DashboardCharts"
@@ -117,6 +119,8 @@ const DashboardPage = () => {
             <div className="grid lg:grid-cols-2  gap-6">
               <RemindersAlerts />
               <BirthdayReminders />
+              <WarrantyExpirationAlerts />
+              <InventoryReorderAlerts />
             </div>
           )}
 

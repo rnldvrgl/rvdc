@@ -1,8 +1,8 @@
 "use client"
 
+import { PageLoadingSkeleton } from "@/components/custom/shared/skeletons"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useNavigation } from "@/lib/hooks/useNavigation"
-import { Loader2 } from "lucide-react"
 import { redirect } from "next/navigation"
 import { useEffect } from "react"
 
@@ -26,12 +26,5 @@ export default function AttendancePage() {
     }
   }, [role, push])
 
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="flex flex-col items-center gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Redirecting...</p>
-      </div>
-    </div>
-  )
+  return <PageLoadingSkeleton message="Redirecting..." />
 }

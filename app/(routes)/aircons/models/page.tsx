@@ -462,6 +462,9 @@ export default function AirconModelsPage() {
         filters={filters}
         orderingOptions={orderingOptions}
         onRefresh={refetch}
+        emptyIcon={Zap}
+        emptyTitle="No aircon models found"
+        emptyDescription="Add your first model to define specifications and pricing"
       />
     </Wrapper>
   )

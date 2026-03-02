@@ -198,6 +198,9 @@ export default function AirconBrandsPage() {
           }
         }
         withoutDateRangeFilter
+        emptyIcon={Wind}
+        emptyTitle="No brands found"
+        emptyDescription="Add your first brand to organize aircon products"
       />
     </Wrapper>
   )
