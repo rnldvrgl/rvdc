@@ -223,36 +223,36 @@ export default function ServicesPage() {
         title="Services"
         description="Manage repair, installation, and maintenance services"
         actionButton={
-          <div className="flex items-center gap-2">
-            {/* View toggle */}
-            <div className="flex items-center rounded-lg border bg-muted p-0.5">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={viewMode === "table" ? "default" : "ghost"}
-                    aria-label="Table view"
-                    onClick={() => setViewMode("table")}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Table view</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={viewMode === "kanban" ? "default" : "ghost"}
-                    aria-label="Kanban board view"
-                    onClick={() => setViewMode("kanban")}
-                  >
-                    <Kanban className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Kanban board</TooltipContent>
-              </Tooltip>
-            </div>
+          canAddService && (
+            <div className="flex items-center gap-2">
+              {/* View toggle */}
+              <div className="flex items-center rounded-lg border bg-muted p-0.5">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={viewMode === "table" ? "default" : "ghost"}
+                      aria-label="Table view"
+                      onClick={() => setViewMode("table")}
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Table view</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={viewMode === "kanban" ? "default" : "ghost"}
+                      aria-label="Kanban board view"
+                      onClick={() => setViewMode("kanban")}
+                    >
+                      <Kanban className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Kanban board</TooltipContent>
+                </Tooltip>
+              </div>
 
-            {canAddService && (
               <Button
                 onClick={() => openEntity()}
                 size="sm"
@@ -260,8 +260,8 @@ export default function ServicesPage() {
                 <Plus className="mr-2 h-4 w-4" />
                 New Service
               </Button>
-            )}
-          </div>
+            </div>
+          )
         }
         onRefresh={refetch}
       />

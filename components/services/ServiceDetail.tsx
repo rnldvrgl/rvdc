@@ -33,7 +33,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Service } from "@/lib/constants/interface"
-import { useServicePermissions } from "@/lib/hooks/useServicePermissions"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
@@ -113,6 +113,7 @@ export default function ServiceDetail({
   onEdit,
   onRefresh,
 }: ServiceDetailProps) {
+  const { canManage } = useCurrentUser()
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState("")
@@ -146,18 +147,6 @@ export default function ServiceDetail({
   const { updateAppliance } = useServiceApplianceMutations()
   const { data: schedules = [], isLoading: schedulesLoading } =
     useSchedulesByService(service.id)
-
-  // Permission checks
-  const {
-    canEditServiceDetails,
-    canCompleteService,
-    canCancelService,
-    canProcessRefunds,
-    canApplyDiscounts,
-    canRecordPayments,
-    canEditAppliances,
-    canManageParts,
-  } = useServicePermissions()
 
   const canComplete =
     service.status === "pending" || service.status === "in_progress"
@@ -566,7 +555,7 @@ export default function ServiceDetail({
 
         {/* Action Buttons — icon-only on small screens */}
         <div className="flex items-center gap-1.5">
-          {!isCompleted && onEdit && canEditServiceDetails && (
+          {!isCompleted && onEdit && canManage && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -583,7 +572,7 @@ export default function ServiceDetail({
           )}
           {service.status !== "completed" &&
             service.status !== "cancelled" &&
-            canCancelService && (
+            canManage && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -598,7 +587,7 @@ export default function ServiceDetail({
                 <TooltipContent>Cancel Service</TooltipContent>
               </Tooltip>
             )}
-          {service.status === "completed" && canProcessRefunds && (
+          {service.status === "completed" && canManage && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -619,7 +608,7 @@ export default function ServiceDetail({
               <TooltipContent>Process Refund</TooltipContent>
             </Tooltip>
           )}
-          {canComplete && canCompleteService && (
+          {canComplete && canManage && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -1474,8 +1463,8 @@ export default function ServiceDetail({
                   .map((ta) => ta.technician) || []
               }
               onUpdate={onRefresh}
-              disabled={isCompleted || !canEditAppliances}
-              canManageParts={canManageParts && !isCompleted}
+              disabled={isCompleted || !canManage}
+              canManageParts={!isCompleted}
             />
           )}
 
@@ -1556,7 +1545,7 @@ export default function ServiceDetail({
           {/* Service Discount Card */}
           {service.status !== "completed" &&
             service.status !== "cancelled" &&
-            canApplyDiscounts && (
+            canManage && (
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">Service Discount</CardTitle>
@@ -1753,7 +1742,7 @@ export default function ServiceDetail({
           </Card>
 
           {/* Refund Section */}
-          {canProcessRefunds &&
+          {canManage &&
             parseFloat(service.total_paid || "0") > 0 &&
             parseFloat(service.total_paid || "0") >
               parseFloat(service.total_refunded || "0") && (
@@ -1878,7 +1867,7 @@ export default function ServiceDetail({
             )}
 
           {/* Add Payment Button */}
-          {canRecordPayments && (
+          {canManage && (
             <Button
               className="w-full"
               variant="outline"
