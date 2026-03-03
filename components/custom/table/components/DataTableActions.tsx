@@ -92,9 +92,7 @@ export function DataTableActions({ items }: DataTableActionsProps) {
                       item.disabled && "opacity-40 cursor-not-allowed",
                     )}
                   >
-                    {Icon && (
-                      <Icon className="size-4 text-muted-foreground" />
-                    )}
+                    {Icon && <Icon className="size-4 text-muted-foreground" />}
                     {item.label}
                   </DropdownMenuItem>
                 )
