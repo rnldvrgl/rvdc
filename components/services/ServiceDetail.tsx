@@ -11,7 +11,7 @@ import ApplianceKanbanBoard from "@/components/services/ApplianceKanbanBoard"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -675,17 +675,19 @@ export default function ServiceDetail({
         defaultValue="overview"
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-4 h-auto">
+        <TabsList className="grid w-full grid-cols-4 h-9">
           <TabsTrigger
             value="overview"
-            className="text-xs sm:text-sm"
+            className="text-xs sm:text-sm gap-1.5"
           >
+            <Info className="h-3.5 w-3.5 hidden sm:block" />
             Overview
           </TabsTrigger>
           <TabsTrigger
             value="appliances"
-            className="text-xs sm:text-sm"
+            className="text-xs sm:text-sm gap-1.5"
           >
+            <Package className="h-3.5 w-3.5 hidden sm:block" />
             <span className="hidden sm:inline">
               {service.service_type === "installation" ? "Units" : "Appliances"}
             </span>
@@ -693,21 +695,34 @@ export default function ServiceDetail({
               {service.service_type === "installation" ? "Units" : "Items"}
             </span>
             {service.appliances && service.appliances.length > 0 && (
-              <span className="ml-1 sm:ml-2 rounded-full bg-primary px-1.5 sm:px-2 py-0.5 text-xs text-primary-foreground">
+              <Badge
+                variant="secondary"
+                className="h-5 min-w-5 px-1 text-[10px] rounded-full"
+              >
                 {service.appliances.length}
-              </span>
+              </Badge>
             )}
           </TabsTrigger>
           <TabsTrigger
             value="payments"
-            className="text-xs sm:text-sm"
+            className="text-xs sm:text-sm gap-1.5"
           >
+            <Wallet className="h-3.5 w-3.5 hidden sm:block" />
             Payments
+            {service.payments && service.payments.length > 0 && (
+              <Badge
+                variant="secondary"
+                className="h-5 min-w-5 px-1 text-[10px] rounded-full"
+              >
+                {service.payments.length}
+              </Badge>
+            )}
           </TabsTrigger>
           <TabsTrigger
             value="schedule"
-            className="text-xs sm:text-sm"
+            className="text-xs sm:text-sm gap-1.5"
           >
+            <Calendar className="h-3.5 w-3.5 hidden sm:block" />
             Schedule
           </TabsTrigger>
         </TabsList>
@@ -715,665 +730,641 @@ export default function ServiceDetail({
         {/* Overview Tab */}
         <TabsContent
           value="overview"
-          className="space-y-4"
+          className="space-y-1"
         >
-          <div className="grid gap-4 ">
-            {/* Client Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-base">
-                  <User className="mr-2 h-4 w-4" />
-                  Client Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Name
-                  </p>
-                  <p className="text-sm">
-                    {service.client?.full_name || "N/A"}
-                  </p>
-                </div>
+          {/* Client & Service Info — compact horizontal sections */}
+          <div className="rounded-lg border bg-card">
+            {/* Client row */}
+            <div className="px-4 py-3">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <User className="h-3 w-3" />
+                Client
+              </p>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <span className="text-sm font-semibold">
+                  {service.client?.full_name || "N/A"}
+                </span>
                 {service.client?.contact_number && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Contact
-                    </p>
-                    <p className="flex items-center text-sm">
-                      <Phone className="mr-2 h-3 w-3" />
-                      {service.client.contact_number}
-                    </p>
-                  </div>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Phone className="h-3 w-3" />
+                    {service.client.contact_number}
+                  </span>
                 )}
                 {service.client?.address && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Address
-                    </p>
-                    <p className="flex items-start text-sm">
-                      <MapPin className="mr-2 mt-0.5 h-3 w-3 shrink-0" />
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <MapPin className="h-3 w-3 shrink-0" />
+                    <span className="truncate max-w-[250px]">
                       {service.client.address}
-                    </p>
-                  </div>
+                    </span>
+                  </span>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Service Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-base">
-                  <Wrench className="mr-2 h-4 w-4" />
-                  Service Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Type
-                  </p>
-                  <p className="text-sm">
-                    {serviceTypeLabels[service.service_type] ||
-                      service.service_type}
-                  </p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Mode
-                  </p>
-                  <p className="text-sm">
-                    {serviceModeLabels[service.service_mode] ||
-                      service.service_mode}
-                  </p>
-                </div>
-                <div className="flex justify-between">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Status
-                  </p>
-                  <Badge variant={getBadgeVariant(service.status)}>
-                    {serviceStatusLabels[service.status] || service.status}
+            <Separator />
+
+            {/* Service info row */}
+            <div className="px-4 py-3">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Wrench className="h-3 w-3" />
+                Service Details
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant={getBadgeVariant(service.status)}
+                  className="text-xs"
+                >
+                  {serviceStatusLabels[service.status] || service.status}
+                </Badge>
+                <Badge
+                  className="text-xs"
+                  variant={
+                    ({
+                      repair: "warning",
+                      dismantle: "warning",
+                      inspection: "default",
+                      cleaning: "success",
+                      motor_rewind: "destructive",
+                      installation: "default",
+                    }[service.service_type] || "outline") as
+                      | "success"
+                      | "default"
+                      | "destructive"
+                      | "outline"
+                      | "secondary"
+                      | "warning"
+                  }
+                >
+                  {serviceTypeLabels[service.service_type] ||
+                    service.service_type}
+                </Badge>
+                <Badge
+                  variant="secondary"
+                  className="text-xs"
+                >
+                  {serviceModeLabels[service.service_mode] ||
+                    service.service_mode}
+                </Badge>
+                {service.stall && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs"
+                  >
+                    {typeof service.stall === "object" &&
+                    "name" in service.stall
+                      ? (service.stall as { name: string }).name
+                      : `Stall #${service.stall}`}
                   </Badge>
-                </div>
-                {/* Show pickup date for pull-out services */}
-                {service.service_mode === "pull_out" && service.pickup_date && (
-                  <div className="flex justify-between">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Pickup Date
-                    </p>
-                    <p className="text-sm flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {formatDate(new Date(service.pickup_date), "PPp")}
-                    </p>
-                  </div>
                 )}
-                {/* Show delivery date for pull-out services */}
-                {service.service_mode === "pull_out" &&
-                  service.delivery_date && (
-                    <div className="flex justify-between">
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Delivery Date
-                      </p>
-                      <p className="text-sm flex items-center gap-1">
+              </div>
+              {/* Conditional date details */}
+              {(service.service_mode === "pull_out" ||
+                service.service_mode === "home_service") && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                  {service.service_mode === "pull_out" &&
+                    service.pickup_date && (
+                      <span className="flex items-center gap-1">
                         <Truck className="h-3 w-3" />
+                        Pickup:{" "}
+                        {formatDate(new Date(service.pickup_date), "PPp")}
+                      </span>
+                    )}
+                  {service.service_mode === "pull_out" &&
+                    service.delivery_date && (
+                      <span className="flex items-center gap-1">
+                        <Truck className="h-3 w-3" />
+                        Delivery:{" "}
                         {formatDate(new Date(service.delivery_date), "PPp")}
-                      </p>
-                    </div>
-                  )}
-                {/* Show schedule info for home services */}
-                {service.service_mode === "home_service" &&
-                  schedules.length > 0 &&
-                  schedules[0].scheduled_date && (
-                    <div className="flex justify-between">
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Scheduled
-                      </p>
-                      <p className="text-sm flex items-center gap-1">
+                      </span>
+                    )}
+                  {service.service_mode === "home_service" &&
+                    schedules.length > 0 &&
+                    schedules[0].scheduled_date && (
+                      <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
+                        Scheduled:{" "}
                         {formatDate(
                           new Date(schedules[0].scheduled_date),
                           "PPp",
                         )}
-                      </p>
-                    </div>
-                  )}
-              </CardContent>
-            </Card>
+                      </span>
+                    )}
+                </div>
+              )}
+            </div>
+          </div>
 
-            {/* Appliances Breakdown */}
-            {service.appliances && service.appliances.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center text-base">
-                    <Package className="mr-2 h-4 w-4" />
-                    Appliances & Charges
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {service.appliances.map((appliance) => {
-                    const laborFee = parseFloat(appliance.labor_fee || "0")
-                    const discountedLaborFee = parseFloat(
-                      appliance.discounted_labor_fee ||
-                        appliance.labor_fee ||
-                        "0",
-                    )
-                    const hasLaborDiscount =
-                      ((appliance.labor_discount_amount &&
-                        parseFloat(appliance.labor_discount_amount) > 0) ||
-                        (appliance.labor_discount_percentage &&
-                          parseFloat(appliance.labor_discount_percentage) >
-                            0)) &&
-                      !appliance.labor_is_free
+          {/* Appliances Breakdown */}
+          {service.appliances && service.appliances.length > 0 && (
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                <Package className="h-3 w-3" />
+                Appliances & Charges
+              </p>
+              <div className="space-y-2">
+                {service.appliances.map((appliance) => {
+                  const laborFee = parseFloat(appliance.labor_fee || "0")
+                  const discountedLaborFee = parseFloat(
+                    appliance.discounted_labor_fee ||
+                      appliance.labor_fee ||
+                      "0",
+                  )
+                  const hasLaborDiscount =
+                    ((appliance.labor_discount_amount &&
+                      parseFloat(appliance.labor_discount_amount) > 0) ||
+                      (appliance.labor_discount_percentage &&
+                        parseFloat(appliance.labor_discount_percentage) > 0)) &&
+                    !appliance.labor_is_free
 
-                    const partsCost = parseFloat(
-                      appliance.total_parts_cost || "0",
-                    )
-                    const partsOriginalCost = appliance.items_used
-                      ? appliance.items_used.reduce(
-                          (sum, part) =>
-                            sum + parseFloat(part.item_price) * part.quantity,
-                          0,
+                  const partsCost = parseFloat(
+                    appliance.total_parts_cost || "0",
+                  )
+                  const partsOriginalCost = appliance.items_used
+                    ? appliance.items_used.reduce(
+                        (sum, part) =>
+                          sum + parseFloat(part.item_price) * part.quantity,
+                        0,
+                      )
+                    : 0
+                  const hasPartsDiscount = partsOriginalCost > partsCost
+
+                  // Find the installation unit linked to this appliance (by serial number)
+                  const linkedUnit =
+                    service.service_type === "installation" &&
+                    service.installation_units &&
+                    appliance.serial_number
+                      ? service.installation_units.find(
+                          (u) => u.serial_number === appliance.serial_number,
                         )
+                      : null
+                  const applianceUnitPrice = linkedUnit
+                    ? parseFloat(
+                        linkedUnit.sale_price ||
+                          linkedUnit.model?.promo_price ||
+                          linkedUnit.model?.retail_price ||
+                          "0",
+                      )
+                    : appliance.unit_price
+                      ? parseFloat(appliance.unit_price)
                       : 0
-                    const hasPartsDiscount = partsOriginalCost > partsCost
 
-                    // Find the installation unit linked to this appliance (by serial number)
-                    const linkedUnit =
-                      service.service_type === "installation" &&
-                      service.installation_units &&
-                      appliance.serial_number
-                        ? service.installation_units.find(
-                            (u) => u.serial_number === appliance.serial_number,
-                          )
-                        : null
-                    const applianceUnitPrice = linkedUnit
-                      ? parseFloat(
-                          linkedUnit.sale_price ||
-                            linkedUnit.model?.promo_price ||
-                            linkedUnit.model?.retail_price ||
-                            "0",
-                        )
-                      : appliance.unit_price
-                        ? parseFloat(appliance.unit_price)
-                        : 0
+                  const applianceTotal =
+                    discountedLaborFee + partsCost + applianceUnitPrice
 
-                    const applianceTotal =
-                      discountedLaborFee + partsCost + applianceUnitPrice
-
-                    return (
-                      <div
-                        key={appliance.id}
-                        className="rounded-lg border p-3 space-y-2"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-medium text-sm">
-                              {appliance.appliance_type?.name ||
-                                (appliance.brand && appliance.model
-                                  ? `${appliance.brand} ${appliance.model}`
-                                  : "Unknown Appliance")}
+                  return (
+                    <div
+                      key={appliance.id}
+                      className="rounded-lg border p-3 space-y-2"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="font-medium text-sm">
+                            {appliance.appliance_type?.name ||
+                              (appliance.brand && appliance.model
+                                ? `${appliance.brand} ${appliance.model}`
+                                : "Unknown Appliance")}
+                          </p>
+                          {(appliance.brand || appliance.model) && (
+                            <p className="text-xs text-muted-foreground">
+                              {[appliance.brand, appliance.model]
+                                .filter(Boolean)
+                                .join(" ")}
                             </p>
-                            {(appliance.brand || appliance.model) && (
-                              <p className="text-xs text-muted-foreground">
-                                {[appliance.brand, appliance.model]
-                                  .filter(Boolean)
-                                  .join(" ")}
-                              </p>
-                            )}
-                            {appliance.serial_number && (
-                              <p className="text-xs text-muted-foreground">
-                                SN: {appliance.serial_number}
-                              </p>
-                            )}
-                          </div>
-                          <Badge variant={getBadgeVariant(appliance.status)}>
-                            {applianceStatusLabels[appliance.status] ||
-                              appliance.status}
-                          </Badge>
+                          )}
+                          {appliance.serial_number && (
+                            <p className="text-xs text-muted-foreground">
+                              SN: {appliance.serial_number}
+                            </p>
+                          )}
                         </div>
+                        <Badge variant={getBadgeVariant(appliance.status)}>
+                          {applianceStatusLabels[appliance.status] ||
+                            appliance.status}
+                        </Badge>
+                      </div>
 
-                        <Separator />
+                      <Separator />
 
-                        <div className="space-y-1 text-sm">
-                          <div className="flex justify-between items-center">
-                            <span className="text-muted-foreground">
-                              Labor Fee
-                            </span>
-                            {appliance.labor_is_free ? (
-                              <Badge
-                                variant="success"
-                                className="text-xs"
-                              >
-                                FREE
-                              </Badge>
-                            ) : (
-                              <div className="flex flex-col items-end gap-0.5">
-                                {hasLaborDiscount && (
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-xs line-through text-muted-foreground">
-                                      {formatCurrency(laborFee)}
-                                    </span>
-                                    <Badge
-                                      variant="outline"
-                                      className="text-green-600 border-green-600 text-xs px-1.5 py-0"
-                                    >
-                                      {appliance.labor_discount_percentage &&
-                                      parseFloat(
-                                        appliance.labor_discount_percentage,
-                                      ) > 0
-                                        ? `${appliance.labor_discount_percentage}%`
-                                        : `₱${appliance.labor_discount_amount}`}
-                                    </Badge>
-                                  </div>
-                                )}
-                                <span className="font-medium">
-                                  {formatCurrency(discountedLaborFee)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          {appliance.items_used &&
-                            appliance.items_used.length > 0 && (
-                              <>
-                                <div className="flex justify-between items-center">
-                                  <span className="text-muted-foreground">
-                                    Parts ({appliance.items_used.length} items)
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between items-center">
+                          <span className="text-muted-foreground">
+                            Labor Fee
+                          </span>
+                          {appliance.labor_is_free ? (
+                            <Badge
+                              variant="success"
+                              className="text-xs"
+                            >
+                              FREE
+                            </Badge>
+                          ) : (
+                            <div className="flex flex-col items-end gap-0.5">
+                              {hasLaborDiscount && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs line-through text-muted-foreground">
+                                    {formatCurrency(laborFee)}
                                   </span>
-                                  <div className="flex flex-col items-end gap-0.5">
-                                    {hasPartsDiscount && (
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-xs line-through text-muted-foreground">
-                                          {formatCurrency(partsOriginalCost)}
-                                        </span>
-                                        <Badge
-                                          variant="outline"
-                                          className="text-green-600 border-green-600 text-xs px-1.5 py-0"
-                                        >
-                                          {formatCurrency(
-                                            partsOriginalCost - partsCost,
-                                          )}
-                                        </Badge>
-                                      </div>
-                                    )}
-                                    <span className="font-medium">
-                                      {formatCurrency(partsCost)}
-                                    </span>
-                                  </div>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-green-600 border-green-600 text-xs px-1.5 py-0"
+                                  >
+                                    {appliance.labor_discount_percentage &&
+                                    parseFloat(
+                                      appliance.labor_discount_percentage,
+                                    ) > 0
+                                      ? `${appliance.labor_discount_percentage}%`
+                                      : `₱${appliance.labor_discount_amount}`}
+                                  </Badge>
                                 </div>
-                                {/* Show parts details */}
-                                <div className="ml-4 mt-1 space-y-1 text-xs">
-                                  {appliance.items_used.map((part) => {
-                                    const partHasDiscount =
-                                      (part.discount_amount &&
-                                        parseFloat(part.discount_amount) > 0) ||
-                                      (part.discount_percentage &&
-                                        parseFloat(part.discount_percentage) >
-                                          0)
-
-                                    return (
-                                      <div
-                                        key={part.id}
-                                        className="flex justify-between items-center text-muted-foreground"
-                                      >
-                                        <div className="flex items-center gap-1.5">
-                                          <span>
-                                            • {part.item_name} (x{part.quantity}
-                                            )
-                                          </span>
-                                          {part.is_free ? (
-                                            <Badge
-                                              variant="success"
-                                              className="text-xs"
-                                            >
-                                              FREE
-                                            </Badge>
-                                          ) : (
-                                            partHasDiscount && (
-                                              <Badge
-                                                variant="outline"
-                                                className="text-green-600 border-green-600 text-xs px-1 py-0"
-                                              >
-                                                {part.discount_percentage &&
-                                                parseFloat(
-                                                  part.discount_percentage,
-                                                ) > 0
-                                                  ? `${part.discount_percentage}%`
-                                                  : `₱${part.discount_amount}`}
-                                              </Badge>
-                                            )
-                                          )}
-                                        </div>
-                                        <div className="flex flex-col items-end">
-                                          {!part.is_free && partHasDiscount && (
-                                            <span className="text-xs line-through">
-                                              {formatCurrency(
-                                                parseFloat(part.item_price) *
-                                                  part.quantity,
-                                              )}
-                                            </span>
-                                          )}
-                                          <span>
-                                            {formatCurrency(part.line_total)}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    )
-                                  })}
-                                </div>
-                              </>
-                            )}
-                          {/* Show unit price for this appliance */}
-                          {applianceUnitPrice > 0 && (
-                            <div className="flex justify-between items-center">
-                              <span className="text-muted-foreground">
-                                Unit Price
-                                {linkedUnit?.model
-                                  ? ` (${linkedUnit.model.brand?.name || ""} ${linkedUnit.model.name || ""})`
-                                  : ""}
-                              </span>
+                              )}
                               <span className="font-medium">
-                                {formatCurrency(applianceUnitPrice)}
+                                {formatCurrency(discountedLaborFee)}
                               </span>
                             </div>
                           )}
-                          <Separator />
-                          <div className="flex justify-between font-semibold">
-                            <span>Subtotal</span>
-                            <span>{formatCurrency(applianceTotal)}</span>
+                        </div>
+                        {appliance.items_used &&
+                          appliance.items_used.length > 0 && (
+                            <>
+                              <div className="flex justify-between items-center">
+                                <span className="text-muted-foreground">
+                                  Parts ({appliance.items_used.length} items)
+                                </span>
+                                <div className="flex flex-col items-end gap-0.5">
+                                  {hasPartsDiscount && (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs line-through text-muted-foreground">
+                                        {formatCurrency(partsOriginalCost)}
+                                      </span>
+                                      <Badge
+                                        variant="outline"
+                                        className="text-green-600 border-green-600 text-xs px-1.5 py-0"
+                                      >
+                                        {formatCurrency(
+                                          partsOriginalCost - partsCost,
+                                        )}
+                                      </Badge>
+                                    </div>
+                                  )}
+                                  <span className="font-medium">
+                                    {formatCurrency(partsCost)}
+                                  </span>
+                                </div>
+                              </div>
+                              {/* Show parts details */}
+                              <div className="ml-4 mt-1 space-y-1 text-xs">
+                                {appliance.items_used.map((part) => {
+                                  const partHasDiscount =
+                                    (part.discount_amount &&
+                                      parseFloat(part.discount_amount) > 0) ||
+                                    (part.discount_percentage &&
+                                      parseFloat(part.discount_percentage) > 0)
+
+                                  return (
+                                    <div
+                                      key={part.id}
+                                      className="flex justify-between items-center text-muted-foreground"
+                                    >
+                                      <div className="flex items-center gap-1.5">
+                                        <span>
+                                          • {part.item_name} (x{part.quantity})
+                                        </span>
+                                        {part.is_free ? (
+                                          <Badge
+                                            variant="success"
+                                            className="text-xs"
+                                          >
+                                            FREE
+                                          </Badge>
+                                        ) : (
+                                          partHasDiscount && (
+                                            <Badge
+                                              variant="outline"
+                                              className="text-green-600 border-green-600 text-xs px-1 py-0"
+                                            >
+                                              {part.discount_percentage &&
+                                              parseFloat(
+                                                part.discount_percentage,
+                                              ) > 0
+                                                ? `${part.discount_percentage}%`
+                                                : `₱${part.discount_amount}`}
+                                            </Badge>
+                                          )
+                                        )}
+                                      </div>
+                                      <div className="flex flex-col items-end">
+                                        {!part.is_free && partHasDiscount && (
+                                          <span className="text-xs line-through">
+                                            {formatCurrency(
+                                              parseFloat(part.item_price) *
+                                                part.quantity,
+                                            )}
+                                          </span>
+                                        )}
+                                        <span>
+                                          {formatCurrency(part.line_total)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </>
+                          )}
+                        {/* Show unit price for this appliance */}
+                        {applianceUnitPrice > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">
+                              Unit Price
+                              {linkedUnit?.model
+                                ? ` (${linkedUnit.model.brand?.name || ""} ${linkedUnit.model.name || ""})`
+                                : ""}
+                            </span>
+                            <span className="font-medium">
+                              {formatCurrency(applianceUnitPrice)}
+                            </span>
                           </div>
+                        )}
+                        <Separator />
+                        <div className="flex justify-between font-semibold">
+                          <span>Subtotal</span>
+                          <span>{formatCurrency(applianceTotal)}</span>
                         </div>
                       </div>
-                    )
-                  })}
-                </CardContent>
-              </Card>
-            )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
-            {/* Financial Summary */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-base">
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Financial Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {/* Show service-level discount if exists */}
-                {((service.service_discount_amount &&
-                  parseFloat(service.service_discount_amount) > 0) ||
-                  (service.service_discount_percentage &&
-                    parseFloat(service.service_discount_percentage) > 0)) && (
-                  <>
-                    <div className="flex items-center justify-between text-sm">
-                      <p className="text-muted-foreground">Original Amount</p>
-                      <p className="line-through">
-                        {(() => {
-                          // Calculate subtotal from appliances (before service discount)
-                          const appliancesSubtotal =
-                            service.appliances?.reduce((total, appliance) => {
-                              const laborFee = parseFloat(
-                                appliance.discounted_labor_fee ||
-                                  appliance.labor_fee ||
-                                  "0",
-                              )
-                              const partsCost = parseFloat(
-                                appliance.total_parts_cost || "0",
-                              )
-                              // Per-appliance unit price (brand_new linked by serial or second-hand)
-                              const linkedUnit =
-                                service.service_type === "installation" &&
-                                service.installation_units &&
-                                appliance.serial_number
-                                  ? service.installation_units.find(
-                                      (u) =>
-                                        u.serial_number ===
-                                        appliance.serial_number,
-                                    )
-                                  : null
-                              const unitPrice = linkedUnit
-                                ? parseFloat(
-                                    linkedUnit.sale_price ||
-                                      linkedUnit.model?.promo_price ||
-                                      linkedUnit.model?.retail_price ||
-                                      "0",
+          {/* Financial Summary */}
+          <div className="rounded-lg border bg-card">
+            <div className="px-4 py-3 space-y-2">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Wallet className="h-3 w-3" />
+                Financial Summary
+              </p>
+              {/* Show service-level discount if exists */}
+              {((service.service_discount_amount &&
+                parseFloat(service.service_discount_amount) > 0) ||
+                (service.service_discount_percentage &&
+                  parseFloat(service.service_discount_percentage) > 0)) && (
+                <>
+                  <div className="flex items-center justify-between text-sm">
+                    <p className="text-muted-foreground">Original Amount</p>
+                    <p className="line-through">
+                      {(() => {
+                        // Calculate subtotal from appliances (before service discount)
+                        const appliancesSubtotal =
+                          service.appliances?.reduce((total, appliance) => {
+                            const laborFee = parseFloat(
+                              appliance.discounted_labor_fee ||
+                                appliance.labor_fee ||
+                                "0",
+                            )
+                            const partsCost = parseFloat(
+                              appliance.total_parts_cost || "0",
+                            )
+                            // Per-appliance unit price (brand_new linked by serial or second-hand)
+                            const linkedUnit =
+                              service.service_type === "installation" &&
+                              service.installation_units &&
+                              appliance.serial_number
+                                ? service.installation_units.find(
+                                    (u) =>
+                                      u.serial_number ===
+                                      appliance.serial_number,
                                   )
-                                : appliance.unit_price
-                                  ? parseFloat(appliance.unit_price)
-                                  : 0
-                              return total + laborFee + partsCost + unitPrice
-                            }, 0) || 0
+                                : null
+                            const unitPrice = linkedUnit
+                              ? parseFloat(
+                                  linkedUnit.sale_price ||
+                                    linkedUnit.model?.promo_price ||
+                                    linkedUnit.model?.retail_price ||
+                                    "0",
+                                )
+                              : appliance.unit_price
+                                ? parseFloat(appliance.unit_price)
+                                : 0
+                            return total + laborFee + partsCost + unitPrice
+                          }, 0) || 0
 
-                          return formatCurrency(appliancesSubtotal)
+                        return formatCurrency(appliancesSubtotal)
+                      })()}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <p className="text-muted-foreground">Service Discount</p>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className="text-green-600 border-green-600"
+                      >
+                        {service.service_discount_percentage &&
+                        parseFloat(service.service_discount_percentage) > 0
+                          ? `${service.service_discount_percentage}% off`
+                          : `₱${service.service_discount_amount} off`}
+                      </Badge>
+                      <p className="text-green-600 font-medium">
+                        -
+                        {(() => {
+                          const discountAmount = parseFloat(
+                            service.service_discount_amount || "0",
+                          )
+                          const discountPercentage = parseFloat(
+                            service.service_discount_percentage || "0",
+                          )
+
+                          // If percentage discount, calculate from subtotal
+                          if (discountPercentage > 0 && discountAmount === 0) {
+                            const appliancesSubtotal =
+                              service.appliances?.reduce((total, appliance) => {
+                                const laborFee = parseFloat(
+                                  appliance.discounted_labor_fee ||
+                                    appliance.labor_fee ||
+                                    "0",
+                                )
+                                const partsCost = parseFloat(
+                                  appliance.total_parts_cost || "0",
+                                )
+                                // Per-appliance unit price
+                                const linkedUnit =
+                                  service.service_type === "installation" &&
+                                  service.installation_units &&
+                                  appliance.serial_number
+                                    ? service.installation_units.find(
+                                        (u) =>
+                                          u.serial_number ===
+                                          appliance.serial_number,
+                                      )
+                                    : null
+                                const unitPrice = linkedUnit
+                                  ? parseFloat(
+                                      linkedUnit.sale_price ||
+                                        linkedUnit.model?.promo_price ||
+                                        linkedUnit.model?.retail_price ||
+                                        "0",
+                                    )
+                                  : appliance.unit_price
+                                    ? parseFloat(appliance.unit_price)
+                                    : 0
+                                return total + laborFee + partsCost + unitPrice
+                              }, 0) || 0
+
+                            const calculatedDiscount =
+                              (appliancesSubtotal * discountPercentage) / 100
+                            return formatCurrency(calculatedDiscount)
+                          }
+
+                          return formatCurrency(discountAmount)
                         })()}
                       </p>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <p className="text-muted-foreground">Service Discount</p>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className="text-green-600 border-green-600"
-                        >
-                          {service.service_discount_percentage &&
-                          parseFloat(service.service_discount_percentage) > 0
-                            ? `${service.service_discount_percentage}% off`
-                            : `₱${service.service_discount_amount} off`}
-                        </Badge>
-                        <p className="text-green-600 font-medium">
-                          -
-                          {(() => {
-                            const discountAmount = parseFloat(
-                              service.service_discount_amount || "0",
-                            )
-                            const discountPercentage = parseFloat(
-                              service.service_discount_percentage || "0",
-                            )
-
-                            // If percentage discount, calculate from subtotal
-                            if (
-                              discountPercentage > 0 &&
-                              discountAmount === 0
-                            ) {
-                              const appliancesSubtotal =
-                                service.appliances?.reduce(
-                                  (total, appliance) => {
-                                    const laborFee = parseFloat(
-                                      appliance.discounted_labor_fee ||
-                                        appliance.labor_fee ||
-                                        "0",
-                                    )
-                                    const partsCost = parseFloat(
-                                      appliance.total_parts_cost || "0",
-                                    )
-                                    // Per-appliance unit price
-                                    const linkedUnit =
-                                      service.service_type === "installation" &&
-                                      service.installation_units &&
-                                      appliance.serial_number
-                                        ? service.installation_units.find(
-                                            (u) =>
-                                              u.serial_number ===
-                                              appliance.serial_number,
-                                          )
-                                        : null
-                                    const unitPrice = linkedUnit
-                                      ? parseFloat(
-                                          linkedUnit.sale_price ||
-                                            linkedUnit.model?.promo_price ||
-                                            linkedUnit.model?.retail_price ||
-                                            "0",
-                                        )
-                                      : appliance.unit_price
-                                        ? parseFloat(appliance.unit_price)
-                                        : 0
-                                    return (
-                                      total + laborFee + partsCost + unitPrice
-                                    )
-                                  },
-                                  0,
-                                ) || 0
-
-                              const calculatedDiscount =
-                                (appliancesSubtotal * discountPercentage) / 100
-                              return formatCurrency(calculatedDiscount)
-                            }
-
-                            return formatCurrency(discountAmount)
-                          })()}
-                        </p>
-                      </div>
-                    </div>
-                    <Separator />
-                  </>
-                )}
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Total Revenue
-                  </p>
-                  <p className="text-lg font-bold">
-                    {formatCurrency(calculateActualTotalRevenue())}
-                  </p>
-                </div>
-                <Separator />
+                  </div>
+                  <Separator />
+                </>
+              )}
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Revenue
+                </p>
+                <p className="text-lg font-bold">
+                  {formatCurrency(calculateActualTotalRevenue())}
+                </p>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between text-sm">
+                <p className="text-muted-foreground">Main Stall</p>
+                <p>
+                  {formatCurrency(
+                    parseFloat(service.main_stall_revenue || "0"),
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <p className="text-muted-foreground">Sub Stall</p>
+                <p>
+                  {formatCurrency(parseFloat(service.sub_stall_revenue || "0"))}
+                </p>
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Payment Status
+                </p>
+                <Badge variant={getBadgeVariant(service.payment_status)}>
+                  {paymentStatusLabels[service.payment_status] ||
+                    service.payment_status}
+                </Badge>
+              </div>
+              {service.total_paid && (
                 <div className="flex items-center justify-between text-sm">
-                  <p className="text-muted-foreground">Main Stall</p>
-                  <p>
-                    {formatCurrency(
-                      parseFloat(service.main_stall_revenue || "0"),
-                    )}
+                  <p className="text-muted-foreground">Paid</p>
+                  <p className="font-medium text-green-600">
+                    {formatCurrency(parseFloat(service.total_paid))}
                   </p>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <p className="text-muted-foreground">Sub Stall</p>
-                  <p>
-                    {formatCurrency(
-                      parseFloat(service.sub_stall_revenue || "0"),
-                    )}
-                  </p>
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Payment Status
-                  </p>
-                  <Badge variant={getBadgeVariant(service.payment_status)}>
-                    {paymentStatusLabels[service.payment_status] ||
-                      service.payment_status}
-                  </Badge>
-                </div>
-                {service.total_paid && (
+              )}
+              {service.total_refunded &&
+                parseFloat(service.total_refunded) > 0 && (
                   <div className="flex items-center justify-between text-sm">
-                    <p className="text-muted-foreground">Paid</p>
-                    <p className="font-medium text-green-600">
-                      {formatCurrency(parseFloat(service.total_paid))}
+                    <p className="text-muted-foreground">Total Refunded</p>
+                    <p className="font-medium text-red-600">
+                      -{formatCurrency(parseFloat(service.total_refunded))}
                     </p>
                   </div>
                 )}
-                {service.total_refunded &&
-                  parseFloat(service.total_refunded) > 0 && (
+              <Separator />
+              {(() => {
+                const balanceDue =
+                  calculateActualTotalRevenue() -
+                  parseFloat(service.total_paid || "0") +
+                  parseFloat(service.total_refunded || "0")
+                return (
+                  <>
                     <div className="flex items-center justify-between text-sm">
-                      <p className="text-muted-foreground">Total Refunded</p>
-                      <p className="font-medium text-red-600">
-                        -{formatCurrency(parseFloat(service.total_refunded))}
+                      <p className="text-muted-foreground">Balance Due</p>
+                      <p
+                        className={`font-medium ${balanceDue < 0 ? "text-orange-600" : "text-red-600"}`}
+                      >
+                        {formatCurrency(balanceDue)}
                       </p>
                     </div>
-                  )}
-                <Separator />
-                {(() => {
-                  const balanceDue =
-                    calculateActualTotalRevenue() -
-                    parseFloat(service.total_paid || "0") +
-                    parseFloat(service.total_refunded || "0")
-                  return (
-                    <>
-                      <div className="flex items-center justify-between text-sm">
-                        <p className="text-muted-foreground">Balance Due</p>
-                        <p
-                          className={`font-medium ${balanceDue < 0 ? "text-orange-600" : "text-red-600"}`}
-                        >
-                          {formatCurrency(balanceDue)}
-                        </p>
-                      </div>
-                      {balanceDue < 0 && <OverPaymentWarning />}
-                    </>
-                  )
-                })()}
-              </CardContent>
-            </Card>
+                    {balanceDue < 0 && <OverPaymentWarning />}
+                  </>
+                )
+              })()}
+            </div>
           </div>
 
           {/* Description & Notes */}
           {(service.description || service.remarks || service.notes) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">
-                  Additional Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
+            <div className="rounded-lg border bg-card px-4 py-3">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+                Additional Information
+              </p>
+              <div className="space-y-2">
                 {service.description && (
                   <div>
-                    <p className="mb-1 text-sm font-medium text-muted-foreground">
+                    <p className="text-xs font-medium text-muted-foreground">
                       Description
                     </p>
-                    <p className="text-sm">{service.description}</p>
+                    <p className="text-sm mt-0.5">{service.description}</p>
                   </div>
                 )}
                 {service.remarks && (
                   <div>
-                    <p className="mb-1 text-sm font-medium text-muted-foreground">
+                    <p className="text-xs font-medium text-muted-foreground">
                       Remarks
                     </p>
-                    <p className="text-sm">{service.remarks}</p>
+                    <p className="text-sm mt-0.5">{service.remarks}</p>
                   </div>
                 )}
                 {service.notes && (
                   <div>
-                    <p className="mb-1 text-sm font-medium text-muted-foreground">
+                    <p className="text-xs font-medium text-muted-foreground">
                       Internal Notes
                     </p>
-                    <p className="text-sm">{service.notes}</p>
+                    <p className="text-sm mt-0.5">{service.notes}</p>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Technicians */}
           {service.technician_assignments &&
             service.technician_assignments.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">
-                    Assigned Technicians
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {service.technician_assignments.map((assignment, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-3 rounded-md border p-2"
-                      >
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                          <User className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">
-                            {assignment.technician_name ||
-                              `Technician #${assignment.technician}`}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {assignment.assignment_type
-                              .replace("_", " ")
-                              .replace(/\b\w/g, (l) => l.toUpperCase())}
-                          </p>
-                        </div>
+              <div className="rounded-lg border bg-card px-4 py-3">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <User className="h-3 w-3" />
+                  Assigned Technicians
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {service.technician_assignments.map((assignment, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 rounded-md border bg-muted/30 px-2.5 py-1.5"
+                    >
+                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
+                        <User className="h-3 w-3 text-primary" />
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      <div>
+                        <p className="text-xs font-medium leading-none">
+                          {assignment.technician_name ||
+                            `Technician #${assignment.technician}`}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {assignment.assignment_type
+                            .replace("_", " ")
+                            .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
 
           {/* Service Location Details - Only show if NOT carry-in */}
@@ -1381,45 +1372,32 @@ export default function ServiceDetail({
             (service.override_address ||
               service.override_contact_person ||
               service.override_contact_number) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Service Location</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
+              <div className="rounded-lg border bg-card px-4 py-3">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <MapPin className="h-3 w-3" />
+                  Service Location
+                </p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                   {service.override_contact_person && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Contact Person
-                      </p>
-                      <p className="text-sm">
-                        {service.override_contact_person}
-                      </p>
-                    </div>
+                    <span className="flex items-center gap-1 text-sm">
+                      <User className="h-3 w-3 text-muted-foreground" />
+                      {service.override_contact_person}
+                    </span>
                   )}
                   {service.override_contact_number && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Contact Number
-                      </p>
-                      <p className="flex items-center text-sm">
-                        <Phone className="mr-2 h-3 w-3" />
-                        {service.override_contact_number}
-                      </p>
-                    </div>
+                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Phone className="h-3 w-3" />
+                      {service.override_contact_number}
+                    </span>
                   )}
                   {service.override_address && (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Service Address
-                      </p>
-                      <p className="flex items-start text-sm">
-                        <MapPin className="mr-2 mt-0.5 h-3 w-3 shrink-0" />
-                        {service.override_address}
-                      </p>
-                    </div>
+                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      {service.override_address}
+                    </span>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
         </TabsContent>
 
@@ -1519,146 +1497,245 @@ export default function ServiceDetail({
         {/* Payments Tab */}
         <TabsContent
           value="payments"
-          className="space-y-4"
+          className="space-y-3"
         >
+          {/* Payment Summary Strip with progress bar */}
+          {(() => {
+            const totalAmount = calculateActualTotalRevenue()
+            const totalPaid = parseFloat(service.total_paid || "0")
+            const totalRefunded = parseFloat(service.total_refunded || "0")
+            const balanceDue = totalAmount - totalPaid + totalRefunded
+            const paidPercent =
+              totalAmount > 0
+                ? Math.min((totalPaid / totalAmount) * 100, 100)
+                : 0
+
+            return (
+              <div className="rounded-lg border bg-card px-4 py-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                      <p className="text-sm font-semibold">
+                        {formatCurrency(totalAmount)}
+                      </p>
+                    </div>
+                    <Separator
+                      orientation="vertical"
+                      className="h-8"
+                    />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Paid</p>
+                      <p className="text-sm font-semibold text-green-600">
+                        {formatCurrency(totalPaid)}
+                      </p>
+                    </div>
+                    {totalRefunded > 0 && (
+                      <>
+                        <Separator
+                          orientation="vertical"
+                          className="h-8"
+                        />
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Refunded
+                          </p>
+                          <p className="text-sm font-semibold text-red-600">
+                            -{formatCurrency(totalRefunded)}
+                          </p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted-foreground">Balance Due</p>
+                    <p
+                      className={`text-base font-bold ${balanceDue < 0 ? "text-orange-600" : balanceDue === 0 ? "text-green-600" : "text-red-600"}`}
+                    >
+                      {formatCurrency(balanceDue)}
+                    </p>
+                  </div>
+                </div>
+                {/* Progress bar */}
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      paidPercent >= 100
+                        ? "bg-green-500"
+                        : paidPercent > 0
+                          ? "bg-primary"
+                          : "bg-muted"
+                    }`}
+                    style={{ width: `${paidPercent}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span>{Math.round(paidPercent)}% paid</span>
+                  <Badge
+                    variant={getBadgeVariant(service.payment_status)}
+                    className="text-[10px] h-4 px-1.5"
+                  >
+                    {paymentStatusLabels[service.payment_status] ||
+                      service.payment_status}
+                  </Badge>
+                </div>
+                {balanceDue < 0 && <OverPaymentWarning />}
+              </div>
+            )
+          })()}
+
           {/* Info Alert */}
           {!isCompleted && (
             <Alert variant="info">
               <Info className="h-4 w-4" />
               <AlertDescription>
                 You can record down payments or partial payments anytime before
-                completing the service. All payments will be tracked and
-                properly recorded when the service is completed.
+                completing the service.
               </AlertDescription>
             </Alert>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Payment History</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {service.payments && service.payments.length > 0 ? (
-                <div className="space-y-2">
-                  {service.payments.map((payment, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between rounded-md border p-2"
-                    >
-                      <div>
-                        <p className="text-sm font-medium">
+          {/* Payment History */}
+          <div>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Wallet className="h-3 w-3" />
+              Payment History
+            </p>
+            {service.payments && service.payments.length > 0 ? (
+              <div className="space-y-1.5">
+                {service.payments.map((payment, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 rounded-md border bg-card px-3 py-2"
+                  >
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 dark:bg-green-950 shrink-0">
+                      <Wallet className="h-3.5 w-3.5 text-green-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">
                           {formatCurrency(
                             parseFloat(payment.amount.toString()),
                           )}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] h-4 px-1.5 capitalize"
+                        >
                           {payment.payment_type}
-                        </p>
+                        </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      {payment.notes && (
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {payment.notes}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-[10px] text-muted-foreground">
                         {formatDate(
                           new Date(payment.created_at),
-                          "EEEE, MMMM d, yyyy",
+                          "MMM d, yyyy",
                         )}
                       </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {formatDate(new Date(payment.created_at), "h:mm a")}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-8 text-center">
-                  <Wallet className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    No payments recorded yet
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-6 text-center rounded-lg border border-dashed">
+                <Wallet className="mx-auto mb-1.5 h-6 w-6 text-muted-foreground/50" />
+                <p className="text-xs text-muted-foreground">
+                  No payments recorded yet
+                </p>
+              </div>
+            )}
+          </div>
 
-          {/* Service Discount Card */}
+          {/* Service Discount */}
           {service.status !== "completed" &&
             service.status !== "cancelled" &&
             canManage && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Service Discount</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Discount Type</Label>
-                      <Select
-                        value={discountType}
-                        onValueChange={(
-                          value: "none" | "percentage" | "fixed",
-                        ) => setDiscountType(value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No Discount</SelectItem>
-                          <SelectItem value="percentage">
-                            Percentage (%)
-                          </SelectItem>
-                          <SelectItem value="fixed">
-                            Fixed Amount (₱)
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label>Amount / Percentage</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max={discountType === "percentage" ? "100" : undefined}
-                        step={discountType === "percentage" ? "1" : "0.01"}
-                        value={discountValue}
-                        onChange={(e) => setDiscountValue(e.target.value)}
-                        disabled={discountType === "none"}
-                        placeholder={
-                          discountType === "percentage" ? "0-100" : "0.00"
-                        }
-                      />
-                    </div>
+              <div className="rounded-lg border bg-card px-4 py-3 space-y-3">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Service Discount
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Discount Type</Label>
+                    <Select
+                      value={discountType}
+                      onValueChange={(value: "none" | "percentage" | "fixed") =>
+                        setDiscountType(value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Discount</SelectItem>
+                        <SelectItem value="percentage">
+                          Percentage (%)
+                        </SelectItem>
+                        <SelectItem value="fixed">Fixed Amount (₱)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Reason</Label>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Amount / Percentage</Label>
                     <Input
-                      placeholder="Senior Citizen, Loyalty, Promo, etc."
-                      value={discountReason}
-                      onChange={(e) => setDiscountReason(e.target.value)}
+                      type="number"
+                      min="0"
+                      max={discountType === "percentage" ? "100" : undefined}
+                      step={discountType === "percentage" ? "1" : "0.01"}
+                      value={discountValue}
+                      onChange={(e) => setDiscountValue(e.target.value)}
                       disabled={discountType === "none"}
+                      placeholder={
+                        discountType === "percentage" ? "0-100" : "0.00"
+                      }
                     />
                   </div>
+                </div>
 
-                  {calculateDiscount() > 0 && (
-                    <div className="flex justify-between pt-2 border-t">
-                      <span className="text-sm font-medium">
-                        Discount Applied:
-                      </span>
-                      <span className="text-sm font-medium text-green-600">
-                        -{formatCurrency(calculateDiscount())}
-                      </span>
-                    </div>
-                  )}
+                <div className="space-y-1">
+                  <Label className="text-xs">Reason</Label>
+                  <Input
+                    placeholder="Senior Citizen, Loyalty, Promo, etc."
+                    value={discountReason}
+                    onChange={(e) => setDiscountReason(e.target.value)}
+                    disabled={discountType === "none"}
+                  />
+                </div>
 
-                  <Button
-                    onClick={handleApplyDiscount}
-                    disabled={updateService.isPending}
-                    className="w-full"
-                  >
-                    {updateService.isPending
-                      ? "Applying..."
-                      : discountType === "none"
-                        ? "Remove Discount"
-                        : "Apply Discount"}
-                  </Button>
-                </CardContent>
-              </Card>
+                {calculateDiscount() > 0 && (
+                  <div className="flex justify-between pt-2 border-t">
+                    <span className="text-sm font-medium">
+                      Discount Applied:
+                    </span>
+                    <span className="text-sm font-medium text-green-600">
+                      -{formatCurrency(calculateDiscount())}
+                    </span>
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleApplyDiscount}
+                  disabled={updateService.isPending}
+                  className="w-full"
+                  size="sm"
+                >
+                  {updateService.isPending
+                    ? "Applying..."
+                    : discountType === "none"
+                      ? "Remove Discount"
+                      : "Apply Discount"}
+                </Button>
+              </div>
             )}
 
           {/* Display Applied Discount */}
@@ -1667,246 +1744,189 @@ export default function ServiceDetail({
             (service.service_discount_percentage &&
               parseFloat(service.service_discount_percentage.toString()) >
                 0)) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  Applied Discount
-                  <Badge variant="success">Active</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <p className="text-muted-foreground">Type</p>
-                  <p className="font-medium">
-                    {service.service_discount_percentage &&
-                    parseFloat(service.service_discount_percentage.toString()) >
-                      0
-                      ? `${service.service_discount_percentage}%`
-                      : `Fixed: ${formatCurrency(parseFloat((service.service_discount_amount || 0).toString()))}`}
-                  </p>
-                </div>
-                {service.discount_reason && (
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="text-muted-foreground">Reason</p>
-                    <p className="font-medium">{service.discount_reason}</p>
-                  </div>
-                )}
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium">Discount Amount</p>
-                  <p className="text-lg font-bold text-green-600">
-                    -
-                    {formatCurrency(
-                      service.service_discount_amount &&
-                        parseFloat(service.service_discount_amount.toString()) >
-                          0
-                        ? parseFloat(service.service_discount_amount.toString())
-                        : (parseFloat(service.total_revenue || "0") *
-                            parseFloat(
-                              (
-                                service.service_discount_percentage || 0
-                              ).toString(),
-                            )) /
-                            100,
-                    )}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Payment Summary Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Payment Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <p className="text-muted-foreground">Total Amount</p>
-                <p className="font-medium">
-                  {formatCurrency(calculateActualTotalRevenue())}
-                </p>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <p className="text-muted-foreground">Total Paid</p>
-                <p className="font-medium text-green-600">
-                  {formatCurrency(parseFloat(service.total_paid || "0"))}
-                </p>
-              </div>
-              {service.total_refunded &&
-                parseFloat(service.total_refunded) > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="text-muted-foreground">Total Refunded</p>
-                    <p className="font-medium text-red-600">
-                      -{formatCurrency(parseFloat(service.total_refunded))}
-                    </p>
-                  </div>
-                )}
-              <Separator />
+            <div className="rounded-lg border border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20 px-4 py-3 space-y-1.5">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Balance Due</p>
-                <p
-                  className={`text-lg font-bold ${
-                    calculateActualTotalRevenue() -
-                      parseFloat(service.total_paid || "0") +
-                      parseFloat(service.total_refunded || "0") <
-                    0
-                      ? "text-orange-600"
-                      : "text-red-600"
-                  }`}
-                >
+                <p className="text-[10px] font-medium uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1.5">
+                  Applied Discount
+                  <Badge
+                    variant="success"
+                    className="text-[10px] h-4 px-1.5"
+                  >
+                    Active
+                  </Badge>
+                </p>
+                <p className="text-sm font-bold text-green-600">
+                  -
                   {formatCurrency(
-                    calculateActualTotalRevenue() -
-                      parseFloat(service.total_paid || "0") +
-                      parseFloat(service.total_refunded || "0"),
+                    service.service_discount_amount &&
+                      parseFloat(service.service_discount_amount.toString()) > 0
+                      ? parseFloat(service.service_discount_amount.toString())
+                      : (parseFloat(service.total_revenue || "0") *
+                          parseFloat(
+                            (
+                              service.service_discount_percentage || 0
+                            ).toString(),
+                          )) /
+                          100,
                   )}
                 </p>
               </div>
-              {calculateActualTotalRevenue() -
-                parseFloat(service.total_paid || "0") +
-                parseFloat(service.total_refunded || "0") <
-                0 && <OverPaymentWarning />}
-              {service.total_refunded && parseFloat(service.total_refunded) && (
-                <div className="text-xs text-muted-foreground">
-                  {formatCurrency(parseFloat(service.total_refunded))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span>
+                  {service.service_discount_percentage &&
+                  parseFloat(service.service_discount_percentage.toString()) > 0
+                    ? `${service.service_discount_percentage}%`
+                    : `Fixed: ${formatCurrency(parseFloat((service.service_discount_amount || 0).toString()))}`}
+                </span>
+                {service.discount_reason && (
+                  <>
+                    <span>·</span>
+                    <span>{service.discount_reason}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Payment Summary — removed, now in summary strip above */}
 
           {/* Refund Section */}
           {canManage &&
             parseFloat(service.total_paid || "0") > 0 &&
             parseFloat(service.total_paid || "0") >
               parseFloat(service.total_refunded || "0") && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base flex items-center gap-2">
-                    Process Refund
-                    {calculateActualTotalRevenue() -
-                      parseFloat(service.total_paid || "0") +
-                      parseFloat(service.total_refunded || "0") <
-                      0 && <Badge variant="warning">Action Required</Badge>}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {service.status !== "completed" ? (
-                    <>
-                      <Alert variant="warning">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertDescription className="space-y-2">
-                          <p className="font-semibold">
-                            Refunds require service completion
-                          </p>
-                          {parseFloat(service.balance_due || "0") < 0 ? (
-                            <>
-                              <p>
-                                The customer has an overpayment of{" "}
-                                <strong>
-                                  {formatCurrency(
-                                    Math.abs(
-                                      parseFloat(service.balance_due || "0"),
-                                    ),
-                                  )}
-                                </strong>{" "}
-                                after applying discounts.
-                              </p>
-                              <div className="mt-3 p-3 bg-muted rounded-md space-y-2 text-sm">
-                                <p className="font-medium">
-                                  To refund the overpayment:
-                                </p>
-                                <ol className="list-decimal list-inside space-y-1 ml-2">
-                                  <li>
-                                    Complete the service using the
-                                    &quot;Complete Service&quot; button above
-                                  </li>
-                                  <li>
-                                    Return to the Payments tab and click
-                                    &quot;Process Refund&quot;
-                                  </li>
-                                  <li>
-                                    The refund amount will be pre-filled with
-                                    the overpayment amount
-                                  </li>
-                                </ol>
-                              </div>
-                            </>
-                          ) : (
-                            <p>
-                              Refunds can only be processed after completing the
-                              service.
-                            </p>
-                          )}
-                        </AlertDescription>
-                      </Alert>
-
-                      {parseFloat(service.balance_due || "0") < 0 && (
-                        <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 rounded-md">
-                          <span className="text-sm font-medium">
-                            Overpayment Amount:
-                          </span>
-                          <span className="text-lg font-bold text-orange-600">
-                            {formatCurrency(
-                              Math.abs(parseFloat(service.balance_due || "0")),
-                            )}
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Alert variant="info">
-                        <Info className="h-4 w-4" />
-                        <AlertDescription>
-                          Maximum refundable:{" "}
-                          <strong>
-                            {formatCurrency(
-                              parseFloat(service.total_paid || "0") -
-                                parseFloat(service.total_refunded || "0"),
-                            )}
-                          </strong>
-                        </AlertDescription>
-                      </Alert>
-
-                      <Button
-                        className="w-full"
-                        variant="warning"
-                        onClick={() => {
-                          setRefundDialogOpen(true)
-                          // Auto-fill with excess amount if overpayment detected
-                          if (parseFloat(service.balance_due || "0") < 0) {
-                            setRefundAmount(
-                              Math.abs(
-                                parseFloat(service.balance_due || "0"),
-                              ).toString(),
-                            )
-                            setRefundType("partial")
-                          } else {
-                            const maxRefund =
-                              parseFloat(service.total_paid || "0") -
-                              parseFloat(service.total_refunded || "0")
-                            setRefundAmount(maxRefund.toString())
-                            setRefundType("full")
-                          }
-                        }}
-                      >
-                        <AlertCircle className="mr-2 h-4 w-4" />
-                        Process Refund
-                      </Button>
-                    </>
+              <div className="rounded-lg border bg-card px-4 py-3 space-y-3">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  Process Refund
+                  {calculateActualTotalRevenue() -
+                    parseFloat(service.total_paid || "0") +
+                    parseFloat(service.total_refunded || "0") <
+                    0 && (
+                    <Badge
+                      variant="warning"
+                      className="text-[10px] h-4 px-1.5"
+                    >
+                      Action Required
+                    </Badge>
                   )}
-                </CardContent>
-              </Card>
+                </p>
+                {service.status !== "completed" ? (
+                  <>
+                    <Alert variant="warning">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription className="space-y-2">
+                        <p className="font-semibold">
+                          Refunds require service completion
+                        </p>
+                        {parseFloat(service.balance_due || "0") < 0 ? (
+                          <>
+                            <p>
+                              The customer has an overpayment of{" "}
+                              <strong>
+                                {formatCurrency(
+                                  Math.abs(
+                                    parseFloat(service.balance_due || "0"),
+                                  ),
+                                )}
+                              </strong>{" "}
+                              after applying discounts.
+                            </p>
+                            <div className="mt-3 p-3 bg-muted rounded-md space-y-2 text-sm">
+                              <p className="font-medium">
+                                To refund the overpayment:
+                              </p>
+                              <ol className="list-decimal list-inside space-y-1 ml-2">
+                                <li>
+                                  Complete the service using the &quot;Complete
+                                  Service&quot; button above
+                                </li>
+                                <li>
+                                  Return to the Payments tab and click
+                                  &quot;Process Refund&quot;
+                                </li>
+                                <li>
+                                  The refund amount will be pre-filled with the
+                                  overpayment amount
+                                </li>
+                              </ol>
+                            </div>
+                          </>
+                        ) : (
+                          <p>
+                            Refunds can only be processed after completing the
+                            service.
+                          </p>
+                        )}
+                      </AlertDescription>
+                    </Alert>
+
+                    {parseFloat(service.balance_due || "0") < 0 && (
+                      <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 rounded-md">
+                        <span className="text-sm font-medium">
+                          Overpayment Amount:
+                        </span>
+                        <span className="text-lg font-bold text-orange-600">
+                          {formatCurrency(
+                            Math.abs(parseFloat(service.balance_due || "0")),
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Alert variant="info">
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        Maximum refundable:{" "}
+                        <strong>
+                          {formatCurrency(
+                            parseFloat(service.total_paid || "0") -
+                              parseFloat(service.total_refunded || "0"),
+                          )}
+                        </strong>
+                      </AlertDescription>
+                    </Alert>
+
+                    <Button
+                      className="w-full"
+                      variant="warning"
+                      onClick={() => {
+                        setRefundDialogOpen(true)
+                        // Auto-fill with excess amount if overpayment detected
+                        if (parseFloat(service.balance_due || "0") < 0) {
+                          setRefundAmount(
+                            Math.abs(
+                              parseFloat(service.balance_due || "0"),
+                            ).toString(),
+                          )
+                          setRefundType("partial")
+                        } else {
+                          const maxRefund =
+                            parseFloat(service.total_paid || "0") -
+                            parseFloat(service.total_refunded || "0")
+                          setRefundAmount(maxRefund.toString())
+                          setRefundType("full")
+                        }
+                      }}
+                    >
+                      <AlertCircle className="mr-2 h-4 w-4" />
+                      Process Refund
+                    </Button>
+                  </>
+                )}
+              </div>
             )}
 
-          {/* Add Payment Button */}
+          {/* Record Payment — compact at bottom */}
           {canManage && (
             <Button
-              className="w-full"
+              className="w-full border-dashed"
               variant="outline"
+              size="sm"
               onClick={handleAddPayment}
             >
-              <Wallet className="mr-2 h-4 w-4" />
+              <Wallet className="mr-1.5 h-3.5 w-3.5" />
               Record Payment
             </Button>
           )}
@@ -1915,209 +1935,193 @@ export default function ServiceDetail({
         {/* Schedule Tab */}
         <TabsContent
           value="schedule"
-          className="space-y-4"
+          className="space-y-3"
         >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Schedule & Timeline</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {/* Created */}
-              <div className="flex items-start gap-3 rounded-md border p-3">
-                <Calendar className="mt-1 h-5 w-5 text-primary" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium">Service Created</p>
-                  <p className="text-xs text-muted-foreground">
+          {/* Vertical timeline */}
+          <div className="relative pl-6">
+            {/* Timeline line */}
+            <div className="absolute left-[9px] top-2 bottom-2 w-px bg-border" />
+
+            {/* Created */}
+            <div className="relative pb-4">
+              <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-primary bg-background flex items-center justify-center">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold">Service Created</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {formatDate(
+                    new Date(service.created_at),
+                    "EEEE, MMMM d, yyyy 'at' h:mm a",
+                  )}
+                </p>
+              </div>
+            </div>
+
+            {/* Received At (Carry-In) */}
+            {service.received_at && (
+              <div className="relative pb-4">
+                <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-green-500 bg-background flex items-center justify-center">
+                  <CheckCircle className="h-2.5 w-2.5 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold">Received At Shop</p>
+                  <p className="text-[10px] text-muted-foreground">
                     {formatDate(
-                      new Date(service.created_at),
+                      new Date(service.received_at),
                       "EEEE, MMMM d, yyyy 'at' h:mm a",
                     )}
                   </p>
                 </div>
               </div>
+            )}
 
-              {/* Pickup Date (Pull-Out) */}
-              {service.service_mode === "pull_out" && service.pickup_date && (
-                <div className="flex items-start gap-3 rounded-md border p-3 bg-blue-50 dark:bg-blue-950">
-                  <Truck className="mt-1 h-5 w-5 text-blue-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                      Scheduled Pickup
-                    </p>
-                    <p className="text-xs text-blue-700 dark:text-blue-300">
-                      {formatDate(
-                        new Date(service.pickup_date),
-                        "EEEE, MMMM d, yyyy 'at' h:mm a",
-                      )}
-                    </p>
-                  </div>
+            {/* Pickup Date (Pull-Out) */}
+            {service.service_mode === "pull_out" && service.pickup_date && (
+              <div className="relative pb-4">
+                <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-blue-500 bg-background flex items-center justify-center">
+                  <Truck className="h-2.5 w-2.5 text-blue-500" />
                 </div>
-              )}
-
-              {/* Delivery Date (Pull-Out) */}
-              {service.service_mode === "pull_out" && service.delivery_date && (
-                <div className="flex items-start gap-3 rounded-md border p-3 bg-green-50 dark:bg-green-950">
-                  <Truck className="mt-1 h-5 w-5 text-green-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-green-900 dark:text-green-100">
-                      Scheduled Delivery
-                    </p>
-                    <p className="text-xs text-green-700 dark:text-green-300">
-                      {formatDate(
-                        new Date(service.delivery_date),
-                        "EEEE, MMMM d, yyyy 'at' h:mm a",
-                      )}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                    Scheduled Pickup
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {formatDate(
+                      new Date(service.pickup_date),
+                      "EEEE, MMMM d, yyyy 'at' h:mm a",
+                    )}
+                  </p>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Received At (Carry-In) */}
-              {service.received_at && (
-                <div className="flex items-start gap-3 rounded-md border p-3">
-                  <CheckCircle className="mt-1 h-5 w-5 text-green-600" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Received At Shop</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(
-                        new Date(service.received_at),
-                        "EEEE, MMMM d, yyyy 'at' h:mm a",
-                      )}
-                    </p>
-                  </div>
+            {/* Delivery Date (Pull-Out) */}
+            {service.service_mode === "pull_out" && service.delivery_date && (
+              <div className="relative pb-4">
+                <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-green-500 bg-background flex items-center justify-center">
+                  <Truck className="h-2.5 w-2.5 text-green-500" />
                 </div>
-              )}
-
-              {/* Pickup Date (Pull-Out) */}
-              {service.pickup_date && (
-                <div className="flex items-start gap-3 rounded-md border p-3">
-                  <Truck className="mt-1 h-5 w-5 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Pickup Scheduled</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(
-                        new Date(service.pickup_date),
-                        "EEEE, MMMM d, yyyy",
-                      )}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-xs font-semibold text-green-700 dark:text-green-300">
+                    Scheduled Delivery
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {formatDate(
+                      new Date(service.delivery_date),
+                      "EEEE, MMMM d, yyyy 'at' h:mm a",
+                    )}
+                  </p>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Delivery Date (Pull-Out) */}
-              {service.delivery_date && (
-                <div className="flex items-start gap-3 rounded-md border p-3">
-                  <Package className="mt-1 h-5 w-5 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-xs sm:text-sm font-medium">
-                      Delivery Scheduled
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(
-                        new Date(service.delivery_date),
-                        "EEEE, MMMM d, yyyy",
-                      )}
-                    </p>
+            {/* Schedules for Home Services */}
+            {service.service_mode === "home_service" &&
+              schedules.length > 0 &&
+              schedules.map((schedule) => (
+                <div
+                  key={schedule.id}
+                  className="relative pb-4"
+                >
+                  <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-primary bg-background flex items-center justify-center">
+                    <Calendar className="h-2.5 w-2.5 text-primary" />
                   </div>
-                </div>
-              )}
-
-              {/* Schedules for Home Services */}
-              {service.service_mode === "home_service" &&
-                schedules.length > 0 && (
-                  <div className="space-y-3 mt-4 pt-4 border-t">
-                    <h5 className="font-medium text-sm">
-                      Scheduled Appointments
-                    </h5>
-                    {schedules.map((schedule) => (
-                      <div
-                        key={schedule.id}
-                        className="flex items-start gap-3 rounded-md border p-3 bg-muted/30"
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-semibold">
+                        {formatDate(
+                          new Date(schedule.scheduled_date),
+                          "EEEE, MMMM d, yyyy",
+                        )}
+                      </p>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] h-4 px-1.5"
                       >
-                        <Calendar className="mt-1 h-5 w-5 text-primary shrink-0" />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-medium">
-                              {formatDate(
-                                new Date(schedule.scheduled_date),
-                                "EEEE, MMMM d, yyyy",
-                              )}
-                            </p>
+                        {schedule.status}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
+                      <Clock className="h-2.5 w-2.5" />
+                      <span>{formatTimeTo12Hour(schedule.scheduled_time)}</span>
+                    </div>
+                    {schedule.technicians &&
+                      schedule.technicians.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {schedule.technicians.map((tech) => (
                             <Badge
-                              variant="outline"
-                              className="text-xs"
+                              key={tech.id}
+                              variant="secondary"
+                              className="text-[10px] h-4 px-1.5"
                             >
-                              {schedule.status}
+                              {tech.full_name}
                             </Badge>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            <span>
-                              {formatTimeTo12Hour(schedule.scheduled_time)}
-                            </span>
-                          </div>
-                          {schedule.technicians &&
-                            schedule.technicians.length > 0 && (
-                              <div className="mt-2">
-                                <p className="text-xs font-medium mb-1">
-                                  Assigned Technicians:
-                                </p>
-                                <div className="flex flex-wrap gap-1">
-                                  {schedule.technicians.map((tech) => (
-                                    <Badge
-                                      key={tech.id}
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      {tech.full_name}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          {schedule.address && (
-                            <div className="flex items-start gap-2 mt-2">
-                              <MapPin className="mt-0.5 h-3 w-3 text-muted-foreground shrink-0" />
-                              <p className="text-xs text-muted-foreground">
-                                {schedule.address}
-                              </p>
-                            </div>
-                          )}
+                          ))}
                         </div>
+                      )}
+                    {schedule.address && (
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1">
+                        <MapPin className="h-2.5 w-2.5 shrink-0" />
+                        <span>{schedule.address}</span>
                       </div>
-                    ))}
+                    )}
                   </div>
-                )}
+                </div>
+              ))}
 
-              {/* Empty State */}
-              {!service.pickup_date &&
-                !service.delivery_date &&
-                !service.received_at &&
-                (schedulesLoading || schedules.length === 0) && (
-                  <div className="py-8 text-center">
-                    <Calendar className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      No additional schedule information
-                    </p>
-                  </div>
-                )}
+            {/* Completion marker */}
+            {isCompleted && (
+              <div className="relative pb-0">
+                <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-green-500 bg-green-500 flex items-center justify-center">
+                  <CheckCircle className="h-2.5 w-2.5 text-white" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-green-600">
+                    Service Completed
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {service.updated_at
+                      ? formatDate(
+                          new Date(service.updated_at),
+                          "EEEE, MMMM d, yyyy 'at' h:mm a",
+                        )
+                      : "Completed"}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
 
-              {/* Schedule Delivery Button for Pull-Out Services */}
-              {service.service_mode === "pull_out" &&
-                service.pickup_date &&
-                !service.delivery_date &&
-                !isCompleted && (
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    onClick={() => setScheduleDeliveryDialogOpen(true)}
-                  >
-                    <Truck className="mr-2 h-4 w-4" />
-                    Schedule Delivery
-                  </Button>
-                )}
-            </CardContent>
-          </Card>
+          {/* Empty State */}
+          {!service.pickup_date &&
+            !service.delivery_date &&
+            !service.received_at &&
+            !isCompleted &&
+            (schedulesLoading || schedules.length === 0) && (
+              <div className="py-6 text-center rounded-lg border border-dashed">
+                <Calendar className="mx-auto mb-1.5 h-6 w-6 text-muted-foreground/50" />
+                <p className="text-xs text-muted-foreground">
+                  No additional schedule information
+                </p>
+              </div>
+            )}
+
+          {/* Schedule Delivery Button for Pull-Out Services */}
+          {service.service_mode === "pull_out" &&
+            service.pickup_date &&
+            !service.delivery_date &&
+            !isCompleted && (
+              <Button
+                className="w-full border-dashed"
+                variant="outline"
+                size="sm"
+                onClick={() => setScheduleDeliveryDialogOpen(true)}
+              >
+                <Truck className="mr-1.5 h-3.5 w-3.5" />
+                Schedule Delivery
+              </Button>
+            )}
         </TabsContent>
       </Tabs>
 
