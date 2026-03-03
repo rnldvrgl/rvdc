@@ -59,7 +59,11 @@ export function DataTablePagination({
           key={pageNumber}
           variant={pageNumber === safePage ? "default" : "outline"}
           size="icon"
-          className="size-8"
+          className={cn(
+            "size-8",
+            pageNumber !== safePage &&
+              "bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50",
+          )}
           onClick={() => goToPage(pageNumber)}
         >
           {pageNumber}
@@ -116,7 +120,7 @@ export function DataTablePagination({
           <Button
             variant="outline"
             size="icon"
-            className="hidden lg:flex h-8 w-8"
+            className="hidden lg:flex h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
             onClick={() => goToPage(1)}
             disabled={!hasPrevPage || safePage === 1}
           >
@@ -125,7 +129,7 @@ export function DataTablePagination({
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
             onClick={() => goToPage(safePage - 1)}
             disabled={!hasPrevPage}
           >
@@ -137,7 +141,7 @@ export function DataTablePagination({
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
             onClick={() => goToPage(safePage + 1)}
             disabled={!hasNextPage}
           >
@@ -146,7 +150,7 @@ export function DataTablePagination({
           <Button
             variant="outline"
             size="icon"
-            className="hidden lg:flex h-8 w-8"
+            className="hidden lg:flex h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
             onClick={() => goToPage(totalPages)}
             disabled={!hasNextPage || safePage === totalPages}
           >
