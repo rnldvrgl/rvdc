@@ -1,5 +1,6 @@
 import { PaginatedFilterProps, PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
+import { keepPreviousData } from "@tanstack/react-query"
 import qs from "qs"
 
 interface UsePaginatedQueryOptions<
@@ -53,6 +54,7 @@ export function usePaginatedQuery<T>({
     options: {
       enabled,
       select,
+      placeholderData: keepPreviousData, // keep previous page visible while loading next
     },
   })
 }
