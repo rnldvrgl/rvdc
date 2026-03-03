@@ -82,3 +82,47 @@ export const useUnpaidSalesStatus = (options: useGetAnalyticsOptions) =>
     queryKey: ["unpaid_sales_status", options],
     url: `${chartsUrl}unpaid-sales-status/${buildQueryString(options)}`,
   })
+
+// Employee Performance
+export interface EmployeePerformanceData {
+  start_date: string
+  end_date: string
+  top_service_types: {
+    service_type: string
+    count: number
+    revenue: number
+  }[]
+  top_technicians: {
+    employee_id: number
+    employee_name: string
+    total_assignments: number
+    completed: number
+    completion_rate: number
+    total_revenue: number
+  }[]
+  most_late: {
+    employee_id: number
+    employee_name: string
+    late_count: number
+    total_late_minutes: number
+  }[]
+  most_punctual: {
+    employee_id: number
+    employee_name: string
+    total_days: number
+    on_time_days: number
+    late_days: number
+    punctuality_rate: number
+    total_paid_hours: number
+    full_days: number
+  }[]
+}
+
+export const useEmployeePerformance = (
+  options: useGetAnalyticsOptions & { enabled?: boolean },
+) =>
+  useApiQuery<EmployeePerformanceData>({
+    queryKey: ["employee_performance", options],
+    url: `/analytics/reports/employee-performance/${buildQueryString(options)}`,
+    enabled: options.enabled,
+  })

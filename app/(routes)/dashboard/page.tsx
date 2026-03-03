@@ -2,6 +2,7 @@
 
 import { BirthdayGreeting } from "@/components/custom/dashboard/BirthdayGreeting"
 import { BirthdayReminders } from "@/components/custom/dashboard/BirthdayReminders"
+import { EmployeePerformanceStats } from "@/components/custom/dashboard/EmployeePerformanceStats"
 import { InventoryReorderAlerts } from "@/components/custom/dashboard/InventoryReorderAlerts"
 import { LeaveBalanceSummary } from "@/components/custom/dashboard/LeaveBalanceSummary"
 import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
@@ -169,6 +170,11 @@ const DashboardPage = () => {
 
               {/* Charts */}
               <DashboardCharts />
+
+              {/* Employee Performance */}
+              <WidgetErrorBoundary fallbackTitle="Employee performance failed to load">
+                <EmployeePerformanceStats />
+              </WidgetErrorBoundary>
             </div>
           )}
         </div>
