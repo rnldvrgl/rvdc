@@ -18,7 +18,6 @@ export default function ItemQuantitySelector({
   allItems,
   onChange,
   disabled,
-  required = false,
   allowPriceChange,
   stockMap,
 }: {
@@ -27,7 +26,6 @@ export default function ItemQuantitySelector({
   onChange: (items: ItemEntry[]) => void
   disabled?: boolean
   allowPriceChange?: boolean
-  required?: boolean
   /** Map of item_id -> available_quantity for stock display */
   stockMap?: Map<number, number>
 }) {

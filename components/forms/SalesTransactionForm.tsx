@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import {
   Item,
@@ -439,10 +440,13 @@ export default function SalesTransactionForm({
           {/* Items */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <Label
+                required
+                className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"
+              >
                 <Package className="size-3" />
                 Items
-              </h4>
+              </Label>
               {watchedItems.length > 0 && (
                 <Badge
                   variant="secondary"
@@ -454,7 +458,6 @@ export default function SalesTransactionForm({
             </div>
             <ItemQuantitySelector
               disabled={isDisabled}
-              required
               items={items}
               allItems={allItems}
               stockMap={stockMap.size > 0 ? stockMap : undefined}
@@ -491,10 +494,13 @@ export default function SalesTransactionForm({
           {/* Payments */}
           <section className="space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <Label
+                required
+                className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"
+              >
                 <CreditCard className="size-3" />
                 Payments
-              </h4>
+              </Label>
               {watchedPayments.length > 0 && (
                 <Badge
                   variant="secondary"
