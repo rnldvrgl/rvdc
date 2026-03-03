@@ -75,13 +75,14 @@ export default function ServicesPage() {
   const { filter, ordering, search, page, limit } = searchParams
 
   // Data fetching
+  // Use high limit for Kanban view to show all services, normal pagination for table
   const {
     data: services,
     isLoading,
     refetch,
   } = useServices({
-    page,
-    limit,
+    page: viewMode === "kanban" ? 1 : page,
+    limit: viewMode === "kanban" ? 1000 : limit,
     search,
     filter,
     ordering,

@@ -12,6 +12,7 @@ import React from "react"
 
 import { DataTableDateRangeFilter } from "@/components/custom/table/components/DataTableDateRangeFilter"
 import { DataTableFilterDropdown } from "@/components/custom/table/components/DataTableFilterDropdown"
+import { DataTableLimitFilter } from "@/components/custom/table/components/DataTableLimitFilter"
 import { DataTablePagination } from "@/components/custom/table/components/DataTablePagination"
 import { DataTableSortDropdown } from "@/components/custom/table/components/DataTableSortDropdown"
 import { Badge } from "@/components/ui/badge"
@@ -676,8 +677,11 @@ export function DataTable<TData, TValue>({
         <>
           <Separator className="bg-border/60" />
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-1">
-            <div className="text-sm font-medium text-muted-foreground">
-              Page {page} of {pageCount}
+            <div className="flex items-center gap-4">
+              <DataTableLimitFilter />
+              <div className="text-sm font-medium text-muted-foreground">
+                Page {page} of {pageCount}
+              </div>
             </div>
             <DataTablePagination
               hasPrevPage={hasPrevPage}
