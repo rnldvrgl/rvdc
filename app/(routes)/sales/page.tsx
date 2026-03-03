@@ -33,7 +33,7 @@ const emptyData = {
 
 export default function SalesTransactionsPage() {
   const { role } = useCurrentUser()
-  const searchParams = useSearchParameters()
+  const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
   const { page, limit, search, ordering, filter } = searchParams
   const [isArchived, setIsArchived] = useState(false)
   const { data, isLoading, refetch } = useSalesTransactions({

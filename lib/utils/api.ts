@@ -2,6 +2,7 @@ import { refreshToken } from "@/lib/utils/auth"
 import { deleteCookie, setCookie } from "@/lib/utils/cookies"
 import { getToken, removeToken, setToken } from "@/lib/utils/tokens"
 import axios from "axios"
+import qs from "qs"
 import { toast } from "sonner"
 
 const baseURL = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"}/api`
@@ -9,6 +10,9 @@ const api = axios.create({
   baseURL,
   headers: {
     "Content-Type": "application/json",
+  },
+  paramsSerializer: (params) => {
+    return qs.stringify(params, { arrayFormat: "repeat", skipNulls: true })
   },
 })
 

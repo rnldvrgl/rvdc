@@ -29,7 +29,7 @@ const emptyData = {
 
 export default function ExpensesPage() {
   const { role, isAdmin, assigned_stall } = useCurrentUser()
-  const searchParams = useSearchParameters()
+  const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
   const { page, limit, search, filter, ordering } = searchParams
   const [isArchived, setIsArchived] = useState(false)
   const { deleteExpense } = useExpenseMutations()

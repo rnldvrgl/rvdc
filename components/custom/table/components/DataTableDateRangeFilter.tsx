@@ -1,13 +1,13 @@
-'use client'
+"use client"
 
-import DataTableDateRangePicker from '@/components/custom/table/components/DataTableDateRangePicker'
-import { DateRangePresetLabel } from '@/lib/constants/types'
-import { useDefaultDateRange } from '@/lib/hooks/useDefaultRange'
-import { useNavigation } from '@/lib/hooks/useNavigation'
-import useSearchParameters from '@/lib/hooks/useSearchParameters'
-import { formatBackDate } from '@/lib/utils/helpers/date'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { DateRange } from 'react-day-picker'
+import DataTableDateRangePicker from "@/components/custom/table/components/DataTableDateRangePicker"
+import { DateRangePresetLabel } from "@/lib/constants/types"
+import { useDefaultDateRange } from "@/lib/hooks/useDefaultRange"
+import { useNavigation } from "@/lib/hooks/useNavigation"
+import useSearchParameters from "@/lib/hooks/useSearchParameters"
+import { formatBackDate } from "@/lib/utils/helpers/date"
+import { useCallback, useEffect, useMemo, useRef } from "react"
+import { DateRange } from "react-day-picker"
 
 export function DataTableDateRangeFilter({
   defaultRangePreset,
@@ -20,7 +20,7 @@ export function DataTableDateRangeFilter({
   const { push } = useNavigation()
 
   const computedDefaultRange = useDefaultDateRange(
-    defaultRangePreset || 'Today',
+    defaultRangePreset || "Today",
   )
 
   const defaultRange = useMemo(
@@ -53,13 +53,16 @@ export function DataTableDateRangeFilter({
     [filter, limit, search, ordering, push],
   )
 
-  // Only run on first mount if defaultRange exists
+  // Sync default range to URL on first mount (for bookmarking),
+  // but skip if URL already has date params (e.g. shared link or defaults already applied)
   useEffect(() => {
     if (!hasInitialized.current && defaultRange) {
       hasInitialized.current = true
-      handleChange(defaultRange)
+      if (!filter?.start_date && !filter?.end_date) {
+        handleChange(defaultRange)
+      }
     }
-  }, [defaultRange, handleChange])
+  }, [defaultRange, handleChange, filter?.start_date, filter?.end_date])
 
   return (
     <DataTableDateRangePicker

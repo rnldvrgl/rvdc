@@ -21,7 +21,9 @@ import { getRemittanceColumns } from "./columns"
 
 export default function RemittancesPage() {
   const { role, isAdmin } = useCurrentUser()
-  const { page, limit, search, ordering, filter } = useSearchParameters()
+  const { page, limit, search, ordering, filter } = useSearchParameters({
+    defaultRangePreset: "Last 30 Days",
+  })
   const { data, isLoading, refetch } = useRemittancesRecords({
     page,
     limit,
