@@ -1,31 +1,30 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { FormLabel } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Plus, Trash2 } from 'lucide-react'
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { formatCurrency } from "@/lib/utils/helpers"
+import { ChevronsRight, Plus, X } from "lucide-react"
 import {
   Control,
   Controller,
   FieldArrayWithId,
   UseFieldArrayAppend,
   UseFieldArrayRemove,
-} from 'react-hook-form'
+  useWatch,
+} from "react-hook-form"
 
 type Payment = {
   payment_type: string
@@ -42,11 +41,12 @@ type FormValues = {
 
 type PaymentMethodSelectorProps = {
   control: Control<FormValues>
-  fields: FieldArrayWithId<FormValues, 'payments', 'id'>[]
-  append: UseFieldArrayAppend<FormValues, 'payments'>
+  fields: FieldArrayWithId<FormValues, "payments", "id">[]
+  append: UseFieldArrayAppend<FormValues, "payments">
   remove: UseFieldArrayRemove
   disabled?: boolean
   required?: boolean
+  totalItemsAmount?: number
 }
 
 export default function PaymentMethodSelector({
@@ -55,189 +55,215 @@ export default function PaymentMethodSelector({
   remove,
   append,
   disabled,
-  required,
+  totalItemsAmount = 0,
 }: PaymentMethodSelectorProps) {
+  const watchedPayments = useWatch({ control, name: "payments" })
+  const totalPayments = (watchedPayments ?? []).reduce(
+    (sum, p) => sum + (Number(p?.amount) || 0),
+    0,
+  )
+  const remainingBalance = Math.max(0, totalItemsAmount - totalPayments)
+
   const handleAdd = () => {
-    append({ payment_type: 'cash', amount: 0 })
+    append({ payment_type: "cash", amount: 0 })
+  }
+
+  const handleAddWithFill = () => {
+    append({
+      payment_type: "cash",
+      amount: remainingBalance > 0 ? remainingBalance : 0,
+    })
+  }
+
+  const handleFillRemaining = (
+    idx: number,
+    currentAmount: number,
+    onChange: (val: number) => void,
+  ) => {
+    const otherPayments = (watchedPayments ?? []).reduce(
+      (sum, p, i) => (i === idx ? sum : sum + (Number(p?.amount) || 0)),
+      0,
+    )
+    const remaining = Math.max(0, totalItemsAmount - otherPayments)
+    onChange(remaining)
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-3">
-        <FormLabel required={required}>Payments</FormLabel>
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleAdd}
-          disabled={disabled}
-          className="flex items-center gap-1"
-        >
-          <Plus className="size-4" />
-          Add Payment
-        </Button>
-      </div>
-
-      {/* ✅ Desktop table */}
-      <div className="hidden md:block">
-        <div className="border rounded-xl overflow-hidden shadow-sm">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted">
-                <TableHead className="w-1/2">Type</TableHead>
-                <TableHead className="w-1/2">Amount</TableHead>
-                <TableHead className="w-8"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {fields.length > 0 ? (
-                <>
-                  {fields.map((field, idx) => (
-                    <TableRow
-                      key={field.id}
-                      className="hover:bg-muted/50 transition-colors"
-                    >
-                      <TableCell>
-                        <Controller
-                          control={control}
-                          name={`payments.${idx}.payment_type`}
-                          render={({ field }) => (
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                              disabled={disabled}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="cash">Cash</SelectItem>
-                                <SelectItem value="gcash">GCash</SelectItem>
-                                <SelectItem value="credit">Credit</SelectItem>
-                                <SelectItem value="debit">Debit</SelectItem>
-                                <SelectItem value="cheque">Cheque</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Controller
-                          control={control}
-                          name={`payments.${idx}.amount`}
-                          render={({ field }) => (
-                            <Input
-                              type="number"
-                              min="0"
-                              step="1"
-                              value={field.value ?? ''}
-                              onChange={(e) => {
-                                const val = e.target.value
-                                field.onChange(
-                                  val === '' ? null : parseFloat(val),
-                                )
-                              }}
-                              disabled={disabled}
-                              className="w-full"
-                            />
-                          )}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => remove(idx)}
-                          disabled={disabled}
-                        >
-                          <Trash2 className="size-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </>
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-center py-8 text-muted-foreground"
+    <div className="space-y-2">
+      {fields.length > 0 ? (
+        <div className="space-y-2">
+          {fields.map((field, idx) => (
+            <div
+              key={field.id}
+              className="flex items-center gap-2 rounded-lg border p-2.5 hover:bg-muted/30 transition-colors"
+            >
+              {/* Type */}
+              <Controller
+                control={control}
+                name={`payments.${idx}.payment_type`}
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={disabled}
                   >
-                    No payments added
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+                    <SelectTrigger className="w-28 sm:w-32 h-8 text-sm shrink-0">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="gcash">GCash</SelectItem>
+                      <SelectItem value="credit">Credit</SelectItem>
+                      <SelectItem value="debit">Debit</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
 
-      {/* ✅ Mobile card view */}
-      <div className="md:hidden space-y-4">
-        {fields.length > 0 ? (
-          <>
-            {fields.map((field, idx) => (
-              <div
-                key={field.id}
-                className="rounded-xl border p-4 shadow-sm space-y-3"
-              >
-                <Controller
-                  control={control}
-                  name={`payments.${idx}.payment_type`}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                      disabled={disabled}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cash">Cash</SelectItem>
-                        <SelectItem value="gcash">GCash</SelectItem>
-                        <SelectItem value="credit">Credit</SelectItem>
-                        <SelectItem value="debit">Debit</SelectItem>
-                        <SelectItem value="cheque">Cheque</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <Controller
-                  control={control}
-                  name={`payments.${idx}.amount`}
-                  render={({ field }) => (
+              {/* Amount */}
+              <Controller
+                control={control}
+                name={`payments.${idx}.amount`}
+                render={({ field }) => (
+                  <div className="flex items-center gap-1 flex-1 min-w-0">
                     <Input
                       type="number"
                       min="0"
-                      step="1"
-                      value={field.value ?? ''}
+                      step="0.01"
+                      value={field.value ?? ""}
                       onChange={(e) => {
                         const val = e.target.value
-                        field.onChange(val === '' ? null : parseFloat(val))
+                        field.onChange(val === "" ? null : parseFloat(val))
                       }}
                       disabled={disabled}
-                      className="w-full"
+                      className="h-8 flex-1"
+                      placeholder="Amount"
                     />
-                  )}
-                />
-                <div className="flex justify-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => remove(idx)}
-                    disabled={disabled}
-                  >
-                    <Trash2 className="size-4 text-destructive" />
-                  </Button>
-                </div>
+                    {remainingBalance > 0 && !disabled && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 shrink-0 text-primary hover:text-primary/80"
+                              onClick={() =>
+                                handleFillRemaining(
+                                  idx,
+                                  Number(field.value) || 0,
+                                  field.onChange,
+                                )
+                              }
+                            >
+                              <ChevronsRight className="size-3.5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>
+                              Fill remaining: {formatCurrency(remainingBalance)}
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </div>
+                )}
+              />
+
+              {/* Remove */}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => remove(idx)}
+                      disabled={disabled}
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p>Remove payment</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          ))}
+
+          {/* Footer totals */}
+          <div className="px-3 pt-1 space-y-1">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Total</span>
+              <span className="font-medium tabular-nums">
+                {formatCurrency(totalPayments)}
+              </span>
+            </div>
+            {remainingBalance > 0 && (
+              <div className="flex justify-between text-sm">
+                <span className="text-amber-600 dark:text-amber-400">
+                  Remaining
+                </span>
+                <span className="font-medium text-amber-600 dark:text-amber-400 tabular-nums">
+                  {formatCurrency(remainingBalance)}
+                </span>
               </div>
-            ))}
-          </>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground border rounded-xl">
-            No payments added
+            )}
           </div>
+        </div>
+      ) : (
+        <div className="py-6 text-center text-sm text-muted-foreground border border-dashed rounded-lg">
+          No payments added yet
+        </div>
+      )}
+
+      {/* Add buttons */}
+      <div className="flex gap-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex-1 border-dashed"
+                onClick={handleAdd}
+                disabled={disabled}
+              >
+                <Plus className="size-3.5 mr-1.5" />
+                Add Payment
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Add a new payment method</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        {remainingBalance > 0 && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={handleAddWithFill}
+                  disabled={disabled}
+                >
+                  <ChevronsRight className="size-3.5 mr-1" />
+                  {formatCurrency(remainingBalance)}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Add payment with remaining balance</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
     </div>

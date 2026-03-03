@@ -2,6 +2,10 @@
 
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
+import {
+  ServiceReceiptPrintContent,
+  type ServiceReceiptMode,
+} from "@/components/custom/shared/ServiceReceiptPrintContent"
 import ServiceApplianceManager from "@/components/forms/ServiceApplianceManager"
 import ApplianceKanbanBoard from "@/components/services/ApplianceKanbanBoard"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -34,6 +38,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Service } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { usePrint } from "@/lib/hooks/usePrint"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
@@ -56,6 +61,7 @@ import {
   MapPin,
   Package,
   Phone,
+  Printer,
   Truck,
   User,
   Wallet,
@@ -138,6 +144,8 @@ export default function ServiceDetail({
     useState(false)
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>()
   const [applianceView, setApplianceView] = useState<"list" | "kanban">("list")
+  const [receiptPrintDialogOpen, setReceiptPrintDialogOpen] = useState(false)
+  const [receiptMode, setReceiptMode] = useState<ServiceReceiptMode>("combined")
   const {
     completeService,
     recordPayment,
@@ -146,6 +154,18 @@ export default function ServiceDetail({
     updateService,
   } = useServiceMutations()
   const { updateAppliance } = useServiceApplianceMutations()
+
+  // Receipt printing
+  const {
+    printRef: serviceReceiptRef,
+    confirmPrint: confirmServicePrint,
+    cancelPrint: cancelServicePrint,
+    showPrintDialog: showServicePrintDialog,
+    setShowPrintDialog: setShowServicePrintDialog,
+  } = usePrint({
+    documentTitle: `Service Receipt - SVC-${service.id}`,
+    requireConfirmation: true,
+  })
   const { data: schedules = [], isLoading: schedulesLoading } =
     useSchedulesByService(service.id)
 
@@ -215,14 +235,17 @@ export default function ServiceDetail({
       onSuccess: (response) => {
         const data = response.data
         toast.success("Service completed successfully!")
-        if (data?.receipt) {
+        if (data?.receipt || data?.main_receipt || data?.sub_receipt) {
           toast.info("Receipt created successfully.")
+          // Open print dialog after completion
+          setCompleteDialogOpen(false)
+          setReceiptPrintDialogOpen(true)
         } else {
           toast.warning(
             data?.message || "Service completed but no receipt was created.",
           )
+          setCompleteDialogOpen(false)
         }
-        setCompleteDialogOpen(false)
       },
       onSettled: () => {
         onRefresh?.()
@@ -608,6 +631,22 @@ export default function ServiceDetail({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Process Refund</TooltipContent>
+            </Tooltip>
+          )}
+          {service.status === "completed" && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => setReceiptPrintDialogOpen(true)}
+                >
+                  <Printer className="mr-1 h-3.5 w-3.5" />
+                  Print
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Print Service Receipt</TooltipContent>
             </Tooltip>
           )}
           {canComplete && canManage && (
@@ -2404,6 +2443,143 @@ export default function ServiceDetail({
               }
             >
               {refundService.isPending ? "Processing..." : "Process Refund"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Hidden print content */}
+      <div className="hidden">
+        <ServiceReceiptPrintContent
+          ref={serviceReceiptRef}
+          service={service}
+          mode={receiptMode}
+        />
+      </div>
+
+      {/* Print confirmation after print trigger */}
+      <ConfirmDialog
+        open={showServicePrintDialog}
+        onConfirm={() => {
+          confirmServicePrint()
+        }}
+        onCancel={() => {
+          cancelServicePrint()
+        }}
+        title="Print Receipt?"
+        description="Would you like to print this service receipt now?"
+        Icon={Printer}
+        confirmText="Print"
+        cancelText="No, thanks"
+      />
+
+      {/* Receipt Print Mode Selection Dialog */}
+      <Dialog
+        open={receiptPrintDialogOpen}
+        onOpenChange={setReceiptPrintDialogOpen}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Print Service Receipt</DialogTitle>
+            <DialogDescription>
+              Choose how to print the receipt for Service #{service.id}. You can
+              print a combined receipt or separate receipts for each stall.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-4">
+            <div className="space-y-2">
+              <Label>Receipt Type</Label>
+              <Select
+                value={receiptMode}
+                onValueChange={(v) => setReceiptMode(v as ServiceReceiptMode)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="combined">
+                    Combined (Labor + Parts)
+                  </SelectItem>
+                  <SelectItem value="main_only">
+                    Main Stall Only (Labor & Units)
+                  </SelectItem>
+                  <SelectItem value="sub_only">
+                    Sub Stall Only (Parts & Accessories)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Preview summary */}
+            <div className="rounded-md bg-muted p-3 space-y-1.5 text-sm">
+              {receiptMode === "combined" && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Main Stall (Labor)
+                    </span>
+                    <span className="font-medium">
+                      {formatCurrency(
+                        parseFloat(service.main_stall_revenue || "0"),
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Sub Stall (Parts)
+                    </span>
+                    <span className="font-medium">
+                      {formatCurrency(
+                        parseFloat(service.sub_stall_revenue || "0"),
+                      )}
+                    </span>
+                  </div>
+                  <Separator className="my-1" />
+                  <div className="flex justify-between font-semibold">
+                    <span>Total Revenue</span>
+                    <span>
+                      {formatCurrency(parseFloat(service.total_revenue || "0"))}
+                    </span>
+                  </div>
+                </>
+              )}
+              {receiptMode === "main_only" && (
+                <div className="flex justify-between font-medium">
+                  <span>Main Stall Revenue</span>
+                  <span>
+                    {formatCurrency(
+                      parseFloat(service.main_stall_revenue || "0"),
+                    )}
+                  </span>
+                </div>
+              )}
+              {receiptMode === "sub_only" && (
+                <div className="flex justify-between font-medium">
+                  <span>Sub Stall Revenue</span>
+                  <span>
+                    {formatCurrency(
+                      parseFloat(service.sub_stall_revenue || "0"),
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setReceiptPrintDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setReceiptPrintDialogOpen(false)
+                setShowServicePrintDialog(true)
+              }}
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Print Receipt
             </Button>
           </div>
         </DialogContent>

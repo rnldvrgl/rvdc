@@ -2,19 +2,16 @@
 
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { Button } from "@/components/ui/button"
-import { FormLabel } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Item, ItemEntry } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/helpers"
-import { Plus, Trash2 } from "lucide-react"
+import { AlertTriangle, Minus, Plus, X } from "lucide-react"
 
 export default function ItemQuantitySelector({
   items,
@@ -23,6 +20,7 @@ export default function ItemQuantitySelector({
   disabled,
   required = false,
   allowPriceChange,
+  stockMap,
 }: {
   items: ItemEntry[]
   allItems: Item[]
@@ -30,6 +28,8 @@ export default function ItemQuantitySelector({
   disabled?: boolean
   allowPriceChange?: boolean
   required?: boolean
+  /** Map of item_id -> available_quantity for stock display */
+  stockMap?: Map<number, number>
 }) {
   const handleAdd = () => {
     if (allItems.length === 0) return
@@ -44,6 +44,27 @@ export default function ItemQuantitySelector({
         : {}),
     }
     onChange([...items, newItem])
+  }
+
+  /** Check if an item is duplicated in the list */
+  const getDuplicateIndices = () => {
+    const seen = new Map<number, number[]>()
+    items.forEach((itm, idx) => {
+      const id = itm.item.id
+      if (!seen.has(id)) seen.set(id, [])
+      seen.get(id)!.push(idx)
+    })
+    const dupes = new Set<number>()
+    seen.forEach((indices) => {
+      if (indices.length > 1) indices.forEach((i) => dupes.add(i))
+    })
+    return dupes
+  }
+  const duplicateIndices = getDuplicateIndices()
+
+  /** Get available stock for an item */
+  const getAvailableStock = (itemId: number): number | undefined => {
+    return stockMap?.get(itemId)
   }
 
   const handleUpdate = <K extends keyof ItemEntry>(
@@ -94,257 +115,163 @@ export default function ItemQuantitySelector({
     return sum + itm.quantity * effective
   }, 0)
 
-  const tableColSpan = allowPriceChange ? 8 : 5
-
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-3">
-        <FormLabel required={required}>Items</FormLabel>
-        <Button
-          type="button"
-          size="sm"
-          onClick={handleAdd}
-          disabled={disabled || allItems.length === 0}
-          className="flex items-center gap-1"
-        >
-          <Plus className="size-4" />
-          Add Item
-        </Button>
-      </div>
-
-      {/* Desktop Table */}
-      <div className="hidden md:block">
-        <div className="border rounded-xl overflow-hidden shadow-sm">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted">
-                <TableHead className="min-w-[250px]">Item</TableHead>
-                <TableHead className="min-w-[100px]">Qty</TableHead>
-
-                <TableHead
-                  className={`min-w-[140px] ${!allowPriceChange ? "hidden" : ""}`}
-                >
-                  Discounted Price
-                </TableHead>
-
-                <TableHead
-                  className={`min-w-[140px] ${!allowPriceChange ? "hidden" : ""}`}
-                >
-                  Print Price
-                </TableHead>
-
-                <TableHead className="min-w-[120px]">Retail Price</TableHead>
-
-                <TableHead
-                  className={`min-w-[140px] ${!allowPriceChange ? "hidden" : ""}`}
-                >
-                  Wholesale Price
-                </TableHead>
-
-                <TableHead
-                  className={`min-w-[140px] ${!allowPriceChange ? "hidden" : ""}`}
-                >
-                  Technician Price
-                </TableHead>
-
-                <TableHead className="min-w-[120px] text-right">
-                  Total
-                </TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.length > 0 ? (
-                <>
-                  {items.map((itm, idx) => {
-                    const { retail, wholesale, technician, effective } =
-                      getPrices(itm)
-                    const lineTotal = itm.quantity * effective
-                    return (
-                      <TableRow
-                        key={itm.item.id + "-" + idx}
-                        className="hover:bg-muted/50 transition-colors"
-                      >
-                        <TableCell>
-                          <ComboBox
-                            disabled={disabled}
-                            onChange={(val) => {
-                              const found = allItems.find(
-                                (c) => c.id.toString() === val,
-                              )
-                              if (found) handleUpdateItem(idx, found)
-                            }}
-                            value={itm.item.id.toString()}
-                            options={allItems.map((c) => ({
-                              label: c.name,
-                              value: c.id.toString(),
-                            }))}
-                            placeholder="Select item"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            min={1}
-                            value={itm.quantity}
-                            onChange={(e) =>
-                              handleUpdate(
-                                idx,
-                                "quantity",
-                                parseInt(e.target.value) || 1,
-                              )
-                            }
-                            className="w-full"
-                            disabled={disabled}
-                          />
-                        </TableCell>
-                        {allowPriceChange && (
-                          <>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min={0}
-                                value={itm.final_price_per_unit ?? retail}
-                                onChange={(e) =>
-                                  handleUpdate(
-                                    idx,
-                                    "final_price_per_unit",
-                                    parseFloat(e.target.value) || 0,
-                                  )
-                                }
-                                disabled={disabled}
-                                placeholder="Price"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min={0}
-                                value={
-                                  itm.print_price_per_unit ??
-                                  itm.item.retail_price
-                                }
-                                onChange={(e) =>
-                                  handleUpdate(
-                                    idx,
-                                    "print_price_per_unit",
-                                    parseFloat(e.target.value) || 0,
-                                  )
-                                }
-                                disabled={disabled}
-                                placeholder="Print Price"
-                              />
-                            </TableCell>
-                          </>
-                        )}
-                        <TableCell className="text-muted-foreground">
-                          {formatCurrency(retail)}
-                        </TableCell>
-                        {allowPriceChange && (
-                          <>
-                            <TableCell className="text-muted-foreground">
-                              {formatCurrency(wholesale)}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {formatCurrency(technician)}
-                            </TableCell>
-                          </>
-                        )}
-                        <TableCell className="font-semibold text-right">
-                          {formatCurrency(lineTotal)}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemove(idx)}
-                            disabled={disabled}
-                          >
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                  <TableRow className="bg-muted/70 font-semibold">
-                    <TableCell
-                      colSpan={tableColSpan - 1}
-                      className="text-right"
-                    >
-                      Grand Total:
-                    </TableCell>
-                    <TableCell className="text-right font-bold">
-                      {formatCurrency(grandTotal)}
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                </>
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={tableColSpan + 1}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    No items added
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-
-      {/* Mobile Layout */}
-      <div className="md:hidden space-y-4">
-        {items.length > 0 ? (
-          <>
-            {items.map((itm, idx) => {
-              const { retail, wholesale, technician, effective } =
-                getPrices(itm)
-              const lineTotal = itm.quantity * effective
-              return (
-                <div
-                  key={itm.item.id + "-" + idx}
-                  className="rounded-xl border p-4 shadow-sm space-y-3"
-                >
-                  <ComboBox
-                    onChange={(val) => {
-                      const found = allItems.find(
-                        (c) => c.id.toString() === val,
-                      )
-                      if (found) handleUpdateItem(idx, found)
-                    }}
-                    value={itm.item.id.toString()}
-                    options={allItems.map((c) => ({
-                      label: c.name,
-                      value: c.id.toString(),
-                    }))}
-                    placeholder="Select item"
-                  />
-
-                  <div className="flex flex-col gap-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      value={itm.quantity}
-                      onChange={(e) =>
-                        handleUpdate(
-                          idx,
-                          "quantity",
-                          parseInt(e.target.value) || 1,
-                        )
-                      }
+    <div className="space-y-2">
+      {items.length > 0 ? (
+        <div className="space-y-2">
+          {items.map((itm, idx) => {
+            const { retail, wholesale, technician, effective } = getPrices(itm)
+            const lineTotal = itm.quantity * effective
+            const availableStock = getAvailableStock(itm.item.id)
+            const isOverStock =
+              availableStock !== undefined && itm.quantity > availableStock
+            const isDuplicate = duplicateIndices.has(idx)
+            return (
+              <div
+                key={itm.item.id + "-" + idx}
+                className={`rounded-lg border p-3 space-y-2 transition-colors ${
+                  isOverStock
+                    ? "border-amber-400/60 dark:border-amber-600/40 bg-amber-50/30 dark:bg-amber-950/10"
+                    : "hover:bg-muted/30"
+                }`}
+              >
+                {/* Row 1: Item selector + remove */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 min-w-0">
+                    <ComboBox
                       disabled={disabled}
-                      className="w-full"
-                      placeholder="Quantity"
+                      onChange={(val) => {
+                        const found = allItems.find(
+                          (c) => c.id.toString() === val,
+                        )
+                        if (found) handleUpdateItem(idx, found)
+                      }}
+                      value={itm.item.id.toString()}
+                      options={allItems.map((c) => {
+                        const stock = getAvailableStock(c.id)
+                        return {
+                          label:
+                            stock !== undefined
+                              ? `${c.name} (${stock})`
+                              : c.name,
+                          value: c.id.toString(),
+                        }
+                      })}
+                      placeholder="Select item"
                     />
+                  </div>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleRemove(idx)}
+                          disabled={disabled}
+                        >
+                          <X className="size-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">
+                        <p>Remove item</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
 
-                    {allowPriceChange && (
-                      <>
+                {/* Row 2: Qty + Prices + Total */}
+                <div className="flex items-start gap-2 flex-wrap sm:flex-nowrap">
+                  {/* Quantity stepper */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                      Qty
+                    </span>
+                    <div className="flex items-center">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="size-8 rounded-r-none"
+                              onClick={() =>
+                                handleUpdate(
+                                  idx,
+                                  "quantity",
+                                  Math.max(1, itm.quantity - 1),
+                                )
+                              }
+                              disabled={disabled || itm.quantity <= 1}
+                            >
+                              <Minus className="size-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Decrease quantity</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={itm.quantity}
+                        onChange={(e) =>
+                          handleUpdate(
+                            idx,
+                            "quantity",
+                            parseInt(e.target.value) || 1,
+                          )
+                        }
+                        className="h-8 w-14 rounded-none border-x-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        disabled={disabled}
+                      />
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="size-8 rounded-l-none"
+                              onClick={() =>
+                                handleUpdate(idx, "quantity", itm.quantity + 1)
+                              }
+                              disabled={disabled}
+                            >
+                              <Plus className="size-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Increase quantity</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+
+                  {allowPriceChange && (
+                    <>
+                      {/* Sell price */}
+                      <div className="space-y-1 w-28">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-[10px] text-muted-foreground uppercase tracking-wide cursor-help">
+                                Sell
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Discounted selling price charged to client</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <Input
                           type="number"
                           min={0}
+                          step="0.01"
                           value={itm.final_price_per_unit ?? retail}
                           onChange={(e) =>
                             handleUpdate(
@@ -354,14 +281,31 @@ export default function ItemQuantitySelector({
                             )
                           }
                           disabled={disabled}
-                          className="w-full"
-                          placeholder="Discounted Price"
+                          className="h-8"
                         />
+                      </div>
 
+                      {/* Print price */}
+                      <div className="space-y-1 w-28">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-[10px] text-muted-foreground uppercase tracking-wide cursor-help">
+                                Print
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Price printed on the receipt</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <Input
                           type="number"
                           min={0}
-                          value={itm.print_price_per_unit ?? retail}
+                          step="0.01"
+                          value={
+                            itm.print_price_per_unit ?? itm.item.retail_price
+                          }
                           onChange={(e) =>
                             handleUpdate(
                               idx,
@@ -370,52 +314,101 @@ export default function ItemQuantitySelector({
                             )
                           }
                           disabled={disabled}
-                          className="w-full"
-                          placeholder="Print Price"
+                          className="h-8"
                         />
-                      </>
-                    )}
-                  </div>
+                      </div>
+                    </>
+                  )}
 
-                  <div className="grid gap-1 text-sm text-muted-foreground">
-                    <div>Retail Price: {formatCurrency(retail)}</div>
-                    {allowPriceChange && (
-                      <>
-                        <div>Wholesale Price: {formatCurrency(wholesale)}</div>
-                        <div>
-                          Technician Price: {formatCurrency(technician)}
-                        </div>
-                      </>
-                    )}
-                    <div className="text-foreground font-semibold">
-                      Total: {formatCurrency(lineTotal)}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemove(idx)}
-                      disabled={disabled}
-                    >
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
+                  {/* Line total (pushed right) */}
+                  <div className="space-y-1 ml-auto text-right">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                      Total
+                    </span>
+                    <p className="h-8 flex items-center justify-end font-semibold text-sm tabular-nums">
+                      {formatCurrency(lineTotal)}
+                    </p>
                   </div>
                 </div>
-              )
-            })}
-            <div className="text-right font-semibold">
-              Grand Total: {formatCurrency(grandTotal)}
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            No items added
+
+                {/* Row 3: Indicators */}
+                {(availableStock !== undefined ||
+                  isDuplicate ||
+                  isOverStock ||
+                  allowPriceChange) && (
+                  <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
+                    {availableStock !== undefined && (
+                      <span
+                        className={
+                          availableStock <= 0
+                            ? "text-destructive font-medium"
+                            : availableStock <= 5
+                              ? "text-amber-600 dark:text-amber-400"
+                              : ""
+                        }
+                      >
+                        Stock: {availableStock}
+                      </span>
+                    )}
+                    {isOverStock && (
+                      <span className="text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
+                        <AlertTriangle className="size-3" />
+                        Exceeds stock
+                      </span>
+                    )}
+                    {isDuplicate && (
+                      <span className="text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
+                        <AlertTriangle className="size-3" />
+                        Duplicate
+                      </span>
+                    )}
+                    {allowPriceChange && (
+                      <span>
+                        R: {formatCurrency(retail)} · W:{" "}
+                        {formatCurrency(wholesale)} · T:{" "}
+                        {formatCurrency(technician)}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+
+          {/* Grand total */}
+          <div className="flex justify-end pt-1 pr-3">
+            <span className="text-sm font-semibold tabular-nums">
+              Total: {formatCurrency(grandTotal)}
+            </span>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="py-6 text-center text-sm text-muted-foreground border border-dashed rounded-lg">
+          No items added yet
+        </div>
+      )}
+
+      {/* Add button */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full border-dashed"
+              onClick={handleAdd}
+              disabled={disabled || allItems.length === 0}
+            >
+              <Plus className="size-3.5 mr-1.5" />
+              Add Item
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Add a new item to the transaction</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   )
 }

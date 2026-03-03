@@ -7,6 +7,7 @@ import ItemQuantitySelector from "@/components/custom/shared/ItemQuantitySelecto
 import PaymentMethodSelector from "@/components/custom/shared/PaymentMethodSelector"
 import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTransactionPrintContent"
 import SaleTransactionVoidingForm from "@/components/forms/SaleTransactionVoidingForm"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -17,13 +18,16 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
 import {
   Item,
   ItemEntry,
   SalesTransaction,
   Stall,
+  Stock,
 } from "@/lib/constants/interface"
-import { Client } from "@/lib/constants/types"
+import { Client, PaginatedResult } from "@/lib/constants/types"
+import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheetDialog } from "@/lib/hooks/useEntityDialog"
 import { useItemSelection } from "@/lib/hooks/useItemSelection"
@@ -36,8 +40,16 @@ import {
 } from "@/lib/queries/useChoices"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Printer, RotateCcw, Save, Trash2 } from "lucide-react"
-import { useEffect, useState } from "react"
+import {
+  CreditCard,
+  Package,
+  Printer,
+  Receipt,
+  RotateCcw,
+  Save,
+  Trash2,
+} from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import * as z from "zod"
 
@@ -51,57 +63,39 @@ export default function SalesTransactionForm({
   onClose,
 }: SalesTransactionFormProps) {
   const { assigned_stall, role } = useCurrentUser()
-  const formSchema = z
-    .object({
-      stall:
-        role === "admin"
-          ? z.number({
-              required_error: "Stall is required",
-              invalid_type_error: "Stall is required",
-            })
-          : z.number().nullable().optional(),
-      client_id: z
-        .number({
-          required_error: "Client is required",
-        })
-        .nullable(),
-      manual_receipt_number: z.string().optional(),
-      payments: z
-        .array(
-          z.object({
-            payment_type: z.string().min(1, "Payment type is required"),
-            amount: z.number().min(1, "Amount must be a positive number"),
-          }),
-        )
-        .min(1, "At least one payment is required"),
-      items: z
-        .array(
-          z.object({
-            item_id: z.number(),
-            quantity: z.number().min(1, "Quantity must be at least 1"),
-            final_price_per_unit: z.number().min(0),
-            print_price_per_unit: z.number().min(0).optional(),
-          }),
-        )
-        .min(1, "at least one item is required"),
-    })
-    .refine(
-      (data) => {
-        const totalItems = data.items.reduce(
-          (sum, item) => sum + item.quantity * item.final_price_per_unit,
-          0,
-        )
-        const totalPayments = data.payments.reduce(
-          (sum, payment) => sum + payment.amount,
-          0,
-        )
-        return totalPayments <= totalItems
-      },
-      {
-        message: "Total payments cannot exceed total items amount",
-        path: ["payments"],
-      },
-    )
+  const formSchema = z.object({
+    stall:
+      role === "admin"
+        ? z.number({
+            required_error: "Stall is required",
+            invalid_type_error: "Stall is required",
+          })
+        : z.number().nullable().optional(),
+    client_id: z
+      .number({
+        required_error: "Client is required",
+      })
+      .nullable(),
+    manual_receipt_number: z.string().optional(),
+    payments: z
+      .array(
+        z.object({
+          payment_type: z.string().min(1, "Payment type is required"),
+          amount: z.number().min(1, "Amount must be a positive number"),
+        }),
+      )
+      .min(1, "At least one payment is required"),
+    items: z
+      .array(
+        z.object({
+          item_id: z.number(),
+          quantity: z.number().min(1, "Quantity must be at least 1"),
+          final_price_per_unit: z.number().min(0),
+          print_price_per_unit: z.number().min(0).optional(),
+        }),
+      )
+      .min(1, "at least one item is required"),
+  })
 
   type FormValues = z.infer<typeof formSchema>
 
@@ -138,6 +132,28 @@ export default function SalesTransactionForm({
   const { data: clientsData } = useClientChoices()
   const allItems: Item[] = allItemsData ?? []
   const clients: Client[] = clientsData ?? []
+
+  // Fetch stock levels for the selected stall
+  const selectedStallId =
+    role === "admin" ? form.watch("stall") : assigned_stall?.id
+  const { data: stockData } = useApiQuery<PaginatedResult<Stock>>({
+    queryKey: ["stall-stocks-for-sale", selectedStallId],
+    url: "/inventory/stocks/",
+    params: { stall: selectedStallId, limit: 1000 },
+    enabled: !!selectedStallId,
+  })
+
+  // Build item_id -> available_quantity map
+  const stockMap = useMemo(() => {
+    const map = new Map<number, number>()
+    if (stockData?.results) {
+      for (const stock of stockData.results) {
+        map.set(stock.item.id, stock.available_quantity)
+      }
+    }
+    return map
+  }, [stockData])
+
   const { addTransaction, updateTransaction } = useSalesTransactionMutations()
   const isVoided = initialData?.voided
   const isDisabled = form.formState.isSubmitting || isVoided
@@ -292,21 +308,47 @@ export default function SalesTransactionForm({
       </div>
 
       {initialData && (
-        <div className="w-full flex justify-end mb-6">
+        <div className="flex items-center justify-between pb-4">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Badge
+              variant={isVoided ? "destructive" : "success"}
+              className="text-xs"
+            >
+              {isVoided ? "Voided" : "Active"}
+            </Badge>
+            {initialData.stall && (
+              <Badge
+                variant="outline"
+                className="text-xs"
+              >
+                {initialData.stall.name}
+              </Badge>
+            )}
+            {initialData.system_receipt_number && (
+              <Badge
+                variant="secondary"
+                className="text-xs font-mono"
+              >
+                {initialData.system_receipt_number}
+              </Badge>
+            )}
+          </div>
           <Button
             type="button"
-            variant={isVoided ? "secondary" : "destructive"}
-            size="lg"
+            variant="ghost"
+            size="sm"
+            className={
+              isVoided ? "" : "text-destructive hover:text-destructive"
+            }
             onClick={() => openVoiding()}
-            className="shadow-md"
           >
             {isVoided ? (
               <>
-                <RotateCcw className="mr-2 h-4 w-4" /> Reactivate
+                <RotateCcw className="mr-1.5 size-3.5" /> Reactivate
               </>
             ) : (
               <>
-                <Trash2 className="mr-2 h-4 w-4" /> Void Transaction
+                <Trash2 className="mr-1.5 size-3.5" /> Void
               </>
             )}
           </Button>
@@ -316,98 +358,106 @@ export default function SalesTransactionForm({
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-6"
+          className="space-y-5"
         >
-          {/* Transaction Information Card */}
-          <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-6 w-1 bg-primary rounded-sm" />
-              <h3 className="text-lg font-semibold">Transaction Information</h3>
-            </div>
+          {/* Transaction Info */}
+          <section className="space-y-3">
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <Receipt className="size-3" />
+              Transaction Info
+            </h4>
+            {role && role === "admin" && (
+              <FormField
+                name="stall"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Stall</FormLabel>
+                    <ComboBox
+                      disabled={isDisabled}
+                      options={
+                        stalls?.map((s) => ({
+                          value: s.id,
+                          label: s.name,
+                        })) ?? []
+                      }
+                      value={field.value ? Number(field.value) : null}
+                      onChange={(val) => {
+                        field.onChange(val ?? null)
+                        setStall(stalls?.find((s) => s.id === val) ?? null)
+                      }}
+                      placeholder="Select stall"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
-            <div className="grid grid-cols-1 gap-4">
-              {role && role === "admin" && (
-                <FormField
-                  name="stall"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Stall</FormLabel>
-                      <ComboBox
+            <div className="grid gap-3">
+              <FormField
+                name="client_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Client</FormLabel>
+                    <ComboBox
+                      disabled={isDisabled}
+                      options={clients.map((c) => ({
+                        value: c.id,
+                        label: `${c.full_name} (${c.contact_number})`,
+                      }))}
+                      value={field.value ? Number(field.value) : null}
+                      onChange={(val) => field.onChange(val ?? null)}
+                      placeholder="Select client"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="manual_receipt_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Receipt #</FormLabel>
+                    <FormControl>
+                      <Input
                         disabled={isDisabled}
-                        options={
-                          stalls?.map((s) => ({
-                            value: s.id,
-                            label: s.name,
-                          })) ?? []
-                        }
-                        value={field.value ? Number(field.value) : null}
-                        onChange={(val) => {
-                          field.onChange(val ?? null)
-                          setStall(stalls?.find((s) => s.id === val) ?? null)
-                        }}
-                        placeholder="Select stall"
+                        {...field}
+                        placeholder="e.g. 001245"
                       />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* Items */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                <Package className="size-3" />
+                Items
+              </h4>
+              {watchedItems.length > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] h-5 px-1.5"
+                >
+                  {watchedItems.length}
+                </Badge>
               )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="manual_receipt_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Manual Receipt #</FormLabel>
-                      <FormControl>
-                        <Input
-                          disabled={isDisabled}
-                          {...field}
-                          placeholder="e.g. 001245"
-                          className="h-10"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  name="client_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Client</FormLabel>
-                      <ComboBox
-                        disabled={isDisabled}
-                        options={clients.map((c) => ({
-                          value: c.id,
-                          label: `${c.full_name} (${c.contact_number})`,
-                        }))}
-                        value={field.value ? Number(field.value) : null}
-                        onChange={(val) => field.onChange(val ?? null)}
-                        placeholder="Select client"
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
             </div>
-          </div>
-
-          {/* Items Card */}
-          <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-6 w-1 bg-primary rounded-sm" />
-              <h3 className="text-lg font-semibold">Items</h3>
-            </div>
-
             <ItemQuantitySelector
               disabled={isDisabled}
               required
               items={items}
               allItems={allItems}
+              stockMap={stockMap.size > 0 ? stockMap : undefined}
               onChange={(updatedItems) => {
                 form.setValue(
                   "items",
@@ -430,19 +480,30 @@ export default function SalesTransactionForm({
               allowPriceChange
             />
             {form.formState.errors.items && (
-              <p className="text-sm font-medium text-destructive mt-2">
+              <p className="text-sm font-medium text-destructive">
                 {form.formState.errors.items.message}
               </p>
             )}
-          </div>
+          </section>
 
-          {/* Payment Card */}
-          <div className="rounded-lg border bg-card p-6 shadow-sm space-y-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-6 w-1 bg-primary rounded-sm" />
-              <h3 className="text-lg font-semibold">Payment Details</h3>
+          <Separator />
+
+          {/* Payments */}
+          <section className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+                <CreditCard className="size-3" />
+                Payments
+              </h4>
+              {watchedPayments.length > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] h-5 px-1.5"
+                >
+                  {watchedPayments.length}
+                </Badge>
+              )}
             </div>
-
             <PaymentMethodSelector
               control={form.control}
               fields={fields}
@@ -450,89 +511,72 @@ export default function SalesTransactionForm({
               remove={remove}
               disabled={isDisabled}
               required
+              totalItemsAmount={totalItemsAmount}
             />
             {form.formState.errors.payments && (
-              <p className="text-sm font-medium text-destructive mt-2">
+              <p className="text-sm font-medium text-destructive">
                 {form.formState.errors.payments?.message ||
                   form.formState.errors.payments?.root?.message}
               </p>
             )}
-          </div>
+          </section>
 
-          {/* Summary Card */}
-          <div className="rounded-lg border bg-linear-to-br from-primary/5 via-primary/3 to-background p-6 shadow-md">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-6 w-1 bg-primary rounded-sm" />
-              <h3 className="text-lg font-semibold">Transaction Summary</h3>
+          {/* Summary */}
+          <div className="rounded-lg bg-muted/50 p-4 space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">
+                Subtotal · {watchedItems.length} item
+                {watchedItems.length !== 1 && "s"}
+              </span>
+              <span className="font-medium">
+                {formatCurrency(totalItemsAmount)}
+              </span>
             </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 rounded-md bg-background/50 hover:bg-background/80 transition-colors">
-                <span className="text-muted-foreground font-medium">
-                  Total Items
-                </span>
-                <span className="font-semibold text-lg">
-                  {formatCurrency(totalItemsAmount)}
-                </span>
-              </div>
-
-              <div
-                className={`flex justify-between items-center p-3 rounded-md transition-colors ${
-                  totalPayments > totalItemsAmount
-                    ? "bg-destructive/10 border border-destructive/30"
-                    : "bg-background/50 hover:bg-background/80"
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">
+                Paid · {watchedPayments.length} payment
+                {watchedPayments.length !== 1 && "s"}
+              </span>
+              <span className="font-medium text-primary">
+                {formatCurrency(totalPayments)}
+              </span>
+            </div>
+            <Separator />
+            <div className="flex justify-between items-center pt-1">
+              <span className="text-sm font-semibold">
+                {changeDue >= 0 ? "Change" : "Balance Due"}
+              </span>
+              <span
+                className={`text-base font-bold ${
+                  changeDue >= 0
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-destructive"
                 }`}
               >
-                <span className="text-muted-foreground font-medium">
-                  Total Payments
-                </span>
-                <span
-                  className={`font-semibold text-lg ${
-                    totalPayments > totalItemsAmount
-                      ? "text-destructive"
-                      : "text-primary"
-                  }`}
-                >
-                  {formatCurrency(totalPayments)}
-                </span>
-              </div>
-
-              {totalPayments > totalItemsAmount && (
-                <div className="p-3 rounded-md bg-destructive/10 border border-destructive/30">
-                  <p className="text-sm text-destructive font-medium">
-                    ⚠️ Payments exceed total items amount
-                  </p>
-                </div>
-              )}
-
-              <div className="flex justify-between items-center p-4 rounded-md bg-background border-2 border-primary/20">
-                <span className="font-semibold text-base">Change / Due</span>
-                <span
-                  className={`font-bold text-xl ${
-                    changeDue >= 0
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-destructive"
-                  }`}
-                >
-                  {formatCurrency(changeDue)}
-                </span>
-              </div>
+                {formatCurrency(Math.abs(changeDue))}
+              </span>
             </div>
           </div>
 
+          {/* Submit */}
           {!isVoided && (
             <Button
               type="submit"
-              size="lg"
-              className="w-full shadow-md hover:shadow-lg transition-all"
+              className="w-full"
               disabled={
                 !form.formState.isDirty ||
                 form.formState.isSubmitting ||
                 !form.formState.isValid
               }
             >
-              <Save className="mr-2 h-5 w-5" />
-              {initialData ? "Update Transaction" : "Create Transaction"}
+              <Save className="mr-2 size-4" />
+              {form.formState.isSubmitting
+                ? initialData
+                  ? "Updating..."
+                  : "Creating..."
+                : initialData
+                  ? "Update Transaction"
+                  : "Create Transaction"}
             </Button>
           )}
         </form>
