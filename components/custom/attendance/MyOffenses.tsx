@@ -100,17 +100,13 @@ const getSeverityBadge = (severity: string) => {
 export default function MyOffenses() {
   const { data: offensesData, isLoading } = useMyOffenses()
 
-  const offenses = offensesData || []
+  const offenses = useMemo(() => offensesData || [], [offensesData])
 
   const {
     totalOffenses,
     warningCount,
     suspensionCount,
     terminationCount,
-    awolCount,
-    lateCount,
-    curfewCount,
-    otherCount,
     hasReachedLimit,
   } = useMemo(() => {
     let warning = 0,
