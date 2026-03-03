@@ -3,12 +3,14 @@ import { Badge } from "@/components/ui/badge"
 import { GetColumnsProps, Stock } from "@/lib/constants/interface"
 import { getBadgeVariant, safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, PackagePlus, Plus } from "lucide-react"
+import { Edit, PackagePlus, Plus, RotateCcw, Trash2 } from "lucide-react"
 
 export function getStallStockColumns({
   onEdit,
   onRestock,
   onAddStock,
+  onRestore,
+  onHardDelete,
   role,
 }: GetColumnsProps<Stock>): ColumnDef<Stock>[] {
   const columnMap: Record<string, ColumnDef<Stock>> = {
@@ -94,6 +96,26 @@ export function getStallStockColumns({
       header: "Action",
       cell: ({ row }) => {
         const stock = row.original
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(stock),
+                },
+                {
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(stock),
+                  destructive: true,
+                  confirmText: `Permanently delete this stock? This cannot be undone.`,
+                },
+              ]}
+            />
+          )
+        }
         return (
           <DataTableActions
             items={[

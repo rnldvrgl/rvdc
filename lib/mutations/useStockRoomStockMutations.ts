@@ -1,17 +1,17 @@
-'use client'
+"use client"
 
-import { StockRoomStockPayload } from '@/lib/constants/interface'
-import { useApiMutation } from '@/lib/hooks/useApiMutation'
-import api from '@/lib/utils/api'
-import { useQueryClient } from '@tanstack/react-query'
+import { StockRoomStockPayload } from "@/lib/constants/interface"
+import { useApiMutation } from "@/lib/hooks/useApiMutation"
+import api from "@/lib/utils/api"
+import { useQueryClient } from "@tanstack/react-query"
 
 export function useStockRoomStockMutations() {
   const queryClient = useQueryClient()
 
-  const analyticsKeys = [['summary'], ['restocks_over_time']]
+  const analyticsKeys = [["summary"], ["restocks_over_time"]]
   const sharedInvalidations = [
-    { queryKey: ['stall-stocks'] },
-    { queryKey: ['stock-room-stocks'] },
+    { queryKey: ["stall-stocks"] },
+    { queryKey: ["stock-room-stocks"] },
     ...analyticsKeys.map((key) => ({ queryKey: key })),
   ]
 
@@ -23,25 +23,26 @@ export function useStockRoomStockMutations() {
       stock_id: number
       data: StockRoomStockPayload
     }) => api.patch(`/inventory/stockroom/stocks/${stock_id}/`, data),
-    successMessage: 'Stock Room stock updated successfully.',
+    successMessage: "Stock Room stock updated successfully.",
     invalidateQueries: sharedInvalidations,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['stock-room-stocks', variables.stock_id],
+        queryKey: ["stock-room-stocks", variables.stock_id],
       })
     },
   })
 
   const softDeleteStockRoomStock = useApiMutation({
     mutationFn: (stock_id: number) =>
-      api.patch(`/inventory/stockroom/stocks/${stock_id}/`, {
-        is_deleted: true,
-      }),
-    successMessage: 'Stock deleted successfully.',
-    invalidateQueries: sharedInvalidations,
+      api.delete(`/inventory/stockroom/stocks/${stock_id}/`),
+    successMessage: "Stock archived successfully.",
+    invalidateQueries: [
+      ...sharedInvalidations,
+      { queryKey: ["stockroom-stocks-archived"] },
+    ],
     onSuccess: (_, stock_id) => {
       queryClient.invalidateQueries({
-        queryKey: ['stock-room-stocks', stock_id],
+        queryKey: ["stock-room-stocks", stock_id],
       })
     },
   })
@@ -57,11 +58,11 @@ export function useStockRoomStockMutations() {
       api.post(`/inventory/stockroom/stocks/${stock_id}/restock/`, {
         quantity,
       }),
-    successMessage: 'Stock restocked successfully.',
+    successMessage: "Stock restocked successfully.",
     invalidateQueries: sharedInvalidations,
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['stock-room-stocks', variables.stock_id],
+        queryKey: ["stock-room-stocks", variables.stock_id],
       })
     },
   })

@@ -5,14 +5,18 @@ import { GetColumnsProps } from "@/lib/constants/interface"
 import { Employee } from "@/lib/constants/types"
 import { safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, Eye, Trash2 } from "lucide-react"
+import { Archive, Edit, Eye, RotateCcw, Trash2 } from "lucide-react"
 
 export function getEmployeeColumns({
   onEdit,
   onDelete,
   onView,
+  onRestore,
+  onHardDelete,
 }: GetColumnsProps<Employee> & {
   onManageBenefits?: (employee: Employee) => void
+  onRestore?: (employee: Employee) => void
+  onHardDelete?: (employee: Employee) => void
 }): ColumnDef<Employee>[] {
   return [
     {
@@ -92,29 +96,46 @@ export function getEmployeeColumns({
         const employee = row.original
         return (
           <DataTableActions
-            items={[
-              ...(onView
+            items={
+              onRestore && onHardDelete
                 ? [
                     {
-                      label: "View",
-                      icon: Eye,
-                      onClick: () => onView(employee),
+                      label: "Restore",
+                      icon: RotateCcw,
+                      onClick: () => onRestore(employee),
+                      confirmText: `Restore ${employee.first_name} ${employee.last_name}?`,
+                    },
+                    {
+                      label: "Delete Permanently",
+                      icon: Trash2,
+                      onClick: () => onHardDelete(employee),
+                      destructive: true,
+                      confirmText: `Permanently delete ${employee.first_name} ${employee.last_name}?`,
                     },
                   ]
-                : []),
-              {
-                label: "Edit",
-                icon: Edit,
-                onClick: () => onEdit(employee),
-              },
-              {
-                label: "Delete",
-                icon: Trash2,
-                onClick: () => onDelete(employee),
-                destructive: true,
-                confirmText: `Delete ${employee.first_name} ${employee.last_name}?`,
-              },
-            ]}
+                : [
+                    ...(onView
+                      ? [
+                          {
+                            label: "View",
+                            icon: Eye,
+                            onClick: () => onView(employee),
+                          },
+                        ]
+                      : []),
+                    {
+                      label: "Edit",
+                      icon: Edit,
+                      onClick: () => onEdit(employee),
+                    },
+                    {
+                      label: "Archive",
+                      icon: Archive,
+                      onClick: () => onDelete(employee),
+                      confirmText: `Archive ${employee.first_name} ${employee.last_name}?`,
+                    },
+                  ]
+            }
           />
         )
       },

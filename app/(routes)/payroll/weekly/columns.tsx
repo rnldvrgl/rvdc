@@ -5,6 +5,7 @@ import { safeCell } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef, Row } from "@tanstack/react-table"
 import {
+  Archive,
   Banknote,
   Calendar,
   CheckCircle2,
@@ -12,6 +13,7 @@ import {
   Eye,
   FilePenLine,
   FileText,
+  RotateCcw,
   Trash2,
 } from "lucide-react"
 
@@ -19,6 +21,8 @@ interface GetPayrollColumnsProps {
   onView: (payroll: WeeklyPayroll) => void
   onDelete: (id: number) => void
   isAdmin: boolean
+  onRestore?: (payroll: WeeklyPayroll) => void
+  onHardDelete?: (payroll: WeeklyPayroll) => void
 }
 
 const getStatusBadge = (status: string) => {
@@ -69,6 +73,8 @@ export function getPayrollColumns({
   onView,
   onDelete,
   isAdmin,
+  onRestore,
+  onHardDelete,
 }: GetPayrollColumnsProps): ColumnDef<WeeklyPayroll>[] {
   return [
     {
@@ -181,23 +187,41 @@ export function getPayrollColumns({
         const payroll = row.original
         return (
           <DataTableActions
-            items={[
-              {
-                label: "View Details",
-                icon: Eye,
-                onClick: () => onView(payroll),
-              },
-              ...(isAdmin
+            items={
+              onRestore && onHardDelete
                 ? [
                     {
-                      label: "Delete",
+                      label: "Restore",
+                      icon: RotateCcw,
+                      onClick: () => onRestore(payroll),
+                      confirmText: `Restore payroll for ${payroll.employee_name}?`,
+                    },
+                    {
+                      label: "Delete Permanently",
                       icon: Trash2,
-                      onClick: () => onDelete(payroll.id),
+                      onClick: () => onHardDelete(payroll),
                       destructive: true,
+                      confirmText: `Permanently delete payroll for ${payroll.employee_name}?`,
                     },
                   ]
-                : []),
-            ]}
+                : [
+                    {
+                      label: "View Details",
+                      icon: Eye,
+                      onClick: () => onView(payroll),
+                    },
+                    ...(isAdmin
+                      ? [
+                          {
+                            label: "Archive",
+                            icon: Archive,
+                            onClick: () => onDelete(payroll.id),
+                            confirmText: `Archive payroll for ${payroll.employee_name}?`,
+                          },
+                        ]
+                      : []),
+                  ]
+            }
           />
         )
       },

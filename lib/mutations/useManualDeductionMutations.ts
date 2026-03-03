@@ -69,9 +69,10 @@ export const useDeleteManualDeduction = (payrollId?: number) => {
 
   return useApiMutation<number, unknown>({
     mutationFn: (id) => api.delete(`/payroll/manual-deductions/${id}/`),
-    successMessage: "Manual deduction deleted successfully",
+    successMessage: "Manual deduction archived successfully",
     invalidateQueries: [
       { queryKey: ["manual-deductions"] },
+      { queryKey: ["manual-deductions-archived"] },
       { queryKey: ["weekly-payroll"] },
     ],
     onSuccess: async () => {

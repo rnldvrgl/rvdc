@@ -7,10 +7,12 @@ import { ColumnDef, Row } from "@tanstack/react-table"
 import {
   AlertCircle,
   AlertTriangle,
+  Archive,
   Ban,
   Calendar,
   Clock,
   Edit,
+  RotateCcw,
   Trash2,
   UserX,
 } from "lucide-react"
@@ -18,6 +20,8 @@ import {
 interface GetOffenseColumnsProps {
   onEdit: (offense: Offense) => void
   onDelete: (id: number) => void
+  onRestore?: (offense: Offense) => void
+  onHardDelete?: (offense: Offense) => void
   isAdmin: boolean
 }
 
@@ -106,6 +110,8 @@ const getSeverityBadge = (severity: string) => {
 export function getOffenseColumns({
   onEdit,
   onDelete,
+  onRestore,
+  onHardDelete,
   isAdmin,
 }: GetOffenseColumnsProps): ColumnDef<Offense>[] {
   return [
@@ -208,6 +214,26 @@ export function getOffenseColumns({
       header: "Action",
       cell: ({ row }) => {
         const offense = row.original
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(offense),
+                },
+                {
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(offense),
+                  destructive: true,
+                  confirmText: `Permanently delete offense for ${offense.employee_name}? This cannot be undone.`,
+                },
+              ]}
+            />
+          )
+        }
         return (
           <DataTableActions
             items={
@@ -219,11 +245,10 @@ export function getOffenseColumns({
                       onClick: () => onEdit(offense),
                     },
                     {
-                      label: "Delete",
-                      icon: Trash2,
+                      label: "Archive",
+                      icon: Archive,
                       onClick: () => onDelete(offense.id),
-                      destructive: true,
-                      confirmText: `Delete offense for ${offense.employee_name}?`,
+                      confirmText: `Archive offense for ${offense.employee_name}?`,
                     },
                   ]
                 : []

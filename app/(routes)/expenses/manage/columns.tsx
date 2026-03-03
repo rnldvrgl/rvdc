@@ -8,12 +8,14 @@ import {
 } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef, Row } from "@tanstack/react-table"
-import { Edit, Eye, Trash2 } from "lucide-react"
+import { Archive, Edit, Eye, RotateCcw, Trash2 } from "lucide-react"
 
 export function getExpenseColumns({
   onView,
   onEdit,
   onDelete,
+  onRestore,
+  onHardDelete,
   role,
 }: GetColumnsProps<Expense>): ColumnDef<Expense>[] {
   return [
@@ -144,6 +146,28 @@ export function getExpenseColumns({
       header: "Action",
       cell: ({ row }) => {
         const expense = row.original
+
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(expense),
+                },
+                {
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(expense),
+                  destructive: true,
+                  confirmText: `Permanently delete this expense? This cannot be undone.`,
+                },
+              ]}
+            />
+          )
+        }
+
         return (
           <DataTableActions
             items={[
@@ -160,11 +184,10 @@ export function getExpenseColumns({
                       onClick: () => onEdit(expense),
                     },
                     {
-                      label: "Delete",
-                      icon: Trash2,
+                      label: "Archive",
+                      icon: Archive,
                       onClick: () => onDelete(expense),
-                      destructive: true,
-                      confirmText: `Delete expense for ${expense.stall_data?.name}?`,
+                      confirmText: `Archive expense for ${expense.stall_data?.name}?`,
                     },
                   ]
                 : []),

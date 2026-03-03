@@ -116,8 +116,11 @@ export const useDeleteCustomCalendarEvent = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["custom-calendar-events"] })
+      queryClient.invalidateQueries({
+        queryKey: ["custom-calendar-events-archived"],
+      })
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] })
-      toast.success("Event deleted successfully")
+      toast.success("Event archived successfully")
     },
   })
 }

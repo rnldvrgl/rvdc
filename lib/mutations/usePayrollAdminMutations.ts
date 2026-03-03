@@ -128,8 +128,11 @@ export function usePayrollAdminMutations() {
 
   const deleteHoliday = useApiMutation<number, unknown>({
     mutationFn: (id) => api.delete(`${HOLIDAYS_URL}${id}/`),
-    successMessage: "Holiday deleted.",
-    invalidateQueries: [{ queryKey: ["payroll", "holidays"] }],
+    successMessage: "Holiday archived.",
+    invalidateQueries: [
+      { queryKey: ["payroll", "holidays"] },
+      { queryKey: ["holidays-archived"] },
+    ],
   })
 
   // CSV Upload

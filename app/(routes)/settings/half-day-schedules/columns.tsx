@@ -3,16 +3,20 @@ import { HalfDaySchedule } from "@/lib/queries/useHalfDaySchedules"
 import { safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { Edit2, Trash2 } from "lucide-react"
+import { Archive, Edit2, RotateCcw, Trash2 } from "lucide-react"
 
 interface GetColumnsProps {
   onEdit: (schedule: HalfDaySchedule) => void
   onDelete: (id: number) => void
+  onRestore?: (schedule: HalfDaySchedule) => void
+  onHardDelete?: (schedule: HalfDaySchedule) => void
 }
 
 export function getHalfDayScheduleColumns({
   onEdit,
   onDelete,
+  onRestore,
+  onHardDelete,
 }: GetColumnsProps): ColumnDef<HalfDaySchedule>[] {
   return [
     {
@@ -61,6 +65,26 @@ export function getHalfDayScheduleColumns({
       header: "Actions",
       cell: ({ row }) => {
         const schedule = row.original
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(schedule),
+                },
+                {
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(schedule),
+                  destructive: true,
+                  confirmText: `Permanently delete this half-day schedule? This cannot be undone.`,
+                },
+              ]}
+            />
+          )
+        }
         return (
           <DataTableActions
             items={[
@@ -70,10 +94,9 @@ export function getHalfDayScheduleColumns({
                 onClick: () => onEdit(schedule),
               },
               {
-                label: "Delete",
-                icon: Trash2,
+                label: "Archive",
+                icon: Archive,
                 onClick: () => onDelete(schedule.id),
-                destructive: true,
               },
             ]}
           />

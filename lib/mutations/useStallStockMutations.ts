@@ -34,11 +34,12 @@ export function useStallStockMutations() {
 
   const softDeleteStallStock = useApiMutation({
     mutationFn: (stock_id: number) =>
-      api.patch(`/inventory/stocks/${stock_id}/`, {
-        is_deleted: true,
-      }),
-    successMessage: "Stock deleted successfully.",
-    invalidateQueries: sharedInvalidations,
+      api.delete(`/inventory/stocks/${stock_id}/`),
+    successMessage: "Stock archived successfully.",
+    invalidateQueries: [
+      ...sharedInvalidations,
+      { queryKey: ["stall-stocks-archived"] },
+    ],
     onSuccess: (_, stock_id) => {
       queryClient.invalidateQueries({
         queryKey: ["stall-stocks", stock_id],

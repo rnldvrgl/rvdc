@@ -10,14 +10,12 @@ import { Button } from "@/components/ui/button"
 import { Stall } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
-import { useStallMutations } from "@/lib/mutations/useStallMutations"
 import { useStalls } from "@/lib/queries/inventory/useStalls"
 import { MapPin, Plus, Store } from "lucide-react"
 
 export default function StallsPage() {
   const { isAdmin } = useCurrentUser()
   const { data, isLoading, refetch } = useStalls()
-  const { deleteStall } = useStallMutations()
 
   const {
     entityState: { open: editOpen, entity },
@@ -37,19 +35,13 @@ export default function StallsPage() {
     closeEntity: closeViewSheet,
   } = useEntitySheet<Stall>()
 
-  const handleDelete = (stall: Stall) => {
-    if (stall.id !== undefined) {
-      deleteStall.mutate(stall.id)
-    }
-  }
-
   const handleView = (stall: Stall) => {
     openViewSheet(stall)
   }
 
   const columns = getStallColumns({
     onEdit: openEditSheet,
-    onDelete: handleDelete,
+    onDelete: () => {},
     onView: handleView,
   })
 

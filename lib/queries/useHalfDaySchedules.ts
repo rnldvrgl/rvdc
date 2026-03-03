@@ -110,7 +110,10 @@ export const useDeleteHalfDaySchedule = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["half-day-schedules"] })
-      toast.success("Half-day schedule deleted successfully")
+      queryClient.invalidateQueries({
+        queryKey: ["half-day-schedules-archived"],
+      })
+      toast.success("Half-day schedule archived successfully")
     },
   })
 }

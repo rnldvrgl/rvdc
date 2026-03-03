@@ -6,12 +6,21 @@ import { GetColumnsProps } from "@/lib/constants/interface"
 import { Client } from "@/lib/constants/types"
 import { safeCell } from "@/lib/utils/helpers"
 import { ColumnDef, Row } from "@tanstack/react-table"
-import { Ban, Edit, ShieldCheck, Trash2 } from "lucide-react"
+import {
+  Archive,
+  Ban,
+  Edit,
+  RotateCcw,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react"
 
 export function getClientColumns({
   onEdit,
   onDelete,
   onCustomAction,
+  onRestore,
+  onHardDelete,
 }: GetColumnsProps<Client>): ColumnDef<Client>[] {
   return [
     {
@@ -73,6 +82,28 @@ export function getClientColumns({
       cell: ({ row }: { row: Row<Client> }) => {
         const client = row.original
         const is_blocklisted = client.is_blocklisted
+
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(client),
+                },
+                {
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(client),
+                  destructive: true,
+                  confirmText: `Permanently delete ${safeCell(client.full_name)}? This cannot be undone.`,
+                },
+              ]}
+            />
+          )
+        }
+
         return (
           <DataTableActions
             items={[
@@ -89,11 +120,10 @@ export function getClientColumns({
                 onClick: () => onEdit(client),
               },
               {
-                label: "Delete",
-                icon: Trash2,
+                label: "Archive",
+                icon: Archive,
                 onClick: () => onDelete(client),
-                destructive: true,
-                confirmText: `Delete ${safeCell(client.full_name)}?`,
+                confirmText: `Archive ${safeCell(client.full_name)}?`,
               },
             ]}
           />

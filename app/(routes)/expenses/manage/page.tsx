@@ -1,6 +1,7 @@
 "use client"
 
 import { getExpenseColumns } from "@/app/(routes)/expenses/manage/columns"
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
@@ -10,16 +11,27 @@ import ExpenseForm from "@/components/forms/ExpenseForm"
 import { Button } from "@/components/ui/button"
 
 import { Expense } from "@/lib/constants/interface"
+import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useExpenseMutations } from "@/lib/mutations/useExpenseMutations"
 import { useExpenseFilters, useExpenses } from "@/lib/queries/useExpenses"
 import { Coins, Plus } from "lucide-react"
+import { useState } from "react"
+
+const emptyData = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [] as Expense[],
+}
 
 export default function ExpensesPage() {
   const { role, isAdmin, assigned_stall } = useCurrentUser()
-  const { page, limit, search, filter, ordering } = useSearchParameters()
+  const searchParams = useSearchParameters()
+  const { page, limit, search, filter, ordering } = searchParams
+  const [isArchived, setIsArchived] = useState(false)
   const { deleteExpense } = useExpenseMutations()
 
   // Backend already handles role-based filtering via get_role_filtered_queryset
@@ -32,6 +44,13 @@ export default function ExpensesPage() {
     filter,
   })
   const { filters, orderingOptions } = useExpenseFilters()
+
+  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Expense>(
+    "expenses/",
+    "expenses",
+    searchParams,
+    isArchived,
+  )
 
   const {
     entityState: viewSheet,
@@ -57,12 +76,31 @@ export default function ExpensesPage() {
     }
   }
 
-  const columns = getExpenseColumns({
-    onView: openView,
-    onEdit: openEdit,
-    onDelete: handleDelete,
-    role,
-  })
+  const handleRestore = (expense: Expense) => {
+    if (expense.id !== undefined) restoreItem.mutate(expense.id)
+  }
+  const handleHardDelete = (expense: Expense) => {
+    if (expense.id !== undefined) hardDeleteItem.mutate(expense.id)
+  }
+
+  const columns = isArchived
+    ? getExpenseColumns({
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: handleRestore,
+        onHardDelete: handleHardDelete,
+        role,
+      })
+    : getExpenseColumns({
+        onView: openView,
+        onEdit: openEdit,
+        onDelete: handleDelete,
+        role,
+      })
+
+  const tableData = isArchived
+    ? archivedQuery.data || emptyData
+    : data || emptyData
 
   return (
     <Wrapper>
@@ -75,74 +113,92 @@ export default function ExpensesPage() {
             : `Track and manage expenses for ${assigned_stall?.name || "your stall"}.`
         }
         breadcrumbs={["Dashboard", "Finance", "Expenses"]}
-        onRefresh={refetch}
+        onRefresh={isArchived ? archivedQuery.refetch : refetch}
         actionButton={
-          <Button onClick={() => openAddSheet()}>
-            <Plus className="size-4 mr-2" />
-            Add Expense
-          </Button>
+          !isArchived ? (
+            <Button onClick={() => openAddSheet()}>
+              <Plus className="size-4 mr-2" />
+              Add Expense
+            </Button>
+          ) : undefined
         }
       />
       {/* View expense sheet */}
-      <EntitySheet<Expense>
-        open={viewSheet.open}
-        onClose={closeView}
-        entity={viewSheet.entity}
-        title="Expense Details"
-        description="Review the details of this expense record."
-        renderForm={({ onClose, entity }) =>
-          entity ? (
-            <ExpenseDetails
-              entity={entity}
-              onClose={onClose}
+      {!isArchived && (
+        <EntitySheet<Expense>
+          open={viewSheet.open}
+          onClose={closeView}
+          entity={viewSheet.entity}
+          title="Expense Details"
+          description="Review the details of this expense record."
+          renderForm={({ onClose, entity }) =>
+            entity ? (
+              <ExpenseDetails
+                entity={entity}
+                onClose={onClose}
+              />
+            ) : null
+          }
+        />
+      )}
+
+      {!isArchived && (
+        <EntitySheet<Expense>
+          open={editSheet.open}
+          onClose={closeEdit}
+          entity={editSheet.entity}
+          title="Edit Expense"
+          description="Update the expense details below."
+          withCloseConfirmation
+          renderForm={({ forceClose, entity }) => (
+            <ExpenseForm
+              onClose={forceClose}
+              expense={entity}
             />
-          ) : null
-        }
+          )}
+        />
+      )}
+      {!isArchived && (
+        <EntitySheet<Expense>
+          open={addOpen}
+          onClose={closeAddSheet}
+          title="Add Expense"
+          description="Fill out the form below to add a new expense."
+          withCloseConfirmation
+          renderForm={({ forceClose }) => <ExpenseForm onClose={forceClose} />}
+        />
+      )}
+
+      <ArchiveToggle
+        isArchived={isArchived}
+        onToggle={setIsArchived}
+        archivedCount={archivedQuery.data?.count}
       />
 
-      <EntitySheet<Expense>
-        open={editSheet.open}
-        onClose={closeEdit}
-        entity={editSheet.entity}
-        title="Edit Expense"
-        description="Update the expense details below."
-        withCloseConfirmation
-        renderForm={({ forceClose, entity }) => (
-          <ExpenseForm
-            onClose={forceClose}
-            expense={entity}
-          />
-        )}
-      />
-      <EntitySheet<Expense>
-        open={addOpen}
-        onClose={closeAddSheet}
-        title="Add Expense"
-        description="Fill out the form below to add a new expense."
-        withCloseConfirmation
-        renderForm={({ forceClose }) => <ExpenseForm onClose={forceClose} />}
-      />
       {/* Main Content */}
       <DataTable
-        title="Expenses"
-        description="Track and manage all business expenses"
-        isLoading={isLoading}
-        columns={columns}
-        data={
-          data || {
-            count: 0,
-            next: null,
-            previous: null,
-            results: [],
-          }
+        title={isArchived ? "Archived Expenses" : "Expenses"}
+        description={
+          isArchived
+            ? "Restore or permanently delete archived expenses"
+            : "Track and manage all business expenses"
         }
+        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
+        columns={columns}
+        data={tableData}
         defaultRangePreset="Today"
         filters={filters}
         orderingOptions={orderingOptions}
-        onRefresh={refetch}
+        onRefresh={isArchived ? archivedQuery.refetch : refetch}
         emptyIcon={Coins}
-        emptyTitle="No expenses recorded"
-        emptyDescription="Record your first expense to start tracking costs"
+        emptyTitle={
+          isArchived ? "No archived expenses" : "No expenses recorded"
+        }
+        emptyDescription={
+          isArchived
+            ? "Deleted expenses will appear here"
+            : "Record your first expense to start tracking costs"
+        }
       />
     </Wrapper>
   )

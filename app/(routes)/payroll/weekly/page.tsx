@@ -1,6 +1,7 @@
 "use client"
 
 import { getPayrollColumns } from "@/app/(routes)/payroll/weekly/columns"
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
@@ -11,6 +12,7 @@ import PayrollForm from "@/components/forms/PayrollForm"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { WeeklyPayroll } from "@/lib/constants/types"
+import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
@@ -23,12 +25,21 @@ import { FileText, PhilippinePesoIcon, Plus, Users } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
+const emptyData = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [] as WeeklyPayroll[],
+}
+
 export default function PayrollPage() {
   const { isAdmin } = useCurrentUser()
   const router = useRouter()
-  const { page, limit, search, filter, ordering } = useSearchParameters()
+  const searchParams = useSearchParameters()
+  const { page, limit, search, filter, ordering } = searchParams
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [payrollToDelete, setPayrollToDelete] = useState<number | null>(null)
+  const [isArchived, setIsArchived] = useState(false)
 
   const { data, isLoading, refetch } = useWeeklyPayrolls({
     page,
@@ -39,6 +50,14 @@ export default function PayrollPage() {
   })
   const { deletePayroll } = usePayrollMutations()
   const { filters, orderingOptions } = useWeeklyPayrollFilters()
+
+  const { archivedQuery, restoreItem, hardDeleteItem } =
+    useArchive<WeeklyPayroll>(
+      "/payroll/weekly-payrolls/",
+      "payroll",
+      searchParams,
+      isArchived,
+    )
 
   const [bulkGenerateOpen, setBulkGenerateOpen] = useState(false)
 
@@ -65,11 +84,31 @@ export default function PayrollPage() {
     }
   }
 
-  const columns = getPayrollColumns({
-    onView: handleView,
-    onDelete: handleDelete,
-    isAdmin,
-  })
+  const handleRestore = (payroll: WeeklyPayroll) => {
+    if (payroll.id !== undefined) restoreItem.mutate(payroll.id)
+  }
+
+  const handleHardDelete = (payroll: WeeklyPayroll) => {
+    if (payroll.id !== undefined) hardDeleteItem.mutate(payroll.id)
+  }
+
+  const columns = isArchived
+    ? getPayrollColumns({
+        onView: () => {},
+        onDelete: () => {},
+        isAdmin,
+        onRestore: handleRestore,
+        onHardDelete: handleHardDelete,
+      })
+    : getPayrollColumns({
+        onView: handleView,
+        onDelete: handleDelete,
+        isAdmin,
+      })
+
+  const tableData = isArchived
+    ? archivedQuery.data || emptyData
+    : data || emptyData
 
   // Calculate summary statistics
   const totalGrossPay =
@@ -91,27 +130,29 @@ export default function PayrollPage() {
           title="Payroll Management"
           description="Generate and manage weekly payroll for employees. Based on approved daily attendance records."
           icon={PhilippinePesoIcon}
-          onRefresh={refetch}
+          onRefresh={isArchived ? archivedQuery.refetch : refetch}
           actionButton={
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setBulkGenerateOpen(true)}
-              >
-                <Users className="size-4 mr-2" />
-                Bulk Generate
-              </Button>
-              <Button onClick={() => openAdd()}>
-                <Plus className="size-4 mr-2" />
-                Generate Payroll
-              </Button>
-            </div>
+            !isArchived ? (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setBulkGenerateOpen(true)}
+                >
+                  <Users className="size-4 mr-2" />
+                  Bulk Generate
+                </Button>
+                <Button onClick={() => openAdd()}>
+                  <Plus className="size-4 mr-2" />
+                  Generate Payroll
+                </Button>
+              </div>
+            ) : undefined
           }
           isAdminOnly
         />
 
         {/* Summary Statistics */}
-        {data?.results && data.results.length > 0 && (
+        {!isArchived && data?.results && data.results.length > 0 && (
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="border-blue-200 dark:border-blue-800 bg-linear-br! from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -173,22 +214,29 @@ export default function PayrollPage() {
         )}
 
         {/* Data Table */}
+        <ArchiveToggle
+          isArchived={isArchived}
+          onToggle={setIsArchived}
+          archivedCount={archivedQuery.data?.count}
+        />
+
         <DataTable
-          data={
-            data ?? {
-              count: 0,
-              next: null,
-              previous: null,
-              results: [],
-            }
-          }
+          data={tableData}
           columns={columns}
-          isLoading={isLoading}
+          isLoading={isArchived ? archivedQuery.isLoading : isLoading}
           filters={filters}
           orderingOptions={orderingOptions}
           emptyIcon={FileText}
-          emptyTitle="No payroll records found"
-          emptyDescription="Generate your first weekly payroll to get started"
+          emptyTitle={
+            isArchived
+              ? "No archived payroll records"
+              : "No payroll records found"
+          }
+          emptyDescription={
+            isArchived
+              ? "Archived payroll records will appear here"
+              : "Generate your first weekly payroll to get started"
+          }
         />
       </div>
 
@@ -212,14 +260,14 @@ export default function PayrollPage() {
         )}
       />
 
-      {/* Delete Confirmation */}
+      {/* Archive Confirmation */}
       <ConfirmDialog
         open={deleteDialogOpen}
         onCancel={() => setDeleteDialogOpen(false)}
-        title="Delete Payroll"
-        description="Are you sure you want to delete this payroll record? This action cannot be undone."
+        title="Archive Payroll"
+        description="Are you sure you want to archive this payroll record? You can restore it later from the Archived tab."
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText="Archive"
         cancelText="Cancel"
       />
     </Wrapper>

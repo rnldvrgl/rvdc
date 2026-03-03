@@ -1,5 +1,6 @@
 "use client"
 
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
@@ -16,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useArchive } from "@/lib/hooks/useArchive"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import {
   CustomCalendarEvent,
@@ -33,8 +35,13 @@ import { getHalfDayScheduleColumns } from "../half-day-schedules/columns"
 import { getCalendarEventColumns } from "./columns"
 
 export default function CalendarEventsPage() {
-  const { page, limit, search, ordering, filter } = useSearchParameters()
+  const searchParams = useSearchParameters()
+  const { page, limit, search, ordering, filter } = searchParams
   const [activeTab, setActiveTab] = useState("events")
+
+  // Archive state
+  const [isEventsArchived, setIsEventsArchived] = useState(false)
+  const [isHalfDaysArchived, setIsHalfDaysArchived] = useState(false)
 
   // Custom Events state
   const [eventDialogOpen, setEventDialogOpen] = useState(false)
@@ -59,6 +66,28 @@ export default function CalendarEventsPage() {
   const { data: halfDaysData, isLoading: halfDaysLoading } =
     useHalfDaySchedules({ page, limit, search, ordering, filter })
   const deleteHalfDay = useDeleteHalfDaySchedule()
+
+  // Archive hooks
+  const {
+    archivedQuery: archivedEventsQuery,
+    restoreItem: restoreEvent,
+    hardDeleteItem: hardDeleteEvent,
+  } = useArchive<CustomCalendarEvent>(
+    "/analytics/calendar-events/",
+    "custom-calendar-events",
+    searchParams,
+    isEventsArchived,
+  )
+  const {
+    archivedQuery: archivedHalfDaysQuery,
+    restoreItem: restoreHalfDay,
+    hardDeleteItem: hardDeleteHalfDay,
+  } = useArchive<HalfDaySchedule>(
+    "/attendance/half-day-schedules/",
+    "half-day-schedules",
+    searchParams,
+    isHalfDaysArchived,
+  )
 
   // Custom Events handlers
   const handleEditEvent = (event: CustomCalendarEvent) => {
@@ -102,15 +131,43 @@ export default function CalendarEventsPage() {
     setHalfDayDialogOpen(true)
   }
 
-  const eventColumns = getCalendarEventColumns({
-    onEdit: handleEditEvent,
-    onDelete: handleDeleteEvent,
-  })
+  // Archive handlers
+  const handleRestoreEvent = (event: CustomCalendarEvent) => {
+    restoreEvent.mutate(event.id)
+  }
+  const handleHardDeleteEvent = (event: CustomCalendarEvent) => {
+    hardDeleteEvent.mutate(event.id)
+  }
+  const handleRestoreHalfDay = (schedule: HalfDaySchedule) => {
+    restoreHalfDay.mutate(schedule.id)
+  }
+  const handleHardDeleteHalfDay = (schedule: HalfDaySchedule) => {
+    hardDeleteHalfDay.mutate(schedule.id)
+  }
 
-  const halfDayColumns = getHalfDayScheduleColumns({
-    onEdit: handleEditHalfDay,
-    onDelete: handleDeleteHalfDay,
-  })
+  const eventColumns = isEventsArchived
+    ? getCalendarEventColumns({
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: handleRestoreEvent,
+        onHardDelete: handleHardDeleteEvent,
+      })
+    : getCalendarEventColumns({
+        onEdit: handleEditEvent,
+        onDelete: handleDeleteEvent,
+      })
+
+  const halfDayColumns = isHalfDaysArchived
+    ? getHalfDayScheduleColumns({
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: handleRestoreHalfDay,
+        onHardDelete: handleHardDeleteHalfDay,
+      })
+    : getHalfDayScheduleColumns({
+        onEdit: handleEditHalfDay,
+        onDelete: handleDeleteHalfDay,
+      })
 
   return (
     <Wrapper>
@@ -119,12 +176,17 @@ export default function CalendarEventsPage() {
         description="Manage custom calendar events and half-day schedules"
         icon={CalendarDays}
         actionButton={
-          <Button
-            onClick={activeTab === "events" ? handleAddEvent : handleAddHalfDay}
-          >
-            <Plus className="size-4 mr-2" />
-            {activeTab === "events" ? "Add Event" : "Add Half-Day"}
-          </Button>
+          ((activeTab === "events" && !isEventsArchived) ||
+            (activeTab === "half-days" && !isHalfDaysArchived)) && (
+            <Button
+              onClick={
+                activeTab === "events" ? handleAddEvent : handleAddHalfDay
+              }
+            >
+              <Plus className="size-4 mr-2" />
+              {activeTab === "events" ? "Add Event" : "Add Half-Day"}
+            </Button>
+          )
         }
       />
 
@@ -147,25 +209,22 @@ export default function CalendarEventsPage() {
         schedule={selectedHalfDay}
       />
 
-      {/* Delete confirmations */}
+      {/* Archive confirmations */}
       <AlertDialog
         open={eventDeleteConfirmOpen}
         onOpenChange={setEventDeleteConfirmOpen}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Event</AlertDialogTitle>
+            <AlertDialogTitle>Archive Event</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this calendar event? This action
-              cannot be undone.
+              Are you sure you want to archive this calendar event? You can
+              restore it from the Archived tab.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={confirmDeleteEvent}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            Delete
+          <AlertDialogAction onClick={confirmDeleteEvent}>
+            Archive
           </AlertDialogAction>
         </AlertDialogContent>
       </AlertDialog>
@@ -176,18 +235,16 @@ export default function CalendarEventsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Half-Day Schedule</AlertDialogTitle>
+            <AlertDialogTitle>Archive Half-Day Schedule</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this half-day schedule? Employees
-              will no longer be capped at half-day hours for this date.
+              Are you sure you want to archive this half-day schedule? Employees
+              will no longer be capped at half-day hours for this date. You can
+              restore it from the Archived tab.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={confirmDeleteHalfDay}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            Delete
+          <AlertDialogAction onClick={confirmDeleteHalfDay}>
+            Archive
           </AlertDialogAction>
         </AlertDialogContent>
       </AlertDialog>
@@ -215,11 +272,18 @@ export default function CalendarEventsPage() {
         </TabsList>
 
         <TabsContent value="events">
+          <ArchiveToggle
+            isArchived={isEventsArchived}
+            onToggle={setIsEventsArchived}
+            archivedCount={archivedEventsQuery.data?.count}
+          />
           <DataTable
-            isLoading={eventsLoading}
+            isLoading={
+              isEventsArchived ? archivedEventsQuery.isLoading : eventsLoading
+            }
             columns={eventColumns}
             data={
-              eventsData || {
+              (isEventsArchived ? archivedEventsQuery.data : eventsData) || {
                 count: 0,
                 next: null,
                 previous: null,
@@ -228,17 +292,34 @@ export default function CalendarEventsPage() {
             }
             withoutDateRangeFilter
             emptyIcon={CalendarDays}
-            emptyTitle="No calendar events"
-            emptyDescription="Add events to manage company holidays and closures"
+            emptyTitle={
+              isEventsArchived ? "No archived events" : "No calendar events"
+            }
+            emptyDescription={
+              isEventsArchived
+                ? "Archived events will appear here"
+                : "Add events to manage company holidays and closures"
+            }
           />
         </TabsContent>
 
         <TabsContent value="half-days">
+          <ArchiveToggle
+            isArchived={isHalfDaysArchived}
+            onToggle={setIsHalfDaysArchived}
+            archivedCount={archivedHalfDaysQuery.data?.count}
+          />
           <DataTable
-            isLoading={halfDaysLoading}
+            isLoading={
+              isHalfDaysArchived
+                ? archivedHalfDaysQuery.isLoading
+                : halfDaysLoading
+            }
             columns={halfDayColumns}
             data={
-              halfDaysData || {
+              (isHalfDaysArchived
+                ? archivedHalfDaysQuery.data
+                : halfDaysData) || {
                 count: 0,
                 next: null,
                 previous: null,
@@ -247,8 +328,16 @@ export default function CalendarEventsPage() {
             }
             withoutDateRangeFilter
             emptyIcon={Clock4}
-            emptyTitle="No half-day schedules"
-            emptyDescription="Add half-day schedules for special work periods"
+            emptyTitle={
+              isHalfDaysArchived
+                ? "No archived half-day schedules"
+                : "No half-day schedules"
+            }
+            emptyDescription={
+              isHalfDaysArchived
+                ? "Archived schedules will appear here"
+                : "Add half-day schedules for special work periods"
+            }
           />
         </TabsContent>
       </Tabs>

@@ -322,8 +322,11 @@ export function useOffenseMutations() {
 
   const deleteOffense = useApiMutation({
     mutationFn: (id: number) => api.delete(`${offenseUrl}${id}/`),
-    successMessage: "Offense deleted successfully.",
-    invalidateQueries: sharedInvalidations,
+    successMessage: "Offense archived successfully.",
+    invalidateQueries: [
+      ...sharedInvalidations,
+      { queryKey: ["offenses-archived"] },
+    ],
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({
         queryKey: ["offense", `${id}`],

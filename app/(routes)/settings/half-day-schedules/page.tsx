@@ -1,5 +1,6 @@
 "use client"
 
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
@@ -14,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { useArchive } from "@/lib/hooks/useArchive"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import {
   HalfDaySchedule,
@@ -25,7 +27,9 @@ import { useState } from "react"
 import { getHalfDayScheduleColumns } from "./columns"
 
 export default function HalfDaySchedulesPage() {
-  const { page, limit, search, ordering, filter } = useSearchParameters()
+  const searchParams = useSearchParameters()
+  const { page, limit, search, ordering, filter } = searchParams
+  const [isArchived, setIsArchived] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedSchedule, setSelectedSchedule] =
     useState<HalfDaySchedule | null>(null)
@@ -40,6 +44,14 @@ export default function HalfDaySchedulesPage() {
     filter,
   })
   const deleteSchedule = useDeleteHalfDaySchedule()
+
+  const { archivedQuery, restoreItem, hardDeleteItem } =
+    useArchive<HalfDaySchedule>(
+      "/attendance/half-day-schedules/",
+      "half-day-schedules",
+      searchParams,
+      isArchived,
+    )
 
   const handleEdit = (schedule: HalfDaySchedule) => {
     setSelectedSchedule(schedule)
@@ -69,10 +81,24 @@ export default function HalfDaySchedulesPage() {
     setSelectedSchedule(null)
   }
 
-  const columns = getHalfDayScheduleColumns({
-    onEdit: handleEdit,
-    onDelete: handleDelete,
-  })
+  const handleRestoreSchedule = (schedule: HalfDaySchedule) => {
+    restoreItem.mutate(schedule.id)
+  }
+  const handleHardDeleteSchedule = (schedule: HalfDaySchedule) => {
+    hardDeleteItem.mutate(schedule.id)
+  }
+
+  const columns = isArchived
+    ? getHalfDayScheduleColumns({
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: handleRestoreSchedule,
+        onHardDelete: handleHardDeleteSchedule,
+      })
+    : getHalfDayScheduleColumns({
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+      })
 
   return (
     <Wrapper>
@@ -81,46 +107,56 @@ export default function HalfDaySchedulesPage() {
         description="Manage forced half-day dates. Employees will be capped at 4 paid hours on these dates."
         icon={CalendarClock}
         actionButton={
-          <Button onClick={handleAddSchedule}>
-            <Plus className="size-4 mr-2" />
-            Add Half-Day
-          </Button>
+          !isArchived && (
+            <Button onClick={handleAddSchedule}>
+              <Plus className="size-4 mr-2" />
+              Add Half-Day
+            </Button>
+          )
         }
       />
 
-      <HalfDayScheduleDialog
-        open={dialogOpen}
-        onOpenChange={handleCloseDialog}
-        schedule={selectedSchedule}
+      <ArchiveToggle
+        isArchived={isArchived}
+        onToggle={setIsArchived}
+        archivedCount={archivedQuery.data?.count}
       />
 
-      <AlertDialog
-        open={deleteConfirmOpen}
-        onOpenChange={setDeleteConfirmOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Half-Day Schedule</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this half-day schedule? Employees
-              will no longer be capped at half-day hours for this date.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={confirmDelete}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+      {!isArchived && (
+        <>
+          <HalfDayScheduleDialog
+            open={dialogOpen}
+            onOpenChange={handleCloseDialog}
+            schedule={selectedSchedule}
+          />
+
+          <AlertDialog
+            open={deleteConfirmOpen}
+            onOpenChange={setDeleteConfirmOpen}
           >
-            Delete
-          </AlertDialogAction>
-        </AlertDialogContent>
-      </AlertDialog>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Archive Half-Day Schedule</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to archive this half-day schedule?
+                  Employees will no longer be capped at half-day hours for this
+                  date. You can restore it from the Archived tab.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete}>
+                Archive
+              </AlertDialogAction>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
 
       <DataTable
-        isLoading={isLoading}
+        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
         columns={columns}
         data={
-          data || {
+          (isArchived ? archivedQuery.data : data) || {
             count: 0,
             next: null,
             previous: null,
@@ -129,8 +165,16 @@ export default function HalfDaySchedulesPage() {
         }
         withoutDateRangeFilter
         emptyIcon={CalendarClock}
-        emptyTitle="No half-day schedules"
-        emptyDescription="Create schedules to define half-day work periods"
+        emptyTitle={
+          isArchived
+            ? "No archived half-day schedules"
+            : "No half-day schedules"
+        }
+        emptyDescription={
+          isArchived
+            ? "Archived schedules will appear here"
+            : "Create schedules to define half-day work periods"
+        }
       />
     </Wrapper>
   )

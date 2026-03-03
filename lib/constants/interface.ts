@@ -38,6 +38,10 @@ export interface GetColumnsProps<T> {
   onReserve?: (item: T) => void
   onRedeemCleaning?: (item: T) => void
   role?: Roles
+
+  // Archive actions
+  onRestore?: (item: T) => void
+  onHardDelete?: (item: T) => void
 }
 
 export interface EntitySheetProps<T> {

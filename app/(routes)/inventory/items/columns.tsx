@@ -3,7 +3,7 @@ import { GetColumnsProps, Item } from "@/lib/constants/interface"
 import { Roles } from "@/lib/constants/types"
 import { formatCurrency, safeCell } from "@/lib/utils/helpers"
 import { CellContext, ColumnDef } from "@tanstack/react-table"
-import { Edit, Trash2 } from "lucide-react"
+import { Archive, Edit, RotateCcw, Trash2 } from "lucide-react"
 
 interface GetItemColumnsProps extends GetColumnsProps<Item> {
   role: Roles
@@ -12,6 +12,8 @@ interface GetItemColumnsProps extends GetColumnsProps<Item> {
 export function getItemColumns({
   onEdit,
   onDelete,
+  onRestore,
+  onHardDelete,
   role,
 }: GetItemColumnsProps): ColumnDef<Item>[] {
   return [
@@ -67,6 +69,26 @@ export function getItemColumns({
             header: "Action",
             cell: ({ row }: CellContext<Item, unknown>) => {
               const item = row.original
+              if (onRestore && onHardDelete) {
+                return (
+                  <DataTableActions
+                    items={[
+                      {
+                        label: "Restore",
+                        icon: RotateCcw,
+                        onClick: () => onRestore(item),
+                      },
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(item),
+                        destructive: true,
+                        confirmText: `Permanently delete ${item.name}? This cannot be undone.`,
+                      },
+                    ]}
+                  />
+                )
+              }
               return (
                 <DataTableActions
                   items={[
@@ -76,11 +98,10 @@ export function getItemColumns({
                       onClick: () => onEdit(item),
                     },
                     {
-                      label: "Delete",
-                      icon: Trash2,
+                      label: "Archive",
+                      icon: Archive,
                       onClick: () => onDelete(item),
-                      destructive: true,
-                      confirmText: `Delete ${item.name}?`,
+                      confirmText: `Archive ${item.name}?`,
                     },
                   ]}
                 />

@@ -39,9 +39,10 @@ export function useServiceMutations() {
 
   const deleteService = useApiMutation({
     mutationFn: (id: number) => api.delete(`${url}${id}/`),
-    successMessage: "Service deleted successfully.",
+    successMessage: "Service archived successfully.",
     invalidateQueries: [
       { queryKey: ["services"] },
+      { queryKey: ["services-archived"] },
       ...analyticsKeys.map((key) => ({ queryKey: key })),
     ],
   })

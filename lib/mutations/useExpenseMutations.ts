@@ -1,21 +1,21 @@
-'use client'
+"use client"
 
-import { Expense, ExpensePayload } from '@/lib/constants/interface'
-import { useApiMutation } from '@/lib/hooks/useApiMutation'
-import api from '@/lib/utils/api'
-import { useQueryClient } from '@tanstack/react-query'
+import { Expense, ExpensePayload } from "@/lib/constants/interface"
+import { useApiMutation } from "@/lib/hooks/useApiMutation"
+import api from "@/lib/utils/api"
+import { useQueryClient } from "@tanstack/react-query"
 
 export function useExpenseMutations() {
   const queryClient = useQueryClient()
-  const url = 'expenses/'
+  const url = "expenses/"
 
-  const analyticsKeys = [['summary'], ['expenses_over_time'], ['cash_flow']]
+  const analyticsKeys = [["summary"], ["expenses_over_time"], ["cash_flow"]]
 
   const addExpense = useApiMutation({
     mutationFn: (data: ExpensePayload) => api.post(url, data),
-    successMessage: 'Expense created successfully.',
+    successMessage: "Expense created successfully.",
     invalidateQueries: [
-      { queryKey: ['expenses'] },
+      { queryKey: ["expenses"] },
       ...analyticsKeys.map((key) => ({ queryKey: key })),
     ],
   })
@@ -23,23 +23,24 @@ export function useExpenseMutations() {
   const updateExpense = useApiMutation({
     mutationFn: ({ id, data }: { id: number; data: ExpensePayload }) =>
       api.patch(`${url}${id}/`, data),
-    successMessage: 'Expense updated successfully.',
+    successMessage: "Expense updated successfully.",
     invalidateQueries: [
-      { queryKey: ['expenses'] },
+      { queryKey: ["expenses"] },
       ...analyticsKeys.map((key) => ({ queryKey: key })),
     ],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['expense', `${variables.id}`],
+        queryKey: ["expense", `${variables.id}`],
       })
     },
   })
 
   const deleteExpense = useApiMutation({
     mutationFn: (id: number) => api.delete(`${url}${id}/`),
-    successMessage: 'Expense deleted successfully.',
+    successMessage: "Expense archived successfully.",
     invalidateQueries: [
-      { queryKey: ['expenses'] },
+      { queryKey: ["expenses"] },
+      { queryKey: ["expenses-archived"] },
       ...analyticsKeys.map((key) => ({ queryKey: key })),
     ],
   })
@@ -47,27 +48,27 @@ export function useExpenseMutations() {
   const payExpense = useApiMutation({
     mutationFn: ({ id, data }: { id: number; data: Expense }) =>
       api.patch(`${url}${id}/pay/`, data),
-    successMessage: 'Expense payment recorded.',
+    successMessage: "Expense payment recorded.",
     invalidateQueries: [
-      { queryKey: ['expenses'] },
+      { queryKey: ["expenses"] },
       ...analyticsKeys.map((key) => ({ queryKey: key })),
     ],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['expense', `${variables.id}`],
+        queryKey: ["expense", `${variables.id}`],
       })
     },
   })
 
   const markExpenseAsPaid = useApiMutation({
     mutationFn: (id: number) => api.post(`${url}${id}/mark-as-paid/`),
-    successMessage: 'Expense marked as paid.',
+    successMessage: "Expense marked as paid.",
     invalidateQueries: [
-      { queryKey: ['expenses'] },
+      { queryKey: ["expenses"] },
       ...analyticsKeys.map((key) => ({ queryKey: key })),
     ],
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ['expense', `${id}`] })
+      queryClient.invalidateQueries({ queryKey: ["expense", `${id}`] })
     },
   })
 

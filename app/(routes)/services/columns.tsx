@@ -16,10 +16,12 @@ import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef } from "@tanstack/react-table"
 import { formatDistanceToNow } from "date-fns"
 import {
+  Archive,
   Calendar,
   CheckCircle,
   Edit,
   Eye,
+  RotateCcw,
   Shield,
   Sparkles,
   Trash2,
@@ -279,6 +281,8 @@ export function getServiceColumns({
   onDelete,
   onComplete,
   onStatusChange,
+  onRestore,
+  onHardDelete,
 }: GetServiceColumnsProps): ColumnDef<Service>[] {
   const canManageServices = role === "admin" || role === "manager"
 
@@ -530,6 +534,27 @@ export function getServiceColumns({
         const canComplete =
           service.status === "in_progress" || service.status === "pending"
 
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(service),
+                },
+                {
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(service),
+                  destructive: true,
+                  confirmText: `Permanently delete service #${service.id}? This cannot be undone.`,
+                },
+              ]}
+            />
+          )
+        }
+
         return (
           <DataTableActions
             items={[
@@ -560,10 +585,9 @@ export function getServiceColumns({
               ...(canManageServices
                 ? [
                     {
-                      label: "Delete",
-                      icon: Trash2,
+                      label: "Archive",
+                      icon: Archive,
                       onClick: () => onDelete?.(service),
-                      destructive: true,
                       disabled: service.status === "completed",
                     },
                   ]

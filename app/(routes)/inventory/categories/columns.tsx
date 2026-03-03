@@ -2,11 +2,13 @@ import { DataTableActions } from "@/components/custom/table/components/DataTable
 import { GetColumnsProps, ProductCategory } from "@/lib/constants/interface"
 import { safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, Trash2 } from "lucide-react"
+import { Archive, Edit, RotateCcw, Trash2 } from "lucide-react"
 
 export function getCategoryColumns({
   onEdit,
   onDelete,
+  onRestore,
+  onHardDelete,
 }: GetColumnsProps<ProductCategory>): ColumnDef<ProductCategory>[] {
   return [
     {
@@ -23,6 +25,26 @@ export function getCategoryColumns({
       header: "Action",
       cell: ({ row }) => {
         const category = row.original
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(category),
+                },
+                {
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(category),
+                  destructive: true,
+                  confirmText: `Permanently delete ${category.name}? This cannot be undone.`,
+                },
+              ]}
+            />
+          )
+        }
         return (
           <DataTableActions
             items={[
@@ -32,11 +54,10 @@ export function getCategoryColumns({
                 onClick: () => onEdit(category),
               },
               {
-                label: "Delete",
-                icon: Trash2,
+                label: "Archive",
+                icon: Archive,
                 onClick: () => onDelete(category),
-                destructive: true,
-                confirmText: `Delete ${category.name}?`,
+                confirmText: `Archive ${category.name}?`,
               },
             ]}
           />

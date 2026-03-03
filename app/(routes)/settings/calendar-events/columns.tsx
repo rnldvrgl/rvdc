@@ -4,11 +4,13 @@ import { CustomCalendarEvent } from "@/lib/queries/calendar/useCustomCalendarEve
 import { safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { Edit2, Trash2 } from "lucide-react"
+import { Archive, Edit2, RotateCcw, Trash2 } from "lucide-react"
 
 interface GetColumnsProps {
   onEdit: (event: CustomCalendarEvent) => void
   onDelete: (id: number) => void
+  onRestore?: (event: CustomCalendarEvent) => void
+  onHardDelete?: (event: CustomCalendarEvent) => void
 }
 
 const eventTypeColors: Record<string, string> = {
@@ -25,6 +27,8 @@ const eventTypeColors: Record<string, string> = {
 export function getCalendarEventColumns({
   onEdit,
   onDelete,
+  onRestore,
+  onHardDelete,
 }: GetColumnsProps): ColumnDef<CustomCalendarEvent>[] {
   return [
     {
@@ -87,6 +91,26 @@ export function getCalendarEventColumns({
       header: "Actions",
       cell: ({ row }) => {
         const event = row.original
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(event),
+                },
+                {
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(event),
+                  destructive: true,
+                  confirmText: `Permanently delete "${event.title}"? This cannot be undone.`,
+                },
+              ]}
+            />
+          )
+        }
         return (
           <DataTableActions
             items={[
@@ -96,10 +120,9 @@ export function getCalendarEventColumns({
                 onClick: () => onEdit(event),
               },
               {
-                label: "Delete",
-                icon: Trash2,
+                label: "Archive",
+                icon: Archive,
                 onClick: () => onDelete(event.id),
-                destructive: true,
               },
             ]}
           />

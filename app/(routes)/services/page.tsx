@@ -1,6 +1,7 @@
 "use client"
 
 import { getServiceColumns } from "@/app/(routes)/services/columns"
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Service, ServiceStatus } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
+import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
@@ -46,6 +48,7 @@ export default function ServicesPage() {
   const { role } = useCurrentUser()
   const canAddService = role === "admin" || role === "manager"
   const [viewMode, setViewMode] = useState<ViewMode>("table")
+  const [isArchived, setIsArchived] = useState(false)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -68,7 +71,8 @@ export default function ServicesPage() {
   } | null>(null)
 
   // Search params
-  const { filter, ordering, search, page, limit } = useSearchParameters()
+  const searchParams = useSearchParameters()
+  const { filter, ordering, search, page, limit } = searchParams
 
   // Data fetching
   const {
@@ -84,6 +88,13 @@ export default function ServicesPage() {
   })
 
   const { filters: filterDefs, orderingOptions } = useServiceFilters()
+
+  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Service>(
+    "services/services/",
+    "services",
+    searchParams,
+    isArchived,
+  )
 
   // Mutations
   const { deleteService, completeService, cancelService, updateService } =
@@ -208,14 +219,40 @@ export default function ServicesPage() {
     )
   }
 
-  const columns = getServiceColumns({
-    role,
-    onView: handleView,
-    onEdit: handleEdit,
-    onDelete: handleDelete,
-    onComplete: handleComplete,
-    onStatusChange: handleStatusChange,
-  })
+  const handleRestore = (service: Service) => {
+    if (service?.id) restoreItem.mutate(service.id)
+  }
+  const handleHardDelete = (service: Service) => {
+    if (service?.id) hardDeleteItem.mutate(service.id)
+  }
+
+  const columns = isArchived
+    ? getServiceColumns({
+        role,
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: handleRestore,
+        onHardDelete: handleHardDelete,
+      })
+    : getServiceColumns({
+        role,
+        onView: handleView,
+        onEdit: handleEdit,
+        onDelete: handleDelete,
+        onComplete: handleComplete,
+        onStatusChange: handleStatusChange,
+      })
+
+  const emptyServices = {
+    count: 0,
+    next: null,
+    previous: null,
+    results: [],
+  } as PaginatedResult<Service>
+
+  const tableData = isArchived
+    ? archivedQuery.data || emptyServices
+    : (services ?? emptyServices)
 
   return (
     <Wrapper>
@@ -224,7 +261,8 @@ export default function ServicesPage() {
         title="Services"
         description="Manage repair, installation, and maintenance services"
         actionButton={
-          canAddService && (
+          canAddService &&
+          !isArchived && (
             <div className="flex items-center gap-2">
               {/* View toggle */}
               <div className="flex items-center rounded-lg border bg-muted p-0.5">
@@ -264,22 +302,31 @@ export default function ServicesPage() {
             </div>
           )
         }
-        onRefresh={refetch}
+        onRefresh={isArchived ? archivedQuery.refetch : refetch}
+      />
+
+      <ArchiveToggle
+        isArchived={isArchived}
+        onToggle={setIsArchived}
+        archivedCount={archivedQuery.data?.count}
       />
 
       {/* Conditional view rendering */}
-      {viewMode === "table" ? (
+      {isArchived ? (
         <DataTable<Service, unknown>
           columns={columns}
-          data={
-            services ??
-            ({
-              count: 0,
-              next: null,
-              previous: null,
-              results: [],
-            } as PaginatedResult<Service>)
-          }
+          data={tableData}
+          isLoading={archivedQuery.isLoading}
+          filters={filterDefs ?? []}
+          orderingOptions={orderingOptions ?? []}
+          emptyIcon={Wrench}
+          emptyTitle="No archived services"
+          emptyDescription="Deleted services will appear here"
+        />
+      ) : viewMode === "table" ? (
+        <DataTable<Service, unknown>
+          columns={columns}
+          data={tableData}
           isLoading={isLoading}
           filters={filterDefs ?? []}
           orderingOptions={orderingOptions ?? []}
@@ -352,18 +399,18 @@ export default function ServicesPage() {
         />
       )}
 
-      {/* Delete Confirmation Dialog */}
+      {/* Archive Confirmation Dialog */}
       <ConfirmDialog
         open={deleteDialogOpen}
         onCancel={() => setDeleteDialogOpen(false)}
-        title="Delete Service"
+        title="Archive Service"
         description={
           serviceToDelete
-            ? `Are you sure you want to delete service #${serviceToDelete.id}? This action cannot be undone.`
+            ? `Are you sure you want to archive service #${serviceToDelete.id}? You can restore it from the Archived tab.`
             : ""
         }
         onConfirm={confirmDelete}
-        confirmText="Delete"
+        confirmText="Archive"
       />
 
       {/* Complete Confirmation Dialog */}

@@ -4,13 +4,23 @@ import { ExpenseCategory } from "@/lib/constants/interface"
 import { formatCurrency, safeCell } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef, Row } from "@tanstack/react-table"
-import { CheckCircle, Edit, Eye, Trash2, XCircle } from "lucide-react"
+import {
+  Archive,
+  CheckCircle,
+  Edit,
+  Eye,
+  RotateCcw,
+  Trash2,
+  XCircle,
+} from "lucide-react"
 
 interface GetExpenseCategoryColumnsProps {
   onView?: (category: ExpenseCategory) => void
   onEdit: (category: ExpenseCategory) => void
   onDelete: (category: ExpenseCategory) => void
   onToggleActive?: (category: ExpenseCategory) => void
+  onRestore?: (category: ExpenseCategory) => void
+  onHardDelete?: (category: ExpenseCategory) => void
 }
 
 export function getExpenseCategoryColumns({
@@ -18,6 +28,8 @@ export function getExpenseCategoryColumns({
   onEdit,
   onDelete,
   onToggleActive,
+  onRestore,
+  onHardDelete,
 }: GetExpenseCategoryColumnsProps): ColumnDef<ExpenseCategory>[] {
   return [
     {
@@ -103,6 +115,27 @@ export function getExpenseCategoryColumns({
         const category = row.original
         const isActive = category.is_active
 
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(category),
+                },
+                {
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(category),
+                  destructive: true,
+                  confirmText: `Permanently delete "${category.name}"? This cannot be undone.`,
+                },
+              ]}
+            />
+          )
+        }
+
         return (
           <DataTableActions
             items={[
@@ -130,11 +163,10 @@ export function getExpenseCategoryColumns({
                   ]
                 : []),
               {
-                label: "Delete",
-                icon: Trash2,
+                label: "Archive",
+                icon: Archive,
                 onClick: () => onDelete(category),
-                destructive: true,
-                confirmText: `Delete category "${category.name}"? This action cannot be undone.`,
+                confirmText: `Archive category "${category.name}"?`,
               },
             ]}
           />

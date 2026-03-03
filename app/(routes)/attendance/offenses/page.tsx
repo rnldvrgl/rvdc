@@ -1,6 +1,7 @@
 "use client"
 
 import { getOffenseColumns } from "@/app/(routes)/attendance/offenses/columns"
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
@@ -10,6 +11,7 @@ import OffenseForm from "@/components/forms/OffenseForm"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Offense, OffenseStatistics } from "@/lib/constants/types"
+import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
@@ -19,14 +21,23 @@ import {
   useOffenses,
   useOffenseStatistics,
 } from "@/lib/queries/useAttendance"
-import { AlertCircle, AlertTriangle, Plus, Trash2, UserX } from "lucide-react"
+import { AlertCircle, AlertTriangle, Plus, UserX } from "lucide-react"
 import { useState } from "react"
 
 export default function OffensesPage() {
   const { isAdmin } = useCurrentUser()
-  const { page, limit, search, filter, ordering } = useSearchParameters()
+  const [isArchived, setIsArchived] = useState(false)
+  const searchParams = useSearchParameters()
+  const { page, limit, search, filter, ordering } = searchParams
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [offenseToDelete, setOffenseToDelete] = useState<number | null>(null)
+
+  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Offense>(
+    "/attendance/offenses/",
+    "offenses",
+    searchParams,
+    isArchived,
+  )
 
   const { data, isLoading, refetch } = useOffenses({
     page,
@@ -64,11 +75,27 @@ export default function OffensesPage() {
     }
   }
 
-  const columns = getOffenseColumns({
-    onEdit: openEdit,
-    onDelete: handleDelete,
-    isAdmin,
-  })
+  const handleRestore = (offense: Offense) => {
+    if (offense.id !== undefined) restoreItem.mutate(offense.id)
+  }
+
+  const handleHardDelete = (offense: Offense) => {
+    if (offense.id !== undefined) hardDeleteItem.mutate(offense.id)
+  }
+
+  const columns = isArchived
+    ? getOffenseColumns({
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: handleRestore,
+        onHardDelete: handleHardDelete,
+        isAdmin,
+      })
+    : getOffenseColumns({
+        onEdit: openEdit,
+        onDelete: handleDelete,
+        isAdmin,
+      })
 
   return (
     <Wrapper>
@@ -79,16 +106,23 @@ export default function OffensesPage() {
           icon={UserX}
           onRefresh={refetch}
           actionButton={
-            <Button onClick={() => openAdd()}>
-              <Plus className="size-4 mr-2" />
-              Record Offense
-            </Button>
+            !isArchived && (
+              <Button onClick={() => openAdd()}>
+                <Plus className="size-4 mr-2" />
+                Record Offense
+              </Button>
+            )
           }
           isAdminOnly
         />
 
-        {/* Statistics Cards */}
-        {statistics && statistics.length > 0 && (
+        <ArchiveToggle
+          isArchived={isArchived}
+          onToggle={setIsArchived}
+          archivedCount={archivedQuery.data?.count}
+        />
+
+        {!isArchived && statistics && statistics.length > 0 && (
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="border-yellow-200 dark:border-yellow-800 bg-linear-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950/20 dark:to-yellow-900/20">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -163,67 +197,74 @@ export default function OffensesPage() {
         <DataTable
           title="Offense Records"
           description="Track and manage employee policy violations"
-          isLoading={isLoading}
+          isLoading={isArchived ? archivedQuery.isLoading : isLoading}
           columns={columns}
           data={
-            data || {
+            (isArchived ? archivedQuery.data : data) || {
               count: 0,
               next: null,
               previous: null,
               results: [],
             }
           }
-          filters={filters}
-          orderingOptions={orderingOptions}
-          onRefresh={refetch}
+          filters={isArchived ? undefined : filters}
+          orderingOptions={isArchived ? undefined : orderingOptions}
+          onRefresh={isArchived ? archivedQuery.refetch : refetch}
           withoutDateRangeFilter
+          emptyTitle={isArchived ? "No archived offenses" : undefined}
+          emptyDescription={
+            isArchived ? "Archived offenses will appear here" : undefined
+          }
         />
       </div>
 
-      {/* Edit Offense Sheet */}
-      <EntitySheet<Offense>
-        open={editOpen}
-        onClose={closeEdit}
-        entity={entity}
-        title="Edit Offense"
-        description="Update offense details. Severity and offense type are locked."
-        withCloseConfirmation
-        renderForm={({ forceClose, entity }) => (
-          <OffenseForm
-            offense={entity}
+      {!isArchived && (
+        <>
+          {/* Edit Offense Sheet */}
+          <EntitySheet<Offense>
+            open={editOpen}
             onClose={closeEdit}
-            forceClose={forceClose}
+            entity={entity}
+            title="Edit Offense"
+            description="Update offense details. Severity and offense type are locked."
+            withCloseConfirmation
+            renderForm={({ forceClose, entity }) => (
+              <OffenseForm
+                offense={entity}
+                onClose={closeEdit}
+                forceClose={forceClose}
+              />
+            )}
+            className="min-w-xl"
           />
-        )}
-        className="min-w-xl"
-      />
 
-      {/* Add Offense Sheet */}
-      <EntitySheet<Offense>
-        open={addOpen}
-        onClose={closeAdd}
-        title="Record New Offense"
-        description="Document employee policy violation. Severity will be automatically assigned."
-        withCloseConfirmation
-        renderForm={({ forceClose }) => (
-          <OffenseForm
+          {/* Add Offense Sheet */}
+          <EntitySheet<Offense>
+            open={addOpen}
             onClose={closeAdd}
-            forceClose={forceClose}
+            title="Record New Offense"
+            description="Document employee policy violation. Severity will be automatically assigned."
+            withCloseConfirmation
+            renderForm={({ forceClose }) => (
+              <OffenseForm
+                onClose={closeAdd}
+                forceClose={forceClose}
+              />
+            )}
+            className="min-w-xl"
           />
-        )}
-        className="min-w-xl"
-      />
 
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        onCancel={() => setDeleteDialogOpen(false)}
-        onConfirm={confirmDelete}
-        title="Delete Offense"
-        description="Are you sure you want to delete this offense record? This action cannot be undone and may affect the employee's offense count."
-        confirmText="Delete"
-        Icon={Trash2}
-      />
+          {/* Archive Confirmation Dialog */}
+          <ConfirmDialog
+            open={deleteDialogOpen}
+            onCancel={() => setDeleteDialogOpen(false)}
+            onConfirm={confirmDelete}
+            title="Archive Offense"
+            description="Are you sure you want to archive this offense record? You can restore it from the Archived tab."
+            confirmText="Archive"
+          />
+        </>
+      )}
     </Wrapper>
   )
 }

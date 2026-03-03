@@ -1,6 +1,7 @@
 "use client"
 
 import { getSalesTransactionColumns } from "@/app/(routes)/sales/columns"
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTransactionPrintContent"
@@ -10,6 +11,7 @@ import { SalesTransactionDetails } from "@/components/details/SalesTransactionDe
 import SalesTransactionForm from "@/components/forms/SalesTransactionForm"
 import { Button } from "@/components/ui/button"
 import { SalesTransaction } from "@/lib/constants/interface"
+import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import { usePrint } from "@/lib/hooks/usePrint"
@@ -20,10 +22,20 @@ import {
   useSalesTransactions,
 } from "@/lib/queries/sales/useSalesTransactions"
 import { Plus, ShoppingCart } from "lucide-react"
+import { useState } from "react"
+
+const emptyData = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [] as SalesTransaction[],
+}
 
 export default function SalesTransactionsPage() {
   const { role } = useCurrentUser()
-  const { page, limit, search, ordering, filter } = useSearchParameters()
+  const searchParams = useSearchParameters()
+  const { page, limit, search, ordering, filter } = searchParams
+  const [isArchived, setIsArchived] = useState(false)
   const { data, isLoading, refetch } = useSalesTransactions({
     page,
     limit,
@@ -33,6 +45,14 @@ export default function SalesTransactionsPage() {
   })
   const { filters, orderingOptions } = useSalesTransactionFilters()
   const { deleteTransaction } = useSalesTransactionMutations()
+
+  const { archivedQuery, restoreItem, hardDeleteItem } =
+    useArchive<SalesTransaction>(
+      "sales/transactions/",
+      "sales-transactions",
+      searchParams,
+      isArchived,
+    )
 
   // Sheets
   const {
@@ -55,15 +75,34 @@ export default function SalesTransactionsPage() {
     documentTitle: "Receipt",
   })
 
-  const columns = getSalesTransactionColumns({
-    onView: openView,
-    onEdit: openEdit,
-    onPrint: handlePrint,
-    onDelete: (tx) => {
-      if (tx?.id) deleteTransaction.mutate(tx.id)
-    },
-    role: role ?? "guest",
-  })
+  const handleRestore = (tx: SalesTransaction) => {
+    if (tx?.id) restoreItem.mutate(tx.id)
+  }
+  const handleHardDelete = (tx: SalesTransaction) => {
+    if (tx?.id) hardDeleteItem.mutate(tx.id)
+  }
+
+  const columns = isArchived
+    ? getSalesTransactionColumns({
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: handleRestore,
+        onHardDelete: handleHardDelete,
+        role: role ?? "guest",
+      })
+    : getSalesTransactionColumns({
+        onView: openView,
+        onEdit: openEdit,
+        onPrint: handlePrint,
+        onDelete: (tx) => {
+          if (tx?.id) deleteTransaction.mutate(tx.id)
+        },
+        role: role ?? "guest",
+      })
+
+  const tableData = isArchived
+    ? archivedQuery.data || emptyData
+    : (data ?? emptyData)
 
   return (
     <Wrapper>
@@ -84,42 +123,49 @@ export default function SalesTransactionsPage() {
         description="Track sales transactions, manage customer orders, and monitor revenue performance across all stalls."
         breadcrumbs={["Dashboard", "Sales", "Transactions"]}
         actionButton={
-          <Button onClick={() => openCreate()}>
-            <Plus className="size-4 mr-2" />
-            New Sale
-          </Button>
+          !isArchived ? (
+            <Button onClick={() => openCreate()}>
+              <Plus className="size-4 mr-2" />
+              New Sale
+            </Button>
+          ) : undefined
         }
+        onRefresh={isArchived ? archivedQuery.refetch : refetch}
       />
 
       {/* Create Transaction Sheet */}
-      <EntitySheet<SalesTransaction>
-        className="sm:min-w-lg md:min-w-xl lg:min-w-2xl"
-        open={createSheet.open}
-        onClose={closeCreate}
-        title="New Sale"
-        description="Record a new sales transaction."
-        withCloseConfirmation
-        renderForm={({ forceClose }) => (
-          <SalesTransactionForm onClose={forceClose} />
-        )}
-      />
+      {!isArchived && (
+        <EntitySheet<SalesTransaction>
+          className="sm:min-w-lg md:min-w-xl lg:min-w-2xl"
+          open={createSheet.open}
+          onClose={closeCreate}
+          title="New Sale"
+          description="Record a new sales transaction."
+          withCloseConfirmation
+          renderForm={({ forceClose }) => (
+            <SalesTransactionForm onClose={forceClose} />
+          )}
+        />
+      )}
 
       {/* Edit Transaction Sheet */}
-      <EntitySheet<SalesTransaction>
-        className="sm:min-w-lg md:min-w-xl lg:min-w-2xl"
-        open={editSheet.open}
-        onClose={closeEdit}
-        entity={editSheet.entity}
-        title="Edit Sale"
-        description="Update the sales transaction details."
-        withCloseConfirmation
-        renderForm={({ forceClose, entity }) => (
-          <SalesTransactionForm
-            onClose={forceClose}
-            initialData={entity}
-          />
-        )}
-      />
+      {!isArchived && (
+        <EntitySheet<SalesTransaction>
+          className="sm:min-w-lg md:min-w-xl lg:min-w-2xl"
+          open={editSheet.open}
+          onClose={closeEdit}
+          entity={editSheet.entity}
+          title="Edit Sale"
+          description="Update the sales transaction details."
+          withCloseConfirmation
+          renderForm={({ forceClose, entity }) => (
+            <SalesTransactionForm
+              onClose={forceClose}
+              initialData={entity}
+            />
+          )}
+        />
+      )}
 
       {/* View Transaction Sheet */}
       <EntitySheet<SalesTransaction>
@@ -139,29 +185,40 @@ export default function SalesTransactionsPage() {
         }
       />
 
+      <ArchiveToggle
+        isArchived={isArchived}
+        onToggle={setIsArchived}
+        archivedCount={archivedQuery.data?.count}
+      />
+
       {/* Main Content */}
       <DataTable
-        title="Sales Transactions"
-        description="Manage and track all sales transactions"
-        isLoading={isLoading}
-        columns={columns}
-        data={
-          data ?? {
-            count: 0,
-            next: null,
-            previous: null,
-            results: [],
-          }
+        title={isArchived ? "Archived Transactions" : "Sales Transactions"}
+        description={
+          isArchived
+            ? "Restore or permanently delete archived sales"
+            : "Manage and track all sales transactions"
         }
-        enableExport
+        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
+        columns={columns}
+        data={tableData}
+        enableExport={!isArchived}
         exportFileName="sales_transactions"
         defaultRangePreset="Today"
         filters={filters}
         orderingOptions={orderingOptions}
-        onRefresh={refetch}
+        onRefresh={isArchived ? archivedQuery.refetch : refetch}
         emptyIcon={ShoppingCart}
-        emptyTitle="No sales transactions found"
-        emptyDescription="Record your first sale to start tracking revenue"
+        emptyTitle={
+          isArchived
+            ? "No archived transactions"
+            : "No sales transactions found"
+        }
+        emptyDescription={
+          isArchived
+            ? "Deleted sales will appear here"
+            : "Record your first sale to start tracking revenue"
+        }
       />
     </Wrapper>
   )

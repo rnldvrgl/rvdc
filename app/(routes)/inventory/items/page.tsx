@@ -1,6 +1,7 @@
 "use client"
 
 import { getItemColumns } from "@/app/(routes)/inventory/items/columns"
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
@@ -8,17 +9,27 @@ import { DataTable } from "@/components/custom/table/DataTable"
 import ItemForm from "@/components/forms/inventory/ItemForm"
 import { Button } from "@/components/ui/button"
 import { Item } from "@/lib/constants/interface"
+import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useItemMutations } from "@/lib/mutations/useItemMutations"
 import { useItemFilters, useItems } from "@/lib/queries/inventory/useItems"
 import { Package, Plus } from "lucide-react"
+import { useState } from "react"
 
 export default function ItemsPage() {
   const { isAdmin, role } = useCurrentUser()
-  const { page, limit, search, ordering, filter } = useSearchParameters()
+  const [isArchived, setIsArchived] = useState(false)
+  const searchParams = useSearchParameters()
+  const { page, limit, search, ordering, filter } = searchParams
   const { deleteItem } = useItemMutations()
+  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Item>(
+    "/inventory/items/",
+    "items",
+    searchParams,
+    isArchived,
+  )
   const { data, isLoading, refetch } = useItems({
     page,
     limit,
@@ -46,11 +57,27 @@ export default function ItemsPage() {
     }
   }
 
-  const columns = getItemColumns({
-    onEdit: openEditSheet,
-    onDelete: handleDelete,
-    role: role || "guest",
-  })
+  const handleRestore = (item: Item) => {
+    if (item.id !== undefined) restoreItem.mutate(item.id)
+  }
+
+  const handleHardDelete = (item: Item) => {
+    if (item.id !== undefined) hardDeleteItem.mutate(item.id)
+  }
+
+  const columns = isArchived
+    ? getItemColumns({
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: handleRestore,
+        onHardDelete: handleHardDelete,
+        role: role || "guest",
+      })
+    : getItemColumns({
+        onEdit: openEditSheet,
+        onDelete: handleDelete,
+        role: role || "guest",
+      })
 
   return (
     <Wrapper>
@@ -60,6 +87,7 @@ export default function ItemsPage() {
         description="Manage your product catalog, track item details, and monitor inventory levels across all categories."
         breadcrumbs={["Dashboard", "Inventory", "Items"]}
         actionButton={
+          !isArchived &&
           isAdmin && (
             <Button onClick={() => openAddSheet()}>
               <Plus className="size-4 mr-2" />
@@ -69,52 +97,68 @@ export default function ItemsPage() {
         }
       />
 
-      {/* Edit Item Sheet */}
-      <EntitySheet<Item>
-        open={editOpen}
-        onClose={closeEditSheet}
-        entity={entity}
-        title="Edit Item"
-        description="Update the item details below."
-        withCloseConfirmation
-        renderForm={({ forceClose, entity }) => (
-          <ItemForm
-            onClose={forceClose}
-            item={entity}
-          />
-        )}
+      <ArchiveToggle
+        isArchived={isArchived}
+        onToggle={setIsArchived}
+        archivedCount={archivedQuery.data?.count}
       />
 
-      {/* Add Item Sheet */}
-      <EntitySheet<Item>
-        open={addOpen}
-        onClose={closeAddSheet}
-        title="Add Item"
-        description="Fill out the form below to add a new item."
-        withCloseConfirmation
-        renderForm={({ forceClose }) => <ItemForm onClose={forceClose} />}
-      />
+      {!isArchived && (
+        <>
+          {/* Edit Item Sheet */}
+          <EntitySheet<Item>
+            open={editOpen}
+            onClose={closeEditSheet}
+            entity={entity}
+            title="Edit Item"
+            description="Update the item details below."
+            withCloseConfirmation
+            renderForm={({ forceClose, entity }) => (
+              <ItemForm
+                onClose={forceClose}
+                item={entity}
+              />
+            )}
+          />
+
+          {/* Add Item Sheet */}
+          <EntitySheet<Item>
+            open={addOpen}
+            onClose={closeAddSheet}
+            title="Add Item"
+            description="Fill out the form below to add a new item."
+            withCloseConfirmation
+            renderForm={({ forceClose }) => <ItemForm onClose={forceClose} />}
+          />
+        </>
+      )}
 
       {/* Main Content */}
       <DataTable
         title="Inventory Items"
         description="Manage your product catalog and inventory"
-        isLoading={isLoading}
+        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
         columns={columns}
         data={
-          data || {
+          (isArchived ? archivedQuery.data : data) || {
             count: 0,
             next: null,
             previous: null,
             results: [],
           }
         }
-        filters={filters}
-        orderingOptions={orderingOptions}
-        onRefresh={refetch}
+        filters={isArchived ? undefined : filters}
+        orderingOptions={isArchived ? undefined : orderingOptions}
+        onRefresh={isArchived ? archivedQuery.refetch : refetch}
         emptyIcon={Package}
-        emptyTitle="No inventory items found"
-        emptyDescription="Add your first product to build your catalog"
+        emptyTitle={
+          isArchived ? "No archived items" : "No inventory items found"
+        }
+        emptyDescription={
+          isArchived
+            ? "Archived items will appear here"
+            : "Add your first product to build your catalog"
+        }
       />
     </Wrapper>
   )

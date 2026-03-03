@@ -1,6 +1,7 @@
 "use client"
 
 import { getClientColumns } from "@/app/(routes)/clients/columns"
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
@@ -9,14 +10,26 @@ import ClientForm from "@/components/forms/ClientForm"
 import { Button } from "@/components/ui/button"
 
 import { Client } from "@/lib/constants/types"
+import { useArchive } from "@/lib/hooks/useArchive"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useClientMutations } from "@/lib/mutations/useClientMutations"
 import { useClientFilters, useClients } from "@/lib/queries/clients/useClients"
 import { Plus, Users } from "lucide-react"
+import { useState } from "react"
+
+const emptyData = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [] as Client[],
+}
 
 export default function ClientsPage() {
-  const { page, limit, search, ordering, filter } = useSearchParameters()
+  const searchParams = useSearchParameters()
+  const { page, limit, search, ordering, filter } = searchParams
+  const [isArchived, setIsArchived] = useState(false)
+
   const { deleteClient, updateClient } = useClientMutations()
   const { data, isLoading, refetch } = useClients({
     page,
@@ -26,6 +39,13 @@ export default function ClientsPage() {
     filter,
   })
   const { filters, orderingOptions } = useClientFilters()
+
+  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Client>(
+    "/clients/",
+    "clients",
+    searchParams,
+    isArchived,
+  )
 
   // Separate sheets
   const {
@@ -58,11 +78,30 @@ export default function ClientsPage() {
     }
   }
 
-  const columns = getClientColumns({
-    onEdit: openEditSheet,
-    onDelete: handleDelete,
-    onCustomAction: handleToggleBlocklisted,
-  })
+  const handleRestore = (client: Client) => {
+    if (client.id !== undefined) restoreItem.mutate(client.id)
+  }
+
+  const handleHardDelete = (client: Client) => {
+    if (client.id !== undefined) hardDeleteItem.mutate(client.id)
+  }
+
+  const columns = isArchived
+    ? getClientColumns({
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: handleRestore,
+        onHardDelete: handleHardDelete,
+      })
+    : getClientColumns({
+        onEdit: openEditSheet,
+        onDelete: handleDelete,
+        onCustomAction: handleToggleBlocklisted,
+      })
+
+  const tableData = isArchived
+    ? archivedQuery.data || emptyData
+    : data || emptyData
 
   return (
     <Wrapper>
@@ -71,60 +110,73 @@ export default function ClientsPage() {
         title="Client Management"
         description="Manage customer information, contact details, and account status for all your clients."
         breadcrumbs={["Dashboard", "Clients"]}
-        onRefresh={refetch}
+        onRefresh={isArchived ? archivedQuery.refetch : refetch}
         actionButton={
-          <Button onClick={() => openAddSheet()}>
-            <Plus className="size-4 mr-2" />
-            Add Client
-          </Button>
+          !isArchived ? (
+            <Button onClick={() => openAddSheet()}>
+              <Plus className="size-4 mr-2" />
+              Add Client
+            </Button>
+          ) : undefined
         }
       />
 
       {/* Edit Client Sheet */}
-      <EntitySheet<Client>
-        open={editOpen}
-        onClose={closeEditSheet}
-        entity={entity}
-        title="Edit Client"
-        description="Update the client details below."
-        withCloseConfirmation
-        renderForm={({ forceClose, entity }) => (
-          <ClientForm
-            onClose={forceClose}
-            client={entity}
-          />
-        )}
-      />
+      {!isArchived && (
+        <EntitySheet<Client>
+          open={editOpen}
+          onClose={closeEditSheet}
+          entity={entity}
+          title="Edit Client"
+          description="Update the client details below."
+          withCloseConfirmation
+          renderForm={({ forceClose, entity }) => (
+            <ClientForm
+              onClose={forceClose}
+              client={entity}
+            />
+          )}
+        />
+      )}
 
       {/* Add Client Sheet */}
-      <EntitySheet<Client>
-        open={addOpen}
-        onClose={closeAddSheet}
-        title="Add Client"
-        description="Fill out the form below to add a new client."
-        withCloseConfirmation
-        renderForm={({ forceClose }) => <ClientForm onClose={forceClose} />}
+      {!isArchived && (
+        <EntitySheet<Client>
+          open={addOpen}
+          onClose={closeAddSheet}
+          title="Add Client"
+          description="Fill out the form below to add a new client."
+          withCloseConfirmation
+          renderForm={({ forceClose }) => <ClientForm onClose={forceClose} />}
+        />
+      )}
+
+      <ArchiveToggle
+        isArchived={isArchived}
+        onToggle={setIsArchived}
+        archivedCount={archivedQuery.data?.count}
       />
 
       {/* Main Content */}
       <DataTable
-        title="Clients"
-        description="Manage your client database"
-        isLoading={isLoading}
-        columns={columns}
-        data={
-          data || {
-            count: 0,
-            next: null,
-            previous: null,
-            results: [],
-          }
+        title={isArchived ? "Archived Clients" : "Clients"}
+        description={
+          isArchived
+            ? "Restore or permanently delete archived clients"
+            : "Manage your client database"
         }
+        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
+        columns={columns}
+        data={tableData}
         filters={filters}
         orderingOptions={orderingOptions}
         emptyIcon={Users}
-        emptyTitle="No clients found"
-        emptyDescription="Add your first client to build your customer database"
+        emptyTitle={isArchived ? "No archived clients" : "No clients found"}
+        emptyDescription={
+          isArchived
+            ? "Deleted clients will appear here"
+            : "Add your first client to build your customer database"
+        }
       />
     </Wrapper>
   )

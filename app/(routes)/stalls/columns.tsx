@@ -5,11 +5,10 @@ import { GetColumnsProps, Stall } from "@/lib/constants/interface"
 import { safeCell } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, Trash2 } from "lucide-react"
+import { Edit } from "lucide-react"
 
 export function getStallColumns({
   onEdit,
-  onDelete,
 }: GetColumnsProps<Stall>): ColumnDef<Stall>[] {
   return [
     {
@@ -39,13 +38,6 @@ export function getStallColumns({
                 label: "Edit",
                 icon: Edit,
                 onClick: () => onEdit(stall),
-              },
-              {
-                label: "Delete",
-                icon: Trash2,
-                onClick: () => onDelete(stall),
-                destructive: true,
-                confirmText: `Delete ${stall.name}?`,
               },
             ]}
           />

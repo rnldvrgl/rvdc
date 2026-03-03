@@ -1,5 +1,6 @@
 "use client"
 
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
@@ -8,6 +9,7 @@ import { ExpenseCategoryDetails } from "@/components/details/ExpenseCategoryDeta
 import ExpenseCategoryForm from "@/components/forms/ExpenseCategoryForm"
 import { Button } from "@/components/ui/button"
 import { ExpenseCategory } from "@/lib/constants/interface"
+import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
@@ -17,6 +19,7 @@ import {
   useExpenseCategoryFilters,
 } from "@/lib/queries/useExpenseCategories"
 import { Layers, Plus } from "lucide-react"
+import { useState } from "react"
 import { getExpenseCategoryColumns } from "./columns"
 
 // Helper function to sort categories with subcategories grouped under their parents
@@ -47,7 +50,9 @@ const sortCategoriesWithSubcategories = (
 
 export default function ExpenseCategoriesPage() {
   const { isAdmin } = useCurrentUser()
-  const { page, limit, search, filter, ordering } = useSearchParameters()
+  const searchParams = useSearchParameters()
+  const { page, limit, search, filter, ordering } = searchParams
+  const [isArchived, setIsArchived] = useState(false)
   const {
     deleteExpenseCategory,
     activateExpenseCategory,
@@ -61,6 +66,14 @@ export default function ExpenseCategoriesPage() {
     filter,
   })
   const { filters, orderingOptions } = useExpenseCategoryFilters()
+
+  const { archivedQuery, restoreItem, hardDeleteItem } =
+    useArchive<ExpenseCategory>(
+      "/expenses/categories/",
+      "expense-categories",
+      searchParams,
+      isArchived,
+    )
 
   const {
     entityState: viewSheet,
@@ -96,12 +109,35 @@ export default function ExpenseCategoriesPage() {
     }
   }
 
-  const columns = getExpenseCategoryColumns({
-    onView: openView,
-    onEdit: openEdit,
-    onDelete: handleDelete,
-    onToggleActive: handleToggleActive,
-  })
+  const columns = isArchived
+    ? getExpenseCategoryColumns({
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: (cat: ExpenseCategory) => {
+          if (cat.id !== undefined) restoreItem.mutate(cat.id)
+        },
+        onHardDelete: (cat: ExpenseCategory) => {
+          if (cat.id !== undefined) hardDeleteItem.mutate(cat.id)
+        },
+      })
+    : getExpenseCategoryColumns({
+        onView: openView,
+        onEdit: openEdit,
+        onDelete: handleDelete,
+        onToggleActive: handleToggleActive,
+      })
+
+  const emptyData = {
+    count: 0,
+    next: null,
+    previous: null,
+    results: [] as ExpenseCategory[],
+  }
+  const tableData = isArchived
+    ? archivedQuery.data || emptyData
+    : data
+      ? { ...data, results: sortCategoriesWithSubcategories(data.results) }
+      : emptyData
 
   return (
     <Wrapper>
@@ -110,9 +146,10 @@ export default function ExpenseCategoriesPage() {
         title="Expense Categories"
         description="Organize expenses into categories for better tracking and budget management."
         breadcrumbs={["Dashboard", "Finance", "Expenses", "Categories"]}
-        onRefresh={refetch}
+        onRefresh={isArchived ? archivedQuery.refetch : refetch}
         actionButton={
-          isAdmin && (
+          isAdmin &&
+          !isArchived && (
             <Button onClick={() => openAddSheet()}>
               <Plus className="size-4 mr-2" />
               Add Category
@@ -122,75 +159,85 @@ export default function ExpenseCategoriesPage() {
       />
 
       {/* View category sheet */}
-      <EntitySheet<ExpenseCategory>
-        open={viewSheet.open}
-        onClose={closeView}
-        entity={viewSheet.entity}
-        title="Category Details"
-        description="Review the details of this expense category."
-        renderForm={({ onClose, entity }) =>
-          entity ? (
-            <ExpenseCategoryDetails
-              entity={entity}
-              onClose={onClose}
-            />
-          ) : null
-        }
-      />
+      {!isArchived && (
+        <EntitySheet<ExpenseCategory>
+          open={viewSheet.open}
+          onClose={closeView}
+          entity={viewSheet.entity}
+          title="Category Details"
+          description="Review the details of this expense category."
+          renderForm={({ onClose, entity }) =>
+            entity ? (
+              <ExpenseCategoryDetails
+                entity={entity}
+                onClose={onClose}
+              />
+            ) : null
+          }
+        />
+      )}
 
       {/* Edit category sheet */}
-      <EntitySheet<ExpenseCategory>
-        open={editSheet.open}
-        onClose={closeEdit}
-        entity={editSheet.entity}
-        title="Edit Category"
-        description="Update the category details below."
-        withCloseConfirmation
-        renderForm={({ forceClose, entity }) => (
-          <ExpenseCategoryForm
-            onClose={forceClose}
-            category={entity}
-          />
-        )}
-      />
+      {!isArchived && (
+        <EntitySheet<ExpenseCategory>
+          open={editSheet.open}
+          onClose={closeEdit}
+          entity={editSheet.entity}
+          title="Edit Category"
+          description="Update the category details below."
+          withCloseConfirmation
+          renderForm={({ forceClose, entity }) => (
+            <ExpenseCategoryForm
+              onClose={forceClose}
+              category={entity}
+            />
+          )}
+        />
+      )}
 
       {/* Add category sheet */}
-      <EntitySheet<ExpenseCategory>
-        open={addOpen}
-        onClose={closeAddSheet}
-        title="Add Category"
-        description="Fill out the form below to create a new expense category."
-        withCloseConfirmation
-        renderForm={({ forceClose }) => (
-          <ExpenseCategoryForm onClose={forceClose} />
-        )}
+      {!isArchived && (
+        <EntitySheet<ExpenseCategory>
+          open={addOpen}
+          onClose={closeAddSheet}
+          title="Add Category"
+          description="Fill out the form below to create a new expense category."
+          withCloseConfirmation
+          renderForm={({ forceClose }) => (
+            <ExpenseCategoryForm onClose={forceClose} />
+          )}
+        />
+      )}
+
+      <ArchiveToggle
+        isArchived={isArchived}
+        onToggle={setIsArchived}
+        archivedCount={archivedQuery.data?.count}
       />
 
       {/* Main Content */}
       <DataTable
-        title="Expense Categories"
-        description="Manage expense categories and their budgets"
-        isLoading={isLoading}
-        columns={columns}
-        data={
-          data
-            ? {
-                ...data,
-                results: sortCategoriesWithSubcategories(data.results),
-              }
-            : {
-                count: 0,
-                next: null,
-                previous: null,
-                results: [],
-              }
+        title={isArchived ? "Archived Categories" : "Expense Categories"}
+        description={
+          isArchived
+            ? "Restore or permanently delete archived categories"
+            : "Manage expense categories and their budgets"
         }
+        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
+        columns={columns}
+        data={tableData}
         filters={filters}
         orderingOptions={orderingOptions}
-        onRefresh={refetch}
+        onRefresh={isArchived ? archivedQuery.refetch : refetch}
         emptyIcon={Layers}
-        emptyTitle="No expense categories"
-        emptyDescription="Create categories to organize and budget your expenses"
+        emptyTitle={
+          isArchived ? "No archived categories" : "No expense categories"
+        }
+        emptyDescription={
+          isArchived
+            ? "Deleted categories will appear here"
+            : "Create categories to organize and budget your expenses"
+        }
       />
     </Wrapper>
   )

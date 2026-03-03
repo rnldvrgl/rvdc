@@ -139,11 +139,14 @@ export function usePayrollMutations() {
     ],
   })
 
-  // Delete payroll
+  // Delete (archive) payroll
   const deletePayroll = useApiMutation<number, unknown>({
     mutationFn: (id) => api.delete(`${WEEKLY_PAYROLLS}${id}/`),
-    successMessage: "Payroll deleted.",
-    invalidateQueries: [{ queryKey: ["payroll", "weekly-payrolls"] }],
+    successMessage: "Payroll archived.",
+    invalidateQueries: [
+      { queryKey: ["payroll", "weekly-payrolls"] },
+      { queryKey: ["payroll-archived"] },
+    ],
   })
 
   // Bulk generate payroll

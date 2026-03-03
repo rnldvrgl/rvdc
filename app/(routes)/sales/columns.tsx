@@ -10,7 +10,7 @@ import {
 } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef, Row } from "@tanstack/react-table"
-import { Edit, Eye, Printer, Trash2 } from "lucide-react"
+import { Archive, Edit, Eye, Printer, RotateCcw, Trash2 } from "lucide-react"
 
 export function getSalesTransactionColumns({
   role,
@@ -18,6 +18,8 @@ export function getSalesTransactionColumns({
   onEdit,
   onPrint,
   onDelete,
+  onRestore,
+  onHardDelete,
 }: GetColumnsProps<SalesTransaction>): ColumnDef<SalesTransaction>[] {
   const columns: ColumnDef<SalesTransaction>[] = [
     ...(role === "admin"
@@ -118,6 +120,27 @@ export function getSalesTransactionColumns({
           (item) => item.item === null,
         )
 
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(row.original),
+                },
+                {
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(row.original),
+                  destructive: true,
+                  confirmText: `Permanently delete this transaction? This cannot be undone.`,
+                },
+              ]}
+            />
+          )
+        }
+
         return (
           <DataTableActions
             items={[
@@ -141,11 +164,10 @@ export function getSalesTransactionColumns({
                 onClick: () => onPrint?.(row.original),
               },
               {
-                label: "Delete",
-                icon: Trash2,
+                label: "Archive",
+                icon: Archive,
                 onClick: () => onDelete?.(row.original),
-                destructive: true,
-                confirmText: `Delete sale transaction from ${
+                confirmText: `Archive sale transaction from ${
                   row.original.client?.full_name || "this client"
                 }?`,
               },
