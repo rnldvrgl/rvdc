@@ -5,13 +5,7 @@ import {
   useStallStocks,
   useStockRoomStocks,
 } from "@/lib/queries/inventory/useStocks"
-import {
-  AlertTriangle,
-  ArrowRight,
-  Package,
-  PackageX,
-  Warehouse,
-} from "lucide-react"
+import { ArrowRight, Package, Store, Warehouse } from "lucide-react"
 import Link from "next/link"
 import { useMemo } from "react"
 
@@ -20,47 +14,64 @@ type AlertItem = {
   sku: string
   quantity: number
   threshold: number
-  location: string
 }
 
 export function InventoryReorderAlerts() {
   const { data: stallData } = useStallStocks({ limit: 100 })
   const { data: stockRoomData } = useStockRoomStocks({ limit: 100 })
 
-  const { outOfStock, lowStock } = useMemo(() => {
-    const items: AlertItem[] = []
+  const {
+    stallOutOfStock,
+    stallLowStock,
+    stockRoomOutOfStock,
+    stockRoomLowStock,
+  } = useMemo(() => {
+    const stallItems: AlertItem[] = []
+    const stockRoomItems: AlertItem[] = []
 
     // Stall stocks
     for (const stock of stallData?.results ?? []) {
-      items.push({
+      stallItems.push({
         name: stock.item?.name ?? "Unknown",
         sku: stock.item?.sku ?? "",
         quantity: stock.available_quantity ?? stock.quantity ?? 0,
         threshold: stock.low_stock_threshold ?? 0,
-        location: stock.stall?.name ?? "Stall",
       })
     }
 
     // Stockroom stocks
     for (const stock of stockRoomData?.results ?? []) {
-      items.push({
+      stockRoomItems.push({
         name: stock.item?.name ?? "Unknown",
         sku: stock.item?.sku ?? "",
         quantity: stock.quantity ?? 0,
         threshold: stock.low_stock_threshold ?? 0,
-        location: "Stockroom",
       })
     }
 
-    const outOfStock = items.filter((i) => i.quantity <= 0)
-    const lowStock = items.filter(
+    const stallOutOfStock = stallItems.filter((i) => i.quantity <= 0)
+    const stallLowStock = stallItems.filter(
       (i) => i.quantity > 0 && i.threshold > 0 && i.quantity <= i.threshold,
     )
 
-    return { outOfStock, lowStock }
+    const stockRoomOutOfStock = stockRoomItems.filter((i) => i.quantity <= 0)
+    const stockRoomLowStock = stockRoomItems.filter(
+      (i) => i.quantity > 0 && i.threshold > 0 && i.quantity <= i.threshold,
+    )
+
+    return {
+      stallOutOfStock,
+      stallLowStock,
+      stockRoomOutOfStock,
+      stockRoomLowStock,
+    }
   }, [stallData, stockRoomData])
 
-  const total = outOfStock.length + lowStock.length
+  const total =
+    stallOutOfStock.length +
+    stallLowStock.length +
+    stockRoomOutOfStock.length +
+    stockRoomLowStock.length
 
   if (total === 0) {
     return (
@@ -98,79 +109,157 @@ export function InventoryReorderAlerts() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Out of stock */}
-        {outOfStock.length > 0 && (
-          <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10 p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <PackageX className="size-4 text-red-600" />
-              <span className="text-sm font-semibold text-red-700 dark:text-red-400">
-                Out of Stock ({outOfStock.length})
-              </span>
+        {/* Stockroom Out of Stock */}
+        {stockRoomOutOfStock.length > 0 && (
+          <Link
+            href="/inventory/stocks/stockroom?status=no_stock"
+            className="block"
+          >
+            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10 p-3 hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors cursor-pointer">
+              <div className="flex items-center gap-2 mb-2">
+                <Warehouse className="size-4 text-red-600" />
+                <span className="text-sm font-semibold text-red-700 dark:text-red-400">
+                  Stockroom - Out of Stock ({stockRoomOutOfStock.length})
+                </span>
+                <ArrowRight className="size-3.5 ml-auto text-red-600" />
+              </div>
+              <div className="space-y-1.5">
+                {stockRoomOutOfStock.slice(0, 3).map((item, i) => (
+                  <div
+                    key={`sr-oos-${i}`}
+                    className="flex items-center justify-between text-xs"
+                  >
+                    <span className="text-red-800 dark:text-red-300 truncate max-w-[70%]">
+                      {item.name}
+                    </span>
+                    <span className="text-red-600 dark:text-red-400 shrink-0 font-medium">
+                      0 units
+                    </span>
+                  </div>
+                ))}
+                {stockRoomOutOfStock.length > 3 && (
+                  <p className="text-xs text-red-500 font-medium">
+                    +{stockRoomOutOfStock.length - 3} more items
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="space-y-1.5">
-              {outOfStock.slice(0, 5).map((item, i) => (
-                <div
-                  key={`oos-${i}`}
-                  className="flex items-center justify-between text-xs"
-                >
-                  <span className="text-red-800 dark:text-red-300 truncate max-w-[60%]">
-                    {item.name}
-                  </span>
-                  <span className="text-red-600 dark:text-red-400 shrink-0">
-                    {item.location}
-                  </span>
-                </div>
-              ))}
-              {outOfStock.length > 5 && (
-                <p className="text-xs text-red-500">
-                  +{outOfStock.length - 5} more
-                </p>
-              )}
-            </div>
-          </div>
+          </Link>
         )}
 
-        {/* Low stock */}
-        {lowStock.length > 0 && (
-          <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="size-4 text-amber-600" />
-              <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                Low Stock ({lowStock.length})
-              </span>
+        {/* Stockroom Low Stock */}
+        {stockRoomLowStock.length > 0 && (
+          <Link
+            href="/inventory/stocks/stockroom?status=low_stock"
+            className="block"
+          >
+            <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-3 hover:bg-amber-100/50 dark:hover:bg-amber-900/20 transition-colors cursor-pointer">
+              <div className="flex items-center gap-2 mb-2">
+                <Warehouse className="size-4 text-amber-600" />
+                <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                  Stockroom - Low Stock ({stockRoomLowStock.length})
+                </span>
+                <ArrowRight className="size-3.5 ml-auto text-amber-600" />
+              </div>
+              <div className="space-y-1.5">
+                {stockRoomLowStock.slice(0, 3).map((item, i) => (
+                  <div
+                    key={`sr-low-${i}`}
+                    className="flex items-center justify-between text-xs"
+                  >
+                    <span className="text-amber-800 dark:text-amber-300 truncate max-w-[50%]">
+                      {item.name}
+                    </span>
+                    <span className="text-amber-600 dark:text-amber-400 shrink-0 font-medium">
+                      {item.quantity} / {item.threshold}
+                    </span>
+                  </div>
+                ))}
+                {stockRoomLowStock.length > 3 && (
+                  <p className="text-xs text-amber-500 font-medium">
+                    +{stockRoomLowStock.length - 3} more items
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="space-y-1.5">
-              {lowStock.slice(0, 5).map((item, i) => (
-                <div
-                  key={`low-${i}`}
-                  className="flex items-center justify-between text-xs"
-                >
-                  <span className="text-amber-800 dark:text-amber-300 truncate max-w-[50%]">
-                    {item.name}
-                  </span>
-                  <span className="text-amber-600 dark:text-amber-400 shrink-0">
-                    {item.quantity} / {item.threshold} · {item.location}
-                  </span>
-                </div>
-              ))}
-              {lowStock.length > 5 && (
-                <p className="text-xs text-amber-500">
-                  +{lowStock.length - 5} more
-                </p>
-              )}
-            </div>
-          </div>
+          </Link>
         )}
 
-        {/* Link to inventory */}
-        <Link
-          href="/inventory/stocks/stockroom"
-          className="flex items-center gap-1.5 text-xs text-primary hover:underline underline-offset-4"
-        >
-          <Warehouse className="size-3.5" />
-          View full inventory
-          <ArrowRight className="size-3" />
-        </Link>
+        {/* Stall Out of Stock */}
+        {stallOutOfStock.length > 0 && (
+          <Link
+            href="/inventory/stocks/stall?status=no_stock"
+            className="block"
+          >
+            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10 p-3 hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors cursor-pointer">
+              <div className="flex items-center gap-2 mb-2">
+                <Store className="size-4 text-red-600" />
+                <span className="text-sm font-semibold text-red-700 dark:text-red-400">
+                  Stall - Out of Stock ({stallOutOfStock.length})
+                </span>
+                <ArrowRight className="size-3.5 ml-auto text-red-600" />
+              </div>
+              <div className="space-y-1.5">
+                {stallOutOfStock.slice(0, 3).map((item, i) => (
+                  <div
+                    key={`st-oos-${i}`}
+                    className="flex items-center justify-between text-xs"
+                  >
+                    <span className="text-red-800 dark:text-red-300 truncate max-w-[70%]">
+                      {item.name}
+                    </span>
+                    <span className="text-red-600 dark:text-red-400 shrink-0 font-medium">
+                      0 units
+                    </span>
+                  </div>
+                ))}
+                {stallOutOfStock.length > 3 && (
+                  <p className="text-xs text-red-500 font-medium">
+                    +{stallOutOfStock.length - 3} more items
+                  </p>
+                )}
+              </div>
+            </div>
+          </Link>
+        )}
+
+        {/* Stall Low Stock */}
+        {stallLowStock.length > 0 && (
+          <Link
+            href="/inventory/stocks/stall?status=low_stock"
+            className="block"
+          >
+            <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-3 hover:bg-amber-100/50 dark:hover:bg-amber-900/20 transition-colors cursor-pointer">
+              <div className="flex items-center gap-2 mb-2">
+                <Store className="size-4 text-amber-600" />
+                <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
+                  Stall - Low Stock ({stallLowStock.length})
+                </span>
+                <ArrowRight className="size-3.5 ml-auto text-amber-600" />
+              </div>
+              <div className="space-y-1.5">
+                {stallLowStock.slice(0, 3).map((item, i) => (
+                  <div
+                    key={`st-low-${i}`}
+                    className="flex items-center justify-between text-xs"
+                  >
+                    <span className="text-amber-800 dark:text-amber-300 truncate max-w-[50%]">
+                      {item.name}
+                    </span>
+                    <span className="text-amber-600 dark:text-amber-400 shrink-0 font-medium">
+                      {item.quantity} / {item.threshold}
+                    </span>
+                  </div>
+                ))}
+                {stallLowStock.length > 3 && (
+                  <p className="text-xs text-amber-500 font-medium">
+                    +{stallLowStock.length - 3} more items
+                  </p>
+                )}
+              </div>
+            </div>
+          </Link>
+        )}
       </CardContent>
     </Card>
   )
