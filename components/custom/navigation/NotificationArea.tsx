@@ -36,8 +36,20 @@ const typeToIcon: Record<string, typeof Bell> = {
   expense_created: Receipt,
   appointment_reminder: Calendar,
   stock_low: AlertTriangle,
-  restock: Package,
+  stock_out: AlertTriangle,
+  stock_reorder: Package,
+  stock_restocked: Package,
   transfer_created: Truck,
+  service_created: Calendar,
+  service_updated: Calendar,
+  service_completed: Check,
+  service_cancelled: AlertTriangle,
+  service_assigned: Calendar,
+  payment_received: Receipt,
+  payment_overdue: AlertTriangle,
+  warranty_claim_created: AlertTriangle,
+  warranty_claim_approved: Check,
+  warranty_expiring: AlertTriangle,
 }
 
 /** Group notifications by "Today", "Yesterday", "Older" */
@@ -121,7 +133,12 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
         break
       }
 
-      case "appointment_reminder": {
+      case "appointment_reminder":
+      case "service_created":
+      case "service_updated":
+      case "service_completed":
+      case "service_cancelled":
+      case "service_assigned": {
         const serviceId = notif.data?.service_id
         if (typeof serviceId === "number") {
           router.push(`/services/${serviceId}`)
@@ -133,8 +150,30 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
       }
 
       case "stock_low":
-      case "restock": {
+      case "stock_out":
+      case "stock_reorder":
+      case "stock_restocked": {
         router.push("/inventory/stocks/stockroom")
+        setOpen(false)
+        break
+      }
+
+      case "payment_received":
+      case "payment_overdue": {
+        const serviceId = notif.data?.service_id
+        if (typeof serviceId === "number") {
+          router.push(`/services/${serviceId}`)
+        } else {
+          router.push("/services")
+        }
+        setOpen(false)
+        break
+      }
+
+      case "warranty_claim_created":
+      case "warranty_claim_approved":
+      case "warranty_expiring": {
+        router.push("/services")
         setOpen(false)
         break
       }
@@ -204,7 +243,7 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
                         const Icon = typeToIcon[n.type] ?? Bell
                         return (
                           <div
-                            key={n.id ?? `${n.summary}-${n.created_at}`}
+                            key={n.id ?? `${n.type}-${n.created_at}`}
                             className={clsx(
                               "flex items-center p-3 rounded-lg hover:bg-accent transition relative cursor-pointer",
                               !n.is_read && "bg-muted/50",
@@ -226,7 +265,7 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
                                     "text-blue-600 dark:text-blue-400",
                                   n.type === "appointment_reminder" &&
                                     "text-green-600 dark:text-green-400",
-                                  n.type === "restock" &&
+                                  n.type === "stock_restocked" &&
                                     "text-purple-600 dark:text-purple-400",
                                   n.type === "transfer_created" &&
                                     "text-orange-600 dark:text-orange-400",
@@ -236,8 +275,15 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
                             </div>
                             <div className="ml-3 grow">
                               <p className="text-sm font-semibold">
-                                {n.summary}
+                                {n.title || n.message}
                               </p>
+                              {n.title &&
+                                n.message &&
+                                n.message !== n.title && (
+                                  <p className="text-xs text-muted-foreground line-clamp-1">
+                                    {n.message}
+                                  </p>
+                                )}
                               <p className="text-xs text-muted-foreground">
                                 {n.relative_time}
                               </p>

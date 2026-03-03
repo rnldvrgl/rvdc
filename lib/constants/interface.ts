@@ -292,14 +292,14 @@ export interface BuildNavOptions {
 
 export interface Notification {
   id: number
-  user: User
   type: string
-  data: Record<string, unknown>
+  type_display: string
+  title: string
   message: string
+  data: Record<string, unknown>
   is_read: boolean
   created_at: string
   relative_time: string
-  summary: string
 }
 
 // Expense Category
