@@ -50,7 +50,13 @@ export function SalesReport() {
       0,
     )
     const totalPaid = active.reduce((s, t) => s + Number(t.total_paid ?? 0), 0)
-    return { active, voided, totalSales, totalPaid, outstanding: totalSales - totalPaid }
+    return {
+      active,
+      voided,
+      totalSales,
+      totalPaid,
+      outstanding: totalSales - totalPaid,
+    }
   }, [transactions])
 
   const handleExport = () => {
