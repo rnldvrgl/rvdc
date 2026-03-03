@@ -392,7 +392,7 @@ export function DataTable<TData, TValue>({
               placeholder="Search..."
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
-              className="pl-9 pr-9 bg-muted/50 h-9"
+              className="pl-9 pr-9 bg-white dark:bg-muted/50 border-slate-300 dark:border-slate-700 focus-visible:ring-purple-500 h-9"
             />
             {localSearch && (
               <Button
@@ -465,8 +465,8 @@ export function DataTable<TData, TValue>({
           </span>
           {search && (
             <Badge
-              variant="secondary"
-              className="gap-1.5 h-7"
+              variant="default"
+              className="gap-1.5 h-7 bg-purple-500 hover:bg-purple-600"
             >
               <Search className="size-3" />
               <span className="text-xs">{search}</span>
@@ -474,8 +474,8 @@ export function DataTable<TData, TValue>({
           )}
           {sortingState.length > 0 && (
             <Badge
-              variant="secondary"
-              className="gap-1.5 h-7"
+              variant="default"
+              className="gap-1.5 h-7 bg-purple-500 hover:bg-purple-600"
             >
               <ArrowUpDown className="size-3" />
               <span className="text-xs">
@@ -486,8 +486,8 @@ export function DataTable<TData, TValue>({
           )}
           {filter && Object.keys(filter).length > 0 && (
             <Badge
-              variant="secondary"
-              className="gap-1.5 h-7"
+              variant="default"
+              className="gap-1.5 h-7 bg-purple-500 hover:bg-purple-600"
             >
               <Filter className="size-3" />
               <span className="text-xs">

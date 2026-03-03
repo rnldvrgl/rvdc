@@ -113,14 +113,17 @@ export function DataTableFilterDropdown({ filters, className }: Props) {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className={cn(className)}
+          className={cn(
+            "bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50",
+            className,
+          )}
         >
           <FilterIcon className="mr-1.5 h-4 w-4" />
           Filter
           {entries.length > 0 && (
             <Badge
-              variant="secondary"
-              className="ml-2 h-[18px] rounded px-[6px] font-mono text-[10px]"
+              variant="default"
+              className="ml-2 h-[18px] rounded px-1.5 font-mono text-[10px] bg-purple-500 hover:bg-purple-600"
             >
               {entries.length}
             </Badge>
