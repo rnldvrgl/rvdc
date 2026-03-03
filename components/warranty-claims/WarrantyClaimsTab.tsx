@@ -33,7 +33,7 @@ export default function WarrantyClaimsTab() {
 
   // Fetch units for selected client
   const { data: unitsData, isLoading: unitsLoading } = useAirconUnits({
-    limit: 200,
+    limit: 100,
     filter: selectedClientId ? { client: selectedClientId } : undefined,
     enabled: !!selectedClientId,
   })

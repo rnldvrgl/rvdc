@@ -11,7 +11,10 @@ import Link from "next/link"
 export function RemindersAlerts() {
   const { data: pendingLeaves, isLoading: loadingLeaves } =
     usePendingLeaveApprovals()
-  const { data: servicesData, isLoading: loadingServices } = useServices()
+  const { data: servicesData, isLoading: loadingServices } = useServices({
+    limit: 50,
+    filter: { status: "in_progress" },
+  })
   const services = servicesData?.results || []
 
   // Services needing attention

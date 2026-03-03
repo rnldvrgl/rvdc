@@ -14,6 +14,7 @@ import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCale
 import DashboardCharts from "@/components/custom/shared/charts/DashboardCharts"
 import SummaryCards from "@/components/custom/shared/charts/SummaryCards"
 import PageHeader from "@/components/custom/shared/PageHeader"
+import { WidgetErrorBoundary } from "@/components/custom/shared/WidgetErrorBoundary"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useGetSummary } from "@/lib/queries/analytics/useGetAnalytics"
@@ -117,10 +118,18 @@ const DashboardPage = () => {
 
           {role === "admin" && (
             <div className="grid lg:grid-cols-2  gap-6">
-              <RemindersAlerts />
-              <BirthdayReminders />
-              <WarrantyExpirationAlerts />
-              <InventoryReorderAlerts />
+              <WidgetErrorBoundary fallbackTitle="Reminders failed to load">
+                <RemindersAlerts />
+              </WidgetErrorBoundary>
+              <WidgetErrorBoundary fallbackTitle="Birthdays failed to load">
+                <BirthdayReminders />
+              </WidgetErrorBoundary>
+              <WidgetErrorBoundary fallbackTitle="Warranty alerts failed to load">
+                <WarrantyExpirationAlerts />
+              </WidgetErrorBoundary>
+              <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
+                <InventoryReorderAlerts />
+              </WidgetErrorBoundary>
             </div>
           )}
 

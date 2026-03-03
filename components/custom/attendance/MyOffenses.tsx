@@ -14,8 +14,7 @@ import {
 	LucideIcon,
 	UserX,
 } from "lucide-react";
-
-const getOffenseTypeBadge = (offenseType: string) => {
+import { useMemo } from "react";const getOffenseTypeBadge = (offenseType: string) => {
 	const config: Record<
 		string,
 		{ color: string; icon: LucideIcon; label: string }
@@ -88,27 +87,41 @@ export default function MyOffenses() {
 	const { data: offensesData, isLoading } = useMyOffenses();
 
 	const offenses = offensesData || [];
-	const totalOffenses = offenses?.length || 0;
-	const warningCount =
-		offenses?.filter((o) => o.severity_level === "WARNING").length || 0;
-	const suspensionCount =
-		offenses?.filter((o) => o.severity_level === "SUSPENSION").length || 0;
-	const terminationCount =
-		offenses?.filter((o) => o.severity_level === "TERMINATION").length || 0;
 
-	// Count offenses per type
-	const awolCount =
-		offenses?.filter((o) => o.offense_type === "AWOL").length || 0;
-	const lateCount =
-		offenses?.filter((o) => o.offense_type === "LATE").length || 0;
-	const curfewCount =
-		offenses?.filter((o) => o.offense_type === "CURFEW").length || 0;
-	const otherCount =
-		offenses?.filter((o) => o.offense_type === "OTHER").length || 0;
-
-	// Check if any offense type has reached limit (3 or more)
-	const hasReachedLimit =
-		awolCount >= 3 || lateCount >= 3 || curfewCount >= 3 || otherCount >= 3;
+	const {
+		totalOffenses,
+		warningCount,
+		suspensionCount,
+		terminationCount,
+		awolCount,
+		lateCount,
+		curfewCount,
+		otherCount,
+		hasReachedLimit,
+	} = useMemo(() => {
+		let warning = 0, suspension = 0, termination = 0;
+		let awol = 0, late = 0, curfew = 0, other = 0;
+		for (const o of offenses) {
+			if (o.severity_level === "WARNING") warning++;
+			else if (o.severity_level === "SUSPENSION") suspension++;
+			else if (o.severity_level === "TERMINATION") termination++;
+			if (o.offense_type === "AWOL") awol++;
+			else if (o.offense_type === "LATE") late++;
+			else if (o.offense_type === "CURFEW") curfew++;
+			else if (o.offense_type === "OTHER") other++;
+		}
+		return {
+			totalOffenses: offenses.length,
+			warningCount: warning,
+			suspensionCount: suspension,
+			terminationCount: termination,
+			awolCount: awol,
+			lateCount: late,
+			curfewCount: curfew,
+			otherCount: other,
+			hasReachedLimit: awol >= 3 || late >= 3 || curfew >= 3 || other >= 3,
+		};
+	}, [offenses]);
 
 	if (isLoading) {
 		return (

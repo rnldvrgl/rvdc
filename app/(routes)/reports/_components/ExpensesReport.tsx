@@ -17,6 +17,7 @@ import { useExpenses } from "@/lib/queries/useExpenses"
 import { ExportColumn, exportToCSV } from "@/lib/utils/export"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { Download } from "lucide-react"
+import { useMemo } from "react"
 
 function peso(v: string | number) {
   return `₱${Number(v).toLocaleString("en-PH", {
@@ -33,34 +34,36 @@ function displayDate(d: string | Date | null | undefined) {
 export function ExpensesReport() {
   const { start_date, end_date, stall } = useDateParamsFromForm()
   const { data: expenseData, isLoading } = useExpenses({
-    limit: 1000,
+    limit: 100,
     start_date,
     end_date,
     filter: stall ? { stall: String(stall) } : undefined,
   })
 
-  const expenses = expenseData?.results ?? []
-  const totalExpenses = expenses.reduce(
-    (s, e) => s + Number(e.total_price ?? 0),
-    0,
-  )
-  const paidExpenses = expenses.reduce(
-    (s, e) => s + Number(e.paid_amount ?? 0),
-    0,
-  )
+  const expenses = useMemo(() => expenseData?.results ?? [], [expenseData])
 
-  // Group by category
-  const byCategory = expenses.reduce(
-    (acc, exp) => {
-      const cat = exp.category_data?.name ?? "Uncategorized"
-      acc[cat] = (acc[cat] ?? 0) + Number(exp.total_price ?? 0)
-      return acc
-    },
-    {} as Record<string, number>,
-  )
-  const categories = Object.entries(byCategory)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
+  const { totalExpenses, paidExpenses, categories } = useMemo(() => {
+    const totalExpenses = expenses.reduce(
+      (s, e) => s + Number(e.total_price ?? 0),
+      0,
+    )
+    const paidExpenses = expenses.reduce(
+      (s, e) => s + Number(e.paid_amount ?? 0),
+      0,
+    )
+    const byCategory = expenses.reduce(
+      (acc, exp) => {
+        const cat = exp.category_data?.name ?? "Uncategorized"
+        acc[cat] = (acc[cat] ?? 0) + Number(exp.total_price ?? 0)
+        return acc
+      },
+      {} as Record<string, number>,
+    )
+    const categories = Object.entries(byCategory)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+    return { totalExpenses, paidExpenses, categories }
+  }, [expenses])
 
   const handleExport = () => {
     const cols: ExportColumn<Expense>[] = [

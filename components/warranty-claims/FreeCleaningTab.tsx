@@ -33,7 +33,7 @@ export default function FreeCleaningTab() {
 
   // Fetch units filtered by client (sale or reservation) when a client is selected
   const { data: unitsData, isLoading: unitsLoading } = useAirconUnits({
-    limit: 200,
+    limit: 100,
     filter: selectedClientId ? { client: selectedClientId } : undefined,
     enabled: !!selectedClientId,
   })

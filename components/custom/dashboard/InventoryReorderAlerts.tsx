@@ -24,8 +24,8 @@ type AlertItem = {
 }
 
 export function InventoryReorderAlerts() {
-  const { data: stallData } = useStallStocks({ limit: 200 })
-  const { data: stockRoomData } = useStockRoomStocks({ limit: 200 })
+  const { data: stallData } = useStallStocks({ limit: 100 })
+  const { data: stockRoomData } = useStockRoomStocks({ limit: 100 })
 
   const { outOfStock, lowStock } = useMemo(() => {
     const items: AlertItem[] = []

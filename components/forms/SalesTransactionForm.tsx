@@ -140,7 +140,7 @@ export default function SalesTransactionForm({
   const { data: stockData } = useApiQuery<PaginatedResult<Stock>>({
     queryKey: ["stall-stocks-for-sale", selectedStallId],
     url: "/inventory/stocks/",
-    params: { stall: selectedStallId, limit: 1000 },
+    params: { stall: selectedStallId, limit: 100 },
     enabled: !!selectedStallId,
   })
 

@@ -73,7 +73,7 @@ export default function TaxBracketsPage() {
 
   // Fetch tax brackets (set high limit to get all records without pagination)
   const { data: taxBracketsData, isLoading } = useTaxBrackets({
-    limit: 1000, // High limit to fetch all tax brackets
+    limit: 100, // Fetch all tax brackets
     filter: {
       bracket_type: bracketType,
       is_active: showInactive ? undefined : true,

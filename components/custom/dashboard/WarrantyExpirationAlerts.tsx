@@ -13,7 +13,7 @@ export function WarrantyExpirationAlerts() {
   // Fetch sold/installed units (they're the ones with active warranties)
   const { data, isLoading } = useAirconUnits({
     filter: { is_sold: "true" },
-    limit: 200,
+    limit: 100,
   })
   const units = React.useMemo(() => data?.results ?? [], [data])
 

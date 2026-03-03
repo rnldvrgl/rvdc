@@ -16,6 +16,7 @@ import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import { useServices } from "@/lib/queries/services/useServices"
 import { ExportColumn, exportToCSV } from "@/lib/utils/export"
 import { Download } from "lucide-react"
+import { useMemo } from "react"
 
 function peso(v: string | number) {
   return `₱${Number(v).toLocaleString("en-PH", {
@@ -27,34 +28,37 @@ function peso(v: string | number) {
 export function ServicesReport() {
   const { start_date, end_date, stall } = useDateParamsFromForm()
   const { data: serviceData, isLoading } = useServices({
-    limit: 1000,
+    limit: 100,
     start_date,
     end_date,
     filter: stall ? { main_stall: String(stall) } : undefined,
   })
 
-  const services = serviceData?.results ?? []
-  const totalRevenue = services.reduce(
-    (s, svc) => s + Number(svc.total_revenue ?? 0),
-    0,
-  )
-  const totalCost = services.reduce(
-    (s, svc) => s + Number(svc.total_cost ?? 0),
-    0,
-  )
-  const totalPaid = services.reduce(
-    (s, svc) => s + Number(svc.total_paid ?? 0),
-    0,
-  )
+  const services = useMemo(() => serviceData?.results ?? [], [serviceData])
 
-  const byStatus = services.reduce(
-    (acc, svc) => {
-      const st = svc.status ?? "unknown"
-      acc[st] = (acc[st] ?? 0) + 1
-      return acc
-    },
-    {} as Record<string, number>,
-  )
+  const { totalRevenue, totalCost, totalPaid, byStatus } = useMemo(() => {
+    const totalRevenue = services.reduce(
+      (s, svc) => s + Number(svc.total_revenue ?? 0),
+      0,
+    )
+    const totalCost = services.reduce(
+      (s, svc) => s + Number(svc.total_cost ?? 0),
+      0,
+    )
+    const totalPaid = services.reduce(
+      (s, svc) => s + Number(svc.total_paid ?? 0),
+      0,
+    )
+    const byStatus = services.reduce(
+      (acc, svc) => {
+        const st = svc.status ?? "unknown"
+        acc[st] = (acc[st] ?? 0) + 1
+        return acc
+      },
+      {} as Record<string, number>,
+    )
+    return { totalRevenue, totalCost, totalPaid, byStatus }
+  }, [services])
 
   const handleExport = () => {
     const cols: ExportColumn<Service>[] = [

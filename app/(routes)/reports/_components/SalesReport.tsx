@@ -17,6 +17,7 @@ import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { ExportColumn, exportToCSV } from "@/lib/utils/export"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { Download } from "lucide-react"
+import { useMemo } from "react"
 
 function peso(v: string | number) {
   return `₱${Number(v).toLocaleString("en-PH", {
@@ -33,22 +34,24 @@ function displayDate(d: string | Date | null | undefined) {
 export function SalesReport() {
   const { start_date, end_date, stall } = useDateParamsFromForm()
   const { data: salesData, isLoading } = useSalesTransactions({
-    limit: 1000,
+    limit: 100,
     start_date,
     end_date,
     filter: stall ? { stall: String(stall) } : undefined,
   })
 
-  const transactions = salesData?.results ?? []
-  const active = transactions.filter((t) => !t.voided)
-  const voided = transactions.filter((t) => t.voided)
+  const transactions = useMemo(() => salesData?.results ?? [], [salesData])
 
-  const totalSales = active.reduce(
-    (s, t) => s + Number(t.computed_total ?? 0),
-    0,
-  )
-  const totalPaid = active.reduce((s, t) => s + Number(t.total_paid ?? 0), 0)
-  const outstanding = totalSales - totalPaid
+  const { active, voided, totalSales, totalPaid, outstanding } = useMemo(() => {
+    const active = transactions.filter((t) => !t.voided)
+    const voided = transactions.filter((t) => t.voided)
+    const totalSales = active.reduce(
+      (s, t) => s + Number(t.computed_total ?? 0),
+      0,
+    )
+    const totalPaid = active.reduce((s, t) => s + Number(t.total_paid ?? 0), 0)
+    return { active, voided, totalSales, totalPaid, outstanding: totalSales - totalPaid }
+  }, [transactions])
 
   const handleExport = () => {
     const cols: ExportColumn<SalesTransaction>[] = [
