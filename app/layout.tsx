@@ -41,9 +41,13 @@ export default function RootLayout({
       >
         <NextTopLoader
           color="#7f22fe"
-          height={3}
+          height={2.5}
           showSpinner={false}
+          easing="ease"
+          speed={400}
           shadow="0 0 10px #7f22fe,0 0 5px #7f22fe"
+          crawlSpeed={300}
+          initialPosition={0.08}
         />
         <QueryClientContextProvider>
           <ThemeProvider

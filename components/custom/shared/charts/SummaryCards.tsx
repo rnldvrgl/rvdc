@@ -1,6 +1,6 @@
 "use client"
 
-import { Skeleton } from "@/components/ui/skeleton"
+import { ModernStatCardSkeleton } from "@/components/custom/shared/skeletons"
 import { AnalyticsSummary } from "@/lib/constants/interface"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import { useGetSummary } from "@/lib/queries/analytics/useGetAnalytics"
@@ -185,51 +185,31 @@ const SummaryCards = () => {
 
   return (
     <div className="space-y-8">
-      {isLoading
-        ? Array.from({ length: 4 }).map((_, i) => (
-            <div key={i}>
-              <div className="mb-6">
-                <Skeleton className="h-6 w-40 mb-2" />
-                <Skeleton className="h-4 w-64" />
-              </div>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
-                {Array.from({ length: 2 }).map((_, j) => (
-                  <StatsCard
-                    key={j}
-                    title=""
-                    value=""
-                    icon={DollarSign}
-                    isLoading={true}
-                  />
-                ))}
-              </div>
+      {summaryGroups.map((group, idx) => (
+        <div
+          key={idx}
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-1 bg-linear-to-b from-primary to-primary/50 rounded-full" />
+            <h3 className="text-lg font-semibold text-foreground">
+              {group.title}
+            </h3>
+          </div>
+          {isLoading ? (
+            <ModernStatCardSkeleton count={group.cards.length} />
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
+              {group.cards.map((card, i) => (
+                <StatsCard
+                  key={i}
+                  {...card}
+                />
+              ))}
             </div>
-          ))
-        : summaryGroups.map((group, i) => (
-            <div key={i}>
-              <div className="mb-6">
-                <h2 className="text-xl font-bold text-foreground mb-2">
-                  {group.title}
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Key performance indicators for your business
-                </p>
-              </div>
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
-                {group.cards.map((card, j) => (
-                  <StatsCard
-                    key={j}
-                    title={card.title}
-                    value={card.value}
-                    icon={card.icon}
-                    variant={card.variant}
-                    trend={card.trend}
-                    href={card.href}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
+          )}
+        </div>
+      ))}
     </div>
   )
 }

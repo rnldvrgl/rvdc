@@ -117,7 +117,7 @@ const DashboardPage = () => {
           )}
 
           {role === "admin" && (
-            <div className="grid lg:grid-cols-2  gap-6">
+            <div className="grid lg:grid-cols-2 gap-6">
               <WidgetErrorBoundary fallbackTitle="Reminders failed to load">
                 <RemindersAlerts />
               </WidgetErrorBoundary>
@@ -150,12 +150,20 @@ const DashboardPage = () => {
 
           {/* Analytics - Admin & Manager Only */}
           {(role === "admin" || role === "manager") && (
-            <div className="space-y-6">
-              {/* Date Range Controls */}
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <TrendingUp className="size-5" />
-                Analytics & Metrics
-              </h2>
+            <div className="space-y-8">
+              {/* Section Header */}
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <TrendingUp className="size-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold">Analytics & Metrics</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Track your business performance and growth
+                  </p>
+                </div>
+              </div>
+
               {/* Summary Cards */}
               <SummaryCards />
 
