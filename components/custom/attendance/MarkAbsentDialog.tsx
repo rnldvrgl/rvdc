@@ -86,7 +86,7 @@ export function MarkAbsentDialog() {
     >
       <DialogTrigger asChild>
         <Button
-          variant="outline"
+          variant="destructive"
           size="sm"
           className="gap-2"
         >

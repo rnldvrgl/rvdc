@@ -129,7 +129,7 @@ export function MultiSelect({
       >
         <Command>
           <CommandInput placeholder="Search..." />
-          <CommandList>
+          <CommandList className="max-h-60 overflow-y-auto">
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (

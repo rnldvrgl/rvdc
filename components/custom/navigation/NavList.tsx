@@ -132,7 +132,10 @@ export default function NavList({
           }
 
           return (
-            <li key={item.name}>
+            <li
+              key={item.name}
+              className="space-y-0.5"
+            >
               {content}
 
               {isParent && (

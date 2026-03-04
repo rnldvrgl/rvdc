@@ -18,20 +18,20 @@ export const RecentActivitySection = ({
 }: RecentActivitySectionProps) => {
   return (
     <Card className="gap-0 py-0">
-      <CardHeader className="border-b py-6">
-        <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 w-fit mx-auto">
-              <Clock className="size-4 text-slate-600 dark:text-slate-400" />
+      <CardHeader className="border-b py-4 md:py-6">
+        <div className="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 items-center">
+            <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 w-fit">
+              <Clock className="size-3.5 md:size-4 text-slate-600 dark:text-slate-400" />
             </div>
-            <CardTitle className="text-base md:text-lg font-semibold">
+            <CardTitle className="text-sm md:text-base lg:text-lg font-semibold">
               Recent Activity
             </CardTitle>
           </div>
           {showEmployeeCount && (
             <Badge
               variant="outline"
-              className="text-xs"
+              className="text-[10px] md:text-xs"
             >
               Last 10 Records
             </Badge>

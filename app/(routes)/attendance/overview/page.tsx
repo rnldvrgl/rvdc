@@ -1,18 +1,11 @@
 "use client"
 
-import { AttendanceApproval } from "@/components/custom/attendance/AttendanceApproval"
+import { AttendanceManagementTabs } from "@/components/custom/attendance/AttendanceManagementTabs"
+import { AttendanceOverviewStats } from "@/components/custom/attendance/AttendanceOverviewStats"
 import { EmployeeFilter } from "@/components/custom/attendance/EmployeeFilter"
-import { GradientStatCard } from "@/components/custom/attendance/GradientStatCard"
-import { LeaveOverview } from "@/components/custom/attendance/LeaveOverview"
 import { MarkAbsentDialog } from "@/components/custom/attendance/MarkAbsentDialog"
-import { RecentActivitySection } from "@/components/custom/attendance/RecentActivitySection"
-import { StatCard } from "@/components/custom/attendance/StatCard"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
-import {
-  GRADIENT_CARD_CONFIGS,
-  STAT_CARD_CONFIGS,
-} from "@/lib/constants/attendanceCards"
 import { useAttendanceStats } from "@/lib/hooks/useAttendanceStats"
 import { useNavigation } from "@/lib/hooks/useNavigation"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
@@ -52,14 +45,14 @@ const AttendanceOverviewPage = () => {
     data: attendanceData,
     isLoading,
     refetch,
-  } = useDailyAttendances({ filter: monthFilter })
+  } = useDailyAttendances({ filter: monthFilter, limit: 1000 })
 
   // Separate query for recent activity (not limited to current month)
   const { data: recentAttendanceData, isLoading: isLoadingRecent } =
     useDailyAttendances({
       filter,
       limit: 10,
-      ordering: "-date,-created_at", // Most recent first
+      ordering: "-date,-created_at",
     })
 
   const attendanceRecords = attendanceData?.results || []
@@ -84,6 +77,7 @@ const AttendanceOverviewPage = () => {
   return (
     <Wrapper>
       <div className="space-y-4 md:space-y-6">
+        {/* Page Header */}
         <PageHeader
           icon={Users}
           title="Attendance"
@@ -95,77 +89,27 @@ const AttendanceOverviewPage = () => {
           ]}
           onRefresh={refetch}
           actionButton={<MarkAbsentDialog />}
+          variant="compact"
         />
 
-        {/* Employee Filter */}
         <EmployeeFilter
           employees={employeeChoices}
           selectedEmployee={selectedEmployee ?? undefined}
           onEmployeeChange={setSelectedEmployee}
         />
 
-        {/* Summary Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {STAT_CARD_CONFIGS.map((config) => {
-            const value = stats[`${config.key}Count` as keyof typeof stats]
-            const subtitle =
-              typeof config.getSubtitle === "function"
-                ? config.getSubtitle(stats.approvedCount, stats.totalCount)
-                : config.getSubtitle
+        {/* Stats Overview */}
+        <AttendanceOverviewStats
+          stats={stats}
+          isLoading={isLoading}
+        />
 
-            return (
-              <StatCard
-                key={config.key}
-                title={config.title}
-                value={value as number}
-                subtitle={subtitle}
-                icon={config.icon}
-                iconBgColor={config.iconBgColor}
-                iconColor={config.iconColor}
-                valueColor={config.valueColor}
-                isLoading={isLoading}
-              />
-            )
-          })}
-        </div>
-
-        {/* Additional Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-          {GRADIENT_CARD_CONFIGS.map((config) => {
-            const value = stats[`${config.key}Count` as keyof typeof stats]
-
-            return (
-              <GradientStatCard
-                key={config.key}
-                title={config.title}
-                value={value as number}
-                subtitle={config.subtitle}
-                icon={config.icon}
-                gradientFrom={config.gradientFrom}
-                gradientTo={config.gradientTo}
-                borderColor={config.borderColor}
-                iconBgColor={config.iconBgColor}
-                iconColor={config.iconColor}
-                titleColor={config.titleColor}
-                valueColor={config.valueColor}
-                subtitleColor={config.subtitleColor}
-                isLoading={isLoading}
-              />
-            )
-          })}
-        </div>
-
-        {/* Admin Approval Panel */}
-        <AttendanceApproval />
-
-        {/* Leave Overview Section */}
-        <LeaveOverview />
-
-        {/* Recent Records */}
-        <RecentActivitySection
-          records={recentRecords}
-          isLoading={isLoadingRecent}
+        {/* Tabbed Management Sections */}
+        <AttendanceManagementTabs
+          recentRecords={recentRecords}
+          isLoadingRecent={isLoadingRecent}
           showEmployeeCount={!selectedEmployee}
+          filter={filter}
         />
       </div>
     </Wrapper>

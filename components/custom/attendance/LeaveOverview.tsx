@@ -294,48 +294,54 @@ export function LeaveOverview() {
 
     return (
       <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col gap-3 md:gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
-                  <Plane className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                  <Plane className="h-3.5 md:h-4 w-3.5 md:w-4 text-slate-600 dark:text-slate-400" />
                 </div>
-                <CardTitle className="text-base md:text-lg font-semibold">
+                <CardTitle className="text-sm md:text-base lg:text-lg font-semibold">
                   Pending Leave Approvals
                 </CardTitle>
               </div>
-              <Badge variant="secondary">{pendingLeaves.length} pending</Badge>
+              <Badge
+                variant="secondary"
+                className="text-xs"
+              >
+                {pendingLeaves.length} pending
+              </Badge>
             </div>
             {selectedItems.size > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
+                <span className="text-xs md:text-sm text-muted-foreground">
                   {selectedItems.size} selected
                 </span>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50 h-8 text-xs md:text-sm"
                   onClick={handleBulkApprove}
                   disabled={isLoading}
                 >
-                  <CheckCircle className="h-4 w-4 mr-1" />
-                  Approve Selected
+                  <CheckCircle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
+                  <span className="hidden sm:inline">Approve </span>Selected
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 text-xs md:text-sm"
                   onClick={handleBulkReject}
                   disabled={isLoading}
                 >
-                  <XCircle className="h-4 w-4 mr-1" />
-                  Reject Selected
+                  <XCircle className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
+                  <span className="hidden sm:inline">Reject </span>Selected
                 </Button>
                 <Button
                   size="sm"
                   variant="ghost"
                   onClick={() => setSelectedItems(new Set())}
+                  className="h-8 text-xs md:text-sm"
                 >
                   Clear
                 </Button>
@@ -344,80 +350,84 @@ export function LeaveOverview() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">
-                    <Checkbox
-                      checked={
-                        selectedItems.size === pendingLeaves?.length &&
-                        pendingLeaves?.length > 0
-                      }
-                      onCheckedChange={toggleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Employee</TableHead>
-                  <TableHead>Leave Type</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Duration</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pendingLeaves?.map((leave: LeaveRequest) => (
-                  <TableRow key={leave.id}>
-                    <TableCell>
+          <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+            <div className="rounded-md border min-w-[700px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">
                       <Checkbox
-                        checked={selectedItems.has(leave.id)}
-                        onCheckedChange={() => toggleSelectItem(leave.id)}
+                        checked={
+                          selectedItems.size === pendingLeaves?.length &&
+                          pendingLeaves?.length > 0
+                        }
+                        onCheckedChange={toggleSelectAll}
                       />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {leave.employee_name || "Unknown"}
-                    </TableCell>
-                    <TableCell>{getLeaveTypeBadge(leave.leave_type)}</TableCell>
-                    <TableCell>{formatLeaveDate(leave)}</TableCell>
-                    <TableCell>{formatLeaveDuration(leave)}</TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {leave.reason || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                          disabled={isLoading || selectedLeaveId === leave.id}
-                          onClick={() => handleApprove(leave.id)}
-                        >
-                          {selectedLeaveId === leave.id &&
-                          approveLeave.isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <>
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          disabled={isLoading}
-                          onClick={() => handleRejectClick(leave.id)}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Reject
-                        </Button>
-                      </div>
-                    </TableCell>
+                    </TableHead>
+                    <TableHead>Employee</TableHead>
+                    <TableHead>Leave Type</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {pendingLeaves?.map((leave: LeaveRequest) => (
+                    <TableRow key={leave.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedItems.has(leave.id)}
+                          onCheckedChange={() => toggleSelectItem(leave.id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {leave.employee_name || "Unknown"}
+                      </TableCell>
+                      <TableCell>
+                        {getLeaveTypeBadge(leave.leave_type)}
+                      </TableCell>
+                      <TableCell>{formatLeaveDate(leave)}</TableCell>
+                      <TableCell>{formatLeaveDuration(leave)}</TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {leave.reason || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            disabled={isLoading || selectedLeaveId === leave.id}
+                            onClick={() => handleApprove(leave.id)}
+                          >
+                            {selectedLeaveId === leave.id &&
+                            approveLeave.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <>
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approve
+                              </>
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            disabled={isLoading}
+                            onClick={() => handleRejectClick(leave.id)}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
           {/* Reject Dialog */}
@@ -529,13 +539,13 @@ export function LeaveOverview() {
 
       {/* My Leave Requests */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
-                <FileText className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                <FileText className="h-3.5 md:h-4 w-3.5 md:w-4 text-slate-600 dark:text-slate-400" />
               </div>
-              <CardTitle className="text-base md:text-lg font-semibold">
+              <CardTitle className="text-sm md:text-base lg:text-lg font-semibold">
                 My Leave Requests
               </CardTitle>
             </div>
@@ -563,65 +573,67 @@ export function LeaveOverview() {
             </div>
           ) : (
             <>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Leave Type</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Duration</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead>Rejection Reason</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {myLeavesList.map((leave: LeaveRequest) => (
-                      <TableRow key={leave.id}>
-                        <TableCell>
-                          {getLeaveTypeBadge(leave.leave_type)}
-                        </TableCell>
-                        <TableCell>{formatLeaveDate(leave)}</TableCell>
-                        <TableCell>{formatLeaveDuration(leave)}</TableCell>
-                        <TableCell>
-                          {getLeaveStatusBadge(leave.status)}
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {leave.reason || "—"}
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {leave.rejection_reason || "—"}
-                        </TableCell>
-                        <TableCell>
-                          {leave.status === "PENDING" ? (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              disabled={
-                                isLoading && selectedLeaveId === leave.id
-                              }
-                              onClick={() => handleCancel(leave.id)}
-                            >
-                              {selectedLeaveId === leave.id &&
-                              cancelLeave.isPending ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <>
-                                  <XCircle className="h-4 w-4 mr-1" />
-                                  Cancel
-                                </>
-                              )}
-                            </Button>
-                          ) : (
-                            "—"
-                          )}
-                        </TableCell>
+              <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+                <div className="rounded-md border min-w-[700px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Leave Type</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead>Rejection Reason</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {myLeavesList.map((leave: LeaveRequest) => (
+                        <TableRow key={leave.id}>
+                          <TableCell>
+                            {getLeaveTypeBadge(leave.leave_type)}
+                          </TableCell>
+                          <TableCell>{formatLeaveDate(leave)}</TableCell>
+                          <TableCell>{formatLeaveDuration(leave)}</TableCell>
+                          <TableCell>
+                            {getLeaveStatusBadge(leave.status)}
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {leave.reason || "—"}
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {leave.rejection_reason || "—"}
+                          </TableCell>
+                          <TableCell>
+                            {leave.status === "PENDING" ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                disabled={
+                                  isLoading && selectedLeaveId === leave.id
+                                }
+                                onClick={() => handleCancel(leave.id)}
+                              >
+                                {selectedLeaveId === leave.id &&
+                                cancelLeave.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Cancel
+                                  </>
+                                )}
+                              </Button>
+                            ) : (
+                              "—"
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
 
               {/* Pagination */}
