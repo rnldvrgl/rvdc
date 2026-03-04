@@ -6,6 +6,7 @@ import {
   ClockInPayload,
   ClockOutPayload,
   LeaveRequestPayload,
+  MarkAbsentPayload,
   OffensePayload,
   RejectAttendancePayload,
   RejectLeavePayload,
@@ -142,6 +143,36 @@ export function useAttendanceMutations() {
     },
   })
 
+  type MarkAbsentResponse = {
+    detail: string
+    marked_count: number
+    skipped: Array<{
+      employee_id: number
+      name: string
+      reason: string
+    }>
+  }
+
+  const markAbsent = useApiMutation<MarkAbsentPayload, MarkAbsentResponse>({
+    mutationFn: (data: MarkAbsentPayload) =>
+      api.post(`${attendanceUrl}mark_absent/`, data).then((res) => res.data),
+    invalidateQueries: sharedInvalidations,
+    onSuccess: (response) => {
+      const markedCount = response?.marked_count || 0
+      const skipped = response?.skipped || []
+
+      if (markedCount > 0) {
+        toast.success(`${markedCount} employee(s) marked as absent.`)
+      }
+
+      if (skipped.length > 0) {
+        skipped.forEach((item) => {
+          toast.warning(`${item.name}: ${item.reason}`)
+        })
+      }
+    },
+  })
+
   return {
     clockIn,
     clockOut,
@@ -150,6 +181,7 @@ export function useAttendanceMutations() {
     updateAttendance,
     deleteAttendance,
     updateUniformPenalties,
+    markAbsent,
   }
 }
 

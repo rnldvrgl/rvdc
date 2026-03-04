@@ -410,6 +410,11 @@ export type RejectAttendancePayload = {
   reason?: string
 }
 
+export type MarkAbsentPayload = {
+  employee_ids: number[]
+  date: string
+}
+
 export type UpdateUniformPenaltiesPayload = {
   missing_uniform_shirt: boolean
   missing_uniform_pants: boolean

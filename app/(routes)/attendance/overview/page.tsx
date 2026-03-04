@@ -4,6 +4,7 @@ import { AttendanceApproval } from "@/components/custom/attendance/AttendanceApp
 import { EmployeeFilter } from "@/components/custom/attendance/EmployeeFilter"
 import { GradientStatCard } from "@/components/custom/attendance/GradientStatCard"
 import { LeaveOverview } from "@/components/custom/attendance/LeaveOverview"
+import { MarkAbsentDialog } from "@/components/custom/attendance/MarkAbsentDialog"
 import { RecentActivitySection } from "@/components/custom/attendance/RecentActivitySection"
 import { StatCard } from "@/components/custom/attendance/StatCard"
 import PageHeader from "@/components/custom/shared/PageHeader"
@@ -28,7 +29,9 @@ type SelectedEmployeeType =
 const AttendanceOverviewPage = () => {
   const { filter } = useSearchParameters()
   const { push } = useNavigation()
-  const { data: employeeChoicesData } = useEmployeeChoices()
+  const { data: employeeChoicesData } = useEmployeeChoices({
+    includeInPayroll: true,
+  })
   const [selectedEmployee, setSelectedEmployee] =
     useState<SelectedEmployeeType>(undefined)
 
@@ -76,7 +79,7 @@ const AttendanceOverviewPage = () => {
     push({
       filter: { ...filter, employee_id: selectedEmployee?.employee_id },
     })
-  }, [selectedEmployee?.employee_id])
+  }, [selectedEmployee?.employee_id, filter, push])
 
   return (
     <Wrapper>
@@ -91,6 +94,7 @@ const AttendanceOverviewPage = () => {
             `${selectedEmployee?.employee_name || "All Employees"}`,
           ]}
           onRefresh={refetch}
+          actionButton={<MarkAbsentDialog />}
         />
 
         {/* Employee Filter */}
