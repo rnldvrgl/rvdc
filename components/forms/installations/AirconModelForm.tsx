@@ -189,6 +189,7 @@ export default function AirconModelForm({
       brand_id: initialData?.brand?.id ?? undefined,
       name: initialData?.name ?? "",
       retail_price: initialData?.retail_price ?? "",
+      cost_price: initialData?.cost_price ?? "",
       discount_percentage:
         initialData?.discount_percentage !== undefined
           ? Number(initialData.discount_percentage)
@@ -504,6 +505,36 @@ export default function AirconModelForm({
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={control}
+                  name="cost_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cost Price</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
+                            ₱
+                          </span>
+                          <Input
+                            {...field}
+                            type="number"
+                            step={0.01}
+                            className="pl-8 h-11"
+                            placeholder="0.00"
+                            value={field.value ?? ""}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Dealer/purchase price (used for net income calculation)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={control}
                   name="discount_percentage"

@@ -49,6 +49,14 @@ export function getAirconModelColumns({
       cell: ({ row }) => formatCurrency(row.original.retail_price),
     },
     {
+      accessorKey: "cost_price",
+      header: "Cost Price",
+      cell: ({ row }) => {
+        const cost = row.original.cost_price
+        return cost ? formatCurrency(cost) : safeCell("")
+      },
+    },
+    {
       accessorKey: "discount_percentage",
       header: "Discount %",
       cell: ({ row }) => {

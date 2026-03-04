@@ -203,6 +203,17 @@ export default function AirconModelsPage() {
                     </p>
                   </div>
 
+                  <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                      Cost Price
+                    </p>
+                    <p className="mt-1 text-lg font-bold text-slate-800 dark:text-slate-100">
+                      {entity.cost_price
+                        ? formatCurrency(entity.cost_price)
+                        : "Not set"}
+                    </p>
+                  </div>
+
                   {entity.has_discount &&
                   entity.discount_percentage &&
                   parseFloat(entity.discount_percentage) > 0 ? (

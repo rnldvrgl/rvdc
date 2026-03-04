@@ -106,6 +106,12 @@ export function SummaryReport() {
       color: "text-rose-600",
     },
     {
+      label: "Unit Cost (Aircon)",
+      value: peso(summary?.unit_cost_deduction ?? 0),
+      icon: Package,
+      color: "text-rose-500",
+    },
+    {
       label: "Net Income",
       value: peso(summary?.net_income ?? 0),
       icon: TrendingUp,

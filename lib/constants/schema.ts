@@ -162,6 +162,7 @@ export const AirconModelSchema = z.object({
   brand_id: z.number().min(1, "Brand is required"),
   name: z.string().min(1, "Model name is required"),
   retail_price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price"),
+  cost_price: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid price").optional(),
   discount_percentage: z.number().min(0).max(100).optional(),
   aircon_type: z.nativeEnum(AirconTypes),
   horsepower: z.string().optional(),

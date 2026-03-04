@@ -457,7 +457,7 @@ export interface AnalyticsSummary {
   total_sales: number // sales revenue only
   service_revenue: number // service revenue
   total_revenue: number // combined sales + services
-  net_income: number // revenue - expenses
+  net_income: number // revenue - expenses - unit costs
 
   // Outstanding balances
   total_outstanding: number // total receivables
@@ -485,6 +485,9 @@ export interface AnalyticsSummary {
 
   // Expenses
   total_expense: number // total expenses
+
+  // Unit cost deductions
+  unit_cost_deduction: number // cost price of aircon units sold/installed
 
   // Top selling
   top_selling_item: {
@@ -696,6 +699,7 @@ export interface AirconModels {
   brand_id?: number
   name: string
   retail_price: string
+  cost_price?: string
   discount_percentage?: string
   aircon_type: AirconTypes
   horsepower?: string
