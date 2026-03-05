@@ -503,6 +503,7 @@ export default function AirconModelForm({
                           />
                         </div>
                       </FormControl>
+                      <FormDescription>Public selling price</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
