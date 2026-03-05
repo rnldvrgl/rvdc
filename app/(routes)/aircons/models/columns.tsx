@@ -7,7 +7,6 @@ import {
   capitalize,
   formatCurrency,
   getBadgeVariant,
-  safeCell,
 } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
 import { Edit, Eye, Trash2 } from "lucide-react"
@@ -46,32 +45,38 @@ export function getAirconModelColumns({
     {
       accessorKey: "retail_price",
       header: "Retail Price",
-      cell: ({ row }) => formatCurrency(row.original.retail_price),
-    },
-    {
-      accessorKey: "cost_price",
-      header: "Cost Price",
-      cell: ({ row }) => {
-        const cost = row.original.cost_price
-        return cost ? formatCurrency(cost) : safeCell("")
-      },
-    },
-    {
-      accessorKey: "promo_price",
-      header: "Promo Price",
-      cell: ({ row }) => {
-        const promo = row.original.promo_price
-        return promo ? formatCurrency(promo) : safeCell("")
-      },
+      cell: ({ row }) => (
+        <span
+          className={
+            row.original.has_discount
+              ? "text-muted-foreground line-through"
+              : ""
+          }
+        >
+          {formatCurrency(row.original.retail_price)}
+        </span>
+      ),
     },
     {
       accessorKey: "selling_price",
       header: "Selling Price",
       cell: ({ row }) => {
-        const selling = row.original.selling_price
-        return selling
-          ? formatCurrency(selling)
-          : formatCurrency(row.original.retail_price)
+        const { selling_price, retail_price, has_discount, promo_price } =
+          row.original
+        const price = selling_price || retail_price
+        return (
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium">{formatCurrency(price)}</span>
+            {has_discount && promo_price && (
+              <Badge
+                variant="success"
+                className="text-[10px] px-1.5 py-0"
+              >
+                Promo
+              </Badge>
+            )}
+          </div>
+        )
       },
     },
     {

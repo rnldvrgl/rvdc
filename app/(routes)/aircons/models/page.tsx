@@ -191,12 +191,14 @@ export default function AirconModelsPage() {
                   <Tag className="size-3.5" />
                   Pricing
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
                     <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
                       Retail Price
                     </p>
-                    <p className="mt-1 text-lg font-bold text-slate-800 dark:text-slate-100">
+                    <p
+                      className={`mt-1 text-lg font-bold ${entity.has_discount ? "text-muted-foreground line-through" : "text-slate-800 dark:text-slate-100"}`}
+                    >
                       {formatCurrency(entity.retail_price)}
                     </p>
                   </div>
@@ -235,13 +237,32 @@ export default function AirconModelsPage() {
                   ) : (
                     <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
                       <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
-                        Promo
+                        Promo Price
                       </p>
                       <p className="mt-1 text-sm font-semibold text-slate-500">
-                        No promo price
+                        No promo set
                       </p>
                     </div>
                   )}
+                </div>
+
+                {/* Selling Price — always visible */}
+                <div className="rounded-xl border-2 border-sky-200 bg-sky-50 px-4 py-3 dark:border-sky-700/40 dark:bg-sky-900/20">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                      Selling Price
+                    </p>
+                    {entity.has_discount && (
+                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-800/40 dark:text-emerald-300">
+                        Promo Applied
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xl font-black text-sky-700 dark:text-sky-300">
+                    {formatCurrency(
+                      entity.selling_price || entity.retail_price,
+                    )}
+                  </p>
                 </div>
               </section>
 

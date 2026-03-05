@@ -1513,7 +1513,11 @@ function ApplianceCard({
           {isInstallation && (
             <UnitPriceCard
               appliance={appliance}
+              serviceId={serviceId}
               installationUnits={installationUnits}
+              disabled={disabled}
+              updateAppliance={updateAppliance}
+              invalidateServiceQueries={invalidateServiceQueries}
             />
           )}
 
@@ -1605,49 +1609,242 @@ function ApplianceCard({
 
 function UnitPriceCard({
   appliance,
+  serviceId,
   installationUnits,
+  disabled,
+  updateAppliance,
+  invalidateServiceQueries,
 }: {
   appliance: ServiceAppliance
+  serviceId: number
   installationUnits: AirconUnits[]
+  disabled: boolean
+  updateAppliance: {
+    mutateAsync: (args: {
+      id: number
+      data: ServiceAppliancePayload
+    }) => Promise<unknown>
+  }
+  invalidateServiceQueries: () => Promise<void>
 }) {
+  const [isEditingPrice, setIsEditingPrice] = useState(false)
+  const [editPrice, setEditPrice] = useState<string>("")
+  const [isSaving, setIsSaving] = useState(false)
+
   const matchingUnit = appliance.serial_number
     ? installationUnits.find(
         (unit) => unit.serial_number === appliance.serial_number,
       )
     : null
 
-  const price = appliance.unit_price
+  const defaultPrice = matchingUnit?.model
+    ? parseFloat(
+        matchingUnit.model.selling_price ||
+          matchingUnit.model.retail_price ||
+          "0",
+      )
+    : 0
+
+  const currentPrice = appliance.unit_price
     ? parseFloat(appliance.unit_price)
-    : matchingUnit?.model
-      ? parseFloat(
-          matchingUnit.model.selling_price ||
-            matchingUnit.model.retail_price ||
-            "0",
-        )
-      : null
+    : defaultPrice
+
+  const hasOverride =
+    appliance.unit_price != null &&
+    parseFloat(appliance.unit_price) !== defaultPrice
+
+  const handleStartEdit = () => {
+    setEditPrice(currentPrice > 0 ? currentPrice.toString() : "")
+    setIsEditingPrice(true)
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditingPrice(false)
+    setEditPrice("")
+  }
+
+  const handleSavePrice = async () => {
+    setIsSaving(true)
+    try {
+      const newPrice = editPrice ? parseFloat(editPrice) : null
+      await updateAppliance.mutateAsync({
+        id: appliance.id,
+        data: {
+          service: serviceId,
+          appliance_type_id: appliance.appliance_type?.id ?? null,
+          labor_fee: parseFloat(appliance.labor_fee),
+          status: appliance.status,
+          unit_price:
+            newPrice !== null ? Math.round(newPrice * 100) / 100 : null,
+        },
+      })
+      toast.success("Unit price updated!")
+      setIsEditingPrice(false)
+      await invalidateServiceQueries()
+    } catch {
+      // handled by useApiMutation
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleResetToDefault = async () => {
+    setIsSaving(true)
+    try {
+      await updateAppliance.mutateAsync({
+        id: appliance.id,
+        data: {
+          service: serviceId,
+          appliance_type_id: appliance.appliance_type?.id ?? null,
+          labor_fee: parseFloat(appliance.labor_fee),
+          status: appliance.status,
+          unit_price: null,
+        },
+      })
+      toast.success("Unit price reset to default!")
+      setIsEditingPrice(false)
+      await invalidateServiceQueries()
+    } catch {
+      // handled by useApiMutation
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   return (
     <Card className="border-2">
       <CardContent>
         <div className="space-y-2">
-          <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-            Unit Price
-          </Label>
-          {price != null && price > 0 ? (
+          <div className="flex items-center justify-between">
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+              Unit Price
+            </Label>
+            {!disabled && !isEditingPrice && currentPrice > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartEdit}
+                    className="h-6 w-6 p-0"
+                  >
+                    <Edit className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Override unit price</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+
+          {isEditingPrice ? (
+            <div className="space-y-2">
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+                placeholder={`₱${defaultPrice.toLocaleString("en-PH", { minimumFractionDigits: 2 })} — default`}
+                className="h-9"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSavePrice()
+                  if (e.key === "Escape") handleCancelEdit()
+                }}
+              />
+              {defaultPrice > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Default: {formatCurrency(defaultPrice)}
+                </p>
+              )}
+              <div className="flex items-center gap-1.5">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleSavePrice}
+                  disabled={isSaving}
+                  className="h-7 text-xs"
+                >
+                  <Save className="mr-1 h-3 w-3" />
+                  Save
+                </Button>
+                {hasOverride && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResetToDefault}
+                    disabled={isSaving}
+                    className="h-7 text-xs"
+                  >
+                    <RotateCcw className="mr-1 h-3 w-3" />
+                    Reset
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                  className="h-7 text-xs"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : currentPrice > 0 ? (
             <div className="space-y-1">
+              {hasOverride && defaultPrice > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm line-through text-muted-foreground">
+                    {formatCurrency(defaultPrice)}
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs ${
+                      currentPrice < defaultPrice
+                        ? "text-green-600 border-green-600"
+                        : "text-orange-600 border-orange-600"
+                    }`}
+                  >
+                    {currentPrice < defaultPrice
+                      ? `${formatCurrency(defaultPrice - currentPrice)} off`
+                      : `+${formatCurrency(currentPrice - defaultPrice)}`}
+                  </Badge>
+                </div>
+              )}
               <p className="text-2xl font-bold text-primary">
-                {formatCurrency(price)}
+                {formatCurrency(currentPrice)}
               </p>
               <p className="text-xs text-muted-foreground">
                 {matchingUnit?.model
                   ? `${matchingUnit.model.brand?.name} ${matchingUnit.model.name}`
                   : "Second-hand unit"}
+                {hasOverride && " • Custom price"}
               </p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {matchingUnit ? "No unit linked" : "Labor only (no unit price)"}
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                {matchingUnit
+                  ? "No unit price set"
+                  : "Labor only (no unit price)"}
+              </p>
+              {!disabled && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleStartEdit}
+                  className="h-7 text-xs"
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  Set Price
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </CardContent>

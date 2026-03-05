@@ -456,7 +456,7 @@ export default function AirconModelForm({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                   control={control}
                   name="retail_price"
@@ -502,15 +502,11 @@ export default function AirconModelForm({
                           />
                         </div>
                       </FormControl>
-                      <FormDescription>
-                        Dealer/purchase price (used for net income calculation)
-                      </FormDescription>
+                      <FormDescription>Dealer/purchase cost</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={control}
                   name="promo_price"
@@ -528,7 +524,7 @@ export default function AirconModelForm({
                             step={0.01}
                             min={0}
                             className="pl-8 h-11"
-                            placeholder="Leave empty for no promo"
+                            placeholder="No promo"
                             value={field.value ?? ""}
                             onChange={(e) =>
                               field.onChange(e.target.value || null)
@@ -537,8 +533,7 @@ export default function AirconModelForm({
                         </div>
                       </FormControl>
                       <FormDescription>
-                        Optional. If set below retail, this becomes the selling
-                        price.
+                        Below retail = selling price
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -550,9 +545,19 @@ export default function AirconModelForm({
                 parseFloat(promoPrice) > 0 &&
                 parseFloat(promoPrice) < parseFloat(retailPrice) && (
                   <div className="flex items-center justify-between rounded-lg border-2 border-emerald-300 bg-emerald-50 px-4 py-3 dark:border-emerald-700 dark:bg-emerald-900/20">
-                    <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-                      Selling Price
-                    </span>
+                    <div>
+                      <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                        Selling Price
+                      </span>
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                        Save{" "}
+                        {formatCurrency(
+                          (
+                            parseFloat(retailPrice) - parseFloat(promoPrice)
+                          ).toFixed(2),
+                        )}
+                      </p>
+                    </div>
                     <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
                       {formatCurrency(parseFloat(promoPrice).toFixed(2))}
                     </span>
