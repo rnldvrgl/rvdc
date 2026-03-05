@@ -6,6 +6,7 @@ import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import { RemittanceDetails } from "@/components/details/RemittanceDetails"
 import RemittanceForm from "@/components/forms/RemittanceForm"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { RemittanceRecord } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -16,7 +17,19 @@ import {
   useRemittancesRecordFilters,
   useRemittancesRecords,
 } from "@/lib/queries/useRemittancesRecords"
-import { DollarSign, Plus } from "lucide-react"
+import { cn, formatCurrency } from "@/lib/utils/helpers"
+import {
+  ArrowRightLeft,
+  Banknote,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  Plus,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react"
+import { useMemo } from "react"
 import { getRemittanceColumns } from "./columns"
 
 export default function RemittancesPage() {
@@ -33,6 +46,38 @@ export default function RemittancesPage() {
   })
   const { filters, orderingOptions } = useRemittancesRecordFilters()
   const { deleteRemittance, markRemitted } = useRemittanceMutations()
+
+  // Compute summary stats from loaded results
+  const stats = useMemo(() => {
+    const results = data?.results ?? []
+    const totalDeclared = results.reduce(
+      (s, r) => s + Number(r.declared_amount || 0),
+      0,
+    )
+    const totalRemitted = results.reduce(
+      (s, r) => s + Number(r.remitted_amount || 0),
+      0,
+    )
+    const totalCOD = results.reduce(
+      (s, r) => s + Number(r.cod_for_next_day || 0),
+      0,
+    )
+    const acknowledged = results.filter((r) => r.is_remitted).length
+    const pending = results.length - acknowledged
+    const overCount = results.filter((r) => Number(r.balance || 0) > 0).length
+    const shortCount = results.filter((r) => Number(r.balance || 0) < 0).length
+
+    return {
+      totalDeclared,
+      totalRemitted,
+      totalCOD,
+      acknowledged,
+      pending,
+      overCount,
+      shortCount,
+      total: results.length,
+    }
+  }, [data?.results])
 
   const {
     entityState: viewSheet,
@@ -77,9 +122,78 @@ export default function RemittancesPage() {
         }
       />
 
+      {/* Summary Stat Cards */}
+      {!isLoading && stats.total > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatCard
+            label="Declared"
+            value={formatCurrency(stats.totalDeclared)}
+            icon={<Wallet className="size-4" />}
+            muted
+          />
+          <StatCard
+            label="Remitted"
+            value={formatCurrency(stats.totalRemitted)}
+            icon={<Banknote className="size-4" />}
+            highlight
+          />
+          <StatCard
+            label="COD Carried"
+            value={formatCurrency(stats.totalCOD)}
+            icon={<ArrowRightLeft className="size-4" />}
+            className={stats.totalCOD > 0 ? "text-amber-600" : ""}
+          />
+          <StatCard
+            label="Status"
+            value={
+              <div className="flex flex-wrap items-center gap-1.5">
+                {stats.pending > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 text-xs"
+                  >
+                    <Clock className="size-3" />
+                    {stats.pending} pending
+                  </Badge>
+                )}
+                {stats.acknowledged > 0 && (
+                  <Badge
+                    variant="success"
+                    className="gap-1 text-xs"
+                  >
+                    <CheckCircle2 className="size-3" />
+                    {stats.acknowledged}
+                  </Badge>
+                )}
+                {stats.shortCount > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="gap-1 text-xs"
+                  >
+                    <TrendingDown className="size-3" />
+                    {stats.shortCount} short
+                  </Badge>
+                )}
+                {stats.overCount > 0 && (
+                  <Badge
+                    variant="warning"
+                    className="gap-1 text-xs"
+                  >
+                    <TrendingUp className="size-3" />
+                    {stats.overCount} over
+                  </Badge>
+                )}
+              </div>
+            }
+            icon={<DollarSign className="size-4" />}
+          />
+        </div>
+      )}
+
       {/* Create Remittance Sheet */}
       <EntitySheet
         open={createSheet.open}
+        className="min-w-xl"
         onClose={closeCreate}
         title="New Remittance"
         description="Record a new cash remittance from a stall location."
@@ -89,6 +203,7 @@ export default function RemittancesPage() {
 
       {/* Edit Remittance Sheet */}
       <EntitySheet
+        className="min-w-xl"
         open={editSheet.open}
         onClose={closeEdit}
         entity={editSheet.entity}
@@ -110,6 +225,7 @@ export default function RemittancesPage() {
 
       {/* View Remittance Sheet */}
       <EntitySheet
+        className="min-w-xl"
         open={viewSheet.open}
         onClose={closeView}
         entity={viewSheet.entity}
@@ -153,5 +269,52 @@ export default function RemittancesPage() {
         emptyDescription="Submit your first daily remittance to start tracking"
       />
     </Wrapper>
+  )
+}
+
+/* ────────────────────────────────────────────
+   Sub-components
+   ──────────────────────────────────────────── */
+
+function StatCard({
+  label,
+  value,
+  icon,
+  highlight,
+  muted,
+  className,
+}: {
+  label: string
+  value: React.ReactNode
+  icon: React.ReactNode
+  highlight?: boolean
+  muted?: boolean
+  className?: string
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border p-3 space-y-1",
+        highlight && "border-primary/30 bg-primary/3",
+      )}
+    >
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      {typeof value === "string" ? (
+        <p
+          className={cn(
+            "text-xl font-bold tabular-nums",
+            muted && "text-muted-foreground",
+            className,
+          )}
+        >
+          {value}
+        </p>
+      ) : (
+        <div className={className}>{value}</div>
+      )}
+    </div>
   )
 }
