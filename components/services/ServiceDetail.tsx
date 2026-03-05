@@ -1706,9 +1706,7 @@ export default function ServiceDetail({
                             <Badge
                               variant="outline"
                               className={`text-[10px] h-4 px-1.5 capitalize ${
-                                isRefund
-                                  ? "border-red-300 text-red-600"
-                                  : ""
+                                isRefund ? "border-red-300 text-red-600" : ""
                               }`}
                             >
                               {tx.method}
