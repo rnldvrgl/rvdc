@@ -34,7 +34,6 @@ import {
 import { formatBackDate } from "@/lib/utils/helpers/date"
 import {
   Banknote,
-  CalendarCheck,
   CreditCard,
   FileText,
   Loader2,
@@ -70,28 +69,25 @@ const STATUS_VARIANT: Record<
 function Section({
   icon: Icon,
   title,
-  description,
   children,
+  className,
 }: {
   icon: React.ElementType
   title: string
-  description?: string
   children: React.ReactNode
+  className?: string
 }) {
   return (
-    <div className="space-y-4 rounded-xl border bg-background p-4 shadow-sm">
-      <div className="flex items-center gap-2">
-        <div className="flex items-center justify-center size-8 rounded-lg bg-primary/10 text-primary">
-          <Icon className="size-4" />
+    <div
+      className={`space-y-4 rounded-xl border bg-card p-5 shadow-sm ${className || ""}`}
+    >
+      <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-center size-9 rounded-lg bg-primary/10 text-primary">
+          <Icon className="size-5" />
         </div>
-        <div>
-          <h3 className="text-sm font-semibold leading-tight">{title}</h3>
-          {description && (
-            <p className="text-xs text-muted-foreground">{description}</p>
-          )}
-        </div>
+        <h3 className="text-base font-semibold">{title}</h3>
       </div>
-      <Separator />
+      <Separator className="bg-border/60" />
       {children}
     </div>
   )
@@ -206,15 +202,14 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-5"
+        className="space-y-6"
       >
-        {/* ── Section 1: Status & Client ── */}
+        {/* Client & Status */}
         <Section
           icon={Users}
           title="Client & Status"
-          description="Who is this cheque from?"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="client"
@@ -240,99 +235,179 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
               name="status"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel required>
-                    <span className="flex items-center gap-2">
-                      Status
-                      {field.value && (
-                        <Badge
-                          variant={STATUS_VARIANT[field.value] ?? "secondary"}
-                          className="text-[10px] px-1.5 py-0"
-                        >
-                          {field.value}
-                        </Badge>
-                      )}
-                    </span>
-                  </FormLabel>
-                  <FormControl>
-                    <ComboBox
-                      options={STATUS_OPTIONS.map((o) => ({
-                        value: o.value,
-                        label: o.label,
-                      }))}
-                      value={field.value ?? null}
-                      onChange={field.onChange}
-                      placeholder="Select status"
-                      disabled={mutationLoading}
-                    />
-                  </FormControl>
+                  <FormLabel required>Status</FormLabel>
+                  <div className="flex items-center gap-2">
+                    <FormControl className="flex-1">
+                      <ComboBox
+                        options={STATUS_OPTIONS.map((o) => ({
+                          value: o.value,
+                          label: o.label,
+                        }))}
+                        value={field.value ?? null}
+                        onChange={field.onChange}
+                        placeholder="Select status"
+                        disabled={mutationLoading}
+                      />
+                    </FormControl>
+                    {field.value && (
+                      <Badge
+                        variant={STATUS_VARIANT[field.value] ?? "secondary"}
+                        className="px-2.5 py-1"
+                      >
+                        {field.value}
+                      </Badge>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
 
-          {/* Conditional Deposit Bank */}
-          {["deposited", "encashed"].includes(selectedStatus || "") && (
-            <FormField
-              control={form.control}
-              name="deposit_bank"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Deposit Bank</FormLabel>
-                  <FormControl>
-                    <ComboBox
-                      options={banks ?? []}
-                      value={field.value || null}
-                      onChange={field.onChange}
-                      placeholder="Select deposit bank"
-                      disabled={mutationLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+            {/* Conditional Deposit Bank */}
+            {["deposited", "encashed"].includes(selectedStatus || "") && (
+              <FormField
+                control={form.control}
+                name="deposit_bank"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Deposit Bank</FormLabel>
+                    <FormControl>
+                      <ComboBox
+                        options={banks ?? []}
+                        value={field.value || null}
+                        onChange={field.onChange}
+                        placeholder="Select deposit bank"
+                        disabled={mutationLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </div>
         </Section>
 
-        {/* ── Section 2: Cheque Details ── */}
+        {/* Cheque Information */}
         <Section
           icon={CreditCard}
-          title="Cheque Details"
-          description="Bank, number, amount, and date"
+          title="Cheque Information"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="bank_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Issuing Bank</FormLabel>
-                  <FormControl>
-                    <ComboBox
-                      options={banks ?? []}
-                      value={field.value || null}
-                      onChange={field.onChange}
-                      placeholder="Select bank"
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="bank_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Issuing Bank</FormLabel>
+                    <FormControl>
+                      <ComboBox
+                        options={banks ?? []}
+                        value={field.value || null}
+                        onChange={field.onChange}
+                        placeholder="Select bank"
+                        disabled={mutationLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="cheque_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Cheque Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="e.g. 001234567"
+                        disabled={mutationLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="cheque_amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Cheque Amount (₱)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(e.target.valueAsNumber || undefined)
+                        }
+                        placeholder="0.00"
+                        disabled={mutationLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="cheque_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <DatePicker
+                      field={field}
+                      placeholder="Pick a date"
+                      label="Cheque Date"
                       disabled={mutationLoading}
+                      required
+                      maxDate={
+                        new Date(
+                          new Date().setFullYear(new Date().getFullYear() + 1),
+                        )
+                      }
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <Separator className="my-2" />
+
+            <div className="flex items-center gap-2.5 mb-3">
+              <Checkbox
+                id="sameAsClient"
+                checked={sameAsClient}
+                onCheckedChange={(checked) => setSameAsClient(!!checked)}
+                disabled={mutationLoading}
+              />
+              <label
+                htmlFor="sameAsClient"
+                className="text-sm font-medium cursor-pointer select-none"
+              >
+                Issuer is same as client
+              </label>
+            </div>
 
             <FormField
               control={form.control}
-              name="cheque_number"
+              name="issued_by"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel required>Cheque Number</FormLabel>
+                  <FormLabel required>Issued By</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="e.g. 001234567"
-                      disabled={mutationLoading}
+                      placeholder="Name on the cheque"
+                      disabled={mutationLoading || sameAsClient}
                     />
                   </FormControl>
                   <FormMessage />
@@ -340,214 +415,137 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
               )}
             />
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="cheque_amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Cheque Amount (₱)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      value={field.value ?? ""}
-                      onChange={(e) =>
-                        field.onChange(e.target.valueAsNumber || undefined)
-                      }
-                      placeholder="0.00"
-                      disabled={mutationLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="cheque_date"
-              render={({ field }) => (
-                <FormItem>
-                  <DatePicker
-                    field={field}
-                    placeholder="Pick a date"
-                    label="Cheque Date"
-                    disabled={mutationLoading}
-                    required
-                    maxDate={
-                      new Date(
-                        new Date().setFullYear(new Date().getFullYear() + 1),
-                      )
-                    }
-                  />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <Separator />
-
-          {/* Issued by */}
-          <div className="flex items-center gap-2 mb-1">
-            <Checkbox
-              id="sameAsClient"
-              checked={sameAsClient}
-              onCheckedChange={(checked) => setSameAsClient(!!checked)}
-              disabled={mutationLoading}
-            />
-            <label
-              htmlFor="sameAsClient"
-              className="text-sm font-medium leading-none cursor-pointer select-none"
-            >
-              Issuer is same as client
-            </label>
-          </div>
-
-          <FormField
-            control={form.control}
-            name="issued_by"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel required>Issued By</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Name on the cheque"
-                    disabled={mutationLoading || sameAsClient}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </Section>
 
-        {/* ── Section 3: Billing & Amount Summary ── */}
+        {/* Billing & Collection */}
         <Section
           icon={Banknote}
-          title="Billing"
-          description="Billing amount and official receipt"
+          title="Billing & Collection"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="billing_amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Billing Amount (₱)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      value={field.value ?? ""}
-                      onChange={(e) =>
-                        field.onChange(e.target.valueAsNumber || undefined)
-                      }
-                      placeholder="0.00"
-                      disabled={mutationLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="billing_amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Billing Amount (₱)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(e.target.valueAsNumber || undefined)
+                        }
+                        placeholder="0.00"
+                        disabled={mutationLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="or_number"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>OR Number</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="e.g. OR-2025-0001"
-                      disabled={mutationLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+              <FormField
+                control={form.control}
+                name="or_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>OR Number</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="e.g. OR-2026-0001"
+                        disabled={mutationLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-          {/* Quick amount comparison */}
-          {difference !== null && (
-            <div className="rounded-lg bg-muted/60 border px-4 py-3 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                Cheque vs Billing difference
-              </span>
-              <span
-                className={`font-semibold ${
+            {/* Amount Comparison */}
+            {difference !== null && (
+              <div
+                className={`rounded-lg border-2 px-4 py-3 flex items-center justify-between ${
                   difference > 0
-                    ? "text-emerald-600"
+                    ? "bg-emerald-50 border-emerald-200"
                     : difference < 0
-                      ? "text-rose-600"
-                      : "text-muted-foreground"
+                      ? "bg-rose-50 border-rose-200"
+                      : "bg-muted border-border"
                 }`}
               >
-                {difference > 0 ? "+" : ""}₱
-                {Math.abs(difference).toLocaleString("en-PH", {
-                  minimumFractionDigits: 2,
-                })}
-                {difference === 0 && " (exact match)"}
-              </span>
-            </div>
-          )}
-        </Section>
+                <span className="text-sm font-medium text-muted-foreground">
+                  {difference === 0 ? "Exact Match" : "Difference"}
+                </span>
+                <span
+                  className={`text-lg font-bold ${
+                    difference > 0
+                      ? "text-emerald-700"
+                      : difference < 0
+                        ? "text-rose-700"
+                        : "text-muted-foreground"
+                  }`}
+                >
+                  {difference > 0 ? "+" : ""}₱
+                  {Math.abs(difference).toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
+            )}
 
-        {/* ── Section 4: Collection Info ── */}
-        <Section
-          icon={CalendarCheck}
-          title="Collection"
-          description="When and who collected the cheque"
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="date_collected"
-              render={({ field }) => (
-                <FormItem>
-                  <DatePicker
-                    field={field}
-                    label="Date Collected"
-                    placeholder="Pick a date"
-                    disabled={mutationLoading}
-                  />
-                </FormItem>
-              )}
-            />
+            <Separator className="my-2" />
 
-            <FormField
-              control={form.control}
-              name="collected_by"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Collected By</FormLabel>
-                  <FormControl>
-                    <ComboBox
-                      options={userOptions}
-                      value={field.value ?? null}
-                      onChange={field.onChange}
-                      placeholder="Select collector"
-                      disabled={mutationLoading || usersLoading}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="date_collected"
+                render={({ field }) => (
+                  <FormItem>
+                    <DatePicker
+                      field={field}
+                      label="Date Collected"
+                      placeholder="Pick a date"
+                      disabled={mutationLoading}
                     />
-                  </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    Leave empty if delivered by client
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="collected_by"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Collected By</FormLabel>
+                    <FormControl>
+                      <ComboBox
+                        options={userOptions}
+                        value={field.value ?? null}
+                        onChange={field.onChange}
+                        placeholder="Select collector"
+                        disabled={mutationLoading || usersLoading}
+                      />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground mt-1.5">
+                      Leave empty if delivered by client
+                    </p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         </Section>
 
-        {/* ── Section 5: Notes ── */}
+        {/* Notes */}
         <Section
           icon={FileText}
-          title="Notes"
-          description="Any additional remarks"
+          title="Notes (Optional)"
         >
           <FormField
             control={form.control}
@@ -557,9 +555,10 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
                 <FormControl>
                   <Textarea
                     {...field}
-                    placeholder="Add optional notes here..."
-                    rows={3}
+                    placeholder="Add any additional remarks or important information..."
+                    rows={4}
                     disabled={mutationLoading}
+                    className="resize-none"
                   />
                 </FormControl>
                 <FormMessage />
@@ -568,19 +567,21 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
           />
         </Section>
 
-        {/* ── Actions ── */}
-        <div className="flex justify-end gap-2 pt-2">
+        {/* Actions */}
+        <div className="flex justify-end gap-3 pt-4 border-t">
           <Button
             type="button"
             variant="outline"
             onClick={onClose}
             disabled={mutationLoading}
+            className="min-w-[100px]"
           >
             Cancel
           </Button>
           <Button
             type="submit"
             disabled={mutationLoading}
+            className="min-w-[140px]"
           >
             {mutationLoading ? (
               <Loader2 className="size-4 mr-2 animate-spin" />
