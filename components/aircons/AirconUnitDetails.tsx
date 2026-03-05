@@ -324,8 +324,8 @@ export function AirconUnitDetails({
             <h3 className="text-lg font-semibold mb-4">Lifecycle</h3>
             <div className="flex items-start justify-between gap-0">
               {lifecycleSteps.map((step, i) => {
-                const isDone = i < currentIdx
-                const isCurrent = i === currentIdx
+                const isDone = i <= currentIdx
+                const isCurrent = false
                 return (
                   <div
                     key={step.key}
