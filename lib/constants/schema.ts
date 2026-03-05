@@ -95,6 +95,10 @@ export const RemittanceRecordSchema = z.object({
   cash_breakdown: CashDenominationBreakdownPayloadSchema.optional(),
 
   is_remitted: z.boolean().optional(),
+
+  // Backdating support
+  remittance_date: z.string().optional(), // "YYYY-MM-DD" or empty
+  mark_as_acknowledged: z.boolean().optional(),
 })
 
 export const ChequeCollectionSchema = z

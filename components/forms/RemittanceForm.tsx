@@ -1,7 +1,15 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { ArrowRightLeft, Banknote, Minus, Plus, Wallet } from "lucide-react"
+import {
+  ArrowRightLeft,
+  Banknote,
+  CalendarIcon,
+  Info,
+  Minus,
+  Plus,
+  Wallet,
+} from "lucide-react"
 import { useCallback, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 
@@ -13,6 +21,7 @@ import useUserProfileStore from "@/lib/store/useUserProfileStore"
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import {
   Form,
   FormControl,
@@ -22,13 +31,20 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 
 import { RemittanceRecordPayload } from "@/lib/constants/infers"
 import { RemittanceRecordSchema } from "@/lib/constants/schema"
+import { useRemittancePreview } from "@/lib/queries/useRemittancesRecords"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
+import { format, isToday, startOfDay } from "date-fns"
 
 const DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5, 1] as const
 type Denom = (typeof DENOMINATIONS)[number]
@@ -61,6 +77,17 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
   const isRemitted = initialData?.is_remitted ?? false
   const disabled = isRemitted
 
+  // Preview: fetch expected sales/expenses for the selected stall + date
+  const [previewStall, setPreviewStall] = useState<number | undefined>(
+    initialData?.stall ??
+      (role === "admin" ? undefined : userProfile?.assigned_stall?.id),
+  )
+  const [previewDate, setPreviewDate] = useState<string | undefined>(undefined)
+  const { data: preview, isLoading: previewLoading } = useRemittancePreview({
+    stall: isEditing ? undefined : previewStall,
+    date: previewDate,
+  })
+
   // "Remit all" mode: when ON, remit count auto-matches declared
   const defaultRemitAll =
     !initialData ||
@@ -78,6 +105,8 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         initialData?.stall ??
         (role === "admin" ? undefined : userProfile?.assigned_stall?.id),
       notes: initialData?.notes ?? "",
+      remittance_date: undefined,
+      mark_as_acknowledged: false,
       cash_breakdown: {
         ...Object.fromEntries(
           DENOMINATIONS.flatMap((d) => [
@@ -92,7 +121,11 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
     },
   })
 
-  const { setValue, getValues, control, handleSubmit } = form
+  const { setValue, getValues, control, handleSubmit, watch } = form
+
+  // Watch date for backdated indicator
+  const watchedDate = watch("remittance_date")
+  const isBackdated = !isEditing && !!watchedDate
 
   // Watch all cash_breakdown fields for live totals
   const watchedBreakdown = useWatch({ control, name: "cash_breakdown" })
@@ -126,7 +159,6 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         setValue(getCountField(denom), value)
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [remitAll, setValue],
   )
 
@@ -136,7 +168,6 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
       const declared = (getValues(getDeclaredField(denom)) as number) || 0
       setValue(getCountField(denom), Math.min(value, declared))
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [setValue, getValues],
   )
 
@@ -151,7 +182,6 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [setValue, getValues],
   )
 
@@ -169,7 +199,6 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         setValue(countField, newVal)
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [setValue, getValues, remitAll],
   )
 
@@ -199,7 +228,6 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         }
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [setValue, getValues, remitAll],
   )
 
@@ -246,7 +274,10 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                       stalls?.map((s) => ({ value: s.id, label: s.name })) ?? []
                     }
                     value={field.value ?? null}
-                    onChange={field.onChange}
+                    onChange={(val) => {
+                      field.onChange(val)
+                      setPreviewStall(typeof val === "number" ? val : undefined)
+                    }}
                     placeholder="Select stall"
                     disabled={disabled}
                   />
@@ -255,6 +286,161 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
               </FormItem>
             )}
           />
+        )}
+
+        {/* Date Picker + Backdate Options (admin, create mode only) */}
+        {role === "admin" && !isEditing && (
+          <div className="space-y-3">
+            <FormField
+              control={control}
+              name="remittance_date"
+              render={({ field }) => {
+                const dateValue = field.value
+                  ? new Date(field.value + "T00:00:00")
+                  : undefined
+
+                return (
+                  <FormItem>
+                    <FormLabel>Remittance Date</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !field.value && "text-muted-foreground",
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 size-4" />
+                            {dateValue
+                              ? format(dateValue, "EEE, MMM dd yyyy")
+                              : "Today (default)"}
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto p-0"
+                        align="start"
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={dateValue}
+                          onSelect={(date) => {
+                            if (date && isToday(date)) {
+                              field.onChange(undefined)
+                              setPreviewDate(undefined)
+                            } else if (date) {
+                              const formatted = format(date, "yyyy-MM-dd")
+                              field.onChange(formatted)
+                              setPreviewDate(formatted)
+                            } else {
+                              field.onChange(undefined)
+                              setPreviewDate(undefined)
+                            }
+                          }}
+                          disabled={(date) => date > startOfDay(new Date())}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )
+              }}
+            />
+
+            {/* Backdated info banner + auto-acknowledge */}
+            {isBackdated && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-3 space-y-3">
+                <div className="flex gap-2 text-sm text-amber-700 dark:text-amber-400">
+                  <Info className="size-4 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium">Backdated entry</p>
+                    <p className="text-xs text-amber-600 dark:text-amber-500">
+                      Sales and expenses will be pulled from the selected date.
+                      COD carry-over may not be accurate for historical entries.
+                    </p>
+                  </div>
+                </div>
+                <FormField
+                  control={control}
+                  name="mark_as_acknowledged"
+                  render={({ field }) => (
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                          Mark as acknowledged
+                        </p>
+                        <p className="text-xs text-amber-600 dark:text-amber-500">
+                          Cash was already collected by admin
+                        </p>
+                      </div>
+                      <Switch
+                        checked={field.value ?? false}
+                        onCheckedChange={field.onChange}
+                      />
+                    </div>
+                  )}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Expected Remittance Preview */}
+        {!isEditing && preview && !previewLoading && (
+          <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">
+                Expected for{" "}
+                {format(new Date(preview.date + "T00:00:00"), "MMM dd, yyyy")}
+              </p>
+              {preview.already_exists && (
+                <Badge
+                  variant="destructive"
+                  className="text-xs"
+                >
+                  Already submitted
+                </Badge>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Cash Sales</span>
+                <span className="font-medium tabular-nums">
+                  {formatCurrency(preview.total_sales_cash)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">GCash</span>
+                <span className="font-medium tabular-nums">
+                  {formatCurrency(preview.total_sales_gcash)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">COD In</span>
+                <span className="font-medium tabular-nums">
+                  {formatCurrency(preview.cod_from_previous)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Expenses</span>
+                <span className="font-medium tabular-nums text-red-600">
+                  {Number(preview.total_expenses) > 0
+                    ? `−${formatCurrency(preview.total_expenses)}`
+                    : formatCurrency(0)}
+                </span>
+              </div>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold">Expected to Remit</span>
+              <span className="text-lg font-bold tabular-nums text-primary">
+                {formatCurrency(preview.expected_remittance)}
+              </span>
+            </div>
+          </div>
         )}
 
         {/* Live Summary Cards */}
@@ -445,7 +631,6 @@ function DenominationRow({
     (useWatch({ control, name: getCountField(denom) }) as number) ?? 0
   const codCount = declaredCount - remitCount
   const declaredValue = declaredCount * denom
-  const remitValue = remitCount * denom
 
   return (
     <div
