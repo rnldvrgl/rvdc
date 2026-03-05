@@ -132,7 +132,7 @@ export function AirconUnitDetails({
               <span className="text-2xl font-bold text-gray-900">
                 ₱
                 {parseFloat(
-                  unit.model.selling_price || unit.model.retail_price,
+                  unit.sale_price || unit.model.retail_price,
                 ).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -486,6 +486,23 @@ export function AirconUnitDetails({
         <div className="border-t pt-4">
           <h3 className="text-lg font-semibold mb-3">Pricing</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Actual Sale Price (if different from model default) */}
+            {unit.sale_price &&
+              parseFloat(unit.sale_price) !==
+                parseFloat(unit.model.selling_price || "0") && (
+                <div className="sm:col-span-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <label className="text-sm font-medium text-blue-700">
+                    Actual Sale Price (Custom)
+                  </label>
+                  <p className="text-lg font-bold text-blue-900">
+                    ₱
+                    {parseFloat(unit.sale_price).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </p>
+                </div>
+              )}
             {unit.model.retail_price && (
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
@@ -505,7 +522,7 @@ export function AirconUnitDetails({
             {unit.model.has_discount && unit.model.selling_price && (
               <div>
                 <label className="text-sm font-medium text-muted-foreground">
-                  Selling Price
+                  Selling Price (Model Default)
                 </label>
                 <p className="text-base font-semibold text-green-600">
                   ₱
