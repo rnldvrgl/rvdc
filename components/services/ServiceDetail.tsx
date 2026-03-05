@@ -928,13 +928,14 @@ export default function ServiceDetail({
                                 ? `${appliance.brand} ${appliance.model}`
                                 : "Unknown Appliance")}
                           </p>
-                          {(appliance.brand || appliance.model) && (
-                            <p className="text-xs text-muted-foreground">
-                              {[appliance.brand, appliance.model]
-                                .filter(Boolean)
-                                .join(" ")}
-                            </p>
-                          )}
+                          {appliance.appliance_type?.name &&
+                            (appliance.brand || appliance.model) && (
+                              <p className="text-xs text-muted-foreground">
+                                {[appliance.brand, appliance.model]
+                                  .filter(Boolean)
+                                  .join(" ")}
+                              </p>
+                            )}
                           {appliance.serial_number && (
                             <p className="text-xs text-muted-foreground">
                               SN: {appliance.serial_number}
