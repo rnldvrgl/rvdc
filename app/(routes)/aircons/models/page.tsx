@@ -26,7 +26,6 @@ import {
   Minus,
   Monitor,
   Pencil,
-  Percent,
   Plus,
   Settings2,
   Shield,
@@ -66,9 +65,9 @@ export default function AirconModelsPage() {
   } = useEntitySheet<AirconModels>()
 
   const {
-    entityState: { open: discountOpen, entity: discountEntity },
-    openEntity: openDiscountSheet,
-    closeEntity: closeDiscountSheet,
+    entityState: { open: promoOpen, entity: promoEntity },
+    openEntity: openPromoSheet,
+    closeEntity: closePromoSheet,
   } = useEntitySheet<AirconModels>()
 
   const handleDelete = (model: AirconModels) => {
@@ -80,7 +79,7 @@ export default function AirconModelsPage() {
   const columns = getAirconModelColumns({
     onEdit: openEditSheet,
     onDelete: handleDelete,
-    onCustomAction: openDiscountSheet,
+    onCustomAction: openPromoSheet,
     onView: handleView,
   })
 
@@ -90,7 +89,7 @@ export default function AirconModelsPage() {
       <PageHeader
         icon={Monitor}
         title="Aircon Models"
-        description="Manage air conditioning unit models, specifications, pricing, and promotional discounts for your installation services."
+        description="Manage air conditioning unit models, specifications, pricing, and promotional prices for your installation services."
         breadcrumbs={["Dashboard", "Aircons", "Models"]}
         actionButton={
           canManage && (
@@ -137,8 +136,7 @@ export default function AirconModelsPage() {
                     )}
                     {entity.has_discount && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/20 px-3 py-1 text-xs font-semibold text-rose-300 ring-1 ring-rose-400/30">
-                        <Percent className="size-3" />{" "}
-                        {entity.discount_percentage}% OFF
+                        <Tag className="size-3" /> Promo
                       </span>
                     )}
                   </div>
@@ -215,32 +213,32 @@ export default function AirconModelsPage() {
                   </div>
 
                   {entity.has_discount &&
-                  entity.discount_percentage &&
-                  parseFloat(entity.discount_percentage) > 0 ? (
+                  entity.promo_price &&
+                  parseFloat(entity.promo_price) > 0 ? (
                     <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-700/40 dark:bg-emerald-900/20">
                       <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                         Promo Price
                       </p>
                       <p className="mt-1 text-lg font-bold text-emerald-700 dark:text-emerald-300">
-                        {formatCurrency(
-                          (
-                            parseFloat(entity.retail_price || "0") *
-                            (1 - parseFloat(entity.discount_percentage) / 100)
-                          ).toFixed(2),
-                        )}
+                        {formatCurrency(entity.promo_price)}
                       </p>
                       <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-800/40 dark:text-emerald-300">
-                        <Percent className="size-2.5" />
-                        {entity.discount_percentage}% off
+                        Save{" "}
+                        {formatCurrency(
+                          (
+                            parseFloat(entity.retail_price || "0") -
+                            parseFloat(entity.promo_price)
+                          ).toFixed(2),
+                        )}
                       </span>
                     </div>
                   ) : (
                     <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-700/60 dark:bg-slate-800/50">
                       <p className="text-[11px] font-medium uppercase tracking-wider text-slate-400">
-                        Discount
+                        Promo
                       </p>
                       <p className="mt-1 text-sm font-semibold text-slate-500">
-                        No discount
+                        No promo price
                       </p>
                     </div>
                   )}
@@ -329,12 +327,16 @@ export default function AirconModelsPage() {
                                 <span className="text-base font-bold text-slate-900 dark:text-slate-50">
                                   {formatCurrency(entry.retail_price)}
                                 </span>
-                                {parseFloat(entry.discount_percentage) > 0 && (
-                                  <span className="text-xs text-slate-500 dark:text-slate-400">
-                                    ({entry.discount_percentage}% off →{" "}
-                                    {formatCurrency(entry.effective_price)})
-                                  </span>
-                                )}
+                                {entry.promo_price &&
+                                  parseFloat(entry.promo_price) > 0 &&
+                                  parseFloat(entry.promo_price) <
+                                    parseFloat(entry.retail_price) && (
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                                      (promo:{" "}
+                                      {formatCurrency(entry.promo_price)} →{" "}
+                                      {formatCurrency(entry.effective_price)})
+                                    </span>
+                                  )}
                                 {changeAmount !== null && !isInitial && (
                                   <span
                                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm ${
@@ -438,27 +440,25 @@ export default function AirconModelsPage() {
         )}
       />
 
-      {/* ── Discount Sheet ── */}
+      {/* ── Promo Sheet ── */}
       <EntitySheet<AirconModels>
-        open={discountOpen}
-        onClose={closeDiscountSheet}
-        entity={discountEntity}
+        open={promoOpen}
+        onClose={closePromoSheet}
+        entity={promoEntity}
         title={
-          discountEntity?.discount_percentage
-            ? "Update Discount"
-            : "Add Discount"
+          promoEntity?.promo_price ? "Update Promo Price" : "Set Promo Price"
         }
         description={
-          discountEntity?.discount_percentage
-            ? "Update the promotional discount for this model."
-            : "Apply a promotional discount to this model."
+          promoEntity?.promo_price
+            ? "Update the promotional price for this model."
+            : "Set a promotional price for this model."
         }
         withCloseConfirmation
         renderForm={({ forceClose, entity }) => (
           <AirconModelForm
             onClose={forceClose}
             initialData={entity}
-            isAddingDiscount
+            isAddingPromo
           />
         )}
       />

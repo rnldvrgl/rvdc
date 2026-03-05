@@ -57,22 +57,21 @@ export function getAirconModelColumns({
       },
     },
     {
-      accessorKey: "discount_percentage",
-      header: "Discount %",
-      cell: ({ row }) => {
-        const discount = row.original.discount_percentage
-        return safeCell(discount ? `${Number(discount).toFixed(0)}%` : "")
-      },
-    },
-    {
       accessorKey: "promo_price",
       header: "Promo Price",
       cell: ({ row }) => {
-        const retail = parseFloat(row.original.retail_price)
-        const discount = parseFloat(row.original.discount_percentage ?? "0")
-        if (!discount) return formatCurrency(retail)
-        const promo = retail - (retail * discount) / 100
-        return formatCurrency(promo)
+        const promo = row.original.promo_price
+        return promo ? formatCurrency(promo) : safeCell("")
+      },
+    },
+    {
+      accessorKey: "selling_price",
+      header: "Selling Price",
+      cell: ({ row }) => {
+        const selling = row.original.selling_price
+        return selling
+          ? formatCurrency(selling)
+          : formatCurrency(row.original.retail_price)
       },
     },
     {

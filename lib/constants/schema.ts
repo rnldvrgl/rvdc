@@ -159,7 +159,11 @@ export const ChequeCollectionSchema = z
   )
 
 export const DiscountOnlySchema = z.object({
-  discount_percentage: z.number().int().min(0).max(100).optional(),
+  promo_price: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Invalid price")
+    .optional()
+    .nullable(),
 })
 
 export const AirconModelSchema = z.object({
@@ -170,7 +174,11 @@ export const AirconModelSchema = z.object({
     .string()
     .regex(/^\d+(\.\d{1,2})?$/, "Invalid price")
     .optional(),
-  discount_percentage: z.number().min(0).max(100).optional(),
+  promo_price: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, "Invalid price")
+    .optional()
+    .nullable(),
   aircon_type: z.nativeEnum(AirconTypes),
   horsepower: z.string().optional(),
   is_inverter: z.boolean(),

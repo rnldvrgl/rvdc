@@ -490,12 +490,14 @@ export default function ServiceDetail({
               )
             : null
         const unitPrice = linkedUnit
-          ? parseFloat(
-              linkedUnit.sale_price ||
-                linkedUnit.model?.promo_price ||
-                linkedUnit.model?.retail_price ||
-                "0",
-            )
+          ? appliance.unit_price
+            ? parseFloat(appliance.unit_price)
+            : parseFloat(
+                linkedUnit.sale_price ||
+                  linkedUnit.model?.selling_price ||
+                  linkedUnit.model?.retail_price ||
+                  "0",
+              )
           : appliance.unit_price
             ? parseFloat(appliance.unit_price)
             : 0
@@ -898,12 +900,14 @@ export default function ServiceDetail({
                         )
                       : null
                   const applianceUnitPrice = linkedUnit
-                    ? parseFloat(
-                        linkedUnit.sale_price ||
-                          linkedUnit.model?.promo_price ||
-                          linkedUnit.model?.retail_price ||
-                          "0",
-                      )
+                    ? appliance.unit_price
+                      ? parseFloat(appliance.unit_price)
+                      : parseFloat(
+                          linkedUnit.sale_price ||
+                            linkedUnit.model?.selling_price ||
+                            linkedUnit.model?.retail_price ||
+                            "0",
+                        )
                     : appliance.unit_price
                       ? parseFloat(appliance.unit_price)
                       : 0
@@ -1138,12 +1142,14 @@ export default function ServiceDetail({
                                   )
                                 : null
                             const unitPrice = linkedUnit
-                              ? parseFloat(
-                                  linkedUnit.sale_price ||
-                                    linkedUnit.model?.promo_price ||
-                                    linkedUnit.model?.retail_price ||
-                                    "0",
-                                )
+                              ? appliance.unit_price
+                                ? parseFloat(appliance.unit_price)
+                                : parseFloat(
+                                    linkedUnit.sale_price ||
+                                      linkedUnit.model?.selling_price ||
+                                      linkedUnit.model?.retail_price ||
+                                      "0",
+                                  )
                               : appliance.unit_price
                                 ? parseFloat(appliance.unit_price)
                                 : 0
@@ -1200,12 +1206,14 @@ export default function ServiceDetail({
                                       )
                                     : null
                                 const unitPrice = linkedUnit
-                                  ? parseFloat(
-                                      linkedUnit.sale_price ||
-                                        linkedUnit.model?.promo_price ||
-                                        linkedUnit.model?.retail_price ||
-                                        "0",
-                                    )
+                                  ? appliance.unit_price
+                                    ? parseFloat(appliance.unit_price)
+                                    : parseFloat(
+                                        linkedUnit.sale_price ||
+                                          linkedUnit.model?.selling_price ||
+                                          linkedUnit.model?.retail_price ||
+                                          "0",
+                                      )
                                   : appliance.unit_price
                                     ? parseFloat(appliance.unit_price)
                                     : 0

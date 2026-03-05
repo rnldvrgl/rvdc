@@ -34,7 +34,6 @@ import {
   ArrowUp,
   History,
   Minus,
-  Percent,
   Settings2,
   Shield,
   Tag,
@@ -42,15 +41,8 @@ import {
 
 interface Props {
   initialData?: AirconModels
-  isAddingDiscount?: boolean
+  isAddingPromo?: boolean
   onClose: () => void
-}
-
-const clampDiscount = (value?: number | string) => {
-  const n =
-    value === "" || value === undefined ? undefined : Math.floor(Number(value))
-  if (n === undefined || Number.isNaN(n)) return undefined
-  return Math.min(Math.max(n, 0), 100)
 }
 
 /* --------------- Price History Timeline --------------- */
@@ -94,12 +86,15 @@ function PriceHistoryTimeline({ history }: { history: ModelPriceHistory[] }) {
                   <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
                     {formatCurrency(entry.retail_price)}
                   </span>
-                  {parseFloat(entry.discount_percentage) > 0 && (
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                      ({entry.discount_percentage}% off →{" "}
-                      {formatCurrency(entry.effective_price)})
-                    </span>
-                  )}
+                  {entry.promo_price &&
+                    parseFloat(entry.promo_price) > 0 &&
+                    parseFloat(entry.promo_price) <
+                      parseFloat(entry.retail_price) && (
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        (promo: {formatCurrency(entry.promo_price)} →{" "}
+                        {formatCurrency(entry.effective_price)})
+                      </span>
+                    )}
                   {changeAmount !== null && !isInitial && (
                     <span
                       className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm ${
@@ -142,37 +137,10 @@ function PriceHistoryTimeline({ history }: { history: ModelPriceHistory[] }) {
   )
 }
 
-/* --------------- Promo Price Preview --------------- */
-function PromoPricePreview({
-  retailPrice,
-  discount,
-}: {
-  retailPrice: string | undefined
-  discount: number | undefined
-}) {
-  const promoPrice =
-    retailPrice && discount !== undefined && discount > 0
-      ? Number(retailPrice) * (1 - Number(discount) / 100)
-      : undefined
-
-  if (!promoPrice || promoPrice <= 0) return null
-
-  return (
-    <div className="flex items-center justify-between rounded-lg border-2 border-emerald-300 bg-emerald-50 px-4 py-3">
-      <span className="text-sm font-semibold text-emerald-800">
-        Promo Price
-      </span>
-      <span className="text-lg font-bold text-emerald-700">
-        {formatCurrency(promoPrice.toFixed(2))}
-      </span>
-    </div>
-  )
-}
-
 /* --------------- Main Form --------------- */
 export default function AirconModelForm({
   initialData,
-  isAddingDiscount,
+  isAddingPromo,
   onClose,
 }: Props) {
   const isEditing = !!initialData
@@ -183,17 +151,14 @@ export default function AirconModelForm({
 
   const form = useForm<AirconModelPayload>({
     resolver: zodResolver(
-      isAddingDiscount ? DiscountOnlySchema : AirconModelSchema,
+      isAddingPromo ? DiscountOnlySchema : AirconModelSchema,
     ) as unknown as Resolver<AirconModelPayload>,
     defaultValues: {
       brand_id: initialData?.brand?.id ?? undefined,
       name: initialData?.name ?? "",
       retail_price: initialData?.retail_price ?? "",
       cost_price: initialData?.cost_price ?? "",
-      discount_percentage:
-        initialData?.discount_percentage !== undefined
-          ? Number(initialData.discount_percentage)
-          : undefined,
+      promo_price: initialData?.promo_price ?? undefined,
       aircon_type: initialData?.aircon_type ?? undefined,
       horsepower: initialData?.horsepower ?? undefined,
       is_inverter: initialData?.is_inverter ?? false,
@@ -205,15 +170,15 @@ export default function AirconModelForm({
 
   const { handleSubmit, control } = form
   const retailPrice = useWatch({ control, name: "retail_price" })
-  const discount = useWatch({ control, name: "discount_percentage" })
+  const promoPrice = useWatch({ control, name: "promo_price" })
 
   const handleFormSubmit = (data: AirconModelPayload) => {
     const payload: Partial<AirconModels> = {
       ...data,
-      discount_percentage: data.discount_percentage?.toString(),
+      promo_price: data.promo_price || null,
     }
 
-    if (isAddingDiscount && initialData) {
+    if (isAddingPromo && initialData) {
       updateModel.mutate(
         { id: initialData.id, data: payload },
         { onSuccess: onClose },
@@ -233,8 +198,8 @@ export default function AirconModelForm({
     }
   }
 
-  // Discount-only mode
-  if (isAddingDiscount) {
+  // Promo price-only mode
+  if (isAddingPromo) {
     return (
       <Form {...form}>
         <form
@@ -259,50 +224,61 @@ export default function AirconModelForm({
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Percent className="size-5" />
-                Apply Discount
+                <Tag className="size-5" />
+                Set Promo Price
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <FormField
                 control={control}
-                name="discount_percentage"
+                name="promo_price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Discount Percentage</FormLabel>
+                    <FormLabel>Promo Price</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
+                          ₱
+                        </span>
                         <Input
                           {...field}
                           type="number"
-                          step={1}
+                          step={0.01}
                           min={0}
-                          max={100}
-                          className="pl-10 h-11"
-                          placeholder="0"
+                          className="pl-8 h-11"
+                          placeholder="Enter promo price"
                           value={field.value ?? ""}
-                          onChange={(e) => {
-                            const clamped = clampDiscount(e.target.value)
-                            e.target.value = clamped?.toString() ?? ""
-                            field.onChange(clamped)
-                          }}
-                          onBlur={(e) => {
-                            const clamped = clampDiscount(e.target.value)
-                            e.target.value = clamped?.toString() ?? ""
-                            field.onChange(clamped)
-                          }}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
                         />
                       </div>
                     </FormControl>
+                    <FormDescription>
+                      Leave empty to use retail price. Must be less than retail
+                      price.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <PromoPricePreview
-                retailPrice={retailPrice}
-                discount={discount}
-              />
+              {promoPrice &&
+                retailPrice &&
+                parseFloat(promoPrice) > 0 &&
+                parseFloat(promoPrice) < parseFloat(retailPrice) && (
+                  <div className="flex items-center justify-between rounded-lg border-2 border-emerald-300 bg-emerald-50 px-4 py-3 dark:border-emerald-700 dark:bg-emerald-900/20">
+                    <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                      Savings
+                    </span>
+                    <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                      {formatCurrency(
+                        (
+                          parseFloat(retailPrice) - parseFloat(promoPrice)
+                        ).toFixed(2),
+                      )}
+                    </span>
+                  </div>
+                )}
             </CardContent>
           </Card>
           <div className="flex justify-end gap-4 pt-4">
@@ -317,9 +293,9 @@ export default function AirconModelForm({
               type="submit"
               className="min-w-32"
             >
-              {initialData?.discount_percentage
-                ? "Update Discount"
-                : "Apply Discount"}
+              {initialData?.promo_price
+                ? "Update Promo Price"
+                : "Set Promo Price"}
             </Button>
           </div>
         </form>
@@ -537,44 +513,51 @@ export default function AirconModelForm({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={control}
-                  name="discount_percentage"
+                  name="promo_price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Discount %</FormLabel>
+                      <FormLabel>Promo Price</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
+                            ₱
+                          </span>
                           <Input
                             {...field}
                             type="number"
-                            step={1}
+                            step={0.01}
                             min={0}
-                            max={100}
-                            className="pl-10 h-11"
-                            placeholder="0"
+                            className="pl-8 h-11"
+                            placeholder="Leave empty for no promo"
                             value={field.value ?? ""}
-                            onChange={(e) => {
-                              const clamped = clampDiscount(e.target.value)
-                              e.target.value = clamped?.toString() ?? ""
-                              field.onChange(clamped)
-                            }}
-                            onBlur={(e) => {
-                              const clamped = clampDiscount(e.target.value)
-                              e.target.value = clamped?.toString() ?? ""
-                              field.onChange(clamped)
-                            }}
+                            onChange={(e) =>
+                              field.onChange(e.target.value || null)
+                            }
                           />
                         </div>
                       </FormControl>
+                      <FormDescription>
+                        Optional. If set below retail, this becomes the selling
+                        price.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-              <PromoPricePreview
-                retailPrice={retailPrice}
-                discount={discount}
-              />
+              {promoPrice &&
+                retailPrice &&
+                parseFloat(promoPrice) > 0 &&
+                parseFloat(promoPrice) < parseFloat(retailPrice) && (
+                  <div className="flex items-center justify-between rounded-lg border-2 border-emerald-300 bg-emerald-50 px-4 py-3 dark:border-emerald-700 dark:bg-emerald-900/20">
+                    <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                      Selling Price
+                    </span>
+                    <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                      {formatCurrency(parseFloat(promoPrice).toFixed(2))}
+                    </span>
+                  </div>
+                )}
             </CardContent>
           </Card>
 

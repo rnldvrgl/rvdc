@@ -292,7 +292,11 @@ export default function ServiceApplianceManager({
       )
       if (matchingUnit) {
         editUnitId = matchingUnit.id
-        editUnitType = appliance.unit_price ? "second_hand" : "brand_new"
+        // If unit exists in inventory, it's brand_new (even with custom price override)
+        editUnitType = "brand_new"
+      } else {
+        // No matching inventory unit — it's a second-hand entry
+        editUnitType = "second_hand"
       }
     }
 
@@ -408,9 +412,7 @@ export default function ServiceApplianceManager({
         unit_type: data.unit_type,
         unit_id: data.unit_type === "brand_new" ? data.unit_id : undefined,
         unit_price:
-          data.unit_type === "second_hand" &&
-          data.unit_price !== undefined &&
-          data.unit_price !== null
+          data.unit_price !== undefined && data.unit_price !== null
             ? Math.round(data.unit_price * 100) / 100
             : null,
       }
@@ -631,6 +633,8 @@ export default function ServiceApplianceManager({
                           setField("brand", unit?.model?.brand?.name || "")
                           setField("model", unit?.model?.name || "")
                           setField("serial_number", unit?.serial_number || "")
+                          // Reset unit_price so it defaults to model selling price
+                          setField("unit_price", undefined)
                         }}
                         options={unitOptions}
                         placeholder="Select unit from inventory"
@@ -670,13 +674,64 @@ export default function ServiceApplianceManager({
                             {selectedUnit.model?.aircon_type || "N/A"}
                           </p>
                         </div>
-                        <div className="col-span-2">
-                          <p className="text-muted-foreground">Retail Price</p>
-                          <p className="text-lg font-bold text-primary">
+                        <div>
+                          <p className="text-muted-foreground">
+                            {selectedUnit.model?.has_discount
+                              ? "Retail Price"
+                              : "Price"}
+                          </p>
+                          <p
+                            className={`font-bold ${selectedUnit.model?.has_discount ? "text-muted-foreground line-through text-sm" : "text-lg text-primary"}`}
+                          >
                             {selectedUnit.model?.retail_price
                               ? `₱${parseFloat(selectedUnit.model.retail_price).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                               : "N/A"}
                           </p>
+                        </div>
+                        {selectedUnit.model?.has_discount &&
+                          selectedUnit.model?.selling_price && (
+                            <div>
+                              <p className="text-muted-foreground">
+                                Selling Price
+                              </p>
+                              <p className="text-lg font-bold text-primary">
+                                ₱
+                                {parseFloat(
+                                  selectedUnit.model.selling_price,
+                                ).toLocaleString("en-PH", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </p>
+                            </div>
+                          )}
+                        <div className="col-span-2 pt-2 border-t">
+                          <Label className="text-sm font-medium">
+                            Unit Price Override{" "}
+                            <span className="text-muted-foreground text-xs">
+                              (optional — leave empty to use{" "}
+                              {selectedUnit.model?.has_discount
+                                ? "selling"
+                                : "retail"}{" "}
+                              price)
+                            </span>
+                          </Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={unitPrice ?? ""}
+                            onChange={(e) =>
+                              setField(
+                                "unit_price",
+                                e.target.value
+                                  ? parseFloat(e.target.value)
+                                  : undefined,
+                              )
+                            }
+                            placeholder={`₱${parseFloat(selectedUnit.model?.selling_price || selectedUnit.model?.retail_price || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} — default`}
+                            className="mt-1.5"
+                          />
                         </div>
                       </div>
                     </div>
@@ -1561,10 +1616,14 @@ function UnitPriceCard({
       )
     : null
 
-  const price = matchingUnit?.model
-    ? parseFloat(matchingUnit.model.promo_price || "0")
-    : appliance.unit_price
-      ? parseFloat(appliance.unit_price)
+  const price = appliance.unit_price
+    ? parseFloat(appliance.unit_price)
+    : matchingUnit?.model
+      ? parseFloat(
+          matchingUnit.model.selling_price ||
+            matchingUnit.model.retail_price ||
+            "0",
+        )
       : null
 
   return (

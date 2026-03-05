@@ -118,11 +118,11 @@ function getAirconUnitItems(units: AirconUnits[]) {
     .filter(
       (u) =>
         u.model &&
-        parseFloat(String(u.sale_price ?? u.model?.promo_price ?? "0")) > 0,
+        parseFloat(String(u.sale_price ?? u.model?.selling_price ?? "0")) > 0,
     )
     .map((u) => {
       const price = parseFloat(
-        String(u.sale_price ?? u.model?.promo_price ?? "0"),
+        String(u.sale_price ?? u.model?.selling_price ?? "0"),
       )
       const brand = u.model?.brand?.name ?? ""
       const model = u.model?.name ?? ""

@@ -685,12 +685,12 @@ export interface ModelPriceHistory {
   id: number
   aircon_model: number
   retail_price: string
-  discount_percentage: string
+  promo_price?: string | null
   old_retail_price?: string | null
-  old_discount_percentage?: string | null
+  old_promo_price?: string | null
   effective_price: string
   price_change_amount?: string | null
-  change_type: "initial" | "price" | "discount" | "price_and_discount"
+  change_type: "initial" | "price" | "promo" | "price_and_promo"
   notes: string
   changed_at: string
 }
@@ -702,12 +702,12 @@ export interface AirconModels {
   name: string
   retail_price: string
   cost_price?: string
-  discount_percentage?: string
+  promo_price?: string | null
   aircon_type: AirconTypes
   horsepower?: string
   is_inverter: boolean
   has_discount?: boolean
-  promo_price?: string
+  selling_price?: string
   parts_warranty_months?: number
   labor_warranty_months?: number
   parts_warranty_years?: number
