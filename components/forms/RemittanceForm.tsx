@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
   ArrowRightLeft,
   Banknote,
-  CalendarIcon,
   Info,
   Minus,
   Plus,
@@ -19,9 +18,9 @@ import { useStallChoices } from "@/lib/queries/useChoices"
 import useUserProfileStore from "@/lib/store/useUserProfileStore"
 
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import DatePicker from "@/components/custom/inputs/DatePicker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
 import {
   Form,
   FormControl,
@@ -31,11 +30,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
@@ -44,7 +38,7 @@ import { RemittanceRecordPayload } from "@/lib/constants/infers"
 import { RemittanceRecordSchema } from "@/lib/constants/schema"
 import { useRemittancePreview } from "@/lib/queries/useRemittancesRecords"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
-import { format, isToday, startOfDay } from "date-fns"
+import { format, startOfDay } from "date-fns"
 
 const DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5, 1] as const
 type Denom = (typeof DENOMINATIONS)[number]
@@ -300,52 +294,26 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                   : undefined
 
                 return (
-                  <FormItem>
-                    <FormLabel>Remittance Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground",
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 size-4" />
-                            {dateValue
-                              ? format(dateValue, "EEE, MMM dd yyyy")
-                              : "Today (default)"}
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-auto p-0"
-                        align="start"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={dateValue}
-                          onSelect={(date) => {
-                            if (date && isToday(date)) {
-                              field.onChange(undefined)
-                              setPreviewDate(undefined)
-                            } else if (date) {
-                              const formatted = format(date, "yyyy-MM-dd")
-                              field.onChange(formatted)
-                              setPreviewDate(formatted)
-                            } else {
-                              field.onChange(undefined)
-                              setPreviewDate(undefined)
-                            }
-                          }}
-                          disabled={(date) => date > startOfDay(new Date())}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
+                  <DatePicker
+                    label="Remittance Date"
+                    placeholder="Today (default)"
+                    field={{
+                      value: dateValue,
+                      onChange: (date: Date | undefined) => {
+                        if (!date) {
+                          field.onChange(undefined)
+                          setPreviewDate(undefined)
+                        } else {
+                          const formatted = format(date, "yyyy-MM-dd")
+                          field.onChange(formatted)
+                          setPreviewDate(formatted)
+                        }
+                      },
+                    }}
+                    withMinMaxDate
+                    maxDate={startOfDay(new Date())}
+                    withMessage
+                  />
                 )
               }}
             />
