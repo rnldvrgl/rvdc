@@ -591,7 +591,10 @@ export function AirconUnitDetails({
               {unit.parts_warranty_end_date && (
                 <p className="text-xs text-blue-800 mt-0.5">
                   Until:{" "}
-                  {new Date(unit.parts_warranty_end_date).toLocaleDateString()}
+                  {formatDate(
+                    new Date(unit.parts_warranty_end_date),
+                    "MMM dd, yyyy",
+                  )}
                 </p>
               )}
             </div>
@@ -637,7 +640,10 @@ export function AirconUnitDetails({
               {unit.labor_warranty_end_date && (
                 <p className="text-xs text-amber-800 mt-0.5">
                   Until:{" "}
-                  {new Date(unit.labor_warranty_end_date).toLocaleDateString()}
+                  {formatDate(
+                    new Date(unit.labor_warranty_end_date),
+                    "MMM dd, yyyy",
+                  )}
                 </p>
               )}
             </div>
@@ -652,7 +658,10 @@ export function AirconUnitDetails({
                     Warranty Start
                   </label>
                   <p className="text-base font-medium">
-                    {new Date(unit.warranty_start_date).toLocaleDateString()}
+                    {formatDate(
+                      new Date(unit.warranty_start_date),
+                      "MMM dd, yyyy",
+                    )}
                   </p>
                 </div>
               )}
@@ -690,9 +699,10 @@ export function AirconUnitDetails({
                   <div className="text-xs text-muted-foreground pl-[110px]">
                     <p>
                       Redeemed on:{" "}
-                      {new Date(
-                        unit.free_cleaning_redemption_date,
-                      ).toLocaleDateString()}
+                      {formatDate(
+                        new Date(unit.free_cleaning_redemption_date),
+                        "MMM dd, yyyy",
+                      )}
                     </p>
                     {unit.free_cleaning_service_id && (
                       <p>Service ID: #{unit.free_cleaning_service_id}</p>
@@ -767,7 +777,7 @@ export function AirconUnitDetails({
             </label>
             <p className="text-base font-medium">
               {unit.created_at
-                ? new Date(unit.created_at).toLocaleDateString()
+                ? formatDate(new Date(unit.created_at), "MMM dd, yyyy")
                 : "N/A"}
             </p>
           </div>

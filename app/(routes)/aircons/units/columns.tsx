@@ -162,7 +162,11 @@ export function getAirconUnitsColumns({
 
         const actions = [
           ...(onView ? [{ label: "View", onClick: () => onView(unit) }] : []),
-          ...(onInstall && unit.is_sold
+          ...(onInstall &&
+          unit.is_sold &&
+          !unit.installation_service &&
+          unit.unit_status !== "Installed" &&
+          unit.unit_status !== "For Installation"
             ? [
                 {
                   label: "Schedule Installation",
