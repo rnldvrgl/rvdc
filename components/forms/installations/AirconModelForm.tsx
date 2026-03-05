@@ -228,7 +228,7 @@ export default function AirconModelForm({
                 Set Promo Price
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="grid space-y-4">
               <FormField
                 control={control}
                 name="promo_price"
@@ -456,31 +456,7 @@ export default function AirconModelForm({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FormField
-                  control={control}
-                  name="retail_price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Retail Price</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
-                            ₱
-                          </span>
-                          <Input
-                            {...field}
-                            type="number"
-                            step={0.01}
-                            className="pl-8 h-11"
-                            placeholder="0.00"
-                          />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="grid grid-cols-1 gap-6">
                 <FormField
                   control={control}
                   name="cost_price"
@@ -503,6 +479,30 @@ export default function AirconModelForm({
                         </div>
                       </FormControl>
                       <FormDescription>Dealer/purchase cost</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="retail_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>Retail Price</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-medium">
+                            ₱
+                          </span>
+                          <Input
+                            {...field}
+                            type="number"
+                            step={0.01}
+                            className="pl-8 h-11"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
