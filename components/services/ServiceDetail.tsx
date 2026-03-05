@@ -51,7 +51,6 @@ import {
 } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import {
-  AlertCircle,
   AlertTriangle,
   Calendar,
   CheckCircle,
@@ -764,27 +763,25 @@ export default function ServiceDetail({
           <div className="rounded-lg border bg-card">
             {/* Client row */}
             <div className="px-4 py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                <User className="h-3 w-3" />
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5" />
                 Client
               </p>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                <span className="text-sm font-semibold">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold">
                   {service.client?.full_name || "N/A"}
-                </span>
+                </p>
                 {service.client?.contact_number && (
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Phone className="h-3 w-3" />
+                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Phone className="h-3.5 w-3.5 shrink-0" />
                     {service.client.contact_number}
-                  </span>
+                  </p>
                 )}
                 {service.client?.address && (
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <MapPin className="h-3 w-3 shrink-0" />
-                    <span className="truncate max-w-[250px]">
-                      {service.client.address}
-                    </span>
-                  </span>
+                  <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    {service.client.address}
+                  </p>
                 )}
               </div>
             </div>
@@ -793,8 +790,8 @@ export default function ServiceDetail({
 
             {/* Service info row */}
             <div className="px-4 py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                <Wrench className="h-3 w-3" />
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Wrench className="h-3.5 w-3.5" />
                 Service Details
               </p>
               <div className="flex flex-wrap items-center gap-2">
@@ -884,9 +881,9 @@ export default function ServiceDetail({
 
           {/* Appliances Breakdown */}
           {service.appliances && service.appliances.length > 0 && (
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-                <Package className="h-3 w-3" />
+            <div className="rounded-lg border bg-card px-4 py-3">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                <Package className="h-3.5 w-3.5" />
                 Appliances & Charges
               </p>
               <div className="space-y-2">
@@ -1132,8 +1129,8 @@ export default function ServiceDetail({
           {/* Financial Summary */}
           <div className="rounded-lg border bg-card">
             <div className="px-4 py-3 space-y-2">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Wallet className="h-3 w-3" />
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Wallet className="h-3.5 w-3.5" />
                 Financial Summary
               </p>
               {/* Show service-level discount if exists */}
@@ -1327,13 +1324,13 @@ export default function ServiceDetail({
           {/* Description & Notes */}
           {(service.description || service.remarks || service.notes) && (
             <div className="rounded-lg border bg-card px-4 py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
                 Additional Information
               </p>
               <div className="space-y-2">
                 {service.description && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-muted-foreground">
                       Description
                     </p>
                     <p className="text-sm mt-0.5">{service.description}</p>
@@ -1341,7 +1338,7 @@ export default function ServiceDetail({
                 )}
                 {service.remarks && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-muted-foreground">
                       Remarks
                     </p>
                     <p className="text-sm mt-0.5">{service.remarks}</p>
@@ -1349,7 +1346,7 @@ export default function ServiceDetail({
                 )}
                 {service.notes && (
                   <div>
-                    <p className="text-xs font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-muted-foreground">
                       Internal Notes
                     </p>
                     <p className="text-sm mt-0.5">{service.notes}</p>
@@ -1363,8 +1360,8 @@ export default function ServiceDetail({
           {service.technician_assignments &&
             service.technician_assignments.length > 0 && (
               <div className="rounded-lg border bg-card px-4 py-3">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <User className="h-3 w-3" />
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <User className="h-3.5 w-3.5" />
                   Assigned Technicians
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -1377,11 +1374,11 @@ export default function ServiceDetail({
                         <User className="h-3 w-3 text-primary" />
                       </div>
                       <div>
-                        <p className="text-xs font-medium leading-none">
+                        <p className="text-sm font-medium leading-none">
                           {assignment.technician_name ||
                             `Technician #${assignment.technician}`}
                         </p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                        <p className="text-xs text-muted-foreground mt-0.5">
                           {assignment.assignment_type
                             .replace("_", " ")
                             .replace(/\b\w/g, (l) => l.toUpperCase())}
@@ -1399,28 +1396,28 @@ export default function ServiceDetail({
               service.override_contact_person ||
               service.override_contact_number) && (
               <div className="rounded-lg border bg-card px-4 py-3">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <MapPin className="h-3 w-3" />
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5" />
                   Service Location
                 </p>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                <div className="space-y-1">
                   {service.override_contact_person && (
-                    <span className="flex items-center gap-1 text-sm">
-                      <User className="h-3 w-3 text-muted-foreground" />
+                    <p className="flex items-center gap-1.5 text-sm font-semibold">
+                      <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       {service.override_contact_person}
-                    </span>
+                    </p>
                   )}
                   {service.override_contact_number && (
-                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Phone className="h-3 w-3" />
+                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Phone className="h-3.5 w-3.5 shrink-0" />
                       {service.override_contact_number}
-                    </span>
+                    </p>
                   )}
                   {service.override_address && (
-                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3 w-3 shrink-0" />
+                    <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                       {service.override_address}
-                    </span>
+                    </p>
                   )}
                 </div>
               </div>
@@ -1580,11 +1577,11 @@ export default function ServiceDetail({
                     style={{ width: `${paidPercent}%` }}
                   />
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{Math.round(paidPercent)}% paid</span>
                   <Badge
                     variant={getBadgeVariant(service.payment_status)}
-                    className="text-[10px] h-4 px-1.5"
+                    className="text-xs h-4 px-1.5"
                   >
                     {paymentStatusLabels[service.payment_status] ||
                       service.payment_status}
@@ -1594,6 +1591,51 @@ export default function ServiceDetail({
               </div>
             )
           })()}
+
+          {/* Action Buttons — always visible at top */}
+          {canManage && (
+            <div className="flex gap-2">
+              <Button
+                className="flex-1"
+                variant="outline"
+                size="sm"
+                onClick={handleAddPayment}
+              >
+                <Wallet className="mr-1.5 h-3.5 w-3.5" />
+                Record Payment
+              </Button>
+              {parseFloat(service.total_paid || "0") > 0 &&
+                parseFloat(service.total_paid || "0") >
+                  parseFloat(service.total_refunded || "0") &&
+                service.status === "completed" && (
+                  <Button
+                    className="flex-1"
+                    variant="warning"
+                    size="sm"
+                    onClick={() => {
+                      setRefundDialogOpen(true)
+                      if (parseFloat(service.balance_due || "0") < 0) {
+                        setRefundAmount(
+                          Math.abs(
+                            parseFloat(service.balance_due || "0"),
+                          ).toString(),
+                        )
+                        setRefundType("partial")
+                      } else {
+                        const maxRefund =
+                          parseFloat(service.total_paid || "0") -
+                          parseFloat(service.total_refunded || "0")
+                        setRefundAmount(maxRefund.toString())
+                        setRefundType("full")
+                      }
+                    }}
+                  >
+                    <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    Process Refund
+                  </Button>
+                )}
+            </div>
+          )}
 
           {/* Info Alert */}
           {!isCompleted && (
@@ -1608,8 +1650,8 @@ export default function ServiceDetail({
 
           {/* Transaction History */}
           <div>
-            <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-              <Wallet className="h-3 w-3" />
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              <Wallet className="h-3.5 w-3.5" />
               Transaction History
             </p>
             {(() => {
@@ -1729,16 +1771,16 @@ export default function ServiceDetail({
                             )}
                           </div>
                           {tx.notes && (
-                            <p className="text-[10px] text-muted-foreground truncate">
+                            <p className="text-xs text-muted-foreground truncate">
                               {tx.notes}
                             </p>
                           )}
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className="text-xs text-muted-foreground">
                             {formatDate(new Date(tx.date), "MMM d, yyyy")}
                           </p>
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className="text-xs text-muted-foreground">
                             {formatDate(new Date(tx.date), "h:mm a")}
                           </p>
                         </div>
@@ -1755,7 +1797,7 @@ export default function ServiceDetail({
             service.status !== "cancelled" &&
             canManage && (
               <div className="rounded-lg border bg-card px-4 py-3 space-y-3">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Service Discount
                 </p>
                 <div className="grid grid-cols-2 gap-3">
@@ -1841,7 +1883,7 @@ export default function ServiceDetail({
                 0)) && (
             <div className="rounded-lg border border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20 px-4 py-3 space-y-1.5">
               <div className="flex items-center justify-between">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1.5">
+                <p className="text-xs font-medium uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1.5">
                   Applied Discount
                   <Badge
                     variant="success"
@@ -1885,13 +1927,14 @@ export default function ServiceDetail({
 
           {/* Payment Summary — removed, now in summary strip above */}
 
-          {/* Refund Section */}
+          {/* Refund Info Section (non-completed services only) */}
           {canManage &&
             parseFloat(service.total_paid || "0") > 0 &&
             parseFloat(service.total_paid || "0") >
-              parseFloat(service.total_refunded || "0") && (
+              parseFloat(service.total_refunded || "0") &&
+            service.status !== "completed" && (
               <div className="rounded-lg border bg-card px-4 py-3 space-y-3">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   Process Refund
                   {parseFloat(service.balance_due || "0") < 0 && (
                     <Badge
@@ -1902,126 +1945,66 @@ export default function ServiceDetail({
                     </Badge>
                   )}
                 </p>
-                {service.status !== "completed" ? (
-                  <>
-                    <Alert variant="warning">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription className="space-y-2">
-                        <p className="font-semibold">
-                          Refunds require service completion
+                <Alert variant="warning">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription className="space-y-2">
+                    <p className="font-semibold">
+                      Refunds require service completion
+                    </p>
+                    {parseFloat(service.balance_due || "0") < 0 ? (
+                      <>
+                        <p>
+                          The customer has an overpayment of{" "}
+                          <strong>
+                            {formatCurrency(
+                              Math.abs(parseFloat(service.balance_due || "0")),
+                            )}
+                          </strong>{" "}
+                          after applying discounts.
                         </p>
-                        {parseFloat(service.balance_due || "0") < 0 ? (
-                          <>
-                            <p>
-                              The customer has an overpayment of{" "}
-                              <strong>
-                                {formatCurrency(
-                                  Math.abs(
-                                    parseFloat(service.balance_due || "0"),
-                                  ),
-                                )}
-                              </strong>{" "}
-                              after applying discounts.
-                            </p>
-                            <div className="mt-3 p-3 bg-muted rounded-md space-y-2 text-sm">
-                              <p className="font-medium">
-                                To refund the overpayment:
-                              </p>
-                              <ol className="list-decimal list-inside space-y-1 ml-2">
-                                <li>
-                                  Complete the service using the &quot;Complete
-                                  Service&quot; button above
-                                </li>
-                                <li>
-                                  Return to the Payments tab and click
-                                  &quot;Process Refund&quot;
-                                </li>
-                                <li>
-                                  The refund amount will be pre-filled with the
-                                  overpayment amount
-                                </li>
-                              </ol>
-                            </div>
-                          </>
-                        ) : (
-                          <p>
-                            Refunds can only be processed after completing the
-                            service.
+                        <div className="mt-3 p-3 bg-muted rounded-md space-y-2 text-sm">
+                          <p className="font-medium">
+                            To refund the overpayment:
                           </p>
-                        )}
-                      </AlertDescription>
-                    </Alert>
-
-                    {parseFloat(service.balance_due || "0") < 0 && (
-                      <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 rounded-md">
-                        <span className="text-sm font-medium">
-                          Overpayment Amount:
-                        </span>
-                        <span className="text-lg font-bold text-orange-600">
-                          {formatCurrency(
-                            Math.abs(parseFloat(service.balance_due || "0")),
-                          )}
-                        </span>
-                      </div>
+                          <ol className="list-decimal list-inside space-y-1 ml-2">
+                            <li>
+                              Complete the service using the &quot;Complete
+                              Service&quot; button above
+                            </li>
+                            <li>
+                              Return to the Payments tab and click &quot;Process
+                              Refund&quot;
+                            </li>
+                            <li>
+                              The refund amount will be pre-filled with the
+                              overpayment amount
+                            </li>
+                          </ol>
+                        </div>
+                      </>
+                    ) : (
+                      <p>
+                        Refunds can only be processed after completing the
+                        service.
+                      </p>
                     )}
-                  </>
-                ) : (
-                  <>
-                    <Alert variant="info">
-                      <Info className="h-4 w-4" />
-                      <AlertDescription>
-                        Maximum refundable:{" "}
-                        <strong>
-                          {formatCurrency(
-                            parseFloat(service.total_paid || "0") -
-                              parseFloat(service.total_refunded || "0"),
-                          )}
-                        </strong>
-                      </AlertDescription>
-                    </Alert>
+                  </AlertDescription>
+                </Alert>
 
-                    <Button
-                      className="w-full"
-                      variant="warning"
-                      onClick={() => {
-                        setRefundDialogOpen(true)
-                        // Auto-fill with excess amount if overpayment detected
-                        if (parseFloat(service.balance_due || "0") < 0) {
-                          setRefundAmount(
-                            Math.abs(
-                              parseFloat(service.balance_due || "0"),
-                            ).toString(),
-                          )
-                          setRefundType("partial")
-                        } else {
-                          const maxRefund =
-                            parseFloat(service.total_paid || "0") -
-                            parseFloat(service.total_refunded || "0")
-                          setRefundAmount(maxRefund.toString())
-                          setRefundType("full")
-                        }
-                      }}
-                    >
-                      <AlertCircle className="mr-2 h-4 w-4" />
-                      Process Refund
-                    </Button>
-                  </>
+                {parseFloat(service.balance_due || "0") < 0 && (
+                  <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900 rounded-md">
+                    <span className="text-sm font-medium">
+                      Overpayment Amount:
+                    </span>
+                    <span className="text-lg font-bold text-orange-600">
+                      {formatCurrency(
+                        Math.abs(parseFloat(service.balance_due || "0")),
+                      )}
+                    </span>
+                  </div>
                 )}
               </div>
             )}
-
-          {/* Record Payment — compact at bottom */}
-          {canManage && (
-            <Button
-              className="w-full border-dashed"
-              variant="outline"
-              size="sm"
-              onClick={handleAddPayment}
-            >
-              <Wallet className="mr-1.5 h-3.5 w-3.5" />
-              Record Payment
-            </Button>
-          )}
         </TabsContent>
 
         {/* Schedule Tab */}
@@ -2030,18 +2013,18 @@ export default function ServiceDetail({
           className="space-y-3"
         >
           {/* Vertical timeline */}
-          <div className="relative pl-6">
+          <div className="relative ml-2">
             {/* Timeline line */}
-            <div className="absolute left-[9px] top-2 bottom-2 w-px bg-border" />
+            <div className="absolute left-[8px] top-2 bottom-2 w-px bg-border/50" />
 
             {/* Created */}
-            <div className="relative pb-4">
-              <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-primary bg-background flex items-center justify-center">
+            <div className="flex gap-3 pb-3">
+              <div className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-primary bg-primary/10 z-10">
                 <div className="h-1.5 w-1.5 rounded-full bg-primary" />
               </div>
-              <div>
-                <p className="text-xs font-semibold">Service Created</p>
-                <p className="text-[10px] text-muted-foreground">
+              <div className="pt-px">
+                <p className="text-sm font-semibold leading-none">Service Created</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDate(
                     new Date(service.created_at),
                     "EEEE, MMMM d, yyyy 'at' h:mm a",
@@ -2052,13 +2035,13 @@ export default function ServiceDetail({
 
             {/* Received At (Carry-In) */}
             {service.received_at && (
-              <div className="relative pb-4">
-                <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-green-500 bg-background flex items-center justify-center">
+              <div className="flex gap-3 pb-3">
+                <div className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-950 z-10">
                   <CheckCircle className="h-2.5 w-2.5 text-green-500" />
                 </div>
-                <div>
-                  <p className="text-xs font-semibold">Received At Shop</p>
-                  <p className="text-[10px] text-muted-foreground">
+                <div className="pt-px">
+                  <p className="text-sm font-semibold leading-none">Received At Shop</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {formatDate(
                       new Date(service.received_at),
                       "EEEE, MMMM d, yyyy 'at' h:mm a",
@@ -2070,15 +2053,15 @@ export default function ServiceDetail({
 
             {/* Pickup Date (Pull-Out) */}
             {service.service_mode === "pull_out" && service.pickup_date && (
-              <div className="relative pb-4">
-                <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-blue-500 bg-background flex items-center justify-center">
+              <div className="flex gap-3 pb-3">
+                <div className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-blue-500 bg-blue-50 dark:bg-blue-950 z-10">
                   <Truck className="h-2.5 w-2.5 text-blue-500" />
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-blue-700 dark:text-blue-300">
+                <div className="pt-px">
+                  <p className="text-sm font-semibold leading-none text-blue-700 dark:text-blue-300">
                     Scheduled Pickup
                   </p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {formatDate(
                       new Date(service.pickup_date),
                       "EEEE, MMMM d, yyyy 'at' h:mm a",
@@ -2090,15 +2073,15 @@ export default function ServiceDetail({
 
             {/* Delivery Date (Pull-Out) */}
             {service.service_mode === "pull_out" && service.delivery_date && (
-              <div className="relative pb-4">
-                <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-green-500 bg-background flex items-center justify-center">
+              <div className="flex gap-3 pb-3">
+                <div className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-950 z-10">
                   <Truck className="h-2.5 w-2.5 text-green-500" />
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-green-700 dark:text-green-300">
+                <div className="pt-px">
+                  <p className="text-sm font-semibold leading-none text-green-700 dark:text-green-300">
                     Scheduled Delivery
                   </p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {formatDate(
                       new Date(service.delivery_date),
                       "EEEE, MMMM d, yyyy 'at' h:mm a",
@@ -2114,14 +2097,14 @@ export default function ServiceDetail({
               schedules.map((schedule) => (
                 <div
                   key={schedule.id}
-                  className="relative pb-4"
+                  className="flex gap-3 pb-3"
                 >
-                  <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-primary bg-background flex items-center justify-center">
+                  <div className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-primary bg-primary/10 z-10">
                     <Calendar className="h-2.5 w-2.5 text-primary" />
                   </div>
-                  <div>
+                  <div className="pt-px">
                     <div className="flex items-center gap-2">
-                      <p className="text-xs font-semibold">
+                      <p className="text-sm font-semibold leading-none">
                         {formatDate(
                           new Date(schedule.scheduled_date),
                           "EEEE, MMMM d, yyyy",
@@ -2134,13 +2117,13 @@ export default function ServiceDetail({
                         {schedule.status}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-0.5">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                       <Clock className="h-2.5 w-2.5" />
                       <span>{formatTimeTo12Hour(schedule.scheduled_time)}</span>
                     </div>
                     {schedule.technicians &&
                       schedule.technicians.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">
+                        <div className="flex flex-wrap gap-1 mt-1">
                           {schedule.technicians.map((tech) => (
                             <Badge
                               key={tech.id}
@@ -2153,8 +2136,8 @@ export default function ServiceDetail({
                         </div>
                       )}
                     {schedule.address && (
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1">
-                        <MapPin className="h-2.5 w-2.5 shrink-0" />
+                      <div className="flex items-start gap-1 text-xs text-muted-foreground mt-1">
+                        <MapPin className="h-3 w-3 shrink-0 mt-0.5" />
                         <span>{schedule.address}</span>
                       </div>
                     )}
@@ -2164,15 +2147,15 @@ export default function ServiceDetail({
 
             {/* Completion marker */}
             {isCompleted && (
-              <div className="relative pb-0">
-                <div className="absolute left-[-18px] top-1 h-4 w-4 rounded-full border-2 border-green-500 bg-green-500 flex items-center justify-center">
+              <div className="flex gap-3">
+                <div className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-green-500 bg-green-500 z-10">
                   <CheckCircle className="h-2.5 w-2.5 text-white" />
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-green-600">
+                <div className="pt-px">
+                  <p className="text-sm font-semibold leading-none text-green-600">
                     Service Completed
                   </p>
-                  <p className="text-[10px] text-muted-foreground">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     {service.updated_at
                       ? formatDate(
                           new Date(service.updated_at),
@@ -2313,30 +2296,30 @@ export default function ServiceDetail({
             </div>
             <div className="rounded-md bg-muted p-3 space-y-1">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Revenue</span>
+                <span className="text-muted-foreground">Total</span>
                 <span className="font-medium">
                   {formatCurrency(parseFloat(service.total_revenue || "0"))}
                 </span>
               </div>
-              {parseFloat(service.total_paid || "0") > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Paid</span>
-                  <span className="font-medium text-green-600">
-                    {formatCurrency(parseFloat(service.total_paid || "0"))}
-                  </span>
-                </div>
-              )}
-              {parseFloat(service.total_refunded || "0") > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Total Refunded</span>
-                  <span className="font-medium text-orange-600">
-                    -{formatCurrency(parseFloat(service.total_refunded || "0"))}
-                  </span>
-                </div>
-              )}
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Balance Due</span>
-                <span className="font-medium text-red-600">
+                <span className="text-muted-foreground">Paid</span>
+                <span className="font-medium text-green-600">
+                  {formatCurrency(
+                    parseFloat(service.total_paid || "0") -
+                      parseFloat(service.total_refunded || "0"),
+                  )}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between text-sm font-medium">
+                <span>Balance Due</span>
+                <span
+                  className={`${
+                    parseFloat(service.balance_due || "0") <= 0
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
                   {formatCurrency(parseFloat(service.balance_due || "0"))}
                 </span>
               </div>
