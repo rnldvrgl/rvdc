@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -8,12 +8,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Stock, StockPayload, StockRoomStock } from '@/lib/constants/interface'
-import { useStallStockMutations } from '@/lib/mutations/useStallStockMutations'
-import { useStockRoomStockMutations } from '@/lib/mutations/useStockRoomStockMutations'
-import { SubmitHandler, useForm } from 'react-hook-form'
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Stock, StockPayload, StockRoomStock } from "@/lib/constants/interface"
+import { useStallStockMutations } from "@/lib/mutations/useStallStockMutations"
+import { useStockRoomStockMutations } from "@/lib/mutations/useStockRoomStockMutations"
+import { SubmitHandler, useForm } from "react-hook-form"
 
 interface FormValues {
   low_stock_threshold: string
@@ -21,7 +21,7 @@ interface FormValues {
 
 interface StockThresholdFormProps {
   stock: Stock | StockRoomStock
-  type: 'stall' | 'stock_room'
+  type: "stall" | "stock_room"
   onClose: () => void
 }
 
@@ -32,7 +32,7 @@ export default function StockThresholdForm({
 }: StockThresholdFormProps) {
   const form = useForm<FormValues>({
     defaultValues: {
-      low_stock_threshold: stock?.low_stock_threshold?.toString() ?? '',
+      low_stock_threshold: stock?.low_stock_threshold?.toString() ?? "",
     },
   })
 
@@ -40,14 +40,14 @@ export default function StockThresholdForm({
   const { updateStockRoomStock } = useStockRoomStockMutations()
 
   const handleSubmit: SubmitHandler<FormValues> = (data) => {
-    const threshold = parseInt(data.low_stock_threshold) || 0
+    const threshold = parseFloat(data.low_stock_threshold) || 0
 
-    if (type === 'stall') {
+    if (type === "stall") {
       // Type guard to ensure stock is of type Stock
-      if (!('stall' in stock) || !stock.stall?.id) {
-        form.setError('root', {
-          type: 'required',
-          message: 'Stall is required',
+      if (!("stall" in stock) || !stock.stall?.id) {
+        form.setError("root", {
+          type: "required",
+          message: "Stall is required",
         })
         return
       }
@@ -62,7 +62,7 @@ export default function StockThresholdForm({
         { stock_id: stock.id, data: payload },
         { onSuccess: onClose },
       )
-    } else if (type === 'stock_room') {
+    } else if (type === "stock_room") {
       // no stall_id needed
       const payload = {
         item_id: stock.item.id,
@@ -92,12 +92,14 @@ export default function StockThresholdForm({
             />
           </FormItem>
 
-          {type === 'stall' && (
+          {type === "stall" && (
             <>
               <FormItem>
                 <FormLabel>Stall</FormLabel>
                 <Input
-                  value={'stall' in stock ? stock.stall?.name ?? 'N/A' : 'N/A'}
+                  value={
+                    "stall" in stock ? (stock.stall?.name ?? "N/A") : "N/A"
+                  }
                   disabled
                 />
               </FormItem>
@@ -111,7 +113,7 @@ export default function StockThresholdForm({
             </>
           )}
 
-          {type === 'stock_room' && (
+          {type === "stock_room" && (
             <FormItem>
               <FormLabel>Current Stock Room Quantity</FormLabel>
               <Input
@@ -124,7 +126,7 @@ export default function StockThresholdForm({
           <FormField
             control={form.control}
             name="low_stock_threshold"
-            rules={{ required: 'Low stock threshold is required' }}
+            rules={{ required: "Low stock threshold is required" }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Low Stock Threshold</FormLabel>
@@ -132,7 +134,7 @@ export default function StockThresholdForm({
                   <Input
                     {...field}
                     type="number"
-                    step="1"
+                    step="0.01"
                     min="0"
                     placeholder="e.g. 10"
                   />

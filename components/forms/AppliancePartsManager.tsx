@@ -48,7 +48,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ApplianceItemUsed } from "@/lib/constants/interface"
+import { ApplianceItemUsed, Stock } from "@/lib/constants/interface"
+import { PaginatedResult } from "@/lib/constants/types"
+import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useApplianceItemMutations } from "@/lib/mutations/services/useApplianceItemMutations"
 import { useItems } from "@/lib/queries/inventory/useItems"
@@ -108,14 +110,23 @@ export default function AppliancePartsManager({
   const items = itemsData?.results || []
   const selectedItem = items.find((i) => i.id === selectedItemId)
 
+  // Fetch stock info for the selected item (to show availability)
+  const { data: stockData } = useApiQuery<PaginatedResult<Stock>>({
+    queryKey: ["stall-stocks", "item", selectedItemId],
+    url: "/inventory/stocks/",
+    params: { item: selectedItemId, limit: 1 },
+    enabled: !!selectedItemId,
+  })
+  const selectedItemStock = stockData?.results?.[0]
+
   const handleSavePart = async () => {
     if (!selectedItemId || !quantity) {
       toast.error("Please fill in all fields")
       return
     }
 
-    const qty = parseInt(quantity)
-    if (qty <= 0) {
+    const qty = parseFloat(quantity)
+    if (isNaN(qty) || qty <= 0) {
       toast.error("Quantity must be greater than 0")
       return
     }
@@ -123,7 +134,7 @@ export default function AppliancePartsManager({
     const payload = {
       appliance: applianceId,
       item: selectedItemId,
-      quantity: qty,
+      quantity: Math.round(qty * 100) / 100,
       is_free: isFree,
       discount_amount:
         !isFree && discountType === "fixed"
@@ -509,15 +520,71 @@ export default function AppliancePartsManager({
               </Popover>
             </div>
 
+            {/* Stock availability info for selected item */}
+            {selectedItem && selectedItemStock && (
+              <div className="rounded-md border bg-muted/50 p-3 space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Available Stock:
+                  </span>
+                  <span
+                    className={cn(
+                      "font-semibold",
+                      selectedItemStock.status === "no_stock" && "text-red-600",
+                      selectedItemStock.status === "low_stock" &&
+                        "text-amber-600",
+                      selectedItemStock.status === "high_stock" &&
+                        "text-green-600",
+                    )}
+                  >
+                    {selectedItemStock.available_quantity}{" "}
+                    {selectedItem.unit_of_measure}
+                  </span>
+                </div>
+                {Number(selectedItem.waste_tolerance_percentage) > 0 && (
+                  <div className="flex items-center justify-between text-xs text-amber-600">
+                    <span>Waste Tolerance:</span>
+                    <span>±{selectedItem.waste_tolerance_percentage}%</span>
+                  </div>
+                )}
+                {selectedItemStock.status === "no_stock" && (
+                  <p className="text-xs text-red-600 font-medium">
+                    ⚠ No stock available
+                  </p>
+                )}
+                {selectedItemStock.status === "low_stock" && (
+                  <p className="text-xs text-amber-600">⚠ Low stock</p>
+                )}
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>Quantity</Label>
               <Input
                 type="number"
-                min="1"
+                min="0.01"
+                step={
+                  selectedItem &&
+                  ["kg", "ft"].includes(selectedItem.unit_of_measure)
+                    ? "0.01"
+                    : "1"
+                }
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                placeholder="Enter quantity"
+                placeholder={
+                  selectedItem &&
+                  ["kg", "ft"].includes(selectedItem.unit_of_measure)
+                    ? `Enter quantity (${selectedItem.unit_of_measure})`
+                    : "Enter quantity"
+                }
               />
+              {selectedItem &&
+                ["kg", "ft"].includes(selectedItem.unit_of_measure) && (
+                  <p className="text-xs text-muted-foreground">
+                    Supports decimal values (e.g., 2.5{" "}
+                    {selectedItem.unit_of_measure})
+                  </p>
+                )}
             </div>
 
             {/* Is Free Checkbox */}

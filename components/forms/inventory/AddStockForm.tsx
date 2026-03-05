@@ -36,7 +36,7 @@ export default function AddStockForm({ stock, onClose }: AddStockFormProps) {
   const stallVariant = getBadgeVariant(stock.status)
 
   const onSubmit = (data: FormValues) => {
-    const quantity = parseInt(data.quantity)
+    const quantity = parseFloat(data.quantity)
     if (isNaN(quantity) || quantity <= 0) {
       form.setError("quantity", {
         type: "manual",
@@ -136,7 +136,8 @@ export default function AddStockForm({ stock, onClose }: AddStockFormProps) {
                   type="number"
                   placeholder="Enter quantity"
                   {...field}
-                  min={1}
+                  min={0.01}
+                  step={0.01}
                 />
               </FormControl>
               <FormMessage />
