@@ -12,7 +12,6 @@ import ApplianceKanbanBoard from "@/components/services/ApplianceKanbanBoard"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -1431,13 +1430,15 @@ export default function ServiceDetail({
         >
           {/* View toggle + kanban board */}
           {canManage && service.appliances && service.appliances.length > 0 && (
-            <div className="flex items-center justify-end gap-1">
+            <div className="flex items-center justify-end gap-0.5">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     aria-label="List view"
                     onClick={() => setApplianceView("list")}
-                    variant={applianceView === "list" ? "default" : "plain"}
+                    variant={applianceView === "list" ? "default" : "ghost"}
+                    size="sm"
+                    className="h-7 w-7 p-0"
                   >
                     <List className="h-3.5 w-3.5" />
                   </Button>
@@ -1448,8 +1449,10 @@ export default function ServiceDetail({
                 <TooltipTrigger asChild>
                   <Button
                     aria-label="Kanban board view"
-                    variant={applianceView === "kanban" ? "default" : "plain"}
+                    variant={applianceView === "kanban" ? "default" : "ghost"}
                     onClick={() => setApplianceView("kanban")}
+                    size="sm"
+                    className="h-7 w-7 p-0"
                   >
                     <Kanban className="h-3.5 w-3.5" />
                   </Button>
@@ -1504,16 +1507,21 @@ export default function ServiceDetail({
 
           {!isCompleted &&
             (!service.appliances || service.appliances.length === 0) && (
-              <Card className="border-dashed">
-                <CardContent className="p-6 text-center">
-                  <Wrench className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
-                  <p className="text-sm text-muted-foreground">
-                    {service.service_type === "installation"
-                      ? "No units added yet. Add aircon units for installation."
-                      : "No appliances added yet. Add appliances to generate sales when completing this service."}
-                  </p>
-                </CardContent>
-              </Card>
+              <div className="rounded-lg border border-dashed p-8 text-center">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted mx-auto mb-3">
+                  <Wrench className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium mb-1">
+                  {service.service_type === "installation"
+                    ? "No units added yet"
+                    : "No appliances added yet"}
+                </p>
+                <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                  {service.service_type === "installation"
+                    ? "Add aircon units to track installation and generate charges."
+                    : "Add appliances to track repairs and generate charges when completing this service."}
+                </p>
+              </div>
             )}
         </TabsContent>
 

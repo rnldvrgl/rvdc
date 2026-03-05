@@ -264,27 +264,37 @@ export default function AppliancePartsManager({
   return (
     <>
       <Card className="bg-transparent border-0 p-0">
-        <CardHeader className="flex flex-row items-center justify-between px-0">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Package className="h-4 w-4" />
-            Parts Used
+        <CardHeader className="flex flex-row items-center justify-between px-0 pb-3">
+          <CardTitle className="text-sm flex items-center gap-1.5 text-muted-foreground">
+            <Package className="h-3.5 w-3.5" />
+            <span className="font-medium uppercase tracking-wide">
+              Parts Used
+            </span>
+            {partsUsed.length > 0 && (
+              <span className="text-xs font-normal">({partsUsed.length})</span>
+            )}
           </CardTitle>
           {!disabled && (
             <Button
               size="sm"
+              variant="outline"
               onClick={() => setDialogOpen(true)}
               disabled={disabled}
+              className="h-7 text-xs"
             >
-              <Plus className="h-4 w-4 mr-1" />
+              <Plus className="h-3 w-3 mr-1" />
               Add Part
             </Button>
           )}
         </CardHeader>
         <CardContent className="px-0">
           {partsUsed.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No parts added yet
-            </p>
+            <div className="text-center py-6">
+              <Package className="h-6 w-6 mx-auto text-muted-foreground/40 mb-2" />
+              <p className="text-xs text-muted-foreground">
+                No parts added yet
+              </p>
+            </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
               <Table>
@@ -612,8 +622,8 @@ export default function AppliancePartsManager({
             </div>
 
             {/* Discount Section */}
-            <div className="space-y-3 pt-2 border-t">
-              <Label className="text-sm font-semibold">
+            <div className="space-y-3 pt-3 border-t">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Item Discount (Optional)
               </Label>
               {isFree ? (
@@ -668,31 +678,31 @@ export default function AppliancePartsManager({
             </div>
 
             {selectedItemId && (
-              <div className="rounded-lg bg-muted p-3 text-sm space-y-2">
-                <div>
-                  <p className="font-semibold">Subtotal:</p>
-                  <p className="text-lg font-bold text-primary">
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-semibold text-primary">
                     {formatCurrency(
                       Number(
                         items.find((i) => i.id === selectedItemId)
                           ?.retail_price || 0,
                       ) * parseInt(quantity || "0"),
                     )}
-                  </p>
+                  </span>
                 </div>
                 {discountType !== "none" && discountValue && (
                   <>
-                    <div className="border-t pt-2">
-                      <p className="font-semibold text-green-600">Discount:</p>
-                      <p className="text-sm">
+                    <div className="flex items-center justify-between border-t pt-2">
+                      <span className="text-green-600">Discount</span>
+                      <span className="text-sm text-green-600">
                         {discountType === "percentage"
                           ? `${discountValue}% off`
                           : `-${formatCurrency(parseFloat(discountValue))}`}
-                      </p>
+                      </span>
                     </div>
-                    <div className="border-t pt-2">
-                      <p className="font-semibold">Final Cost:</p>
-                      <p className="text-lg font-bold text-primary">
+                    <div className="flex items-center justify-between border-t pt-2">
+                      <span className="font-medium">Final Cost</span>
+                      <span className="font-bold text-primary">
                         {formatCurrency(
                           (() => {
                             const subtotal =
@@ -707,7 +717,7 @@ export default function AppliancePartsManager({
                             return subtotal - discount
                           })(),
                         )}
-                      </p>
+                      </span>
                     </div>
                   </>
                 )}

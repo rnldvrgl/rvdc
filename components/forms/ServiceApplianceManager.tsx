@@ -39,14 +39,17 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  CircleDollarSign,
   Edit,
   Package,
   Plus,
   RotateCcw,
   Save,
+  Shield,
   Trash2,
   User,
-  X,
+  Users,
+  Wrench,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
@@ -474,14 +477,14 @@ export default function ServiceApplianceManager({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center text-lg">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Package className="h-4 w-4 text-muted-foreground" />
           {isInstallation ? "Units" : "Appliances"}
-          <Badge
-            variant="secondary"
-            className="ml-2"
-          >
-            {appliances.length}
-          </Badge>
+          {appliances.length > 0 && (
+            <span className="text-xs font-normal text-muted-foreground">
+              ({appliances.length})
+            </span>
+          )}
         </CardTitle>
         {!disabled && !isEditing && (
           <Button
@@ -489,24 +492,34 @@ export default function ServiceApplianceManager({
             size="sm"
             onClick={handleAdd}
           >
-            <Plus className="mr-2 h-4 w-4" />
-            {isInstallation ? "Add Unit" : "Add Appliance"}
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Add {isInstallation ? "Unit" : "Appliance"}
           </Button>
         )}
       </CardHeader>
 
       <CardContent>
         {isEditing ? (
-          <div className="space-y-4 rounded-lg border p-4">
-            <h4 className="font-medium">
-              {isAdding
-                ? isInstallation
-                  ? "Add Unit"
-                  : "Add Appliance"
-                : isInstallation
-                  ? "Edit Unit"
-                  : "Edit Appliance"}
-            </h4>
+          <div className="space-y-5">
+            {/* Form Title */}
+            <div className="flex items-center gap-2 pb-1">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
+                {isAdding ? (
+                  <Plus className="h-3.5 w-3.5 text-primary" />
+                ) : (
+                  <Edit className="h-3.5 w-3.5 text-primary" />
+                )}
+              </div>
+              <h4 className="text-sm font-semibold">
+                {isAdding
+                  ? isInstallation
+                    ? "Add Unit"
+                    : "Add Appliance"
+                  : isInstallation
+                    ? "Edit Unit"
+                    : "Edit Appliance"}
+              </h4>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               {/* Appliance Type (non-installation only) */}
@@ -535,6 +548,12 @@ export default function ServiceApplianceManager({
 
               {/* Assigned Technicians */}
               <div className="space-y-2 col-span-2">
+                <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+                  <Users className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium uppercase tracking-wide">
+                    Assignment
+                  </span>
+                </div>
                 <Label className="text-sm font-medium">
                   Assigned Technicians
                 </Label>
@@ -563,7 +582,13 @@ export default function ServiceApplianceManager({
               {isInstallation && (
                 <>
                   {/* Unit Type Selector */}
-                  <div className="space-y-3 pt-3 border-t col-span-2">
+                  <div className="space-y-3 col-span-2">
+                    <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
+                      <Package className="h-3.5 w-3.5" />
+                      <span className="text-xs font-medium uppercase tracking-wide">
+                        Unit Details
+                      </span>
+                    </div>
                     <Label className="text-sm font-medium">Unit Type</Label>
                     <RadioGroup
                       value={unitType || "brand_new"}
@@ -574,44 +599,40 @@ export default function ServiceApplianceManager({
                         setField("model", "")
                         setField("serial_number", "")
                       }}
-                      className="grid grid-cols-2 gap-4"
+                      className="grid grid-cols-2 gap-3"
                     >
-                      <div className="flex items-center space-x-2">
+                      <label
+                        htmlFor="brand_new"
+                        className={`relative flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${unitType === "brand_new" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
+                      >
                         <RadioGroupItem
                           value="brand_new"
                           id="brand_new"
                           className="mt-0.5"
                         />
-                        <Label
-                          htmlFor="brand_new"
-                          className="flex-1 cursor-pointer"
-                        >
-                          <div>
-                            <div className="font-medium">Brand New</div>
-                            <div className="text-xs text-muted-foreground">
-                              Select from inventory
-                            </div>
+                        <div>
+                          <div className="text-sm font-medium">Brand New</div>
+                          <div className="text-xs text-muted-foreground">
+                            Select from inventory
                           </div>
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
+                        </div>
+                      </label>
+                      <label
+                        htmlFor="second_hand"
+                        className={`relative flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${unitType === "second_hand" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
+                      >
                         <RadioGroupItem
                           value="second_hand"
                           id="second_hand"
                           className="mt-0.5"
                         />
-                        <Label
-                          htmlFor="second_hand"
-                          className="flex-1 cursor-pointer"
-                        >
-                          <div>
-                            <div className="font-medium">Second Hand</div>
-                            <div className="text-xs text-muted-foreground">
-                              Enter details manually
-                            </div>
+                        <div>
+                          <div className="text-sm font-medium">Second Hand</div>
+                          <div className="text-xs text-muted-foreground">
+                            Enter details manually
                           </div>
-                        </Label>
-                      </div>
+                        </div>
+                      </label>
                     </RadioGroup>
                   </div>
 
@@ -645,75 +666,82 @@ export default function ServiceApplianceManager({
 
                   {/* Brand New — Selected unit details */}
                   {unitType === "brand_new" && selectedUnit && (
-                    <div className="col-span-2 rounded-lg border bg-muted/50 p-4 space-y-2">
-                      <h4 className="text-sm font-semibold mb-3">
-                        Unit Details
+                    <div className="col-span-2 rounded-lg border bg-muted/30 p-4 space-y-3">
+                      <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Selected Unit
                       </h4>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                         <div>
-                          <p className="text-muted-foreground">Brand</p>
+                          <p className="text-xs text-muted-foreground">Brand</p>
                           <p className="font-medium">
                             {selectedUnit.model?.brand?.name || "N/A"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Model</p>
+                          <p className="text-xs text-muted-foreground">Model</p>
                           <p className="font-medium">
                             {selectedUnit.model?.name || "N/A"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Serial Number</p>
+                          <p className="text-xs text-muted-foreground">
+                            Serial Number
+                          </p>
                           <p className="font-medium">
                             {selectedUnit.serial_number || "N/A"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground">Type</p>
+                          <p className="text-xs text-muted-foreground">Type</p>
                           <p className="font-medium">
                             {selectedUnit.model?.aircon_type || "N/A"}
                           </p>
                         </div>
-                        <div>
-                          <p className="text-muted-foreground">
+                      </div>
+                      <Separator />
+                      <div className="flex items-end justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-baseline gap-2 mb-1">
+                            {selectedUnit.model?.has_discount ? (
+                              <>
+                                <span className="text-lg font-bold text-primary">
+                                  ₱
+                                  {parseFloat(
+                                    selectedUnit.model.selling_price || "0",
+                                  ).toLocaleString("en-PH", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </span>
+                                <span className="text-sm line-through text-muted-foreground">
+                                  ₱
+                                  {parseFloat(
+                                    selectedUnit.model.retail_price || "0",
+                                  ).toLocaleString("en-PH", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-lg font-bold text-primary">
+                                {selectedUnit.model?.retail_price
+                                  ? `₱${parseFloat(selectedUnit.model.retail_price).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                  : "N/A"}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
                             {selectedUnit.model?.has_discount
-                              ? "Retail Price"
-                              : "Price"}
-                          </p>
-                          <p
-                            className={`font-bold ${selectedUnit.model?.has_discount ? "text-muted-foreground line-through text-sm" : "text-lg text-primary"}`}
-                          >
-                            {selectedUnit.model?.retail_price
-                              ? `₱${parseFloat(selectedUnit.model.retail_price).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                              : "N/A"}
+                              ? "Selling price"
+                              : "Retail price"}
                           </p>
                         </div>
-                        {selectedUnit.model?.has_discount &&
-                          selectedUnit.model?.selling_price && (
-                            <div>
-                              <p className="text-muted-foreground">
-                                Selling Price
-                              </p>
-                              <p className="text-lg font-bold text-primary">
-                                ₱
-                                {parseFloat(
-                                  selectedUnit.model.selling_price,
-                                ).toLocaleString("en-PH", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </p>
-                            </div>
-                          )}
-                        <div className="col-span-2 pt-2 border-t">
-                          <Label className="text-sm font-medium">
-                            Unit Price Override{" "}
-                            <span className="text-muted-foreground text-xs">
-                              (optional — leave empty to use{" "}
-                              {selectedUnit.model?.has_discount
-                                ? "selling"
-                                : "retail"}{" "}
-                              price)
+                        <div className="flex-1">
+                          <Label className="text-xs font-medium">
+                            Price Override
+                            <span className="text-muted-foreground ml-1">
+                              (optional)
                             </span>
                           </Label>
                           <Input
@@ -729,8 +757,8 @@ export default function ServiceApplianceManager({
                                   : undefined,
                               )
                             }
-                            placeholder={`₱${parseFloat(selectedUnit.model?.selling_price || selectedUnit.model?.retail_price || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} — default`}
-                            className="mt-1.5"
+                            placeholder={`₱${parseFloat(selectedUnit.model?.selling_price || selectedUnit.model?.retail_price || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                            className="mt-1"
                           />
                         </div>
                       </div>
@@ -804,6 +832,12 @@ export default function ServiceApplianceManager({
               {/* ── Non-installation brand/model/serial ──────────────────── */}
               {!isInstallation && (
                 <>
+                  <div className="col-span-2 flex items-center gap-1.5 text-muted-foreground">
+                    <Wrench className="h-3.5 w-3.5" />
+                    <span className="text-xs font-medium uppercase tracking-wide">
+                      Unit Information
+                    </span>
+                  </div>
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Brand</Label>
                     <Input
@@ -820,7 +854,7 @@ export default function ServiceApplianceManager({
                       placeholder="Model number"
                     />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 col-span-2">
                     <Label className="text-sm font-medium">
                       Serial Number{" "}
                       <span className="text-muted-foreground text-xs">
@@ -838,7 +872,14 @@ export default function ServiceApplianceManager({
                 </>
               )}
 
-              {/* ── Labor Fee ────────────────────────────────────────────── */}
+              {/* ── Labor & Pricing Section ──────────────────────────────── */}
+              <div className="col-span-2 flex items-center gap-1.5 text-muted-foreground pt-1">
+                <CircleDollarSign className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium uppercase tracking-wide">
+                  Labor & Pricing
+                </span>
+              </div>
+
               <div className="space-y-2">
                 <Label className="text-sm font-medium">
                   {isInstallation ? "Installation Fee (₱)" : "Labor Fee (₱)"}
@@ -872,24 +913,24 @@ export default function ServiceApplianceManager({
               </div>
 
               {/* ── Labor Discount ───────────────────────────────────────── */}
-              <div className="space-y-3 pt-3 border-t col-span-2">
+              <div className="space-y-3 col-span-2">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowLaborDiscount(!showLaborDiscount)}
-                  className="w-full text-sm p-0 h-auto"
+                  className="w-full justify-start text-xs text-muted-foreground p-0 h-auto hover:text-foreground"
                 >
                   {showLaborDiscount ? (
-                    <ChevronUp className="h-4 w-4 mr-1" />
+                    <ChevronUp className="h-3.5 w-3.5 mr-1" />
                   ) : (
-                    <ChevronDown className="h-4 w-4 mr-1" />
+                    <ChevronDown className="h-3.5 w-3.5 mr-1" />
                   )}
                   Labor Discount (Optional)
                 </Button>
 
                 {showLaborDiscount && (
-                  <div className="grid grid-cols-3 gap-3 pl-4 border-l-2">
+                  <div className="grid grid-cols-3 gap-3 rounded-lg border bg-muted/30 p-3">
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Type</Label>
                       <ComboBox
@@ -966,6 +1007,12 @@ export default function ServiceApplianceManager({
             {/* Issue / Diagnosis (non-installation only) */}
             {!isInstallation && (
               <>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Wrench className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium uppercase tracking-wide">
+                    Service Details
+                  </span>
+                </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Issue Reported</Label>
                   <Textarea
@@ -973,6 +1020,7 @@ export default function ServiceApplianceManager({
                     onChange={(e) => setField("issue_reported", e.target.value)}
                     placeholder="Describe the issue reported by the client"
                     rows={2}
+                    className="resize-none"
                   />
                 </div>
                 <div className="space-y-2">
@@ -984,6 +1032,7 @@ export default function ServiceApplianceManager({
                     }
                     placeholder="Technician's diagnosis and findings"
                     rows={2}
+                    className="resize-none"
                   />
                 </div>
               </>
@@ -991,8 +1040,13 @@ export default function ServiceApplianceManager({
 
             {/* Warranty (non-installation only) */}
             {!isInstallation && (
-              <div className="space-y-3 pt-3 border-t">
-                <h5 className="text-sm font-semibold">Warranty Information</h5>
+              <div className="space-y-3">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Shield className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium uppercase tracking-wide">
+                    Warranty
+                  </span>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">
@@ -1049,14 +1103,13 @@ export default function ServiceApplianceManager({
             )}
 
             {/* Action Buttons */}
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2 border-t">
               <Button
                 type="button"
-                variant="destructive"
+                variant="outline"
                 size="sm"
                 onClick={resetForm}
               >
-                <X className="mr-2 h-4 w-4" />
                 Cancel
               </Button>
               <Button
@@ -1067,8 +1120,8 @@ export default function ServiceApplianceManager({
                 )}
                 variant="success"
               >
-                <Save className="mr-2 h-4 w-4" />
-                Save
+                <Save className="mr-1.5 h-3.5 w-3.5" />
+                {isAdding ? "Add" : "Save Changes"}
               </Button>
             </div>
           </div>
@@ -1297,12 +1350,12 @@ function ApplianceCard({
     }
   }
   return (
-    <Card className="overflow-hidden">
+    <div className="rounded-lg border bg-card overflow-hidden">
       {/* Header */}
-      <CardHeader className="border-b flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0 space-y-2">
+      <div className="flex items-start justify-between gap-3 p-4 pb-3">
+        <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="text-base font-semibold">
+            <h4 className="text-sm font-semibold">
               {appliance.appliance_type?.name ||
                 (appliance.brand && appliance.model
                   ? `${appliance.brand} ${appliance.model}`
@@ -1310,19 +1363,19 @@ function ApplianceCard({
             </h4>
             <Badge
               variant="outline"
-              className="font-medium"
+              className="text-xs font-medium"
             >
               {getStatusLabel(appliance.status)}
             </Badge>
           </div>
 
           {(appliance.brand || appliance.model) && (
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Package className="h-3.5 w-3.5" />
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <Package className="h-3 w-3" />
               <span className="font-medium">{appliance.brand || "—"}</span>
               {appliance.model && (
                 <>
-                  <span>•</span>
+                  <span className="text-muted-foreground/50">·</span>
                   <span>{appliance.model}</span>
                 </>
               )}
@@ -1330,10 +1383,9 @@ function ApplianceCard({
           )}
 
           {serviceTechnicians.length > 0 && (
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <User className="h-3.5 w-3.5" />
-              <span>Assigned to:</span>
-              <span className="font-medium">
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <User className="h-3 w-3" />
+              <span>
                 {serviceTechnicians
                   .map(
                     (techId) => users.find((u) => u.id === techId)?.full_name,
@@ -1343,32 +1395,9 @@ function ApplianceCard({
               </span>
             </p>
           )}
-
-          {/* Quick Status Actions */}
-          {!disabled && availableActions.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap pt-1">
-              {availableActions.map((action) => {
-                const Icon = action.icon
-                return (
-                  <Button
-                    key={`${action.from}-${action.to}`}
-                    type="button"
-                    variant={action.variant}
-                    size="sm"
-                    disabled={statusLoading}
-                    onClick={() => handleStatusChange(action.to)}
-                    className="h-7 text-xs"
-                  >
-                    <Icon className="mr-1 h-3.5 w-3.5" />
-                    {action.label}
-                  </Button>
-                )
-              })}
-            </div>
-          )}
         </div>
 
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-0.5 shrink-0">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -1376,12 +1405,12 @@ function ApplianceCard({
                 variant="ghost"
                 size="sm"
                 onClick={onToggleExpand}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 p-0"
               >
                 {expanded ? (
-                  <ChevronUp className="h-4 w-4" />
+                  <ChevronUp className="h-3.5 w-3.5" />
                 ) : (
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-3.5 w-3.5" />
                 )}
               </Button>
             </TooltipTrigger>
@@ -1404,9 +1433,9 @@ function ApplianceCard({
                     variant="ghost"
                     size="sm"
                     onClick={onEdit}
-                    className="h-8 w-8 p-0"
+                    className="h-7 w-7 p-0"
                   >
-                    <Edit className="h-4 w-4" />
+                    <Edit className="h-3.5 w-3.5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -1420,9 +1449,9 @@ function ApplianceCard({
                     variant="ghost"
                     size="sm"
                     onClick={onDelete}
-                    className="h-8 w-8 p-0"
+                    className="h-7 w-7 p-0"
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -1432,147 +1461,132 @@ function ApplianceCard({
             </>
           )}
         </div>
-      </CardHeader>
+      </div>
+
+      {/* Status Actions */}
+      {!disabled && availableActions.length > 0 && (
+        <div className="flex items-center gap-1.5 flex-wrap px-4 pb-3">
+          {availableActions.map((action) => {
+            const Icon = action.icon
+            return (
+              <Button
+                key={`${action.from}-${action.to}`}
+                type="button"
+                variant={action.variant}
+                size="sm"
+                disabled={statusLoading}
+                onClick={() => handleStatusChange(action.to)}
+                className="h-6 text-xs px-2"
+              >
+                <Icon className="mr-1 h-3 w-3" />
+                {action.label}
+              </Button>
+            )
+          })}
+        </div>
+      )}
 
       {/* Content */}
-      <CardContent className="space-y-4">
+      <div className="px-4 pb-4 space-y-3">
         {appliance.issue_reported && (
-          <div className="space-y-2">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Issue Reported
-            </Label>
-            <p className="text-sm leading-relaxed bg-muted/50 p-3 rounded-md">
+            </p>
+            <p className="text-sm leading-relaxed bg-muted/40 p-2.5 rounded-md">
               {appliance.issue_reported}
             </p>
           </div>
         )}
 
         {appliance.diagnosis_notes && (
-          <div className="space-y-2">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Diagnosis Notes
-            </Label>
-            <p className="text-sm leading-relaxed bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-900">
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Diagnosis
+            </p>
+            <p className="text-sm leading-relaxed bg-blue-50 dark:bg-blue-950/20 p-2.5 rounded-md border border-blue-200/50 dark:border-blue-900/50">
               {appliance.diagnosis_notes}
             </p>
           </div>
         )}
 
-        {/* Financial Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Financial Summary — compact inline */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-muted/30 p-3 text-sm">
           {/* Labor Fee */}
-          <Card className="border-2">
-            <CardContent>
-              <div className="space-y-2">
-                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Labor Fee
-                </Label>
-                {appliance.labor_is_free ? (
-                  <Badge
-                    variant="success"
-                    className="ml-2"
-                  >
-                    FREE
-                  </Badge>
-                ) : (
-                  <div className="space-y-1">
-                    {((appliance.labor_discount_amount &&
-                      parseFloat(appliance.labor_discount_amount) > 0) ||
-                      (appliance.labor_discount_percentage &&
-                        parseFloat(appliance.labor_discount_percentage) >
-                          0)) && (
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm line-through text-muted-foreground">
-                          {formatCurrency(parseFloat(appliance.labor_fee))}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="text-green-600 border-green-600"
-                        >
-                          {appliance.labor_discount_percentage &&
-                          parseFloat(appliance.labor_discount_percentage) > 0
-                            ? `${appliance.labor_discount_percentage}% off`
-                            : `₱${appliance.labor_discount_amount} off`}
-                        </Badge>
-                      </div>
-                    )}
-                    <p className="text-2xl font-bold text-primary">
-                      {formatCurrency(
-                        parseFloat(
-                          appliance.discounted_labor_fee || appliance.labor_fee,
-                        ),
-                      )}
-                    </p>
-                  </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Labor</p>
+            {appliance.labor_is_free ? (
+              <Badge
+                variant="success"
+                className="text-xs mt-0.5"
+              >
+                FREE
+              </Badge>
+            ) : (
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-semibold text-primary">
+                  {formatCurrency(
+                    parseFloat(
+                      appliance.discounted_labor_fee || appliance.labor_fee,
+                    ),
+                  )}
+                </span>
+                {((appliance.labor_discount_amount &&
+                  parseFloat(appliance.labor_discount_amount) > 0) ||
+                  (appliance.labor_discount_percentage &&
+                    parseFloat(appliance.labor_discount_percentage) > 0)) && (
+                  <span className="text-xs text-green-600">
+                    {appliance.labor_discount_percentage &&
+                    parseFloat(appliance.labor_discount_percentage) > 0
+                      ? `${appliance.labor_discount_percentage}% off`
+                      : `₱${appliance.labor_discount_amount} off`}
+                  </span>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            )}
+          </div>
 
           {/* Unit Price (installation only) */}
           {isInstallation && (
-            <UnitPriceCard
-              appliance={appliance}
-              serviceId={serviceId}
-              installationUnits={installationUnits}
-              disabled={disabled}
-              updateAppliance={updateAppliance}
-              invalidateServiceQueries={invalidateServiceQueries}
-            />
+            <>
+              <Separator
+                orientation="vertical"
+                className="h-8"
+              />
+              <UnitPriceInline
+                appliance={appliance}
+                serviceId={serviceId}
+                installationUnits={installationUnits}
+                disabled={disabled}
+                updateAppliance={updateAppliance}
+                invalidateServiceQueries={invalidateServiceQueries}
+              />
+            </>
           )}
 
           {/* Parts Cost */}
-          <Card className="border-2">
-            <CardContent>
-              <div className="space-y-2">
-                <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-                  Parts Cost
-                </Label>
-                {appliance.items_used && appliance.items_used.length > 0 ? (
-                  <div className="space-y-1">
-                    {(() => {
-                      const totalOriginal = appliance.items_used.reduce(
-                        (sum, part) =>
-                          sum + parseFloat(part.item_price) * part.quantity,
-                        0,
-                      )
-                      const totalFinal = parseFloat(
-                        appliance.total_parts_cost || "0",
-                      )
-                      const hasDiscount = totalOriginal > totalFinal
-                      return (
-                        <>
-                          {hasDiscount && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm line-through text-muted-foreground">
-                                {formatCurrency(totalOriginal)}
-                              </span>
-                              <Badge
-                                variant="outline"
-                                className="text-green-600 border-green-600 text-xs"
-                              >
-                                {formatCurrency(totalOriginal - totalFinal)} off
-                              </Badge>
-                            </div>
-                          )}
-                          <p className="text-2xl font-bold text-primary">
-                            {formatCurrency(totalFinal)}
-                          </p>
-                        </>
-                      )
-                    })()}
-                    <p className="text-xs text-muted-foreground">
-                      {appliance.items_used.length}{" "}
-                      {appliance.items_used.length === 1 ? "item" : "items"}{" "}
-                      used
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No parts used</p>
-                )}
+          <Separator
+            orientation="vertical"
+            className="h-8"
+          />
+          <div>
+            <p className="text-xs text-muted-foreground">Parts</p>
+            {appliance.items_used && appliance.items_used.length > 0 ? (
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-semibold text-primary">
+                  {formatCurrency(
+                    parseFloat(appliance.total_parts_cost || "0"),
+                  )}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  ({appliance.items_used.length}{" "}
+                  {appliance.items_used.length === 1 ? "item" : "items"})
+                </span>
               </div>
-            </CardContent>
-          </Card>
+            ) : (
+              <span className="text-muted-foreground text-xs">No parts</span>
+            )}
+          </div>
         </div>
 
         {/* Warranty */}
@@ -1587,7 +1601,7 @@ function ApplianceCard({
           appliance.items_used.length > 0 && (
             <PartsSummary parts={appliance.items_used} />
           )}
-      </CardContent>
+      </div>
 
       {/* Expandable Parts Manager */}
       {expanded && (
@@ -1601,13 +1615,13 @@ function ApplianceCard({
           </div>
         </div>
       )}
-    </Card>
+    </div>
   )
 }
 
 // ─── Sub-components ─────────────────────────────────────────────────────────────
 
-function UnitPriceCard({
+function UnitPriceInline({
   appliance,
   serviceId,
   installationUnits,
@@ -1712,233 +1726,187 @@ function UnitPriceCard({
   }
 
   return (
-    <Card className="border-2">
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-              Unit Price
-            </Label>
-            {!disabled && !isEditingPrice && currentPrice > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleStartEdit}
-                    className="h-6 w-6 p-0"
-                  >
-                    <Edit className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Override unit price</TooltipContent>
-              </Tooltip>
-            )}
-          </div>
+    <div>
+      <div className="flex items-center gap-1">
+        <p className="text-xs text-muted-foreground">Unit</p>
+        {!disabled && !isEditingPrice && currentPrice > 0 && (
+          <button
+            type="button"
+            onClick={handleStartEdit}
+            title="Edit unit price"
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <Edit className="h-2.5 w-2.5" />
+          </button>
+        )}
+      </div>
 
-          {isEditingPrice ? (
-            <div className="space-y-2">
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={editPrice}
-                onChange={(e) => setEditPrice(e.target.value)}
-                placeholder={`₱${defaultPrice.toLocaleString("en-PH", { minimumFractionDigits: 2 })} — default`}
-                className="h-9"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSavePrice()
-                  if (e.key === "Escape") handleCancelEdit()
-                }}
-              />
-              {defaultPrice > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Default: {formatCurrency(defaultPrice)}
-                </p>
-              )}
-              <div className="flex items-center gap-1.5">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleSavePrice}
-                  disabled={isSaving}
-                  className="h-7 text-xs"
-                >
-                  <Save className="mr-1 h-3 w-3" />
-                  Save
-                </Button>
-                {hasOverride && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleResetToDefault}
-                    disabled={isSaving}
-                    className="h-7 text-xs"
-                  >
-                    <RotateCcw className="mr-1 h-3 w-3" />
-                    Reset
-                  </Button>
-                )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCancelEdit}
-                  disabled={isSaving}
-                  className="h-7 text-xs"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : currentPrice > 0 ? (
-            <div className="space-y-1">
-              {hasOverride && defaultPrice > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm line-through text-muted-foreground">
-                    {formatCurrency(defaultPrice)}
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs ${
-                      currentPrice < defaultPrice
-                        ? "text-green-600 border-green-600"
-                        : "text-orange-600 border-orange-600"
-                    }`}
-                  >
-                    {currentPrice < defaultPrice
-                      ? `${formatCurrency(defaultPrice - currentPrice)} off`
-                      : `+${formatCurrency(currentPrice - defaultPrice)}`}
-                  </Badge>
-                </div>
-              )}
-              <p className="text-2xl font-bold text-primary">
-                {formatCurrency(currentPrice)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {matchingUnit?.model
-                  ? `${matchingUnit.model.brand?.name} ${matchingUnit.model.name}`
-                  : "Second-hand unit"}
-                {hasOverride && " • Custom price"}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                {matchingUnit
-                  ? "No unit price set"
-                  : "Labor only (no unit price)"}
-              </p>
-              {!disabled && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleStartEdit}
-                  className="h-7 text-xs"
-                >
-                  <Plus className="mr-1 h-3 w-3" />
-                  Set Price
-                </Button>
-              )}
-            </div>
+      {isEditingPrice ? (
+        <div className="space-y-1.5 mt-0.5">
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={editPrice}
+            onChange={(e) => setEditPrice(e.target.value)}
+            placeholder={`₱${defaultPrice.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
+            className="h-7 text-xs w-32"
+            autoFocus
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSavePrice()
+              if (e.key === "Escape") handleCancelEdit()
+            }}
+          />
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSavePrice}
+              disabled={isSaving}
+              className="h-5 text-[10px] px-1.5"
+            >
+              Save
+            </Button>
+            {hasOverride && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResetToDefault}
+                disabled={isSaving}
+                className="h-5 text-[10px] px-1.5"
+              >
+                Reset
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleCancelEdit}
+              disabled={isSaving}
+              className="h-5 text-[10px] px-1.5"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : currentPrice > 0 ? (
+        <div className="flex items-baseline gap-1.5">
+          <span className="font-semibold text-primary">
+            {formatCurrency(currentPrice)}
+          </span>
+          {hasOverride && (
+            <span
+              className={`text-xs ${currentPrice < defaultPrice ? "text-green-600" : "text-orange-600"}`}
+            >
+              {currentPrice < defaultPrice
+                ? `${formatCurrency(defaultPrice - currentPrice)} off`
+                : `+${formatCurrency(currentPrice - defaultPrice)}`}
+            </span>
           )}
         </div>
-      </CardContent>
-    </Card>
+      ) : (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground">
+            {matchingUnit ? "Not set" : "Labor only"}
+          </span>
+          {!disabled && (
+            <button
+              type="button"
+              onClick={handleStartEdit}
+              className="text-xs text-primary hover:underline"
+            >
+              Set
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
 function WarrantyCard({ appliance }: { appliance: ServiceAppliance }) {
   return (
-    <Card className="border-2 border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
-      <CardContent>
-        <div className="space-y-3">
-          <Label className="text-xs uppercase tracking-wide text-blue-700 dark:text-blue-300">
-            Warranty Information
-          </Label>
+    <div className="rounded-lg border border-blue-200/50 bg-blue-50/30 dark:bg-blue-950/10 p-3 space-y-2">
+      <div className="flex items-center gap-1.5">
+        <Shield className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+        <span className="text-xs font-medium uppercase tracking-wide text-blue-700 dark:text-blue-300">
+          Warranty
+        </span>
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {appliance.labor_warranty_months != null &&
-              appliance.labor_warranty_months > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">
-                    Labor Warranty
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold">
-                      {appliance.labor_warranty_months} months
-                    </p>
-                    {appliance.is_labor_warranty_active && (
-                      <Badge
-                        variant="success"
-                        className="text-xs"
-                      >
-                        Active
-                      </Badge>
-                    )}
-                  </div>
-                  {appliance.labor_warranty_end_date && (
-                    <p className="text-xs text-muted-foreground">
-                      Until:{" "}
-                      {new Date(
-                        appliance.labor_warranty_end_date,
-                      ).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
+      <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        {appliance.labor_warranty_months != null &&
+          appliance.labor_warranty_months > 0 && (
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">Labor</p>
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium">
+                  {appliance.labor_warranty_months} months
+                </span>
+                {appliance.is_labor_warranty_active && (
+                  <Badge
+                    variant="success"
+                    className="text-[10px] px-1 py-0"
+                  >
+                    Active
+                  </Badge>
+                )}
+              </div>
+              {appliance.labor_warranty_end_date && (
+                <p className="text-[10px] text-muted-foreground">
+                  Until{" "}
+                  {new Date(
+                    appliance.labor_warranty_end_date,
+                  ).toLocaleDateString()}
+                </p>
               )}
-
-            {appliance.unit_warranty_months != null &&
-              appliance.unit_warranty_months > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Unit Warranty</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold">
-                      {appliance.unit_warranty_months} months
-                    </p>
-                    {appliance.is_unit_warranty_active && (
-                      <Badge
-                        variant="success"
-                        className="text-xs"
-                      >
-                        Active
-                      </Badge>
-                    )}
-                  </div>
-                  {appliance.unit_warranty_end_date && (
-                    <p className="text-xs text-muted-foreground">
-                      Until:{" "}
-                      {new Date(
-                        appliance.unit_warranty_end_date,
-                      ).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-              )}
-          </div>
-
-          {appliance.warranty_notes && (
-            <div className="space-y-1 pt-2 border-t border-blue-200 dark:border-blue-800">
-              <p className="text-xs text-muted-foreground">Notes</p>
-              <p className="text-sm leading-relaxed">
-                {appliance.warranty_notes}
-              </p>
             </div>
           )}
 
-          {appliance.warranty_start_date && (
-            <p className="text-xs text-muted-foreground pt-1">
-              Warranty started:{" "}
-              {new Date(appliance.warranty_start_date).toLocaleDateString()}
-            </p>
+        {appliance.unit_warranty_months != null &&
+          appliance.unit_warranty_months > 0 && (
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">Unit</p>
+              <div className="flex items-center gap-1.5">
+                <span className="font-medium">
+                  {appliance.unit_warranty_months} months
+                </span>
+                {appliance.is_unit_warranty_active && (
+                  <Badge
+                    variant="success"
+                    className="text-[10px] px-1 py-0"
+                  >
+                    Active
+                  </Badge>
+                )}
+              </div>
+              {appliance.unit_warranty_end_date && (
+                <p className="text-[10px] text-muted-foreground">
+                  Until{" "}
+                  {new Date(
+                    appliance.unit_warranty_end_date,
+                  ).toLocaleDateString()}
+                </p>
+              )}
+            </div>
           )}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      {appliance.warranty_notes && (
+        <p className="text-xs text-muted-foreground pt-1 border-t border-blue-200/50 dark:border-blue-800/50">
+          {appliance.warranty_notes}
+        </p>
+      )}
+
+      {appliance.warranty_start_date && (
+        <p className="text-[10px] text-muted-foreground">
+          Started:{" "}
+          {new Date(appliance.warranty_start_date).toLocaleDateString()}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -1948,56 +1916,44 @@ function PartsSummary({
   parts?: ServiceAppliance["items_used"]
 }) {
   return (
-    <div className="space-y-2">
-      <Label className="text-xs uppercase tracking-wide text-muted-foreground">
-        Parts Summary
-      </Label>
-      <div className="bg-muted/30 rounded-md p-3">
-        <div className="space-y-1.5">
-          {parts.map((part) => {
-            const hasDiscount =
-              (part.discount_amount && parseFloat(part.discount_amount) > 0) ||
-              (part.discount_percentage &&
-                parseFloat(part.discount_percentage) > 0)
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Parts Used
+      </p>
+      <div className="rounded-md bg-muted/20 divide-y">
+        {parts.map((part) => {
+          const hasDiscount =
+            (part.discount_amount && parseFloat(part.discount_amount) > 0) ||
+            (part.discount_percentage &&
+              parseFloat(part.discount_percentage) > 0)
 
-            return (
-              <div
-                key={part.id}
-                className="flex justify-between items-center text-sm gap-2"
-              >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="text-muted-foreground truncate">
-                    {part.item_name}{" "}
-                    <span className="text-xs">(x{part.quantity})</span>
+          return (
+            <div
+              key={part.id}
+              className="flex justify-between items-center text-xs px-3 py-1.5 gap-2"
+            >
+              <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                <span className="text-muted-foreground truncate">
+                  {part.item_name}
+                </span>
+                <span className="text-muted-foreground/60 shrink-0">
+                  x{part.quantity}
+                </span>
+                {hasDiscount && (
+                  <span className="text-green-600 shrink-0">
+                    {part.discount_percentage &&
+                    parseFloat(part.discount_percentage) > 0
+                      ? `${part.discount_percentage}% off`
+                      : `₱${part.discount_amount} off`}
                   </span>
-                  {hasDiscount && (
-                    <Badge
-                      variant="outline"
-                      className="text-green-600 border-green-600 text-xs shrink-0"
-                    >
-                      {part.discount_percentage &&
-                      parseFloat(part.discount_percentage) > 0
-                        ? `${part.discount_percentage}% off`
-                        : `₱${part.discount_amount} off`}
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex flex-col items-end shrink-0">
-                  {hasDiscount && (
-                    <span className="text-xs line-through text-muted-foreground">
-                      {formatCurrency(
-                        parseFloat(part.item_price) * part.quantity,
-                      )}
-                    </span>
-                  )}
-                  <span className="font-medium">
-                    {formatCurrency(part.line_total)}
-                  </span>
-                </div>
+                )}
               </div>
-            )
-          })}
-        </div>
+              <span className="font-medium shrink-0">
+                {formatCurrency(part.line_total)}
+              </span>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
