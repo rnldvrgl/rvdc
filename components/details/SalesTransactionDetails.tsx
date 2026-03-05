@@ -331,8 +331,20 @@ export function SalesTransactionDetails({
                       key={idx}
                       className="hover:bg-muted/50 transition-colors"
                     >
-                      <TableCell className="capitalize">
-                        {payment.payment_type}
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="capitalize">
+                            {payment.payment_type}
+                          </span>
+                          {payment.cheque_number && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              #{payment.cheque_number}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {formatDate(new Date(payment.payment_date))}

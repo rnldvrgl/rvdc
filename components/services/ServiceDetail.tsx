@@ -1,5 +1,6 @@
 "use client"
 
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import {
@@ -41,6 +42,7 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { usePrint } from "@/lib/hooks/usePrint"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
+import { useChequeChoices } from "@/lib/queries/useChoices"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
 import {
   formatCurrency,
@@ -62,6 +64,7 @@ import {
   Package,
   Phone,
   Printer,
+  RotateCcw,
   Truck,
   User,
   Wallet,
@@ -126,6 +129,7 @@ export default function ServiceDetail({
   const [paymentAmount, setPaymentAmount] = useState("")
   const [paymentType, setPaymentType] = useState("cash")
   const [paymentNotes, setPaymentNotes] = useState("")
+  const [selectedCheque, setSelectedCheque] = useState<number | null>(null)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [cancelReason, setCancelReason] = useState("")
   const [refundDialogOpen, setRefundDialogOpen] = useState(false)
@@ -168,6 +172,8 @@ export default function ServiceDetail({
   })
   const { data: schedules = [], isLoading: schedulesLoading } =
     useSchedulesByService(service.id)
+  const { data: chequeChoices = [], rawData: chequeRawData = [] } =
+    useChequeChoices(service.client?.id)
 
   const canComplete =
     service.status === "pending" || service.status === "in_progress"
@@ -199,6 +205,18 @@ export default function ServiceDetail({
     service.service_discount_percentage,
     service.discount_reason,
   ])
+
+  // Auto-fill payment amount when cheque is selected
+  useEffect(() => {
+    if (selectedCheque && chequeRawData.length > 0) {
+      const selectedChequeData = chequeRawData.find(
+        (c) => c.id === selectedCheque,
+      )
+      if (selectedChequeData) {
+        setPaymentAmount(selectedChequeData.cheque_amount)
+      }
+    }
+  }, [selectedCheque, chequeRawData])
 
   // Calculate discount amount
   const calculateDiscount = () => {
@@ -254,11 +272,11 @@ export default function ServiceDetail({
   }
 
   const handleAddPayment = () => {
-    const balanceDue =
-      calculateActualTotalRevenue() - parseFloat(service.total_paid || "0")
+    const balanceDue = parseFloat(service.balance_due || "0")
     setPaymentAmount(balanceDue > 0 ? balanceDue.toString() : "0")
     setPaymentType("cash")
     setPaymentNotes("")
+    setSelectedCheque(null)
     setPaymentDialogOpen(true)
   }
 
@@ -446,6 +464,11 @@ export default function ServiceDetail({
       return
     }
 
+    if (paymentType === "cheque" && !selectedCheque) {
+      toast.error("Please select a cheque for cheque payments")
+      return
+    }
+
     const roundedAmount = Math.round(parseFloat(paymentAmount) * 100) / 100
 
     recordPayment.mutate(
@@ -455,6 +478,8 @@ export default function ServiceDetail({
           payment_type: paymentType,
           amount: roundedAmount.toString(),
           notes: paymentNotes || undefined,
+          cheque_collection:
+            paymentType === "cheque" ? selectedCheque : undefined,
         },
       },
       {
@@ -463,6 +488,7 @@ export default function ServiceDetail({
           setPaymentAmount("")
           setPaymentType("cash")
           setPaymentNotes("")
+          setSelectedCheque(null)
         },
         onSettled: () => {
           // Call onRefresh after query invalidation completes
@@ -1239,7 +1265,7 @@ export default function ServiceDetail({
                   Total Revenue
                 </p>
                 <p className="text-lg font-bold">
-                  {formatCurrency(calculateActualTotalRevenue())}
+                  {formatCurrency(parseFloat(service.total_revenue || "0"))}
                 </p>
               </div>
               <Separator />
@@ -1271,25 +1297,16 @@ export default function ServiceDetail({
                 <div className="flex items-center justify-between text-sm">
                   <p className="text-muted-foreground">Paid</p>
                   <p className="font-medium text-green-600">
-                    {formatCurrency(parseFloat(service.total_paid))}
+                    {formatCurrency(
+                      parseFloat(service.total_paid || "0") -
+                        parseFloat(service.total_refunded || "0"),
+                    )}
                   </p>
                 </div>
               )}
-              {service.total_refunded &&
-                parseFloat(service.total_refunded) > 0 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="text-muted-foreground">Total Refunded</p>
-                    <p className="font-medium text-red-600">
-                      -{formatCurrency(parseFloat(service.total_refunded))}
-                    </p>
-                  </div>
-                )}
               <Separator />
               {(() => {
-                const balanceDue =
-                  calculateActualTotalRevenue() -
-                  parseFloat(service.total_paid || "0") +
-                  parseFloat(service.total_refunded || "0")
+                const balanceDue = parseFloat(service.balance_due || "0")
                 return (
                   <>
                     <div className="flex items-center justify-between text-sm">
@@ -1510,13 +1527,14 @@ export default function ServiceDetail({
         >
           {/* Payment Summary Strip with progress bar */}
           {(() => {
-            const totalAmount = calculateActualTotalRevenue()
+            const totalAmount = parseFloat(service.total_revenue || "0")
             const totalPaid = parseFloat(service.total_paid || "0")
             const totalRefunded = parseFloat(service.total_refunded || "0")
-            const balanceDue = totalAmount - totalPaid + totalRefunded
+            const netPaid = totalPaid - totalRefunded
+            const balanceDue = parseFloat(service.balance_due || "0")
             const paidPercent =
               totalAmount > 0
-                ? Math.min((totalPaid / totalAmount) * 100, 100)
+                ? Math.min(Math.max((netPaid / totalAmount) * 100, 0), 100)
                 : 0
 
             return (
@@ -1536,25 +1554,9 @@ export default function ServiceDetail({
                     <div>
                       <p className="text-xs text-muted-foreground">Paid</p>
                       <p className="text-sm font-semibold text-green-600">
-                        {formatCurrency(totalPaid)}
+                        {formatCurrency(netPaid)}
                       </p>
                     </div>
-                    {totalRefunded > 0 && (
-                      <>
-                        <Separator
-                          orientation="vertical"
-                          className="h-8"
-                        />
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Refunded
-                          </p>
-                          <p className="text-sm font-semibold text-red-600">
-                            -{formatCurrency(totalRefunded)}
-                          </p>
-                        </div>
-                      </>
-                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">Balance Due</p>
@@ -1604,64 +1606,150 @@ export default function ServiceDetail({
             </Alert>
           )}
 
-          {/* Payment History */}
+          {/* Transaction History */}
           <div>
             <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
               <Wallet className="h-3 w-3" />
-              Payment History
+              Transaction History
             </p>
-            {service.payments && service.payments.length > 0 ? (
-              <div className="space-y-1.5">
-                {service.payments.map((payment, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-3 rounded-md border bg-card px-3 py-2"
-                  >
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 dark:bg-green-950 shrink-0">
-                      <Wallet className="h-3.5 w-3.5 text-green-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold">
-                          {formatCurrency(
-                            parseFloat(payment.amount.toString()),
-                          )}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] h-4 px-1.5 capitalize"
-                        >
-                          {payment.payment_type}
-                        </Badge>
-                      </div>
-                      {payment.notes && (
-                        <p className="text-[10px] text-muted-foreground truncate">
-                          {payment.notes}
-                        </p>
-                      )}
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-[10px] text-muted-foreground">
-                        {formatDate(
-                          new Date(payment.created_at),
-                          "MMM d, yyyy",
-                        )}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {formatDate(new Date(payment.created_at), "h:mm a")}
-                      </p>
-                    </div>
+            {(() => {
+              // Merge payments and refunds into a single sorted list
+              const transactions: {
+                type: "payment" | "refund"
+                amount: number
+                date: string
+                method: string
+                notes?: string
+                chequeNumber?: string
+                refundType?: string
+              }[] = []
+
+              if (service.payments) {
+                for (const p of service.payments) {
+                  transactions.push({
+                    type: "payment",
+                    amount: parseFloat(p.amount.toString()),
+                    date: p.created_at,
+                    method: p.payment_type,
+                    notes: p.notes,
+                    chequeNumber: p.cheque_number,
+                  })
+                }
+              }
+
+              if (service.refunds) {
+                for (const r of service.refunds) {
+                  transactions.push({
+                    type: "refund",
+                    amount: parseFloat(r.refund_amount),
+                    date: r.refund_date,
+                    method: r.refund_method_display || r.refund_method,
+                    notes: r.reason,
+                    refundType: r.refund_type_display || r.refund_type,
+                  })
+                }
+              }
+
+              // Sort newest first
+              transactions.sort(
+                (a, b) =>
+                  new Date(b.date).getTime() - new Date(a.date).getTime(),
+              )
+
+              if (transactions.length === 0) {
+                return (
+                  <div className="py-6 text-center rounded-lg border border-dashed">
+                    <Wallet className="mx-auto mb-1.5 h-6 w-6 text-muted-foreground/50" />
+                    <p className="text-xs text-muted-foreground">
+                      No transactions yet
+                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-6 text-center rounded-lg border border-dashed">
-                <Wallet className="mx-auto mb-1.5 h-6 w-6 text-muted-foreground/50" />
-                <p className="text-xs text-muted-foreground">
-                  No payments recorded yet
-                </p>
-              </div>
-            )}
+                )
+              }
+
+              return (
+                <div className="space-y-1.5">
+                  {transactions.map((tx, index) => {
+                    const isRefund = tx.type === "refund"
+                    return (
+                      <div
+                        key={index}
+                        className={`flex items-center gap-3 rounded-md border px-3 py-2 ${
+                          isRefund
+                            ? "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30"
+                            : "bg-card"
+                        }`}
+                      >
+                        <div
+                          className={`flex h-7 w-7 items-center justify-center rounded-full shrink-0 ${
+                            isRefund
+                              ? "bg-red-100 dark:bg-red-950"
+                              : "bg-green-100 dark:bg-green-950"
+                          }`}
+                        >
+                          {isRefund ? (
+                            <RotateCcw className="h-3.5 w-3.5 text-red-600" />
+                          ) : (
+                            <Wallet className="h-3.5 w-3.5 text-green-600" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-sm font-semibold ${
+                                isRefund ? "text-red-600" : ""
+                              }`}
+                            >
+                              {isRefund ? "-" : "+"}
+                              {formatCurrency(tx.amount)}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] h-4 px-1.5 capitalize ${
+                                isRefund
+                                  ? "border-red-300 text-red-600"
+                                  : ""
+                              }`}
+                            >
+                              {tx.method}
+                            </Badge>
+                            {tx.chequeNumber && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] h-4 px-1.5"
+                              >
+                                #{tx.chequeNumber}
+                              </Badge>
+                            )}
+                            {tx.refundType && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] h-4 px-1.5 capitalize"
+                              >
+                                {tx.refundType}
+                              </Badge>
+                            )}
+                          </div>
+                          {tx.notes && (
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {tx.notes}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-[10px] text-muted-foreground">
+                            {formatDate(new Date(tx.date), "MMM d, yyyy")}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {formatDate(new Date(tx.date), "h:mm a")}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
           </div>
 
           {/* Service Discount */}
@@ -1807,10 +1895,7 @@ export default function ServiceDetail({
               <div className="rounded-lg border bg-card px-4 py-3 space-y-3">
                 <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   Process Refund
-                  {calculateActualTotalRevenue() -
-                    parseFloat(service.total_paid || "0") +
-                    parseFloat(service.total_refunded || "0") <
-                    0 && (
+                  {parseFloat(service.balance_due || "0") < 0 && (
                     <Badge
                       variant="warning"
                       className="text-[10px] h-4 px-1.5"
@@ -2167,7 +2252,12 @@ export default function ServiceDetail({
               <Label htmlFor="payment_type">Payment Type</Label>
               <Select
                 value={paymentType}
-                onValueChange={setPaymentType}
+                onValueChange={(value) => {
+                  setPaymentType(value)
+                  if (value !== "cheque") {
+                    setSelectedCheque(null)
+                  }
+                }}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -2181,6 +2271,21 @@ export default function ServiceDetail({
                 </SelectContent>
               </Select>
             </div>
+            {paymentType === "cheque" && (
+              <div className="space-y-2">
+                <Label htmlFor="cheque">Select Cheque</Label>
+                <ComboBox
+                  options={chequeChoices}
+                  value={selectedCheque}
+                  onChange={setSelectedCheque}
+                  placeholder="Select a cheque..."
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Only pending and deposited cheques are shown
+                </p>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="amount">Amount (₱)</Label>
               <Input
@@ -2190,7 +2295,13 @@ export default function ServiceDetail({
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
                 placeholder="0.00"
+                disabled={paymentType === "cheque" && !!selectedCheque}
               />
+              {paymentType === "cheque" && selectedCheque && (
+                <p className="text-xs text-muted-foreground">
+                  Amount is set to the selected cheque's value
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes</Label>
@@ -2204,11 +2315,27 @@ export default function ServiceDetail({
             </div>
             <div className="rounded-md bg-muted p-3 space-y-1">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Amount</span>
+                <span className="text-muted-foreground">Total Revenue</span>
                 <span className="font-medium">
                   {formatCurrency(parseFloat(service.total_revenue || "0"))}
                 </span>
               </div>
+              {parseFloat(service.total_paid || "0") > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total Paid</span>
+                  <span className="font-medium text-green-600">
+                    {formatCurrency(parseFloat(service.total_paid || "0"))}
+                  </span>
+                </div>
+              )}
+              {parseFloat(service.total_refunded || "0") > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total Refunded</span>
+                  <span className="font-medium text-orange-600">
+                    -{formatCurrency(parseFloat(service.total_refunded || "0"))}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Balance Due</span>
                 <span className="font-medium text-red-600">

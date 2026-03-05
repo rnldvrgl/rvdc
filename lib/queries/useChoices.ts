@@ -142,3 +142,40 @@ export const useApplianceTypeChoices = () => {
     url: `${url}appliance-types/`,
   })
 }
+
+export const useChequeChoices = (clientId?: number) => {
+  const params = new URLSearchParams()
+  if (clientId) {
+    params.append("client", clientId.toString())
+  }
+  params.append("status", "pending")
+  params.append("status", "deposited")
+
+  const queryString = params.toString()
+  const { data, ...rest } = useApiQuery<
+    {
+      id: number
+      cheque_number: string
+      cheque_amount: string
+      client_name: string
+    }[]
+  >({
+    queryKey: ["cheque-choices", clientId],
+    url: `receivables/cheques/choices/${queryString ? `?${queryString}` : ""}`,
+    options: {
+      enabled: !!clientId,
+    },
+  })
+
+  // Transform data to ComboboxOption format
+  const transformedData: ComboboxOption[] = (data || []).map((cheque) => ({
+    value: cheque.id,
+    label: `${cheque.cheque_number} - ₱${parseFloat(cheque.cheque_amount).toLocaleString()}`,
+  }))
+
+  return {
+    data: transformedData,
+    rawData: data || [],
+    ...rest,
+  }
+}

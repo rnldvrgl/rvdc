@@ -391,6 +391,8 @@ export interface SalesPayment {
   payment_type: PaymentType
   amount: number
   payment_date: string
+  cheque_collection?: number | null
+  cheque_number?: string | null
 }
 
 // Sales Item
@@ -923,6 +925,8 @@ export interface ServicePayment {
   amount: string
   payment_date: string
   received_by?: User | null
+  cheque_collection?: number | null
+  cheque_number?: string | null
   notes?: string
   created_at: string
   updated_at: string
@@ -934,6 +938,7 @@ export interface ServicePaymentPayload {
   amount: number
   payment_date?: string
   received_by?: number
+  cheque_collection?: number | null
   notes?: string
 }
 
@@ -1012,6 +1017,7 @@ export interface Service {
   installation_units?: AirconUnits[]
   technician_assignments?: TechnicianAssignment[]
   payments?: ServicePayment[]
+  refunds?: ServiceRefund[]
   next_schedule?: {
     id: number
     schedule_type: string

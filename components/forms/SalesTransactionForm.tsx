@@ -83,6 +83,7 @@ export default function SalesTransactionForm({
         z.object({
           payment_type: z.string().min(1, "Payment type is required"),
           amount: z.number().min(1, "Amount must be a positive number"),
+          cheque_collection: z.number().nullable().optional(),
         }),
       )
       .min(1, "At least one payment is required"),
@@ -111,6 +112,7 @@ export default function SalesTransactionForm({
         initialData?.payments?.map((i) => ({
           payment_type: i.payment_type,
           amount: Number(i.amount) ?? 0,
+          cheque_collection: i.cheque_collection ?? null,
         })) ?? [],
       items:
         initialData?.items?.map((i) => ({
@@ -235,6 +237,7 @@ export default function SalesTransactionForm({
       initialData.payments?.map((p) => ({
         payment_type: p.payment_type,
         amount: Number(p.amount) ?? 0,
+        cheque_collection: p.cheque_collection ?? null,
       })) ?? [],
     )
   }, [initialData, allItemsData, stalls, assigned_stall, role, form.setValue])
@@ -252,6 +255,8 @@ export default function SalesTransactionForm({
       payments: data.payments.map((p) => ({
         payment_type: p.payment_type,
         amount: p.amount,
+        cheque_collection:
+          p.payment_type === "cheque" ? p.cheque_collection : undefined,
       })),
     }
 
@@ -518,6 +523,7 @@ export default function SalesTransactionForm({
               disabled={isDisabled}
               required
               totalItemsAmount={totalItemsAmount}
+              clientId={form.watch("client_id")}
             />
             {form.formState.errors.payments && (
               <p className="text-sm font-medium text-destructive">

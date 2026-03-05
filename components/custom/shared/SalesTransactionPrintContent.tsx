@@ -1,10 +1,10 @@
-'use client'
+"use client"
 
-import { SalesTransaction, Stall } from '@/lib/constants/interface'
-import useGetReceiptDetails from '@/lib/hooks/useGetReceiptDetails'
-import { formatCurrency } from '@/lib/utils/helpers'
-import { formatDate } from '@/lib/utils/helpers/date'
-import React from 'react'
+import { SalesTransaction, Stall } from "@/lib/constants/interface"
+import useGetReceiptDetails from "@/lib/hooks/useGetReceiptDetails"
+import { formatCurrency } from "@/lib/utils/helpers"
+import { formatDate } from "@/lib/utils/helpers/date"
+import React from "react"
 
 type PrintRowProps = {
   label: string
@@ -15,8 +15,8 @@ type PrintRowProps = {
 
 const PrintRow = ({ label, value, bold, alignRight }: PrintRowProps) => (
   <div className="flex justify-between text-sm">
-    <div className={bold ? 'font-bold' : ''}>{label}</div>
-    <div className={alignRight ? 'text-right' : ''}>{value}</div>
+    <div className={bold ? "font-bold" : ""}>{label}</div>
+    <div className={alignRight ? "text-right" : ""}>{value}</div>
   </div>
 )
 
@@ -42,7 +42,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
     return printPrice !== finalPrice
   })
 
-  const { shop_name, address, tin_id } = useGetReceiptDetails(stall?.name ?? '')
+  const { shop_name, address, tin_id } = useGetReceiptDetails(stall?.name ?? "")
 
   const printTotal =
     entity?.items?.reduce((acc, item) => {
@@ -55,7 +55,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
 
   const paymentsTotal = isFakePrint
     ? printTotal
-    : entity?.payments?.reduce((acc, p) => acc + Number(p.amount), 0) ?? 0
+    : (entity?.payments?.reduce((acc, p) => acc + Number(p.amount), 0) ?? 0)
 
   const printChangeDue = paymentsTotal - printTotal
 
@@ -82,12 +82,12 @@ export const SalesTransactionPrintContent = React.forwardRef<
       {/* DETAILS */}
       <PrintRow
         label="Date:"
-        value={formatDate(createdAt, 'MM-dd-yyyy, hh:mm a')}
+        value={formatDate(createdAt, "MM-dd-yyyy, hh:mm a")}
         bold
       />
       <PrintRow
         label="Client:"
-        value={entity?.client?.full_name ?? 'N/A'}
+        value={entity?.client?.full_name ?? "N/A"}
         bold
       />
 
@@ -118,7 +118,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
             className="flex text-sm space-x-1.5"
           >
             <div className="w-6">{item.quantity}</div>
-            <div className="flex-1">{item.item?.name ?? 'Unnamed'}</div>
+            <div className="flex-1">{item.item?.name ?? "Unnamed"}</div>
             <div className="w-20 text-right">{formatCurrency(unitPrice)}</div>
             <div className="w-20 text-right">{formatCurrency(lineTotal)}</div>
           </div>
@@ -144,7 +144,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
           {entity?.payments?.map((payment, idx) => (
             <PrintRow
               key={`${payment.payment_type}-${idx}`}
-              label={`${payment.payment_type.toUpperCase()}:`}
+              label={`${payment.payment_type.toUpperCase()}${payment.cheque_number ? ` (#${payment.cheque_number})` : ""}:`}
               value={formatCurrency(Number(payment.amount))}
               bold
             />
@@ -171,4 +171,4 @@ export const SalesTransactionPrintContent = React.forwardRef<
   )
 })
 
-SalesTransactionPrintContent.displayName = 'SalesTransactionPrintContent'
+SalesTransactionPrintContent.displayName = "SalesTransactionPrintContent"

@@ -67,7 +67,12 @@ export function useServiceMutations() {
       data,
     }: {
       id: number
-      data: { payment_type: string; amount: string | number; notes?: string }
+      data: {
+        payment_type: string
+        amount: string | number
+        notes?: string
+        cheque_collection?: number | null
+      }
     }) => api.post(`${url}${id}/payments/`, data),
     successMessage: "Payment recorded successfully.",
     invalidateQueries: [
@@ -75,6 +80,7 @@ export function useServiceMutations() {
       { queryKey: ["sales-transactions"] },
       { queryKey: ["remittances"] },
       { queryKey: ["daily-sales"] },
+      { queryKey: ["cheque-choices"] },
       ...analyticsKeys.map((key) => ({ queryKey: key })),
     ],
     onSuccess: (_, { id }) => {
@@ -114,6 +120,7 @@ export function useServiceMutations() {
     invalidateQueries: [
       { queryKey: ["services"] },
       { queryKey: ["sales-transactions"] },
+      { queryKey: ["cheque-choices"] },
       ...analyticsKeys.map((key) => ({ queryKey: key })),
     ],
     onSuccess: (_, { id }) => {

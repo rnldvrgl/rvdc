@@ -1,7 +1,9 @@
 "use client"
 
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -15,6 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useChequeChoices } from "@/lib/queries/useChoices"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { ChevronsRight, Plus, X } from "lucide-react"
 import {
@@ -29,6 +32,7 @@ import {
 type Payment = {
   payment_type: string
   amount: number
+  cheque_collection?: number | null
 }
 
 type FormValues = {
@@ -47,6 +51,7 @@ type PaymentMethodSelectorProps = {
   disabled?: boolean
   required?: boolean
   totalItemsAmount?: number
+  clientId?: number | null
 }
 
 export default function PaymentMethodSelector({
@@ -56,8 +61,12 @@ export default function PaymentMethodSelector({
   append,
   disabled,
   totalItemsAmount = 0,
+  clientId,
 }: PaymentMethodSelectorProps) {
   const watchedPayments = useWatch({ control, name: "payments" })
+  const { data: chequeChoices = [], rawData: chequeRawData = [] } =
+    useChequeChoices(clientId)
+
   const totalPayments = (watchedPayments ?? []).reduce(
     (sum, p) => sum + (Number(p?.amount) || 0),
     0,
@@ -65,13 +74,14 @@ export default function PaymentMethodSelector({
   const remainingBalance = Math.max(0, totalItemsAmount - totalPayments)
 
   const handleAdd = () => {
-    append({ payment_type: "cash", amount: 0 })
+    append({ payment_type: "cash", amount: 0, cheque_collection: null })
   }
 
   const handleAddWithFill = () => {
     append({
       payment_type: "cash",
       amount: remainingBalance > 0 ? remainingBalance : 0,
+      cheque_collection: null,
     })
   }
 
@@ -92,108 +102,182 @@ export default function PaymentMethodSelector({
     <div className="space-y-2">
       {fields.length > 0 ? (
         <div className="space-y-2">
-          {fields.map((field, idx) => (
-            <div
-              key={field.id}
-              className="flex items-center gap-2 rounded-lg border p-2.5 hover:bg-muted/30 transition-colors"
-            >
-              {/* Type */}
-              <Controller
-                control={control}
-                name={`payments.${idx}.payment_type`}
-                render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    disabled={disabled}
-                  >
-                    <SelectTrigger className="w-28 sm:w-32 h-8 text-sm shrink-0">
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="gcash">GCash</SelectItem>
-                      <SelectItem value="credit">Credit</SelectItem>
-                      <SelectItem value="debit">Debit</SelectItem>
-                      <SelectItem value="cheque">Cheque</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
+          {fields.map((field, idx) => {
+            const currentPaymentType = watchedPayments?.[idx]?.payment_type
+            const isChequePayment = currentPaymentType === "cheque"
 
-              {/* Amount */}
-              <Controller
-                control={control}
-                name={`payments.${idx}.amount`}
-                render={({ field }) => (
-                  <div className="flex items-center gap-1 flex-1 min-w-0">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={field.value ?? ""}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        field.onChange(val === "" ? null : parseFloat(val))
-                      }}
-                      disabled={disabled}
-                      className="h-8 flex-1"
-                      placeholder="Amount"
-                    />
-                    {remainingBalance > 0 && !disabled && (
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="size-7 shrink-0 text-primary hover:text-primary/80"
-                              onClick={() =>
-                                handleFillRemaining(
-                                  idx,
-                                  Number(field.value) || 0,
-                                  field.onChange,
+            return (
+              <div
+                key={field.id}
+                className="rounded-lg border p-2.5 space-y-2"
+              >
+                <div className="flex items-center gap-2">
+                  {/* Type */}
+                  <Controller
+                    control={control}
+                    name={`payments.${idx}.payment_type`}
+                    render={({ field: typeField }) => (
+                      <Select
+                        value={typeField.value}
+                        onValueChange={(value) => {
+                          typeField.onChange(value)
+                          // Clear cheque selection when changing away from cheque
+                          if (value !== "cheque") {
+                            const chequeField =
+                              control._formValues.payments[idx]
+                            if (chequeField) {
+                              chequeField.cheque_collection = null
+                            }
+                          }
+                        }}
+                        disabled={disabled}
+                      >
+                        <SelectTrigger className="w-28 sm:w-32 h-8 text-sm shrink-0">
+                          <SelectValue placeholder="Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="cash">Cash</SelectItem>
+                          <SelectItem value="gcash">GCash</SelectItem>
+                          <SelectItem value="credit">Credit</SelectItem>
+                          <SelectItem value="debit">Debit</SelectItem>
+                          <SelectItem value="cheque">Cheque</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+
+                  {/* Amount */}
+                  <Controller
+                    control={control}
+                    name={`payments.${idx}.amount`}
+                    render={({ field: amountField }) => {
+                      const currentCheque =
+                        watchedPayments?.[idx]?.cheque_collection
+                      const isChequeSelected =
+                        isChequePayment && !!currentCheque
+
+                      return (
+                        <div className="flex items-center gap-1 flex-1 min-w-0">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={amountField.value ?? ""}
+                            onChange={(e) => {
+                              const val = e.target.value
+                              amountField.onChange(
+                                val === "" ? null : parseFloat(val),
+                              )
+                            }}
+                            disabled={disabled || isChequeSelected}
+                            className="h-8 flex-1"
+                            placeholder="Amount"
+                          />
+                          {remainingBalance > 0 &&
+                            !disabled &&
+                            !isChequeSelected && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      className="size-7 shrink-0 text-primary hover:text-primary/80"
+                                      onClick={() =>
+                                        handleFillRemaining(
+                                          idx,
+                                          Number(amountField.value) || 0,
+                                          amountField.onChange,
+                                        )
+                                      }
+                                    >
+                                      <ChevronsRight className="size-3.5" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>
+                                      Fill remaining:{" "}
+                                      {formatCurrency(remainingBalance)}
+                                    </p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
+                        </div>
+                      )
+                    }}
+                  />
+
+                  {/* Remove */}
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => remove(idx)}
+                          disabled={disabled}
+                        >
+                          <X className="size-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left">
+                        <p>Remove payment</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+
+                {/* Cheque selector */}
+                {isChequePayment && (
+                  <div className="space-y-1 pl-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Select Cheque
+                    </Label>
+                    <Controller
+                      control={control}
+                      name={`payments.${idx}.cheque_collection`}
+                      render={({ field: chequeField }) => (
+                        <ComboBox
+                          options={chequeChoices}
+                          value={chequeField.value ?? null}
+                          onChange={(value) => {
+                            chequeField.onChange(value)
+                            // Auto-fill amount when cheque is selected
+                            if (value && chequeRawData.length > 0) {
+                              const selectedCheque = chequeRawData.find(
+                                (c) => c.id === value,
+                              )
+                              if (selectedCheque) {
+                                control._formValues.payments[idx].amount =
+                                  parseFloat(selectedCheque.cheque_amount)
+                                // Trigger re-render by updating the field
+                                const amountField =
+                                  control._formValues.payments[idx]
+                                control.setValue(
+                                  `payments.${idx}.amount` as const,
+                                  parseFloat(selectedCheque.cheque_amount),
                                 )
                               }
-                            >
-                              <ChevronsRight className="size-3.5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>
-                              Fill remaining: {formatCurrency(remainingBalance)}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    )}
+                            }
+                          }}
+                          placeholder="Select a cheque..."
+                          className="h-8"
+                          disabled={disabled}
+                        />
+                      )}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Amount will be set to the cheque's value
+                    </p>
                   </div>
                 )}
-              />
-
-              {/* Remove */}
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => remove(idx)}
-                      disabled={disabled}
-                    >
-                      <X className="size-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left">
-                    <p>Remove payment</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </div>
-          ))}
+              </div>
+            )
+          })}
 
           {/* Footer totals */}
           <div className="px-3 pt-1 space-y-1">
