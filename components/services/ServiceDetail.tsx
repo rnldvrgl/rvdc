@@ -2023,7 +2023,9 @@ export default function ServiceDetail({
                 <div className="h-1.5 w-1.5 rounded-full bg-primary" />
               </div>
               <div className="pt-px">
-                <p className="text-sm font-semibold leading-none">Service Created</p>
+                <p className="text-sm font-semibold leading-none">
+                  Service Created
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {formatDate(
                     new Date(service.created_at),
@@ -2040,7 +2042,9 @@ export default function ServiceDetail({
                   <CheckCircle className="h-2.5 w-2.5 text-green-500" />
                 </div>
                 <div className="pt-px">
-                  <p className="text-sm font-semibold leading-none">Received At Shop</p>
+                  <p className="text-sm font-semibold leading-none">
+                    Received At Shop
+                  </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {formatDate(
                       new Date(service.received_at),
