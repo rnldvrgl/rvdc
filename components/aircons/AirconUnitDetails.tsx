@@ -131,22 +131,12 @@ export function AirconUnitDetails({
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-gray-900">
                 ₱
-                {unit.model.has_discount
-                  ? (
-                      parseFloat(unit.model.retail_price) *
-                      (1 -
-                        parseFloat(unit.model.discount_percentage || "0") / 100)
-                    ).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })
-                  : parseFloat(unit.model.retail_price).toLocaleString(
-                      "en-US",
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      },
-                    )}
+                {parseFloat(
+                  unit.model.selling_price || unit.model.retail_price,
+                ).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </span>
               {unit.model.has_discount && (
                 <>
@@ -161,7 +151,7 @@ export function AirconUnitDetails({
                     )}
                   </span>
                   <span className="text-sm font-medium text-green-600">
-                    {unit.model.discount_percentage}% OFF
+                    Promo
                   </span>
                 </>
               )}
@@ -492,60 +482,46 @@ export function AirconUnitDetails({
       )}
 
       {/* Pricing Information */}
-      {unit.model &&
-        (unit.model.retail_price || unit.model.discount_percentage) && (
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold mb-3">Pricing</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {unit.model.retail_price && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Retail Price
-                  </label>
-                  <p className="text-base font-medium">
-                    ₱
-                    {parseFloat(unit.model.retail_price).toLocaleString(
-                      "en-US",
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      },
-                    )}
-                  </p>
-                </div>
-              )}
-              {unit.model.discount_percentage &&
-                parseFloat(unit.model.discount_percentage) > 0 && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">
-                      Discount
-                    </label>
-                    <p className="text-base font-medium text-green-600">
-                      {unit.model.discount_percentage}% OFF
-                    </p>
-                  </div>
-                )}
-              {unit.model.has_discount && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Sale Price
-                  </label>
-                  <p className="text-base font-semibold text-green-600">
-                    ₱
-                    {(
-                      parseFloat(unit.model.retail_price) *
-                      (1 -
-                        parseFloat(unit.model.discount_percentage || "0") / 100)
-                    ).toLocaleString("en-US", {
+      {unit.model && (unit.model.retail_price || unit.model.selling_price) && (
+        <div className="border-t pt-4">
+          <h3 className="text-lg font-semibold mb-3">Pricing</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {unit.model.retail_price && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Retail Price
+                </label>
+                <p
+                  className={`text-base font-medium ${unit.model.has_discount ? "line-through text-muted-foreground" : ""}`}
+                >
+                  ₱
+                  {parseFloat(unit.model.retail_price).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
+              </div>
+            )}
+            {unit.model.has_discount && unit.model.selling_price && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">
+                  Selling Price
+                </label>
+                <p className="text-base font-semibold text-green-600">
+                  ₱
+                  {parseFloat(unit.model.selling_price).toLocaleString(
+                    "en-US",
+                    {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
-                    })}
-                  </p>
-                </div>
-              )}
-            </div>
+                    },
+                  )}
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
 
       {/* Warranty Information */}
       {(unit.warranty_status ||
