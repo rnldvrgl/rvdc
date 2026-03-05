@@ -405,33 +405,31 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                 </Badge>
               )}
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <div className="grid grid-cols-1 gap-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Cash Sales</span>
                 <span className="font-medium tabular-nums">
                   {formatCurrency(preview.total_sales_cash)}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">GCash</span>
-                <span className="font-medium tabular-nums">
-                  {formatCurrency(preview.total_sales_gcash)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">COD In</span>
-                <span className="font-medium tabular-nums">
-                  {formatCurrency(preview.cod_from_previous)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Expenses</span>
-                <span className="font-medium tabular-nums text-red-600">
-                  {Number(preview.total_expenses) > 0
-                    ? `−${formatCurrency(preview.total_expenses)}`
-                    : formatCurrency(0)}
-                </span>
-              </div>
+              {Number(preview.cod_from_previous) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">
+                    + Previous Day Drawer
+                  </span>
+                  <span className="font-medium tabular-nums">
+                    {formatCurrency(preview.cod_from_previous)}
+                  </span>
+                </div>
+              )}
+              {Number(preview.total_expenses) > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">− Expenses</span>
+                  <span className="font-medium tabular-nums text-red-600">
+                    {formatCurrency(preview.total_expenses)}
+                  </span>
+                </div>
+              )}
             </div>
             <Separator />
             <div className="flex items-center justify-between">
