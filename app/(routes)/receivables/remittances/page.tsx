@@ -111,9 +111,8 @@ export default function RemittancesPage() {
         title="Remittance Management"
         description="Track and manage daily cash remittances from all stall locations with comprehensive financial oversight."
         breadcrumbs={["Dashboard", "Receivables", "Remittances"]}
-        isAdminOnly={!isAdmin}
         actionButton={
-          isAdmin && (
+          (isAdmin || role === "manager" || role === "clerk") && (
             <Button onClick={() => openCreate()}>
               <Plus className="size-4 mr-2" />
               New Remittance
