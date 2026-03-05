@@ -120,7 +120,19 @@ export default function ServiceForm({
       override_contact_number: initialData?.override_contact_number ?? "",
       appointment_datetime: initialData?.appointment_datetime
         ? new Date(initialData.appointment_datetime)
-        : null,
+        : initialData?.next_schedule?.scheduled_date
+          ? (() => {
+              const d = new Date(
+                initialData.next_schedule.scheduled_date + "T00:00:00",
+              )
+              if (initialData.next_schedule.scheduled_time) {
+                const [h, m] =
+                  initialData.next_schedule.scheduled_time.split(":")
+                d.setHours(parseInt(h), parseInt(m), 0, 0)
+              }
+              return d
+            })()
+          : null,
       pickup_date: initialData?.pickup_date
         ? new Date(initialData.pickup_date)
         : null,
@@ -484,7 +496,7 @@ export default function ServiceForm({
                       onChange={field.onChange}
                       disabled={isSubmitting}
                       placeholder="Select appointment date and time"
-                      disablePastDates={true}
+                      disablePastDates={!initialData}
                     />
                   </FormControl>
                   <FormMessage />
