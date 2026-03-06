@@ -843,7 +843,7 @@ const DayEventsModal = ({
                 />
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium text-sm">{event.title}</h4>
-                  <p className="text-xs text-muted-foreground mt-1 capitalize">
+                  <p className="text-sm text-muted-foreground mt-1 capitalize">
                     {event.extendedProps.type === "birthday" &&
                       "Employee Birthday"}
                     {event.extendedProps.type === "holiday" &&
@@ -867,7 +867,7 @@ const DayEventsModal = ({
                       `Half Day${event.extendedProps.reason ? ` - ${event.extendedProps.reason}` : ""}`}
                   </p>
                   {event.extendedProps.type === "schedule" && !event.allDay && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {format(new Date(event.start), "hh:mm a")}
                     </p>
                   )}
@@ -1122,7 +1122,7 @@ const DashboardCalendar = ({
           {dayNames.map((day) => (
             <div
               key={day}
-              className="p-2 sm:p-3 text-center text-sm sm:text-base font-medium text-muted-foreground"
+              className="py-1.5 px-1 sm:px-2 text-center text-sm sm:text-sm font-medium text-muted-foreground"
             >
               <span className="hidden sm:inline">{day}</span>
               <span className="sm:hidden text-sm">{day[0]}</span>
@@ -1134,7 +1134,7 @@ const DashboardCalendar = ({
           {weeks.map((week, weekIndex) => (
             <div
               key={weekIndex}
-              className="grid grid-cols-7 divide-x min-h-20 sm:min-h-24 md:min-h-28 lg:min-h-32"
+              className="grid grid-cols-7 divide-x"
             >
               {week.map((day) => {
                 const dayEvents = eventsByDate[day.toDateString()] || []
@@ -1150,7 +1150,7 @@ const DashboardCalendar = ({
                   <div
                     key={day.toDateString()}
                     className={cn(
-                      "p-2 sm:p-3 cursor-pointer transition-colors overflow-hidden",
+                      "aspect-square p-1 sm:p-1.5 cursor-pointer transition-colors overflow-hidden",
                       !isCurrentMonth &&
                         "bg-muted text-muted-foreground hover:bg-muted!",
                       isTodayDate &&
@@ -1159,20 +1159,20 @@ const DashboardCalendar = ({
                     )}
                     onClick={() => handleDayClick(day)}
                   >
-                    <div className="flex items-center justify-between mb-1 sm:mb-2">
+                    <div className="flex items-center justify-between mb-0.5 sm:mb-1">
                       <span
                         className={cn(
-                          "text-base sm:text-lg font-medium leading-none",
+                          "text-sm sm:text-sm font-medium leading-none",
                           isTodayDate && "text-primary font-semibold",
                         )}
                       >
                         {format(day, "d")}
                       </span>
                       {dayEvents.length > 0 && (
-                        <div className="flex items-center gap-1">
-                          <div className="size-2 sm:size-2.5 rounded-full bg-primary" />
+                        <div className="flex items-center gap-0.5">
+                          <div className="size-1.5 sm:size-2 rounded-full bg-primary" />
                           {dayEvents.length > 1 && (
-                            <span className="text-sm sm:text-xs text-muted-foreground">
+                            <span className="text-[10px] sm:text-sm text-muted-foreground">
                               {dayEvents.length}
                             </span>
                           )}
@@ -1182,7 +1182,7 @@ const DashboardCalendar = ({
 
                     <div className="space-y-1">
                       <div className="hidden lg:block">
-                        {dayEvents.slice(0, 2).map((event, eventIndex) => (
+                        {dayEvents.slice(0, 3).map((event, eventIndex) => (
                           <CalendarEventItem
                             key={eventIndex}
                             event={event}
@@ -1190,15 +1190,15 @@ const DashboardCalendar = ({
                             onClick={handleEventClick}
                           />
                         ))}
-                        {dayEvents.length > 2 && (
-                          <div className="text-xs text-muted-foreground text-center mt-2">
-                            +{dayEvents.length - 2} more
+                        {dayEvents.length > 3 && (
+                          <div className="text-sm text-muted-foreground text-center mt-2">
+                            +{dayEvents.length - 3} more
                           </div>
                         )}
                       </div>
 
                       <div className="hidden sm:block lg:hidden">
-                        {dayEvents.slice(0, 2).map((event, eventIndex) => (
+                        {dayEvents.slice(0, 3).map((event, eventIndex) => (
                           <CalendarEventItem
                             key={eventIndex}
                             event={event}
@@ -1236,15 +1236,15 @@ const DashboardCalendar = ({
                 <div
                   key={day.toDateString()}
                   className={cn(
-                    "p-4 cursor-pointer hover:bg-muted/50",
+                    "p-3 cursor-pointer hover:bg-muted/50",
                     isTodayDate && "bg-primary/10",
                   )}
                   onClick={() => handleDayClick(day)}
                 >
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between mb-2">
                     <div
                       className={cn(
-                        "text-base font-semibold",
+                        "text-sm font-semibold",
                         isTodayDate && "text-primary",
                       )}
                     >
@@ -1264,7 +1264,7 @@ const DashboardCalendar = ({
                       />
                     ))}
                     {dayEvents.length > 3 && (
-                      <div className="text-sm text-muted-foreground text-center mt-3">
+                      <div className="text-sm text-muted-foreground text-center mt-2">
                         +{dayEvents.length - 3} more
                       </div>
                     )}
@@ -1278,18 +1278,18 @@ const DashboardCalendar = ({
         <div className="hidden sm:block overflow-x-auto">
           <div className="min-w-full">
             <div className="grid grid-cols-8 border-b bg-muted/30 min-w-[640px]">
-              <div className="p-2 sm:p-3" />
+              <div className="p-1.5 sm:p-2" />
               {days.map((day) => (
                 <div
                   key={day.toDateString()}
-                  className="p-2 sm:p-3 text-center min-w-20"
+                  className="p-1.5 sm:p-2 text-center min-w-20"
                 >
-                  <div className="text-xs text-muted-foreground">
+                  <div className="text-[10px] text-muted-foreground">
                     {format(day, "EEE")}
                   </div>
                   <div
                     className={cn(
-                      "text-sm sm:text-lg font-medium",
+                      "text-sm sm:text-sm font-medium",
                       isToday(day) && "text-primary",
                     )}
                   >
@@ -1299,13 +1299,13 @@ const DashboardCalendar = ({
               ))}
             </div>
 
-            <div className="divide-y max-h-80 sm:max-h-96 overflow-y-auto min-w-[640px]">
+            <div className="divide-y max-h-64 sm:max-h-80 overflow-y-auto min-w-[640px]">
               {timeSlots.map((hour) => (
                 <div
                   key={hour}
-                  className="grid grid-cols-8 divide-x min-h-10 sm:min-h-12"
+                  className="grid grid-cols-8 divide-x min-h-8 sm:min-h-10"
                 >
-                  <div className="p-2 text-xs flex items-center justify-center text-muted-foreground text-center bg-muted/20">
+                  <div className="p-1 text-[10px] flex items-center justify-center text-muted-foreground text-center bg-muted/20">
                     {format(new Date().setHours(hour, 0, 0, 0), "h:mm a")}
                   </div>
                   {days.map((day) => {
@@ -1327,7 +1327,7 @@ const DashboardCalendar = ({
                             event={event}
                             variant="compact"
                             onClick={handleEventClick}
-                            className="mb-0.5 text-xs"
+                            className="mb-0.5 text-sm"
                           />
                         ))}
                       </div>
@@ -1378,12 +1378,12 @@ const DashboardCalendar = ({
             return (
               <div
                 key={hour}
-                className="border-b last:border-b-0 min-h-16 sm:min-h-20 flex"
+                className="border-b last:border-b-0 min-h-10 sm:min-h-12 flex"
               >
-                <div className="w-20 sm:w-24 p-3 sm:p-4 text-sm text-muted-foreground bg-muted/20 shrink-0">
+                <div className="w-16 sm:w-20 p-2 sm:p-3 text-sm text-muted-foreground bg-muted/20 shrink-0">
                   {format(new Date().setHours(hour, 0, 0, 0), "h:mm a")}
                 </div>
-                <div className="flex-1 p-3 sm:p-4 space-y-2">
+                <div className="flex-1 p-2 sm:p-3 space-y-1">
                   {hourEvents.map((event, eventIndex) => (
                     <DayViewEventItem
                       key={eventIndex}
@@ -1408,17 +1408,19 @@ const DashboardCalendar = ({
       : LEGEND_ITEMS
 
     return (
-      <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-4 p-4 bg-muted/30 rounded-lg">
+      <div className="flex flex-wrap gap-x-3 gap-y-1 px-3 py-2 bg-muted/30 rounded-lg">
         {items.map((item, index) => (
           <div
             key={`${item.type}-${item.label}-${index}`}
-            className="flex items-center gap-2"
+            className="flex items-center gap-1.5"
           >
             <div
-              className="size-3 rounded"
+              className="size-2.5 rounded-sm shrink-0"
               style={{ backgroundColor: item.color }}
             />
-            <span className="text-muted-foreground text-sm">{item.label}</span>
+            <span className="text-muted-foreground text-sm whitespace-nowrap">
+              {item.label}
+            </span>
           </div>
         ))}
 
@@ -1428,13 +1430,13 @@ const DashboardCalendar = ({
             return (
               <div
                 key={type.value}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1.5"
               >
                 <div
-                  className="size-3 rounded"
+                  className="size-2.5 rounded-sm shrink-0"
                   style={{ backgroundColor: colors.bg }}
                 />
-                <span className="text-muted-foreground text-sm">
+                <span className="text-muted-foreground text-sm whitespace-nowrap">
                   {type.label}
                 </span>
               </div>
@@ -1524,14 +1526,14 @@ const DashboardCalendar = ({
         key={`calendar-${effectiveWeekStartsOn}-${view}`}
         className={className}
       >
-        <CardHeader>
-          <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-            <div className="space-y-2">
-              <CardTitle className="flex items-center gap-2 text-xl">
-                <Calendar className="w-6 h-6" />
+        <CardHeader className="pb-3">
+          <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+            <div className="space-y-0.5">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Calendar className="w-4 h-4" />
                 {title || "Calendar"}
               </CardTitle>
-              <CardDescription className="text-base">
+              <CardDescription className="text-sm">
                 {description ||
                   "View birthdays, holidays, and scheduled services"}
               </CardDescription>
@@ -1555,77 +1557,80 @@ const DashboardCalendar = ({
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 pt-0">
           {/* Mobile Controls */}
-          <div className="flex flex-col space-y-3 sm:hidden">
-            <h2 className="text-lg font-semibold text-center px-2">
+          <div className="flex flex-col space-y-2 sm:hidden">
+            <h2 className="text-sm font-semibold text-center px-2">
               {dateTitle}
             </h2>
 
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-1.5">
               {(["month", "week", "day"] as const).map((v) => (
                 <Button
                   key={v}
                   variant={view === v ? "default" : "outline"}
                   size="sm"
                   onClick={() => setView(v)}
-                  className="capitalize text-base"
+                  className="capitalize text-sm h-7 px-2"
                 >
                   {v}
                 </Button>
               ))}
             </div>
 
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-1.5">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleNavigation("prev")}
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </Button>
-              <Button
-                variant={
-                  currentDate.toDateString() === new Date().toDateString()
-                    ? "default"
-                    : "outline"
-                }
-                size="default"
-                onClick={() => handleNavigation("today")}
-                disabled={
-                  currentDate.toDateString() === new Date().toDateString()
-                }
-                className="text-base px-6 py-2 h-10"
-              >
-                Today
-              </Button>
-              <Button
-                variant="outline"
-                size="default"
-                onClick={() => handleNavigation("next")}
-                className="px-4 py-2 h-10"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Desktop Controls */}
-          <div className="hidden sm:flex sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
+                className="h-7 w-7 p-0"
                 onClick={() => handleNavigation("prev")}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
               <Button
+                variant={
+                  currentDate.toDateString() === new Date().toDateString()
+                    ? "default"
+                    : "outline"
+                }
+                size="sm"
+                onClick={() => handleNavigation("today")}
+                disabled={
+                  currentDate.toDateString() === new Date().toDateString()
+                }
+                className="text-sm h-7 px-3"
+              >
+                Today
+              </Button>
+              <Button
                 variant="outline"
                 size="sm"
+                className="h-7 w-7 p-0"
                 onClick={() => handleNavigation("next")}
               >
                 <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Desktop Controls */}
+          <div className="hidden sm:flex sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => handleNavigation("prev")}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => handleNavigation("next")}
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
               </Button>
               <Button
                 variant={
@@ -1638,12 +1643,13 @@ const DashboardCalendar = ({
                 disabled={
                   currentDate.toDateString() === new Date().toDateString()
                 }
+                className="h-7 text-sm px-2.5"
               >
                 Today
               </Button>
             </div>
 
-            <h2 className="text-lg font-semibold text-center flex-1">
+            <h2 className="text-sm font-semibold text-center flex-1">
               {dateTitle}
             </h2>
 
@@ -1654,7 +1660,7 @@ const DashboardCalendar = ({
                   variant={view === v ? "default" : "outline"}
                   size="sm"
                   onClick={() => setView(v)}
-                  className="capitalize"
+                  className="capitalize h-7 text-sm px-2.5"
                 >
                   {v}
                 </Button>
