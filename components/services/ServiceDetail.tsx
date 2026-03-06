@@ -1637,7 +1637,7 @@ export default function ServiceDetail({
                     date: p.created_at,
                     method: p.payment_type,
                     notes: p.notes,
-                    chequeNumber: p.cheque_number,
+                    chequeNumber: p.cheque_number ?? undefined,
                   })
                 }
               }
@@ -2225,7 +2225,9 @@ export default function ServiceDetail({
                 <ComboBox
                   options={chequeChoices}
                   value={selectedCheque}
-                  onChange={setSelectedCheque}
+                  onChange={(value) =>
+                    setSelectedCheque(typeof value === "number" ? value : null)
+                  }
                   placeholder="Select a cheque..."
                   className="w-full"
                 />

@@ -521,6 +521,7 @@ export default function SalesTransactionForm({
               fields={fields}
               append={append}
               remove={remove}
+              setValue={form.setValue}
               disabled={isDisabled}
               required
               totalItemsAmount={totalItemsAmount}

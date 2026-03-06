@@ -26,6 +26,7 @@ import {
   FieldArrayWithId,
   UseFieldArrayAppend,
   UseFieldArrayRemove,
+  UseFormSetValue,
   useWatch,
 } from "react-hook-form"
 
@@ -48,6 +49,7 @@ type PaymentMethodSelectorProps = {
   fields: FieldArrayWithId<FormValues, "payments", "id">[]
   append: UseFieldArrayAppend<FormValues, "payments">
   remove: UseFieldArrayRemove
+  setValue: UseFormSetValue<FormValues>
   disabled?: boolean
   required?: boolean
   totalItemsAmount?: number
@@ -59,13 +61,14 @@ export default function PaymentMethodSelector({
   control,
   remove,
   append,
+  setValue,
   disabled,
   totalItemsAmount = 0,
   clientId,
 }: PaymentMethodSelectorProps) {
   const watchedPayments = useWatch({ control, name: "payments" })
   const { data: chequeChoices = [], rawData: chequeRawData = [] } =
-    useChequeChoices(clientId)
+    useChequeChoices(clientId ?? undefined)
 
   const totalPayments = (watchedPayments ?? []).reduce(
     (sum, p) => sum + (Number(p?.amount) || 0),
@@ -252,10 +255,8 @@ export default function PaymentMethodSelector({
                                 (c) => c.id === value,
                               )
                               if (selectedCheque) {
-                                control._formValues.payments[idx].amount =
-                                  parseFloat(selectedCheque.cheque_amount)
-                                // Trigger re-render by updating the field
-                                control.setValue(
+                                // Auto-fill amount from cheque value
+                                setValue(
                                   `payments.${idx}.amount` as const,
                                   parseFloat(selectedCheque.cheque_amount),
                                 )
