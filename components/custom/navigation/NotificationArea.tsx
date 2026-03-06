@@ -4,25 +4,23 @@ import clsx from "clsx"
 import {
   AlertTriangle,
   Bell,
+  BellOff,
   Calendar,
   Check,
   Package,
   Receipt,
-  Trash2,
   Truck,
+  X,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { useInView } from "react-intersection-observer"
 
 import NotificationSheet from "@/components/custom/shared/NotificationSheet"
-import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { Notification } from "@/lib/constants/interface"
@@ -196,7 +194,7 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
             variant="ghost"
             className="relative"
           >
-            <Bell className="size-5 text-foreground" />
+            <Bell className="size-4 text-foreground" />
             {unreadCountData && unreadCountData?.unread_count > 0 && (
               <span className="absolute top-0 right-0 inline-flex size-4 items-center justify-center rounded-full bg-destructive text-white text-[10px]">
                 {unreadCountData.unread_count}
@@ -206,113 +204,167 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
-          className="w-96"
+          className="w-[420px] p-0"
           align={align}
         >
-          <div className="flex items-center justify-between px-2 py-1">
-            <span className="text-sm font-semibold">Notifications</span>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs"
-              onClick={() =>
-                markAllAsRead.mutate(undefined, {
-                  onSuccess: () => setOpen(false),
-                })
-              }
-              disabled={!hasUnread}
-            >
-              Mark all as read
-            </Button>
+          <div className="flex items-center justify-between px-4 py-3 border-b">
+            <h3 className="font-semibold text-base">Notifications</h3>
+            {hasUnread && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs font-medium hover:bg-accent"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  markAllAsRead.mutate(undefined)
+                }}
+              >
+                <Check className="size-3.5 mr-1.5" />
+                Mark all read
+              </Button>
+            )}
           </div>
 
-          <DropdownMenuSeparator />
-
-          <div className="max-h-96 overflow-y-auto flex flex-col">
+          <div className="max-h-[520px] overflow-y-auto">
             {grouped.length > 0 ? (
               <>
                 {grouped.map((group) => (
                   <div key={group.label}>
-                    <div className="sticky top-0 z-10 bg-popover px-3 py-1.5">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    <div className="sticky top-0 z-10 bg-popover/95 backdrop-blur-sm px-4 py-2 border-b">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                         {group.label}
                       </span>
                     </div>
-                    <div className="flex flex-col gap-1 px-1">
+                    <div className="divide-y">
                       {group.items.map((n) => {
                         const Icon = typeToIcon[n.type] ?? Bell
                         return (
                           <div
                             key={n.id ?? `${n.type}-${n.created_at}`}
                             className={clsx(
-                              "flex items-center p-3 rounded-lg hover:bg-accent transition relative cursor-pointer",
-                              !n.is_read && "bg-muted/50",
+                              "group relative flex items-start gap-3 px-4 py-3 transition-colors hover:bg-accent/50",
+                              !n.is_read && "bg-accent/20",
                             )}
-                            onClick={() => {
-                              handleNotificationClick(n)
-                              if (!n.is_read) {
-                                markAsRead.mutate(n.id)
-                              }
-                            }}
                           >
-                            <div className="shrink-0">
-                              <Icon
+                            <div
+                              className="flex-1 flex items-start gap-3 cursor-pointer"
+                              onClick={() => {
+                                handleNotificationClick(n)
+                                if (!n.is_read) {
+                                  markAsRead.mutate(n.id)
+                                }
+                              }}
+                            >
+                              <div
                                 className={clsx(
-                                  "size-5",
+                                  "shrink-0 mt-0.5 p-2 rounded-lg",
                                   n.type === "stock_low" &&
-                                    "text-yellow-600 dark:text-yellow-400",
+                                    "bg-yellow-100 dark:bg-yellow-950",
+                                  n.type === "stock_out" &&
+                                    "bg-red-100 dark:bg-red-950",
                                   n.type === "expense_created" &&
-                                    "text-blue-600 dark:text-blue-400",
+                                    "bg-blue-100 dark:bg-blue-950",
                                   n.type === "appointment_reminder" &&
-                                    "text-green-600 dark:text-green-400",
+                                    "bg-green-100 dark:bg-green-950",
                                   n.type === "stock_restocked" &&
-                                    "text-purple-600 dark:text-purple-400",
+                                    "bg-purple-100 dark:bg-purple-950",
                                   n.type === "transfer_created" &&
-                                    "text-orange-600 dark:text-orange-400",
-                                  !n.type && "text-muted-foreground",
+                                    "bg-orange-100 dark:bg-orange-950",
+                                  n.type === "payment_received" &&
+                                    "bg-emerald-100 dark:bg-emerald-950",
+                                  n.type === "payment_overdue" &&
+                                    "bg-red-100 dark:bg-red-950",
+                                  (n.type === "service_created" ||
+                                    n.type === "service_updated" ||
+                                    n.type === "service_assigned") &&
+                                    "bg-indigo-100 dark:bg-indigo-950",
+                                  n.type === "service_completed" &&
+                                    "bg-green-100 dark:bg-green-950",
+                                  n.type === "service_cancelled" &&
+                                    "bg-gray-100 dark:bg-gray-950",
+                                  !n.type && "bg-muted",
                                 )}
-                              />
-                            </div>
-                            <div className="ml-3 grow">
-                              <p className="text-sm font-semibold">
-                                {n.title || n.message}
-                              </p>
-                              {n.title &&
-                                n.message &&
-                                n.message !== n.title && (
-                                  <p className="text-xs text-muted-foreground line-clamp-1">
-                                    {n.message}
+                              >
+                                <Icon
+                                  className={clsx(
+                                    "size-4",
+                                    n.type === "stock_low" &&
+                                      "text-yellow-700 dark:text-yellow-400",
+                                    n.type === "stock_out" &&
+                                      "text-red-700 dark:text-red-400",
+                                    n.type === "expense_created" &&
+                                      "text-blue-700 dark:text-blue-400",
+                                    n.type === "appointment_reminder" &&
+                                      "text-green-700 dark:text-green-400",
+                                    n.type === "stock_restocked" &&
+                                      "text-purple-700 dark:text-purple-400",
+                                    n.type === "transfer_created" &&
+                                      "text-orange-700 dark:text-orange-400",
+                                    n.type === "payment_received" &&
+                                      "text-emerald-700 dark:text-emerald-400",
+                                    n.type === "payment_overdue" &&
+                                      "text-red-700 dark:text-red-400",
+                                    (n.type === "service_created" ||
+                                      n.type === "service_updated" ||
+                                      n.type === "service_assigned") &&
+                                      "text-indigo-700 dark:text-indigo-400",
+                                    n.type === "service_completed" &&
+                                      "text-green-700 dark:text-green-400",
+                                    n.type === "service_cancelled" &&
+                                      "text-gray-700 dark:text-gray-400",
+                                    !n.type && "text-muted-foreground",
+                                  )}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0 space-y-1">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-sm font-medium leading-tight">
+                                    {n.title || n.message}
                                   </p>
-                                )}
-                              <p className="text-xs text-muted-foreground">
-                                {n.relative_time}
-                              </p>
+                                  {!n.is_read && (
+                                    <span className="shrink-0 mt-1 size-2 rounded-full bg-blue-600 dark:bg-blue-500" />
+                                  )}
+                                </div>
+                                {n.title &&
+                                  n.message &&
+                                  n.message !== n.title && (
+                                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                      {n.message}
+                                    </p>
+                                  )}
+                                <p className="text-xs text-muted-foreground font-medium">
+                                  {n.relative_time}
+                                </p>
+                              </div>
                             </div>
-                            {!n.is_read && (
-                              <span className="absolute top-1/2 right-2 inline-block size-2 rounded-full bg-destructive -translate-y-1/2" />
-                            )}
-                            <DataTableActions
-                              items={[
-                                ...(!n.is_read
-                                  ? [
-                                      {
-                                        label: "Mark as read",
-                                        icon: Check,
-                                        onClick: () => markAsRead.mutate(n.id),
-                                      },
-                                    ]
-                                  : []),
-                                {
-                                  label: "Delete",
-                                  icon: Trash2,
-                                  destructive: true,
-                                  onClick: () =>
-                                    deleteNotification.mutate(n.id),
-                                  confirmText: "Delete notification?",
-                                  confirmDescription: "This cannot be undone.",
-                                },
-                              ]}
-                            />
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {!n.is_read && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 shrink-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    markAsRead.mutate(n.id)
+                                  }}
+                                  title="Mark as read"
+                                >
+                                  <Check className="size-3.5" />
+                                </Button>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 shrink-0 hover:bg-destructive/10 hover:text-destructive"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  deleteNotification.mutate(n.id)
+                                }}
+                                title="Delete"
+                              >
+                                <X className="size-3.5" />
+                              </Button>
+                            </div>
                           </div>
                         )
                       })}
@@ -322,19 +374,28 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
                 {hasNextPage && (
                   <div
                     ref={loadMoreRef}
-                    className="flex w-full justify-center py-2 text-xs text-muted-foreground"
+                    className="flex justify-center py-4 border-t"
                   >
-                    {isFetchingNextPage ? "Loading more..." : "Load more..."}
+                    <span className="text-xs text-muted-foreground font-medium">
+                      {isFetchingNextPage
+                        ? "Loading more..."
+                        : "Scroll for more"}
+                    </span>
                   </div>
                 )}
               </>
             ) : (
-              <DropdownMenuItem
-                disabled
-                className="text-muted-foreground"
-              >
-                No notifications
-              </DropdownMenuItem>
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                <div className="rounded-full bg-muted p-4 mb-4">
+                  <BellOff className="size-8 text-muted-foreground" />
+                </div>
+                <h4 className="font-semibold text-sm mb-1">
+                  No notifications yet
+                </h4>
+                <p className="text-xs text-muted-foreground max-w-[280px]">
+                  When you receive notifications, they&apos;ll appear here
+                </p>
+              </div>
             )}
           </div>
         </DropdownMenuContent>

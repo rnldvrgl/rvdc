@@ -20,7 +20,14 @@ import { cn, getDisplayImage } from "@/lib/utils/helpers"
 import { getToken } from "@/lib/utils/tokens"
 import { RemixiconComponentType } from "@remixicon/react"
 import { AnimatePresence, motion } from "framer-motion"
-import { ChevronLeft, LogOutIcon, LucideIcon, Menu, X } from "lucide-react"
+import {
+  LogOutIcon,
+  LucideIcon,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  X,
+} from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 
@@ -175,25 +182,53 @@ export default function SidebarNav({
         {/* Edge toggle button */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <button
+            <motion.button
               onClick={toggle}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="absolute -right-3 top-7 z-10 flex size-6 items-center justify-center rounded-full border border-border/80 bg-background text-muted-foreground/80 hover:text-foreground hover:bg-muted shadow-sm transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={cn(
+                "absolute -right-3 top-10 z-10 flex size-7 items-center justify-center rounded-full",
+                "bg-linear-to-br from-primary to-primary/80 shadow-lg shadow-primary/25",
+                "hover:shadow-xl hover:shadow-primary/30 transition-all duration-300",
+                "ring-2 ring-background",
+                "group",
+              )}
             >
-              <motion.div
-                animate={{ rotate: collapsed ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex items-center justify-center"
+              <AnimatePresence
+                mode="wait"
+                initial={false}
               >
-                <ChevronLeft className="size-3" />
-              </motion.div>
-            </button>
+                {collapsed ? (
+                  <motion.div
+                    key="expand"
+                    initial={{ opacity: 0, x: -4 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 4 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <PanelLeftOpen className="size-3.5 text-primary-foreground" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="collapse"
+                    initial={{ opacity: 0, x: 4 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -4 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <PanelLeftClose className="size-3.5 text-primary-foreground" />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </TooltipTrigger>
           <TooltipContent
             side="right"
-            sideOffset={10}
+            sideOffset={12}
+            className="font-medium"
           >
-            <p>{collapsed ? "Expand" : "Collapse"}</p>
+            <p>{collapsed ? "Expand sidebar" : "Collapse sidebar"}</p>
           </TooltipContent>
         </Tooltip>
 
