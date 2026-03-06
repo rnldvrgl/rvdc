@@ -8,6 +8,7 @@ import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import AddStockForm from "@/components/forms/inventory/AddStockForm"
 import RestockForm from "@/components/forms/inventory/RestockForm"
+import StockAuditDialog from "@/components/forms/inventory/StockAuditDialog"
 import StockThresholdForm from "@/components/forms/inventory/StockThresholdForm"
 import { Button } from "@/components/ui/button"
 import { Stock } from "@/lib/constants/interface"
@@ -70,6 +71,17 @@ export default function StocksPage() {
     closeEntity: closeViewSheet,
   } = useEntitySheet<Stock>()
 
+  const [auditStock, setAuditStock] = useState<Stock | null>(null)
+  const [auditOpen, setAuditOpen] = useState(false)
+  const openAudit = (stock: Stock) => {
+    setAuditStock(stock)
+    setAuditOpen(true)
+  }
+  const closeAudit = () => {
+    setAuditOpen(false)
+    setAuditStock(null)
+  }
+
   const handleDelete = (stock: Stock) => {
     if (stock.id !== undefined && stock.stall?.id !== undefined) {
       softDeleteStallStock.mutate(stock.id)
@@ -102,6 +114,7 @@ export default function StocksPage() {
         onRestock: openRestockSheet,
         onAddStock: openAddStockSheet,
         onView: handleView,
+        onAudit: openAudit,
         role,
       })
 
@@ -308,6 +321,13 @@ export default function StocksPage() {
                 />
               ) : null
             }
+          />
+
+          {/* Stock Audit Dialog */}
+          <StockAuditDialog
+            open={auditOpen}
+            onClose={closeAudit}
+            stock={auditStock}
           />
         </>
       )}

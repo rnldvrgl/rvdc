@@ -2,6 +2,8 @@ import { Stock, StockRoomStock } from "@/lib/constants/interface"
 import type { PaginatedFilterProps } from "@/lib/constants/types"
 import { useFilters } from "@/lib/hooks/useFilters"
 import { usePaginatedQuery } from "@/lib/hooks/usePaginatedQuery"
+import api from "@/lib/utils/api"
+import { useQuery } from "@tanstack/react-query"
 
 const stockUrl = "/inventory/stocks/"
 const stockRoomUrl = "/inventory/stockroom/stocks/"
@@ -28,4 +30,34 @@ export function useStockFilters() {
 
 export function useStockRoomFilters() {
   return useFilters("stock-room-filters", `${stockRoomUrl}filters/`)
+}
+
+export interface StockAuditData {
+  stock_id: number
+  item_name: string
+  item_unit: string
+  stall_name: string
+  system_quantity: number
+  reserved_quantity: number
+  available_quantity: number
+  reservations: {
+    service_id: number
+    client_name: string
+    service_type: string
+    service_status: string
+    item_name: string
+    quantity_used: number
+    created_at: string
+  }[]
+}
+
+export function useStockAudit(stockId: number | null) {
+  return useQuery<StockAuditData>({
+    queryKey: ["stock-audit", stockId],
+    queryFn: async () => {
+      const { data } = await api.get(`/inventory/stocks/${stockId}/audit/`)
+      return data
+    },
+    enabled: !!stockId,
+  })
 }

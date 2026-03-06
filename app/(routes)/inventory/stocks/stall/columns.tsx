@@ -3,12 +3,20 @@ import { Badge } from "@/components/ui/badge"
 import { GetColumnsProps, Stock } from "@/lib/constants/interface"
 import { getBadgeVariant, safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, PackagePlus, Plus, RotateCcw, Trash2 } from "lucide-react"
+import {
+  ClipboardCheck,
+  Edit,
+  PackagePlus,
+  Plus,
+  RotateCcw,
+  Trash2,
+} from "lucide-react"
 
 export function getStallStockColumns({
   onEdit,
   onRestock,
   onAddStock,
+  onAudit,
   onRestore,
   onHardDelete,
   role,
@@ -145,6 +153,11 @@ export function getStallStockColumns({
                       label: "Restock",
                       icon: PackagePlus,
                       onClick: () => onRestock?.(stock),
+                    },
+                    {
+                      label: "Audit Stock",
+                      icon: ClipboardCheck,
+                      onClick: () => onAudit?.(stock),
                     },
                   ]
                 : []),
