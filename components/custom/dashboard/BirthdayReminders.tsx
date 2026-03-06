@@ -75,8 +75,7 @@ export function BirthdayReminders() {
                 className="flex items-center gap-3 p-3 rounded-lg border transition-colors hover:bg-accent/50 border-pink-200/50 dark:border-pink-900/30"
               >
                 <div className="size-9 shrink-0 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
-                  {birthday.extendedProps.user_name?.[0]?.toUpperCase() ||
-                    "?"}
+                  {birthday.extendedProps.user_name?.[0]?.toUpperCase() || "?"}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm truncate">
