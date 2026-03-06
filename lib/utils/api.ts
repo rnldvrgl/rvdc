@@ -1,5 +1,4 @@
-import { refreshToken } from "@/lib/utils/auth"
-import { deleteCookie, setCookie } from "@/lib/utils/cookies"
+import { deleteCookie } from "@/lib/utils/cookies"
 import { getToken, removeToken, setToken } from "@/lib/utils/tokens"
 import axios from "axios"
 import qs from "qs"
@@ -16,6 +15,19 @@ const api = axios.create({
   },
 })
 
+// Mutex for token refresh — prevents concurrent refresh attempts
+let isRefreshing = false
+let refreshSubscribers: ((token: string) => void)[] = []
+
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token))
+  refreshSubscribers = []
+}
+
+function addRefreshSubscriber(cb: (token: string) => void) {
+  refreshSubscribers.push(cb)
+}
+
 // Request Interceptor — Attach token
 api.interceptors.request.use(
   async (config) => {
@@ -30,7 +42,7 @@ api.interceptors.request.use(
   },
 )
 
-// Response Interceptor — Handle 401 + refresh
+// Response Interceptor — Handle 401 + refresh with mutex
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -44,35 +56,75 @@ api.interceptors.response.use(
       originalRequest._retry = true
 
       const errData = error?.response?.data
-      const remember_me = await getToken("remember")
 
-      // Check typical DRF simplejwt responses
       const tokenNotValid =
         errData?.code === "token_not_valid" ||
         (typeof errData?.detail === "string" &&
           errData.detail.toLowerCase().includes("token not valid"))
 
-      if (tokenNotValid && remember_me === "true") {
+      if (tokenNotValid) {
+        const refresh = getToken("refresh")
+        if (!refresh) {
+          // No refresh token — force logout
+          removeToken("access")
+          removeToken("refresh")
+          removeToken("remember")
+          deleteCookie()
+          window.location.href = "/"
+          return new Promise(() => {})
+        }
+
+        // If already refreshing, queue this request
+        if (isRefreshing) {
+          return new Promise((resolve) => {
+            addRefreshSubscriber((newToken: string) => {
+              originalRequest.headers["Authorization"] = `Bearer ${newToken}`
+              resolve(api(originalRequest))
+            })
+          })
+        }
+
+        isRefreshing = true
+
         try {
-          const newAccess = (await refreshToken()) as {
-            access: string
-            refresh: string
-          }
-          if (newAccess?.access) {
-            setToken("access", newAccess.access)
-            setToken("refresh", newAccess.refresh)
-            const { access, refresh } = newAccess
-            setCookie("access", access)
-            setCookie("refresh", refresh)
-            originalRequest.headers["Authorization"] =
-              `Bearer ${newAccess.access}`
+          const res = await axios.post(`${baseURL}/auth/token/refresh/`, {
+            refresh,
+          })
+          const { access: newAccess, refresh: newRefresh } = res.data
+
+          if (newAccess && newRefresh) {
+            setToken("access", newAccess)
+            setToken("refresh", newRefresh)
+
+            // Update cookies via API route
+            try {
+              await fetch("/api/set-cookie", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  access: newAccess,
+                  refresh: newRefresh,
+                  role: getToken("role") || undefined,
+                }),
+                credentials: "include",
+              })
+            } catch {
+              // Cookie update is best-effort
+            }
+
+            isRefreshing = false
+            onRefreshed(newAccess)
+
+            originalRequest.headers["Authorization"] = `Bearer ${newAccess}`
             return api(originalRequest)
           }
-        } catch (refreshErr) {
-          console.error("Token refresh failed:", refreshErr)
+        } catch {
+          isRefreshing = false
+          refreshSubscribers = []
         }
       }
 
+      // Refresh failed or not applicable — clean logout
       removeToken("access")
       removeToken("refresh")
       removeToken("remember")

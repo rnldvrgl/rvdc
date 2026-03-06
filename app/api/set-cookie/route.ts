@@ -5,32 +5,40 @@ export async function POST(req: Request) {
 
   const response = NextResponse.json({ message: "Cookie set" })
 
-  // Cookie settings with security best practices
   const isProduction = process.env.NODE_ENV === "production"
 
-  response.cookies.set("role", role, {
-    httpOnly: true,
-    secure: isProduction,
-    path: "/",
-    sameSite: "strict",
-    maxAge: 60 * 60 * 24 * 7 * 30, // 30 days
-  })
+  // Role cookie — long-lived, used by middleware for redirects
+  if (role) {
+    response.cookies.set("role", role, {
+      httpOnly: true,
+      secure: isProduction,
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    })
+  }
 
-  response.cookies.set("access", access, {
-    httpOnly: true,
-    secure: isProduction,
-    path: "/",
-    sameSite: "strict",
-    maxAge: 60 * 60 * 24 * 7, // 1 week
-  })
+  // Access cookie — matches backend ACCESS_TOKEN_LIFETIME (12h)
+  if (access) {
+    response.cookies.set("access", access, {
+      httpOnly: true,
+      secure: isProduction,
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 12, // 12 hours
+    })
+  }
 
-  response.cookies.set("refresh", refresh, {
-    httpOnly: true,
-    secure: isProduction,
-    path: "/",
-    sameSite: "strict",
-    maxAge: 60 * 60 * 24 * 7 * 30, // 30 days
-  })
+  // Refresh cookie — matches backend REFRESH_TOKEN_LIFETIME (30 days)
+  if (refresh) {
+    response.cookies.set("refresh", refresh, {
+      httpOnly: true,
+      secure: isProduction,
+      path: "/",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    })
+  }
 
   return response
 }

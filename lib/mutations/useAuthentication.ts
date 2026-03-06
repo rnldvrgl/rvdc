@@ -65,9 +65,15 @@ export function useAuthentications() {
     )
 
     return useApiMutation({
-      mutationFn: async (refresh: string) =>
-        api.post("/auth/logout/", { refresh }),
-      usePromiseToast: true,
+      mutationFn: async (refresh: string) => {
+        // Best-effort: try to blacklist the refresh token on the server
+        // If it fails (expired, already blacklisted, network error), still proceed with local cleanup
+        try {
+          await api.post("/auth/logout/", { refresh })
+        } catch {
+          // Swallow — we still want to clean up locally
+        }
+      },
       onSuccess: async () => {
         // Remove tokens from storage
         removeToken("access")
@@ -76,16 +82,12 @@ export function useAuthentications() {
 
         // Tell the server to delete HTTP-only cookies
         try {
-          const res = await fetch("/api/delete-cookie", {
+          await fetch("/api/delete-cookie", {
             method: "POST",
             credentials: "include",
           })
-
-          if (!res.ok) {
-            toast.error("Failed to delete auth cookies")
-          }
         } catch {
-          // error is handled by mutation
+          // Best-effort
         }
 
         // Clear client-side user state
@@ -94,6 +96,24 @@ export function useAuthentications() {
         toast.warning("You have been logged out.")
 
         // Redirect to home
+        router.push("/")
+      },
+      onError: async () => {
+        // Even if everything fails, clean up locally
+        removeToken("access")
+        removeToken("refresh")
+        removeToken("remember")
+        clearUserProfile()
+
+        try {
+          await fetch("/api/delete-cookie", {
+            method: "POST",
+            credentials: "include",
+          })
+        } catch {
+          // Best-effort
+        }
+
         router.push("/")
       },
     })
