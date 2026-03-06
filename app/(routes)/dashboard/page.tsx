@@ -86,50 +86,70 @@ const DashboardPage = () => {
         <div className="space-y-6">
           {/* Role-Based Dashboard Components */}
           {role === "technician" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {payrollIncluded && <QuickClockInOut />}
-              {payrollIncluded && <LeaveBalanceSummary />}
-              <div className="col-span-full">
-                <BirthdayReminders />
-              </div>
+            <div className="space-y-6">
+              {payrollIncluded && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <QuickClockInOut />
+                  <LeaveBalanceSummary />
+                </div>
+              )}
+              <BirthdayReminders />
             </div>
           )}
 
           {role === "clerk" && (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <QuickClockInOut />
-              <LeaveBalanceSummary />
-              <RecentTransactions />
-              <SalesSummary />
-              <div className="col-span-full">
-                <BirthdayReminders />
+            <div className="space-y-6">
+              {/* Top Row - Quick Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div className="xl:col-span-2">
+                  <QuickClockInOut />
+                </div>
+                <div className="xl:col-span-2">
+                  <LeaveBalanceSummary />
+                </div>
               </div>
+
+              {/* Middle Row - Transactions & Sales */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <RecentTransactions />
+                <SalesSummary />
+              </div>
+
+              {/* Bottom Row - Birthdays */}
+              <BirthdayReminders />
             </div>
           )}
 
           {role === "manager" && (
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <QuickClockInOut />
-              <LeaveBalanceSummary />
-              <div className="col-span-full">
-                <BirthdayReminders />
+            <div className="space-y-6">
+              {/* Top Row - Quick Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div className="xl:col-span-2">
+                  <QuickClockInOut />
+                </div>
+                <div className="xl:col-span-2">
+                  <LeaveBalanceSummary />
+                </div>
               </div>
+
+              {/* Bottom Row - Birthdays */}
+              <BirthdayReminders />
             </div>
           )}
 
           {role === "admin" && (
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid gap-6 lg:grid-cols-2">
               <WidgetErrorBoundary fallbackTitle="Reminders failed to load">
                 <RemindersAlerts />
               </WidgetErrorBoundary>
               <WidgetErrorBoundary fallbackTitle="Birthdays failed to load">
                 <BirthdayReminders />
               </WidgetErrorBoundary>
-              <WidgetErrorBoundary fallbackTitle="Warranty alerts failed to load">
-                <WarrantyExpirationAlerts />
-              </WidgetErrorBoundary>
               <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
                 <InventoryReorderAlerts />
+              </WidgetErrorBoundary>
+              <WidgetErrorBoundary fallbackTitle="Warranty alerts failed to load">
+                <WarrantyExpirationAlerts />
               </WidgetErrorBoundary>
             </div>
           )}

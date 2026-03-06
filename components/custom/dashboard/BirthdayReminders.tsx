@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCalendarEvents } from "@/lib/queries/calendar/useCalendarEvents"
 import { formatDateToYMD } from "@/lib/utils/helpers"
 import { format } from "date-fns"
-import { Cake } from "lucide-react"
+import { Cake, Sparkles } from "lucide-react"
 
 export function BirthdayReminders() {
   const today = new Date()
@@ -33,16 +33,21 @@ export function BirthdayReminders() {
   if (birthdays.length === 0) {
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Cake className="size-5 text-green-600" />
+            <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950">
+              <Cake className="size-4 text-pink-600 dark:text-pink-400" />
+            </div>
             Upcoming Birthdays
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            No birthdays in the next 7 days
-          </p>
+          <div className="flex items-center justify-center gap-3 py-4 text-center">
+            <Cake className="size-5 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              No birthdays in the next 7 days
+            </p>
+          </div>
         </CardContent>
       </Card>
     )
@@ -50,14 +55,16 @@ export function BirthdayReminders() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Cake className="size-5 text-green-600" />
+          <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950">
+            <Cake className="size-4 text-pink-600 dark:text-pink-400" />
+          </div>
           Upcoming Birthdays
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3">
+        <div className="space-y-2">
           {birthdays.map((birthday, index) => {
             const birthdayDate = new Date(birthday.start)
             const isToday = birthdayDate.toDateString() === today.toDateString()
@@ -65,22 +72,29 @@ export function BirthdayReminders() {
             return (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 rounded-lg border bg-green-50/50 dark:bg-green-900/10"
+                className="flex items-center gap-3 p-3 rounded-lg border transition-colors hover:bg-accent/50 border-pink-200/50 dark:border-pink-900/30"
               >
-                <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                    <Cake className="size-5 text-green-600 dark:text-green-400" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">
-                      {birthday.extendedProps.user_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {isToday ? "Today" : format(birthdayDate, "MMM dd")}
-                      {isToday && " 🎉"}
-                    </p>
-                  </div>
+                <div className="size-9 shrink-0 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                  {birthday.extendedProps.user_name?.[0]?.toUpperCase() ||
+                    "?"}
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">
+                    {birthday.extendedProps.user_name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {isToday ? (
+                      <span className="text-pink-600 dark:text-pink-400 font-medium">
+                        Today 🎉
+                      </span>
+                    ) : (
+                      format(birthdayDate, "MMM dd")
+                    )}
+                  </p>
+                </div>
+                {isToday && (
+                  <Sparkles className="size-4 text-pink-500 animate-pulse shrink-0" />
+                )}
               </div>
             )
           })}

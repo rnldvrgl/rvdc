@@ -117,8 +117,8 @@ export function WarrantyExpirationAlerts() {
       </CardHeader>
       <CardContent>
         {totalAlerts === 0 ? (
-          <div className="flex flex-col items-center gap-2 py-4 text-center">
-            <ShieldCheck className="size-8 text-muted-foreground/50" />
+          <div className="flex items-center justify-center gap-3 py-4 text-center">
+            <ShieldCheck className="size-5 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
               All warranties are in good standing
             </p>

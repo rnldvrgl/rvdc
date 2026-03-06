@@ -83,13 +83,10 @@ export function InventoryReorderAlerts() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <div className="rounded-full bg-emerald-100 dark:bg-emerald-900/30 p-3 mb-3">
-              <Package className="size-5 text-emerald-600" />
-            </div>
-            <p className="text-sm font-medium">All stock levels are healthy</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              No items need reordering
+          <div className="flex items-center justify-center gap-3 py-4 text-center">
+            <Package className="size-5 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              All stock levels are healthy
             </p>
           </div>
         </CardContent>
