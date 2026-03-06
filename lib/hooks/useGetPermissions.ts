@@ -24,7 +24,7 @@ export function useGetPermissions(
       "view_stall_stocks",
       "view_sales",
       "view_services",
-      //   "view_remittances",
+      "view_remittances",
     ]
 
     // Admin & Manager permissions
