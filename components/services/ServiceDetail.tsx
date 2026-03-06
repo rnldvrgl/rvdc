@@ -496,51 +496,6 @@ export default function ServiceDetail({
     )
   }
 
-  // Helper function to calculate actual total revenue with service discount
-  const calculateActualTotalRevenue = () => {
-    const appliancesSubtotal =
-      service.appliances?.reduce((total, appliance) => {
-        const laborFee = parseFloat(
-          appliance.discounted_labor_fee || appliance.labor_fee || "0",
-        )
-        const partsCost = parseFloat(appliance.total_parts_cost || "0")
-        // Per-appliance unit price: match brand_new units by serial or use second-hand unit_price
-        const linkedUnit =
-          service.service_type === "installation" &&
-          service.installation_units &&
-          appliance.serial_number
-            ? service.installation_units.find(
-                (u) => u.serial_number === appliance.serial_number,
-              )
-            : null
-        const unitPrice = linkedUnit
-          ? appliance.unit_price
-            ? parseFloat(appliance.unit_price)
-            : parseFloat(
-                linkedUnit.sale_price ||
-                  linkedUnit.model?.selling_price ||
-                  linkedUnit.model?.retail_price ||
-                  "0",
-              )
-          : appliance.unit_price
-            ? parseFloat(appliance.unit_price)
-            : 0
-        return total + laborFee + partsCost + unitPrice
-      }, 0) || 0
-
-    const discountAmount = parseFloat(service.service_discount_amount || "0")
-    const discountPercentage = parseFloat(
-      service.service_discount_percentage || "0",
-    )
-
-    let actualDiscount = discountAmount
-    if (discountPercentage > 0 && discountAmount === 0) {
-      actualDiscount = (appliancesSubtotal * discountPercentage) / 100
-    }
-
-    return appliancesSubtotal - actualDiscount
-  }
-
   const OverPaymentWarning = () => {
     return (
       <Alert
@@ -2292,7 +2247,7 @@ export default function ServiceDetail({
               />
               {paymentType === "cheque" && selectedCheque && (
                 <p className="text-xs text-muted-foreground">
-                  Amount is set to the selected cheque's value
+                  Amount is set to the selected cheque&apos;s value
                 </p>
               )}
             </div>

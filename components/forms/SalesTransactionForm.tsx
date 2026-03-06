@@ -240,7 +240,8 @@ export default function SalesTransactionForm({
         cheque_collection: p.cheque_collection ?? null,
       })) ?? [],
     )
-  }, [initialData, allItemsData, stalls, assigned_stall, role, form.setValue])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData, allItemsData, stalls, assigned_stall, role])
 
   const handleSubmit = (data: FormValues) => {
     const payload = {

@@ -255,8 +255,6 @@ export default function PaymentMethodSelector({
                                 control._formValues.payments[idx].amount =
                                   parseFloat(selectedCheque.cheque_amount)
                                 // Trigger re-render by updating the field
-                                const amountField =
-                                  control._formValues.payments[idx]
                                 control.setValue(
                                   `payments.${idx}.amount` as const,
                                   parseFloat(selectedCheque.cheque_amount),
@@ -271,7 +269,7 @@ export default function PaymentMethodSelector({
                       )}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Amount will be set to the cheque's value
+                      Amount will be set to the cheque&apos;s value
                     </p>
                   </div>
                 )}
