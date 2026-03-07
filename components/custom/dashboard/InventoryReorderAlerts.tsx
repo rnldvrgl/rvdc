@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   useStallStocks,
   useStallStockStatusCounts,
-  useStockRoomStocks,
   useStockRoomStatusCounts,
+  useStockRoomStocks,
 } from "@/lib/queries/inventory/useStocks"
 import { ArrowRight, Package, Store, Warehouse } from "lucide-react"
 import Link from "next/link"
@@ -48,7 +48,14 @@ export function InventoryReorderAlerts() {
     stockRoomLowStockItems,
   } = useMemo(() => {
     const toAlertItems = (
-      results: { item?: { name?: string; sku?: string }; available_quantity?: number; quantity?: number; low_stock_threshold?: number }[] | undefined,
+      results:
+        | {
+            item?: { name?: string; sku?: string }
+            available_quantity?: number
+            quantity?: number
+            low_stock_threshold?: number
+          }[]
+        | undefined,
       useAvailable = false,
     ): AlertItem[] =>
       (results ?? []).map((stock) => ({
