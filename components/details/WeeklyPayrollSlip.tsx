@@ -41,7 +41,7 @@ import { useWeeklyPayroll } from "@/lib/queries/usePayroll"
 import { formatCurrency, toNumber } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
-import { FileText, Loader2 } from "lucide-react"
+import { AlertCircle, FileText, Loader2 } from "lucide-react"
 import { useState } from "react"
 
 interface WeeklyPayrollSlipProps {
@@ -57,7 +57,7 @@ export function WeeklyPayrollSlip({
   const { data: employeeData } = useEmployee(
     payroll?.employee?.toString() ?? "",
   )
-  const { userProfile, isAdmin, canManage } = useCurrentUser()
+  const { isAdmin, canManage } = useCurrentUser()
   const { updateStatus } = usePayrollMutations()
   const recomputePayroll = useRecomputeWeeklyPayroll(payrollId)
   const deleteManualDeduction = useDeleteManualDeduction(payrollId)
