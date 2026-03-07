@@ -103,14 +103,14 @@ export default function HalfDaySchedulesPage() {
   return (
     <Wrapper>
       <PageHeader
-        title="Half-Day Schedules"
-        description="Manage forced half-day dates. Employees will be capped at 4 paid hours on these dates."
+        title="Day Schedules"
+        description="Mark dates as half-day or shop closed. These apply to all employees automatically."
         icon={CalendarClock}
         actionButton={
           !isArchived && (
             <Button onClick={handleAddSchedule}>
               <Plus className="size-4 mr-2" />
-              Add Half-Day
+              Add Schedule
             </Button>
           )
         }
@@ -136,11 +136,11 @@ export default function HalfDaySchedulesPage() {
           >
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Archive Half-Day Schedule</AlertDialogTitle>
+                <AlertDialogTitle>Archive Day Schedule</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to archive this half-day schedule?
-                  Employees will no longer be capped at half-day hours for this
-                  date. You can restore it from the Archived tab.
+                  Are you sure you want to archive this day schedule? The
+                  schedule override will no longer apply for this date. You can
+                  restore it from the Archived tab.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -166,14 +166,12 @@ export default function HalfDaySchedulesPage() {
         withoutDateRangeFilter
         emptyIcon={CalendarClock}
         emptyTitle={
-          isArchived
-            ? "No archived half-day schedules"
-            : "No half-day schedules"
+          isArchived ? "No archived day schedules" : "No day schedules"
         }
         emptyDescription={
           isArchived
             ? "Archived schedules will appear here"
-            : "Create schedules to define half-day work periods"
+            : "Create schedules to mark dates as half-day or shop closed"
         }
       />
     </Wrapper>

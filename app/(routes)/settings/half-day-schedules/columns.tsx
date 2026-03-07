@@ -1,4 +1,5 @@
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
+import { Badge } from "@/components/ui/badge"
 import { HalfDaySchedule } from "@/lib/queries/useHalfDaySchedules"
 import { safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
@@ -28,6 +29,18 @@ export function getHalfDayScheduleColumns({
           <span className="font-medium">
             {safeCell(format(new Date(date), "MMMM dd, yyyy (EEEE)"))}
           </span>
+        )
+      },
+    },
+    {
+      accessorKey: "schedule_type",
+      header: "Type",
+      cell: ({ row }) => {
+        const type = row.original.schedule_type
+        return (
+          <Badge variant={type === "shop_closed" ? "destructive" : "secondary"}>
+            {type === "shop_closed" ? "Shop Closed" : "Half Day"}
+          </Badge>
         )
       },
     },
@@ -79,7 +92,7 @@ export function getHalfDayScheduleColumns({
                   icon: Trash2,
                   onClick: () => onHardDelete(schedule),
                   destructive: true,
-                  confirmText: `Permanently delete this half-day schedule? This cannot be undone.`,
+                  confirmText: `Permanently delete this day schedule? This cannot be undone.`,
                 },
               ]}
             />

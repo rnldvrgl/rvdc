@@ -15,6 +15,8 @@ import { toast } from "sonner"
 export interface HalfDaySchedule {
   id: number
   date: string
+  schedule_type: "half_day" | "shop_closed"
+  schedule_type_display: string
   reason: string
   created_by: number
   created_by_name: string
@@ -25,6 +27,7 @@ export interface HalfDaySchedule {
 
 export interface HalfDayScheduleCreate {
   date: string
+  schedule_type?: "half_day" | "shop_closed"
   reason?: string
 }
 
@@ -63,7 +66,7 @@ export const useCreateHalfDaySchedule = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["half-day-schedules"] })
-      toast.success("Half-day schedule created successfully")
+      toast.success("Day schedule created successfully")
     },
   })
 }
@@ -93,7 +96,7 @@ export const useUpdateHalfDaySchedule = () => {
       queryClient.invalidateQueries({
         queryKey: ["half-day-schedule", variables.id],
       })
-      toast.success("Half-day schedule updated successfully")
+      toast.success("Day schedule updated successfully")
     },
   })
 }
@@ -113,7 +116,7 @@ export const useDeleteHalfDaySchedule = () => {
       queryClient.invalidateQueries({
         queryKey: ["half-day-schedules-archived"],
       })
-      toast.success("Half-day schedule archived successfully")
+      toast.success("Day schedule archived successfully")
     },
   })
 }

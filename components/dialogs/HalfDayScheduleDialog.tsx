@@ -1,9 +1,3 @@
-/**
- * Half Day Schedule Dialog
- *
- * Dialog for creating and editing admin-designated half-day schedules.
- */
-
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -32,6 +26,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   HalfDayScheduleCreate,
   useCreateHalfDaySchedule,
   useUpdateHalfDaySchedule,
@@ -46,6 +47,7 @@ import * as z from "zod"
 
 const halfDaySchema = z.object({
   date: z.string().min(1, "Date is required"),
+  schedule_type: z.enum(["half_day", "shop_closed"]),
   reason: z.string().optional(),
 })
 
@@ -57,14 +59,17 @@ interface HalfDayScheduleDialogProps {
   schedule?: {
     id: number
     date: string
+    schedule_type?: "half_day" | "shop_closed"
     reason?: string
   } | null
+  defaultScheduleType?: "half_day" | "shop_closed"
 }
 
 export function HalfDayScheduleDialog({
   open,
   onOpenChange,
   schedule,
+  defaultScheduleType = "half_day",
 }: HalfDayScheduleDialogProps) {
   const createMutation = useCreateHalfDaySchedule()
   const updateMutation = useUpdateHalfDaySchedule()
@@ -73,24 +78,29 @@ export function HalfDayScheduleDialog({
     resolver: zodResolver(halfDaySchema),
     defaultValues: {
       date: format(new Date(), "yyyy-MM-dd"),
+      schedule_type: defaultScheduleType,
       reason: "",
     },
   })
+
+  const scheduleType = form.watch("schedule_type")
 
   // Update form when schedule changes
   useEffect(() => {
     if (schedule) {
       form.reset({
         date: schedule.date,
+        schedule_type: schedule.schedule_type || "half_day",
         reason: schedule.reason || "",
       })
     } else {
       form.reset({
         date: format(new Date(), "yyyy-MM-dd"),
+        schedule_type: defaultScheduleType,
         reason: "",
       })
     }
-  }, [schedule, form])
+  }, [schedule, form, defaultScheduleType])
 
   const onSubmit = async (data: HalfDayFormValues) => {
     try {
@@ -115,13 +125,11 @@ export function HalfDayScheduleDialog({
     >
       <DialogContent className="sm:max-w-[450px]">
         <DialogHeader>
-          <DialogTitle>
-            {schedule ? "Edit Half-Day Schedule" : "Add Half-Day Schedule"}
-          </DialogTitle>
+          <DialogTitle>{schedule ? "Edit" : "Add"} Day Schedule</DialogTitle>
           <DialogDescription>
             {schedule
-              ? "Update the half-day schedule details."
-              : "Mark a date as a forced half-day. All employees will be capped at 4 paid hours on this date."}
+              ? "Update the day schedule details."
+              : "Mark a date as half-day or shop closed. This applies to all employees automatically."}
           </DialogDescription>
         </DialogHeader>
 
@@ -130,6 +138,36 @@ export function HalfDayScheduleDialog({
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-4"
           >
+            <FormField
+              control={form.control}
+              name="schedule_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Schedule Type</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="half_day">Half Day</SelectItem>
+                      <SelectItem value="shop_closed">Shop Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    {scheduleType === "shop_closed"
+                      ? "All employees will be marked as Shop Closed with 0 paid hours"
+                      : "All employees will be capped at 4 paid hours"}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="date"
@@ -174,7 +212,7 @@ export function HalfDayScheduleDialog({
                     </PopoverContent>
                   </Popover>
                   <FormDescription>
-                    Select the date to mark as half-day
+                    Select the date for this schedule
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -189,12 +227,12 @@ export function HalfDayScheduleDialog({
                   <FormLabel>Reason (Optional)</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="e.g., Company event, Holiday eve"
+                      placeholder="e.g., Company event, Holiday eve, Inventory day"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Brief reason for the half-day schedule
+                    Brief reason for this schedule
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
