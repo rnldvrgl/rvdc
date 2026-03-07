@@ -79,7 +79,13 @@ interface CustomCalendarEventDialogProps {
     title: string
     description?: string
     event_date: string
-    event_type: "birthday" | "meeting" | "maintenance" | "training" | "deadline" | "other"
+    event_type:
+      | "birthday"
+      | "meeting"
+      | "maintenance"
+      | "training"
+      | "deadline"
+      | "other"
   } | null
   defaultDate?: Date
 }

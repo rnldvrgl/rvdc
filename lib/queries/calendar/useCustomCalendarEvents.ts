@@ -17,7 +17,13 @@ export interface CustomCalendarEvent {
   title: string
   description?: string
   event_date: string
-  event_type: "birthday" | "meeting" | "maintenance" | "training" | "deadline" | "other"
+  event_type:
+    | "birthday"
+    | "meeting"
+    | "maintenance"
+    | "training"
+    | "deadline"
+    | "other"
   event_type_display: string
   created_by: number
   created_by_name: string
@@ -29,7 +35,13 @@ export interface CustomCalendarEventCreate {
   title: string
   description?: string
   event_date: string
-  event_type: "birthday" | "meeting" | "maintenance" | "training" | "deadline" | "other"
+  event_type:
+    | "birthday"
+    | "meeting"
+    | "maintenance"
+    | "training"
+    | "deadline"
+    | "other"
 }
 
 /**

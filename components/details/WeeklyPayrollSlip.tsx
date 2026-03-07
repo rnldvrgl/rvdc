@@ -69,7 +69,12 @@ export function WeeklyPayrollSlip({
 
   if (isLoading) {
     return (
-      <div className={cn("mx-auto flex items-center justify-center py-12", className)}>
+      <div
+        className={cn(
+          "mx-auto flex items-center justify-center py-12",
+          className,
+        )}
+      >
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     )
@@ -77,7 +82,12 @@ export function WeeklyPayrollSlip({
 
   if (!payroll) {
     return (
-      <div className={cn("mx-auto flex items-center justify-center py-12", className)}>
+      <div
+        className={cn(
+          "mx-auto flex items-center justify-center py-12",
+          className,
+        )}
+      >
         <p className="text-muted-foreground">Payroll slip not found</p>
       </div>
     )

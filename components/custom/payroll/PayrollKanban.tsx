@@ -25,7 +25,12 @@ interface PayrollKanbanProps {
   isLoading: boolean
 }
 
-const COLUMNS: { status: PayrollStatus; label: string; color: string; icon: typeof FileText }[] = [
+const COLUMNS: {
+  status: PayrollStatus
+  label: string
+  color: string
+  icon: typeof FileText
+}[] = [
   {
     status: "draft",
     label: "Draft",
@@ -183,9 +188,7 @@ function PayrollCard({ payroll }: { payroll: WeeklyPayroll }) {
         <div className="flex items-center justify-between pt-1 border-t">
           <div>
             <p className="text-[10px] text-muted-foreground">Gross</p>
-            <p className="text-xs font-medium">
-              ₱{formatCurrency(grossPay)}
-            </p>
+            <p className="text-xs font-medium">₱{formatCurrency(grossPay)}</p>
           </div>
           <div className="text-right">
             <p className="text-[10px] text-muted-foreground">Net Pay</p>

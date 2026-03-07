@@ -1,12 +1,12 @@
 "use client"
 
 import { getPayrollColumns } from "@/app/(routes)/payroll/weekly/columns"
+import { PayrollKanban } from "@/components/custom/payroll/PayrollKanban"
 import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
-import { PayrollKanban } from "@/components/custom/payroll/PayrollKanban"
 import { DataTable } from "@/components/custom/table/DataTable"
 import BulkGeneratePayrollForm from "@/components/forms/BulkGeneratePayrollForm"
 import PayrollForm from "@/components/forms/PayrollForm"
@@ -262,45 +262,45 @@ export default function PayrollPage() {
           />
         ) : (
           <DataTable
-          data={tableData}
-          columns={columns}
-          isLoading={isArchived ? archivedQuery.isLoading : isLoading}
-          filters={filters}
-          orderingOptions={orderingOptions}
-          enableRowSelection={!isArchived}
-          bulkActions={
-            !isArchived
-              ? [
-                  {
-                    label: "Mark as Paid",
-                    icon: Banknote,
-                    variant: "default",
-                    onClick: async (selectedRows) => {
-                      const approvedIds = selectedRows
-                        .filter((r) => r.status === "approved")
-                        .map((r) => r.id)
-                      if (approvedIds.length === 0) return
-                      await bulkUpdateStatus.mutateAsync({
-                        payroll_ids: approvedIds,
-                        status: "paid",
-                      })
+            data={tableData}
+            columns={columns}
+            isLoading={isArchived ? archivedQuery.isLoading : isLoading}
+            filters={filters}
+            orderingOptions={orderingOptions}
+            enableRowSelection={!isArchived}
+            bulkActions={
+              !isArchived
+                ? [
+                    {
+                      label: "Mark as Paid",
+                      icon: Banknote,
+                      variant: "default",
+                      onClick: async (selectedRows) => {
+                        const approvedIds = selectedRows
+                          .filter((r) => r.status === "approved")
+                          .map((r) => r.id)
+                        if (approvedIds.length === 0) return
+                        await bulkUpdateStatus.mutateAsync({
+                          payroll_ids: approvedIds,
+                          status: "paid",
+                        })
+                      },
                     },
-                  },
-                ]
-              : undefined
-          }
-          emptyIcon={FileText}
-          emptyTitle={
-            isArchived
-              ? "No archived payroll records"
-              : "No payroll records found"
-          }
-          emptyDescription={
-            isArchived
-              ? "Archived payroll records will appear here"
-              : "Generate your first weekly payroll to get started"
-          }
-        />
+                  ]
+                : undefined
+            }
+            emptyIcon={FileText}
+            emptyTitle={
+              isArchived
+                ? "No archived payroll records"
+                : "No payroll records found"
+            }
+            emptyDescription={
+              isArchived
+                ? "Archived payroll records will appear here"
+                : "Generate your first weekly payroll to get started"
+            }
+          />
         )}
       </div>
 

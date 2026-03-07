@@ -124,10 +124,7 @@ export default function MyPayrollPage() {
                         <span className="font-semibold text-sm">
                           {format(new Date(payroll.week_start), "MMM dd")} -{" "}
                           {payroll.week_end
-                            ? format(
-                                new Date(payroll.week_end),
-                                "MMM dd, yyyy",
-                              )
+                            ? format(new Date(payroll.week_end), "MMM dd, yyyy")
                             : ""}
                         </span>
                       </div>
@@ -157,9 +154,7 @@ export default function MyPayrollPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-muted-foreground">
-                          Net Pay
-                        </p>
+                        <p className="text-xs text-muted-foreground">Net Pay</p>
                         <p className="text-base font-bold text-green-600 dark:text-green-400">
                           ₱{formatCurrency(net)}
                         </p>
