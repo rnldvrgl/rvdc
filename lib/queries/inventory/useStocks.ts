@@ -87,3 +87,23 @@ export function useStockAudit(stockId: number | null) {
     enabled: !!stockId,
   })
 }
+
+export interface StockRoomAuditData {
+  stock_id: number
+  item_name: string
+  item_unit: string
+  system_quantity: number
+}
+
+export function useStockRoomAudit(stockId: number | null) {
+  return useQuery<StockRoomAuditData>({
+    queryKey: ["stockroom-audit", stockId],
+    queryFn: async () => {
+      const { data } = await api.get(
+        `/inventory/stockroom/stocks/${stockId}/audit/`,
+      )
+      return data
+    },
+    enabled: !!stockId,
+  })
+}

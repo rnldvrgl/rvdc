@@ -3,11 +3,18 @@ import { Badge } from "@/components/ui/badge"
 import { GetColumnsProps, StockRoomStock } from "@/lib/constants/interface"
 import { getBadgeVariant, safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Edit, PackagePlus, RotateCcw, Trash2 } from "lucide-react"
+import {
+  ClipboardCheck,
+  Edit,
+  PackagePlus,
+  RotateCcw,
+  Trash2,
+} from "lucide-react"
 
 export function getStockRoomStockColumns({
   onEdit,
   onRestock,
+  onAudit,
   onRestore,
   onHardDelete,
 }: GetColumnsProps<StockRoomStock>): ColumnDef<StockRoomStock>[] {
@@ -101,6 +108,11 @@ export function getStockRoomStockColumns({
         return (
           <DataTableActions
             items={[
+              {
+                label: "Audit",
+                icon: ClipboardCheck,
+                onClick: () => onAudit?.(stock),
+              },
               {
                 label: "Restock",
                 icon: PackagePlus,

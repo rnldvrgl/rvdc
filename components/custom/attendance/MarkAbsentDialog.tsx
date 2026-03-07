@@ -2,6 +2,7 @@
 
 import DatePicker from "@/components/custom/inputs/DatePicker"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,7 @@ import { MultiSelect } from "@/components/ui/multi-select"
 import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
 import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, UserX } from "lucide-react"
+import { Loader2, Store, UserX } from "lucide-react"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -31,6 +32,7 @@ import { z } from "zod"
 const markAbsentSchema = z.object({
   employee_ids: z.array(z.string()).min(1, "Select at least one employee"),
   date: z.date({ required_error: "Date is required" }),
+  shop_closed: z.boolean(),
 })
 
 type MarkAbsentFormValues = z.infer<typeof markAbsentSchema>
@@ -45,6 +47,7 @@ export function MarkAbsentDialog() {
     defaultValues: {
       employee_ids: [],
       date: new Date(),
+      shop_closed: false,
     },
   })
 
@@ -64,6 +67,7 @@ export function MarkAbsentDialog() {
       await markAbsent.mutateAsync({
         employee_ids: values.employee_ids.map((id) => Number(id)),
         date: dateString,
+        ...(values.shop_closed ? { reason: "shop_closed" } : {}),
       })
       form.reset()
       setOpen(false)
@@ -149,6 +153,32 @@ export function MarkAbsentDialog() {
               )}
             />
 
+            {/* Shop Closed toggle */}
+            <FormField
+              name="shop_closed"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="flex items-center gap-1.5">
+                      <Store className="h-4 w-4" />
+                      Shop Closed
+                    </FormLabel>
+                    <p className="text-xs text-muted-foreground">
+                      Mark as shop closed instead of absent. Will not count
+                      toward AWOL and will be auto-approved.
+                    </p>
+                  </div>
+                </FormItem>
+              )}
+            />
+
             <DialogFooter>
               <Button
                 type="button"
@@ -162,18 +192,19 @@ export function MarkAbsentDialog() {
                 disabled={
                   !form.formState.isValid || form.formState.isSubmitting
                 }
-                variant="destructive"
+                variant={form.watch("shop_closed") ? "default" : "destructive"}
               >
                 {form.formState.isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : form.watch("shop_closed") ? (
+                  <Store className="h-4 w-4 mr-2" />
                 ) : (
                   <UserX className="h-4 w-4 mr-2" />
                 )}
-                Mark{" "}
+                {form.watch("shop_closed") ? "Mark Shop Closed" : "Mark Absent"}
                 {form.watch("employee_ids").length > 0
-                  ? form.watch("employee_ids").length
-                  : ""}{" "}
-                Absent
+                  ? ` (${form.watch("employee_ids").length})`
+                  : ""}
               </Button>
             </DialogFooter>
           </form>

@@ -7,6 +7,7 @@ import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import RestockForm from "@/components/forms/inventory/RestockForm"
+import StockRoomAuditDialog from "@/components/forms/inventory/StockRoomAuditDialog"
 import StockThresholdForm from "@/components/forms/inventory/StockThresholdForm"
 import { Button } from "@/components/ui/button"
 import { StockRoomStock } from "@/lib/constants/interface"
@@ -62,6 +63,12 @@ export default function StockRoomStocksPage() {
     closeEntity: closeViewSheet,
   } = useEntitySheet<StockRoomStock>()
 
+  const {
+    entityState: { open: auditOpen, entity: auditEntity },
+    openEntity: openAuditDialog,
+    closeEntity: closeAuditDialog,
+  } = useEntitySheet<StockRoomStock>()
+
   const handleDelete = (stock: StockRoomStock) => {
     if (stock.id !== undefined) {
       softDeleteStockRoomStock.mutate(stock.id)
@@ -92,6 +99,7 @@ export default function StockRoomStocksPage() {
         onDelete: handleDelete,
         onRestock: openRestockSheet,
         onView: handleView,
+        onAudit: openAuditDialog,
       })
 
   return (
@@ -304,6 +312,13 @@ export default function StockRoomStocksPage() {
                 />
               ) : null
             }
+          />
+
+          {/* Audit Dialog */}
+          <StockRoomAuditDialog
+            open={auditOpen}
+            onClose={closeAuditDialog}
+            stock={auditEntity ?? null}
           />
         </>
       )}

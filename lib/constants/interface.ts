@@ -150,7 +150,6 @@ export interface CashAdvanceMovementPayload {
 export interface ProductCategory {
   id: number
   name: string
-  description?: string
   is_deleted?: boolean
   created_at: string
   updated_at: string
@@ -158,7 +157,6 @@ export interface ProductCategory {
 
 export interface ProductCategoryPayload {
   name: string
-  description?: string
 }
 
 // ---------------------
@@ -176,7 +174,6 @@ export interface Item {
   name: string
   sku: string
   category: ProductCategory | null
-  description?: string | null
   unit_of_measure: UnitChoice
   retail_price: string
   wholesale_price: string
@@ -196,7 +193,6 @@ export interface ItemPayload {
   technician_price: number
   cost_price: number
   category_id: number | null
-  description?: string
   unit_of_measure: UnitChoice
   waste_tolerance_percentage?: number
 }

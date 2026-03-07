@@ -46,11 +46,12 @@ import * as z from "zod"
 const LEAVE_TYPES = [
   { value: "SICK", label: "Sick Leave" },
   { value: "EMERGENCY", label: "Emergency Leave" },
+  { value: "SPECIAL", label: "Special Leave" },
 ]
 
 const leaveRequestSchema = z
   .object({
-    leave_type: z.enum(["SICK", "EMERGENCY"], {
+    leave_type: z.enum(["SICK", "EMERGENCY", "SPECIAL"], {
       required_error: "Please select a leave type",
     }),
     start_date: z.date({
@@ -121,6 +122,7 @@ export function LeaveRequestForm() {
   // Get remaining balance for selected leave type
   const remainingBalance = useMemo(() => {
     if (!leaveBalance) return null
+    if (leaveType === "SPECIAL") return null // No balance tracking for special leave
     if (leaveType === "SICK")
       return parseFloat(leaveBalance.sick_leave_remaining?.toString() || "0")
     if (leaveType === "EMERGENCY")

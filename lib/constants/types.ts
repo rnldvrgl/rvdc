@@ -320,10 +320,11 @@ export type AttendanceType =
   | "PARTIAL"
   | "ABSENT"
   | "LEAVE"
+  | "SHOP_CLOSED"
   | "PENDING"
   | "INVALID"
 export type AttendanceStatus = "PENDING" | "APPROVED" | "REJECTED" | "NONE"
-export type LeaveType = "SICK" | "EMERGENCY"
+export type LeaveType = "SICK" | "EMERGENCY" | "SPECIAL"
 export type LeaveStatus = "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED"
 export type ShiftPeriod = "AM" | "PM" | "FULL"
 export type CalendarAttendanceStatus = "present" | "late" | "absent" | "leave"
@@ -394,6 +395,7 @@ export type RejectAttendancePayload = {
 export type MarkAbsentPayload = {
   employee_ids: number[]
   date: string
+  reason?: string
 }
 
 export type UpdateUniformPenaltiesPayload = {

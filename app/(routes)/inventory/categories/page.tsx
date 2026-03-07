@@ -143,14 +143,6 @@ export default function ItemCategoriesPage() {
                         {entity.id || "N/A"}
                       </p>
                     </div>
-                    <div className="sm:col-span-2">
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Description
-                      </label>
-                      <p className="text-base text-muted-foreground">
-                        {entity.description || "No description available"}
-                      </p>
-                    </div>
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">
                         Created Date

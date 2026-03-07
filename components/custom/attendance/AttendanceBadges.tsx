@@ -105,6 +105,12 @@ export function AttendanceTypeBadge({
         "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
       label: "On Leave",
     },
+    SHOP_CLOSED: {
+      icon: AlertCircle,
+      className:
+        "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200",
+      label: "Shop Closed",
+    },
     PENDING: {
       icon: AlertCircle,
       className:

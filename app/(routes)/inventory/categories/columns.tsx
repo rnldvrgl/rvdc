@@ -1,6 +1,5 @@
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
 import { GetColumnsProps, ProductCategory } from "@/lib/constants/interface"
-import { safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
 import { Archive, Edit, RotateCcw, Trash2 } from "lucide-react"
 
@@ -14,11 +13,6 @@ export function getCategoryColumns({
     {
       accessorKey: "name",
       header: "Name",
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ getValue }) => safeCell(getValue()),
     },
     {
       accessorKey: "action",

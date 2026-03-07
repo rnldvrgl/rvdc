@@ -67,9 +67,33 @@ export function useStockRoomStockMutations() {
     },
   })
 
+  const auditStockRoomStock = useApiMutation({
+    mutationFn: ({
+      stock_id,
+      physical_count,
+    }: {
+      stock_id: number
+      physical_count: number
+    }) =>
+      api.post(`/inventory/stockroom/stocks/${stock_id}/audit/`, {
+        physical_count,
+      }),
+    successMessage: "Stock reconciled successfully.",
+    invalidateQueries: sharedInvalidations,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["stock-room-stocks", variables.stock_id],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ["stockroom-audit", variables.stock_id],
+      })
+    },
+  })
+
   return {
     updateStockRoomStock,
     softDeleteStockRoomStock,
     restockStockRoomStock,
+    auditStockRoomStock,
   }
 }

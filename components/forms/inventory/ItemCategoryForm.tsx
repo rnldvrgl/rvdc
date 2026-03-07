@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -8,18 +8,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
 import {
   ProductCategory,
   ProductCategoryPayload,
-} from '@/lib/constants/interface'
-import { useItemCategoryMutations } from '@/lib/mutations/useItemCategoryMutations'
-import { SubmitHandler, useForm } from 'react-hook-form'
+} from "@/lib/constants/interface"
+import { useItemCategoryMutations } from "@/lib/mutations/useItemCategoryMutations"
+import { SubmitHandler, useForm } from "react-hook-form"
 
 interface FormValues {
   name: string
-  description: string
 }
 
 interface ItemCategoryFormProps {
@@ -33,8 +32,7 @@ export default function ItemCategoryForm({
 }: ItemCategoryFormProps) {
   const form = useForm<FormValues>({
     defaultValues: {
-      name: category?.name ?? '',
-      description: category?.description ?? '',
+      name: category?.name ?? "",
     },
   })
 
@@ -43,7 +41,6 @@ export default function ItemCategoryForm({
   const handleSubmit: SubmitHandler<FormValues> = (data) => {
     const payload: ProductCategoryPayload = {
       name: data.name,
-      description: data.description,
     }
 
     if (category?.id) {
@@ -66,7 +63,7 @@ export default function ItemCategoryForm({
           <FormField
             control={form.control}
             name="name"
-            rules={{ required: 'Name is required' }}
+            rules={{ required: "Name is required" }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel required>Name</FormLabel>
@@ -80,28 +77,11 @@ export default function ItemCategoryForm({
               </FormItem>
             )}
           />
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Optional description"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         <div className="pt-4 flex justify-end">
           <Button type="submit">
-            {category ? 'Update Category' : 'Add Category'}
+            {category ? "Update Category" : "Add Category"}
           </Button>
         </div>
       </form>

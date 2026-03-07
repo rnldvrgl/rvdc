@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState } from "react"
 
 export function useItemSelection<
   Item,
@@ -20,6 +20,7 @@ export function useItemSelection<
       const initial = getInitialItems(initialData)
       setItems(initial)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData])
 
   useEffect(() => {

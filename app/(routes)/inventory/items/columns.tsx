@@ -33,11 +33,6 @@ export function getItemColumns({
         safeCell(row.original.category?.name),
     },
     {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ getValue }) => safeCell(getValue()),
-    },
-    {
       accessorKey: "unit_of_measure",
       header: "Unit",
       cell: ({ getValue }) => safeCell(getValue()),

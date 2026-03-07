@@ -96,6 +96,7 @@ const getLeaveTypeBadge = (leaveType: string) => {
     SICK: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
     EMERGENCY:
       "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+    SPECIAL: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
   }
 
   return (

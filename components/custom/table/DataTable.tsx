@@ -722,7 +722,6 @@ export function DataTable<TData, TValue>({
                         action.onClick(selectedRows)
                         setRowSelection({})
                       }}
-                      className="h-9"
                     >
                       {ActionIcon && <ActionIcon className="size-4 mr-1.5" />}
                       {action.label}

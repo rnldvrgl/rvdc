@@ -28,7 +28,6 @@ interface FormValues {
   category: string | null
   unit_of_measure: "pcs" | "ft" | "kg" | "roll" | "box"
   retail_price: string
-  description: string
   wholesale_price: string
   technician_price: string
   cost_price: string
@@ -52,7 +51,6 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
       cost_price: item?.cost_price?.toString() ?? "",
       waste_tolerance_percentage:
         item?.waste_tolerance_percentage?.toString() ?? "0",
-      description: item?.description ?? "",
     },
   })
 
@@ -66,7 +64,6 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
     const payload: ItemPayload = {
       name: data.name,
       category_id: data.category ? parseInt(data.category) : null,
-      description: data.description,
       unit_of_measure: data.unit_of_measure,
       retail_price: parseFloat(data.retail_price) || 0,
       wholesale_price: parseFloat(data.wholesale_price) || 0,
@@ -127,23 +124,6 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
                       loadingCategories ? "Loading..." : "Select Category"
                     }
                     disabled={loadingCategories}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="E.g. short details about this product"
                   />
                 </FormControl>
                 <FormMessage />
