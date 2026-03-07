@@ -27,11 +27,15 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { useCreateManualDeduction } from "@/lib/mutations/useManualDeductionMutations"
+import {
+  useCreateManualDeduction,
+  useUpdateManualDeduction,
+} from "@/lib/mutations/useManualDeductionMutations"
+import { ManualDeduction } from "@/lib/schemas/manualDeductionSchema"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { addWeeks, format } from "date-fns"
+import { format } from "date-fns"
 import { Loader2 } from "lucide-react"
-import { useMemo } from "react"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -41,7 +45,7 @@ const manualDeductionSchema = z.object({
   deduction_type: z.enum(["one_time", "recurring"]),
   amount: z.coerce.number().positive("Amount must be greater than zero"),
   effective_date: z.date().optional(),
-  number_of_weeks: z.coerce.number().optional(),
+  end_date: z.date().optional(),
 })
 
 type ManualDeductionFormData = z.infer<typeof manualDeductionSchema>
@@ -51,9 +55,10 @@ interface AddManualDeductionFormProps {
   onOpenChange: (open: boolean) => void
   employeeId: number
   employeeName: string
-  weekStart?: string // ISO date string for payroll week start
-  weekEnd?: string // ISO date string for payroll week end
-  payrollId?: number // Optional payroll ID to trigger auto-recompute
+  weekStart?: string
+  weekEnd?: string
+  payrollId?: number
+  deduction?: ManualDeduction | null
 }
 
 export function AddManualDeductionForm({
@@ -64,8 +69,11 @@ export function AddManualDeductionForm({
   weekStart,
   weekEnd,
   payrollId,
+  deduction,
 }: AddManualDeductionFormProps) {
   const createMutation = useCreateManualDeduction(payrollId)
+  const updateMutation = useUpdateManualDeduction()
+  const isEditing = !!deduction
 
   const form = useForm<ManualDeductionFormData>({
     resolver: zodResolver(manualDeductionSchema),
@@ -75,45 +83,51 @@ export function AddManualDeductionForm({
       deduction_type: "one_time",
       amount: 0,
       effective_date: undefined,
-      number_of_weeks: undefined,
+      end_date: undefined,
     },
   })
 
-  const deductionType = form.watch("deduction_type")
-  const effectiveDate = form.watch("effective_date")
-  const numberOfWeeks = form.watch("number_of_weeks")
-
-  // Automatically compute end date based on number of weeks for recurring deductions
-  const computedEndDate = useMemo(() => {
-    if (
-      deductionType === "recurring" &&
-      numberOfWeeks &&
-      numberOfWeeks > 0 &&
-      effectiveDate
-    ) {
-      return addWeeks(effectiveDate, numberOfWeeks)
+  useEffect(() => {
+    if (deduction) {
+      form.reset({
+        name: deduction.name,
+        description: deduction.description || "",
+        deduction_type: deduction.end_date ? "recurring" : "one_time",
+        amount: Number(deduction.amount),
+        effective_date: deduction.effective_date
+          ? new Date(deduction.effective_date)
+          : undefined,
+        end_date: deduction.end_date ? new Date(deduction.end_date) : undefined,
+      })
+    } else {
+      form.reset({
+        name: "",
+        description: "",
+        deduction_type: "one_time",
+        amount: 0,
+        effective_date: undefined,
+        end_date: undefined,
+      })
     }
-    return undefined
-  }, [deductionType, numberOfWeeks, effectiveDate])
+  }, [deduction, form])
+
+  const deductionType = form.watch("deduction_type")
 
   const onSubmit = async (data: ManualDeductionFormData) => {
     try {
-      // Determine effective_date based on deduction type and payroll context
       let effectiveDate: string | undefined
 
       if (data.deduction_type === "recurring") {
-        // For recurring: use weekStart if available (to include in current payroll),
-        // otherwise use user-selected date
-        if (weekStart) {
+        if (weekStart && !isEditing) {
           effectiveDate = weekStart
         } else if (data.effective_date) {
           effectiveDate = format(data.effective_date, "yyyy-MM-dd")
         }
       } else if (data.deduction_type === "one_time") {
-        // For one_time: use weekEnd if available (to apply to current payroll period)
-        // This ensures the deduction is applied to the payroll being viewed
-        if (weekEnd) {
+        if (weekEnd && !isEditing) {
           effectiveDate = weekEnd
+        } else if (data.effective_date) {
+          effectiveDate = format(data.effective_date, "yyyy-MM-dd")
         }
       }
 
@@ -124,13 +138,17 @@ export function AddManualDeductionForm({
         employee: employeeId,
         amount: Number(data.amount),
         effective_date: effectiveDate,
-        end_date: computedEndDate
-          ? format(computedEndDate, "yyyy-MM-dd")
+        end_date: data.end_date
+          ? format(data.end_date, "yyyy-MM-dd")
           : undefined,
         is_active: true,
       }
 
-      await createMutation.mutateAsync(payload)
+      if (isEditing) {
+        await updateMutation.mutateAsync({ id: deduction.id, ...payload })
+      } else {
+        await createMutation.mutateAsync(payload)
+      }
       form.reset()
       onOpenChange(false)
     } catch {
@@ -138,20 +156,7 @@ export function AddManualDeductionForm({
     }
   }
 
-  const getDeductionTypeDescription = (type: string) => {
-    switch (type) {
-      case "one_time":
-        return weekStart && weekEnd
-          ? `This deduction will be applied once to the current payroll period (${format(new Date(weekStart), "MMM dd")} - ${format(new Date(weekEnd), "MMM dd, yyyy")})`
-          : "This deduction will be applied once to the employee's next payroll"
-      case "recurring":
-        return weekStart && weekEnd
-          ? `This deduction will start from the current payroll period (${format(new Date(weekStart), "MMM dd")} - ${format(new Date(weekEnd), "MMM dd, yyyy")}) and continue for the specified number of weeks`
-          : "This deduction will be applied to multiple payroll periods"
-      default:
-        return ""
-    }
-  }
+  const isLoading = createMutation.isPending || updateMutation.isPending
 
   return (
     <Dialog
@@ -160,9 +165,11 @@ export function AddManualDeductionForm({
     >
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Manual Deduction</DialogTitle>
-          <DialogDescription className="space-y-2">
-            Create a deduction for{" "}
+          <DialogTitle>
+            {isEditing ? "Edit" : "Add"} Manual Deduction
+          </DialogTitle>
+          <DialogDescription>
+            {isEditing ? "Update" : "Create a"} deduction for{" "}
             <span className="font-semibold">{employeeName}</span>
           </DialogDescription>
         </DialogHeader>
@@ -197,7 +204,9 @@ export function AddManualDeductionForm({
                     </SelectContent>
                   </Select>
                   <FormDescription className="text-xs">
-                    {getDeductionTypeDescription(field.value)}
+                    {deductionType === "one_time"
+                      ? "Deducted once from a single payroll"
+                      : "Deducted every payroll until the end date"}
                   </FormDescription>
                 </FormItem>
               )}
@@ -240,77 +249,38 @@ export function AddManualDeductionForm({
                       name={field.name}
                     />
                   </FormControl>
-                  <FormDescription className="text-xs">
-                    This amount will be deducted from each payroll
-                  </FormDescription>
                 </FormItem>
               )}
             />
 
-            {/* Only show Start Date and Number of Weeks for recurring deductions */}
             {deductionType === "recurring" && (
               <>
-                {!weekStart && (
-                  <FormField
-                    control={form.control}
-                    name="effective_date"
-                    render={({ field }) => (
-                      <DatePicker
-                        required
-                        field={field}
-                        label="Start Date"
-                        placeholder="Select start date"
-                        description="Deduction will start on payrolls from this date forward"
-                        disablePastDates
-                      />
-                    )}
-                  />
-                )}
-
-                {weekStart && (
-                  <div className="text-sm bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-md p-3">
-                    <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                      Start Date
-                    </p>
-                    <p className="text-blue-800 dark:text-blue-200">
-                      This recurring deduction will start from the current
-                      payroll period:{" "}
-                      <span className="font-semibold">
-                        {format(new Date(weekStart), "MMM dd")} -{" "}
-                        {format(new Date(weekEnd!), "MMM dd, yyyy")}
-                      </span>
-                    </p>
-                  </div>
-                )}
+                <FormField
+                  control={form.control}
+                  name="effective_date"
+                  render={({ field }) => (
+                    <DatePicker
+                      required
+                      field={field}
+                      label="Start Date"
+                      placeholder="Select start date"
+                      description="When to start applying this deduction"
+                    />
+                  )}
+                />
 
                 <FormField
                   control={form.control}
-                  name="number_of_weeks"
+                  name="end_date"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Number of Weeks</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="1"
-                          placeholder="e.g., 10"
-                          value={field.value || ""}
-                          onChange={(e) => {
-                            const value = e.target.value
-                            field.onChange(
-                              value === "" ? undefined : parseInt(value),
-                            )
-                          }}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                        />
-                      </FormControl>
-                      <FormDescription className="text-xs">
-                        {computedEndDate
-                          ? `Deduction will end on ${format(computedEndDate, "MMM dd, yyyy")}`
-                          : "Enter number of weeks for this deduction"}
-                      </FormDescription>
-                    </FormItem>
+                    <DatePicker
+                      required
+                      field={field}
+                      label="End Date"
+                      placeholder="Select end date"
+                      description="Last payroll period this deduction applies to"
+                      minDate={form.watch("effective_date")}
+                    />
                   )}
                 />
               </>
@@ -325,37 +295,13 @@ export function AddManualDeductionForm({
                   <FormControl>
                     <Textarea
                       placeholder="Additional notes about this deduction"
-                      rows={3}
+                      rows={2}
                       {...field}
                     />
                   </FormControl>
                 </FormItem>
               )}
             />
-
-            <div className="text-xs bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-md p-3">
-              <p className="font-medium text-amber-900 dark:text-amber-100 mb-1">
-                {weekStart ? "How it works:" : "Examples:"}
-              </p>
-              {weekStart ? (
-                <ul className="list-disc list-inside space-y-1 text-amber-800 dark:text-amber-200">
-                  <li>
-                    <strong>One-time</strong>: Deducted from this payroll period
-                    only
-                  </li>
-                  <li>
-                    <strong>Recurring</strong>: Starts from this payroll and
-                    continues for the number of weeks you specify
-                  </li>
-                </ul>
-              ) : (
-                <ul className="list-disc list-inside space-y-1 text-amber-800 dark:text-amber-200">
-                  <li>One-time: Cash advance ₱1,000 (single deduction)</li>
-                  <li>Recurring: Loan ₱500/week for 10 weeks</li>
-                  <li>Recurring: Equipment damage ₱100/week for 5 weeks</li>
-                </ul>
-              )}
-            </div>
 
             <DialogFooter>
               <Button
@@ -365,18 +311,16 @@ export function AddManualDeductionForm({
                   form.reset()
                   onOpenChange(false)
                 }}
-                disabled={createMutation.isPending}
+                disabled={isLoading}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={createMutation.isPending}
+                disabled={isLoading}
               >
-                {createMutation.isPending && (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                )}
-                Add Deduction
+                {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {isEditing ? "Update" : "Add"} Deduction
               </Button>
             </DialogFooter>
           </form>
