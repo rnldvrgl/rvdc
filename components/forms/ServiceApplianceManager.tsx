@@ -521,7 +521,7 @@ export default function ServiceApplianceManager({
               </h4>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Appliance Type (non-installation only) */}
               {!isInstallation && (
                 <div className="space-y-2">
@@ -599,7 +599,7 @@ export default function ServiceApplianceManager({
                         setField("model", "")
                         setField("serial_number", "")
                       }}
-                      className="grid grid-cols-2 gap-3"
+                      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
                     >
                       <label
                         htmlFor="brand_new"
@@ -670,7 +670,7 @@ export default function ServiceApplianceManager({
                       <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                         Selected Unit
                       </h4>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                      <div className="grid grid-cols-2 sm:gap-x-4 gap-y-2 text-sm">
                         <div>
                           <p className="text-xs text-muted-foreground">Brand</p>
                           <p className="font-medium">
@@ -1047,7 +1047,7 @@ export default function ServiceApplianceManager({
                     Warranty
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">
                       Labor Warranty (months)

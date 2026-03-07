@@ -10,9 +10,11 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
 import { Stock, StockPayload, StockRoomStock } from "@/lib/constants/interface"
 import { useStallStockMutations } from "@/lib/mutations/useStallStockMutations"
 import { useStockRoomStockMutations } from "@/lib/mutations/useStockRoomStockMutations"
+import { Save } from "lucide-react"
 import { SubmitHandler, useForm } from "react-hook-form"
 
 interface FormValues {
@@ -77,76 +79,91 @@ export default function StockThresholdForm({
     }
   }
 
+  const unit = stock.item?.unit_of_measure ?? "pcs"
+  const isPending = updateStallStock.isPending || updateStockRoomStock.isPending
+
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleSubmit)}
-        className="space-y-6 max-w-md"
+        className="space-y-5"
       >
-        <div className="space-y-4 grid">
-          <FormItem>
-            <FormLabel>Item</FormLabel>
-            <Input
-              value={stock.item.name}
-              disabled
-            />
-          </FormItem>
-
-          {type === "stall" && (
-            <>
-              <FormItem>
-                <FormLabel>Stall</FormLabel>
-                <Input
-                  value={
-                    "stall" in stock ? (stock.stall?.name ?? "N/A") : "N/A"
-                  }
-                  disabled
-                />
-              </FormItem>
-              <FormItem>
-                <FormLabel>Current Quantity</FormLabel>
-                <Input
-                  value={stock.quantity.toString()}
-                  disabled
-                />
-              </FormItem>
-            </>
+        {/* Info */}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          <div>
+            <p className="text-muted-foreground">Item</p>
+            <p className="font-medium">
+              {stock.item?.display_name ?? stock.item.name}
+            </p>
+          </div>
+          {type === "stall" && "stall" in stock && (
+            <div>
+              <p className="text-muted-foreground">Stall</p>
+              <p className="font-medium">{stock.stall?.name ?? "N/A"}</p>
+            </div>
           )}
-
-          {type === "stock_room" && (
-            <FormItem>
-              <FormLabel>Current Stock Room Quantity</FormLabel>
-              <Input
-                value={stock.quantity.toString()}
-                disabled
-              />
-            </FormItem>
-          )}
-
-          <FormField
-            control={form.control}
-            name="low_stock_threshold"
-            rules={{ required: "Low stock threshold is required" }}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Low Stock Threshold</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="e.g. 10"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div>
+            <p className="text-muted-foreground">Current Qty</p>
+            <p className="font-medium">
+              {stock.quantity} {unit}
+            </p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Current Threshold</p>
+            <p className="font-medium">
+              {stock.low_stock_threshold} {unit}
+            </p>
+          </div>
         </div>
 
-        <div className="pt-4 flex justify-end">
-          <Button type="submit">Update Threshold</Button>
+        <Separator />
+
+        {/* Threshold Input */}
+        <FormField
+          control={form.control}
+          name="low_stock_threshold"
+          rules={{ required: "Low stock threshold is required" }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                New Low Stock Threshold{" "}
+                <span className="text-destructive">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input
+                  {...field}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder={`e.g. 10 (${unit})`}
+                />
+              </FormControl>
+              <FormMessage />
+              <p className="text-xs text-muted-foreground">
+                You will be alerted when stock falls below this level.
+              </p>
+            </FormItem>
+          )}
+        />
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            className="flex-1"
+            disabled={isPending}
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {isPending ? "Saving..." : "Update Threshold"}
+          </Button>
         </div>
       </form>
     </Form>

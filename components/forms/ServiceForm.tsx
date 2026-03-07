@@ -344,7 +344,7 @@ export default function ServiceForm({
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Service Type */}
           <FormField
             name="service_type"
@@ -523,7 +523,7 @@ export default function ServiceForm({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 name="override_contact_person"
                 control={form.control}
@@ -568,7 +568,7 @@ export default function ServiceForm({
           <div className="space-y-4 rounded-lg border p-4">
             <h3 className="font-medium text-sm">Pull-Out Service Details</h3>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 name="pickup_date"
                 control={form.control}
@@ -629,7 +629,7 @@ export default function ServiceForm({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 name="override_contact_person"
                 control={form.control}

@@ -23,6 +23,7 @@ import {
 import { MultiSelect } from "@/components/ui/multi-select"
 import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
 import { useEmployeeChoices } from "@/lib/queries/useChoices"
+import { formatDateToYMD } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2, Store, UserX } from "lucide-react"
 import { useState } from "react"
@@ -60,8 +61,8 @@ export function MarkAbsentDialog() {
     }))
 
   const handleSubmit = async (values: MarkAbsentFormValues) => {
-    // Convert Date to YYYY-MM-DD format for API
-    const dateString = values.date.toISOString().split("T")[0]
+    // Convert Date to YYYY-MM-DD in local timezone
+    const dateString = formatDateToYMD(values.date)
 
     try {
       await markAbsent.mutateAsync({

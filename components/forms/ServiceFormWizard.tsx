@@ -396,7 +396,7 @@ export default function ServiceFormWizard({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 name="service_type"
                 control={form.control}
@@ -531,7 +531,7 @@ export default function ServiceFormWizard({
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     name="override_contact_person"
                     control={form.control}
@@ -577,7 +577,7 @@ export default function ServiceFormWizard({
                   <Calendar className="size-4" />
                   Pull-Out Details
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     name="pickup_date"
                     control={form.control}
@@ -635,7 +635,7 @@ export default function ServiceFormWizard({
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     name="override_contact_person"
                     control={form.control}
