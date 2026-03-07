@@ -60,6 +60,7 @@ const eventSchema = z.object({
   description: z.string().optional(),
   event_date: z.string().min(1, "Date is required"),
   event_type: z.enum([
+    "birthday",
     "meeting",
     "maintenance",
     "training",
@@ -78,7 +79,7 @@ interface CustomCalendarEventDialogProps {
     title: string
     description?: string
     event_date: string
-    event_type: "meeting" | "maintenance" | "training" | "deadline" | "other"
+    event_type: "birthday" | "meeting" | "maintenance" | "training" | "deadline" | "other"
   } | null
   defaultDate?: Date
 }
@@ -194,7 +195,7 @@ export function CustomCalendarEventDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="holiday">Holiday</SelectItem>
+                      <SelectItem value="birthday">Birthday</SelectItem>
                       <SelectItem value="meeting">Meeting</SelectItem>
                       <SelectItem value="maintenance">Maintenance</SelectItem>
                       <SelectItem value="training">Training</SelectItem>

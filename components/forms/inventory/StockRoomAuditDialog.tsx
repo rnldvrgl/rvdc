@@ -167,17 +167,26 @@ export default function StockRoomAuditDialog({
                 </CardContent>
               </Card>
 
-              {/* System Quantity */}
+              {/* System Breakdown */}
               <Card>
                 <CardContent className="px-6 space-y-2">
-                  <div className="font-semibold text-sm">System Quantity</div>
-                  <div className="text-2xl font-bold text-foreground">
-                    {systemQty}{" "}
-                    <span className="text-sm font-normal text-muted-foreground">
-                      {auditData?.item_unit ??
-                        stock.item?.unit_of_measure ??
-                        "pcs"}
-                    </span>
+                  <div className="font-semibold text-sm">System Breakdown</div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <BreakdownItem
+                      label="Total Qty"
+                      value={systemQty}
+                      className="text-foreground"
+                    />
+                    <BreakdownItem
+                      label="Reserved"
+                      value={0}
+                      className="text-amber-600 dark:text-amber-400"
+                    />
+                    <BreakdownItem
+                      label="Available"
+                      value={systemQty}
+                      className="text-green-600 dark:text-green-400"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -240,26 +249,58 @@ export default function StockRoomAuditDialog({
                 </Card>
               )}
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={
-                  !form.watch("physical_count") || auditStockRoomStock.isPending
-                }
-              >
-                {auditStockRoomStock.isPending ? (
-                  <>
-                    <Loader2 className="size-4 mr-2 animate-spin" />
-                    Reconciling...
-                  </>
-                ) : (
-                  "Reconcile Stock"
-                )}
-              </Button>
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={
+                    auditStockRoomStock.isPending ||
+                    form.watch("physical_count") === "" ||
+                    !hasDiscrepancy
+                  }
+                >
+                  {auditStockRoomStock.isPending ? (
+                    <>
+                      <Loader2 className="size-4 mr-2 animate-spin" />
+                      Reconciling...
+                    </>
+                  ) : (
+                    "Reconcile Stock"
+                  )}
+                </Button>
+              </div>
             </form>
           </Form>
         )}
       </DialogContent>
     </Dialog>
+  )
+}
+
+function BreakdownItem({
+  label,
+  value,
+  className,
+}: {
+  label: string
+  value: number
+  className?: string
+}) {
+  return (
+    <div className="text-center">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className={`text-lg font-bold font-mono ${className ?? ""}`}>
+        {value}
+      </div>
+    </div>
   )
 }

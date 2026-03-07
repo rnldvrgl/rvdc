@@ -23,13 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useRecomputeWeeklyPayroll } from "@/lib/mutations/payroll/usePayrollMutations"
@@ -76,21 +69,17 @@ export function WeeklyPayrollSlip({
 
   if (isLoading) {
     return (
-      <Card className={cn("mx-auto", className)}>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div className={cn("mx-auto flex items-center justify-center py-12", className)}>
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
     )
   }
 
   if (!payroll) {
     return (
-      <Card className={cn("mx-auto", className)}>
-        <CardContent className="flex items-center justify-center py-12">
-          <p className="text-muted-foreground">Payroll slip not found</p>
-        </CardContent>
-      </Card>
+      <div className={cn("mx-auto flex items-center justify-center py-12", className)}>
+        <p className="text-muted-foreground">Payroll slip not found</p>
+      </div>
     )
   }
 
@@ -138,23 +127,19 @@ export function WeeklyPayrollSlip({
   const canDelete = isAdmin && payroll.status === "draft"
 
   return (
-    <Card className={cn("mx-auto w-full shadow-lg", className)}>
-      <CardHeader className="space-y-3">
-        {/* Title and Badge Row */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg sm:text-xl font-bold print:text-xl">
-              Payroll Slip
-            </CardTitle>
-            <CardDescription className="text-xs mt-1 print:text-xs">
-              {format(weekStartDate, "MMM dd")} -{" "}
-              {format(weekEndDate, "MMM dd, yyyy")}
-            </CardDescription>
+    <div className={cn("mx-auto w-full space-y-4", className)}>
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-bold">Payroll Slip</h2>
+            <StatusBadge status={payroll.status} />
           </div>
-          <StatusBadge status={payroll.status} />
+          <p className="text-sm text-muted-foreground">
+            {format(weekStartDate, "MMM dd")} -{" "}
+            {format(weekEndDate, "MMM dd, yyyy")}
+          </p>
         </div>
-
-        {/* Action Buttons */}
         <PayrollActions
           status={payroll.status}
           isAdmin={isAdmin}
@@ -184,97 +169,95 @@ export function WeeklyPayrollSlip({
           onAddDeduction={() => setManualDeductionDialogOpen(true)}
           onAddCashAdvance={() => setCashAdvanceDialogOpen(true)}
         />
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-3">
-        {/* Company & Employee Info */}
-        <div className="grid md:grid-cols-2 gap-3">
-          <CompanyInfoCard />
-          <EmployeeInfoCard
-            name={employeeName}
-            role={employeeRole}
-            dailyRate={employeeDailyRate}
-            hourlyRate={employeeHourlyRate}
-          />
-        </div>
+      {/* Employee & Company Info */}
+      <div className="grid md:grid-cols-2 gap-3">
+        <CompanyInfoCard />
+        <EmployeeInfoCard
+          name={employeeName}
+          role={employeeRole}
+          dailyRate={employeeDailyRate}
+          hourlyRate={employeeHourlyRate}
+        />
+      </div>
 
-        {/* Time Summary */}
-        <TimeSummary
-          regularHours={regularHours}
-          approvedOtHours={approvedOtHours}
-          holidayHours={holidayHours}
-          nightDiffHours={nightDiffHours}
+      {/* Time Summary */}
+      <TimeSummary
+        regularHours={regularHours}
+        approvedOtHours={approvedOtHours}
+        holidayHours={holidayHours}
+        nightDiffHours={nightDiffHours}
+      />
+
+      {/* Earnings and Deductions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <EarningsSection
+          basicPay={basicPay}
+          approvedOtPay={approvedOtPay}
+          holidayPayTotal={holidayPayTotal}
+          nightDiffPay={nightDiffPay}
+          allowances={allowances}
+          additionalEarnings={additionalEarnings}
+          additionalEarningsDetails={payroll.additional_earnings_details}
+          totalEarnings={totalEarnings}
+          canDelete={canDelete}
+          canManage={canManage}
+          onDeleteEarning={setDeleteEarningId}
         />
 
-        {/* Earnings and Deductions */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <EarningsSection
-            basicPay={basicPay}
-            approvedOtPay={approvedOtPay}
-            holidayPayTotal={holidayPayTotal}
-            nightDiffPay={nightDiffPay}
-            allowances={allowances}
-            additionalEarnings={additionalEarnings}
-            additionalEarningsDetails={payroll.additional_earnings_details}
-            totalEarnings={totalEarnings}
-            canDelete={canDelete}
-            canManage={canManage}
-            onDeleteEarning={setDeleteEarningId}
-          />
-
-          <DeductionsSection
-            deductions={payroll.deductions || {}}
-            deductionMetadata={payroll.deduction_metadata}
-            totalDeductions={totalDeductions}
-            canDelete={canDelete}
-            canManage={canManage}
-            onDeleteDeduction={setDeleteDeductionId}
-          />
-        </div>
-
-        {/* Net Pay Summary - Prominent but Compact */}
-        <div className="rounded-lg bg-linear-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 p-4 text-white shadow-md print:bg-white print:border-2 print:border-green-600 print:text-green-600">
-          <div className="text-center space-y-1">
-            <p className="text-xs sm:text-sm font-medium opacity-90 print:opacity-100">
-              Net Pay
-            </p>
-            <p className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
-              ₱ {formatCurrency(netPay)}
-            </p>
-          </div>
-        </div>
-
-        {/* Notes */}
-        {payroll.notes && (
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <div className="flex items-center gap-2 mb-1.5">
-              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-              <h3 className="text-sm sm:text-base font-semibold">Notes</h3>
-            </div>
-            <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">
-              {payroll.notes}
-            </p>
-          </div>
-        )}
-
-        {/* Footer - Minimal */}
-        <div className="text-center text-[10px] text-muted-foreground space-y-0.5 pt-2 border-t">
-          <p>Computer-generated payroll slip</p>
-          <p>
-            Generated{" "}
-            {format(new Date(payroll.created_at), "MMM dd, yyyy 'at' h:mm a")}
-          </p>
-          <p>
-            If you have questions about this payroll slip, please contact admin.
-          </p>
-        </div>
-
-        {/* Developer Credit */}
-        <DeveloperCredit
-          variant="default"
-          size="sm"
+        <DeductionsSection
+          deductions={payroll.deductions || {}}
+          deductionMetadata={payroll.deduction_metadata}
+          totalDeductions={totalDeductions}
+          canDelete={canDelete}
+          canManage={canManage}
+          onDeleteDeduction={setDeleteDeductionId}
         />
-      </CardContent>
+      </div>
+
+      {/* Net Pay Summary */}
+      <div className="rounded-xl bg-linear-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 p-5 text-white shadow-md print:bg-white print:border-2 print:border-green-600 print:text-green-600">
+        <div className="text-center space-y-1">
+          <p className="text-sm font-medium opacity-90 print:opacity-100">
+            Net Pay
+          </p>
+          <p className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
+            ₱ {formatCurrency(netPay)}
+          </p>
+        </div>
+      </div>
+
+      {/* Notes */}
+      {payroll.notes && (
+        <div className="rounded-lg border bg-muted/30 p-3">
+          <div className="flex items-center gap-2 mb-1.5">
+            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+            <h3 className="text-sm font-semibold">Notes</h3>
+          </div>
+          <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">
+            {payroll.notes}
+          </p>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="text-center text-[10px] text-muted-foreground space-y-0.5 pt-2 border-t">
+        <p>Computer-generated payroll slip</p>
+        <p>
+          Generated{" "}
+          {format(new Date(payroll.created_at), "MMM dd, yyyy 'at' h:mm a")}
+        </p>
+        <p>
+          If you have questions about this payroll slip, please contact admin.
+        </p>
+      </div>
+
+      {/* Developer Credit */}
+      <DeveloperCredit
+        variant="default"
+        size="sm"
+      />
 
       {/* Additional Earning Dialog */}
       <AddAdditionalEarningForm
@@ -405,6 +388,6 @@ export function WeeklyPayrollSlip({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </div>
   )
 }

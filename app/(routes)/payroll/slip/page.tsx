@@ -5,13 +5,19 @@ import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { StatusBadge } from "@/components/details/payroll/StatusBadge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { PayrollStatus } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useWeeklyPayrolls } from "@/lib/queries/usePayroll"
 import { formatCurrency } from "@/lib/utils/currency"
 import { format } from "date-fns"
-import { Calendar, Eye, Loader2, TrendingDown, TrendingUp } from "lucide-react"
+import {
+  ArrowRight,
+  Calendar,
+  Loader2,
+  Minus,
+  PhilippinePesoIcon,
+  Plus,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 
 /**
@@ -33,7 +39,7 @@ export default function MyPayrollPage() {
           <PageHeader
             title="My Payroll"
             description="View your payroll history and payment details"
-            icon={Calendar}
+            icon={PhilippinePesoIcon}
           />
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -45,105 +51,143 @@ export default function MyPayrollPage() {
 
   const payrolls = data?.results || []
 
+  // Summary stats
+  const totalNetPay = payrolls.reduce(
+    (sum, p) => sum + Number(p.net_pay || 0),
+    0,
+  )
+  const paidCount = payrolls.filter((p) => p.status === "paid").length
+
   return (
     <Wrapper>
       <div className="space-y-4 md:space-y-6">
         <PageHeader
           title="My Payroll"
           description="View your payroll history and payment details"
-          icon={Calendar}
+          icon={PhilippinePesoIcon}
         />
 
+        {/* Quick Stats */}
+        {payrolls.length > 0 && (
+          <div className="grid grid-cols-2 gap-3">
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="size-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
+                  <PhilippinePesoIcon className="size-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Total Earned</p>
+                  <p className="text-lg font-bold truncate">
+                    ₱{formatCurrency(totalNetPay)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="size-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                  <Calendar className="size-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Paid Slips</p>
+                  <p className="text-lg font-bold">
+                    {paidCount}{" "}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      / {payrolls.length}
+                    </span>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Payroll List */}
         {payrolls.length > 0 ? (
-          <div className="grid gap-3 sm:gap-4">
-            {payrolls.map((payroll) => (
-              <Card
-                key={payroll.id}
-                className="hover:shadow-lg transition-all duration-200 hover:border-primary/50 py-2"
-              >
-                <CardContent className="p-4 sm:p-6">
-                  {/* Header Section */}
-                  <div className="flex flex-col gap-2 mb-4 pb-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2 min-w-0 flex-1">
-                        <Calendar className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                        <span className="font-semibold text-sm sm:text-base">
+          <div className="space-y-2">
+            {payrolls.map((payroll) => {
+              const gross = Number(payroll.gross_pay || 0)
+              const deductions = Number(payroll.total_deductions || 0)
+              const net = Number(payroll.net_pay || 0)
+
+              return (
+                <Card
+                  key={payroll.id}
+                  className="group cursor-pointer hover:shadow-md hover:border-primary/40 transition-all py-0"
+                  onClick={() => router.push(`/payroll/slip/${payroll.id}`)}
+                >
+                  <CardContent className="p-4">
+                    {/* Top Row: Period + Status */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Calendar className="size-4 text-muted-foreground shrink-0" />
+                        <span className="font-semibold text-sm">
                           {format(new Date(payroll.week_start), "MMM dd")} -{" "}
                           {payroll.week_end
-                            ? format(new Date(payroll.week_end), "MMM dd, yyyy")
+                            ? format(
+                                new Date(payroll.week_end),
+                                "MMM dd, yyyy",
+                              )
                             : ""}
                         </span>
                       </div>
-                      <div className="shrink-0">
-                        <StatusBadge status={payroll.status as PayrollStatus} />
-                      </div>
+                      <StatusBadge status={payroll.status as PayrollStatus} />
                     </div>
-                  </div>
 
-                  <Separator className="mb-4" />
-
-                  {/* Payment Details */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                    {/* Gross Pay */}
-                    <div className="text-center p-3 rounded-lg bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 border border-blue-200/50 dark:border-blue-800/50">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <TrendingUp className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                        <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">
-                          Gross Pay
+                    {/* Pay Breakdown Row */}
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-4 sm:gap-6">
+                        <div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Plus className="size-3" />
+                            <span className="text-xs">Gross</span>
+                          </div>
+                          <p className="font-medium">
+                            ₱{formatCurrency(gross)}
+                          </p>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Minus className="size-3" />
+                            <span className="text-xs">Deductions</span>
+                          </div>
+                          <p className="font-medium text-red-600 dark:text-red-400">
+                            ₱{formatCurrency(deductions)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-muted-foreground">
+                          Net Pay
+                        </p>
+                        <p className="text-base font-bold text-green-600 dark:text-green-400">
+                          ₱{formatCurrency(net)}
                         </p>
                       </div>
-                      <p className="text-base sm:text-lg font-bold text-blue-700 dark:text-blue-300">
-                        ₱{formatCurrency(payroll.gross_pay)}
-                      </p>
                     </div>
 
-                    {/* Deductions */}
-                    <div className="text-center p-3 rounded-lg bg-linear-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 border border-red-200/50 dark:border-red-800/50">
-                      <div className="flex items-center justify-center gap-1 mb-1">
-                        <TrendingDown className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
-                        <p className="text-xs text-red-700 dark:text-red-300 font-medium">
-                          Deductions
-                        </p>
-                      </div>
-                      <p className="text-base sm:text-lg font-bold text-red-700 dark:text-red-300">
-                        ₱{formatCurrency(payroll.total_deductions)}
-                      </p>
+                    {/* View Arrow */}
+                    <div className="flex justify-end mt-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-muted-foreground group-hover:text-primary"
+                      >
+                        View Payslip
+                        <ArrowRight className="size-3 ml-1" />
+                      </Button>
                     </div>
-
-                    {/* Net Pay */}
-                    <div className="text-center p-3 rounded-lg bg-linear-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 border border-green-200/50 dark:border-green-800/50">
-                      <p className="text-xs text-green-700 dark:text-green-300 font-medium mb-1">
-                        Net Pay
-                      </p>
-                      <p className="text-base sm:text-lg font-bold text-green-700 dark:text-green-300">
-                        ₱{formatCurrency(payroll.net_pay)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Action Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push(`/payroll/slip/${payroll.id}`)}
-                    className="w-full hover:bg-primary hover:text-primary-foreground transition-colors text-sm"
-                  >
-                    <Eye className="size-4 mr-2" />
-                    <span className="hidden sm:inline">
-                      View Detailed Payslip
-                    </span>
-                    <span className="sm:hidden">View Payslip</span>
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         ) : (
           <Card className="border-dashed">
             <CardContent className="py-10 text-center">
               <div className="flex flex-col items-center gap-3">
                 <div className="flex items-center justify-center size-14 rounded-xl bg-muted/60 text-muted-foreground">
-                  <Calendar className="size-7" />
+                  <PhilippinePesoIcon className="size-7" />
                 </div>
                 <div className="space-y-1">
                   <p className="text-base font-medium text-foreground">

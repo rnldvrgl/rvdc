@@ -6,6 +6,7 @@ import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
+import { PayrollKanban } from "@/components/custom/payroll/PayrollKanban"
 import { DataTable } from "@/components/custom/table/DataTable"
 import BulkGeneratePayrollForm from "@/components/forms/BulkGeneratePayrollForm"
 import PayrollForm from "@/components/forms/PayrollForm"
@@ -24,6 +25,8 @@ import {
 import {
   Banknote,
   FileText,
+  KanbanSquare,
+  List,
   PhilippinePesoIcon,
   Plus,
   Users,
@@ -46,6 +49,7 @@ export default function PayrollPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [payrollToDelete, setPayrollToDelete] = useState<number | null>(null)
   const [isArchived, setIsArchived] = useState(false)
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table")
 
   const { data, isLoading, refetch } = useWeeklyPayrolls({
     page,
@@ -219,14 +223,45 @@ export default function PayrollPage() {
           </div>
         )}
 
-        {/* Data Table */}
-        <ArchiveToggle
-          isArchived={isArchived}
-          onToggle={setIsArchived}
-          archivedCount={archivedQuery.data?.count}
-        />
+        {/* View Toggle & Archive */}
+        <div className="flex items-center justify-between gap-2">
+          <ArchiveToggle
+            isArchived={isArchived}
+            onToggle={setIsArchived}
+            archivedCount={archivedQuery.data?.count}
+          />
+          {!isArchived && (
+            <div className="flex items-center border rounded-lg p-0.5 bg-muted/50">
+              <Button
+                variant={viewMode === "table" ? "default" : "ghost"}
+                size="sm"
+                className="h-7 px-2.5 text-xs"
+                onClick={() => setViewMode("table")}
+              >
+                <List className="size-3.5 mr-1.5" />
+                Table
+              </Button>
+              <Button
+                variant={viewMode === "kanban" ? "default" : "ghost"}
+                size="sm"
+                className="h-7 px-2.5 text-xs"
+                onClick={() => setViewMode("kanban")}
+              >
+                <KanbanSquare className="size-3.5 mr-1.5" />
+                Board
+              </Button>
+            </div>
+          )}
+        </div>
 
-        <DataTable
+        {/* Kanban or Table View */}
+        {!isArchived && viewMode === "kanban" ? (
+          <PayrollKanban
+            payrolls={data?.results || []}
+            isLoading={isLoading}
+          />
+        ) : (
+          <DataTable
           data={tableData}
           columns={columns}
           isLoading={isArchived ? archivedQuery.isLoading : isLoading}
@@ -266,6 +301,7 @@ export default function PayrollPage() {
               : "Generate your first weekly payroll to get started"
           }
         />
+        )}
       </div>
 
       {/* Generate Payroll Sheet */}
