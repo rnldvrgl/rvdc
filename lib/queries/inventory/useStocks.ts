@@ -32,6 +32,32 @@ export function useStockRoomFilters() {
   return useFilters("stock-room-filters", `${stockRoomUrl}filters/`)
 }
 
+export interface StockStatusCounts {
+  no_stock: number
+  low_stock: number
+  high_stock: number
+}
+
+export function useStallStockStatusCounts() {
+  return useQuery<StockStatusCounts>({
+    queryKey: ["stall-stock-status-counts"],
+    queryFn: async () => {
+      const { data } = await api.get(`${stockUrl}status-counts/`)
+      return data
+    },
+  })
+}
+
+export function useStockRoomStatusCounts() {
+  return useQuery<StockStatusCounts>({
+    queryKey: ["stockroom-stock-status-counts"],
+    queryFn: async () => {
+      const { data } = await api.get(`${stockRoomUrl}status-counts/`)
+      return data
+    },
+  })
+}
+
 export interface StockAuditData {
   stock_id: number
   item_name: string

@@ -3,7 +3,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   useStallStocks,
+  useStallStockStatusCounts,
   useStockRoomStocks,
+  useStockRoomStatusCounts,
 } from "@/lib/queries/inventory/useStocks"
 import { ArrowRight, Package, Store, Warehouse } from "lucide-react"
 import Link from "next/link"
@@ -17,61 +19,63 @@ type AlertItem = {
 }
 
 export function InventoryReorderAlerts() {
-  const { data: stallData } = useStallStocks({ limit: 100 })
-  const { data: stockRoomData } = useStockRoomStocks({ limit: 100 })
+  // Fetch accurate counts from backend
+  const { data: stallCounts } = useStallStockStatusCounts()
+  const { data: stockRoomCounts } = useStockRoomStatusCounts()
+
+  // Fetch filtered items for preview (only first 3 needed per category)
+  const { data: stallNoStockData } = useStallStocks({
+    limit: 3,
+    filter: { status: "no_stock" },
+  })
+  const { data: stallLowStockData } = useStallStocks({
+    limit: 3,
+    filter: { status: "low_stock" },
+  })
+  const { data: srNoStockData } = useStockRoomStocks({
+    limit: 3,
+    filter: { status: "no_stock" },
+  })
+  const { data: srLowStockData } = useStockRoomStocks({
+    limit: 3,
+    filter: { status: "low_stock" },
+  })
 
   const {
-    stallOutOfStock,
-    stallLowStock,
-    stockRoomOutOfStock,
-    stockRoomLowStock,
+    stallOutOfStockItems,
+    stallLowStockItems,
+    stockRoomOutOfStockItems,
+    stockRoomLowStockItems,
   } = useMemo(() => {
-    const stallItems: AlertItem[] = []
-    const stockRoomItems: AlertItem[] = []
-
-    // Stall stocks
-    for (const stock of stallData?.results ?? []) {
-      stallItems.push({
+    const toAlertItems = (
+      results: { item?: { name?: string; sku?: string }; available_quantity?: number; quantity?: number; low_stock_threshold?: number }[] | undefined,
+      useAvailable = false,
+    ): AlertItem[] =>
+      (results ?? []).map((stock) => ({
         name: stock.item?.name ?? "Unknown",
         sku: stock.item?.sku ?? "",
-        quantity: stock.available_quantity ?? stock.quantity ?? 0,
+        quantity: useAvailable
+          ? (stock.available_quantity ?? stock.quantity ?? 0)
+          : (stock.quantity ?? 0),
         threshold: stock.low_stock_threshold ?? 0,
-      })
-    }
-
-    // Stockroom stocks
-    for (const stock of stockRoomData?.results ?? []) {
-      stockRoomItems.push({
-        name: stock.item?.name ?? "Unknown",
-        sku: stock.item?.sku ?? "",
-        quantity: stock.quantity ?? 0,
-        threshold: stock.low_stock_threshold ?? 0,
-      })
-    }
-
-    const stallOutOfStock = stallItems.filter((i) => i.quantity <= 0)
-    const stallLowStock = stallItems.filter(
-      (i) => i.quantity > 0 && i.threshold > 0 && i.quantity <= i.threshold,
-    )
-
-    const stockRoomOutOfStock = stockRoomItems.filter((i) => i.quantity <= 0)
-    const stockRoomLowStock = stockRoomItems.filter(
-      (i) => i.quantity > 0 && i.threshold > 0 && i.quantity <= i.threshold,
-    )
+      }))
 
     return {
-      stallOutOfStock,
-      stallLowStock,
-      stockRoomOutOfStock,
-      stockRoomLowStock,
+      stallOutOfStockItems: toAlertItems(stallNoStockData?.results, true),
+      stallLowStockItems: toAlertItems(stallLowStockData?.results, true),
+      stockRoomOutOfStockItems: toAlertItems(srNoStockData?.results),
+      stockRoomLowStockItems: toAlertItems(srLowStockData?.results),
     }
-  }, [stallData, stockRoomData])
+  }, [stallNoStockData, stallLowStockData, srNoStockData, srLowStockData])
+
+  // Use backend counts (accurate across all pages)
+  const stallNoStockCount = stallCounts?.no_stock ?? 0
+  const stallLowStockCount = stallCounts?.low_stock ?? 0
+  const srNoStockCount = stockRoomCounts?.no_stock ?? 0
+  const srLowStockCount = stockRoomCounts?.low_stock ?? 0
 
   const total =
-    stallOutOfStock.length +
-    stallLowStock.length +
-    stockRoomOutOfStock.length +
-    stockRoomLowStock.length
+    stallNoStockCount + stallLowStockCount + srNoStockCount + srLowStockCount
 
   if (total === 0) {
     return (
@@ -107,7 +111,7 @@ export function InventoryReorderAlerts() {
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Stockroom Out of Stock */}
-        {stockRoomOutOfStock.length > 0 && (
+        {srNoStockCount > 0 && (
           <Link
             href="/inventory/stocks/stockroom?status=no_stock"
             className="block"
@@ -116,12 +120,12 @@ export function InventoryReorderAlerts() {
               <div className="flex items-center gap-2 mb-2">
                 <Warehouse className="size-4 text-red-600" />
                 <span className="text-sm font-semibold text-red-700 dark:text-red-400">
-                  Stockroom - Out of Stock ({stockRoomOutOfStock.length})
+                  Stockroom - Out of Stock ({srNoStockCount})
                 </span>
                 <ArrowRight className="size-3.5 ml-auto text-red-600" />
               </div>
               <div className="space-y-1.5">
-                {stockRoomOutOfStock.slice(0, 3).map((item, i) => (
+                {stockRoomOutOfStockItems.map((item, i) => (
                   <div
                     key={`sr-oos-${i}`}
                     className="flex items-center justify-between text-xs"
@@ -134,9 +138,9 @@ export function InventoryReorderAlerts() {
                     </span>
                   </div>
                 ))}
-                {stockRoomOutOfStock.length > 3 && (
+                {srNoStockCount > 3 && (
                   <p className="text-xs text-red-500 font-medium">
-                    +{stockRoomOutOfStock.length - 3} more items
+                    +{srNoStockCount - 3} more items
                   </p>
                 )}
               </div>
@@ -145,7 +149,7 @@ export function InventoryReorderAlerts() {
         )}
 
         {/* Stockroom Low Stock */}
-        {stockRoomLowStock.length > 0 && (
+        {srLowStockCount > 0 && (
           <Link
             href="/inventory/stocks/stockroom?status=low_stock"
             className="block"
@@ -154,12 +158,12 @@ export function InventoryReorderAlerts() {
               <div className="flex items-center gap-2 mb-2">
                 <Warehouse className="size-4 text-amber-600" />
                 <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                  Stockroom - Low Stock ({stockRoomLowStock.length})
+                  Stockroom - Low Stock ({srLowStockCount})
                 </span>
                 <ArrowRight className="size-3.5 ml-auto text-amber-600" />
               </div>
               <div className="space-y-1.5">
-                {stockRoomLowStock.slice(0, 3).map((item, i) => (
+                {stockRoomLowStockItems.map((item, i) => (
                   <div
                     key={`sr-low-${i}`}
                     className="flex items-center justify-between text-xs"
@@ -172,9 +176,9 @@ export function InventoryReorderAlerts() {
                     </span>
                   </div>
                 ))}
-                {stockRoomLowStock.length > 3 && (
+                {srLowStockCount > 3 && (
                   <p className="text-xs text-amber-500 font-medium">
-                    +{stockRoomLowStock.length - 3} more items
+                    +{srLowStockCount - 3} more items
                   </p>
                 )}
               </div>
@@ -183,7 +187,7 @@ export function InventoryReorderAlerts() {
         )}
 
         {/* Stall Out of Stock */}
-        {stallOutOfStock.length > 0 && (
+        {stallNoStockCount > 0 && (
           <Link
             href="/inventory/stocks/stall?status=no_stock"
             className="block"
@@ -192,12 +196,12 @@ export function InventoryReorderAlerts() {
               <div className="flex items-center gap-2 mb-2">
                 <Store className="size-4 text-red-600" />
                 <span className="text-sm font-semibold text-red-700 dark:text-red-400">
-                  Stall - Out of Stock ({stallOutOfStock.length})
+                  Stall - Out of Stock ({stallNoStockCount})
                 </span>
                 <ArrowRight className="size-3.5 ml-auto text-red-600" />
               </div>
               <div className="space-y-1.5">
-                {stallOutOfStock.slice(0, 3).map((item, i) => (
+                {stallOutOfStockItems.map((item, i) => (
                   <div
                     key={`st-oos-${i}`}
                     className="flex items-center justify-between text-xs"
@@ -210,9 +214,9 @@ export function InventoryReorderAlerts() {
                     </span>
                   </div>
                 ))}
-                {stallOutOfStock.length > 3 && (
+                {stallNoStockCount > 3 && (
                   <p className="text-xs text-red-500 font-medium">
-                    +{stallOutOfStock.length - 3} more items
+                    +{stallNoStockCount - 3} more items
                   </p>
                 )}
               </div>
@@ -221,7 +225,7 @@ export function InventoryReorderAlerts() {
         )}
 
         {/* Stall Low Stock */}
-        {stallLowStock.length > 0 && (
+        {stallLowStockCount > 0 && (
           <Link
             href="/inventory/stocks/stall?status=low_stock"
             className="block"
@@ -230,12 +234,12 @@ export function InventoryReorderAlerts() {
               <div className="flex items-center gap-2 mb-2">
                 <Store className="size-4 text-amber-600" />
                 <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                  Stall - Low Stock ({stallLowStock.length})
+                  Stall - Low Stock ({stallLowStockCount})
                 </span>
                 <ArrowRight className="size-3.5 ml-auto text-amber-600" />
               </div>
               <div className="space-y-1.5">
-                {stallLowStock.slice(0, 3).map((item, i) => (
+                {stallLowStockItems.map((item, i) => (
                   <div
                     key={`st-low-${i}`}
                     className="flex items-center justify-between text-xs"
@@ -248,9 +252,9 @@ export function InventoryReorderAlerts() {
                     </span>
                   </div>
                 ))}
-                {stallLowStock.length > 3 && (
+                {stallLowStockCount > 3 && (
                   <p className="text-xs text-amber-500 font-medium">
-                    +{stallLowStock.length - 3} more items
+                    +{stallLowStockCount - 3} more items
                   </p>
                 )}
               </div>
