@@ -298,22 +298,8 @@ export type WeeklyPayroll = {
 
   net_pay: string | number
 
-  status: "draft" | "approved" | "paid" | "received" | "cancelled"
+  status: "draft" | "approved" | "paid"
   status_display?: string
-
-  received_at?: string | null
-  received_by?: number | null
-  received_by_detail?: {
-    id: number
-    username: string
-    first_name: string
-    last_name: string
-    full_name: string
-  }
-
-  disputed: boolean
-  disputed_reason?: string
-  disputed_at?: string | null
 
   notes?: string
 
@@ -323,12 +309,7 @@ export type WeeklyPayroll = {
   updated_at: string
 }
 
-export type PayrollStatus =
-  | "draft"
-  | "approved"
-  | "paid"
-  | "received"
-  | "cancelled"
+export type PayrollStatus = "draft" | "approved" | "paid"
 
 export type HolidayKind = "regular" | "special_non_working"
 

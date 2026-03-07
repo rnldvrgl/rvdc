@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { PayrollStatus } from "@/lib/constants/types"
 import {
-  AlertCircle,
   Banknote,
   CheckCircle,
   CreditCard,
@@ -13,13 +12,9 @@ import {
 interface PayrollActionsProps {
   status: PayrollStatus
   isAdmin: boolean
-  isEmployee: boolean
   isProcessing: boolean
-  disputed: boolean
   onApprove: () => void
   onMarkPaid: () => void
-  onMarkReceived: () => void
-  onDispute: () => void
   onRecompute: () => void
   onAddEarning: () => void
   onAddDeduction: () => void
@@ -29,13 +24,9 @@ interface PayrollActionsProps {
 export function PayrollActions({
   status,
   isAdmin,
-  isEmployee,
   isProcessing,
-  disputed,
   onApprove,
   onMarkPaid,
-  onMarkReceived,
-  onDispute,
   onRecompute,
   onAddEarning,
   onAddDeduction,
@@ -107,31 +98,6 @@ export function PayrollActions({
             Mark as Paid
           </Button>
         )}
-      </div>
-    )
-  }
-
-  if (isEmployee && status === "paid" && !disputed) {
-    return (
-      <div className="grid md:grid-cols-2 gap-2 print:hidden">
-        <Button
-          size="sm"
-          variant="success"
-          onClick={onMarkReceived}
-          disabled={isProcessing}
-        >
-          <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
-          Mark Received
-        </Button>
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={onDispute}
-          disabled={isProcessing}
-        >
-          <AlertCircle className="h-3.5 w-3.5 mr-1.5" />
-          Dispute
-        </Button>
       </div>
     )
   }

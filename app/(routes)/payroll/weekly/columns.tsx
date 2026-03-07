@@ -48,12 +48,6 @@ const getStatusBadge = (status: string) => {
       label: "Paid",
       icon: <Banknote className="h-3 w-3 mr-1" />,
     },
-    received: {
-      color:
-        "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 border-purple-300 dark:border-purple-600",
-      label: "Received",
-      icon: <CheckCircle2 className="h-3 w-3 mr-1" />,
-    },
   }
 
   const { color, label, icon } = config[status] || config.draft

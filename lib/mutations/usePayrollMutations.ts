@@ -50,7 +50,7 @@ export interface PreviewPayrollResponse {
 
 export interface UpdateStatusInput {
   id: number
-  status: "draft" | "approved" | "paid" | "received"
+  status: "draft" | "approved" | "paid"
 }
 
 export interface BulkGeneratePayrollInput {
@@ -78,15 +78,6 @@ export interface BulkGeneratePayrollResponse {
     employee_name: string
     error: string
   }>
-}
-
-export interface MarkReceivedInput {
-  id: number
-}
-
-export interface DisputePayrollInput {
-  id: number
-  reason: string
 }
 
 export interface BulkUpdateStatusInput {
@@ -159,28 +150,6 @@ export function usePayrollMutations() {
     invalidateQueries: [{ queryKey: ["payroll", "weekly-payrolls"] }],
   })
 
-  // Mark as received
-  const markAsReceived = useApiMutation<MarkReceivedInput, WeeklyPayroll>({
-    mutationFn: ({ id }) =>
-      api.post(`${WEEKLY_PAYROLLS}${id}/mark-received/`, {}),
-    successMessage: "Payroll marked as received.",
-    invalidateQueries: [
-      { queryKey: ["payroll", "weekly-payrolls"] },
-      { queryKey: ["payroll", "weekly-payroll"] },
-    ],
-  })
-
-  // Dispute payroll
-  const disputePayroll = useApiMutation<DisputePayrollInput, WeeklyPayroll>({
-    mutationFn: ({ id, reason }) =>
-      api.post(`${WEEKLY_PAYROLLS}${id}/dispute/`, { reason }),
-    successMessage: "Payroll dispute submitted.",
-    invalidateQueries: [
-      { queryKey: ["payroll", "weekly-payrolls"] },
-      { queryKey: ["payroll", "weekly-payroll"] },
-    ],
-  })
-
   // Bulk update status
   const bulkUpdateStatus = useApiMutation<
     BulkUpdateStatusInput,
@@ -199,8 +168,6 @@ export function usePayrollMutations() {
     updatePayroll,
     deletePayroll,
     bulkGeneratePayroll,
-    markAsReceived,
-    disputePayroll,
     bulkUpdateStatus,
   }
 }

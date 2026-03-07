@@ -21,7 +21,13 @@ import {
   useWeeklyPayrollFilters,
   useWeeklyPayrolls,
 } from "@/lib/queries/usePayroll"
-import { FileText, PhilippinePesoIcon, Plus, Users } from "lucide-react"
+import {
+  Banknote,
+  FileText,
+  PhilippinePesoIcon,
+  Plus,
+  Users,
+} from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -48,7 +54,7 @@ export default function PayrollPage() {
     ordering,
     filter,
   })
-  const { deletePayroll } = usePayrollMutations()
+  const { deletePayroll, bulkUpdateStatus } = usePayrollMutations()
   const { filters, orderingOptions } = useWeeklyPayrollFilters()
 
   const { archivedQuery, restoreItem, hardDeleteItem } =
@@ -226,6 +232,28 @@ export default function PayrollPage() {
           isLoading={isArchived ? archivedQuery.isLoading : isLoading}
           filters={filters}
           orderingOptions={orderingOptions}
+          enableRowSelection={!isArchived}
+          bulkActions={
+            !isArchived
+              ? [
+                  {
+                    label: "Mark as Paid",
+                    icon: Banknote,
+                    variant: "default",
+                    onClick: async (selectedRows) => {
+                      const approvedIds = selectedRows
+                        .filter((r) => r.status === "approved")
+                        .map((r) => r.id)
+                      if (approvedIds.length === 0) return
+                      await bulkUpdateStatus.mutateAsync({
+                        payroll_ids: approvedIds,
+                        status: "paid",
+                      })
+                    },
+                  },
+                ]
+              : undefined
+          }
           emptyIcon={FileText}
           emptyTitle={
             isArchived

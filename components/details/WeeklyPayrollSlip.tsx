@@ -23,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -31,15 +30,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
+
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useRecomputeWeeklyPayroll } from "@/lib/mutations/payroll/usePayrollMutations"
 import { useDeleteAdditionalEarning } from "@/lib/mutations/useAdditionalEarningMutations"
@@ -50,7 +41,7 @@ import { useWeeklyPayroll } from "@/lib/queries/usePayroll"
 import { formatCurrency, toNumber } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
-import { AlertCircle, FileText, Loader2 } from "lucide-react"
+import { FileText, Loader2 } from "lucide-react"
 import { useState } from "react"
 
 interface WeeklyPayrollSlipProps {
@@ -67,12 +58,10 @@ export function WeeklyPayrollSlip({
     payroll?.employee?.toString() ?? "",
   )
   const { userProfile, isAdmin, canManage } = useCurrentUser()
-  const { updateStatus, markAsReceived, disputePayroll } = usePayrollMutations()
+  const { updateStatus } = usePayrollMutations()
   const recomputePayroll = useRecomputeWeeklyPayroll(payrollId)
   const deleteManualDeduction = useDeleteManualDeduction(payrollId)
 
-  const [disputeDialogOpen, setDisputeDialogOpen] = useState(false)
-  const [disputeReason, setDisputeReason] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [manualDeductionDialogOpen, setManualDeductionDialogOpen] =
     useState(false)
@@ -147,7 +136,6 @@ export function WeeklyPayrollSlip({
 
   // Permission checks
   const canDelete = isAdmin && payroll.status === "draft"
-  const isEmployee = userProfile?.id === payroll.employee
 
   return (
     <Card className={cn("mx-auto w-full shadow-lg", className)}>
@@ -170,9 +158,7 @@ export function WeeklyPayrollSlip({
         <PayrollActions
           status={payroll.status}
           isAdmin={isAdmin}
-          isEmployee={isEmployee}
           isProcessing={isProcessing}
-          disputed={payroll.disputed || false}
           onApprove={async () => {
             setIsProcessing(true)
             await updateStatus.mutateAsync({
@@ -189,14 +175,6 @@ export function WeeklyPayrollSlip({
             })
             setIsProcessing(false)
           }}
-          onMarkReceived={async () => {
-            setIsProcessing(true)
-            await markAsReceived.mutateAsync({
-              id: payrollId,
-            })
-            setIsProcessing(false)
-          }}
-          onDispute={() => setDisputeDialogOpen(true)}
           onRecompute={async () => {
             setIsProcessing(true)
             await recomputePayroll.mutateAsync({})
@@ -266,33 +244,6 @@ export function WeeklyPayrollSlip({
           </div>
         </div>
 
-        {/* Dispute Info */}
-        {payroll.disputed && (
-          <div className="rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/20 p-3">
-            <div className="flex items-start gap-2 mb-2">
-              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm sm:text-base font-semibold text-amber-900 dark:text-amber-400 mb-1">
-                  Disputed Payroll
-                </h3>
-                {payroll.disputed_reason && (
-                  <p className="text-xs text-amber-800 dark:text-amber-300">
-                    {payroll.disputed_reason}
-                  </p>
-                )}
-                {payroll.disputed_at && (
-                  <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
-                    {format(
-                      new Date(payroll.disputed_at),
-                      "MMM dd, yyyy 'at' h:mm a",
-                    )}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Notes */}
         {payroll.notes && (
           <div className="rounded-lg border bg-muted/30 p-3">
@@ -324,63 +275,6 @@ export function WeeklyPayrollSlip({
           size="sm"
         />
       </CardContent>
-
-      {/* Dispute Dialog */}
-      <Dialog
-        open={disputeDialogOpen}
-        onOpenChange={setDisputeDialogOpen}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Dispute Payroll</DialogTitle>
-            <DialogDescription>
-              Provide a reason for disputing this payroll. The admin will be
-              notified.
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea
-            placeholder="Enter your reason..."
-            value={disputeReason}
-            onChange={(e) => setDisputeReason(e.target.value)}
-            rows={4}
-            className="resize-none"
-          />
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDisputeDialogOpen(false)
-                setDisputeReason("")
-              }}
-              disabled={isProcessing}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                if (!disputeReason.trim()) return
-                setIsProcessing(true)
-                await disputePayroll.mutateAsync({
-                  id: payrollId,
-                  reason: disputeReason,
-                })
-                setIsProcessing(false)
-                setDisputeDialogOpen(false)
-                setDisputeReason("")
-              }}
-              disabled={
-                !disputeReason.trim() ||
-                isProcessing ||
-                disputePayroll.isPending
-              }
-            >
-              <AlertCircle className="h-4 w-4 mr-2" />
-              Submit
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Additional Earning Dialog */}
       <AddAdditionalEarningForm

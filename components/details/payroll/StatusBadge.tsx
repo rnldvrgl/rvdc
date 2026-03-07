@@ -1,13 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { PayrollStatus } from "@/lib/constants/types"
 import { cn } from "@/lib/utils/helpers"
-import {
-  AlertCircle,
-  Banknote,
-  CheckCircle,
-  FileText,
-  LucideIcon,
-} from "lucide-react"
+import { Banknote, CheckCircle, FileText, LucideIcon } from "lucide-react"
 
 const STATUS_CONFIG: Record<
   PayrollStatus,
@@ -30,18 +24,6 @@ const STATUS_CONFIG: Record<
       "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-blue-300 dark:border-blue-600",
     icon: Banknote,
     label: "Paid",
-  },
-  received: {
-    color:
-      "bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300 border-purple-300 dark:border-purple-600",
-    icon: CheckCircle,
-    label: "Received",
-  },
-  cancelled: {
-    color:
-      "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300 border-red-300 dark:border-red-600",
-    icon: AlertCircle,
-    label: "Cancelled",
   },
 }
 
