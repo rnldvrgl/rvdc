@@ -20,7 +20,7 @@ import {
   useManualDeductions,
 } from "@/lib/queries/useManualDeductions"
 import { ManualDeduction } from "@/lib/schemas/manualDeductionSchema"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
 import {
   Archive,
@@ -516,7 +516,7 @@ export default function CompanyDeductionsPage() {
             </CardContent>
           </Card>
 
-          {editingEmployeeDeduction && (
+          {editingEmployeeDeduction?.employee && editingEmployeeDeduction && (
             <AddManualDeductionForm
               open={!!editingEmployeeDeduction}
               onOpenChange={(open) => {
