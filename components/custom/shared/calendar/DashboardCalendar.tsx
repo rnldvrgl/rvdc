@@ -72,6 +72,7 @@ type EventType =
   | "schedule"
   | "service"
   | "half_day"
+  | "shop_closed"
   | "custom_event"
 interface EventColors {
   bg: string
@@ -218,6 +219,12 @@ const EVENT_COLORS: Record<string, EventColors> = {
     border: "#ea580c",
     text: "#ffffff",
   },
+  // Shop closed
+  shopClosed: {
+    bg: "#ef4444", // red-500
+    border: "#dc2626",
+    text: "#ffffff",
+  },
   default: {
     bg: "#6b7280",
     border: "#4b5563",
@@ -253,6 +260,11 @@ const LEGEND_ITEMS = [
   { type: "custom_event", label: "Training", color: EVENT_COLORS.training.bg },
   { type: "custom_event", label: "Deadlines", color: EVENT_COLORS.deadline.bg },
   { type: "half_day", label: "Half Days", color: EVENT_COLORS.halfDay.bg },
+  {
+    type: "shop_closed",
+    label: "Shop Closed",
+    color: EVENT_COLORS.shopClosed.bg,
+  },
 ] as const
 
 const ATTENDANCE_LEGEND_ITEMS: Array<{
@@ -310,6 +322,9 @@ const getEventColors = (event: CalendarEvent): EventColors => {
 
     case "half_day":
       return EVENT_COLORS.halfDay
+
+    case "shop_closed":
+      return EVENT_COLORS.shopClosed
 
     case "custom_event": {
       const eventType = event.extendedProps.event_type

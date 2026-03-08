@@ -21,6 +21,7 @@ export interface CalendarEvent {
       | "leave"
       | "custom_event"
       | "half_day"
+      | "shop_closed"
     user_id?: number
     user_name?: string
     holiday_type?: string

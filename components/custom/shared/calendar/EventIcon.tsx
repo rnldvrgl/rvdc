@@ -222,6 +222,10 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
           className={cn(baseClasses, "text-orange-600 dark:text-orange-400")}
         />
       )
+    case "shop_closed":
+      return (
+        <Store className={cn(baseClasses, "text-red-600 dark:text-red-400")} />
+      )
     default:
       return null
   }

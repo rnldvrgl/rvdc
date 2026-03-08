@@ -163,6 +163,7 @@ const DashboardPage = () => {
                 "custom_event",
                 "holiday",
                 "half_day",
+                "shop_closed",
                 "leave",
               ]}
             />
