@@ -808,9 +808,9 @@ const EventDetailModal = ({
                 />
               </div>
               <div>
-                <h3 className="font-semibold">{event.title}</h3>
+                <h3 className="font-semibold">Shop Closed</h3>
                 <Badge className="bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
-                  Shop Closed
+                  All Day
                 </Badge>
               </div>
             </div>
@@ -818,16 +818,16 @@ const EventDetailModal = ({
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <span className="text-muted-foreground">
-                  {format(new Date(event.start), "EEEE, MMMM dd, yyyy")} (All
-                  Day)
+                  {format(new Date(event.start), "EEEE, MMMM dd, yyyy")}
                 </span>
               </div>
-              {extendedProps.reason && (
-                <div className="text-sm">
-                  <span className="font-medium">Reason:</span>{" "}
-                  {extendedProps.reason}
-                </div>
-              )}
+              {extendedProps.reason &&
+                extendedProps.reason.toLowerCase() !== "shop closed" && (
+                  <div className="text-sm">
+                    <span className="font-medium">Reason:</span>{" "}
+                    {extendedProps.reason}
+                  </div>
+                )}
               {extendedProps.created_by && (
                 <div className="text-sm">
                   <span className="font-medium">Set by:</span>{" "}
@@ -922,7 +922,7 @@ const DayEventsModal = ({
                     {event.extendedProps.type === "half_day" &&
                       `Half Day${event.extendedProps.reason ? ` - ${event.extendedProps.reason}` : ""}`}
                     {event.extendedProps.type === "shop_closed" &&
-                      `Shop Closed${event.extendedProps.reason ? ` - ${event.extendedProps.reason}` : ""}`}
+                      `Shop Closed${event.extendedProps.reason && event.extendedProps.reason.toLowerCase() !== "shop closed" ? ` - ${event.extendedProps.reason}` : ""}`}
                   </p>
                   {event.extendedProps.type === "schedule" && !event.allDay && (
                     <p className="text-sm text-muted-foreground">

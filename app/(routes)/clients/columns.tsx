@@ -10,15 +10,18 @@ import {
   Archive,
   Ban,
   Edit,
+  Eye,
   RotateCcw,
   ShieldCheck,
   Trash2,
 } from "lucide-react"
+import Link from "next/link"
 
 export function getClientColumns({
   onEdit,
   onDelete,
   onCustomAction,
+  onView,
   onRestore,
   onHardDelete,
 }: GetColumnsProps<Client>): ColumnDef<Client>[] {
@@ -26,7 +29,17 @@ export function getClientColumns({
     {
       accessorKey: "full_name",
       header: "Name",
-      cell: ({ getValue }) => safeCell(getValue()),
+      cell: ({ row }) => {
+        const client = row.original
+        return (
+          <Link
+            href={`/clients/${client.id}`}
+            className="font-medium text-primary hover:underline"
+          >
+            {safeCell(client.full_name)}
+          </Link>
+        )
+      },
     },
     {
       accessorKey: "contact_number",
@@ -113,6 +126,11 @@ export function getClientColumns({
                   : "Add to blocklist",
                 icon: is_blocklisted ? ShieldCheck : Ban,
                 onClick: () => onCustomAction?.(client),
+              },
+              {
+                label: "View",
+                icon: Eye,
+                onClick: () => onView?.(client),
               },
               {
                 label: "Edit",

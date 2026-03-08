@@ -77,6 +77,7 @@ export function ClockInOut({
     hasClockedOut: isClockedOut,
     canClockInOutToday,
     isMarkedAbsent,
+    isShopClosed,
   } = useClockInOut()
 
   const canClock = canClockInOut(role || "")
@@ -140,6 +141,11 @@ export function ClockInOut({
       // Error is handled by useApiMutation
     }
   }
+
+  // Check if today is shop closed
+  const shopClosedEvent = events?.find(
+    (event) => event.extendedProps.type === "shop_closed",
+  )
 
   const isLoading = clockIn.isPending || clockOut.isPending
 
@@ -212,8 +218,9 @@ export function ClockInOut({
   const leaveMessage = getLeaveMessage()
   const clockDisabled = isClockDisabledByLeave()
 
-  // Show actions only if can clock in/out today, not disabled by leave, and not marked as absent
-  const showActions = canClockInOutToday && !clockDisabled && !isMarkedAbsent
+  // Show actions only if can clock in/out today, not disabled by leave, not marked as absent, and not shop closed
+  const showActions =
+    canClockInOutToday && !clockDisabled && !isMarkedAbsent && !isShopClosed
 
   if (!canClock || !user_id) {
     return (
@@ -316,6 +323,24 @@ export function ClockInOut({
             <AlertTitle>Holiday</AlertTitle>
             <AlertDescription suppressHydrationWarning>
               Today is {todayHoliday.title}. Enjoy your day off!
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Shop Closed Alert */}
+        {(shopClosedEvent || isShopClosed) && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Shop Closed</AlertTitle>
+            <AlertDescription>
+              The shop is closed today
+              {shopClosedEvent?.extendedProps.reason &&
+              shopClosedEvent.extendedProps.reason.toLowerCase() !==
+                "shop closed"
+                ? ` — ${shopClosedEvent.extendedProps.reason}`
+                : ""}
+              . Clock in/out is not available. For emergency services, contact
+              your manager to override.
             </AlertDescription>
           </Alert>
         )}

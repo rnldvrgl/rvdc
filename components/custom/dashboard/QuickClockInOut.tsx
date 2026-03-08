@@ -45,6 +45,7 @@ export function QuickClockInOut() {
     canClockInOutToday,
     formatTime,
     isMarkedAbsent,
+    isShopClosed,
   } = useClockInOut()
 
   const yesterdayAttendance = attendanceData?.results[1] || null
@@ -147,12 +148,20 @@ export function QuickClockInOut() {
     return null
   }
 
+  // Check if today is shop closed
+  const shopClosedEvent = events?.find(
+    (event) => event.extendedProps.type === "shop_closed",
+  )
+
   const isClockDisabledByLeave =
     todayLeave && (!isHalfDay || !canClockInHalfDay())
 
   // Determine if actions should be shown
   const showActions =
-    canClockInOutToday && !isClockDisabledByLeave && !isMarkedAbsent
+    canClockInOutToday &&
+    !isClockDisabledByLeave &&
+    !isMarkedAbsent &&
+    !isShopClosed
 
   const handleClockIn = () => {
     if (!profile?.id) return
@@ -282,6 +291,23 @@ export function QuickClockInOut() {
             <AlertTitle>Holiday</AlertTitle>
             <AlertDescription suppressHydrationWarning>
               Today is {todayHoliday.title}. Enjoy your day off!
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Shop Closed Alert */}
+        {(shopClosedEvent || isShopClosed) && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Shop Closed</AlertTitle>
+            <AlertDescription>
+              The shop is closed today
+              {shopClosedEvent?.extendedProps.reason &&
+              shopClosedEvent.extendedProps.reason.toLowerCase() !==
+                "shop closed"
+                ? ` \u2014 ${shopClosedEvent.extendedProps.reason}`
+                : ""}
+              . For emergency services, contact your manager.
             </AlertDescription>
           </Alert>
         )}

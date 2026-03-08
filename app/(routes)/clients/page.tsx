@@ -16,6 +16,7 @@ import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useClientMutations } from "@/lib/mutations/useClientMutations"
 import { useClientFilters, useClients } from "@/lib/queries/clients/useClients"
 import { Plus, Users } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 const emptyData = {
@@ -26,6 +27,7 @@ const emptyData = {
 }
 
 export default function ClientsPage() {
+  const router = useRouter()
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const [isArchived, setIsArchived] = useState(false)
@@ -97,6 +99,7 @@ export default function ClientsPage() {
         onEdit: openEditSheet,
         onDelete: handleDelete,
         onCustomAction: handleToggleBlocklisted,
+        onView: (client) => router.push(`/clients/${client.id}`),
       })
 
   const tableData = isArchived

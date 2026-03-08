@@ -27,6 +27,8 @@ export function useClockInOut() {
   }
   const isMarkedAbsent =
     attendanceStatus?.attendance?.attendance_type === "ABSENT"
+  const isShopClosed =
+    attendanceStatus?.attendance?.attendance_type === "SHOP_CLOSED"
   const BUSINESS_START_HOUR = settings?.shift_start
     ? getHourFromTime(settings.shift_start)
     : 8
@@ -90,5 +92,6 @@ export function useClockInOut() {
     canClockInOutToday,
     formatTime,
     isMarkedAbsent,
+    isShopClosed,
   }
 }
