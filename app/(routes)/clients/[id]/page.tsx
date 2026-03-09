@@ -23,8 +23,13 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { Service, ServicePayment } from "@/lib/constants/interface"
+import type {
+  SalesTransaction,
+  Service,
+  ServicePayment,
+} from "@/lib/constants/interface"
 import { useClient } from "@/lib/queries/clients/useClients"
+import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useService, useServices } from "@/lib/queries/services/useServices"
 import { formatCurrency } from "@/lib/utils/currency"
 import { getBadgeVariant } from "@/lib/utils/helpers"
@@ -44,6 +49,7 @@ import {
   MapPin,
   Phone,
   Receipt,
+  ShoppingCart,
   User,
   Wallet,
   Wrench,
@@ -107,6 +113,11 @@ export default function ClientDetailPage() {
     limit: 100,
   })
 
+  const { data: salesData, isLoading: salesLoading } = useSalesTransactions({
+    filter: { client: clientId },
+    limit: 100,
+  })
+
   // Service detail sheet state
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
@@ -115,6 +126,7 @@ export default function ClientDetailPage() {
   )
 
   const services = servicesData?.results ?? []
+  const salesTransactions = salesData?.results ?? []
 
   // Collect all payments from all services
   const allPayments: (ServicePayment & {
@@ -138,20 +150,44 @@ export default function ClientDetailPage() {
       new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime(),
   )
 
-  // Summary stats
+  // Summary stats (Services)
   const totalServices = services.length
-  const totalRevenue = services.reduce(
+  const serviceRevenue = services.reduce(
     (sum: number, s: Service) => sum + parseFloat(s.total_revenue || "0"),
     0,
   )
-  const totalPaid = services.reduce(
+  const servicePaid = services.reduce(
     (sum: number, s: Service) => sum + parseFloat(s.total_paid || "0"),
     0,
   )
-  const totalBalance = services.reduce(
+  const serviceBalance = services.reduce(
     (sum: number, s: Service) => sum + parseFloat(s.balance_due || "0"),
     0,
   )
+
+  // Summary stats (Sales)
+  const salesRevenue = salesTransactions.reduce(
+    (sum: number, t: SalesTransaction) =>
+      sum + parseFloat(String(t.computed_total || "0")),
+    0,
+  )
+  const salesPaid = salesTransactions.reduce(
+    (sum: number, t: SalesTransaction) => {
+      const paid =
+        t.payments?.reduce(
+          (pSum, p) => pSum + parseFloat(String(p.amount || "0")),
+          0,
+        ) || 0
+      return sum + paid
+    },
+    0,
+  )
+  const salesBalance = salesRevenue - salesPaid
+
+  // Combined totals
+  const totalRevenue = serviceRevenue + salesRevenue
+  const totalPaid = servicePaid + salesPaid
+  const totalBalance = serviceBalance + salesBalance
 
   const handleViewService = (service: Service) => {
     setSelectedService(service)
@@ -315,7 +351,7 @@ export default function ClientDetailPage() {
         </Card>
       </div>
 
-      {/* Services & Payments Tabs */}
+      {/* Services, Sales & Payments Tabs */}
       <Tabs
         defaultValue="services"
         className="space-y-4"
@@ -327,6 +363,13 @@ export default function ClientDetailPage() {
           >
             <Wrench className="h-4 w-4" />
             Services ({totalServices})
+          </TabsTrigger>
+          <TabsTrigger
+            value="sales"
+            className="gap-2"
+          >
+            <ShoppingCart className="h-4 w-4" />
+            Sales ({salesTransactions.length})
           </TabsTrigger>
           <TabsTrigger
             value="payments"
@@ -433,6 +476,111 @@ export default function ClientDetailPage() {
                         </TableCell>
                       </TableRow>
                     ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Sales Tab */}
+        <TabsContent value="sales">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Sales Transactions</CardTitle>
+              <CardDescription>Items purchased from sub stall</CardDescription>
+            </CardHeader>
+            <CardContent className="px-2 pb-2 pt-0">
+              {salesLoading ? (
+                <div className="space-y-3 p-4">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton
+                      key={i}
+                      className="h-10 w-full"
+                    />
+                  ))}
+                </div>
+              ) : salesTransactions.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground">
+                  No sales transactions found for this client.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-24">Receipt #</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Items</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Stall
+                      </TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {salesTransactions.map((transaction: SalesTransaction) => {
+                      const itemCount = transaction.items?.length || 0
+                      const totalItems =
+                        transaction.items?.reduce(
+                          (sum, item) => sum + item.quantity,
+                          0,
+                        ) || 0
+
+                      return (
+                        <TableRow key={transaction.id}>
+                          <TableCell className="font-medium">
+                            {transaction.manual_receipt_number ||
+                              transaction.system_receipt_number
+                                ?.slice(0, 8)
+                                .toUpperCase()}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(transaction.created_at)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <span className="font-medium">
+                                {itemCount} item{itemCount !== 1 ? "s" : ""}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {" "}
+                                ({totalItems} qty)
+                              </span>
+                            </div>
+                            {transaction.items &&
+                              transaction.items.length > 0 && (
+                                <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-0.5">
+                                  {transaction.items
+                                    .map(
+                                      (item) =>
+                                        `${item.item.name} (${item.quantity})`,
+                                    )
+                                    .join(", ")}
+                                </p>
+                              )}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                            {transaction.stall?.name || "—"}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatCurrency(transaction.computed_total || 0)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge
+                              variant={getBadgeVariant(
+                                transaction.payment_status,
+                              )}
+                              className="text-xs"
+                            >
+                              {paymentStatusLabels[
+                                transaction.payment_status
+                              ] || transaction.payment_status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
                   </TableBody>
                 </Table>
               )}
