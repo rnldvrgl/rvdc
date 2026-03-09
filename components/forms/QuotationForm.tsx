@@ -173,8 +173,6 @@ export default function QuotationForm({
   const [selectedClientId, setSelectedClientId] = useState<number | null>(
     quotation?.client ?? null,
   )
-  const selectedClient = clients.find((c) => c.id === selectedClientId)
-
   const clientOptions = useMemo(
     () => clients.map((c) => ({ value: c.id, label: c.full_name })),
     [clients],
