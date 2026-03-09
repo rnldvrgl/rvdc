@@ -552,6 +552,7 @@ export default function ClientDetailPage() {
                               transaction.items.length > 0 && (
                                 <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-0.5">
                                   {transaction.items
+                                    .filter((item) => item.item)
                                     .map(
                                       (item) =>
                                         `${item.item.name} (${item.quantity})`,
