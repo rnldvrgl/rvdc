@@ -92,6 +92,10 @@ export default function QuotationViewSheet({
         status,
         authorized_signature: q.authorized_signature,
         client_signature: q.client_signature,
+        authorized_name: q.authorized_name,
+        authorized_date: q.authorized_date || undefined,
+        client_acceptance_name: q.client_acceptance_name,
+        client_acceptance_date: q.client_acceptance_date || undefined,
         items: (q.items ?? []).map((i) => ({
           description: i.description,
           quantity: i.quantity,
@@ -265,7 +269,7 @@ const QuotationPrintContent = React.forwardRef<
       )}
 
       {/* ITEMS TABLE */}
-      <table className="w-full text-[12px] mb-5 border-collapse table-fixed">
+      <table className="w-full text-[12px]  mb-1 border-collapse table-fixed">
         <thead>
           <tr className="bg-gray-800 text-white">
             <th className="text-left py-2 px-3 font-semibold w-[50%]">
@@ -312,31 +316,49 @@ const QuotationPrintContent = React.forwardRef<
             </tr>
           )}
         </tbody>
-      </table>
-
-      {/* TOTALS */}
-      <div className="flex justify-end mb-6">
-        <div className="w-64 text-[12px]">
-          <div className="flex justify-between py-1 border-b border-gray-200">
-            <span>Subtotal</span>
-            <span>&#8369;{formatCurrency(Number(q.subtotal))}</span>
-          </div>
+        {/* TOTALS — inside the table for perfect alignment */}
+        <tfoot>
+          <tr>
+            <td
+              colSpan={3}
+              className="text-right py-2 px-3 border-b border-gray-200 text-gray-600"
+            >
+              Subtotal
+            </td>
+            <td className="text-right py-2 px-3 border-b border-gray-200">
+              &#8369;{formatCurrency(Number(q.subtotal))}
+            </td>
+          </tr>
           {Number(q.discount_amount) > 0 && (
-            <div className="flex justify-between py-1 border-b border-gray-200 text-red-600">
-              <span>Discount</span>
-              <span>-&#8369;{formatCurrency(Number(q.discount_amount))}</span>
-            </div>
+            <tr>
+              <td
+                colSpan={3}
+                className="text-right py-2 px-3 border-b border-gray-200 text-red-600"
+              >
+                Discount
+              </td>
+              <td className="text-right py-2 px-3 border-b border-gray-200 text-red-600">
+                -&#8369;{formatCurrency(Number(q.discount_amount))}
+              </td>
+            </tr>
           )}
-          <div className="flex justify-between py-2 font-bold text-[14px] border-b-2 border-gray-800">
-            <span>Total</span>
-            <span>&#8369;{formatCurrency(Number(q.total))}</span>
-          </div>
-        </div>
-      </div>
+          <tr className="bg-gray-800 text-white">
+            <td
+              colSpan={3}
+              className="text-right py-2 px-3 font-bold text-[13px]"
+            >
+              Total
+            </td>
+            <td className="text-right py-2 px-3 font-bold text-[13px]">
+              &#8369;{formatCurrency(Number(q.total))}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
 
       {/* TERMS & CONDITIONS */}
       {q.terms_conditions && (
-        <div className="mb-5 text-[11px]">
+        <div className="my-5 text-[11px]">
           <h3 className="font-semibold text-[12px] mb-1">Terms & Conditions</h3>
           <ul className="list-disc pl-5 text-gray-600 leading-relaxed space-y-0.5">
             {q.terms_conditions
@@ -383,10 +405,10 @@ const QuotationPrintContent = React.forwardRef<
 
       {/* SIGNATURES */}
       <div className="grid grid-cols-2 gap-12 mt-10 text-[12px] text-center">
-        <div className="flex flex-col justify-between relative">
+        <div className="flex flex-col relative">
           <p className="font-semibold mb-2">Authorized Representative:</p>
           {q.authorized_signature ? (
-            <div className="mb-1">
+            <div className="mb-18">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={q.authorized_signature}
@@ -399,20 +421,29 @@ const QuotationPrintContent = React.forwardRef<
           )}
           <div>
             <div className="border-b border-gray-800 mb-1" />
-            <p className="text-[11px] text-gray-500">
-              Signature over printed name and date
-            </p>
+            {q.authorized_name ? (
+              <p className="text-[11px] font-semibold uppercase">
+                {q.authorized_name}
+              </p>
+            ) : (
+              <p className="text-[11px] text-gray-500">Printed Name</p>
+            )}
+            {q.authorized_name && q.authorized_date && (
+              <p className="text-[11px] text-gray-500">
+                {format(new Date(q.authorized_date), "MMMM dd, yyyy")}
+              </p>
+            )}
           </div>
         </div>
-        <div className="flex flex-col justify-between">
+        <div className="flex flex-col relative">
           <p className="font-semibold mb-2">Client Acceptance:</p>
           {q.client_signature ? (
-            <div className="mb-1">
+            <div className="mb-18">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={q.client_signature}
                 alt="Client signature"
-                className="h-18 object-contain absolute top-0"
+                className="h-18 object-contain absolute  top-6 left-1/2 transform -translate-x-1/2"
               />
             </div>
           ) : (
@@ -420,9 +451,18 @@ const QuotationPrintContent = React.forwardRef<
           )}
           <div>
             <div className="border-b border-gray-800 mb-1" />
-            <p className="text-[11px] text-gray-500">
-              Signature over printed name and date
-            </p>
+            {q.client_acceptance_name ? (
+              <p className="text-[11px] font-semibold uppercase">
+                {q.client_acceptance_name}
+              </p>
+            ) : (
+              <p className="text-[11px] text-gray-500">Printed Name</p>
+            )}
+            {q.client_acceptance_name && q.client_acceptance_date && (
+              <p className="text-[11px] text-gray-500">
+                {format(new Date(q.client_acceptance_date), "MMMM dd, yyyy")}
+              </p>
+            )}
           </div>
         </div>
       </div>

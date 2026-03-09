@@ -134,6 +134,10 @@ export type Quotation = BaseEntity & {
   status: QuotationStatus
   authorized_signature: string
   client_signature: string
+  authorized_name: string
+  authorized_date: string
+  client_acceptance_name: string
+  client_acceptance_date: string
   items: QuotationItem[]
   created_by?: number
   created_by_name?: string
@@ -155,6 +159,10 @@ export type QuotationPayload = {
   status?: QuotationStatus
   authorized_signature?: string
   client_signature?: string
+  authorized_name?: string
+  authorized_date?: string
+  client_acceptance_name?: string
+  client_acceptance_date?: string
   items: Omit<QuotationItem, "id" | "total_price">[]
 }
 

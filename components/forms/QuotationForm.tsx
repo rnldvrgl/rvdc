@@ -180,16 +180,29 @@ export default function QuotationForm({
     [clients],
   )
 
-  const clientAddress = selectedClient
-    ? [
-        selectedClient.address,
-        selectedClient.barangay,
-        selectedClient.city,
-        selectedClient.province,
-      ]
-        .filter(Boolean)
-        .join(", ")
-    : (quotation?.client_address ?? "")
+  // ── Client override fields ──
+  const [clientNameOverride, setClientNameOverride] = useState(
+    quotation?.client_name ?? "",
+  )
+  const [clientAddressOverride, setClientAddressOverride] = useState(
+    quotation?.client_address ?? "",
+  )
+  const [clientContactOverride, setClientContactOverride] = useState(
+    quotation?.client_contact ?? "",
+  )
+
+  // Sync overrides when client selection changes
+  const handleClientChange = (v: number | null) => {
+    setSelectedClientId(v as number | null)
+    const c = clients.find((cl) => cl.id === v)
+    if (c) {
+      setClientNameOverride(c.full_name)
+      setClientContactOverride(c.contact_number ?? "")
+      setClientAddressOverride(
+        [c.address, c.barangay, c.city, c.province].filter(Boolean).join(", "),
+      )
+    }
+  }
 
   // ── Templates ──
   const { data: allTemplates } = useQuotationTemplates()
@@ -236,6 +249,20 @@ export default function QuotationForm({
   )
   const [clientSignature, setClientSignature] = useState(
     quotation?.client_signature ?? "",
+  )
+
+  // Signature printed names & dates
+  const [authorizedName, setAuthorizedName] = useState(
+    quotation?.authorized_name ?? "",
+  )
+  const [authorizedDate, setAuthorizedDate] = useState(
+    quotation?.authorized_date ?? "",
+  )
+  const [clientAcceptanceName, setClientAcceptanceName] = useState(
+    quotation?.client_acceptance_name ?? "",
+  )
+  const [clientAcceptanceDate, setClientAcceptanceDate] = useState(
+    quotation?.client_acceptance_date ?? "",
   )
 
   // ── Line Items ──
@@ -311,10 +338,9 @@ export default function QuotationForm({
 
     const payload: QuotationPayload = {
       client: selectedClientId,
-      client_name: selectedClient?.full_name ?? quotation?.client_name ?? "",
-      client_address: clientAddress,
-      client_contact:
-        selectedClient?.contact_number ?? quotation?.client_contact ?? "",
+      client_name: clientNameOverride,
+      client_address: clientAddressOverride,
+      client_contact: clientContactOverride,
       quote_date: format(quoteDate, "yyyy-MM-dd"),
       valid_until: format(validUntil, "yyyy-MM-dd"),
       project_description: projectDescription,
@@ -323,6 +349,10 @@ export default function QuotationForm({
       payment_terms: arrayToLines(paymentLines),
       authorized_signature: authorizedSignature,
       client_signature: clientSignature,
+      authorized_name: authorizedName,
+      authorized_date: authorizedDate || undefined,
+      client_acceptance_name: clientAcceptanceName,
+      client_acceptance_date: clientAcceptanceDate || undefined,
       items: items
         .filter((i) => i.description.trim())
         .map((i) => ({
@@ -357,27 +387,45 @@ export default function QuotationForm({
             <ComboBox
               options={clientOptions}
               value={selectedClientId}
-              onChange={(v) => setSelectedClientId(v as number | null)}
+              onChange={(v) => handleClientChange(v as number | null)}
               placeholder="Select client..."
               searchPlaceholder="Search client name..."
             />
           </div>
-          {selectedClient && (
-            <div className="rounded-md bg-muted/50 px-3 py-2 text-sm text-muted-foreground space-y-0.5">
-              {selectedClient.contact_number && (
-                <p>
-                  <span className="font-medium text-foreground">Phone:</span>{" "}
-                  {selectedClient.contact_number}
-                </p>
-              )}
-              {clientAddress && (
-                <p>
-                  <span className="font-medium text-foreground">Address:</span>{" "}
-                  {clientAddress}
-                </p>
-              )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                Client Name
+              </Label>
+              <Input
+                value={clientNameOverride}
+                onChange={(e) => setClientNameOverride(e.target.value)}
+                placeholder="Client name..."
+                className="h-9"
+              />
             </div>
-          )}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                Contact Number
+              </Label>
+              <Input
+                value={clientContactOverride}
+                onChange={(e) => setClientContactOverride(e.target.value)}
+                placeholder="Contact number..."
+                className="h-9"
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Address</Label>
+            <Textarea
+              value={clientAddressOverride}
+              onChange={(e) => setClientAddressOverride(e.target.value)}
+              placeholder="Client address..."
+              rows={2}
+              className="resize-none"
+            />
+          </div>
         </div>
       </section>
 
@@ -693,16 +741,86 @@ export default function QuotationForm({
           </span>
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <SignatureInput
-            label="Authorized Representative"
-            value={authorizedSignature}
-            onChange={setAuthorizedSignature}
-          />
-          <SignatureInput
-            label="Client Acceptance"
-            value={clientSignature}
-            onChange={setClientSignature}
-          />
+          <div className="space-y-3">
+            <SignatureInput
+              label="Authorized Representative"
+              value={authorizedSignature}
+              onChange={setAuthorizedSignature}
+            />
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                Printed Name
+              </Label>
+              <Input
+                value={authorizedName}
+                onChange={(e) => setAuthorizedName(e.target.value)}
+                placeholder="Full name..."
+                className="h-8 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Date</Label>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  type="date"
+                  value={authorizedDate}
+                  onChange={(e) => setAuthorizedDate(e.target.value)}
+                  className="h-8 text-sm flex-1"
+                />
+                {authorizedDate && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => setAuthorizedDate("")}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <SignatureInput
+              label="Client Acceptance"
+              value={clientSignature}
+              onChange={setClientSignature}
+            />
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                Printed Name
+              </Label>
+              <Input
+                value={clientAcceptanceName}
+                onChange={(e) => setClientAcceptanceName(e.target.value)}
+                placeholder="Full name..."
+                className="h-8 text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Date</Label>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  type="date"
+                  value={clientAcceptanceDate}
+                  onChange={(e) => setClientAcceptanceDate(e.target.value)}
+                  className="h-8 text-sm flex-1"
+                />
+                {clientAcceptanceDate && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    onClick={() => setClientAcceptanceDate("")}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
