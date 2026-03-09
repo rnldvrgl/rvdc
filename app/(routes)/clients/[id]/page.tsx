@@ -3,6 +3,7 @@
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
+import { SalesTransactionDetails } from "@/components/details/SalesTransactionDetails"
 import ServiceDetail from "@/components/services/ServiceDetail"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -29,6 +30,7 @@ import type {
   ServicePayment,
 } from "@/lib/constants/interface"
 import { useClient } from "@/lib/queries/clients/useClients"
+import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useService, useServices } from "@/lib/queries/services/useServices"
 import { formatCurrency } from "@/lib/utils/currency"
@@ -124,6 +126,13 @@ export default function ClientDetailPage() {
   const { data: detailService, refetch: refetchService } = useService(
     selectedService?.id,
   )
+
+  // Sales transaction detail sheet state
+  const {
+    entityState: salesViewSheet,
+    openEntity: openSalesView,
+    closeEntity: closeSalesView,
+  } = useEntitySheet<SalesTransaction>()
 
   const services = servicesData?.results ?? []
   const salesTransactions = salesData?.results ?? []
@@ -528,7 +537,11 @@ export default function ClientDetailPage() {
                         ) || 0
 
                       return (
-                        <TableRow key={transaction.id}>
+                        <TableRow
+                          key={transaction.id}
+                          className="cursor-pointer"
+                          onClick={() => openSalesView(transaction)}
+                        >
                           <TableCell className="font-medium">
                             {transaction.manual_receipt_number ||
                               transaction.system_receipt_number
@@ -700,6 +713,24 @@ export default function ClientDetailPage() {
           )}
         />
       )}
+
+      {/* Sales Transaction Detail Sheet */}
+      <EntitySheet<SalesTransaction>
+        className="sm:min-w-2xl md:min-w-3xl xl:min-w-4xl"
+        open={salesViewSheet.open}
+        onClose={closeSalesView}
+        entity={salesViewSheet.entity}
+        title="Transaction Details"
+        description="View detailed information about this sales transaction."
+        renderForm={({ onClose, entity }) =>
+          entity ? (
+            <SalesTransactionDetails
+              entity={entity}
+              onClose={onClose}
+            />
+          ) : null
+        }
+      />
     </Wrapper>
   )
 }
