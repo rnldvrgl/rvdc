@@ -2,10 +2,6 @@
 
 import {
   applianceStatusLabels,
-  serviceModeLabels,
-  serviceStatusLabels,
-  serviceTypeColors,
-  serviceTypeLabels,
   statusConfig,
 } from "@/app/(routes)/services/columns"
 import { Badge } from "@/components/ui/badge"
@@ -16,6 +12,12 @@ import {
 } from "@/components/ui/tooltip"
 import { Service, ServiceStatus } from "@/lib/constants/interface"
 import { formatCurrency, getBadgeVariant, safeCell } from "@/lib/utils/helpers"
+import {
+  getServiceModeLabel,
+  getServiceStatusLabel,
+  getServiceTypeBadgeClass,
+  getServiceTypeLabel,
+} from "@/lib/utils/helpers/service"
 
 import {
   closestCenter,
@@ -324,17 +326,15 @@ function ServiceCard({
         <div className="flex items-center gap-1 flex-wrap">
           <Badge
             variant="outline"
-            className={`text-[10px] px-1.5 py-0 h-4 ${serviceTypeColors[service.service_type] || ""}`}
+            className={`text-[10px] px-1.5 py-0 h-4 ${getServiceTypeBadgeClass(service.service_type)}`}
           >
-            {serviceTypeLabels[service.service_type] ||
-              safeCell(service.service_type)}
+            {getServiceTypeLabel(service.service_type)}
           </Badge>
           <Badge
             variant="secondary"
             className="text-[10px] px-1.5 py-0 h-4"
           >
-            {serviceModeLabels[service.service_mode] ||
-              safeCell(service.service_mode)}
+            {getServiceModeLabel(service.service_mode)}
           </Badge>
         </div>
 
@@ -448,7 +448,7 @@ function StatusProgressBar({ status }: { status: string }) {
                 />
               </TooltipTrigger>
               <TooltipContent className="text-xs">
-                {serviceStatusLabels[step]}
+                {getServiceStatusLabel(step)}
               </TooltipContent>
             </Tooltip>
             {i < steps.length - 1 && (
@@ -601,7 +601,7 @@ export default function ServiceKanbanBoard({
           <AlertCircle className="h-4 w-4" />
           Drop on a column to change status. Allowed:{" "}
           {getTransitionsForService(activeService)
-            .map((s) => serviceStatusLabels[s])
+            .map((s) => getServiceStatusLabel(s))
             .join(", ") || "None"}
         </motion.div>
       )}

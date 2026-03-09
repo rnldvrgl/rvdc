@@ -1,12 +1,12 @@
 "use client"
 
-import { serviceTypeLabels } from "@/app/(routes)/services/columns"
 import { ListCardSkeleton } from "@/components/custom/shared/skeletons"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import { useEmployeePerformance } from "@/lib/queries/analytics/useGetAnalytics"
 import { formatCurrency } from "@/lib/utils/helpers"
+import { getServiceTypeLabel } from "@/lib/utils/helpers/service"
 import {
   Award,
   Clock,
@@ -83,8 +83,7 @@ export function EmployeePerformanceStats() {
                         #{index + 1}
                       </span>
                       <span className="font-medium">
-                        {serviceTypeLabels[type.service_type] ||
-                          type.service_type}
+                        {getServiceTypeLabel(type.service_type)}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">

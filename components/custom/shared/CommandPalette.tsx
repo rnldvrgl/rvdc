@@ -42,18 +42,21 @@ const quickActions = [
     icon: Users,
     action: "addClient",
     keywords: "create add client customer",
+    shortcut: "Ctrl+Shift+C",
   },
   {
     label: "New Service",
     icon: Wrench,
     action: "addService",
     keywords: "create add service repair installation",
+    shortcut: "Ctrl+Shift+S",
   },
   {
     label: "New Expense",
     icon: Coins,
     action: "addExpense",
     keywords: "create add expense cost",
+    shortcut: "Ctrl+Shift+E",
   },
   {
     label: "New Remittance",
@@ -163,17 +166,77 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
   const hasSearchResults =
     clients.length > 0 || services.length > 0 || sales.length > 0
 
-  // Listen for Ctrl+K / Cmd+K
+  // Listen for keyboard shortcuts
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
+      // Don't fire shortcuts when typing in inputs
+      const tag = (e.target as HTMLElement)?.tagName
+      const isInput = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT"
+
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
         setOpen((o) => !o)
+        return
+      }
+
+      // Skip remaining shortcuts if inside an input or dialog is open
+      if (isInput || open) return
+
+      // Alt + shortcut combos for navigation
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        switch (e.key) {
+          case "d":
+            e.preventDefault()
+            router.push("/dashboard")
+            break
+          case "s":
+            e.preventDefault()
+            router.push("/services")
+            break
+          case "c":
+            e.preventDefault()
+            router.push("/clients")
+            break
+          case "i":
+            e.preventDefault()
+            router.push("/inventory/items")
+            break
+          case "e":
+            e.preventDefault()
+            router.push("/expenses/manage")
+            break
+          case "a":
+            e.preventDefault()
+            router.push("/attendance/overview")
+            break
+          case "p":
+            e.preventDefault()
+            router.push("/payroll/weekly")
+            break
+        }
+      }
+
+      // Ctrl/Cmd + Shift + shortcut for quick-create actions
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
+        switch (e.key) {
+          case "S":
+            e.preventDefault()
+            onAction?.("addService")
+            break
+          case "C":
+            e.preventDefault()
+            onAction?.("addClient")
+            break
+          case "E":
+            e.preventDefault()
+            onAction?.("addExpense")
+            break
+        }
       }
     }
     document.addEventListener("keydown", down)
     return () => document.removeEventListener("keydown", down)
-  }, [])
+  }, [open, router, onAction])
 
   const handleNavigate = useCallback(
     (href: string) => {
@@ -229,10 +292,15 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
               <div className="flex items-center justify-center size-8 rounded-md bg-primary/10 text-primary">
                 <item.icon className="size-4" />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-1">
                 <span>{item.label}</span>
                 <Plus className="size-3 text-muted-foreground" />
               </div>
+              {item.shortcut && (
+                <kbd className="pointer-events-none text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
+                  {item.shortcut}
+                </kbd>
+              )}
             </CommandItem>
           ))}
         </CommandGroup>
@@ -334,6 +402,33 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
                   </span>
                 )}
               </div>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        {/* Keyboard Shortcuts Reference */}
+        <CommandGroup heading="Keyboard Shortcuts">
+          {[
+            { keys: "Alt+D", label: "Go to Dashboard" },
+            { keys: "Alt+S", label: "Go to Services" },
+            { keys: "Alt+C", label: "Go to Clients" },
+            { keys: "Alt+I", label: "Go to Inventory" },
+            { keys: "Alt+E", label: "Go to Expenses" },
+            { keys: "Alt+A", label: "Go to Attendance" },
+            { keys: "Alt+P", label: "Go to Payroll" },
+          ].map((shortcut) => (
+            <CommandItem
+              key={shortcut.keys}
+              value={`shortcut ${shortcut.label}`}
+              className="gap-3 justify-between"
+              onSelect={() => {}}
+            >
+              <span className="text-muted-foreground">{shortcut.label}</span>
+              <kbd className="pointer-events-none text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
+                {shortcut.keys}
+              </kbd>
             </CommandItem>
           ))}
         </CommandGroup>

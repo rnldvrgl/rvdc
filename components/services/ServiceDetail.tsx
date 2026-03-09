@@ -50,6 +50,12 @@ import {
 } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import {
+  getServiceModeLabel,
+  getServiceStatusLabel,
+  getServiceTypeBadgeClass,
+  getServiceTypeLabel,
+} from "@/lib/utils/helpers/service"
+import {
   AlertTriangle,
   Calendar,
   CheckCircle,
@@ -76,28 +82,6 @@ interface ServiceDetailProps {
   service: Service
   onEdit?: () => void
   onRefresh?: () => void
-}
-
-const serviceTypeLabels: Record<string, string> = {
-  repair: "Repair",
-  dismantle: "Dismantle",
-  inspection: "Inspection",
-  cleaning: "Cleaning",
-  motor_rewind: "Motor Rewind",
-  installation: "Installation",
-}
-
-const serviceModeLabels: Record<string, string> = {
-  home_service: "Home Service",
-  carry_in: "Carry In",
-  pull_out: "Pull-Out",
-}
-
-const serviceStatusLabels: Record<string, string> = {
-  pending: "Pending",
-  in_progress: "In Progress",
-  completed: "Completed",
-  cancelled: "Cancelled",
 }
 
 const paymentStatusLabels: Record<string, string> = {
@@ -521,34 +505,19 @@ export default function ServiceDetail({
             variant={getBadgeVariant(service.status)}
             className="text-[11px] px-2 py-0.5"
           >
-            {serviceStatusLabels[service.status] || service.status}
+            {getServiceStatusLabel(service.status)}
           </Badge>
           <Badge
-            className="text-[11px] px-2 py-0.5"
-            variant={
-              ({
-                repair: "warning",
-                dismantle: "warning",
-                inspection: "default",
-                cleaning: "success",
-                motor_rewind: "destructive",
-                installation: "default",
-              }[service.service_type] || "outline") as
-                | "success"
-                | "default"
-                | "destructive"
-                | "outline"
-                | "secondary"
-                | "warning"
-            }
+            variant="outline"
+            className={`text-[11px] px-2 py-0.5 ${getServiceTypeBadgeClass(service.service_type)}`}
           >
-            {serviceTypeLabels[service.service_type] || service.service_type}
+            {getServiceTypeLabel(service.service_type)}
           </Badge>
           <Badge
             className="text-[11px] px-2 py-0.5"
             variant="secondary"
           >
-            {serviceModeLabels[service.service_mode] || service.service_mode}
+            {getServiceModeLabel(service.service_mode)}
           </Badge>
           <Badge
             variant={getBadgeVariant(service.payment_status)}
@@ -753,36 +722,19 @@ export default function ServiceDetail({
                   variant={getBadgeVariant(service.status)}
                   className="text-xs"
                 >
-                  {serviceStatusLabels[service.status] || service.status}
+                  {getServiceStatusLabel(service.status)}
                 </Badge>
                 <Badge
-                  className="text-xs"
-                  variant={
-                    ({
-                      repair: "warning",
-                      dismantle: "warning",
-                      inspection: "default",
-                      cleaning: "success",
-                      motor_rewind: "destructive",
-                      installation: "default",
-                    }[service.service_type] || "outline") as
-                      | "success"
-                      | "default"
-                      | "destructive"
-                      | "outline"
-                      | "secondary"
-                      | "warning"
-                  }
+                  variant="outline"
+                  className={`text-xs ${getServiceTypeBadgeClass(service.service_type)}`}
                 >
-                  {serviceTypeLabels[service.service_type] ||
-                    service.service_type}
+                  {getServiceTypeLabel(service.service_type)}
                 </Badge>
                 <Badge
                   variant="secondary"
                   className="text-xs"
                 >
-                  {serviceModeLabels[service.service_mode] ||
-                    service.service_mode}
+                  {getServiceModeLabel(service.service_mode)}
                 </Badge>
                 {service.stall && (
                   <Badge

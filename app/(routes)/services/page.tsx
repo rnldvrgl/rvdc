@@ -1,6 +1,7 @@
 "use client"
 
 import { getServiceColumns } from "@/app/(routes)/services/columns"
+import { useServicePageState } from "@/app/(routes)/services/useServicePageState"
 import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
@@ -26,13 +27,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Service, ServiceStatus } from "@/lib/constants/interface"
+import { Service } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
-import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import {
   useService,
   useServiceFilters,
@@ -40,7 +40,6 @@ import {
 } from "@/lib/queries/services/useServices"
 import { Kanban, List, Plus, Wrench } from "lucide-react"
 import { useState } from "react"
-import { toast } from "sonner"
 
 type ViewMode = "table" | "kanban"
 
@@ -49,33 +48,12 @@ export default function ServicesPage() {
   const canAddService = role === "admin" || role === "manager"
   const [viewMode, setViewMode] = useState<ViewMode>("table")
   const [isArchived, setIsArchived] = useState(false)
-  const [detailsOpen, setDetailsOpen] = useState(false)
-  const [selectedService, setSelectedService] = useState<Service | null>(null)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [completeDialogOpen, setCompleteDialogOpen] = useState(false)
-  const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null)
-  const [serviceToComplete, setServiceToComplete] = useState<Service | null>(
-    null,
-  )
-
-  // Cancel dialog state (for drag-to-cancel and inline cancel)
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
-  const [cancelReason, setCancelReason] = useState("")
-  const [serviceToCancel, setServiceToCancel] = useState<Service | null>(null)
-
-  // Status change state (for confirming transitions)
-  const [statusChangeDialogOpen, setStatusChangeDialogOpen] = useState(false)
-  const [statusChangeTarget, setStatusChangeTarget] = useState<{
-    service: Service
-    newStatus: string
-  } | null>(null)
 
   // Search params
   const searchParams = useSearchParameters()
   const { filter, ordering, search, page, limit } = searchParams
 
   // Data fetching
-  // Use high limit for Kanban view to show all services, normal pagination for table
   const {
     data: services,
     isLoading,
@@ -97,128 +75,20 @@ export default function ServicesPage() {
     isArchived,
   )
 
-  // Mutations
-  const { deleteService, completeService, cancelService, updateService } =
-    useServiceMutations()
+  // All dialog/detail state extracted to hook
+  const state = useServicePageState(refetch)
 
   // Entity sheet for create/edit
   const { entityState, openEntity, closeEntity } = useEntitySheet<Service>()
-
-  const handleView = (service: Service) => {
-    setSelectedService(service)
-    setDetailsOpen(true)
-  }
-
-  // Fetch fresh service data when viewing details
-  const { data: detailService, refetch: refetchService } = useService(
-    selectedService?.id,
-  )
 
   const handleEdit = (service: Service) => {
     openEntity(service)
   }
 
-  const handleDelete = (service: Service) => {
-    setServiceToDelete(service)
-    setDeleteDialogOpen(true)
-  }
-
-  const confirmDelete = () => {
-    if (serviceToDelete) {
-      deleteService.mutate(serviceToDelete.id, {
-        onSuccess: () => {
-          setDeleteDialogOpen(false)
-          setServiceToDelete(null)
-        },
-      })
-    }
-  }
-
-  const handleComplete = (service: Service) => {
-    setServiceToComplete(service)
-    setCompleteDialogOpen(true)
-  }
-
-  const confirmComplete = () => {
-    if (serviceToComplete) {
-      completeService.mutate(serviceToComplete.id, {
-        onSuccess: () => {
-          setCompleteDialogOpen(false)
-          setServiceToComplete(null)
-          refetch()
-        },
-      })
-    }
-  }
-
-  // ── Status change handler (from both table inline buttons & kanban drag) ──
-  const handleStatusChange = (service: Service, newStatus: string) => {
-    if (newStatus === "cancelled") {
-      // Need cancel reason dialog
-      setServiceToCancel(service)
-      setCancelReason("")
-      setCancelDialogOpen(true)
-      return
-    }
-
-    if (newStatus === "completed") {
-      // Use existing complete flow
-      handleComplete(service)
-      return
-    }
-
-    if (newStatus === "in_progress") {
-      // Confirm start progress
-      setStatusChangeTarget({ service, newStatus })
-      setStatusChangeDialogOpen(true)
-      return
-    }
-  }
-
-  const confirmStatusChange = () => {
-    if (!statusChangeTarget) return
-
-    const { service, newStatus } = statusChangeTarget
-
-    updateService.mutate(
-      { id: service.id, data: { status: newStatus as ServiceStatus } },
-      {
-        onSuccess: () => {
-          setStatusChangeDialogOpen(false)
-          setStatusChangeTarget(null)
-          refetch()
-        },
-        onError: () => {
-          toast.error("Failed to update service status")
-          setStatusChangeDialogOpen(false)
-          setStatusChangeTarget(null)
-        },
-      },
-    )
-  }
-
-  const confirmCancel = () => {
-    if (!serviceToCancel) return
-    if (!cancelReason.trim()) {
-      toast.error("Please provide a reason for cancellation")
-      return
-    }
-
-    cancelService.mutate(
-      { id: serviceToCancel.id, reason: cancelReason },
-      {
-        onSuccess: () => {
-          setCancelDialogOpen(false)
-          setServiceToCancel(null)
-          setCancelReason("")
-          refetch()
-        },
-        onError: () => {
-          toast.error("Failed to cancel service")
-        },
-      },
-    )
-  }
+  // Fetch fresh service data when viewing details
+  const { data: detailService, refetch: refetchService } = useService(
+    state.selectedService?.id,
+  )
 
   const handleRestore = (service: Service) => {
     if (service?.id) restoreItem.mutate(service.id)
@@ -237,11 +107,11 @@ export default function ServicesPage() {
       })
     : getServiceColumns({
         role,
-        onView: handleView,
+        onView: state.handleView,
         onEdit: handleEdit,
-        onDelete: handleDelete,
-        onComplete: handleComplete,
-        onStatusChange: handleStatusChange,
+        onDelete: state.handleDelete,
+        onComplete: state.handleComplete,
+        onStatusChange: state.handleStatusChange,
       })
 
   const emptyServices = {
@@ -338,8 +208,8 @@ export default function ServicesPage() {
       ) : (
         <ServiceKanbanBoard
           services={services?.results ?? []}
-          onView={handleView}
-          onStatusChange={handleStatusChange}
+          onView={state.handleView}
+          onStatusChange={state.handleStatusChange}
         />
       )}
 
@@ -373,24 +243,21 @@ export default function ServicesPage() {
       />
 
       {/* Details Sheet */}
-      {detailsOpen && selectedService && (
+      {state.detailsOpen && state.selectedService && (
         <EntitySheet
           withCloseConfirmation
           className="sm:min-w-4xl md:min-w-5xl xl:min-w-6xl"
-          open={detailsOpen}
-          onClose={() => {
-            setDetailsOpen(false)
-            setSelectedService(null)
-          }}
-          title={`Service #${String(selectedService.id).padStart(4, "0")}`}
-          description={`Created ${new Date(selectedService.created_at).toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`}
+          open={state.detailsOpen}
+          onClose={state.closeDetails}
+          title={`Service #${String(state.selectedService.id).padStart(4, "0")}`}
+          description={`Created ${new Date(state.selectedService.created_at).toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`}
           entity={detailService}
           renderForm={() => (
             <ServiceDetail
-              service={detailService || selectedService}
+              service={detailService || state.selectedService!}
               onEdit={() => {
-                setDetailsOpen(false)
-                handleEdit(detailService || selectedService)
+                state.closeDetails()
+                handleEdit(detailService || state.selectedService!)
               }}
               onRefresh={async () => {
                 await refetchService()
@@ -402,60 +269,59 @@ export default function ServicesPage() {
 
       {/* Archive Confirmation Dialog */}
       <ConfirmDialog
-        open={deleteDialogOpen}
-        onCancel={() => setDeleteDialogOpen(false)}
+        open={state.deleteDialog.isOpen}
+        onCancel={state.deleteDialog.close}
         title="Archive Service"
         description={
-          serviceToDelete
-            ? `Are you sure you want to archive service #${serviceToDelete.id}? You can restore it from the Archived tab.`
+          state.deleteDialog.target
+            ? `Are you sure you want to archive service #${state.deleteDialog.target.id}? You can restore it from the Archived tab.`
             : ""
         }
-        onConfirm={confirmDelete}
+        onConfirm={state.confirmDelete}
         confirmText="Archive"
       />
 
       {/* Complete Confirmation Dialog */}
       <ConfirmDialog
-        open={completeDialogOpen}
-        onCancel={() => setCompleteDialogOpen(false)}
+        open={state.completeDialog.isOpen}
+        onCancel={state.completeDialog.close}
         title="Complete Service"
         description={
-          serviceToComplete
-            ? `Complete service #${serviceToComplete.id}? This will finalize stock consumption and create transactions.`
+          state.completeDialog.target
+            ? `Complete service #${state.completeDialog.target.id}? This will finalize stock consumption and create transactions.`
             : ""
         }
-        onConfirm={confirmComplete}
+        onConfirm={state.confirmComplete}
         confirmText="Complete"
       />
 
       {/* Status Change Confirmation Dialog (for pending → in_progress) */}
       <ConfirmDialog
-        open={statusChangeDialogOpen}
-        onCancel={() => {
-          setStatusChangeDialogOpen(false)
-          setStatusChangeTarget(null)
-        }}
+        open={state.statusChangeDialog.isOpen}
+        onCancel={state.statusChangeDialog.close}
         title="Start Service"
         description={
-          statusChangeTarget
-            ? `Move service #${statusChangeTarget.service.id} to "In Progress"? This indicates work has started.`
+          state.statusChangeDialog.target
+            ? `Move service #${state.statusChangeDialog.target.service.id} to "In Progress"? This indicates work has started.`
             : ""
         }
-        onConfirm={confirmStatusChange}
+        onConfirm={state.confirmStatusChange}
         confirmText="Start Progress"
       />
 
       {/* Cancel Service Dialog (with reason) */}
       <Dialog
-        open={cancelDialogOpen}
-        onOpenChange={setCancelDialogOpen}
+        open={state.cancelDialog.isOpen}
+        onOpenChange={(open) => {
+          if (!open) state.cancelDialog.close()
+        }}
       >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Cancel Service</DialogTitle>
             <DialogDescription>
-              {serviceToCancel
-                ? `Cancel service #${serviceToCancel.id}? Please provide a reason.`
+              {state.cancelDialog.target
+                ? `Cancel service #${state.cancelDialog.target.id}? Please provide a reason.`
                 : ""}
             </DialogDescription>
           </DialogHeader>
@@ -465,26 +331,22 @@ export default function ServicesPage() {
               <Textarea
                 id="cancel-reason"
                 placeholder="Enter the reason for cancellation..."
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
+                value={state.cancelReason}
+                onChange={(e) => state.setCancelReason(e.target.value)}
                 rows={3}
               />
             </div>
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
-                onClick={() => {
-                  setCancelDialogOpen(false)
-                  setServiceToCancel(null)
-                  setCancelReason("")
-                }}
+                onClick={state.cancelDialog.close}
               >
                 Keep Service
               </Button>
               <Button
                 variant="destructive"
-                onClick={confirmCancel}
-                disabled={!cancelReason.trim()}
+                onClick={state.confirmCancel}
+                disabled={!state.cancelReason.trim()}
               >
                 Cancel Service
               </Button>

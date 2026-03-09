@@ -34,15 +34,21 @@ export function useDailyAttendances(props: PaginatedFilterProps = {}) {
 }
 
 export function usePendingAttendanceApprovals(
-  props: PaginatedFilterProps = {},
+  props: PaginatedFilterProps & { search?: string } = {},
 ) {
   const employeeId = props.filter?.employee_id
+  const search = props.search
+  const params = new URLSearchParams()
+  if (employeeId) params.set("employee_id", String(employeeId))
+  if (search) params.set("search", search)
+  const qs = params.toString()
   return useApiQuery<DailyAttendance[]>({
     queryKey: [
       "pending-attendance-approvals",
-      `${employeeId ? "employee_id=" + employeeId : "all"}`,
+      employeeId ?? "all",
+      search ?? "",
     ],
-    url: `${attendanceUrl}pending_approvals/${employeeId ? `?employee_id=${employeeId}` : ""}`,
+    url: `${attendanceUrl}pending_approvals/${qs ? `?${qs}` : ""}`,
   })
 }
 

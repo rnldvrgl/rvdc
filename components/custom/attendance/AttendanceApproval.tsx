@@ -7,6 +7,21 @@ import {
 import { UniformPenaltyCheckboxes } from "@/components/custom/attendance/UniformPenaltyCheckboxes"
 import { DataTable } from "@/components/custom/table/DataTable"
 import { Button } from "@/components/ui/button"
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { DailyAttendance } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
@@ -18,28 +33,28 @@ import { ColumnDef } from "@tanstack/react-table"
 import {
   AlertTriangle,
   CheckCircle,
-  ChevronDown,
-  ChevronRight,
   Clock,
   Loader2,
+  ShirtIcon,
   XCircle,
 } from "lucide-react"
-import { Fragment, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 export function AttendanceApproval() {
   const { role } = useCurrentUser()
-  const { filter } = useSearchParameters()
+  const { page, limit, filter, search } = useSearchParameters()
   const [selectedAttendanceId, setSelectedAttendanceId] = useState<
     number | null
   >(null)
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set())
+  const [drawerAttendance, setDrawerAttendance] =
+    useState<DailyAttendance | null>(null)
 
   // Check if user can approve
   const hasApprovalRights = canApprove(role || "")
 
   // Fetch pending approvals
   const { data: pendingApprovals, isLoading: approvalsLoading } =
-    usePendingAttendanceApprovals({ filter })
+    usePendingAttendanceApprovals({ filter, search: search || undefined })
 
   // Mutations
   const { approveAttendance, rejectAttendance } = useAttendanceMutations()
@@ -90,40 +105,8 @@ export function AttendanceApproval() {
     }
   }
 
-  const toggleRow = (attendanceId: number) => {
-    const newExpanded = new Set(expandedRows)
-    if (newExpanded.has(attendanceId)) {
-      newExpanded.delete(attendanceId)
-    } else {
-      newExpanded.add(attendanceId)
-    }
-    setExpandedRows(newExpanded)
-  }
-
   const columns: ColumnDef<DailyAttendance>[] = useMemo(
     () => [
-      {
-        id: "expand",
-        header: "",
-        cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={(e) => {
-              e.stopPropagation()
-              toggleRow(row.original.id)
-            }}
-          >
-            {expandedRows.has(row.original.id) ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </Button>
-        ),
-        enableSorting: false,
-      },
       {
         accessorKey: "employee_name",
         header: "Employee",
@@ -218,64 +201,86 @@ export function AttendanceApproval() {
       },
       {
         id: "actions",
-        header: "Actions",
+        header: "",
         cell: ({ row }) => {
           const attendance = row.original
+          const isBusy = isLoading || selectedAttendanceId === attendance.id
           return (
-            <div className="flex justify-end gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                disabled={isLoading || selectedAttendanceId === attendance.id}
-                onClick={() => handleApprove(attendance.id)}
-              >
-                {selectedAttendanceId === attendance.id &&
-                approveAttendance.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                    Approve
-                  </>
-                )}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                disabled={isLoading || selectedAttendanceId === attendance.id}
-                onClick={() => handleReject(attendance.id)}
-              >
-                {selectedAttendanceId === attendance.id &&
-                rejectAttendance.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <XCircle className="h-4 w-4 mr-1" />
-                    Reject
-                  </>
-                )}
-              </Button>
-            </div>
+            <TooltipProvider delayDuration={0}>
+              <div className="flex justify-end gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
+                      onClick={() => setDrawerAttendance(attendance)}
+                    >
+                      <ShirtIcon className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Uniform Penalties</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
+                      disabled={isBusy}
+                      onClick={() => handleApprove(attendance.id)}
+                    >
+                      {selectedAttendanceId === attendance.id &&
+                      approveAttendance.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Approve</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100"
+                      disabled={isBusy}
+                      onClick={() => handleReject(attendance.id)}
+                    >
+                      {selectedAttendanceId === attendance.id &&
+                      rejectAttendance.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <XCircle className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Reject</TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
           )
         },
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [expandedRows, isLoading, selectedAttendanceId],
+    [isLoading, selectedAttendanceId],
   )
 
-  // Wrap array data into PaginatedResult format for DataTable
-  const paginatedData = useMemo(
-    () => ({
-      count: pendingApprovals?.length ?? 0,
-      next: null,
-      previous: null,
-      results: pendingApprovals ?? [],
-    }),
-    [pendingApprovals],
-  )
+  // Slice array data for the current page (DataTable uses manualPagination)
+  const paginatedData = useMemo(() => {
+    const all = pendingApprovals ?? []
+    const start = (page - 1) * limit
+    const sliced = all.slice(start, start + limit)
+    return {
+      count: all.length,
+      next: start + limit < all.length ? "next" : null,
+      previous: page > 1 ? "prev" : null,
+      results: sliced,
+    }
+  }, [pendingApprovals, page, limit])
 
   if (!hasApprovalRights) {
     return null
@@ -310,20 +315,34 @@ export function AttendanceApproval() {
         emptyDescription="No pending attendance records to review."
       />
 
-      {/* Expanded Uniform Penalty rows rendered below the table */}
-      {pendingApprovals?.map(
-        (attendance) =>
-          expandedRows.has(attendance.id) && (
-            <Fragment key={`uniform-${attendance.id}`}>
-              <div className="border rounded-md p-4 -mt-2 mb-2 bg-muted/20">
-                <p className="text-sm font-medium mb-2">
-                  Uniform Penalties — {attendance.employee_name}
-                </p>
-                <UniformPenaltyCheckboxes attendance={attendance} />
-              </div>
-            </Fragment>
-          ),
-      )}
+      {/* Uniform Penalty Drawer */}
+      <Drawer
+        direction="right"
+        open={!!drawerAttendance}
+        onOpenChange={(open) => {
+          if (!open) setDrawerAttendance(null)
+        }}
+      >
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Uniform Penalties</DrawerTitle>
+            <DrawerDescription>
+              {drawerAttendance?.employee_name} —{" "}
+              {drawerAttendance && formatDate(drawerAttendance.date)}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-4">
+            {drawerAttendance && (
+              <UniformPenaltyCheckboxes attendance={drawerAttendance} />
+            )}
+          </div>
+          <DrawerFooter>
+            <DrawerClose asChild>
+              <Button variant="outline">Close</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </>
   )
 }

@@ -13,6 +13,12 @@ import {
   safeCell,
 } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
+import {
+  getServiceModeLabel,
+  getServiceStatusLabel,
+  getServiceTypeBadgeClass,
+  getServiceTypeLabel,
+} from "@/lib/utils/helpers/service"
 import { ColumnDef } from "@tanstack/react-table"
 import { formatDistanceToNow } from "date-fns"
 import {
@@ -27,29 +33,6 @@ import {
   Trash2,
   Truck,
 } from "lucide-react"
-
-// --- Labels ---
-export const serviceTypeLabels: Record<string, string> = {
-  repair: "Repair",
-  dismantle: "Dismantle",
-  inspection: "Inspection",
-  cleaning: "Cleaning",
-  motor_rewind: "Motor Rewind",
-  installation: "Installation",
-}
-
-export const serviceModeLabels: Record<string, string> = {
-  home_service: "Home Service",
-  carry_in: "Carry In",
-  pull_out: "Pull-Out",
-}
-
-export const serviceStatusLabels: Record<string, string> = {
-  pending: "Pending",
-  in_progress: "In Progress",
-  completed: "Completed",
-  cancelled: "Cancelled",
-}
 
 // --- Helpers ---
 
@@ -251,22 +234,6 @@ export const applianceStatusLabels: Record<string, string> = {
   installed: "Installed",
 }
 
-// --- Service type color mapping ---
-export const serviceTypeColors: Record<string, string> = {
-  repair:
-    "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
-  dismantle:
-    "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800",
-  inspection:
-    "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-sky-400 dark:border-sky-800",
-  cleaning:
-    "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800",
-  motor_rewind:
-    "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800",
-  installation:
-    "bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:border-violet-800",
-}
-
 // --- Column definition ---
 
 interface GetServiceColumnsProps extends GetColumnsProps<Service> {
@@ -346,7 +313,7 @@ export function getServiceColumns({
               variant={getBadgeVariant(value)}
               className="text-[11px]"
             >
-              {serviceStatusLabels[value] || safeCell(value)}
+              {getServiceStatusLabel(value)}
             </Badge>
           )
         }
@@ -369,7 +336,7 @@ export function getServiceColumns({
               variant={getBadgeVariant(value)}
               className="text-[11px] cursor-default"
             >
-              {serviceStatusLabels[value] || safeCell(value)}
+              {getServiceStatusLabel(value)}
             </Badge>
             {transitions.map((t) => (
               <Tooltip key={t.status}>
@@ -401,22 +368,20 @@ export function getServiceColumns({
       header: "Service",
       cell: ({ row }) => {
         const service = row.original
-        const typeColor = serviceTypeColors[service.service_type] || ""
+        const typeColor = getServiceTypeBadgeClass(service.service_type)
         return (
           <div className="flex flex-wrap gap-0.5">
             <Badge
               variant="outline"
               className={`text-[10px] px-1.5 py-0 ${typeColor}`}
             >
-              {serviceTypeLabels[service.service_type] ||
-                safeCell(service.service_type)}
+              {getServiceTypeLabel(service.service_type)}
             </Badge>
             <Badge
               variant="secondary"
               className="text-[10px] px-1.5 py-0"
             >
-              {serviceModeLabels[service.service_mode] ||
-                safeCell(service.service_mode)}
+              {getServiceModeLabel(service.service_mode)}
             </Badge>
           </div>
         )

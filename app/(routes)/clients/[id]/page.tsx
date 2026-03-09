@@ -1,7 +1,9 @@
 "use client"
 
+import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
+import ServiceDetail from "@/components/services/ServiceDetail"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -12,46 +14,42 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { Service, ServicePayment } from "@/lib/constants/interface"
 import { useClient } from "@/lib/queries/clients/useClients"
-import { useServices } from "@/lib/queries/services/useServices"
+import { useService, useServices } from "@/lib/queries/services/useServices"
 import { formatCurrency } from "@/lib/utils/currency"
 import { getBadgeVariant } from "@/lib/utils/helpers"
+import {
+  getServiceModeLabel,
+  getServiceStatusLabel,
+  getServiceTypeBadgeClass,
+  getServiceTypeLabel,
+} from "@/lib/utils/helpers/service"
 import { format } from "date-fns"
 import {
   ArrowLeft,
   Ban,
   Calendar,
   CreditCard,
+  DollarSign,
   MapPin,
   Phone,
+  Receipt,
   User,
+  Wallet,
   Wrench,
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
-
-const serviceTypeLabels: Record<string, string> = {
-  repair: "Repair",
-  dismantle: "Dismantle",
-  inspection: "Inspection",
-  cleaning: "Cleaning",
-  motor_rewind: "Motor Rewind",
-  installation: "Installation",
-}
-
-const serviceModeLabels: Record<string, string> = {
-  home_service: "Home Service",
-  carry_in: "Carry In",
-  pull_out: "Pull-Out",
-}
-
-const serviceStatusLabels: Record<string, string> = {
-  pending: "Pending",
-  in_progress: "In Progress",
-  completed: "Completed",
-  cancelled: "Cancelled",
-}
+import { useState } from "react"
 
 const paymentStatusLabels: Record<string, string> = {
   unpaid: "Unpaid",
@@ -85,16 +83,36 @@ function formatDateTime(dateStr: string) {
   }
 }
 
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+}
+
 export default function ClientDetailPage() {
   const params = useParams()
   const router = useRouter()
   const clientId = params.id as string
 
   const { data: client, isLoading: clientLoading } = useClient(clientId)
-  const { data: servicesData, isLoading: servicesLoading } = useServices({
+  const {
+    data: servicesData,
+    isLoading: servicesLoading,
+    refetch: refetchServices,
+  } = useServices({
     filter: { client: clientId },
     limit: 100,
   })
+
+  // Service detail sheet state
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const { data: detailService, refetch: refetchService } = useService(
+    selectedService?.id,
+  )
 
   const services = servicesData?.results ?? []
 
@@ -102,6 +120,7 @@ export default function ClientDetailPage() {
   const allPayments: (ServicePayment & {
     service_id: number
     service_type: string
+    received_by_name?: string
   })[] = []
   services.forEach((service: Service) => {
     service.payments?.forEach((payment) => {
@@ -109,6 +128,8 @@ export default function ClientDetailPage() {
         ...payment,
         service_id: service.id,
         service_type: service.service_type,
+        received_by_name: (payment as unknown as Record<string, unknown>)
+          .received_by_name as string | undefined,
       })
     })
   })
@@ -131,6 +152,16 @@ export default function ClientDetailPage() {
     (sum: number, s: Service) => sum + parseFloat(s.balance_due || "0"),
     0,
   )
+
+  const handleViewService = (service: Service) => {
+    setSelectedService(service)
+    setDetailsOpen(true)
+  }
+
+  const handleCloseDetails = () => {
+    setDetailsOpen(false)
+    setSelectedService(null)
+  }
 
   if (clientLoading) {
     return (
@@ -188,78 +219,101 @@ export default function ClientDetailPage() {
         }
       />
 
-      {/* Client Info */}
+      {/* Client Details */}
       <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <User className="h-6 w-6 text-primary" />
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">{client.full_name}</h2>
-                  {client.is_blocklisted && (
-                    <Badge
-                      variant="destructive"
-                      className="gap-1"
-                    >
-                      <Ban className="h-3 w-3" />
-                      Blocklisted
-                    </Badge>
-                  )}
-                </div>
-                {client.contact_number && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="h-3.5 w-3.5" />
-                    {client.contact_number}
-                  </div>
-                )}
-                {address && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {address}
-                  </div>
-                )}
-                {client.created_at && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    Client since {formatDate(client.created_at)}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Summary Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="text-center px-3 py-2 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">Services</p>
-                <p className="text-lg font-semibold">{totalServices}</p>
-              </div>
-              <div className="text-center px-3 py-2 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">Revenue</p>
-                <p className="text-lg font-semibold">
-                  {formatCurrency(totalRevenue)}
-                </p>
-              </div>
-              <div className="text-center px-3 py-2 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">Paid</p>
-                <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                  {formatCurrency(totalPaid)}
-                </p>
-              </div>
-              <div className="text-center px-3 py-2 rounded-lg bg-muted/50">
-                <p className="text-xs text-muted-foreground">Balance</p>
-                <p
-                  className={`text-lg font-semibold ${totalBalance > 0 ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}
-                >
-                  {formatCurrency(totalBalance)}
-                </p>
-              </div>
-            </div>
+        <CardContent className="flex items-start gap-4">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-bold">
+            {getInitials(client.full_name)}
+          </div>
+          <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+            {client.is_blocklisted && (
+              <Badge
+                variant="destructive"
+                className="gap-1 w-fit"
+              >
+                <Ban className="h-3 w-3" />
+                Blocklisted
+              </Badge>
+            )}
+            {client.contact_number && (
+              <span className="flex items-center gap-1.5">
+                <Phone className="h-3.5 w-3.5 shrink-0" />
+                {client.contact_number}
+              </span>
+            )}
+            {address && (
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                {address}
+              </span>
+            )}
+            {client.created_at && (
+              <span className="flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 shrink-0" />
+                Client since {formatDate(client.created_at)}
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Card>
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-500/10">
+              <Wrench className="h-4 w-4 text-blue-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Services</p>
+              <p className="text-lg font-semibold leading-none truncate">
+                {totalServices}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-purple-500/10">
+              <Receipt className="h-4 w-4 text-purple-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Revenue</p>
+              <p className="text-lg font-semibold leading-none truncate">
+                {formatCurrency(totalRevenue)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-green-500/10">
+              <DollarSign className="h-4 w-4 text-green-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Paid</p>
+              <p className="text-lg font-semibold leading-none truncate text-green-600 dark:text-green-400">
+                {formatCurrency(totalPaid)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="flex items-center gap-3 p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-red-500/10">
+              <Wallet className="h-4 w-4 text-red-500" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Balance</p>
+              <p
+                className={`text-lg font-semibold leading-none truncate ${totalBalance > 0 ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}
+              >
+                {formatCurrency(totalBalance)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Services & Payments Tabs */}
       <Tabs
@@ -284,168 +338,175 @@ export default function ClientDetailPage() {
         </TabsList>
 
         {/* Services Tab */}
-        <TabsContent
-          value="services"
-          className="space-y-3"
-        >
-          {servicesLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton
-                  key={i}
-                  className="h-24 w-full"
-                />
-              ))}
-            </div>
-          ) : services.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                No services found for this client.
-              </CardContent>
-            </Card>
-          ) : (
-            services.map((service: Service) => (
-              <Card
-                key={service.id}
-                className="hover:bg-muted/30 transition-colors"
-              >
-                <CardContent className="py-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium">#{service.id}</span>
-                        <Badge variant="outline">
-                          {serviceTypeLabels[service.service_type] ||
-                            service.service_type}
-                        </Badge>
-                        <Badge variant="secondary">
-                          {serviceModeLabels[service.service_mode] ||
-                            service.service_mode}
-                        </Badge>
-                        <Badge variant={getBadgeVariant(service.status)}>
-                          {serviceStatusLabels[service.status] ||
-                            service.status}
-                        </Badge>
-                      </div>
-                      {service.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-1">
-                          {service.description}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        <span>{formatDate(service.created_at)}</span>
-                        {service.stall && <span>• {service.stall.name}</span>}
-                        {service.appliances &&
-                          service.appliances.length > 0 && (
-                            <span>
-                              • {service.appliances.length} appliance
-                              {service.appliances.length !== 1 ? "s" : ""}
-                            </span>
-                          )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 shrink-0">
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {formatCurrency(service.total_revenue)}
-                        </p>
-                        <Badge
-                          variant={getBadgeVariant(service.payment_status)}
-                          className="text-xs"
-                        >
-                          {paymentStatusLabels[service.payment_status] ||
-                            service.payment_status}
-                        </Badge>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          router.push(`/services?search=${service.id}`)
-                        }
+        <TabsContent value="services">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Service History</CardTitle>
+              <CardDescription>
+                All services requested by this client
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-2 pb-2 pt-0">
+              {servicesLoading ? (
+                <div className="space-y-3 p-4">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton
+                      key={i}
+                      className="h-10 w-full"
+                    />
+                  ))}
+                </div>
+              ) : services.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground">
+                  No services found for this client.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-20">ID</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead className="hidden sm:table-cell">
+                        Mode
+                      </TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Date
+                      </TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Payment</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {services.map((service: Service) => (
+                      <TableRow
+                        key={service.id}
+                        className="cursor-pointer"
+                        onClick={() => handleViewService(service)}
                       >
-                        View
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Payments for this service */}
-                  {service.payments && service.payments.length > 0 && (
-                    <div className="mt-3 pt-3 border-t">
-                      <p className="text-xs font-medium text-muted-foreground mb-2">
-                        Payments ({service.payments.length})
-                      </p>
-                      <div className="space-y-1.5">
-                        {service.payments.map((payment) => (
-                          <div
-                            key={payment.id}
-                            className="flex items-center justify-between text-sm px-3 py-1.5 rounded bg-muted/40"
+                        <TableCell className="font-medium">
+                          #{String(service.id).padStart(4, "0")}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={`text-xs ${getServiceTypeBadgeClass(service.service_type)}`}
                           >
-                            <div className="flex items-center gap-2">
-                              <Badge
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                {paymentTypeLabels[payment.payment_type] ||
-                                  payment.payment_type}
-                              </Badge>
-                              <span className="text-muted-foreground text-xs">
-                                {formatDateTime(payment.payment_date)}
-                              </span>
-                            </div>
-                            <span className="font-medium">
-                              {formatCurrency(payment.amount)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
+                            {getServiceTypeLabel(service.service_type)}
+                          </Badge>
+                          {service.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-1">
+                              {service.description}
+                            </p>
+                          )}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {getServiceModeLabel(service.service_mode)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={getBadgeVariant(service.status)}
+                            className="text-xs"
+                          >
+                            {getServiceStatusLabel(service.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+                          {formatDate(service.created_at)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(service.total_revenue)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Badge
+                            variant={getBadgeVariant(service.payment_status)}
+                            className="text-xs"
+                          >
+                            {paymentStatusLabels[service.payment_status] ||
+                              service.payment_status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Payments Tab */}
-        <TabsContent
-          value="payments"
-          className="space-y-3"
-        >
-          {servicesLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton
-                  key={i}
-                  className="h-16 w-full"
-                />
-              ))}
-            </div>
-          ) : allPayments.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
-                No payments found for this client.
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Payment History</CardTitle>
-                <CardDescription>
-                  All payments across {totalServices} service
-                  {totalServices !== 1 ? "s" : ""}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {allPayments.map((payment) => (
-                    <div
-                      key={payment.id}
-                      className="flex items-center justify-between py-3 px-4 rounded-lg hover:bg-muted/50 transition-colors border"
-                    >
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
+        <TabsContent value="payments">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Payment History</CardTitle>
+              <CardDescription>
+                All payments across all services
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-2 pb-2 pt-0">
+              {servicesLoading ? (
+                <div className="space-y-3 p-4">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton
+                      key={i}
+                      className="h-10 w-full"
+                    />
+                  ))}
+                </div>
+              ) : allPayments.length === 0 ? (
+                <div className="py-12 text-center text-muted-foreground">
+                  No payments found for this client.
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Service</TableHead>
+                      <TableHead className="hidden sm:table-cell">
+                        Method
+                      </TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Received By
+                      </TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {allPayments.map((payment) => (
+                      <TableRow
+                        key={payment.id}
+                        className="cursor-pointer"
+                        onClick={() => {
+                          const svc = services.find(
+                            (s: Service) => s.id === payment.service_id,
+                          )
+                          if (svc) handleViewService(svc)
+                        }}
+                      >
+                        <TableCell className="text-sm">
+                          {formatDateTime(payment.payment_date)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">
+                              #{String(payment.service_id).padStart(4, "0")}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${getServiceTypeBadgeClass(payment.service_type)}`}
+                            >
+                              {getServiceTypeLabel(payment.service_type)}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <Badge
                             variant="outline"
                             className="text-xs"
@@ -453,43 +514,43 @@ export default function ClientDetailPage() {
                             {paymentTypeLabels[payment.payment_type] ||
                               payment.payment_type}
                           </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            Service #{payment.service_id}
-                          </span>
-                          <Badge
-                            variant="secondary"
-                            className="text-xs"
-                          >
-                            {serviceTypeLabels[payment.service_type] ||
-                              payment.service_type}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{formatDateTime(payment.payment_date)}</span>
-                          {payment.received_by && (
-                            <span>
-                              • Received by {payment.received_by.first_name}{" "}
-                              {payment.received_by.last_name}
-                            </span>
-                          )}
-                        </div>
-                        {payment.notes && (
-                          <p className="text-xs text-muted-foreground">
-                            {payment.notes}
-                          </p>
-                        )}
-                      </div>
-                      <span className="font-semibold text-green-600 dark:text-green-400">
-                        {formatCurrency(payment.amount)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                          {payment.received_by_name || "—"}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold text-green-600 dark:text-green-400">
+                          {formatCurrency(payment.amount)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Service Detail Sheet */}
+      {detailsOpen && selectedService && (
+        <EntitySheet
+          className="sm:min-w-4xl md:min-w-5xl xl:min-w-6xl"
+          open={detailsOpen}
+          onClose={handleCloseDetails}
+          title={`Service #${String(selectedService.id).padStart(4, "0")}`}
+          description={`Created ${new Date(selectedService.created_at).toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`}
+          entity={detailService}
+          renderForm={() => (
+            <ServiceDetail
+              service={detailService || selectedService}
+              onRefresh={async () => {
+                await refetchService()
+                await refetchServices()
+              }}
+            />
+          )}
+        />
+      )}
     </Wrapper>
   )
 }
