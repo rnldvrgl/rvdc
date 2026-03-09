@@ -29,8 +29,8 @@ import type {
   Service,
   ServicePayment,
 } from "@/lib/constants/interface"
-import { useClient } from "@/lib/queries/clients/useClients"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
+import { useClient } from "@/lib/queries/clients/useClients"
 import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useService, useServices } from "@/lib/queries/services/useServices"
 import { formatCurrency } from "@/lib/utils/currency"
