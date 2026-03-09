@@ -531,7 +531,7 @@ export default function QuotationForm({
         </div>
 
         {/* Header (desktop) */}
-        <div className="hidden sm:grid sm:grid-cols-[2fr_80px_120px_36px] gap-2 mb-1.5 px-1">
+        <div className="hidden sm:grid sm:grid-cols-[1fr_70px_110px_36px] gap-2 mb-1.5 px-1">
           <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
             Description
           </span>
@@ -548,75 +548,54 @@ export default function QuotationForm({
           {items.map((item) => (
             <div
               key={item.id}
-              className="group flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-2.5 sm:grid sm:grid-cols-[2fr_80px_120px_36px] sm:gap-2 sm:items-center sm:border-0 sm:bg-transparent sm:p-0 sm:rounded-none"
+              className="group flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-2.5 sm:grid sm:grid-cols-[1fr_70px_110px_36px] sm:gap-2 sm:items-center sm:border-0 sm:bg-transparent sm:p-0 sm:rounded-none"
             >
-              <div>
-                <Label className="text-xs text-muted-foreground sm:hidden mb-1 block">
-                  Description
-                </Label>
-                <Input
-                  value={item.description}
-                  onChange={(e) =>
-                    updateItem(item.id, "description", e.target.value)
-                  }
-                  placeholder="Item description..."
-                  className="h-9"
-                />
-              </div>
-              <div className="grid grid-cols-[1fr_1fr_auto] gap-2 sm:contents">
-                <div>
-                  <Label className="text-xs text-muted-foreground sm:hidden mb-1 block">
-                    Qty
-                  </Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={item.qty}
-                    onChange={(e) =>
-                      updateItem(
-                        item.id,
-                        "qty",
-                        Math.max(1, parseInt(e.target.value) || 1),
-                      )
-                    }
-                    className="h-9"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground sm:hidden mb-1 block">
-                    Price
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={item.price || ""}
-                    onChange={(e) =>
-                      updateItem(
-                        item.id,
-                        "price",
-                        parseFloat(e.target.value) || 0,
-                      )
-                    }
-                    placeholder="0.00"
-                    className="h-9"
-                  />
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 text-muted-foreground hover:text-destructive opacity-60 hover:opacity-100 self-end sm:self-auto"
-                      onClick={() => removeItem(item.id)}
-                      disabled={items.length === 1}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Remove item</TooltipContent>
-                </Tooltip>
-              </div>
+              <Input
+                value={item.description}
+                onChange={(e) =>
+                  updateItem(item.id, "description", e.target.value)
+                }
+                placeholder="Item description..."
+                className="h-9"
+              />
+              <Input
+                type="number"
+                min={1}
+                value={item.qty}
+                onChange={(e) =>
+                  updateItem(
+                    item.id,
+                    "qty",
+                    Math.max(1, parseInt(e.target.value) || 1),
+                  )
+                }
+                className="h-9"
+              />
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={item.price || ""}
+                onChange={(e) =>
+                  updateItem(item.id, "price", parseFloat(e.target.value) || 0)
+                }
+                placeholder="0.00"
+                className="h-9"
+              />
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-destructive opacity-60 hover:opacity-100"
+                    onClick={() => removeItem(item.id)}
+                    disabled={items.length === 1}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Remove item</TooltipContent>
+              </Tooltip>
             </div>
           ))}
         </div>
@@ -761,12 +740,36 @@ export default function QuotationForm({
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Date</Label>
               <div className="flex items-center gap-1.5">
-                <Input
-                  type="date"
-                  value={authorizedDate}
-                  onChange={(e) => setAuthorizedDate(e.target.value)}
-                  className="h-8 text-sm flex-1"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal h-8 text-sm",
+                        !authorizedDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                      {authorizedDate
+                        ? format(new Date(authorizedDate), "MMM dd, yyyy")
+                        : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0"
+                    align="start"
+                  >
+                    <Calendar
+                      mode="single"
+                      selected={
+                        authorizedDate ? new Date(authorizedDate) : undefined
+                      }
+                      onSelect={(d) =>
+                        setAuthorizedDate(d ? format(d, "yyyy-MM-dd") : "")
+                      }
+                    />
+                  </PopoverContent>
+                </Popover>
                 {authorizedDate && (
                   <Button
                     type="button"
@@ -801,12 +804,40 @@ export default function QuotationForm({
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Date</Label>
               <div className="flex items-center gap-1.5">
-                <Input
-                  type="date"
-                  value={clientAcceptanceDate}
-                  onChange={(e) => setClientAcceptanceDate(e.target.value)}
-                  className="h-8 text-sm flex-1"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal h-8 text-sm",
+                        !clientAcceptanceDate && "text-muted-foreground",
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                      {clientAcceptanceDate
+                        ? format(new Date(clientAcceptanceDate), "MMM dd, yyyy")
+                        : "Pick a date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto p-0"
+                    align="start"
+                  >
+                    <Calendar
+                      mode="single"
+                      selected={
+                        clientAcceptanceDate
+                          ? new Date(clientAcceptanceDate)
+                          : undefined
+                      }
+                      onSelect={(d) =>
+                        setClientAcceptanceDate(
+                          d ? format(d, "yyyy-MM-dd") : "",
+                        )
+                      }
+                    />
+                  </PopoverContent>
+                </Popover>
                 {clientAcceptanceDate && (
                   <Button
                     type="button"

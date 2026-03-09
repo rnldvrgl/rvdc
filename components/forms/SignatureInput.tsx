@@ -27,7 +27,7 @@ export default function SignatureInput({
 }: SignatureInputProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [mode, setMode] = useState<Mode>(value ? "upload" : "draw")
+  const [mode, setMode] = useState<Mode>("upload")
   const [isDrawing, setIsDrawing] = useState(false)
   const [hasContent, setHasContent] = useState(!!value)
 
