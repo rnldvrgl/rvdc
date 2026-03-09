@@ -188,6 +188,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Wrench,
     permission: "view_services",
   },
+  quotation: {
+    name: "Quotations",
+    href: "/quotations",
+    icon: FileText,
+    permission: "view_quotations",
+  },
   aircons: {
     name: "Airconditioning",
     icon: Wind,
@@ -304,6 +310,7 @@ export const orderedNavigation: NavigationEntry[] = [
   // Core Business Operations
   baseNavigation.sales,
   baseNavigation.services,
+  baseNavigation.quotation,
   baseNavigation.receivables,
   baseNavigation.expenses,
   baseNavigation.inventory,

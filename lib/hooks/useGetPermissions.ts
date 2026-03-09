@@ -41,6 +41,7 @@ export function useGetPermissions(
       "view_payment_collection",
       "view_remittances",
       "view_reports",
+      "view_quotations",
     ]
 
     // Admin, Manager, and Clerk permissions for shortcuts

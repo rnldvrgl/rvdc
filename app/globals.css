@@ -170,18 +170,86 @@
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--border)) transparent;
   }
+}
 
-  @keyframes fall {
-    0% {
-      transform: translateY(-100vh) rotate(0deg);
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(100vh) rotate(360deg);
-      opacity: 0.3;
-    }
+/* A4 Print Styles for Quotation */
+@media print {
+  @page {
+    size: A4;
+    margin: 0.75in;
   }
-  .animate-fall {
-    animation: fall linear infinite;
+
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
+
+  /* Hide everything except the print content */
+  body > *:not(.quotation-print) {
+    display: none !important;
+  }
+
+  nav,
+  header,
+  aside,
+  footer,
+  [data-sidebar],
+  [data-topbar] {
+    display: none !important;
+  }
+
+  .quotation-print {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .quotation-print * {
+    color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .quotation-print table thead tr {
+    background-color: #1f2937 !important;
+    color: white !important;
+  }
+
+  .quotation-print table tbody tr:nth-child(even) {
+    background-color: #f9fafb !important;
+  }
+
+  /* Multi-page support */
+  .quotation-print {
+    height: auto !important;
+  }
+
+  .quotation-print table tbody tr {
+    page-break-inside: avoid;
+  }
+
+  .quotation-print > div {
+    page-break-inside: avoid;
+  }
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+.animate-fall {
+  animation: fall linear infinite;
 }

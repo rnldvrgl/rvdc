@@ -106,6 +106,81 @@ export type Client = BaseEntity & {
 
 export type ClientPayload = Omit<Client, keyof BaseEntity>
 
+// Quotation
+export type QuotationStatus = "draft" | "sent" | "accepted" | "declined"
+
+export type QuotationItem = {
+  id?: number
+  description: string
+  quantity: number
+  unit_price: number
+  total_price?: number
+}
+
+export type Quotation = BaseEntity & {
+  client?: number | null
+  client_data?: Client | null
+  client_name: string
+  client_address: string
+  client_contact: string
+  quote_date: string
+  valid_until: string
+  project_description: string
+  subtotal: number
+  discount_amount: number
+  total: number
+  terms_conditions: string
+  payment_terms: string
+  status: QuotationStatus
+  authorized_signature: string
+  client_signature: string
+  items: QuotationItem[]
+  created_by?: number
+  created_by_name?: string
+  item_count?: number
+  deleted_at?: string | null
+}
+
+export type QuotationPayload = {
+  client?: number | null
+  client_name: string
+  client_address: string
+  client_contact: string
+  quote_date: string
+  valid_until: string
+  project_description: string
+  discount_amount: number
+  terms_conditions: string
+  payment_terms: string
+  status?: QuotationStatus
+  authorized_signature?: string
+  client_signature?: string
+  items: Omit<QuotationItem, "id" | "total_price">[]
+}
+
+export type QuotationTermsTemplateCategory =
+  | "terms_conditions"
+  | "payment_terms"
+
+export type QuotationTermsTemplate = {
+  id: number
+  name: string
+  category: QuotationTermsTemplateCategory
+  lines: string[]
+  is_default: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type QuotationTermsTemplatePayload = {
+  name: string
+  category: QuotationTermsTemplateCategory
+  lines: string[]
+  is_default?: boolean
+  is_active?: boolean
+}
+
 // Employee (formerly Technician)
 export type Employee = BaseEntity & {
   username?: string
