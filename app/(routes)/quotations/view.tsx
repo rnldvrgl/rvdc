@@ -343,56 +343,41 @@ const QuotationPrintContent = React.forwardRef<
             </tr>
           )}
         </tbody>
-        {/* TOTALS — inside the table for perfect alignment */}
-        <tfoot>
-          {/* NOTES row */}
-          {q.notes && (
-            <tr>
-              <td
-                colSpan={4}
-                className="py-2 px-3 text-[11px] text-gray-600 italic border-b border-gray-200 whitespace-pre-line"
-              >
-                Note/s: {q.notes}
-              </td>
-            </tr>
-          )}
-          <tr>
-            <td
-              colSpan={3}
-              className="text-right py-2 px-3 border-b border-gray-200 text-gray-600"
-            >
-              Subtotal
-            </td>
-            <td className="text-right py-2 px-3 border-b border-gray-200">
-              &#8369;{formatCurrency(Number(q.subtotal))}
-            </td>
-          </tr>
-          {Number(q.discount_amount) > 0 && (
-            <tr>
-              <td
-                colSpan={3}
-                className="text-right py-2 px-3 border-b border-gray-200 text-red-600"
-              >
-                Discount
-              </td>
-              <td className="text-right py-2 px-3 border-b border-gray-200 text-red-600">
-                -&#8369;{formatCurrency(Number(q.discount_amount))}
-              </td>
-            </tr>
-          )}
-          <tr className="bg-gray-800 text-white">
-            <td
-              colSpan={3}
-              className="text-right py-2 px-3 font-bold text-[13px]"
-            >
-              Total
-            </td>
-            <td className="text-right py-2 px-3 font-bold text-[13px]">
-              &#8369;{formatCurrency(Number(q.total))}
-            </td>
-          </tr>
-        </tfoot>
       </table>
+
+      {/* NOTES */}
+      {q.notes && (
+        <div className="text-[11px] text-gray-600 italic py-2 px-3 mb-2 bg-gray-50 border-b border-gray-200 whitespace-pre-line">
+          Note/s: {q.notes}
+        </div>
+      )}
+
+      {/* TOTALS — outside table to prevent duplication on page breaks */}
+      <div className="quotation-totals mb-6">
+        <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-200 text-[12px] text-gray-600">
+          <span></span>
+          <span className="text-right">Subtotal</span>
+          <span className="text-right">
+            &#8369;{formatCurrency(Number(q.subtotal))}
+          </span>
+        </div>
+        {Number(q.discount_amount) > 0 && (
+          <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-200 text-[12px] text-red-600">
+            <span></span>
+            <span className="text-right">Discount</span>
+            <span className="text-right">
+              -&#8369;{formatCurrency(Number(q.discount_amount))}
+            </span>
+          </div>
+        )}
+        <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 bg-gray-800 text-white font-bold text-[13px]">
+          <span></span>
+          <span className="text-right">Total</span>
+          <span className="text-right">
+            &#8369;{formatCurrency(Number(q.total))}
+          </span>
+        </div>
+      </div>
 
       {/* TERMS & CONDITIONS */}
       {q.terms_conditions && (
@@ -424,83 +409,86 @@ const QuotationPrintContent = React.forwardRef<
         </div>
       )}
 
-      {/* APPROVAL NOTE */}
-      <div className="text-[11px] text-gray-600 mb-6 leading-relaxed text-center">
-        <p>
-          This quotation has been approved by RVDC Ref & Aircon Repair Shop as
-          evidenced by the signature of its authorized representative below.
-        </p>
-        <p className="mt-2">
-          If you have any questions concerning this quotation, please contact
-          RVDC Ref & Aircon Repair Shop at{" "}
-          <span className="font-semibold">0936-667-8269</span>.
-        </p>
-        <p className="mt-2 italic">
-          Thank you for giving us the opportunity to quote and we look forward
-          to working with you.
-        </p>
-      </div>
-
-      {/* SIGNATURES */}
-      <div className="grid grid-cols-2 gap-12 mt-10 text-[12px] text-center">
-        <div className="flex flex-col relative">
-          <p className="font-semibold mb-2">Authorized Representative:</p>
-          {q.authorized_signature ? (
-            <div className="mb-18">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={q.authorized_signature}
-                alt="Authorized signature"
-                className="h-18 object-contain absolute top-6 left-1/2 transform -translate-x-1/2"
-              />
-            </div>
-          ) : (
-            <div className="mb-18" />
-          )}
-          <div>
-            <div className="border-b border-gray-800 mb-1" />
-            {q.authorized_name ? (
-              <p className="text-[11px] font-semibold uppercase">
-                {q.authorized_name}
-              </p>
-            ) : (
-              <p className="text-[11px] text-gray-500">Printed Name</p>
-            )}
-            {q.authorized_name && q.authorized_date && (
-              <p className="text-[11px] text-gray-500">
-                {format(new Date(q.authorized_date), "MMMM dd, yyyy")}
-              </p>
-            )}
-          </div>
+      {/* APPROVAL NOTE & SIGNATURES - Keep together on same page */}
+      <div className="signature-section">
+        {/* APPROVAL NOTE */}
+        <div className="text-[11px] text-gray-600 mb-6 leading-relaxed text-center">
+          <p>
+            This quotation has been approved by RVDC Ref & Aircon Repair Shop as
+            evidenced by the signature of its authorized representative below.
+          </p>
+          <p className="mt-2">
+            If you have any questions concerning this quotation, please contact
+            RVDC Ref & Aircon Repair Shop at{" "}
+            <span className="font-semibold">0936-667-8269</span>.
+          </p>
+          <p className="mt-2 italic">
+            Thank you for giving us the opportunity to quote and we look forward
+            to working with you.
+          </p>
         </div>
-        <div className="flex flex-col relative">
-          <p className="font-semibold mb-2">Client Acceptance:</p>
-          {q.client_signature ? (
-            <div className="mb-18">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={q.client_signature}
-                alt="Client signature"
-                className="h-18 object-contain absolute  top-6 left-1/2 transform -translate-x-1/2"
-              />
-            </div>
-          ) : (
-            <div className="mb-18" />
-          )}
-          <div>
-            <div className="border-b border-gray-800 mb-1" />
-            {q.client_acceptance_name ? (
-              <p className="text-[11px] font-semibold uppercase">
-                {q.client_acceptance_name}
-              </p>
+
+        {/* SIGNATURES */}
+        <div className="grid grid-cols-2 gap-12 mt-10 text-[12px] text-center">
+          <div className="flex flex-col relative">
+            <p className="font-semibold mb-2">Authorized Representative:</p>
+            {q.authorized_signature ? (
+              <div className="mb-18">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={q.authorized_signature}
+                  alt="Authorized signature"
+                  className="h-18 object-contain absolute top-6 left-1/2 transform -translate-x-1/2"
+                />
+              </div>
             ) : (
-              <p className="text-[11px] text-gray-500">Printed Name</p>
+              <div className="mb-18" />
             )}
-            {q.client_acceptance_name && q.client_acceptance_date && (
-              <p className="text-[11px] text-gray-500">
-                {format(new Date(q.client_acceptance_date), "MMMM dd, yyyy")}
-              </p>
+            <div>
+              <div className="border-b border-gray-800 mb-1" />
+              {q.authorized_name ? (
+                <p className="text-[11px] font-semibold uppercase">
+                  {q.authorized_name}
+                </p>
+              ) : (
+                <p className="text-[11px] text-gray-500">Printed Name</p>
+              )}
+              {q.authorized_name && q.authorized_date && (
+                <p className="text-[11px] text-gray-500">
+                  {format(new Date(q.authorized_date), "MMMM dd, yyyy")}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col relative">
+            <p className="font-semibold mb-2">Client Acceptance:</p>
+            {q.client_signature ? (
+              <div className="mb-18">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={q.client_signature}
+                  alt="Client signature"
+                  className="h-18 object-contain absolute  top-6 left-1/2 transform -translate-x-1/2"
+                />
+              </div>
+            ) : (
+              <div className="mb-18" />
             )}
+            <div>
+              <div className="border-b border-gray-800 mb-1" />
+              {q.client_acceptance_name ? (
+                <p className="text-[11px] font-semibold uppercase">
+                  {q.client_acceptance_name}
+                </p>
+              ) : (
+                <p className="text-[11px] text-gray-500">Printed Name</p>
+              )}
+              {q.client_acceptance_name && q.client_acceptance_date && (
+                <p className="text-[11px] text-gray-500">
+                  {format(new Date(q.client_acceptance_date), "MMMM dd, yyyy")}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>

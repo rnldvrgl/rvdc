@@ -1,18 +1,11 @@
 "use client"
 
+import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
 import {
   Dialog,
   DialogContent,
@@ -23,11 +16,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
@@ -51,20 +39,12 @@ import {
 import { ApplianceItemUsed, Stock } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
-import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useApplianceItemMutations } from "@/lib/mutations/services/useApplianceItemMutations"
 import { useItems } from "@/lib/queries/inventory/useItems"
 import { useApplianceItems } from "@/lib/queries/services/useApplianceItems"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
 import { useQueryClient } from "@tanstack/react-query"
-import {
-  Check,
-  ChevronsUpDown,
-  Edit,
-  Package,
-  Plus,
-  Trash2,
-} from "lucide-react"
+import { Edit, Package, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -84,9 +64,6 @@ export default function AppliancePartsManager({
   const [editingPartId, setEditingPartId] = useState<number | null>(null)
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null)
   const [quantity, setQuantity] = useState("1")
-  const [itemSearch, setItemSearch] = useState("")
-  const debouncedSearch = useDebounce(itemSearch, 500)
-  const [itemComboOpen, setItemComboOpen] = useState(false)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<number | null>(null)
   const [discountType, setDiscountType] = useState<
@@ -98,17 +75,22 @@ export default function AppliancePartsManager({
 
   const { data: partsUsed = [], isLoading } = useApplianceItems(applianceId)
 
-  // Fetch items with search
+  // Fetch items for selection
   const { data: itemsData, isLoading: itemsLoading } = useItems({
     page: 1,
-    limit: 20,
-    search: debouncedSearch,
+    limit: 100,
   })
 
   const { addItem, updateItem, deleteItem } = useApplianceItemMutations()
 
   const items = itemsData?.results || []
   const selectedItem = items.find((i) => i.id === selectedItemId)
+
+  // Transform items to ComboBox options
+  const itemOptions = items.map((item) => ({
+    value: item.id,
+    label: `${item.name} — ${item.sku} • ${formatCurrency(item.retail_price)}`,
+  }))
 
   // Fetch stock info for the selected item (to show availability)
   const { data: stockData } = useApiQuery<PaginatedResult<Stock>>({
@@ -444,7 +426,6 @@ export default function AppliancePartsManager({
             setSelectedItemId(null)
             setQuantity("1")
             setIsFree(false)
-            setItemSearch("")
             setDiscountType("none")
             setDiscountValue("")
             setDiscountReason("")
@@ -466,68 +447,14 @@ export default function AppliancePartsManager({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Item</Label>
-              <Popover
-                open={itemComboOpen}
-                onOpenChange={setItemComboOpen}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={itemComboOpen}
-                    className="w-full justify-between"
-                  >
-                    {selectedItemId
-                      ? `${selectedItem?.name} - ${selectedItem?.sku}`
-                      : "Select item..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-full p-0"
-                  align="start"
-                >
-                  <Command>
-                    <CommandInput
-                      placeholder="Search items..."
-                      value={itemSearch}
-                      onValueChange={setItemSearch}
-                    />
-                    <CommandList>
-                      <CommandEmpty>
-                        {itemsLoading ? "Loading..." : "No items found."}
-                      </CommandEmpty>
-                      <CommandGroup>
-                        {items.map((item) => (
-                          <CommandItem
-                            key={item.id}
-                            value={`${item.name} ${item.sku}`}
-                            onSelect={() => {
-                              setSelectedItemId(item.id)
-                              setItemComboOpen(false)
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                selectedItemId === item.id
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            <div className="flex flex-col">
-                              <span className="font-medium">{item.name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {item.sku} • {formatCurrency(item.retail_price)}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <ComboBox
+                options={itemOptions}
+                value={selectedItemId}
+                onChange={(value) => setSelectedItemId(value as number | null)}
+                placeholder="Select item..."
+                searchPlaceholder="Search items..."
+                disabled={itemsLoading}
+              />
             </div>
 
             {/* Stock availability info for selected item */}

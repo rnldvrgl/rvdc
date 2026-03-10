@@ -237,6 +237,18 @@
   .quotation-print > div {
     page-break-inside: avoid;
   }
+
+  /* Keep signature section together on same page */
+  .quotation-print .signature-section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Prevent totals from breaking across pages */
+  .quotation-print .quotation-totals {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
 }
 
 @keyframes fall {
