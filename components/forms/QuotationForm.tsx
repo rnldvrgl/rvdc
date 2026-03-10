@@ -390,6 +390,24 @@ export default function QuotationForm({
   )
   const [selectedRepId, setSelectedRepId] = useState<number | null>(null)
 
+  // Resolve selectedRepId from authorized_name when editing
+  const resolvedRepRef = useRef(false)
+  if (
+    isEdit &&
+    !resolvedRepRef.current &&
+    authorizedRepOptions.length > 0 &&
+    quotation?.authorized_name
+  ) {
+    const match = authorizedRepOptions.find(
+      (o) => o.label.toLowerCase() === quotation.authorized_name.toLowerCase(),
+    )
+    if (match) {
+      resolvedRepRef.current = true
+      // Use queueMicrotask to avoid setState during render
+      queueMicrotask(() => setSelectedRepId(match.value as number))
+    }
+  }
+
   // ── Line Items ──
   const [items, setItems] = useState<FormItem[]>(
     quotation?.items?.length
@@ -413,6 +431,7 @@ export default function QuotationForm({
 
   // ── Notes ──
   const [notes, setNotes] = useState(quotation?.notes ?? "")
+  const notesRef = useRef<HTMLTextAreaElement>(null)
 
   const addItem = useCallback(() => {
     setItems((prev) => [
@@ -848,13 +867,68 @@ export default function QuotationForm({
 
         {/* Notes */}
         <div className="mt-4 space-y-1.5">
-          <Label className="text-xs text-muted-foreground">
-            Note/s{" "}
-            <span className="text-[10px]">
-              (displayed below items, e.g. warranty info)
-            </span>
-          </Label>
+          <div className="flex items-center gap-1">
+            <Label className="text-xs text-muted-foreground flex-1">
+              Note/s{" "}
+              <span className="text-[10px]">
+                (displayed below items, e.g. warranty info)
+              </span>
+            </Label>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => {
+                    const ta = notesRef.current
+                    if (!ta) return
+                    const { selectionStart: s, selectionEnd: e } = ta
+                    const selected = notes.slice(s, e)
+                    if (!selected) return
+                    const wrapped = `**${selected}**`
+                    setNotes(notes.slice(0, s) + wrapped + notes.slice(e))
+                    requestAnimationFrame(() => {
+                      ta.focus()
+                      ta.setSelectionRange(s + 2, e + 2)
+                    })
+                  }}
+                >
+                  <Bold className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Bold selected text</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6"
+                  onClick={() => {
+                    const ta = notesRef.current
+                    if (!ta) return
+                    const { selectionStart: s, selectionEnd: e } = ta
+                    const selected = notes.slice(s, e)
+                    if (!selected) return
+                    const wrapped = `*${selected}*`
+                    setNotes(notes.slice(0, s) + wrapped + notes.slice(e))
+                    requestAnimationFrame(() => {
+                      ta.focus()
+                      ta.setSelectionRange(s + 1, e + 1)
+                    })
+                  }}
+                >
+                  <Italic className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Italic selected text</TooltipContent>
+            </Tooltip>
+          </div>
           <Textarea
+            ref={notesRef}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. 1 Year Warranty Parts / 5 Years Warranty Compressor"
@@ -899,31 +973,48 @@ export default function QuotationForm({
           <h3 className="text-sm font-semibold text-foreground">
             Terms & Conditions
           </h3>
-          {termsTemplates.length > 0 && (
-            <Select onValueChange={applyTermsTemplate}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SelectTrigger className="w-44 h-7 text-xs">
-                    <SelectValue placeholder="Load template..." />
-                  </SelectTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Select a template to pre-fill terms. You can still edit
-                  individual lines after.
-                </TooltipContent>
-              </Tooltip>
-              <SelectContent>
-                {termsTemplates.map((t) => (
-                  <SelectItem
-                    key={t.id}
-                    value={String(t.id)}
-                  >
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <div className="flex items-center gap-1.5">
+            {termsTemplates.length > 0 && (
+              <Select onValueChange={applyTermsTemplate}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SelectTrigger className="w-44 h-7 text-xs">
+                      <SelectValue placeholder="Load template..." />
+                    </SelectTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Select a template to pre-fill terms. You can still edit
+                    individual lines after.
+                  </TooltipContent>
+                </Tooltip>
+                <SelectContent>
+                  {termsTemplates.map((t) => (
+                    <SelectItem
+                      key={t.id}
+                      value={String(t.id)}
+                    >
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setTermsLines([...DEFAULT_TERMS])}
+                >
+                  <X className="mr-1 h-3 w-3" />
+                  Reset
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Reset to default terms</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
         <EditableLines
           lines={termsLines}
@@ -940,30 +1031,47 @@ export default function QuotationForm({
           <h3 className="text-sm font-semibold text-foreground">
             Payment Terms
           </h3>
-          {paymentTemplates.length > 0 && (
-            <Select onValueChange={applyPaymentTemplate}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <SelectTrigger className="w-44 h-7 text-xs">
-                    <SelectValue placeholder="Load template..." />
-                  </SelectTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  Select a template to pre-fill payment terms
-                </TooltipContent>
-              </Tooltip>
-              <SelectContent>
-                {paymentTemplates.map((t) => (
-                  <SelectItem
-                    key={t.id}
-                    value={String(t.id)}
-                  >
-                    {t.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
+          <div className="flex items-center gap-1.5">
+            {paymentTemplates.length > 0 && (
+              <Select onValueChange={applyPaymentTemplate}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SelectTrigger className="w-44 h-7 text-xs">
+                      <SelectValue placeholder="Load template..." />
+                    </SelectTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Select a template to pre-fill payment terms
+                  </TooltipContent>
+                </Tooltip>
+                <SelectContent>
+                  {paymentTemplates.map((t) => (
+                    <SelectItem
+                      key={t.id}
+                      value={String(t.id)}
+                    >
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={() => setPaymentLines([...DEFAULT_PAYMENT_TERMS])}
+                >
+                  <X className="mr-1 h-3 w-3" />
+                  Reset
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Reset to default payment terms</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
         <EditableLines
           lines={paymentLines}
