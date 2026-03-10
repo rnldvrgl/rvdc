@@ -185,21 +185,34 @@
     print-color-adjust: exact !important;
   }
 
-  /* Hide everything except the print content */
-  body > *:not(.quotation-print) {
-    display: none !important;
-  }
-
+  /* Hide UI elements but keep content accessible */
   nav,
   header,
   aside,
   footer,
+  button,
   [data-sidebar],
-  [data-topbar] {
+  [data-topbar],
+  [role="dialog"]:not(:has(.quotation-print)),
+  .sheet-overlay {
     display: none !important;
   }
 
+  /* Ensure quotation content is visible */
+  body,
+  body * {
+    visibility: hidden;
+  }
+
+  .quotation-print,
+  .quotation-print * {
+    visibility: visible !important;
+  }
+
   .quotation-print {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
     width: 100% !important;
     min-height: auto !important;
     padding: 0 !important;
@@ -248,6 +261,43 @@
   .quotation-print .quotation-totals {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+
+  /* Ensure text is visible and properly sized on mobile print */
+  .quotation-print,
+  .quotation-print * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Force visibility of all quotation content */
+  .quotation-print,
+  .quotation-print *,
+  .quotation-print table,
+  .quotation-print table * {
+    visibility: visible !important;
+    display: block !important;
+  }
+
+  .quotation-print table {
+    display: table !important;
+  }
+
+  .quotation-print thead {
+    display: table-header-group !important;
+  }
+
+  .quotation-print tbody {
+    display: table-row-group !important;
+  }
+
+  .quotation-print tr {
+    display: table-row !important;
+  }
+
+  .quotation-print td,
+  .quotation-print th {
+    display: table-cell !important;
   }
 }
 

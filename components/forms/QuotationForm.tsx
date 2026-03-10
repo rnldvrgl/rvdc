@@ -923,8 +923,8 @@ export default function QuotationForm({
                 className={cn(
                   "grid gap-2",
                   item.airconUnitId
-                    ? "grid-cols-[1fr_200px]"
-                    : "grid-cols-[1fr_90px_200px]",
+                    ? "grid-cols-1 sm:grid-cols-[1fr_200px]"
+                    : "grid-cols-1 sm:grid-cols-[1fr_90px_200px]",
                 )}
               >
                 <DescriptionField

@@ -142,7 +142,7 @@ export default function QuotationViewSheet({
         className="max-w-4xl! w-full px-6 sm:px-8 py-8 overflow-y-auto"
       >
         <SheetHeader className="mb-5 pb-5 border-b border-border">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <SheetTitle className="text-xl font-semibold">
                 Quotation Preview
@@ -153,7 +153,7 @@ export default function QuotationViewSheet({
             </div>
             <Button
               onClick={() => handlePrint()}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
             >
               <Printer className="mr-2 h-4 w-4" />
               Print
@@ -219,40 +219,42 @@ const QuotationPrintContent = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="quotation-print bg-white text-black font-sans w-[210mm] min-h-[297mm] p-12"
+      className="quotation-print bg-white text-black font-sans w-full sm:w-[210mm] min-h-[297mm] p-4 sm:p-12"
     >
       {/* HEADER */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start justify-between mb-4 sm:mb-6 gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/rvdc_logo.png"
             alt="RVDC Logo"
-            width={64}
-            height={64}
-            className="object-contain"
+            width={48}
+            height={48}
+            className="object-contain sm:w-16 sm:h-16"
           />
           <div>
-            <h1 className="text-lg font-bold leading-tight">
+            <h1 className="text-base sm:text-lg font-bold leading-tight">
               RVDC Ref & Aircon Repair Shop
             </h1>
-            <p className="text-[11px] text-gray-600 leading-snug">
+            <p className="text-[10px] sm:text-[11px] text-gray-600 leading-snug">
               A-02 MRL Building, Mc. Arthur Hiway,
               <br />
               Mabiga, Mabalacat City, Pampanga, 2010
             </p>
-            <p className="text-[11px] text-gray-600">Phone: 0936-667-8269</p>
+            <p className="text-[10px] sm:text-[11px] text-gray-600">
+              Phone: 0936-667-8269
+            </p>
           </div>
         </div>
-        <div className="text-right">
-          <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
+        <div className="text-left sm:text-right">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight">
             QUOTATION
           </h2>
         </div>
       </div>
 
       {/* CLIENT & DATE ROW */}
-      <div className="grid grid-cols-2 gap-6 mb-6 text-[12px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6 text-[11px] sm:text-[12px]">
         <div className="space-y-1">
           <div>
             <span className="font-semibold">Client: </span>
@@ -269,7 +271,7 @@ const QuotationPrintContent = React.forwardRef<
             </div>
           )}
         </div>
-        <div className="space-y-1 text-right">
+        <div className="space-y-1 sm:text-right">
           <div>
             <span className="font-semibold">Date: </span>
             {q.quote_date
@@ -287,7 +289,7 @@ const QuotationPrintContent = React.forwardRef<
 
       {/* PROJECT DESCRIPTION */}
       {q.project_description && (
-        <div className="mb-5 text-[12px]">
+        <div className="mb-4 sm:mb-5 text-[11px] sm:text-[12px]">
           <h3 className="font-semibold mb-1">Project Description</h3>
           <p className="whitespace-pre-line text-gray-700">
             {q.project_description}
@@ -296,56 +298,58 @@ const QuotationPrintContent = React.forwardRef<
       )}
 
       {/* ITEMS TABLE */}
-      <table className="w-full text-[12px] border-collapse table-fixed border border-gray-300">
-        <thead>
-          <tr className="bg-gray-800 text-white">
-            <th className="text-left py-2 px-3 font-semibold w-[50%] border-r border-gray-600">
-              Description
-            </th>
-            <th className="text-center py-2 px-3 font-semibold w-[10%] border-r border-gray-600">
-              Qty
-            </th>
-            <th className="text-right py-2 px-3 font-semibold w-[20%] border-r border-gray-600">
-              Unit Price
-            </th>
-            <th className="text-right py-2 px-3 font-semibold w-[20%]">
-              Total
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {(q.items ?? []).map((item, idx) => (
-            <tr
-              key={item.id ?? idx}
-              className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
-            >
-              <td className="py-2 px-3 border-b border-r border-gray-300 wrap-break-word whitespace-pre-line">
-                {renderFormattedText(item.description)}
-              </td>
-              <td className="py-2 px-3 text-center border-b border-r border-gray-300">
-                {item.quantity}
-              </td>
-              <td className="py-2 px-3 text-right border-b border-r border-gray-300">
-                &#8369;{formatCurrency(Number(item.unit_price))}
-              </td>
-              <td className="py-2 px-3 text-right border-b border-gray-300">
-                &#8369;
-                {formatCurrency(item.quantity * Number(item.unit_price))}
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full text-[11px] sm:text-[12px] border-collapse table-fixed border border-gray-300">
+          <thead>
+            <tr className="bg-gray-800 text-white">
+              <th className="text-left py-2 px-3 font-semibold w-[50%] border-r border-gray-600">
+                Description
+              </th>
+              <th className="text-center py-2 px-3 font-semibold w-[10%] border-r border-gray-600">
+                Qty
+              </th>
+              <th className="text-right py-2 px-3 font-semibold w-[20%] border-r border-gray-600">
+                Unit Price
+              </th>
+              <th className="text-right py-2 px-3 font-semibold w-[20%]">
+                Total
+              </th>
             </tr>
-          ))}
-          {(q.items ?? []).length === 0 && (
-            <tr>
-              <td
-                colSpan={4}
-                className="py-4 text-center text-gray-400 italic border-b border-gray-300"
+          </thead>
+          <tbody>
+            {(q.items ?? []).map((item, idx) => (
+              <tr
+                key={item.id ?? idx}
+                className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
               >
-                No items
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+                <td className="py-2 px-3 border-b border-r border-gray-300 wrap-break-word whitespace-pre-line">
+                  {renderFormattedText(item.description)}
+                </td>
+                <td className="py-2 px-3 text-center border-b border-r border-gray-300">
+                  {item.quantity}
+                </td>
+                <td className="py-2 px-3 text-right border-b border-r border-gray-300">
+                  &#8369;{formatCurrency(Number(item.unit_price))}
+                </td>
+                <td className="py-2 px-3 text-right border-b border-gray-300">
+                  &#8369;
+                  {formatCurrency(item.quantity * Number(item.unit_price))}
+                </td>
+              </tr>
+            ))}
+            {(q.items ?? []).length === 0 && (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="py-4 text-center text-gray-400 italic border-b border-gray-300"
+                >
+                  No items
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       {/* NOTES */}
       {q.notes && (
@@ -356,26 +360,26 @@ const QuotationPrintContent = React.forwardRef<
 
       {/* TOTALS — outside table to prevent duplication on page breaks */}
       <div className="quotation-totals border-x border-b border-gray-300">
-        <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[12px] text-gray-600 ">
-          <span></span>
+        <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[11px] sm:text-[12px] text-gray-600 ">
+          <span className="sm:col-span-1"></span>
           <span className="text-right">Subtotal</span>
-          <span className="text-right">
+          <span className="text-right sm:ml-0 ml-3">
             &#8369;{formatCurrency(Number(q.subtotal))}
           </span>
         </div>
         {Number(q.discount_amount) > 0 && (
-          <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[12px] text-red-600 bg-white">
-            <span></span>
+          <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[11px] sm:text-[12px] text-red-600 bg-white">
+            <span className="sm:col-span-1"></span>
             <span className="text-right">Discount</span>
-            <span className="text-right">
+            <span className="text-right sm:ml-0 ml-3">
               -&#8369;{formatCurrency(Number(q.discount_amount))}
             </span>
           </div>
         )}
-        <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 bg-gray-800 text-white font-bold text-sm">
-          <span></span>
+        <div className="grid grid-cols-[1fr_auto] sm:grid-cols-[60%_20%_20%] py-2 px-3 bg-gray-800 text-white font-bold text-xs sm:text-sm">
+          <span className="sm:col-span-1"></span>
           <span className="text-right">Total</span>
-          <span className="text-right">
+          <span className="text-right sm:ml-0 ml-3">
             &#8369;{formatCurrency(Number(q.total))}
           </span>
         </div>
@@ -383,72 +387,78 @@ const QuotationPrintContent = React.forwardRef<
 
       {/* PAYMENT SCHEDULE */}
       {q.payments && q.payments.length > 0 && (
-        <div className="my-4 text-[11px]">
-          <h3 className="font-semibold text-[12px] mb-2">Payment Schedule</h3>
-          <table className="w-full border-collapse border border-gray-300 text-[11px]">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="text-left py-1.5 px-3 border border-gray-300 font-semibold w-[20%]">
-                  Description
-                </th>
-                <th className="text-left py-1.5 px-3 border border-gray-300 font-semibold w-[12%]">
-                  M.O.P
-                </th>
-                <th className="text-right py-1.5 px-3 border border-gray-300 font-semibold w-[14%]">
-                  Amount
-                </th>
-                <th className="text-center py-1.5 px-3 border border-gray-300 font-semibold w-[14%]">
-                  Ref #
-                </th>
-                <th className="text-center py-1.5 px-3 border border-gray-300 font-semibold w-[13%]">
-                  S.I #
-                </th>
-                <th className="text-center py-1.5 px-3 border border-gray-300 font-semibold w-[11%]">
-                  Date
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {q.payments.map((p, idx) => (
-                <tr key={p.id ?? idx}>
-                  <td className="py-1.5 px-3 border border-gray-300">
-                    {p.label}
-                  </td>
-                  <td className="py-1.5 px-3 border border-gray-300">
-                    {p.payment_method === "bank_transfer"
-                      ? "Bank Transfer"
-                      : p.payment_method === "gcash"
-                        ? "GCash"
-                        : p.payment_method === "cash"
-                          ? "Cash"
-                          : "—"}
-                  </td>
-
-                  <td className="py-1.5 px-3 text-right border border-gray-300">
-                    &#8369;{formatCurrency(Number(p.amount))}
-                  </td>
-                  <td className="py-1.5 px-3 text-center border border-gray-300">
-                    {p.reference_number || "—"}
-                  </td>
-                  <td className="py-1.5 px-3 text-center border border-gray-300">
-                    {p.si_number || "—"}
-                  </td>
-                  <td className="py-1.5 px-3 text-center border border-gray-300">
-                    {p.payment_date
-                      ? format(new Date(p.payment_date), "MM/dd/yyyy")
-                      : "—"}
-                  </td>
+        <div className="my-3 sm:my-4 text-[10px] sm:text-[11px]">
+          <h3 className="font-semibold text-[11px] sm:text-[12px] mb-2">
+            Payment Schedule
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse border border-gray-300 text-[10px] sm:text-[11px]">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="text-left py-1.5 px-3 border border-gray-300 font-semibold w-[20%]">
+                    Description
+                  </th>
+                  <th className="text-left py-1.5 px-3 border border-gray-300 font-semibold w-[12%]">
+                    M.O.P
+                  </th>
+                  <th className="text-right py-1.5 px-3 border border-gray-300 font-semibold w-[14%]">
+                    Amount
+                  </th>
+                  <th className="text-center py-1.5 px-3 border border-gray-300 font-semibold w-[14%]">
+                    Ref #
+                  </th>
+                  <th className="text-center py-1.5 px-3 border border-gray-300 font-semibold w-[13%]">
+                    S.I #
+                  </th>
+                  <th className="text-center py-1.5 px-3 border border-gray-300 font-semibold w-[11%]">
+                    Date
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {q.payments.map((p, idx) => (
+                  <tr key={p.id ?? idx}>
+                    <td className="py-1.5 px-3 border border-gray-300">
+                      {p.label}
+                    </td>
+                    <td className="py-1.5 px-3 border border-gray-300">
+                      {p.payment_method === "bank_transfer"
+                        ? "Bank Transfer"
+                        : p.payment_method === "gcash"
+                          ? "GCash"
+                          : p.payment_method === "cash"
+                            ? "Cash"
+                            : "—"}
+                    </td>
+
+                    <td className="py-1.5 px-3 text-right border border-gray-300">
+                      &#8369;{formatCurrency(Number(p.amount))}
+                    </td>
+                    <td className="py-1.5 px-3 text-center border border-gray-300">
+                      {p.reference_number || "—"}
+                    </td>
+                    <td className="py-1.5 px-3 text-center border border-gray-300">
+                      {p.si_number || "—"}
+                    </td>
+                    <td className="py-1.5 px-3 text-center border border-gray-300">
+                      {p.payment_date
+                        ? format(new Date(p.payment_date), "MM/dd/yyyy")
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* TERMS & CONDITIONS */}
       {q.terms_conditions && (
-        <div className="my-4 text-[11px]">
-          <h3 className="font-semibold text-[12px] mb-1">Terms & Conditions</h3>
+        <div className="my-3 sm:my-4 text-[10px] sm:text-[11px]">
+          <h3 className="font-semibold text-[11px] sm:text-[12px] mb-1">
+            Terms & Conditions
+          </h3>
           <ul className="list-disc pl-5 text-gray-600 leading-relaxed space-y-0.5">
             {q.terms_conditions
               .split("\n")
@@ -462,8 +472,10 @@ const QuotationPrintContent = React.forwardRef<
 
       {/* PAYMENT TERMS */}
       {q.payment_terms && (
-        <div className="mb-4 text-[11px]">
-          <h3 className="font-semibold text-[12px] mb-1">Payment Terms</h3>
+        <div className="mb-3 sm:mb-4 text-[10px] sm:text-[11px]">
+          <h3 className="font-semibold text-[11px] sm:text-[12px] mb-1">
+            Payment Terms
+          </h3>
           <ul className="list-disc pl-5 text-gray-600 leading-relaxed space-y-0.5">
             {q.payment_terms
               .split("\n")
@@ -478,7 +490,7 @@ const QuotationPrintContent = React.forwardRef<
       {/* APPROVAL NOTE & SIGNATURES - Keep together on same page */}
       <div className="signature-section">
         {/* APPROVAL NOTE */}
-        <div className="text-[11px] text-gray-600 mb-4 leading-relaxed text-center">
+        <div className="text-[10px] sm:text-[11px] text-gray-600 mb-3 sm:mb-4 leading-relaxed text-center">
           <p>
             This quotation has been approved by RVDC Ref & Aircon Repair Shop as
             evidenced by the signature of its authorized representative below.
@@ -495,34 +507,34 @@ const QuotationPrintContent = React.forwardRef<
         </div>
 
         {/* SIGNATURES */}
-        <div className="grid grid-cols-2 gap-12 mt-6 text-[12px] text-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-12 mt-4 sm:mt-6 text-[11px] sm:text-[12px] text-center">
           <div className="flex flex-col relative">
             <p className="font-semibold mb-2">Authorized Representative:</p>
             {q.authorized_signature ? (
-              <div className="mb-14">
+              <div className="mb-10 sm:mb-14">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={q.authorized_signature}
                   alt="Authorized signature"
-                  className="h-18 object-contain absolute top-6 left-1/2 transform -translate-x-1/2"
+                  className="h-14 sm:h-18 object-contain absolute top-6 left-1/2 transform -translate-x-1/2"
                 />
               </div>
             ) : (
-              <div className="mb-14" />
+              <div className="mb-10 sm:mb-14" />
             )}
             <div>
               <div className="border-b border-gray-800 mb-1" />
               {q.authorized_name ? (
-                <p className="text-[11px] font-semibold uppercase">
+                <p className="text-[10px] sm:text-[11px] font-semibold uppercase">
                   {q.authorized_name}
                 </p>
               ) : (
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[10px] sm:text-[11px] text-gray-500">
                   Signature over Printed Name
                 </p>
               )}
               {q.authorized_name && q.authorized_date && (
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[10px] sm:text-[11px] text-gray-500">
                   {format(new Date(q.authorized_date), "MMMM dd, yyyy")}
                 </p>
               )}
@@ -531,30 +543,30 @@ const QuotationPrintContent = React.forwardRef<
           <div className="flex flex-col relative">
             <p className="font-semibold mb-2">Client Acceptance:</p>
             {q.client_signature ? (
-              <div className="mb-14">
+              <div className="mb-10 sm:mb-14">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={q.client_signature}
                   alt="Client signature"
-                  className="h-18 object-contain absolute  top-6 left-1/2 transform -translate-x-1/2"
+                  className="h-14 sm:h-18 object-contain absolute  top-6 left-1/2 transform -translate-x-1/2"
                 />
               </div>
             ) : (
-              <div className="mb-14" />
+              <div className="mb-10 sm:mb-14" />
             )}
             <div>
               <div className="border-b border-gray-800 mb-1" />
               {q.client_acceptance_name ? (
-                <p className="text-[11px] font-semibold uppercase">
+                <p className="text-[10px] sm:text-[11px] font-semibold uppercase">
                   {q.client_acceptance_name}
                 </p>
               ) : (
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[10px] sm:text-[11px] text-gray-500">
                   Signature over Printed Name
                 </p>
               )}
               {q.client_acceptance_name && q.client_acceptance_date && (
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[10px] sm:text-[11px] text-gray-500">
                   {format(new Date(q.client_acceptance_date), "MMMM dd, yyyy")}
                 </p>
               )}
