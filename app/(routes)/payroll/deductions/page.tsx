@@ -160,7 +160,7 @@ function DeductionRow({
       </div>
 
       {/* Amount & Actions Row */}
-      <div className="flex items-center justify-between sm:justify-end gap-3 pl-13 sm:pl-0">
+      <div className="flex items-center justify-between sm:justify-end gap-3 pl-12 sm:pl-0">
         {/* Amount */}
         <div className="text-left sm:text-right">
           <span className="font-bold text-base sm:text-lg text-foreground">
