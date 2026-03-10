@@ -291,7 +291,7 @@ export default function QuotationForm({
       airconUnits.map((u) => ({
         value: u.id,
         label:
-          `${u.serial_number}${u.outdoor_serial_number ? ` / ${u.outdoor_serial_number}` : ""} — ${u.model?.brand?.name ?? ""} ${AIRCON_TYPE_LABELS[u.model?.aircon_type ?? ""] ?? u.model?.aircon_type ?? ""} ${u.model?.horsepower ?? ""}hp${u.model?.is_inverter ? " INVERTER" : ""} ${u.model?.name ?? ""} ${u.is_reserved ? " (Reserved)" : ""} ${u.installation_service ? " (Installed)" : ""}`.trim(),
+          `${u.serial_number} — ${u.model?.brand?.name ?? ""} ${u.model?.horsepower ?? ""}hp${u.model?.is_inverter ? " INV" : ""}${u.is_reserved ? " [R]" : ""}${u.installation_service ? " [I]" : ""}`.trim(),
       })),
     [airconUnits],
   )
@@ -1285,7 +1285,13 @@ export default function QuotationForm({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <SelectTrigger className="w-44 h-7 text-xs">
-                      <SelectValue placeholder="Load template..." />
+                      <SelectValue
+                        placeholder={
+                          termsLines.length > 0
+                            ? "Change template..."
+                            : "Load template..."
+                        }
+                      />
                     </SelectTrigger>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -1349,7 +1355,13 @@ export default function QuotationForm({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <SelectTrigger className="w-44 h-7 text-xs">
-                      <SelectValue placeholder="Load template..." />
+                      <SelectValue
+                        placeholder={
+                          paymentLines.length > 0
+                            ? "Change template..."
+                            : "Load template..."
+                        }
+                      />
                     </SelectTrigger>
                   </TooltipTrigger>
                   <TooltipContent>
