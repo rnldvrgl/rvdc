@@ -1160,7 +1160,7 @@ export default function QuotationForm({
                 </Tooltip>
               </div>
               {/* Row 2: Payment Method + Date + Ref No. + S.I. No. */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">
                     Payment Method
@@ -1284,7 +1284,7 @@ export default function QuotationForm({
               >
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <SelectTrigger className="w-44 h-7 text-xs">
+                    <SelectTrigger className="w-36 sm:w-44 h-7 text-xs">
                       <SelectValue
                         placeholder={
                           termsLines.length > 0
@@ -1354,7 +1354,7 @@ export default function QuotationForm({
               >
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <SelectTrigger className="w-44 h-7 text-xs">
+                    <SelectTrigger className="w-36 sm:w-44 h-7 text-xs">
                       <SelectValue
                         placeholder={
                           paymentLines.length > 0
@@ -1452,7 +1452,7 @@ export default function QuotationForm({
                   className="h-8 text-sm"
                 />
               </div>
-              <div className="space-y-1 min-w-[140px]">
+              <div className="space-y-1">
                 <Label className="text-[11px] text-muted-foreground">
                   Date
                 </Label>
@@ -1525,7 +1525,7 @@ export default function QuotationForm({
                   className="h-8 text-sm"
                 />
               </div>
-              <div className="space-y-1 min-w-[140px]">
+              <div className="space-y-1">
                 <Label className="text-[11px] text-muted-foreground">
                   Date
                 </Label>
