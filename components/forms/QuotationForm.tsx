@@ -287,7 +287,7 @@ export default function QuotationForm({
       airconUnits.map((u) => ({
         value: u.id,
         label:
-          `${u.serial_number}${u.outdoor_serial_number ? ` / ${u.outdoor_serial_number}` : ""} — ${u.model?.brand?.name ?? ""} ${AIRCON_TYPE_LABELS[u.model?.aircon_type ?? ""] ?? u.model?.aircon_type ?? ""} ${u.model?.horsepower ?? ""}hp${u.model?.is_inverter ? " INVERTER" : ""} ${u.model?.name ?? ""}`.trim(),
+          `${u.serial_number}${u.outdoor_serial_number ? ` / ${u.outdoor_serial_number}` : ""} — ${u.model?.brand?.name ?? ""} ${AIRCON_TYPE_LABELS[u.model?.aircon_type ?? ""] ?? u.model?.aircon_type ?? ""} ${u.model?.horsepower ?? ""}hp${u.model?.is_inverter ? " INVERTER" : ""} ${u.model?.name ?? ""} ${u.is_reserved ? " (Reserved)" : ""} ${u.installation_service ? " (Installed)" : ""}`.trim(),
       })),
     [airconUnits],
   )
@@ -445,6 +445,19 @@ export default function QuotationForm({
   // ── Notes ──
   const [notes, setNotes] = useState(quotation?.notes ?? "")
   const notesRef = useRef<HTMLTextAreaElement>(null)
+
+  /** Get options for a specific item, excluding units already selected by other items */
+  const getUnitOptionsForItem = useCallback(
+    (currentItemId: string) => {
+      const selectedByOthers = new Set(
+        items
+          .filter((i) => i.id !== currentItemId && i.airconUnitId != null)
+          .map((i) => i.airconUnitId),
+      )
+      return airconUnitOptions.filter((o) => !selectedByOthers.has(o.value))
+    },
+    [items, airconUnitOptions],
+  )
 
   const addItem = useCallback(() => {
     setItems((prev) => [
@@ -797,7 +810,7 @@ export default function QuotationForm({
                 <div className="flex items-center gap-1.5">
                   <div className="flex-1">
                     <ComboBox
-                      options={airconUnitOptions}
+                      options={getUnitOptionsForItem(item.id)}
                       value={item.airconUnitId}
                       onChange={(v) =>
                         handleAirconUnitSelect(item.id, v as number | null)
@@ -946,6 +959,7 @@ export default function QuotationForm({
           <Textarea
             ref={notesRef}
             value={notes}
+            defaultValue="1 Year Warranty Parts / 5 Years Warranty Compressor / 1 Year Labor Warranty"
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. 1 Year Warranty Parts / 5 Years Warranty Compressor"
             rows={2}
