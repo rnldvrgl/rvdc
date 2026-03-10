@@ -18,14 +18,14 @@ export function getAirconUnitsColumns({
   return [
     {
       accessorKey: "serial_number",
-      header: "Indoor Serial Number",
+      header: "Indoor S/N",
       cell: ({ getValue }) => (
         <span className="font-mono font-medium">{safeCell(getValue())}</span>
       ),
     },
     {
       accessorKey: "outdoor_serial_number",
-      header: "Outdoor Serial Number",
+      header: "Outdoor S/N",
       cell: ({ getValue }) => {
         const value = getValue()
         return value ? (

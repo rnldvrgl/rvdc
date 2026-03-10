@@ -69,9 +69,9 @@ export function ComboBox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("justify-between w-full", className)}
+          className={cn("justify-between w-full overflow-hidden", className)}
         >
-          {selectedLabel}
+          <span className="truncate">{selectedLabel}</span>
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

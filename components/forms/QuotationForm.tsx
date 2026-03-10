@@ -443,8 +443,29 @@ export default function QuotationForm({
   )
 
   // ── Notes ──
-  const [notes, setNotes] = useState(quotation?.notes ?? "")
+  const DEFAULT_NOTES =
+    "1 Year Warranty Parts / 5 Years Warranty Compressor / 1 Year Labor Warranty"
+  const [notes, setNotes] = useState(
+    quotation?.notes ?? (isEdit ? "" : DEFAULT_NOTES),
+  )
   const notesRef = useRef<HTMLTextAreaElement>(null)
+
+  const wrapNotesSelection = useCallback(
+    (marker: string) => {
+      const ta = notesRef.current
+      if (!ta) return
+      const { selectionStart: s, selectionEnd: e } = ta
+      const selected = notes.slice(s, e)
+      if (!selected) return
+      const wrapped = `${marker}${selected}${marker}`
+      setNotes(notes.slice(0, s) + wrapped + notes.slice(e))
+      requestAnimationFrame(() => {
+        ta.focus()
+        ta.setSelectionRange(s + marker.length, e + marker.length)
+      })
+    },
+    [notes],
+  )
 
   /** Get options for a specific item, excluding units already selected by other items */
   const getUnitOptionsForItem = useCallback(
@@ -760,10 +781,9 @@ export default function QuotationForm({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant="outline"
+                variant="success"
                 size="sm"
                 onClick={addItem}
-                className="h-7 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
               >
                 <Plus className="mr-1 h-3 w-3" />
                 Add Item
@@ -841,8 +861,8 @@ export default function QuotationForm({
                 className={cn(
                   "grid gap-2",
                   item.airconUnitId
-                    ? "grid-cols-[1fr_110px]"
-                    : "grid-cols-[1fr_70px_110px]",
+                    ? "grid-cols-[1fr_200px]"
+                    : "grid-cols-[1fr_90px_200px]",
                 )}
               >
                 <DescriptionField
@@ -910,19 +930,7 @@ export default function QuotationForm({
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
-                  onClick={() => {
-                    const ta = notesRef.current
-                    if (!ta) return
-                    const { selectionStart: s, selectionEnd: e } = ta
-                    const selected = notes.slice(s, e)
-                    if (!selected) return
-                    const wrapped = `**${selected}**`
-                    setNotes(notes.slice(0, s) + wrapped + notes.slice(e))
-                    requestAnimationFrame(() => {
-                      ta.focus()
-                      ta.setSelectionRange(s + 2, e + 2)
-                    })
-                  }}
+                  onClick={() => wrapNotesSelection("**")}
                 >
                   <Bold className="h-3 w-3" />
                 </Button>
@@ -936,19 +944,7 @@ export default function QuotationForm({
                   variant="ghost"
                   size="icon"
                   className="h-6 w-6"
-                  onClick={() => {
-                    const ta = notesRef.current
-                    if (!ta) return
-                    const { selectionStart: s, selectionEnd: e } = ta
-                    const selected = notes.slice(s, e)
-                    if (!selected) return
-                    const wrapped = `*${selected}*`
-                    setNotes(notes.slice(0, s) + wrapped + notes.slice(e))
-                    requestAnimationFrame(() => {
-                      ta.focus()
-                      ta.setSelectionRange(s + 1, e + 1)
-                    })
-                  }}
+                  onClick={() => wrapNotesSelection("*")}
                 >
                   <Italic className="h-3 w-3" />
                 </Button>
@@ -959,7 +955,6 @@ export default function QuotationForm({
           <Textarea
             ref={notesRef}
             value={notes}
-            defaultValue="1 Year Warranty Parts / 5 Years Warranty Compressor / 1 Year Labor Warranty"
             onChange={(e) => setNotes(e.target.value)}
             placeholder="e.g. 1 Year Warranty Parts / 5 Years Warranty Compressor"
             rows={2}
@@ -968,7 +963,7 @@ export default function QuotationForm({
         </div>
 
         {/* Totals */}
-        <div className="mt-4 ml-auto w-full sm:w-72 space-y-1.5 text-sm">
+        <div className="mt-4 ml-auto w-full sm:w-[298px] space-y-1.5 text-sm">
           <div className="flex justify-between text-muted-foreground">
             <span>Subtotal</span>
             <span>&#8369;{formatCurrency(subtotal)}</span>
@@ -984,7 +979,7 @@ export default function QuotationForm({
                 setDiscountAmount(parseFloat(e.target.value) || 0)
               }
               placeholder="0.00"
-              className="w-28 h-8 text-right text-sm"
+              className="w-44 h-8 text-right text-sm"
             />
           </div>
           <Separator />
@@ -1307,10 +1302,9 @@ export default function QuotationForm({
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
-              variant="outline"
+              variant="destructive"
               onClick={onClose}
               disabled={isSubmitting}
-              className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
             >
               <X className="mr-1.5 h-4 w-4" />
               Cancel
