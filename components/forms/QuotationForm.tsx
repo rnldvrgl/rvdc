@@ -516,6 +516,9 @@ export default function QuotationForm({
   )
 
   // ── Template handlers ──
+  const [termsTemplateKey, setTermsTemplateKey] = useState(0)
+  const [paymentTemplateKey, setPaymentTemplateKey] = useState(0)
+
   const applyTermsTemplate = (templateId: string) => {
     const tpl = termsTemplates.find((t) => t.id === Number(templateId))
     if (tpl) setTermsLines([...tpl.lines])
@@ -975,7 +978,7 @@ export default function QuotationForm({
           </h3>
           <div className="flex items-center gap-1.5">
             {termsTemplates.length > 0 && (
-              <Select onValueChange={applyTermsTemplate}>
+              <Select key={termsTemplateKey} onValueChange={applyTermsTemplate}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <SelectTrigger className="w-44 h-7 text-xs">
@@ -1006,7 +1009,7 @@ export default function QuotationForm({
                   variant="ghost"
                   size="sm"
                   className="h-7 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={() => setTermsLines([...DEFAULT_TERMS])}
+                  onClick={() => { setTermsLines([...DEFAULT_TERMS]); setTermsTemplateKey((k) => k + 1) }}
                 >
                   <X className="mr-1 h-3 w-3" />
                   Reset
@@ -1033,7 +1036,7 @@ export default function QuotationForm({
           </h3>
           <div className="flex items-center gap-1.5">
             {paymentTemplates.length > 0 && (
-              <Select onValueChange={applyPaymentTemplate}>
+              <Select key={paymentTemplateKey} onValueChange={applyPaymentTemplate}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <SelectTrigger className="w-44 h-7 text-xs">
@@ -1063,7 +1066,7 @@ export default function QuotationForm({
                   variant="ghost"
                   size="sm"
                   className="h-7 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={() => setPaymentLines([...DEFAULT_PAYMENT_TERMS])}
+                  onClick={() => { setPaymentLines([...DEFAULT_PAYMENT_TERMS]); setPaymentTemplateKey((k) => k + 1) }}
                 >
                   <X className="mr-1 h-3 w-3" />
                   Reset
