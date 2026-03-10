@@ -147,28 +147,33 @@ const EmployeePage = () => {
         description="View and manage employee profile information and employment details."
         breadcrumbs={["Dashboard", "Employees", "Details"]}
         actionButton={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               onClick={() => router.push("/employees")}
+              className="w-full sm:w-auto"
             >
               <ArrowLeft className="size-4 mr-2" />
-              Back to Employees
+              <span className="hidden sm:inline">Back to Employees</span>
+              <span className="sm:hidden">Back</span>
             </Button>
-            <Button onClick={() => openEntity(employee)}>
+            <Button
+              onClick={() => openEntity(employee)}
+              className="w-full sm:w-auto"
+            >
               <Pencil className="size-4 mr-2" />
-              Edit Employee
+              Edit
             </Button>
           </div>
         }
       />
 
-      <div className="mx-auto space-y-8">
+      <div className="mx-auto space-y-6">
         {/* PROFILE HEADER */}
         <Card className="shadow-md">
-          <CardHeader className="flex flex-row items-center gap-6">
+          <CardHeader className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
             {employee.profile_image ? (
-              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-primary shrink-0">
                 <Image
                   src={employee.profile_image}
                   alt={`${employee.first_name} ${employee.last_name}`}
@@ -178,16 +183,16 @@ const EmployeePage = () => {
                 />
               </div>
             ) : (
-              <div className="h-24 w-24 rounded-full bg-primary/20 text-primary flex items-center justify-center text-3xl font-bold">
+              <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-primary/20 text-primary flex items-center justify-center text-2xl sm:text-3xl font-bold shrink-0">
                 {employee.first_name?.[0]}
                 {employee.last_name?.[0]}
               </div>
             )}
-            <div className="space-y-2">
-              <h1 className="text-2xl font-bold">
+            <div className="space-y-2 text-center sm:text-left flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold wrap-break-word">
                 {employee.first_name} {employee.last_name}
               </h1>
-              <p className="text-muted-foreground capitalize">
+              <p className="text-sm sm:text-base text-muted-foreground capitalize">
                 {employee.role}
               </p>
               <Badge variant={employee.is_active ? "default" : "outline"}>
@@ -198,10 +203,12 @@ const EmployeePage = () => {
         </Card>
 
         {/* CONTACT & EMPLOYMENT */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Contact & Address</h2>
+            <CardHeader className="pb-3">
+              <h2 className="text-base sm:text-lg font-semibold">
+                Contact & Address
+              </h2>
             </CardHeader>
             <CardContent className="space-y-3">
               <Detail
@@ -250,8 +257,10 @@ const EmployeePage = () => {
           </Card>
 
           <Card>
-            <CardHeader>
-              <h2 className="text-lg font-semibold">Employment & Other Info</h2>
+            <CardHeader className="pb-3">
+              <h2 className="text-base sm:text-lg font-semibold">
+                Employment & Other Info
+              </h2>
             </CardHeader>
             <CardContent className="space-y-3">
               <Detail
@@ -293,10 +302,10 @@ const EmployeePage = () => {
 
           {/* CASH ADVANCE SECTION */}
           <Card className="col-span-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-              <div>
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Wallet className="h-5 w-5" />
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0 pb-4">
+              <div className="flex-1">
+                <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+                  <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
                   Cash Ban
                 </h2>
                 <p className="text-sm mt-1">
@@ -319,6 +328,7 @@ const EmployeePage = () => {
                   size="sm"
                   onClick={() => setShowCashAdvanceForm(!showCashAdvanceForm)}
                   variant={showCashAdvanceForm ? "outline" : "default"}
+                  className="w-full sm:w-auto"
                 >
                   {showCashAdvanceForm ? (
                     "Hide Form"
@@ -384,10 +394,12 @@ const EmployeePage = () => {
           {/* Government Benefit Overrides */}
           {isAdmin && (
             <Card className="col-span-full">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold">Benefit Overrides</h2>
-                  <p className="text-sm text-muted-foreground">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+                <div className="flex-1">
+                  <h2 className="text-base sm:text-lg font-semibold">
+                    Benefit Overrides
+                  </h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Custom government benefit amounts for this employee
                   </p>
                 </div>
@@ -397,6 +409,7 @@ const EmployeePage = () => {
                     setSelectedOverride(null)
                     setBenefitOverrideOpen(true)
                   }}
+                  className="w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Override
@@ -412,10 +425,10 @@ const EmployeePage = () => {
                     {benefitOverrides.map((override) => (
                       <div
                         key={override.id}
-                        className="flex items-center justify-between p-4 border rounded-md"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-md gap-3"
                       >
                         <div className="flex items-start gap-3 flex-1">
-                          <BadgeDollarSign className="h-5 w-5 text-muted-foreground mt-0.5" />
+                          <BadgeDollarSign className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <p className="font-medium">
@@ -457,7 +470,7 @@ const EmployeePage = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 sm:flex-col sm:self-start">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -465,6 +478,7 @@ const EmployeePage = () => {
                               setSelectedOverride(override)
                               setBenefitOverrideOpen(true)
                             }}
+                            className="flex-1 sm:flex-none"
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -480,6 +494,7 @@ const EmployeePage = () => {
                                 deleteOverride.mutate(override.id)
                               }
                             }}
+                            className="flex-1 sm:flex-none"
                           >
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>

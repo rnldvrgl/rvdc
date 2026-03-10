@@ -6,6 +6,7 @@ import { Employee } from "@/lib/constants/types"
 import { safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
 import { Archive, Edit, Eye, RotateCcw, Trash2 } from "lucide-react"
+import Link from "next/link"
 
 export function getEmployeeColumns({
   onEdit,
@@ -20,12 +21,20 @@ export function getEmployeeColumns({
 }): ColumnDef<Employee>[] {
   return [
     {
-      accessorKey: "first_name",
-      header: "First Name",
-    },
-    {
-      accessorKey: "last_name",
-      header: "Last Name",
+      accessorKey: "full_name",
+      header: "Full Name",
+      cell: ({ row }) => {
+        const employee = row.original
+        const fullName = `${employee.first_name} ${employee.last_name}`
+        return (
+          <Link
+            href={`/employees/${employee.id}`}
+            className="font-medium text-primary hover:underline"
+          >
+            {safeCell(fullName)}
+          </Link>
+        )
+      },
     },
     {
       accessorKey: "role",
