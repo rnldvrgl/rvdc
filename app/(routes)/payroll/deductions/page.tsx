@@ -66,7 +66,7 @@ function DeductionRow({
 }) {
   const isRecurring =
     deduction.deduction_type === "recurring_all" || deduction.is_recurring
-  const isApplied = !!deduction.applied_date
+  const isApplied = !isRecurring && !!deduction.applied_date
 
   return (
     <div
