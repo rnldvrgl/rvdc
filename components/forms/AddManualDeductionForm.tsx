@@ -92,7 +92,7 @@ export function AddManualDeductionForm({
       form.reset({
         name: deduction.name,
         description: deduction.description || "",
-        deduction_type: deduction.end_date ? "recurring" : "one_time",
+        deduction_type: deduction.is_recurring ? "recurring" : "one_time",
         amount: Number(deduction.amount),
         effective_date: deduction.effective_date
           ? new Date(deduction.effective_date)
@@ -141,6 +141,7 @@ export function AddManualDeductionForm({
         end_date: data.end_date
           ? format(data.end_date, "yyyy-MM-dd")
           : undefined,
+        is_recurring: data.deduction_type === "recurring",
         is_active: true,
       }
 
@@ -206,7 +207,7 @@ export function AddManualDeductionForm({
                   <FormDescription className="text-xs">
                     {deductionType === "one_time"
                       ? "Deducted once from a single payroll"
-                      : "Deducted every payroll until the end date"}
+                      : "Deducted every payroll until the end date (or indefinitely if no end date)"}
                   </FormDescription>
                 </FormItem>
               )}
@@ -274,11 +275,10 @@ export function AddManualDeductionForm({
                   name="end_date"
                   render={({ field }) => (
                     <DatePicker
-                      required
                       field={field}
-                      label="End Date"
-                      placeholder="Select end date"
-                      description="Last payroll period this deduction applies to"
+                      label="End Date (Optional)"
+                      placeholder="No end date (ongoing)"
+                      description="Leave blank for indefinite recurring deduction"
                       minDate={form.watch("effective_date")}
                     />
                   )}

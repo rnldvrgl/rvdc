@@ -1,6 +1,5 @@
 "use client"
 
-import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { AddCompanyDeductionForm } from "@/components/forms/AddCompanyDeductionForm"
@@ -66,7 +65,7 @@ function DeductionRow({
   showType?: boolean
 }) {
   const isRecurring =
-    deduction.deduction_type === "recurring_all" || !!deduction.end_date
+    deduction.deduction_type === "recurring_all" || deduction.is_recurring
   const isApplied = !!deduction.applied_date
 
   return (
@@ -413,7 +412,6 @@ function EmptyState({ message }: { message: string }) {
 
 export default function CompanyDeductionsPage() {
   const searchParams = useSearchParameters()
-  const [isArchived, setIsArchived] = useState(false)
   const [showInactive, setShowInactive] = useState(true)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [editingDeduction, setEditingDeduction] =
@@ -421,6 +419,8 @@ export default function CompanyDeductionsPage() {
   const [editingEmployeeDeduction, setEditingEmployeeDeduction] =
     useState<ManualDeduction | null>(null)
   const [activeTab, setActiveTab] = useState("company")
+
+  const isArchived = activeTab === "archived"
 
   // Fetch all company-wide deductions (no is_active filter - we filter on frontend)
   const { data: companyDeductionsData, isLoading } = useManualDeductions({
@@ -486,6 +486,14 @@ export default function CompanyDeductionsPage() {
       return true
     }) || []
 
+  // Split employee deductions by type (using is_recurring field)
+  const employeeRecurringDeductions = employeeDeductions.filter(
+    (d) => d.is_recurring,
+  )
+  const employeeOnetimeDeductions = employeeDeductions.filter(
+    (d) => !d.is_recurring,
+  )
+
   return (
     <Wrapper>
       <PageHeader
@@ -493,7 +501,6 @@ export default function CompanyDeductionsPage() {
         description="Manage company-wide and per-employee deductions"
         breadcrumbs={["Payroll", "Deductions"]}
         actionButton={
-          !isArchived &&
           activeTab === "company" && (
             <Button
               onClick={() => setIsAddOpen(true)}
@@ -512,9 +519,20 @@ export default function CompanyDeductionsPage() {
         onValueChange={setActiveTab}
         className="space-y-4"
       >
-        <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-2">
+        <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-3">
           <TabsTrigger value="company">Company-Wide</TabsTrigger>
           <TabsTrigger value="employee">Per Employee</TabsTrigger>
+          <TabsTrigger value="archived">
+            Archived
+            {archivedQuery.data?.count ? (
+              <Badge
+                variant="secondary"
+                className="ml-1.5 text-[10px] px-1.5 py-0"
+              >
+                {archivedQuery.data.count}
+              </Badge>
+            ) : null}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent
@@ -522,27 +540,20 @@ export default function CompanyDeductionsPage() {
           className="space-y-6"
         >
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-            <ArchiveToggle
-              isArchived={isArchived}
-              onToggle={setIsArchived}
-              archivedCount={archivedQuery.data?.count}
-            />
-            {!isArchived && (
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-muted-foreground flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={showInactive}
-                    onChange={(e) => setShowInactive(e.target.checked)}
-                    className="rounded border-gray-300 cursor-pointer"
-                  />
-                  Show inactive deductions
-                </label>
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-muted-foreground flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
+                <input
+                  type="checkbox"
+                  checked={showInactive}
+                  onChange={(e) => setShowInactive(e.target.checked)}
+                  className="rounded border-gray-300 cursor-pointer"
+                />
+                Show inactive deductions
+              </label>
+            </div>
           </div>
 
-          {!isArchived && !showInactive && (
+          {!showInactive && (
             <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900 p-3">
               <p className="text-xs text-blue-800 dark:text-blue-300">
                 <strong>💡 Tip:</strong> Inactive (paused) deductions are
@@ -553,109 +564,79 @@ export default function CompanyDeductionsPage() {
             </div>
           )}
 
-          {!isArchived && (
-            <>
-              {/* Recurring Deductions */}
-              <div className="space-y-3">
-                <SectionLabel
-                  icon={Repeat}
-                  label="Recurring Deductions"
-                  count={recurringDeductions.length}
-                />
-                <Card>
-                  <CardContent className="p-3">
-                    {isLoading ? (
-                      <EmptyState message="Loading..." />
-                    ) : recurringDeductions.length === 0 ? (
-                      <EmptyState message="No recurring deductions configured yet" />
-                    ) : (
-                      <div className="space-y-2">
-                        {recurringDeductions.map((d) => (
-                          <DeductionRow
-                            key={d.id}
-                            deduction={d}
-                            onToggle={handleToggle}
-                            onEdit={(d) => setEditingDeduction(d)}
-                            onArchive={handleArchive}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* One-Time Deductions */}
-              <div className="space-y-3">
-                <SectionLabel
-                  icon={Zap}
-                  label="One-Time Deductions"
-                  count={onetimeDeductions.length}
-                />
-                <Card>
-                  <CardContent className="p-3">
-                    {isLoading ? (
-                      <EmptyState message="Loading..." />
-                    ) : onetimeDeductions.length === 0 ? (
-                      <EmptyState message="No one-time deductions configured yet" />
-                    ) : (
-                      <div className="space-y-2">
-                        {onetimeDeductions.map((d) => (
-                          <DeductionRow
-                            key={d.id}
-                            deduction={d}
-                            onToggle={handleToggle}
-                            onEdit={(d) => setEditingDeduction(d)}
-                            onArchive={handleArchive}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              <AddCompanyDeductionForm
-                open={isAddOpen || !!editingDeduction}
-                onOpenChange={(open: boolean) => {
-                  setIsAddOpen(open)
-                  if (!open) setEditingDeduction(null)
-                }}
-                deduction={editingDeduction}
-              />
-            </>
-          )}
-
-          {/* Archived */}
-          {isArchived && (
+          {/* Recurring Deductions */}
+          <div className="space-y-3">
+            <SectionLabel
+              icon={Repeat}
+              label="Recurring Deductions"
+              count={recurringDeductions.length}
+            />
             <Card>
               <CardContent className="p-3">
-                {archivedQuery.isLoading ? (
+                {isLoading ? (
                   <EmptyState message="Loading..." />
-                ) : !archivedQuery.data?.results?.length ? (
-                  <EmptyState message="No archived deductions found" />
+                ) : recurringDeductions.length === 0 ? (
+                  <EmptyState message="No recurring deductions configured yet" />
                 ) : (
                   <div className="space-y-2">
-                    {archivedQuery.data.results.map((d: ManualDeduction) => (
-                      <ArchivedRow
+                    {recurringDeductions.map((d) => (
+                      <DeductionRow
                         key={d.id}
                         deduction={d}
-                        onRestore={(id) => restoreItem.mutate(id)}
-                        onDelete={(id) => hardDeleteItem.mutate(id)}
-                        restorePending={restoreItem.isPending}
-                        deletePending={hardDeleteItem.isPending}
+                        onToggle={handleToggle}
+                        onEdit={(d) => setEditingDeduction(d)}
+                        onArchive={handleArchive}
                       />
                     ))}
                   </div>
                 )}
               </CardContent>
             </Card>
-          )}
+          </div>
+
+          {/* One-Time Deductions */}
+          <div className="space-y-3">
+            <SectionLabel
+              icon={Zap}
+              label="One-Time Deductions"
+              count={onetimeDeductions.length}
+            />
+            <Card>
+              <CardContent className="p-3">
+                {isLoading ? (
+                  <EmptyState message="Loading..." />
+                ) : onetimeDeductions.length === 0 ? (
+                  <EmptyState message="No one-time deductions configured yet" />
+                ) : (
+                  <div className="space-y-2">
+                    {onetimeDeductions.map((d) => (
+                      <DeductionRow
+                        key={d.id}
+                        deduction={d}
+                        onToggle={handleToggle}
+                        onEdit={(d) => setEditingDeduction(d)}
+                        onArchive={handleArchive}
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <AddCompanyDeductionForm
+            open={isAddOpen || !!editingDeduction}
+            onOpenChange={(open: boolean) => {
+              setIsAddOpen(open)
+              if (!open) setEditingDeduction(null)
+            }}
+            deduction={editingDeduction}
+          />
         </TabsContent>
 
         <TabsContent
           value="employee"
-          className="space-y-4"
+          className="space-y-6"
         >
           <div className="flex flex-col gap-3">
             <div className="rounded-lg border bg-muted/50 p-4">
@@ -689,29 +670,67 @@ export default function CompanyDeductionsPage() {
             </div>
           )}
 
-          <Card>
-            <CardContent className="p-3">
-              {employeeLoading ? (
-                <EmptyState message="Loading..." />
-              ) : employeeDeductions.length === 0 ? (
-                <EmptyState message="No per-employee deductions yet. Add them from an employee's payroll slip." />
-              ) : (
-                <div className="space-y-2">
-                  {employeeDeductions.map((d) => (
-                    <DeductionRow
-                      key={d.id}
-                      deduction={d}
-                      onToggle={handleToggle}
-                      onEdit={(d) => setEditingEmployeeDeduction(d)}
-                      onArchive={handleArchive}
-                      showEmployee
-                      showType
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Recurring Employee Deductions */}
+          <div className="space-y-3">
+            <SectionLabel
+              icon={Repeat}
+              label="Recurring Deductions"
+              count={employeeRecurringDeductions.length}
+            />
+            <Card>
+              <CardContent className="p-3">
+                {employeeLoading ? (
+                  <EmptyState message="Loading..." />
+                ) : employeeRecurringDeductions.length === 0 ? (
+                  <EmptyState message="No recurring employee deductions yet" />
+                ) : (
+                  <div className="space-y-2">
+                    {employeeRecurringDeductions.map((d) => (
+                      <DeductionRow
+                        key={d.id}
+                        deduction={d}
+                        onToggle={handleToggle}
+                        onEdit={(d) => setEditingEmployeeDeduction(d)}
+                        onArchive={handleArchive}
+                        showEmployee
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* One-Time Employee Deductions */}
+          <div className="space-y-3">
+            <SectionLabel
+              icon={Zap}
+              label="One-Time Deductions"
+              count={employeeOnetimeDeductions.length}
+            />
+            <Card>
+              <CardContent className="p-3">
+                {employeeLoading ? (
+                  <EmptyState message="Loading..." />
+                ) : employeeOnetimeDeductions.length === 0 ? (
+                  <EmptyState message="No one-time employee deductions yet" />
+                ) : (
+                  <div className="space-y-2">
+                    {employeeOnetimeDeductions.map((d) => (
+                      <DeductionRow
+                        key={d.id}
+                        deduction={d}
+                        onToggle={handleToggle}
+                        onEdit={(d) => setEditingEmployeeDeduction(d)}
+                        onArchive={handleArchive}
+                        showEmployee
+                      />
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           {editingEmployeeDeduction?.employee && editingEmployeeDeduction && (
             <AddManualDeductionForm
@@ -727,6 +746,42 @@ export default function CompanyDeductionsPage() {
               deduction={editingEmployeeDeduction}
             />
           )}
+        </TabsContent>
+
+        <TabsContent
+          value="archived"
+          className="space-y-4"
+        >
+          <div className="rounded-lg border bg-muted/50 p-4">
+            <p className="text-sm text-muted-foreground">
+              Archived deductions from both company-wide and per-employee
+              categories. These won&apos;t be applied to payroll but can be
+              restored if needed.
+            </p>
+          </div>
+
+          <Card>
+            <CardContent className="p-3">
+              {archivedQuery.isLoading ? (
+                <EmptyState message="Loading..." />
+              ) : !archivedQuery.data?.results?.length ? (
+                <EmptyState message="No archived deductions found" />
+              ) : (
+                <div className="space-y-2">
+                  {archivedQuery.data.results.map((d: ManualDeduction) => (
+                    <ArchivedRow
+                      key={d.id}
+                      deduction={d}
+                      onRestore={(id) => restoreItem.mutate(id)}
+                      onDelete={(id) => hardDeleteItem.mutate(id)}
+                      restorePending={restoreItem.isPending}
+                      deletePending={hardDeleteItem.isPending}
+                    />
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </Wrapper>

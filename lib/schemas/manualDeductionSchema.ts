@@ -34,6 +34,7 @@ export interface ManualDeduction {
   amount: string
   effective_date: string | null
   end_date: string | null
+  is_recurring: boolean
   is_active: boolean
   applied_date: string | null
   is_deleted: boolean
