@@ -119,6 +119,18 @@ export type QuotationItem = {
   total_price?: number
 }
 
+export type QuotationPaymentMethod = "cash" | "gcash" | "bank_transfer"
+
+export type QuotationPayment = {
+  id?: number
+  label: string
+  amount: number
+  payment_method: QuotationPaymentMethod | ""
+  payment_date: string | null
+  reference_number: string
+  si_number: string
+}
+
 export type Quotation = BaseEntity & {
   client?: number | null
   client_data?: Client | null
@@ -142,6 +154,7 @@ export type Quotation = BaseEntity & {
   client_acceptance_name: string
   client_acceptance_date: string
   items: QuotationItem[]
+  payments?: QuotationPayment[]
   created_by?: number
   created_by_name?: string
   item_count?: number
@@ -168,6 +181,7 @@ export type QuotationPayload = {
   client_acceptance_name?: string
   client_acceptance_date?: string
   items: Omit<QuotationItem, "id" | "total_price">[]
+  payments?: Omit<QuotationPayment, "id">[]
 }
 
 export type QuotationTermsTemplateCategory =

@@ -6,6 +6,7 @@ import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import { Detail } from "@/components/details/Detail"
+import { AddManualDeductionForm } from "@/components/forms/AddManualDeductionForm"
 import { CashAdvanceForm } from "@/components/forms/CashAdvanceForm"
 import { EmployeeBenefitOverrideForm } from "@/components/forms/EmployeeBenefitOverrideForm"
 import EmployeeForm from "@/components/forms/EmployeeForm"
@@ -19,10 +20,16 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import { useCashAdvanceMutations } from "@/lib/mutations/useCashAdvanceMutations"
 import { useEmployeeBenefitOverrideMutations } from "@/lib/mutations/useEmployeeBenefitOverrideMutations"
+import {
+  useDeleteManualDeduction,
+  useToggleDeduction,
+} from "@/lib/mutations/useManualDeductionMutations"
 import { useCashAdvanceMovements } from "@/lib/queries/useCashAdvances"
 import { useEmployeeBenefitOverrides } from "@/lib/queries/useEmployeeBenefitOverrides"
 import { useEmployee } from "@/lib/queries/useEmployees"
+import { useEmployeeDeductions } from "@/lib/queries/useManualDeductions"
 import { EmployeeBenefitOverride } from "@/lib/schemas/employeeBenefitOverrideSchema"
+import { ManualDeduction } from "@/lib/schemas/manualDeductionSchema"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { format } from "date-fns"
 import {
@@ -35,8 +42,10 @@ import {
   KeyRound,
   Mail,
   MapPin,
+  Pause,
   Pencil,
   Phone,
+  Play,
   Plus,
   Store,
   Trash2,
@@ -75,11 +84,20 @@ const EmployeePage = () => {
 
   const { deleteOverride } = useEmployeeBenefitOverrideMutations()
   const { deleteMovement } = useCashAdvanceMutations()
+  const toggleDeduction = useToggleDeduction()
+  const deleteDeduction = useDeleteManualDeduction()
+
+  const { data: employeeDeductions = [] } = useEmployeeDeductions(
+    Number(params.id),
+  )
 
   const [benefitOverrideOpen, setBenefitOverrideOpen] = useState(false)
   const [selectedOverride, setSelectedOverride] =
     useState<EmployeeBenefitOverride | null>(null)
   const [showCashAdvanceForm, setShowCashAdvanceForm] = useState(false)
+  const [deductionFormOpen, setDeductionFormOpen] = useState(false)
+  const [selectedDeduction, setSelectedDeduction] =
+    useState<ManualDeduction | null>(null)
 
   const {
     entityState: { open },
@@ -391,6 +409,143 @@ const EmployeePage = () => {
             </CardContent>
           </Card>
 
+          {/* MANUAL DEDUCTIONS SECTION */}
+          <Card className="col-span-full">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
+              <div className="flex-1">
+                <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+                  <BadgeDollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
+                  Manual Deductions
+                </h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Per-employee deductions applied to payroll
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setSelectedDeduction(null)
+                  setDeductionFormOpen(true)
+                }}
+                className="w-full sm:w-auto"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Deduction
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {employeeDeductions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No manual deductions for this employee.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {employeeDeductions.map((ded) => (
+                    <div
+                      key={ded.id}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-md gap-3"
+                    >
+                      <div className="flex items-start gap-3 flex-1">
+                        <BadgeDollarSign className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium">{ded.name}</p>
+                            <Badge
+                              variant={
+                                ded.is_recurring ? "default" : "secondary"
+                              }
+                              className="text-xs"
+                            >
+                              {ded.is_recurring ? "Recurring" : "One-Time"}
+                            </Badge>
+                            {!ded.is_active && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs"
+                              >
+                                Paused
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                            <p>
+                              ₱{Number(ded.amount).toLocaleString()} / payroll
+                            </p>
+                            {ded.effective_date && (
+                              <p className="text-xs">
+                                {format(
+                                  new Date(ded.effective_date),
+                                  "MMM d, yyyy",
+                                )}
+                                {ded.end_date
+                                  ? ` - ${format(new Date(ded.end_date), "MMM d, yyyy")}`
+                                  : ded.is_recurring
+                                    ? " - Ongoing"
+                                    : ""}
+                              </p>
+                            )}
+                            {ded.description && (
+                              <p className="text-xs italic">
+                                {ded.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 sm:flex-col sm:self-start">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            toggleDeduction.mutate({
+                              id: ded.id,
+                              is_active: !ded.is_active,
+                            })
+                          }
+                          title={ded.is_active ? "Pause" : "Resume"}
+                          className="flex-1 sm:flex-none"
+                        >
+                          {ded.is_active ? (
+                            <Pause className="h-4 w-4" />
+                          ) : (
+                            <Play className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedDeduction(ded)
+                            setDeductionFormOpen(true)
+                          }}
+                          className="flex-1 sm:flex-none"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (
+                              confirm(
+                                `Archive deduction "${ded.name}"? It will be removed from future payrolls.`,
+                              )
+                            ) {
+                              deleteDeduction.mutate(ded.id)
+                            }
+                          }}
+                          className="flex-1 sm:flex-none"
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Government Benefit Overrides */}
           {isAdmin && (
             <Card className="col-span-full">
@@ -530,6 +685,15 @@ const EmployeePage = () => {
         onOpenChange={setBenefitOverrideOpen}
         override={selectedOverride}
         preselectedEmployee={employee.id}
+      />
+
+      {/* MANUAL DEDUCTION DIALOG */}
+      <AddManualDeductionForm
+        open={deductionFormOpen}
+        onOpenChange={setDeductionFormOpen}
+        employeeId={employee.id}
+        employeeName={`${employee.first_name} ${employee.last_name}`}
+        deduction={selectedDeduction}
       />
     </Wrapper>
   )

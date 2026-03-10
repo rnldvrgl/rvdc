@@ -219,7 +219,7 @@ const QuotationPrintContent = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="quotation-print bg-white text-black font-sans w-[210mm] min-h-[297mm] p-[0.75in]"
+      className="quotation-print bg-white text-black font-sans w-[210mm] min-h-[297mm] p-12"
     >
       {/* HEADER */}
       <div className="flex items-start justify-between mb-6">
@@ -355,7 +355,7 @@ const QuotationPrintContent = React.forwardRef<
       )}
 
       {/* TOTALS — outside table to prevent duplication on page breaks */}
-      <div className="quotation-totals mb-6 border-x border-b border-gray-300">
+      <div className="quotation-totals border-x border-b border-gray-300">
         <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[12px] text-gray-600 ">
           <span></span>
           <span className="text-right">Subtotal</span>
@@ -380,6 +380,70 @@ const QuotationPrintContent = React.forwardRef<
           </span>
         </div>
       </div>
+
+      {/* PAYMENT SCHEDULE */}
+      {q.payments && q.payments.length > 0 && (
+        <div className="my-4 text-[11px]">
+          <h3 className="font-semibold text-[12px] mb-2">Payment Schedule</h3>
+          <table className="w-full border-collapse border border-gray-300 text-[11px]">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="text-left py-1.5 px-3 border border-gray-300 font-semibold w-[20%]">
+                  Description
+                </th>
+                <th className="text-left py-1.5 px-3 border border-gray-300 font-semibold w-[12%]">
+                  M.O.P
+                </th>
+                <th className="text-right py-1.5 px-3 border border-gray-300 font-semibold w-[14%]">
+                  Amount
+                </th>
+                <th className="text-center py-1.5 px-3 border border-gray-300 font-semibold w-[14%]">
+                  Ref #
+                </th>
+                <th className="text-center py-1.5 px-3 border border-gray-300 font-semibold w-[13%]">
+                  S.I #
+                </th>
+                <th className="text-center py-1.5 px-3 border border-gray-300 font-semibold w-[11%]">
+                  Date
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {q.payments.map((p, idx) => (
+                <tr key={p.id ?? idx}>
+                  <td className="py-1.5 px-3 border border-gray-300">
+                    {p.label}
+                  </td>
+                  <td className="py-1.5 px-3 border border-gray-300">
+                    {p.payment_method === "bank_transfer"
+                      ? "Bank Transfer"
+                      : p.payment_method === "gcash"
+                        ? "GCash"
+                        : p.payment_method === "cash"
+                          ? "Cash"
+                          : "—"}
+                  </td>
+
+                  <td className="py-1.5 px-3 text-right border border-gray-300">
+                    &#8369;{formatCurrency(Number(p.amount))}
+                  </td>
+                  <td className="py-1.5 px-3 text-center border border-gray-300">
+                    {p.reference_number || "—"}
+                  </td>
+                  <td className="py-1.5 px-3 text-center border border-gray-300">
+                    {p.si_number || "—"}
+                  </td>
+                  <td className="py-1.5 px-3 text-center border border-gray-300">
+                    {p.payment_date
+                      ? format(new Date(p.payment_date), "MM/dd/yyyy")
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* TERMS & CONDITIONS */}
       {q.terms_conditions && (
@@ -453,7 +517,9 @@ const QuotationPrintContent = React.forwardRef<
                   {q.authorized_name}
                 </p>
               ) : (
-                <p className="text-[11px] text-gray-500">Printed Name</p>
+                <p className="text-[11px] text-gray-500">
+                  Signature over Printed Name
+                </p>
               )}
               {q.authorized_name && q.authorized_date && (
                 <p className="text-[11px] text-gray-500">
@@ -483,7 +549,9 @@ const QuotationPrintContent = React.forwardRef<
                   {q.client_acceptance_name}
                 </p>
               ) : (
-                <p className="text-[11px] text-gray-500">Printed Name</p>
+                <p className="text-[11px] text-gray-500">
+                  Signature over Printed Name
+                </p>
               )}
               {q.client_acceptance_name && q.client_acceptance_date && (
                 <p className="text-[11px] text-gray-500">

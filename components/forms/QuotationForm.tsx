@@ -25,7 +25,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import type { Quotation, QuotationPayload } from "@/lib/constants/types"
+import type {
+  Quotation,
+  QuotationPayload,
+  QuotationPaymentMethod,
+} from "@/lib/constants/types"
 import { useQuotationMutations } from "@/lib/mutations/useQuotationMutations"
 import { useClients } from "@/lib/queries/clients/useClients"
 import { useAirconUnits } from "@/lib/queries/useAircons"
@@ -380,6 +384,50 @@ export default function QuotationForm({
       : DEFAULT_PAYMENT_TERMS,
   )
 
+  // Payment Schedule (structured payments with value, date, receipt#)
+  interface PaymentRecord {
+    id: string
+    label: string
+    amount: number
+    payment_method: string
+    payment_date: Date | undefined
+    reference_number: string
+    si_number: string
+  }
+  const [paymentRecords, setPaymentRecords] = useState<PaymentRecord[]>(() => {
+    if (quotation?.payments?.length) {
+      return quotation.payments.map((p) => ({
+        id: generateId(),
+        label: p.label,
+        amount: Number(p.amount),
+        payment_method: p.payment_method ?? "",
+        payment_date: p.payment_date ? new Date(p.payment_date) : undefined,
+        reference_number: p.reference_number ?? "",
+        si_number: p.si_number ?? "",
+      }))
+    }
+    return [
+      {
+        id: generateId(),
+        label: "Down payment",
+        amount: 0,
+        payment_method: "cash",
+        payment_date: undefined,
+        reference_number: "",
+        si_number: "",
+      },
+      {
+        id: generateId(),
+        label: "Full payment",
+        amount: 0,
+        payment_method: "cash",
+        payment_date: undefined,
+        reference_number: "",
+        si_number: "",
+      },
+    ]
+  })
+
   // Signatures
   const [authorizedSignature, setAuthorizedSignature] = useState(
     quotation?.authorized_signature ?? "",
@@ -443,7 +491,8 @@ export default function QuotationForm({
   )
 
   // ── Notes ──
-  const DEFAULT_NOTES = "1 Year Warranty Parts / 5 Years Warranty Compressor"
+  const DEFAULT_NOTES =
+    "1 Year Warranty Parts / 5 Years Warranty Compressor / 3 Years PCB Board (Daikin)"
   const [notes, setNotes] = useState(
     quotation?.notes ?? (isEdit ? "" : DEFAULT_NOTES),
   )
@@ -624,6 +673,20 @@ export default function QuotationForm({
           description: i.description,
           quantity: i.qty,
           unit_price: i.price,
+        })),
+      payments: paymentRecords
+        .filter((p) => p.label.trim())
+        .map((p) => ({
+          label: p.label,
+          amount: p.amount,
+          payment_method: (p.payment_method || "") as
+            | QuotationPaymentMethod
+            | "",
+          payment_date: p.payment_date
+            ? format(p.payment_date, "yyyy-MM-dd")
+            : null,
+          reference_number: p.reference_number,
+          si_number: p.si_number,
         })),
     }
 
@@ -986,6 +1049,222 @@ export default function QuotationForm({
             <span>Total</span>
             <span>&#8369;{formatCurrency(total)}</span>
           </div>
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* ── Section: Payment Schedule ─────────────────────── */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-foreground">
+            Payment Schedule
+          </h3>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs border-dashed text-blue-600 border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+            onClick={() =>
+              setPaymentRecords((prev) => [
+                ...prev,
+                {
+                  id: generateId(),
+                  label: "",
+                  amount: 0,
+                  payment_method: "cash",
+                  payment_date: undefined,
+                  reference_number: "",
+                  si_number: "",
+                },
+              ])
+            }
+          >
+            <Plus className="mr-1 h-3 w-3" />
+            Add Payment
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mb-3">
+          Track downpayment, completion payment, etc. These will appear on the
+          printed quotation.
+        </p>
+        <div className="space-y-3">
+          {paymentRecords.map((rec) => (
+            <div
+              key={rec.id}
+              className="group border rounded-md p-3 bg-muted/30 space-y-2"
+            >
+              {/* Row 1: Label + Amount + Delete */}
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_32px] gap-2 items-end">
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    Label
+                  </Label>
+                  <Input
+                    value={rec.label}
+                    onChange={(e) =>
+                      setPaymentRecords((prev) =>
+                        prev.map((r) =>
+                          r.id === rec.id ? { ...r, label: e.target.value } : r,
+                        ),
+                      )
+                    }
+                    placeholder="e.g. Down payment, Full payment"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    Amount (₱)
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={rec.amount || ""}
+                    onChange={(e) =>
+                      setPaymentRecords((prev) =>
+                        prev.map((r) =>
+                          r.id === rec.id
+                            ? {
+                                ...r,
+                                amount: parseFloat(e.target.value) || 0,
+                              }
+                            : r,
+                        ),
+                      )
+                    }
+                    placeholder="0.00"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive self-end"
+                      onClick={() =>
+                        setPaymentRecords((prev) =>
+                          prev.length > 1
+                            ? prev.filter((r) => r.id !== rec.id)
+                            : prev,
+                        )
+                      }
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Remove payment</TooltipContent>
+                </Tooltip>
+              </div>
+              {/* Row 2: Payment Method + Date + Ref No. + S.I. No. */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    Payment Method
+                  </Label>
+                  <Select
+                    value={rec.payment_method}
+                    onValueChange={(v) =>
+                      setPaymentRecords((prev) =>
+                        prev.map((r) =>
+                          r.id === rec.id ? { ...r, payment_method: v } : r,
+                        ),
+                      )
+                    }
+                  >
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="gcash">GCash</SelectItem>
+                      <SelectItem value="bank_transfer">
+                        Bank Transfer
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    Date
+                  </Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal h-8 text-sm",
+                          !rec.payment_date && "text-muted-foreground",
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                        {rec.payment_date
+                          ? format(rec.payment_date, "MM/dd/yyyy")
+                          : "Pick date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-0"
+                      align="start"
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={rec.payment_date}
+                        onSelect={(d) =>
+                          setPaymentRecords((prev) =>
+                            prev.map((r) =>
+                              r.id === rec.id ? { ...r, payment_date: d } : r,
+                            ),
+                          )
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    Ref No.
+                  </Label>
+                  <Input
+                    value={rec.reference_number}
+                    onChange={(e) =>
+                      setPaymentRecords((prev) =>
+                        prev.map((r) =>
+                          r.id === rec.id
+                            ? { ...r, reference_number: e.target.value }
+                            : r,
+                        ),
+                      )
+                    }
+                    placeholder="Reference #"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    S.I. No.
+                  </Label>
+                  <Input
+                    value={rec.si_number}
+                    onChange={(e) =>
+                      setPaymentRecords((prev) =>
+                        prev.map((r) =>
+                          r.id === rec.id
+                            ? { ...r, si_number: e.target.value }
+                            : r,
+                        ),
+                      )
+                    }
+                    placeholder="Sales Invoice #"
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </section>
 
