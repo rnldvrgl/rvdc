@@ -42,6 +42,7 @@ export const userProfileSchema = z
     birthday: z.date().optional(),
 
     profile_image: z.string().nullable().optional(),
+    e_signature: z.string().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     const currentFilled =
@@ -183,6 +184,7 @@ export const AirconModelSchema = z.object({
   horsepower: z.string().optional(),
   is_inverter: z.boolean(),
   parts_warranty_months: z.number().int().min(0).default(60),
+  compressor_warranty_months: z.number().int().min(0).default(60),
   labor_warranty_months: z.number().int().min(0).default(12),
 })
 
@@ -203,4 +205,10 @@ export const AirconUnitSchema = z.object({
     required_error: "Model is required",
     invalid_type_error: "Model must be selected",
   }),
+
+  compressor_warranty_months: z.number().int().min(0).optional(),
+
+  labor_warranty_months: z.number().int().min(0).optional(),
+
+  parts_warranty_months: z.number().int().min(0).optional(),
 })

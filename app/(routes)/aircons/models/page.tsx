@@ -217,7 +217,7 @@ export default function AirconModelsPage() {
                   {entity.has_discount &&
                   entity.promo_price &&
                   parseFloat(entity.promo_price) > 0 ? (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-700/40 dark:bg-emerald-900/20">
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-700/40 dark:bg-emerald-900/20 ">
                       <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                         Promo Price
                       </p>
@@ -245,25 +245,6 @@ export default function AirconModelsPage() {
                     </div>
                   )}
                 </div>
-
-                {/* Selling Price — always visible */}
-                <div className="rounded-xl border-2 border-sky-200 bg-sky-50 px-4 py-3 dark:border-sky-700/40 dark:bg-sky-900/20">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-sky-600 dark:text-sky-400">
-                      Selling Price
-                    </p>
-                    {entity.has_discount && (
-                      <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-800/40 dark:text-emerald-300">
-                        Promo Applied
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1 text-xl font-black text-sky-700 dark:text-sky-300">
-                    {formatCurrency(
-                      entity.selling_price || entity.retail_price,
-                    )}
-                  </p>
-                </div>
               </section>
 
               {/* ── Warranty ── */}
@@ -272,17 +253,33 @@ export default function AirconModelsPage() {
                   <Shield className="size-3.5" />
                   Warranty
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <div className="rounded-xl border border-sky-200 bg-linear-to-br from-sky-50 to-blue-50 px-4 py-4 dark:border-sky-700/40 dark:from-sky-900/20 dark:to-blue-900/20">
                     <p className="text-[11px] font-medium uppercase tracking-wider text-sky-600 dark:text-sky-400">
                       Parts
                     </p>
                     <p className="mt-1 text-2xl font-black text-sky-700 dark:text-sky-300">
-                      {entity.parts_warranty_months ?? 60}
+                      {entity.parts_warranty_months ?? 12}
                       <span className="ml-1 text-sm font-medium">mo.</span>
                     </p>
                     <p className="text-xs text-sky-500 dark:text-sky-400">
-                      ≈ {((entity.parts_warranty_months ?? 60) / 12).toFixed(1)}{" "}
+                      ≈ {((entity.parts_warranty_months ?? 12) / 12).toFixed(1)}{" "}
+                      yr
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-purple-200 bg-linear-to-br from-purple-50 to-violet-50 px-4 py-4 dark:border-purple-700/40 dark:from-purple-900/20 dark:to-violet-900/20">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-purple-600 dark:text-purple-400">
+                      Compressor
+                    </p>
+                    <p className="mt-1 text-2xl font-black text-purple-700 dark:text-purple-300">
+                      {entity.compressor_warranty_months ?? 60}
+                      <span className="ml-1 text-sm font-medium">mo.</span>
+                    </p>
+                    <p className="text-xs text-purple-500 dark:text-purple-400">
+                      ≈{" "}
+                      {((entity.compressor_warranty_months ?? 60) / 12).toFixed(
+                        1,
+                      )}{" "}
                       yr
                     </p>
                   </div>

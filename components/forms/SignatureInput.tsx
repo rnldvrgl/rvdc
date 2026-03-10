@@ -259,13 +259,15 @@ export default function SignatureInput({
           </div>
 
           {/* Upload Actions */}
-          <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-            <span className="text-xs font-medium text-foreground">
-              Upload signature
-            </span>
-            <p className="text-[10px] text-muted-foreground">
-              PNG, JPG up to 2MB
-            </p>
+          <div className="flex justify-between items-center gap-1.5 flex-1 min-w-0">
+            <div className="flex flex-col items-center gap-1.5 ">
+              <span className="text-xs font-medium text-foreground">
+                Upload signature
+              </span>
+              <p className="text-[10px] text-muted-foreground">
+                PNG, JPG up to 2MB
+              </p>
+            </div>
             <label
               role="button"
               className="inline-flex items-center justify-center w-max px-3 py-1.5 text-xs font-medium rounded-md cursor-pointer bg-blue-600 text-white shadow-sm hover:bg-blue-700 transition"

@@ -28,6 +28,11 @@ type UserProfileFormProps = {
     handleFileRemove: () => void
     image: string
   }
+  eSignatureUpload: {
+    handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+    handleFileRemove: () => void
+    image: string
+  }
   hasChanges?: boolean
   isSubmitting?: boolean
 }
@@ -36,6 +41,7 @@ const UserProfileForm = ({
   form,
   onSubmit,
   upload,
+  eSignatureUpload,
   hasChanges = false,
   isSubmitting = false,
 }: UserProfileFormProps) => {
@@ -194,10 +200,37 @@ const UserProfileForm = ({
                     <FormLabel>Profile Image</FormLabel>
                     <FormControl>
                       <ImageUpload
+                        type="profile_image"
                         fieldName={field.name}
                         handleFileChange={upload.handleFileChange}
                         handleFileRemove={upload.handleFileRemove}
                         image={upload.image}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* E-Signature */}
+              <FormField
+                control={form.control}
+                name="e_signature"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      E-Signature{" "}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        (optional — used for quotations)
+                      </span>
+                    </FormLabel>
+                    <FormControl>
+                      <ImageUpload
+                        type="e_signature"
+                        fieldName={field.name}
+                        handleFileChange={eSignatureUpload.handleFileChange}
+                        handleFileRemove={eSignatureUpload.handleFileRemove}
+                        image={eSignatureUpload.image}
                       />
                     </FormControl>
                     <FormMessage />

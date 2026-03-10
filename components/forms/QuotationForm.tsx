@@ -28,20 +28,24 @@ import {
 import type { Quotation, QuotationPayload } from "@/lib/constants/types"
 import { useQuotationMutations } from "@/lib/mutations/useQuotationMutations"
 import { useClients } from "@/lib/queries/clients/useClients"
+import { useAirconUnits } from "@/lib/queries/useAircons"
+import { useEmployees } from "@/lib/queries/useEmployees"
 import { useQuotationTemplates } from "@/lib/queries/useQuotationTemplates"
 import { formatCurrency } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
 import { addDays, format } from "date-fns"
 import {
+  Bold,
   CalendarIcon,
   GripVertical,
+  Italic,
   Loader2,
   Plus,
   Save,
   Trash2,
   X,
 } from "lucide-react"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
 interface QuotationFormProps {
@@ -51,6 +55,7 @@ interface QuotationFormProps {
 
 interface FormItem {
   id: string
+  airconUnitId: number | null
   description: string
   qty: number
   price: number
@@ -85,6 +90,15 @@ const DEFAULT_PAYMENT_TERMS = [
   "50% downpayment, 50% upon job completion.",
   "Accepted payment methods: Bank Transfer, GCash, Cash.",
 ]
+
+const AIRCON_TYPE_LABELS: Record<string, string> = {
+  window: "WINDOW TYPE",
+  split: "SPLIT TYPE",
+  floor_mounted: "FLOOR MOUNTED TYPE",
+  cassette: "CASSETTE TYPE",
+  portable: "PORTABLE",
+  centralized: "CENTRALIZED",
+}
 
 /* ──────────────────────────────────────────────────────────
    Editable Lines Component — per-line inputs with add/remove
@@ -158,6 +172,82 @@ function EditableLines({
 }
 
 /* ──────────────────────────────────────────────────────────
+   Description Field — textarea with bold/italic toolbar
+   ────────────────────────────────────────────────────────── */
+
+function DescriptionField({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (v: string) => void
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+
+  const wrapSelection = (marker: string) => {
+    const ta = ref.current
+    if (!ta) return
+    const { selectionStart: s, selectionEnd: e } = ta
+    const selected = value.slice(s, e)
+    if (!selected) return
+    const wrapped = `${marker}${selected}${marker}`
+    const next = value.slice(0, s) + wrapped + value.slice(e)
+    onChange(next)
+    // Restore cursor after React re-render
+    requestAnimationFrame(() => {
+      ta.focus()
+      ta.setSelectionRange(s + marker.length, e + marker.length)
+    })
+  }
+
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center gap-1">
+        <Label className="text-[11px] text-muted-foreground flex-1">
+          Description
+        </Label>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => wrapSelection("**")}
+            >
+              <Bold className="h-3 w-3" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Bold selected text</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => wrapSelection("*")}
+            >
+              <Italic className="h-3 w-3" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Italic selected text</TooltipContent>
+        </Tooltip>
+      </div>
+      <Textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Item description..."
+        rows={2}
+        className="resize-none text-sm min-h-[60px]"
+      />
+    </div>
+  )
+}
+
+/* ──────────────────────────────────────────────────────────
    Main QuotationForm
    ────────────────────────────────────────────────────────── */
 
@@ -167,9 +257,45 @@ export default function QuotationForm({
 }: QuotationFormProps) {
   const isEdit = !!quotation
 
+  // ── Aircon Units (Available Inventory) ──
+  const { data: airconUnitsData } = useAirconUnits({
+    limit: 500,
+    filter: { is_available_for_sale: "true" },
+  })
+  const airconUnits = useMemo(
+    () => airconUnitsData?.results ?? [],
+    [airconUnitsData],
+  )
+  const airconUnitOptions = useMemo(
+    () =>
+      airconUnits.map((u) => ({
+        value: u.id,
+        label:
+          `${u.serial_number}${u.outdoor_serial_number ? ` / ${u.outdoor_serial_number}` : ""} — ${u.model?.brand?.name ?? ""} ${AIRCON_TYPE_LABELS[u.model?.aircon_type ?? ""] ?? u.model?.aircon_type ?? ""} ${u.model?.horsepower ?? ""}hp${u.model?.is_inverter ? " INVERTER" : ""} ${u.model?.name ?? ""}`.trim(),
+      })),
+    [airconUnits],
+  )
+
   // ── Client ──
   const { data: clientsData } = useClients({ limit: 200 })
   const clients = useMemo(() => clientsData?.results ?? [], [clientsData])
+
+  // ── Authorized Representatives (admin & managers) ──
+  const { data: employeesData } = useEmployees({
+    limit: 100,
+    filter: { include_admins: "true" },
+  })
+  const employees = useMemo(() => employeesData?.results ?? [], [employeesData])
+  const authorizedRepOptions = useMemo(
+    () =>
+      employees
+        .filter((e) => e.role === "admin" || e.role === "manager")
+        .map((e) => ({
+          value: e.id,
+          label: e.full_name || `${e.first_name} ${e.last_name}`.trim(),
+        })),
+    [employees],
+  )
   const [selectedClientId, setSelectedClientId] = useState<number | null>(
     quotation?.client ?? null,
   )
@@ -262,23 +388,42 @@ export default function QuotationForm({
   const [clientAcceptanceDate, setClientAcceptanceDate] = useState(
     quotation?.client_acceptance_date ?? "",
   )
+  const [selectedRepId, setSelectedRepId] = useState<number | null>(null)
 
   // ── Line Items ──
   const [items, setItems] = useState<FormItem[]>(
     quotation?.items?.length
       ? quotation.items.map((i) => ({
           id: generateId(),
+          airconUnitId: i.aircon_unit ?? null,
           description: i.description,
           qty: i.quantity,
           price: Number(i.unit_price),
         }))
-      : [{ id: generateId(), description: "", qty: 1, price: 0 }],
+      : [
+          {
+            id: generateId(),
+            airconUnitId: null,
+            description: "",
+            qty: 1,
+            price: 0,
+          },
+        ],
   )
+
+  // ── Notes ──
+  const [notes, setNotes] = useState(quotation?.notes ?? "")
 
   const addItem = useCallback(() => {
     setItems((prev) => [
       ...prev,
-      { id: generateId(), description: "", qty: 1, price: 0 },
+      {
+        id: generateId(),
+        airconUnitId: null,
+        description: "",
+        qty: 1,
+        price: 0,
+      },
     ])
   }, [])
 
@@ -297,6 +442,58 @@ export default function QuotationForm({
       )
     },
     [],
+  )
+
+  const handleAirconUnitSelect = useCallback(
+    (itemId: string, unitId: number | null) => {
+      const unit = airconUnits.find((u) => u.id === unitId)
+      setItems((prev) =>
+        prev.map((item) => {
+          if (item.id !== itemId) return item
+          if (!unit) return { ...item, airconUnitId: null }
+          const model = unit.model
+          const typeLabel = model
+            ? (AIRCON_TYPE_LABELS[model.aircon_type] ?? model.aircon_type)
+            : ""
+          const desc =
+            `${model?.brand?.name ?? ""} ${typeLabel} ${model?.horsepower ?? ""}hp${model?.is_inverter ? "\nINVERTER" : ""}\n${model?.name ?? ""}\nSerial: ${unit.serial_number}${unit.outdoor_serial_number ? ` / ${unit.outdoor_serial_number}` : ""}`.trim()
+          return {
+            ...item,
+            airconUnitId: unit.id,
+            description: desc,
+            qty: 1,
+            price: Number(model?.selling_price ?? model?.retail_price ?? 0),
+          }
+        }),
+      )
+    },
+    [airconUnits],
+  )
+
+  const handleAirconUnitClear = useCallback((itemId: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? { ...item, airconUnitId: null, description: "", price: 0, qty: 1 }
+          : item,
+      ),
+    )
+  }, [])
+
+  // ── Authorized Representative handler ──
+  const handleAuthorizedRepSelect = useCallback(
+    (empId: number | null) => {
+      setSelectedRepId(empId)
+      if (!empId) return
+      const emp = employees.find((e) => e.id === empId)
+      if (!emp) return
+      setAuthorizedName(
+        emp.full_name || `${emp.first_name} ${emp.last_name}`.trim(),
+      )
+      setAuthorizedSignature(emp.e_signature ?? "")
+      if (!authorizedDate) setAuthorizedDate(format(quoteDate, "yyyy-MM-dd"))
+    },
+    [employees, authorizedDate, quoteDate],
   )
 
   // ── Template handlers ──
@@ -345,6 +542,7 @@ export default function QuotationForm({
       discount_amount: discountAmount,
       terms_conditions: arrayToLines(termsLines),
       payment_terms: arrayToLines(paymentLines),
+      notes,
       authorized_signature: authorizedSignature,
       client_signature: clientSignature,
       authorized_name: authorizedName,
@@ -354,6 +552,7 @@ export default function QuotationForm({
       items: items
         .filter((i) => i.description.trim())
         .map((i) => ({
+          aircon_unit: i.airconUnitId || undefined,
           description: i.description,
           quantity: i.qty,
           unit_price: i.price,
@@ -528,74 +727,140 @@ export default function QuotationForm({
           </Tooltip>
         </div>
 
-        {/* Header (desktop) */}
-        <div className="hidden sm:grid sm:grid-cols-[1fr_70px_110px_36px] gap-2 mb-1.5 px-1">
-          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-            Description
-          </span>
-          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-            Qty
-          </span>
-          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-            Price
-          </span>
-          <span />
-        </div>
-
-        <div className="space-y-2">
-          {items.map((item) => (
+        <div className="space-y-3">
+          {items.map((item, idx) => (
             <div
               key={item.id}
-              className="group flex flex-col gap-2 rounded-md border border-border/60 bg-muted/30 p-2.5 sm:grid sm:grid-cols-[1fr_70px_110px_36px] sm:gap-2 sm:items-center sm:border-0 sm:bg-transparent sm:p-0 sm:rounded-none"
+              className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-2"
             >
-              <Input
-                value={item.description}
-                onChange={(e) =>
-                  updateItem(item.id, "description", e.target.value)
-                }
-                placeholder="Item description..."
-                className="h-9"
-              />
-              <Input
-                type="number"
-                min={1}
-                value={item.qty}
-                onChange={(e) =>
-                  updateItem(
-                    item.id,
-                    "qty",
-                    Math.max(1, parseInt(e.target.value) || 1),
-                  )
-                }
-                className="h-9"
-              />
-              <Input
-                type="number"
-                min={0}
-                step="0.01"
-                value={item.price || ""}
-                onChange={(e) =>
-                  updateItem(item.id, "price", parseFloat(e.target.value) || 0)
-                }
-                placeholder="0.00"
-                className="h-9"
-              />
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 text-muted-foreground hover:text-destructive opacity-60 hover:opacity-100"
-                    onClick={() => removeItem(item.id)}
-                    disabled={items.length === 1}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Remove item</TooltipContent>
-              </Tooltip>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Item {idx + 1}
+                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeItem(item.id)}
+                      disabled={items.length === 1}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Remove item</TooltipContent>
+                </Tooltip>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">
+                  Aircon Unit{" "}
+                  <span className="text-[10px]">
+                    (optional — auto-fills description & price)
+                  </span>
+                </Label>
+                <div className="flex items-center gap-1.5">
+                  <div className="flex-1">
+                    <ComboBox
+                      options={airconUnitOptions}
+                      value={item.airconUnitId}
+                      onChange={(v) =>
+                        handleAirconUnitSelect(item.id, v as number | null)
+                      }
+                      placeholder="Select aircon unit..."
+                      searchPlaceholder="Search serial, brand, model..."
+                    />
+                  </div>
+                  {item.airconUnitId && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleAirconUnitClear(item.id)}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Remove selected unit</TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              </div>
+              <div
+                className={cn(
+                  "grid gap-2",
+                  item.airconUnitId
+                    ? "grid-cols-[1fr_110px]"
+                    : "grid-cols-[1fr_70px_110px]",
+                )}
+              >
+                <DescriptionField
+                  value={item.description}
+                  onChange={(v) => updateItem(item.id, "description", v)}
+                />
+                {!item.airconUnitId && (
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      Qty
+                    </Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={item.qty}
+                      onChange={(e) =>
+                        updateItem(
+                          item.id,
+                          "qty",
+                          Math.max(1, parseInt(e.target.value) || 1),
+                        )
+                      }
+                      className="h-9"
+                    />
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">
+                    Price
+                  </Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={item.price || ""}
+                    onChange={(e) =>
+                      updateItem(
+                        item.id,
+                        "price",
+                        parseFloat(e.target.value) || 0,
+                      )
+                    }
+                    placeholder="0.00"
+                    className="h-9"
+                  />
+                </div>
+              </div>
             </div>
           ))}
+        </div>
+
+        {/* Notes */}
+        <div className="mt-4 space-y-1.5">
+          <Label className="text-xs text-muted-foreground">
+            Note/s{" "}
+            <span className="text-[10px]">
+              (displayed below items, e.g. warranty info)
+            </span>
+          </Label>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="e.g. 1 Year Warranty Parts / 5 Years Warranty Compressor"
+            rows={2}
+            className="resize-none"
+          />
         </div>
 
         {/* Totals */}
@@ -711,142 +976,174 @@ export default function QuotationForm({
 
       {/* ── Section: Signatures ───────────────────────────── */}
       <section>
-        <h3 className="text-sm font-semibold text-foreground mb-3">
+        <h3 className="text-sm font-semibold text-foreground mb-4">
           E-Signatures{" "}
           <span className="text-xs font-normal text-muted-foreground">
-            (optional — draw or upload an image)
+            (optional)
           </span>
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-3">
+          {/* ─ Authorized Representative Card ─ */}
+          <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+            <p className="text-xs font-semibold text-foreground tracking-wide uppercase">
+              Authorized Representative
+            </p>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                Select Representative
+              </Label>
+              <ComboBox
+                options={authorizedRepOptions}
+                value={selectedRepId}
+                onChange={(v) => handleAuthorizedRepSelect(v as number | null)}
+                placeholder="Select representative..."
+                searchPlaceholder="Search by name..."
+              />
+            </div>
             <SignatureInput
-              label="Authorized Representative"
+              label="Signature"
               value={authorizedSignature}
               onChange={setAuthorizedSignature}
             />
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                Printed Name
-              </Label>
-              <Input
-                value={authorizedName}
-                onChange={(e) => setAuthorizedName(e.target.value)}
-                placeholder="Full name..."
-                className="h-8 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Date</Label>
-              <div className="flex items-center gap-1.5">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "flex-1 justify-start text-left font-normal h-8 text-sm",
-                        !authorizedDate && "text-muted-foreground",
-                      )}
+            <div className="grid gap-2">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">
+                  Printed Name
+                </Label>
+                <Input
+                  value={authorizedName}
+                  onChange={(e) => setAuthorizedName(e.target.value)}
+                  placeholder="Full name..."
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1 min-w-[140px]">
+                <Label className="text-[11px] text-muted-foreground">
+                  Date
+                </Label>
+                <div className="flex items-center gap-1">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "flex-1 justify-start text-left font-normal h-8 text-xs",
+                          !authorizedDate && "text-muted-foreground",
+                        )}
+                      >
+                        <CalendarIcon className="mr-1.5 h-3 w-3 text-muted-foreground" />
+                        {authorizedDate
+                          ? format(new Date(authorizedDate), "MMM dd, yyyy")
+                          : "Pick date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-0"
+                      align="start"
                     >
-                      <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                      {authorizedDate
-                        ? format(new Date(authorizedDate), "MMM dd, yyyy")
-                        : "Pick a date"}
+                      <Calendar
+                        mode="single"
+                        selected={
+                          authorizedDate ? new Date(authorizedDate) : undefined
+                        }
+                        onSelect={(d) =>
+                          setAuthorizedDate(d ? format(d, "yyyy-MM-dd") : "")
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {authorizedDate && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => setAuthorizedDate("")}
+                    >
+                      <X className="h-3 w-3" />
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-auto p-0"
-                    align="start"
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={
-                        authorizedDate ? new Date(authorizedDate) : undefined
-                      }
-                      onSelect={(d) =>
-                        setAuthorizedDate(d ? format(d, "yyyy-MM-dd") : "")
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
-                {authorizedDate && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => setAuthorizedDate("")}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
-          <div className="space-y-3">
+
+          {/* ─ Client Acceptance Card ─ */}
+          <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+            <p className="text-xs font-semibold text-foreground tracking-wide uppercase">
+              Client Acceptance
+            </p>
             <SignatureInput
-              label="Client Acceptance"
+              label="Signature"
               value={clientSignature}
               onChange={setClientSignature}
             />
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
-                Printed Name
-              </Label>
-              <Input
-                value={clientAcceptanceName}
-                onChange={(e) => setClientAcceptanceName(e.target.value)}
-                placeholder="Full name..."
-                className="h-8 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">Date</Label>
-              <div className="flex items-center gap-1.5">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "flex-1 justify-start text-left font-normal h-8 text-sm",
-                        !clientAcceptanceDate && "text-muted-foreground",
-                      )}
+            <div className="grid gap-2">
+              <div className="space-y-1">
+                <Label className="text-[11px] text-muted-foreground">
+                  Printed Name
+                </Label>
+                <Input
+                  value={clientAcceptanceName}
+                  onChange={(e) => setClientAcceptanceName(e.target.value)}
+                  placeholder="Full name..."
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1 min-w-[140px]">
+                <Label className="text-[11px] text-muted-foreground">
+                  Date
+                </Label>
+                <div className="flex items-center gap-1">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "flex-1 justify-start text-left font-normal h-8 text-xs",
+                          !clientAcceptanceDate && "text-muted-foreground",
+                        )}
+                      >
+                        <CalendarIcon className="mr-1.5 h-3 w-3 text-muted-foreground" />
+                        {clientAcceptanceDate
+                          ? format(
+                              new Date(clientAcceptanceDate),
+                              "MMM dd, yyyy",
+                            )
+                          : "Pick date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-0"
+                      align="start"
                     >
-                      <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                      {clientAcceptanceDate
-                        ? format(new Date(clientAcceptanceDate), "MMM dd, yyyy")
-                        : "Pick a date"}
+                      <Calendar
+                        mode="single"
+                        selected={
+                          clientAcceptanceDate
+                            ? new Date(clientAcceptanceDate)
+                            : undefined
+                        }
+                        onSelect={(d) =>
+                          setClientAcceptanceDate(
+                            d ? format(d, "yyyy-MM-dd") : "",
+                          )
+                        }
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {clientAcceptanceDate && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => setClientAcceptanceDate("")}
+                    >
+                      <X className="h-3 w-3" />
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-auto p-0"
-                    align="start"
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={
-                        clientAcceptanceDate
-                          ? new Date(clientAcceptanceDate)
-                          : undefined
-                      }
-                      onSelect={(d) =>
-                        setClientAcceptanceDate(
-                          d ? format(d, "yyyy-MM-dd") : "",
-                        )
-                      }
-                    />
-                  </PopoverContent>
-                </Popover>
-                {clientAcceptanceDate && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => setClientAcceptanceDate("")}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>

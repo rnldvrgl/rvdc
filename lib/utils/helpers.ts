@@ -103,7 +103,10 @@ export const convertFileToBase64 = (file: File): Promise<string> => {
 
 export function getDisplayImage(
   image?: string,
-  fallback: string = "/default_image.jpg",
+  type: "profile_image" | "e_signature" = "profile_image",
+  fallback: string = type === "profile_image"
+    ? "/default_image.jpg"
+    : "/default_signature.png",
 ) {
   if (!image || image.trim() === "") {
     return fallback

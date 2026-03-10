@@ -163,6 +163,7 @@ export default function AirconModelForm({
       horsepower: initialData?.horsepower ?? undefined,
       is_inverter: initialData?.is_inverter ?? false,
       parts_warranty_months: initialData?.parts_warranty_months ?? 60,
+      compressor_warranty_months: initialData?.compressor_warranty_months ?? 60,
       labor_warranty_months: initialData?.labor_warranty_months ?? 12,
     },
     mode: "onSubmit",
@@ -576,13 +577,51 @@ export default function AirconModelForm({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid">
                 <FormField
                   control={control}
                   name="parts_warranty_months"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Parts Warranty</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            type="number"
+                            min={0}
+                            step={1}
+                            className="h-11 pr-16"
+                            placeholder="12"
+                            value={field.value ?? 12}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value === ""
+                                  ? 0
+                                  : parseInt(e.target.value, 10),
+                              )
+                            }
+                          />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                            months
+                          </span>
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        {field.value
+                          ? `≈ ${(Number(field.value) / 12).toFixed(1)} year(s)`
+                          : "Default: 1 year"}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={control}
+                  name="compressor_warranty_months"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Compressor Warranty</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input

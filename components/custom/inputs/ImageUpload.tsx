@@ -1,14 +1,15 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
-import { FormItem } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { getDisplayImage } from '@/lib/utils/helpers'
-import { Trash } from 'lucide-react'
-import Image from 'next/image'
+import { Button } from "@/components/ui/button"
+import { FormItem } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { getDisplayImage } from "@/lib/utils/helpers"
+import { Trash } from "lucide-react"
+import Image from "next/image"
 
 interface ImageUploadProps {
   image: string
+  type?: "profile_image" | "e_signature"
   fieldName: string
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   handleFileRemove: () => void
@@ -17,10 +18,11 @@ interface ImageUploadProps {
 const ImageUpload = ({
   image,
   fieldName,
+  type = "profile_image",
   handleFileChange,
   handleFileRemove,
 }: ImageUploadProps) => {
-  const displayImage = getDisplayImage(image)
+  const displayImage = getDisplayImage(image, type)
 
   return (
     <FormItem className="border border-dashed rounded-lg p-4 flex flex-col sm:flex-row items-center gap-6 transition hover:shadow-sm">

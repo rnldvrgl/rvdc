@@ -18,6 +18,32 @@ import { Check, FileEdit, Loader2, Printer, Send, XCircle } from "lucide-react"
 import React, { useRef } from "react"
 import { useReactToPrint } from "react-to-print"
 
+/** Render **bold** and *italic* markers as <strong>/<em> React elements */
+function renderFormattedText(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = []
+  // Match **bold** first, then *italic*
+  const regex = /(\*\*(.+?)\*\*)|(\*(.+?)\*)/g
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+  let key = 0
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index))
+    }
+    if (match[2]) {
+      parts.push(<strong key={key++}>{match[2]}</strong>)
+    } else if (match[4]) {
+      parts.push(<em key={key++}>{match[4]}</em>)
+    }
+    lastIndex = regex.lastIndex
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex))
+  }
+  return parts
+}
+
 const STATUS_OPTIONS: {
   value: QuotationStatus
   label: string
@@ -89,6 +115,7 @@ export default function QuotationViewSheet({
         discount_amount: q.discount_amount,
         terms_conditions: q.terms_conditions,
         payment_terms: q.payment_terms,
+        notes: q.notes,
         status,
         authorized_signature: q.authorized_signature,
         client_signature: q.client_signature,
@@ -290,8 +317,8 @@ const QuotationPrintContent = React.forwardRef<
               key={item.id ?? idx}
               className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
             >
-              <td className="py-2 px-3 border-b border-gray-200 wrap-break-word">
-                {item.description}
+              <td className="py-2 px-3 border-b border-gray-200 wrap-break-word whitespace-pre-line">
+                {renderFormattedText(item.description)}
               </td>
               <td className="py-2 px-3 text-center border-b border-gray-200">
                 {item.quantity}
@@ -318,6 +345,17 @@ const QuotationPrintContent = React.forwardRef<
         </tbody>
         {/* TOTALS — inside the table for perfect alignment */}
         <tfoot>
+          {/* NOTES row */}
+          {q.notes && (
+            <tr>
+              <td
+                colSpan={4}
+                className="py-2 px-3 text-[11px] text-gray-600 italic border-b border-gray-200 whitespace-pre-line"
+              >
+                Note/s: {q.notes}
+              </td>
+            </tr>
+          )}
           <tr>
             <td
               colSpan={3}

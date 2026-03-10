@@ -2,6 +2,7 @@
 
 import { getAirconUnitsColumns } from "@/app/(routes)/aircons/units/columns"
 import { AirconUnitDetails } from "@/components/aircons/AirconUnitDetails"
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
@@ -10,16 +11,26 @@ import AirconUnitForm from "@/components/forms/installations/AirconUnitForm"
 import ScheduleInstallationForm from "@/components/forms/installations/ScheduleInstallationForm"
 import { Button } from "@/components/ui/button"
 import { AirconUnits } from "@/lib/constants/interface"
+import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useAirconUnitMutations } from "@/lib/mutations/installations/useAirconUnitMutations"
 import { useAirconUnitFilters, useAirconUnits } from "@/lib/queries/useAircons"
 import { Plus, Snowflake } from "lucide-react"
+import { useState } from "react"
+
+const emptyData = {
+  count: 0,
+  next: null,
+  previous: null,
+  results: [] as AirconUnits[],
+}
 
 export default function AirconUnitsPage() {
   const { isAdmin } = useCurrentUser()
-  const { page, limit, search, ordering, filter } = useSearchParameters()
+  const searchParams = useSearchParameters()
+  const { page, limit, search, ordering, filter } = searchParams
   const { filters, orderingOptions } = useAirconUnitFilters()
   const { deleteUnit } = useAirconUnitMutations()
   const { data, isLoading, refetch } = useAirconUnits({
@@ -29,6 +40,15 @@ export default function AirconUnitsPage() {
     ordering,
     filter,
   })
+
+  const [isArchived, setIsArchived] = useState(false)
+  const { archivedQuery, restoreItem, hardDeleteItem } =
+    useArchive<AirconUnits>(
+      "installations/aircon-units/",
+      "aircon-units",
+      searchParams,
+      isArchived,
+    )
 
   // Edit sheet
   const {
@@ -64,6 +84,18 @@ export default function AirconUnitsPage() {
     }
   }
 
+  const handleRestore = (unit: AirconUnits) => {
+    if (unit.id !== undefined) {
+      restoreItem.mutate(unit.id)
+    }
+  }
+
+  const handleHardDelete = (unit: AirconUnits) => {
+    if (unit.id !== undefined) {
+      hardDeleteItem.mutate(unit.id)
+    }
+  }
+
   const handleView = (unit: AirconUnits) => {
     openViewSheet(unit)
   }
@@ -72,12 +104,23 @@ export default function AirconUnitsPage() {
     openInstallSheet(unit)
   }
 
-  const columns = getAirconUnitsColumns({
-    onEdit: openEditSheet,
-    onDelete: handleDelete,
-    onView: handleView,
-    onInstall: handleInstall,
-  })
+  const columns = isArchived
+    ? getAirconUnitsColumns({
+        onEdit: () => {},
+        onDelete: () => {},
+        onRestore: handleRestore,
+        onHardDelete: handleHardDelete,
+      })
+    : getAirconUnitsColumns({
+        onEdit: openEditSheet,
+        onDelete: handleDelete,
+        onView: handleView,
+        onInstall: handleInstall,
+      })
+
+  const tableData = isArchived
+    ? archivedQuery.data || emptyData
+    : data || emptyData
 
   return (
     <Wrapper>
@@ -161,25 +204,28 @@ export default function AirconUnitsPage() {
       />
 
       {/* Main Content */}
+      <ArchiveToggle
+        isArchived={isArchived}
+        onToggle={setIsArchived}
+        archivedCount={archivedQuery.data?.count}
+      />
+
       <DataTable
         title="Aircon Units Inventory"
         description="Track and manage all aircon units in stock"
-        isLoading={isLoading}
+        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
         columns={columns}
-        data={
-          data || {
-            count: 0,
-            next: null,
-            previous: null,
-            results: [],
-          }
-        }
+        data={tableData}
         filters={filters}
         orderingOptions={orderingOptions}
-        onRefresh={refetch}
+        onRefresh={isArchived ? archivedQuery.refetch : refetch}
         emptyIcon={Snowflake}
-        emptyTitle="No aircon units found"
-        emptyDescription="Add units to start tracking your inventory"
+        emptyTitle={isArchived ? "No archived units" : "No aircon units found"}
+        emptyDescription={
+          isArchived
+            ? "Archived units will appear here"
+            : "Add units to start tracking your inventory"
+        }
       />
     </Wrapper>
   )

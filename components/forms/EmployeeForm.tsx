@@ -122,6 +122,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
       has_bir_tax: formData.has_bir_tax ?? true,
       has_cash_ban: formData.has_cash_ban ?? true,
       profile_image: "",
+      e_signature: "",
       role: formData.role ?? "technician",
       birthday: formData.birthday ?? "",
       assigned_stall_id: formData.assigned_stall_id?.toString() ?? "none",
@@ -132,6 +133,12 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
     form,
     fieldName: "profile_image",
     initialImage: employee?.profile_image,
+  })
+
+  const eSignatureUpload = useFileUpload({
+    form,
+    fieldName: "e_signature",
+    initialImage: employee?.e_signature ?? "",
   })
 
   const { data: stallsData } = useStallChoices({})
@@ -251,6 +258,38 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                         handleFileChange={upload.handleFileChange}
                         handleFileRemove={upload.handleFileRemove}
                         image={upload.image}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          {/* E-Signature */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="size-5" />
+                E-Signature
+                <span className="text-xs font-normal text-muted-foreground">
+                  (optional — used for quotations)
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FormField
+                control={form.control}
+                name="e_signature"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <ImageUpload
+                        fieldName={field.name}
+                        handleFileChange={eSignatureUpload.handleFileChange}
+                        handleFileRemove={eSignatureUpload.handleFileRemove}
+                        image={eSignatureUpload.image}
                       />
                     </FormControl>
                     <FormMessage />

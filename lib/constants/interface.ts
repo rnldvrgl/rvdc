@@ -99,6 +99,7 @@ export interface User {
   username: string
   email: string
   profile_image: string
+  e_signature?: string | null
   birthday?: string
   assigned_stall?: Stall
   is_active?: boolean
@@ -708,8 +709,10 @@ export interface AirconModels {
   has_discount?: boolean
   selling_price?: string
   parts_warranty_months?: number
+  compressor_warranty_months?: number
   labor_warranty_months?: number
   parts_warranty_years?: number
+  compressor_warranty_years?: number
   labor_warranty_years?: number
   price_history?: ModelPriceHistory[]
 }
@@ -748,6 +751,11 @@ export interface AirconUnits {
   client_name?: string | null
   sold_date?: string | null
   installed_date?: string | null
+  labor_warranty_months?: number | null
+  compressor_warranty_months?: number | null
+  parts_warranty_months?: number | null
+  is_deleted?: boolean
+  deleted_at?: string | null
   created_at?: string
 }
 
@@ -757,6 +765,9 @@ export type AirconUnitPayload = {
   outdoor_serial_number?: string
   model_id: number
   warranty_period_months?: number
+  labor_warranty_months?: number | null
+  compressor_warranty_months?: number | null
+  parts_warranty_months?: number | null
   sale?: number | null
   installation_service?: number | null
   reserved_by?: number | null

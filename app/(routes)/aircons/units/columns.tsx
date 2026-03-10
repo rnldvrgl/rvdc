@@ -5,12 +5,15 @@ import { AirconUnits, GetColumnsProps } from "@/lib/constants/interface"
 import { safeCell } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef, Row } from "@tanstack/react-table"
+import { Archive, Edit, Eye, RotateCcw, Trash2, Wrench } from "lucide-react"
 
 export function getAirconUnitsColumns({
   onEdit,
   onDelete,
   onView,
   onInstall,
+  onRestore,
+  onHardDelete,
 }: GetColumnsProps<AirconUnits>): ColumnDef<AirconUnits>[] {
   return [
     {
@@ -160,34 +163,62 @@ export function getAirconUnitsColumns({
       cell: ({ row }) => {
         const unit = row.original
 
-        const actions = [
-          ...(onView ? [{ label: "View", onClick: () => onView(unit) }] : []),
-          ...(onInstall &&
-          unit.is_sold &&
-          !unit.installation_service &&
-          unit.unit_status !== "Installed" &&
-          unit.unit_status !== "For Installation"
-            ? [
+        if (onRestore && onHardDelete) {
+          return (
+            <DataTableActions
+              items={[
                 {
-                  label: "Schedule Installation",
-                  onClick: () => onInstall(unit),
+                  label: "Restore",
+                  icon: RotateCcw,
+                  onClick: () => onRestore(unit),
                 },
-              ]
-            : []),
-          ...(onEdit ? [{ label: "Edit", onClick: () => onEdit(unit) }] : []),
-          ...(onDelete
-            ? [
                 {
-                  label: "Delete",
-                  onClick: () => onDelete(unit),
+                  label: "Delete Permanently",
+                  icon: Trash2,
+                  onClick: () => onHardDelete(unit),
                   destructive: true,
-                  confirmText: `Delete Aircon Unit with SN: ${unit.serial_number}?`,
+                  confirmText: `Permanently delete unit SN: ${unit.serial_number}? This cannot be undone.`,
                 },
-              ]
-            : []),
-        ]
+              ]}
+            />
+          )
+        }
 
-        return <DataTableActions items={actions} />
+        return (
+          <DataTableActions
+            items={[
+              ...(onView
+                ? [{ label: "View", icon: Eye, onClick: () => onView(unit) }]
+                : []),
+              ...(onInstall &&
+              unit.is_sold &&
+              !unit.installation_service &&
+              unit.unit_status !== "Installed" &&
+              unit.unit_status !== "For Installation"
+                ? [
+                    {
+                      label: "Schedule Installation",
+                      icon: Wrench,
+                      onClick: () => onInstall(unit),
+                    },
+                  ]
+                : []),
+              ...(onEdit
+                ? [{ label: "Edit", icon: Edit, onClick: () => onEdit(unit) }]
+                : []),
+              ...(onDelete
+                ? [
+                    {
+                      label: "Archive",
+                      icon: Archive,
+                      onClick: () => onDelete(unit),
+                      confirmText: `Archive Aircon Unit with SN: ${unit.serial_number}?`,
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        )
       },
     },
   ]

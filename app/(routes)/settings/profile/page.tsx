@@ -43,6 +43,7 @@ function mapProfileToForm(profile: User | null): TUserProfile {
     current_password: "",
     birthday: profile?.birthday ? new Date(profile.birthday) : undefined,
     profile_image: profile?.profile_image ?? "",
+    e_signature: profile?.e_signature ?? "",
   }
 }
 
@@ -91,6 +92,14 @@ function buildProfilePayload(
     payload.profile_image = normalizedImage
   }
 
+  const normalizedESignature = normalizeProfileImage(values.e_signature)
+  if (
+    (normalizedESignature === "" && current.e_signature) ||
+    (normalizedESignature && normalizedESignature !== current.e_signature)
+  ) {
+    payload.e_signature = normalizedESignature
+  }
+
   // Only include passwords if both current and new are provided and different
   const hasCurrentPassword =
     values.current_password && values.current_password.trim() !== ""
@@ -129,6 +138,7 @@ function getChangeSummary(
       `Birthday: "${values.birthday ? new Date(values.birthday).toLocaleDateString() : "Not set"}"`,
     )
   if (payload.profile_image !== undefined) changes.push("Profile Image")
+  if (payload.e_signature !== undefined) changes.push("E-Signature")
   if (payload.new_password) changes.push("Password")
 
   return changes
@@ -173,6 +183,12 @@ export default function SettingsPage() {
     form,
     fieldName: "profile_image",
     initialImage: userProfile?.profile_image,
+  })
+
+  const eSignatureUpload = useFileUpload({
+    form,
+    fieldName: "e_signature",
+    initialImage: userProfile?.e_signature ?? "",
   })
 
   async function onSubmit(values: TUserProfile) {
@@ -318,6 +334,7 @@ export default function SettingsPage() {
             form={form}
             onSubmit={onSubmit}
             upload={upload}
+            eSignatureUpload={eSignatureUpload}
             hasChanges={hasChanges}
             isSubmitting={updateUserProfile.isPending}
           />

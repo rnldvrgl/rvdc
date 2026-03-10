@@ -111,6 +111,8 @@ export type QuotationStatus = "draft" | "sent" | "accepted" | "declined"
 
 export type QuotationItem = {
   id?: number
+  aircon_model?: number | null
+  aircon_unit?: number | null
   description: string
   quantity: number
   unit_price: number
@@ -131,6 +133,7 @@ export type Quotation = BaseEntity & {
   total: number
   terms_conditions: string
   payment_terms: string
+  notes: string
   status: QuotationStatus
   authorized_signature: string
   client_signature: string
@@ -156,6 +159,7 @@ export type QuotationPayload = {
   discount_amount: number
   terms_conditions: string
   payment_terms: string
+  notes?: string
   status?: QuotationStatus
   authorized_signature?: string
   client_signature?: string
@@ -216,6 +220,7 @@ export type Employee = BaseEntity & {
   has_bir_tax?: boolean
   has_cash_ban?: boolean
   profile_image?: string
+  e_signature?: string | null
   assigned_stall?: Stall
 }
 
