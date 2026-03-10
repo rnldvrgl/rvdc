@@ -257,15 +257,31 @@ export default function QuotationForm({
 }: QuotationFormProps) {
   const isEdit = !!quotation
 
-  // ── Aircon Units (Available Inventory) ──
+  // ── Selected Client (declared early so aircon query can use it) ──
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(
+    quotation?.client ?? null,
+  )
+
+  // ── Aircon Units (Available Inventory + client's units) ──
   const { data: airconUnitsData } = useAirconUnits({
     limit: 500,
     filter: { is_available_for_sale: "true" },
   })
-  const airconUnits = useMemo(
-    () => airconUnitsData?.results ?? [],
-    [airconUnitsData],
-  )
+  const { data: clientUnitsData } = useAirconUnits({
+    limit: 500,
+    filter: { client: String(selectedClientId) },
+    enabled: !!selectedClientId,
+  })
+  const airconUnits = useMemo(() => {
+    const available = airconUnitsData?.results ?? []
+    const clientUnits = clientUnitsData?.results ?? []
+    // Merge and deduplicate by ID
+    const map = new Map(available.map((u) => [u.id, u]))
+    for (const u of clientUnits) {
+      if (!map.has(u.id)) map.set(u.id, u)
+    }
+    return Array.from(map.values())
+  }, [airconUnitsData, clientUnitsData])
   const airconUnitOptions = useMemo(
     () =>
       airconUnits.map((u) => ({
@@ -295,9 +311,6 @@ export default function QuotationForm({
           label: e.full_name || `${e.first_name} ${e.last_name}`.trim(),
         })),
     [employees],
-  )
-  const [selectedClientId, setSelectedClientId] = useState<number | null>(
-    quotation?.client ?? null,
   )
   const clientOptions = useMemo(
     () => clients.map((c) => ({ value: c.id, label: c.full_name })),
