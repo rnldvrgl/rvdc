@@ -5,20 +5,33 @@ import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { AddCompanyDeductionForm } from "@/components/forms/AddCompanyDeductionForm"
 import { AddManualDeductionForm } from "@/components/forms/AddManualDeductionForm"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useArchive } from "@/lib/hooks/useArchive"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import {
   useDeleteManualDeduction,
   useToggleDeduction,
 } from "@/lib/mutations/useManualDeductionMutations"
-import {
-  useCompanyDeductions,
-  useManualDeductions,
-} from "@/lib/queries/useManualDeductions"
+import { useManualDeductions } from "@/lib/queries/useManualDeductions"
 import { ManualDeduction } from "@/lib/schemas/manualDeductionSchema"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
@@ -59,131 +72,190 @@ function DeductionRow({
   return (
     <div
       className={cn(
-        "group flex items-center gap-4 px-4 py-3 rounded-lg border transition-colors hover:bg-muted/50",
-        !deduction.is_active && "opacity-60",
+        "group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-lg border transition-colors hover:bg-muted/50",
+        !deduction.is_active && "opacity-50 bg-muted/30 border-dashed",
       )}
     >
-      {/* Icon */}
-      <div
-        className={cn(
-          "flex-shrink-0 flex items-center justify-center h-9 w-9 rounded-lg",
-          isRecurring
-            ? "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
-            : "bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400",
-        )}
-      >
-        {isRecurring ? (
-          <Repeat className="h-4 w-4" />
-        ) : (
-          <Zap className="h-4 w-4" />
-        )}
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm truncate">{deduction.name}</span>
-          {showType && (
-            <Badge
-              variant="outline"
-              className="text-[10px] px-1.5 py-0"
-            >
-              {isRecurring ? "Recurring" : "One-time"}
-            </Badge>
+      {/* Icon & Info - Mobile: Row, Desktop: Row */}
+      <div className="flex items-start gap-3 flex-1 min-w-0">
+        {/* Icon */}
+        <div
+          className={cn(
+            "shrink-0 flex items-center justify-center h-10 w-10 rounded-lg",
+            isRecurring
+              ? "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
+              : "bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400",
           )}
-          {!deduction.is_active && (
-            <Badge
-              variant="secondary"
-              className="text-[10px] px-1.5 py-0"
-            >
-              Inactive
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-          {showEmployee && (
-            <>
-              <span>
-                {deduction.employee_detail?.full_name ||
-                  `Employee #${deduction.employee}`}
-              </span>
-              <span>·</span>
-            </>
-          )}
-          {deduction.effective_date && (
-            <span className="flex items-center gap-1">
-              <CalendarRange className="h-3 w-3" />
-              {format(new Date(deduction.effective_date), "MMM dd, yyyy")}
-              {deduction.end_date
-                ? ` — ${format(new Date(deduction.end_date), "MMM dd, yyyy")}`
-                : isRecurring
-                  ? " — Ongoing"
-                  : ""}
-            </span>
-          )}
-          {isApplied && (
-            <>
-              <span>·</span>
-              <span>
-                Applied{" "}
-                {format(new Date(deduction.applied_date!), "MMM dd, yyyy")}
-              </span>
-            </>
-          )}
-          {deduction.description && (
-            <>
-              <span>·</span>
-              <span className="truncate">{deduction.description}</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Amount */}
-      <div className="flex-shrink-0 text-right">
-        <span className="font-semibold text-sm">
-          ₱{Number(deduction.amount).toFixed(2)}
-        </span>
-        <p className="text-[10px] text-muted-foreground">per payroll</p>
-      </div>
-
-      {/* Actions */}
-      <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={() => onToggle(deduction)}
-          disabled={isApplied}
-          title={deduction.is_active ? "Deactivate" : "Activate"}
         >
-          {deduction.is_active ? (
-            <Pause className="h-3.5 w-3.5" />
+          {isRecurring ? (
+            <Repeat className="h-4 w-4" />
           ) : (
-            <Play className="h-3.5 w-3.5" />
+            <Zap className="h-4 w-4" />
           )}
-        </Button>
-        {onEdit && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
-            onClick={() => onEdit(deduction)}
-            disabled={isApplied}
-            title="Edit"
-          >
-            <Edit className="h-3.5 w-3.5" />
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-destructive"
-          onClick={() => onArchive(deduction.id)}
-          title="Archive"
-        >
-          <Archive className="h-3.5 w-3.5" />
-        </Button>
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            <span className="font-semibold text-sm sm:text-base">
+              {deduction.name}
+            </span>
+            {showType && (
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0.5"
+              >
+                {isRecurring ? "Recurring" : "One-time"}
+              </Badge>
+            )}
+            {!deduction.is_active && (
+              <Badge
+                variant="secondary"
+                className="text-[10px] px-1.5 py-0.5"
+              >
+                Inactive
+              </Badge>
+            )}
+            {isApplied && (
+              <Badge
+                variant="success"
+                className="text-[10px] px-1.5 py-0.5"
+              >
+                Applied
+              </Badge>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mt-1">
+            {showEmployee && (
+              <>
+                <span className="font-medium">
+                  {deduction.employee_detail?.full_name ||
+                    `Employee #${deduction.employee}`}
+                </span>
+                <span className="hidden sm:inline">·</span>
+              </>
+            )}
+            {deduction.effective_date && (
+              <span className="flex items-center gap-1">
+                <CalendarRange className="h-3 w-3 shrink-0" />
+                <span className="truncate">
+                  {format(new Date(deduction.effective_date), "MMM dd, yyyy")}
+                  {deduction.end_date
+                    ? ` — ${format(new Date(deduction.end_date), "MMM dd, yyyy")}`
+                    : isRecurring
+                      ? " — Ongoing"
+                      : ""}
+                </span>
+              </span>
+            )}
+            {deduction.description && (
+              <>
+                <span className="hidden sm:inline">·</span>
+                <span className="line-clamp-1 sm:truncate">
+                  {deduction.description}
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Amount & Actions Row */}
+      <div className="flex items-center justify-between sm:justify-end gap-3 pl-13 sm:pl-0">
+        {/* Amount */}
+        <div className="text-left sm:text-right">
+          <span className="font-bold text-base sm:text-lg text-foreground">
+            ₱
+            {Number(deduction.amount).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </span>
+          <p className="text-[10px] text-muted-foreground">per payroll</p>
+        </div>
+
+        {/* Actions */}
+        <div className="shrink-0 flex items-center gap-1">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                onClick={() => onToggle(deduction)}
+                disabled={isApplied}
+              >
+                {deduction.is_active ? (
+                  <Pause className="h-4 w-4" />
+                ) : (
+                  <Play className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs">
+                {deduction.is_active
+                  ? "Pause: Temporarily disable this deduction. It will stay in the list but won't be applied to payroll."
+                  : "Resume: Reactivate this deduction. It will be applied to future payroll calculations."}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+          {onEdit && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                  onClick={() => onEdit(deduction)}
+                  disabled={isApplied}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Edit deduction details</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
+          <AlertDialog>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                  >
+                    <Archive className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Archive: Move to archived tab. Can be restored later if
+                  needed.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Archive Deduction?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to archive &quot;{deduction.name}&quot;?
+                  This will move it to the archived tab. You can restore it
+                  later if needed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => onArchive(deduction.id)}>
+                  Archive
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
     </div>
   )
@@ -203,51 +275,104 @@ function ArchivedRow({
   deletePending: boolean
 }) {
   return (
-    <div className="flex items-center gap-4 px-4 py-3 rounded-lg border opacity-60">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-3 sm:px-4 py-3 rounded-lg border bg-muted/30">
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-sm">{deduction.name}</span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="font-semibold text-sm">{deduction.name}</span>
           <Badge
             variant="secondary"
-            className="text-[10px] px-1.5 py-0"
+            className="text-[10px] px-1.5 py-0.5"
           >
             {deduction.deduction_type_display || deduction.deduction_type}
           </Badge>
+          <Badge
+            variant="outline"
+            className="text-[10px] px-1.5 py-0.5"
+          >
+            Archived
+          </Badge>
         </div>
         {deduction.description && (
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
             {deduction.description}
           </p>
         )}
+        {deduction.employee_detail && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Employee: {deduction.employee_detail.full_name}
+          </p>
+        )}
       </div>
-      <span className="text-sm font-medium flex-shrink-0">
-        ₱{Number(deduction.amount).toFixed(2)}
-      </span>
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={() => onRestore(deduction.id)}
-          disabled={restorePending}
-        >
-          <RotateCcw className="h-3 w-3 mr-1" />
-          Restore
-        </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          className="h-7 text-xs"
-          onClick={() => {
-            if (confirm(`Permanently delete "${deduction.name}"?`)) {
-              onDelete(deduction.id)
-            }
-          }}
-          disabled={deletePending}
-        >
-          <Trash2 className="h-3 w-3 mr-1" />
-          Delete
-        </Button>
+      <div className="flex items-center justify-between sm:justify-end gap-3">
+        <span className="text-base font-bold shrink-0">
+          ₱
+          {Number(deduction.amount).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => onRestore(deduction.id)}
+                disabled={restorePending}
+              >
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                Restore
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Restore this deduction to the active list</p>
+            </TooltipContent>
+          </Tooltip>
+          <AlertDialog>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="h-8 text-xs"
+                    disabled={deletePending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                    <span className="hidden sm:inline">Delete</span>
+                    <span className="sm:hidden">Del</span>
+                  </Button>
+                </AlertDialogTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  Permanently delete this deduction. This action cannot be
+                  undone.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Permanently?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to permanently delete &quot;
+                  {deduction.name}&quot;? This action cannot be undone and all
+                  data will be lost.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onDelete(deduction.id)}
+                  className="bg-destructive hover:bg-destructive/90"
+                >
+                  Delete Permanently
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
     </div>
   )
@@ -263,12 +388,14 @@ function SectionLabel({
   count: number
 }) {
   return (
-    <div className="flex items-center gap-2 px-1">
-      <Icon className="h-4 w-4 text-muted-foreground" />
-      <span className="text-sm font-medium text-muted-foreground">{label}</span>
+    <div className="flex items-center gap-2.5 px-1">
+      <div className="flex items-center justify-center h-8 w-8 rounded-md bg-primary/10">
+        <Icon className="h-4 w-4 text-primary" />
+      </div>
+      <span className="text-sm font-semibold">{label}</span>
       <Badge
         variant="secondary"
-        className="text-[10px] px-1.5 py-0"
+        className="text-xs px-2 py-0.5 font-medium"
       >
         {count}
       </Badge>
@@ -278,7 +405,7 @@ function SectionLabel({
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+    <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
       {message}
     </div>
   )
@@ -287,6 +414,7 @@ function EmptyState({ message }: { message: string }) {
 export default function CompanyDeductionsPage() {
   const searchParams = useSearchParameters()
   const [isArchived, setIsArchived] = useState(false)
+  const [showInactive, setShowInactive] = useState(true)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [editingDeduction, setEditingDeduction] =
     useState<ManualDeduction | null>(null)
@@ -294,7 +422,11 @@ export default function CompanyDeductionsPage() {
     useState<ManualDeduction | null>(null)
   const [activeTab, setActiveTab] = useState("company")
 
-  const { data: deductions, isLoading } = useCompanyDeductions()
+  // Fetch all company-wide deductions (no is_active filter - we filter on frontend)
+  const { data: companyDeductionsData, isLoading } = useManualDeductions({
+    page_size: 1000, // Get all deductions
+  })
+
   const { data: employeeDeductionsData, isLoading: employeeLoading } =
     useManualDeductions({
       deduction_type: "per_employee",
@@ -318,7 +450,9 @@ export default function CompanyDeductionsPage() {
         is_active: !deduction.is_active,
       })
       toast.success(
-        `Deduction ${deduction.is_active ? "deactivated" : "activated"}`,
+        deduction.is_active
+          ? `"${deduction.name}" paused - won't be applied to payroll`
+          : `"${deduction.name}" activated - will be applied to payroll`,
       )
     } catch {
       toast.error("Failed to update deduction")
@@ -326,26 +460,31 @@ export default function CompanyDeductionsPage() {
   }
 
   const handleArchive = async (id: number) => {
-    if (
-      !confirm(
-        "Are you sure you want to archive this deduction? You can restore it from the Archived tab.",
-      )
-    )
-      return
-
     try {
       await deleteMutation.mutateAsync(id)
-      toast.success("Deduction archived")
+      toast.success("Deduction deleted successfully")
     } catch {
-      toast.error("Failed to archive deduction")
+      toast.error("Failed to delete deduction")
     }
   }
 
   const recurringDeductions =
-    deductions?.filter((d) => d.deduction_type === "recurring_all") || []
+    companyDeductionsData?.results?.filter((d) => {
+      if (d.deduction_type !== "recurring_all") return false
+      if (!showInactive && !d.is_active) return false
+      return true
+    }) || []
   const onetimeDeductions =
-    deductions?.filter((d) => d.deduction_type === "onetime_all") || []
-  const employeeDeductions = employeeDeductionsData?.results || []
+    companyDeductionsData?.results?.filter((d) => {
+      if (d.deduction_type !== "onetime_all") return false
+      if (!showInactive && !d.is_active) return false
+      return true
+    }) || []
+  const employeeDeductions =
+    employeeDeductionsData?.results?.filter((d) => {
+      if (!showInactive && !d.is_active) return false
+      return true
+    }) || []
 
   return (
     <Wrapper>
@@ -356,9 +495,13 @@ export default function CompanyDeductionsPage() {
         actionButton={
           !isArchived &&
           activeTab === "company" && (
-            <Button onClick={() => setIsAddOpen(true)}>
+            <Button
+              onClick={() => setIsAddOpen(true)}
+              className="w-full sm:w-auto"
+            >
               <Plus className="h-4 w-4 mr-2" />
-              Add Deduction
+              <span className="hidden sm:inline">Add Deduction</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           )
         }
@@ -367,8 +510,9 @@ export default function CompanyDeductionsPage() {
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
+        className="space-y-4"
       >
-        <TabsList>
+        <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-2">
           <TabsTrigger value="company">Company-Wide</TabsTrigger>
           <TabsTrigger value="employee">Per Employee</TabsTrigger>
         </TabsList>
@@ -377,11 +521,37 @@ export default function CompanyDeductionsPage() {
           value="company"
           className="space-y-6"
         >
-          <ArchiveToggle
-            isArchived={isArchived}
-            onToggle={setIsArchived}
-            archivedCount={archivedQuery.data?.count}
-          />
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            <ArchiveToggle
+              isArchived={isArchived}
+              onToggle={setIsArchived}
+              archivedCount={archivedQuery.data?.count}
+            />
+            {!isArchived && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-muted-foreground flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={showInactive}
+                    onChange={(e) => setShowInactive(e.target.checked)}
+                    className="rounded border-gray-300 cursor-pointer"
+                  />
+                  Show inactive deductions
+                </label>
+              </div>
+            )}
+          </div>
+
+          {!isArchived && !showInactive && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900 p-3">
+              <p className="text-xs text-blue-800 dark:text-blue-300">
+                <strong>💡 Tip:</strong> Inactive (paused) deductions are
+                hidden. They remain in the system but won&apos;t be applied to
+                payroll. Check the box above to view them, or{" "}
+                <strong>Archive</strong> them to move to the archived tab.
+              </p>
+            </div>
+          )}
 
           {!isArchived && (
             <>
@@ -389,17 +559,17 @@ export default function CompanyDeductionsPage() {
               <div className="space-y-3">
                 <SectionLabel
                   icon={Repeat}
-                  label="Recurring"
+                  label="Recurring Deductions"
                   count={recurringDeductions.length}
                 />
                 <Card>
-                  <CardContent className="p-2">
+                  <CardContent className="p-3">
                     {isLoading ? (
                       <EmptyState message="Loading..." />
                     ) : recurringDeductions.length === 0 ? (
-                      <EmptyState message="No recurring deductions" />
+                      <EmptyState message="No recurring deductions configured yet" />
                     ) : (
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         {recurringDeductions.map((d) => (
                           <DeductionRow
                             key={d.id}
@@ -419,17 +589,17 @@ export default function CompanyDeductionsPage() {
               <div className="space-y-3">
                 <SectionLabel
                   icon={Zap}
-                  label="One-Time"
+                  label="One-Time Deductions"
                   count={onetimeDeductions.length}
                 />
                 <Card>
-                  <CardContent className="p-2">
+                  <CardContent className="p-3">
                     {isLoading ? (
                       <EmptyState message="Loading..." />
                     ) : onetimeDeductions.length === 0 ? (
-                      <EmptyState message="No one-time deductions" />
+                      <EmptyState message="No one-time deductions configured yet" />
                     ) : (
-                      <div className="space-y-1">
+                      <div className="space-y-2">
                         {onetimeDeductions.map((d) => (
                           <DeductionRow
                             key={d.id}
@@ -459,13 +629,13 @@ export default function CompanyDeductionsPage() {
           {/* Archived */}
           {isArchived && (
             <Card>
-              <CardContent className="p-2">
+              <CardContent className="p-3">
                 {archivedQuery.isLoading ? (
                   <EmptyState message="Loading..." />
                 ) : !archivedQuery.data?.results?.length ? (
-                  <EmptyState message="No archived deductions" />
+                  <EmptyState message="No archived deductions found" />
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     {archivedQuery.data.results.map((d: ManualDeduction) => (
                       <ArchivedRow
                         key={d.id}
@@ -487,19 +657,46 @@ export default function CompanyDeductionsPage() {
           value="employee"
           className="space-y-4"
         >
-          <p className="text-sm text-muted-foreground px-1">
-            Custom deductions assigned to individual employees. Added from each
-            employee&apos;s payroll slip.
-          </p>
+          <div className="flex flex-col gap-3">
+            <div className="rounded-lg border bg-muted/50 p-4">
+              <p className="text-sm text-muted-foreground">
+                Custom deductions assigned to individual employees. These can be
+                added from each employee&apos;s payroll slip and are specific to
+                that employee only.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-muted-foreground flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
+                <input
+                  type="checkbox"
+                  checked={showInactive}
+                  onChange={(e) => setShowInactive(e.target.checked)}
+                  className="rounded border-gray-300 cursor-pointer"
+                />
+                Show inactive deductions
+              </label>
+            </div>
+          </div>
+
+          {!showInactive && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900 p-3">
+              <p className="text-xs text-blue-800 dark:text-blue-300">
+                <strong>💡 Tip:</strong> Inactive (paused) deductions are
+                hidden. They remain in the system but won&apos;t be applied to
+                payroll. Check the box above to view them, or{" "}
+                <strong>Archive</strong> them to move to the archived tab.
+              </p>
+            </div>
+          )}
 
           <Card>
-            <CardContent className="p-2">
+            <CardContent className="p-3">
               {employeeLoading ? (
                 <EmptyState message="Loading..." />
               ) : employeeDeductions.length === 0 ? (
                 <EmptyState message="No per-employee deductions yet. Add them from an employee's payroll slip." />
               ) : (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {employeeDeductions.map((d) => (
                     <DeductionRow
                       key={d.id}

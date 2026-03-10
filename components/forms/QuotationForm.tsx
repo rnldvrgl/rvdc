@@ -443,8 +443,7 @@ export default function QuotationForm({
   )
 
   // ── Notes ──
-  const DEFAULT_NOTES =
-    "1 Year Warranty Parts / 5 Years Warranty Compressor / 1 Year Labor Warranty"
+  const DEFAULT_NOTES = "1 Year Warranty Parts / 5 Years Warranty Compressor"
   const [notes, setNotes] = useState(
     quotation?.notes ?? (isEdit ? "" : DEFAULT_NOTES),
   )

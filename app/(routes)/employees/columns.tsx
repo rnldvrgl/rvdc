@@ -52,34 +52,6 @@ export function getEmployeeColumns({
       },
     },
     {
-      accessorKey: "address",
-      header: "Address",
-      cell: ({ getValue }) => {
-        return safeCell(getValue<string>())
-      },
-    },
-    {
-      accessorKey: "barangay",
-      header: "Barangay",
-      cell: ({ getValue }) => {
-        return safeCell(getValue<string>())
-      },
-    },
-    {
-      accessorKey: "city",
-      header: "City",
-      cell: ({ getValue }) => {
-        return safeCell(getValue<string>())
-      },
-    },
-    {
-      accessorKey: "province",
-      header: "Province",
-      cell: ({ getValue }) => {
-        return safeCell(getValue<string>())
-      },
-    },
-    {
       accessorKey: "basic_salary",
       header: "Basic Salary",
       cell: ({ getValue }) => {
