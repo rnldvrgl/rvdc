@@ -256,7 +256,7 @@ export default function QuotationTemplatesManager() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                  className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive transition-colors"
                   onClick={() => removeLine(idx)}
                 >
                   <X className="h-3.5 w-3.5" />
@@ -475,7 +475,7 @@ function TemplateCard({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 shrink-0">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

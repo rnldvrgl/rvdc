@@ -72,7 +72,7 @@ function DeductionRow({
   return (
     <div
       className={cn(
-        "group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-lg border transition-colors hover:bg-muted/50",
+        "flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-lg border transition-colors hover:bg-muted/50",
         !deduction.is_active && "opacity-50 bg-muted/30 border-dashed",
       )}
     >
@@ -181,7 +181,7 @@ function DeductionRow({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                className="h-8 w-8"
                 onClick={() => onToggle(deduction)}
                 disabled={isApplied}
               >
@@ -206,7 +206,7 @@ function DeductionRow({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                  className="h-8 w-8"
                   onClick={() => onEdit(deduction)}
                   disabled={isApplied}
                 >
@@ -225,7 +225,7 @@ function DeductionRow({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
                   >
                     <Archive className="h-4 w-4" />
                   </Button>
