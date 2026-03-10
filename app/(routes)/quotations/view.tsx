@@ -296,14 +296,16 @@ const QuotationPrintContent = React.forwardRef<
       )}
 
       {/* ITEMS TABLE */}
-      <table className="w-full text-[12px]  mb-1 border-collapse table-fixed">
+      <table className="w-full text-[12px] border-collapse table-fixed border border-gray-300">
         <thead>
           <tr className="bg-gray-800 text-white">
-            <th className="text-left py-2 px-3 font-semibold w-[50%]">
+            <th className="text-left py-2 px-3 font-semibold w-[50%] border-r border-gray-600">
               Description
             </th>
-            <th className="text-center py-2 px-3 font-semibold w-[10%]">Qty</th>
-            <th className="text-right py-2 px-3 font-semibold w-[20%]">
+            <th className="text-center py-2 px-3 font-semibold w-[10%] border-r border-gray-600">
+              Qty
+            </th>
+            <th className="text-right py-2 px-3 font-semibold w-[20%] border-r border-gray-600">
               Unit Price
             </th>
             <th className="text-right py-2 px-3 font-semibold w-[20%]">
@@ -317,16 +319,16 @@ const QuotationPrintContent = React.forwardRef<
               key={item.id ?? idx}
               className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
             >
-              <td className="py-2 px-3 border-b border-gray-200 wrap-break-word whitespace-pre-line">
+              <td className="py-2 px-3 border-b border-r border-gray-300 wrap-break-word whitespace-pre-line">
                 {renderFormattedText(item.description)}
               </td>
-              <td className="py-2 px-3 text-center border-b border-gray-200">
+              <td className="py-2 px-3 text-center border-b border-r border-gray-300">
                 {item.quantity}
               </td>
-              <td className="py-2 px-3 text-right border-b border-gray-200">
+              <td className="py-2 px-3 text-right border-b border-r border-gray-300">
                 &#8369;{formatCurrency(Number(item.unit_price))}
               </td>
-              <td className="py-2 px-3 text-right border-b border-gray-200">
+              <td className="py-2 px-3 text-right border-b border-gray-300">
                 &#8369;
                 {formatCurrency(item.quantity * Number(item.unit_price))}
               </td>
@@ -336,7 +338,7 @@ const QuotationPrintContent = React.forwardRef<
             <tr>
               <td
                 colSpan={4}
-                className="py-4 text-center text-gray-400 italic"
+                className="py-4 text-center text-gray-400 italic border-b border-gray-300"
               >
                 No items
               </td>
@@ -347,14 +349,14 @@ const QuotationPrintContent = React.forwardRef<
 
       {/* NOTES */}
       {q.notes && (
-        <div className="text-[11px] text-gray-600 italic py-2 px-3 mb-2 bg-gray-50 border-b border-gray-200 whitespace-pre-line">
+        <div className="text-[11px] text-gray-600 italic py-2 px-3 bg-gray-50 border border-t-0 border-gray-300 whitespace-pre-line">
           Note/s: {q.notes}
         </div>
       )}
 
       {/* TOTALS — outside table to prevent duplication on page breaks */}
-      <div className="quotation-totals mb-6">
-        <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-200 text-[12px] text-gray-600">
+      <div className="quotation-totals mb-6 border-x border-b border-gray-300">
+        <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[12px] text-gray-600 ">
           <span></span>
           <span className="text-right">Subtotal</span>
           <span className="text-right">
@@ -362,7 +364,7 @@ const QuotationPrintContent = React.forwardRef<
           </span>
         </div>
         {Number(q.discount_amount) > 0 && (
-          <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-200 text-[12px] text-red-600">
+          <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[12px] text-red-600 bg-white">
             <span></span>
             <span className="text-right">Discount</span>
             <span className="text-right">
@@ -370,7 +372,7 @@ const QuotationPrintContent = React.forwardRef<
             </span>
           </div>
         )}
-        <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 bg-gray-800 text-white font-bold text-[13px]">
+        <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 bg-gray-800 text-white font-bold text-sm">
           <span></span>
           <span className="text-right">Total</span>
           <span className="text-right">
@@ -381,7 +383,7 @@ const QuotationPrintContent = React.forwardRef<
 
       {/* TERMS & CONDITIONS */}
       {q.terms_conditions && (
-        <div className="my-5 text-[11px]">
+        <div className="my-4 text-[11px]">
           <h3 className="font-semibold text-[12px] mb-1">Terms & Conditions</h3>
           <ul className="list-disc pl-5 text-gray-600 leading-relaxed space-y-0.5">
             {q.terms_conditions
@@ -396,7 +398,7 @@ const QuotationPrintContent = React.forwardRef<
 
       {/* PAYMENT TERMS */}
       {q.payment_terms && (
-        <div className="mb-6 text-[11px]">
+        <div className="mb-4 text-[11px]">
           <h3 className="font-semibold text-[12px] mb-1">Payment Terms</h3>
           <ul className="list-disc pl-5 text-gray-600 leading-relaxed space-y-0.5">
             {q.payment_terms
@@ -412,7 +414,7 @@ const QuotationPrintContent = React.forwardRef<
       {/* APPROVAL NOTE & SIGNATURES - Keep together on same page */}
       <div className="signature-section">
         {/* APPROVAL NOTE */}
-        <div className="text-[11px] text-gray-600 mb-6 leading-relaxed text-center">
+        <div className="text-[11px] text-gray-600 mb-4 leading-relaxed text-center">
           <p>
             This quotation has been approved by RVDC Ref & Aircon Repair Shop as
             evidenced by the signature of its authorized representative below.
@@ -429,11 +431,11 @@ const QuotationPrintContent = React.forwardRef<
         </div>
 
         {/* SIGNATURES */}
-        <div className="grid grid-cols-2 gap-12 mt-10 text-[12px] text-center">
+        <div className="grid grid-cols-2 gap-12 mt-6 text-[12px] text-center">
           <div className="flex flex-col relative">
             <p className="font-semibold mb-2">Authorized Representative:</p>
             {q.authorized_signature ? (
-              <div className="mb-18">
+              <div className="mb-14">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={q.authorized_signature}
@@ -442,7 +444,7 @@ const QuotationPrintContent = React.forwardRef<
                 />
               </div>
             ) : (
-              <div className="mb-18" />
+              <div className="mb-14" />
             )}
             <div>
               <div className="border-b border-gray-800 mb-1" />
@@ -463,7 +465,7 @@ const QuotationPrintContent = React.forwardRef<
           <div className="flex flex-col relative">
             <p className="font-semibold mb-2">Client Acceptance:</p>
             {q.client_signature ? (
-              <div className="mb-18">
+              <div className="mb-14">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={q.client_signature}
@@ -472,7 +474,7 @@ const QuotationPrintContent = React.forwardRef<
                 />
               </div>
             ) : (
-              <div className="mb-18" />
+              <div className="mb-14" />
             )}
             <div>
               <div className="border-b border-gray-800 mb-1" />
