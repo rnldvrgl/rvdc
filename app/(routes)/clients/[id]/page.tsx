@@ -137,6 +137,18 @@ export default function ClientDetailPage() {
   const services = servicesData?.results ?? []
   const salesTransactions = salesData?.results ?? []
 
+  // Collect all related_transaction IDs from services to exclude from standalone sales
+  const serviceRelatedTransactionIds = new Set(
+    services
+      .map((s: Service) => s.related_transaction)
+      .filter((id): id is number => id != null),
+  )
+
+  // Filter out sales transactions that belong to services
+  const standaloneSalesTransactions = salesTransactions.filter(
+    (t: SalesTransaction) => !serviceRelatedTransactionIds.has(t.id),
+  )
+
   // Collect all payments from all services
   const allPayments: (ServicePayment & {
     service_id: number
@@ -174,13 +186,13 @@ export default function ClientDetailPage() {
     0,
   )
 
-  // Summary stats (Sales)
-  const salesRevenue = salesTransactions.reduce(
+  // Summary stats (Sales) - using only standalone sales, excluding service-related transactions
+  const salesRevenue = standaloneSalesTransactions.reduce(
     (sum: number, t: SalesTransaction) =>
       sum + parseFloat(String(t.computed_total || "0")),
     0,
   )
-  const salesPaid = salesTransactions.reduce(
+  const salesPaid = standaloneSalesTransactions.reduce(
     (sum: number, t: SalesTransaction) => {
       const paid =
         t.payments?.reduce(
@@ -509,7 +521,7 @@ export default function ClientDetailPage() {
                     />
                   ))}
                 </div>
-              ) : salesTransactions.length === 0 ? (
+              ) : standaloneSalesTransactions.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground">
                   No sales transactions found for this client.
                 </div>
@@ -528,73 +540,75 @@ export default function ClientDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {salesTransactions.map((transaction: SalesTransaction) => {
-                      const itemCount = transaction.items?.length || 0
-                      const totalItems =
-                        transaction.items?.reduce(
-                          (sum, item) => sum + item.quantity,
-                          0,
-                        ) || 0
+                    {standaloneSalesTransactions.map(
+                      (transaction: SalesTransaction) => {
+                        const itemCount = transaction.items?.length || 0
+                        const totalItems =
+                          transaction.items?.reduce(
+                            (sum, item) => sum + item.quantity,
+                            0,
+                          ) || 0
 
-                      return (
-                        <TableRow
-                          key={transaction.id}
-                          className="cursor-pointer"
-                          onClick={() => openSalesView(transaction)}
-                        >
-                          <TableCell className="font-medium">
-                            {transaction.manual_receipt_number ||
-                              transaction.system_receipt_number
-                                ?.slice(0, 8)
-                                .toUpperCase()}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(transaction.created_at)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <span className="font-medium">
-                                {itemCount} item{itemCount !== 1 ? "s" : ""}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {" "}
-                                ({totalItems} qty)
-                              </span>
-                            </div>
-                            {transaction.items &&
-                              transaction.items.length > 0 && (
-                                <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-0.5">
-                                  {transaction.items
-                                    .filter((item) => item.item)
-                                    .map(
-                                      (item) =>
-                                        `${item.item.name} (${item.quantity})`,
-                                    )
-                                    .join(", ")}
-                                </p>
-                              )}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                            {transaction.stall?.name || "—"}
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(transaction.computed_total || 0)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Badge
-                              variant={getBadgeVariant(
-                                transaction.payment_status,
-                              )}
-                              className="text-xs"
-                            >
-                              {paymentStatusLabels[
-                                transaction.payment_status
-                              ] || transaction.payment_status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
+                        return (
+                          <TableRow
+                            key={transaction.id}
+                            className="cursor-pointer"
+                            onClick={() => openSalesView(transaction)}
+                          >
+                            <TableCell className="font-medium">
+                              {transaction.manual_receipt_number ||
+                                transaction.system_receipt_number
+                                  ?.slice(0, 8)
+                                  .toUpperCase()}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatDate(transaction.created_at)}
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                <span className="font-medium">
+                                  {itemCount} item{itemCount !== 1 ? "s" : ""}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {" "}
+                                  ({totalItems} qty)
+                                </span>
+                              </div>
+                              {transaction.items &&
+                                transaction.items.length > 0 && (
+                                  <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-0.5">
+                                    {transaction.items
+                                      .filter((item) => item.item)
+                                      .map(
+                                        (item) =>
+                                          `${item.item.name} (${item.quantity})`,
+                                      )
+                                      .join(", ")}
+                                  </p>
+                                )}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                              {transaction.stall?.name || "—"}
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {formatCurrency(transaction.computed_total || 0)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Badge
+                                variant={getBadgeVariant(
+                                  transaction.payment_status,
+                                )}
+                                className="text-xs"
+                              >
+                                {paymentStatusLabels[
+                                  transaction.payment_status
+                                ] || transaction.payment_status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      },
+                    )}
                   </TableBody>
                 </Table>
               )}
