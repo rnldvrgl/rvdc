@@ -151,7 +151,7 @@ export default function QuotationsPage() {
             title="New Quotation"
             description="Fill out the form to create a new quotation."
             withCloseConfirmation
-            className="sm:min-w-[900px] max-w-5xl"
+            className="w-full max-w-[95vw] md:max-w-[85vw] lg:max-w-4xl xl:max-w-5xl"
             renderForm={({ forceClose }) => (
               <QuotationForm onClose={forceClose} />
             )}
@@ -218,7 +218,7 @@ function EditQuotationSheet({
       title="Edit Quotation"
       description="Update the quotation details below."
       withCloseConfirmation
-      className="sm:min-w-[900px] max-w-5xl"
+      className="w-full max-w-[95vw] md:max-w-[85vw] lg:max-w-4xl xl:max-w-5xl"
       renderForm={({ forceClose, entity }) =>
         isLoading ? (
           <div className="flex items-center justify-center py-20 text-muted-foreground">

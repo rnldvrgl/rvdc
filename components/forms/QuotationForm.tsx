@@ -764,7 +764,7 @@ export default function QuotationForm({
         <h3 className="text-sm font-semibold text-foreground mb-3">
           Quote Details
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Quote Date</Label>
             <Popover>
@@ -820,7 +820,7 @@ export default function QuotationForm({
             </Popover>
           </div>
         </div>
-        <div className="mt-4 space-y-1.5">
+        <div className="mt-4 space-y-1.5 max-w-3xl">
           <Label className="text-xs text-muted-foreground">
             Project Description
           </Label>
@@ -923,8 +923,8 @@ export default function QuotationForm({
                 className={cn(
                   "grid gap-2",
                   item.airconUnitId
-                    ? "grid-cols-1 sm:grid-cols-[1fr_200px]"
-                    : "grid-cols-1 sm:grid-cols-[1fr_90px_200px]",
+                    ? "grid-cols-1 md:grid-cols-[1fr_180px] lg:grid-cols-[1fr_200px]"
+                    : "grid-cols-1 sm:grid-cols-[1fr_90px] md:grid-cols-[1fr_90px_180px] lg:grid-cols-[1fr_90px_200px]",
                 )}
               >
                 <DescriptionField
@@ -1025,7 +1025,7 @@ export default function QuotationForm({
         </div>
 
         {/* Totals */}
-        <div className="mt-4 ml-auto w-full sm:w-[298px] space-y-1.5 text-sm">
+        <div className="mt-4 ml-auto w-full sm:w-[320px] md:w-[360px] lg:w-[400px] space-y-1.5 text-sm">
           <div className="flex justify-between text-muted-foreground">
             <span>Subtotal</span>
             <span>&#8369;{formatCurrency(subtotal)}</span>
@@ -1041,7 +1041,7 @@ export default function QuotationForm({
                 setDiscountAmount(parseFloat(e.target.value) || 0)
               }
               placeholder="0.00"
-              className="w-44 h-8 text-right text-sm"
+              className="w-32 sm:w-40 md:w-44 h-8 text-right text-sm"
             />
           </div>
           <Separator />
@@ -1095,7 +1095,7 @@ export default function QuotationForm({
               className="group border rounded-md p-3 bg-muted/30 space-y-2"
             >
               {/* Row 1: Label + Amount + Delete */}
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_32px] gap-2 items-end">
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_32px] md:grid-cols-[1fr_180px_32px] lg:grid-cols-[1fr_200px_32px] gap-2 items-end">
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">
                     Label
@@ -1160,7 +1160,7 @@ export default function QuotationForm({
                 </Tooltip>
               </div>
               {/* Row 2: Payment Method + Date + Ref No. + S.I. No. */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">
                     Payment Method
@@ -1417,7 +1417,7 @@ export default function QuotationForm({
             (optional)
           </span>
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* ─ Authorized Representative Card ─ */}
           <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
             <p className="text-xs font-semibold text-foreground tracking-wide uppercase">
