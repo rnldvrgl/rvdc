@@ -20,6 +20,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Item,
   ItemEntry,
@@ -44,10 +45,13 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
   CreditCard,
   Package,
+  PackageMinus,
   Printer,
   Receipt,
+  RefreshCw,
   RotateCcw,
   Save,
+  ShoppingCart,
   Trash2,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
@@ -64,7 +68,8 @@ export default function SalesTransactionForm({
   onClose,
 }: SalesTransactionFormProps) {
   const { assigned_stall, role } = useCurrentUser()
-  const formSchema = z.object({
+  const baseSchema = z.object({
+    transaction_type: z.enum(["sale", "replacement", "pull_out"]),
     stall:
       role === "admin"
         ? z.number({
@@ -72,21 +77,16 @@ export default function SalesTransactionForm({
             invalid_type_error: "Stall is required",
           })
         : z.number().nullable().optional(),
-    client_id: z
-      .number({
-        required_error: "Client is required",
-      })
-      .nullable(),
+    client_id: z.number().nullable().optional(),
+    note: z.string().optional(),
     manual_receipt_number: z.string().optional(),
-    payments: z
-      .array(
-        z.object({
-          payment_type: z.string().min(1, "Payment type is required"),
-          amount: z.number().min(1, "Amount must be a positive number"),
-          cheque_collection: z.number().nullable().optional(),
-        }),
-      )
-      .min(1, "At least one payment is required"),
+    payments: z.array(
+      z.object({
+        payment_type: z.string().min(1, "Payment type is required"),
+        amount: z.number().min(1, "Amount must be a positive number"),
+        cheque_collection: z.number().nullable().optional(),
+      }),
+    ),
     items: z
       .array(
         z.object({
@@ -99,14 +99,36 @@ export default function SalesTransactionForm({
       .min(1, "at least one item is required"),
   })
 
-  type FormValues = z.infer<typeof formSchema>
+  const formSchema = baseSchema.superRefine((data, ctx) => {
+    if (data.transaction_type !== "pull_out" && !data.client_id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Client is required",
+        path: ["client_id"],
+      })
+    }
+    if (
+      data.transaction_type === "sale" &&
+      (!data.payments || data.payments.length === 0)
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "At least one payment is required",
+        path: ["payments"],
+      })
+    }
+  })
+
+  type FormValues = z.infer<typeof baseSchema>
 
   const resolver = zodResolver(formSchema)
   const form = useForm<FormValues>({
     resolver,
     defaultValues: {
+      transaction_type: initialData?.transaction_type ?? "sale",
       stall: initialData?.stall?.id ?? null,
       client_id: initialData?.client?.id,
+      note: initialData?.note ?? "",
       manual_receipt_number: initialData?.manual_receipt_number ?? "",
       payments:
         initialData?.payments?.map((i) => ({
@@ -185,6 +207,8 @@ export default function SalesTransactionForm({
 
   const watchedItems = form.watch("items")
   const watchedPayments = form.watch("payments")
+  const transactionType = form.watch("transaction_type")
+  const isFreeTransaction = transactionType !== "sale"
 
   const totalItemsAmount = watchedItems.reduce(
     (acc, i) => acc + i.quantity * i.final_price_per_unit,
@@ -244,21 +268,26 @@ export default function SalesTransactionForm({
   }, [initialData, allItemsData, stalls, assigned_stall, role])
 
   const handleSubmit = (data: FormValues) => {
+    const isFree = data.transaction_type !== "sale"
     const payload = {
+      transaction_type: data.transaction_type,
       stall: role == "admin" ? data.stall : (assigned_stall?.id ?? null),
       client: data.client_id ?? null,
+      note: data.note || null,
       manual_receipt_number: data.manual_receipt_number ?? null,
       items: data.items.map((i) => ({
         item: i.item_id,
         quantity: i.quantity,
-        final_price_per_unit: i.final_price_per_unit,
+        final_price_per_unit: isFree ? 0 : i.final_price_per_unit,
       })),
-      payments: data.payments.map((p) => ({
-        payment_type: p.payment_type,
-        amount: p.amount,
-        cheque_collection:
-          p.payment_type === "cheque" ? p.cheque_collection : undefined,
-      })),
+      payments: isFree
+        ? []
+        : data.payments.map((p) => ({
+            payment_type: p.payment_type,
+            amount: p.amount,
+            cheque_collection:
+              p.payment_type === "cheque" ? p.cheque_collection : undefined,
+          })),
     }
 
     if (initialData) {
@@ -373,6 +402,77 @@ export default function SalesTransactionForm({
               <Receipt className="size-3" />
               Transaction Info
             </h4>
+
+            {/* Transaction Type Selector */}
+            {!initialData && (
+              <FormField
+                control={form.control}
+                name="transaction_type"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Type</FormLabel>
+                    <div className="flex gap-1.5">
+                      {[
+                        {
+                          value: "sale" as const,
+                          label: "Sale",
+                          icon: ShoppingCart,
+                        },
+                        {
+                          value: "replacement" as const,
+                          label: "Replacement",
+                          icon: RefreshCw,
+                        },
+                        {
+                          value: "pull_out" as const,
+                          label: "Pull Out",
+                          icon: PackageMinus,
+                        },
+                      ].map((opt) => (
+                        <Button
+                          key={opt.value}
+                          type="button"
+                          size="sm"
+                          variant={
+                            field.value === opt.value ? "default" : "outline"
+                          }
+                          className="flex-1 text-xs"
+                          disabled={isDisabled}
+                          onClick={() => {
+                            field.onChange(opt.value)
+                            if (opt.value !== "sale") {
+                              form.setValue("payments", [])
+                            }
+                          }}
+                        >
+                          <opt.icon className="mr-1 size-3" />
+                          {opt.label}
+                        </Button>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Type badge for existing transactions */}
+            {initialData?.transaction_type &&
+              initialData.transaction_type !== "sale" && (
+                <Badge
+                  variant={
+                    initialData.transaction_type === "replacement"
+                      ? "secondary"
+                      : "outline"
+                  }
+                  className="text-xs"
+                >
+                  {initialData.transaction_type === "replacement"
+                    ? "Replacement"
+                    : "Pull Out"}
+                </Badge>
+              )}
+
             {role && role === "admin" && (
               <FormField
                 name="stall"
@@ -401,25 +501,49 @@ export default function SalesTransactionForm({
             )}
 
             <div className="grid gap-3">
-              <FormField
-                name="client_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Client</FormLabel>
-                    <ComboBox
-                      disabled={isDisabled}
-                      options={clients.map((c) => ({
-                        value: c.id,
-                        label: `${c.full_name} ${c.contact_number && `(${c.contact_number})`}`,
-                      }))}
-                      value={field.value ? Number(field.value) : null}
-                      onChange={(val) => field.onChange(val ?? null)}
-                      placeholder="Select client"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {transactionType !== "pull_out" && (
+                <FormField
+                  name="client_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>Client</FormLabel>
+                      <ComboBox
+                        disabled={isDisabled}
+                        options={clients.map((c) => ({
+                          value: c.id,
+                          label: `${c.full_name}${c.contact_number ? ` (${c.contact_number})` : ""}`,
+                        }))}
+                        value={field.value ? Number(field.value) : null}
+                        onChange={(val) => field.onChange(val ?? null)}
+                        placeholder="Select client"
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              {transactionType === "pull_out" && (
+                <FormField
+                  name="client_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Client (optional)</FormLabel>
+                      <ComboBox
+                        disabled={isDisabled}
+                        options={clients.map((c) => ({
+                          value: c.id,
+                          label: `${c.full_name}${c.contact_number ? ` (${c.contact_number})` : ""}`,
+                        }))}
+                        value={field.value ? Number(field.value) : null}
+                        onChange={(val) => field.onChange(val ?? null)}
+                        placeholder="Select client (optional)"
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               <FormField
                 control={form.control}
@@ -438,6 +562,35 @@ export default function SalesTransactionForm({
                   </FormItem>
                 )}
               />
+
+              {isFreeTransaction && (
+                <FormField
+                  control={form.control}
+                  name="note"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        {transactionType === "replacement"
+                          ? "Replacement Reason"
+                          : "Pull Out Note"}
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          disabled={isDisabled}
+                          {...field}
+                          placeholder={
+                            transactionType === "replacement"
+                              ? "e.g. Warranty replacement for defective belt"
+                              : "e.g. Defective motor - pulled out from inventory"
+                          }
+                          rows={2}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
           </section>
 
@@ -473,20 +626,22 @@ export default function SalesTransactionForm({
                   updatedItems.map((i) => ({
                     item_id: i.item?.id ?? 0,
                     quantity: i.quantity,
-                    final_price_per_unit:
-                      i.final_price_per_unit ??
-                      Number(i.item?.retail_price) ??
-                      0,
-                    print_price_per_unit:
-                      i.print_price_per_unit ??
-                      i.final_price_per_unit ??
-                      Number(i.item?.retail_price) ??
-                      0,
+                    final_price_per_unit: isFreeTransaction
+                      ? 0
+                      : (i.final_price_per_unit ??
+                        Number(i.item?.retail_price) ??
+                        0),
+                    print_price_per_unit: isFreeTransaction
+                      ? 0
+                      : (i.print_price_per_unit ??
+                        i.final_price_per_unit ??
+                        Number(i.item?.retail_price) ??
+                        0),
                   })),
                 )
                 setItems(updatedItems)
               }}
-              allowPriceChange
+              allowPriceChange={!isFreeTransaction}
             />
             {form.formState.errors.items && (
               <p className="text-sm font-medium text-destructive">
@@ -497,79 +652,97 @@ export default function SalesTransactionForm({
 
           <Separator />
 
-          {/* Payments */}
-          <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label
-                required
-                className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"
-              >
-                <CreditCard className="size-3" />
-                Payments
-              </Label>
-              {watchedPayments.length > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="text-[10px] h-5 px-1.5"
-                >
-                  {watchedPayments.length}
-                </Badge>
-              )}
-            </div>
-            <PaymentMethodSelector
-              control={form.control}
-              fields={fields}
-              append={append}
-              remove={remove}
-              setValue={form.setValue}
-              disabled={isDisabled}
-              required
-              totalItemsAmount={totalItemsAmount}
-              clientId={form.watch("client_id")}
-            />
-            {form.formState.errors.payments && (
-              <p className="text-sm font-medium text-destructive">
-                {form.formState.errors.payments?.message ||
-                  form.formState.errors.payments?.root?.message}
-              </p>
-            )}
-          </section>
+          {/* Payments - only for regular sales */}
+          {!isFreeTransaction && (
+            <>
+              <section className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label
+                    required
+                    className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"
+                  >
+                    <CreditCard className="size-3" />
+                    Payments
+                  </Label>
+                  {watchedPayments.length > 0 && (
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] h-5 px-1.5"
+                    >
+                      {watchedPayments.length}
+                    </Badge>
+                  )}
+                </div>
+                <PaymentMethodSelector
+                  control={form.control}
+                  fields={fields}
+                  append={append}
+                  remove={remove}
+                  setValue={form.setValue}
+                  disabled={isDisabled}
+                  required
+                  totalItemsAmount={totalItemsAmount}
+                  clientId={form.watch("client_id")}
+                />
+                {form.formState.errors.payments && (
+                  <p className="text-sm font-medium text-destructive">
+                    {form.formState.errors.payments?.message ||
+                      form.formState.errors.payments?.root?.message}
+                  </p>
+                )}
+              </section>
+            </>
+          )}
 
           {/* Summary */}
           <div className="rounded-lg bg-muted/50 p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">
-                Subtotal · {watchedItems.length} item
+                {isFreeTransaction ? "Items to deduct" : "Subtotal"} ·{" "}
+                {watchedItems.length} item
                 {watchedItems.length !== 1 && "s"}
               </span>
-              <span className="font-medium">
-                {formatCurrency(totalItemsAmount)}
-              </span>
+              {!isFreeTransaction && (
+                <span className="font-medium">
+                  {formatCurrency(totalItemsAmount)}
+                </span>
+              )}
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">
-                Paid · {watchedPayments.length} payment
-                {watchedPayments.length !== 1 && "s"}
-              </span>
-              <span className="font-medium text-primary">
-                {formatCurrency(totalPayments)}
-              </span>
-            </div>
-            <Separator />
-            <div className="flex justify-between items-center pt-1">
-              <span className="text-sm font-semibold">
-                {changeDue >= 0 ? "Change" : "Balance Due"}
-              </span>
-              <span
-                className={`text-base font-bold ${
-                  changeDue >= 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-destructive"
-                }`}
-              >
-                {formatCurrency(Math.abs(changeDue))}
-              </span>
-            </div>
+            {!isFreeTransaction && (
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Paid · {watchedPayments.length} payment
+                    {watchedPayments.length !== 1 && "s"}
+                  </span>
+                  <span className="font-medium text-primary">
+                    {formatCurrency(totalPayments)}
+                  </span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-sm font-semibold">
+                    {changeDue >= 0 ? "Change" : "Balance Due"}
+                  </span>
+                  <span
+                    className={`text-base font-bold ${
+                      changeDue >= 0
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-destructive"
+                    }`}
+                  >
+                    {formatCurrency(Math.abs(changeDue))}
+                  </span>
+                </div>
+              </>
+            )}
+            {isFreeTransaction && (
+              <p className="text-xs text-muted-foreground">
+                {transactionType === "replacement"
+                  ? "Items will be deducted from stock as free replacements."
+                  : "Items will be removed from inventory."}
+              </p>
+            )}
           </div>
 
           {/* Submit */}
@@ -590,7 +763,11 @@ export default function SalesTransactionForm({
                   : "Creating..."
                 : initialData
                   ? "Update Transaction"
-                  : "Create Transaction"}
+                  : transactionType === "replacement"
+                    ? "Create Replacement"
+                    : transactionType === "pull_out"
+                      ? "Create Pull Out"
+                      : "Create Transaction"}
             </Button>
           )}
         </form>

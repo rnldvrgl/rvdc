@@ -57,8 +57,24 @@ export function getSalesTransactionColumns({
       header: "Client",
       cell: ({ row }) =>
         safeCell(
-          `${row.original.client?.full_name ?? ""} ${row.original.client?.contact_number && `(${row.original.client?.contact_number})`}`,
+          `${row.original.client?.full_name ?? ""}${row.original.client?.contact_number ? ` (${row.original.client.contact_number})` : ""}`,
         ),
+    },
+    {
+      accessorKey: "transaction_type",
+      header: "Type",
+      cell: ({ getValue }) => {
+        const type = getValue() as string
+        if (!type || type === "sale") return null
+        return (
+          <Badge
+            variant={type === "replacement" ? "secondary" : "outline"}
+            className="text-[10px]"
+          >
+            {type === "replacement" ? "Replacement" : "Pull Out"}
+          </Badge>
+        )
+      },
     },
     {
       accessorKey: "created_at",

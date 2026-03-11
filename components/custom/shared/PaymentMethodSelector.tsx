@@ -36,27 +36,26 @@ type Payment = {
   cheque_collection?: number | null
 }
 
-type FormValues = {
-  client_id: number | null
-  items: { item_id: number; quantity: number; final_price_per_unit: number }[]
-  stall?: number | null
+type BaseFormValues = {
   payments: Payment[]
-  manual_receipt_number?: string
+  [key: string]: unknown
 }
 
-type PaymentMethodSelectorProps = {
-  control: Control<FormValues>
-  fields: FieldArrayWithId<FormValues, "payments", "id">[]
-  append: UseFieldArrayAppend<FormValues, "payments">
+type PaymentMethodSelectorProps<T extends BaseFormValues = BaseFormValues> = {
+  control: Control<T>
+  fields: FieldArrayWithId<T, "payments", "id">[]
+  append: UseFieldArrayAppend<T, "payments">
   remove: UseFieldArrayRemove
-  setValue: UseFormSetValue<FormValues>
+  setValue: UseFormSetValue<T>
   disabled?: boolean
   required?: boolean
   totalItemsAmount?: number
   clientId?: number | null
 }
 
-export default function PaymentMethodSelector({
+export default function PaymentMethodSelector<
+  T extends BaseFormValues = BaseFormValues,
+>({
   fields,
   control,
   remove,
@@ -65,8 +64,8 @@ export default function PaymentMethodSelector({
   disabled,
   totalItemsAmount = 0,
   clientId,
-}: PaymentMethodSelectorProps) {
-  const watchedPayments = useWatch({ control, name: "payments" })
+}: PaymentMethodSelectorProps<T>) {
+  const watchedPayments = useWatch({ control, name: "payments" as any })
   const { data: chequeChoices = [], rawData: chequeRawData = [] } =
     useChequeChoices(clientId ?? undefined)
 

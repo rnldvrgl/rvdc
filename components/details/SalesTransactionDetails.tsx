@@ -88,6 +88,19 @@ export function SalesTransactionDetails({
           <Badge variant={getBadgeVariant(entity.payment_status)}>
             {entity.payment_status.toUpperCase()}
           </Badge>
+          {entity.transaction_type && entity.transaction_type !== "sale" && (
+            <Badge
+              variant={
+                entity.transaction_type === "replacement"
+                  ? "secondary"
+                  : "outline"
+              }
+            >
+              {entity.transaction_type === "replacement"
+                ? "Replacement"
+                : "Pull Out"}
+            </Badge>
+          )}
         </div>
 
         {/* Action buttons */}
@@ -246,6 +259,12 @@ export function SalesTransactionDetails({
               <Detail
                 label="Void Reason"
                 value={entity.void_reason ?? "N/A"}
+              />
+            )}
+            {entity.note && (
+              <Detail
+                label="Note"
+                value={entity.note}
               />
             )}
           </div>

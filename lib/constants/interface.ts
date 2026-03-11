@@ -419,6 +419,9 @@ export interface SalesTransaction {
   voided_at?: string | null
   void_reason?: string | null
 
+  transaction_type?: "sale" | "replacement" | "pull_out"
+  note?: string | null
+
   is_deleted: boolean
   deleted_at?: string | null
 
@@ -439,6 +442,8 @@ export interface SalesTransactionPayload {
   stall: number | null | undefined
   client: number | null
   manual_receipt_number: string | null
+  transaction_type?: string
+  note?: string | null
   items: {
     item: number
     quantity: number
