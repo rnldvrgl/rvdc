@@ -135,7 +135,7 @@ export default function AddStockForm({ stock, onClose }: AddStockFormProps) {
                   placeholder={`Enter quantity (${unit})`}
                   {...field}
                   min={0.01}
-                  step={0.01}
+                  step="any"
                 />
               </FormControl>
               <FormMessage />

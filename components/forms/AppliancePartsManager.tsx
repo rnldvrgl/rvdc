@@ -525,14 +525,14 @@ export default function AppliancePartsManager({
               </div>
               <Input
                 type="number"
-                min="0.01"
-                step={
+                min={
                   selectedItem && selectedItem.unit_of_measure === "kg"
                     ? "0.25"
                     : selectedItem && selectedItem.unit_of_measure === "ft"
                       ? "0.01"
                       : "1"
                 }
+                step="any"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder={

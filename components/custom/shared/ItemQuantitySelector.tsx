@@ -260,8 +260,8 @@ export default function ItemQuantitySelector({
                       </TooltipProvider>
                       <Input
                         type="number"
-                        min={0.01}
-                        step={isKgItem(itm.item) ? "0.25" : "1"}
+                        min={isKgItem(itm.item) ? 0.25 : 1}
+                        step="any"
                         value={editingQty[idx] ?? itm.quantity}
                         onChange={(e) => {
                           setEditingQty((prev) => ({
