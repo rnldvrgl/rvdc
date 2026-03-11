@@ -100,6 +100,18 @@ export function SummaryReport() {
       color: "text-violet-600",
     },
     {
+      label: "Main Stall (Services)",
+      value: peso(summary?.main_stall_service_revenue ?? 0),
+      icon: Wrench,
+      color: "text-violet-500",
+    },
+    {
+      label: "Sub Stall (Services)",
+      value: peso(summary?.sub_stall_service_revenue ?? 0),
+      icon: Wrench,
+      color: "text-violet-400",
+    },
+    {
       label: "Total Expenses",
       value: peso(summary?.total_expense ?? 0),
       icon: TrendingDown,

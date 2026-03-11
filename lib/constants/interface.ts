@@ -458,6 +458,8 @@ export interface AnalyticsSummary {
   // Revenue metrics
   total_sales: number // sales revenue only
   service_revenue: number // service revenue
+  main_stall_service_revenue: number // main stall portion of service revenue
+  sub_stall_service_revenue: number // sub stall portion of service revenue
   total_revenue: number // combined sales + services
   net_income: number // revenue - expenses - unit costs
 

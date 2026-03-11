@@ -36,9 +36,17 @@ export function ServicesReport() {
 
   const services = useMemo(() => serviceData?.results ?? [], [serviceData])
 
-  const { totalRevenue, totalCost, totalPaid, byStatus } = useMemo(() => {
+  const { totalRevenue, totalMainRevenue, totalSubRevenue, totalCost, totalPaid, byStatus } = useMemo(() => {
     const totalRevenue = services.reduce(
       (s, svc) => s + Number(svc.total_revenue ?? 0),
+      0,
+    )
+    const totalMainRevenue = services.reduce(
+      (s, svc) => s + Number(svc.main_stall_revenue ?? 0),
+      0,
+    )
+    const totalSubRevenue = services.reduce(
+      (s, svc) => s + Number(svc.sub_stall_revenue ?? 0),
       0,
     )
     const totalCost = services.reduce(
@@ -57,7 +65,7 @@ export function ServicesReport() {
       },
       {} as Record<string, number>,
     )
-    return { totalRevenue, totalCost, totalPaid, byStatus }
+    return { totalRevenue, totalMainRevenue, totalSubRevenue, totalCost, totalPaid, byStatus }
   }, [services])
 
   const handleExport = () => {
@@ -67,6 +75,8 @@ export function ServicesReport() {
       { header: "Type", accessor: (r) => r.service_type ?? "" },
       { header: "Mode", accessor: (r) => r.service_mode ?? "" },
       { header: "Status", accessor: (r) => r.status ?? "" },
+      { header: "Main Stall", accessor: (r) => Number(r.main_stall_revenue ?? 0) },
+      { header: "Sub Stall", accessor: (r) => Number(r.sub_stall_revenue ?? 0) },
       { header: "Revenue", accessor: (r) => Number(r.total_revenue ?? 0) },
       { header: "Cost", accessor: (r) => Number(r.total_cost ?? 0) },
       { header: "Paid", accessor: (r) => Number(r.total_paid ?? 0) },
@@ -81,7 +91,7 @@ export function ServicesReport() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-5">
             <p className="text-sm text-muted-foreground">Total Services</p>
@@ -94,6 +104,18 @@ export function ServicesReport() {
             <p className="text-2xl font-bold text-emerald-600">
               {peso(totalRevenue)}
             </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <p className="text-sm text-muted-foreground">Main Stall</p>
+            <p className="text-xl font-bold">{peso(totalMainRevenue)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <p className="text-sm text-muted-foreground">Sub Stall</p>
+            <p className="text-xl font-bold">{peso(totalSubRevenue)}</p>
           </CardContent>
         </Card>
         <Card>
@@ -164,6 +186,8 @@ export function ServicesReport() {
                     <TableHead>Client</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Main</TableHead>
+                    <TableHead className="text-right">Sub</TableHead>
                     <TableHead className="text-right">Revenue</TableHead>
                     <TableHead className="text-right">Paid</TableHead>
                     <TableHead>Payment</TableHead>
@@ -188,6 +212,16 @@ export function ServicesReport() {
                         >
                           {svc.status}
                         </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">
+                        {Number(svc.main_stall_revenue ?? 0) > 0
+                          ? peso(svc.main_stall_revenue ?? 0)
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">
+                        {Number(svc.sub_stall_revenue ?? 0) > 0
+                          ? peso(svc.sub_stall_revenue ?? 0)
+                          : "—"}
                       </TableCell>
                       <TableCell className="text-right text-sm font-semibold">
                         {peso(svc.total_revenue ?? 0)}
