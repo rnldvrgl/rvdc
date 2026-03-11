@@ -560,7 +560,7 @@ export function CommandPalette({
                       <CommandItem
                         key={`client-${client.id}`}
                         value={`client ${client.full_name}`}
-                        onSelect={() => handleNavigate(`/clients`)}
+                        onSelect={() => handleNavigate(`/clients/${client.id}`)}
                         className="gap-3"
                       >
                         <div className="flex items-center justify-center size-8 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
@@ -584,7 +584,7 @@ export function CommandPalette({
                       <CommandItem
                         key={`service-${service.id}`}
                         value={`service ${service.id} ${service.client?.full_name}`}
-                        onSelect={() => handleNavigate(`/services`)}
+                        onSelect={() => handleNavigate(`/services?view=${service.id}`)}
                         className="gap-3"
                       >
                         <div className="flex items-center justify-center size-8 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
@@ -607,7 +607,7 @@ export function CommandPalette({
                       <CommandItem
                         key={`sale-${sale.id}`}
                         value={`sale ${sale.manual_receipt_number || sale.system_receipt_number} ${sale.client?.full_name}`}
-                        onSelect={() => handleNavigate(`/sales`)}
+                        onSelect={() => handleNavigate(`/sales?view=${sale.id}`)}
                         className="gap-3"
                       >
                         <div className="flex items-center justify-center size-8 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">

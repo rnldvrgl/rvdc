@@ -18,11 +18,13 @@ import { usePrint } from "@/lib/hooks/usePrint"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
 import {
+  useSalesTransaction,
   useSalesTransactionFilters,
   useSalesTransactions,
 } from "@/lib/queries/sales/useSalesTransactions"
 import { Plus, ShoppingCart } from "lucide-react"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 const emptyData = {
   count: 0,
@@ -36,6 +38,11 @@ export default function SalesTransactionsPage() {
   const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
   const { page, limit, search, ordering, filter } = searchParams
   const [isArchived, setIsArchived] = useState(false)
+
+  // Next.js router and URL params for handling view parameter from Command Palette
+  const router = useRouter()
+  const urlSearchParams = useSearchParams()
+
   const { data, isLoading, refetch } = useSalesTransactions({
     page,
     limit,
@@ -70,6 +77,24 @@ export default function SalesTransactionsPage() {
     openEntity: openEdit,
     closeEntity: closeEdit,
   } = useEntitySheet<SalesTransaction>()
+
+  // Handle opening detail sheet from Command Palette search
+  const viewId = urlSearchParams?.get("view")
+  const { data: viewTransaction } = useSalesTransaction(
+    viewId ? Number(viewId) : undefined,
+  )
+
+  useEffect(() => {
+    if (viewId && viewTransaction) {
+      // Open the detail sheet with the fetched transaction
+      openView(viewTransaction)
+
+      // Clear the view parameter from URL
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete("view")
+      router.replace(newUrl.pathname + newUrl.search, { scroll: false })
+    }
+  }, [viewId, viewTransaction, openView, router])
 
   const { printRef, handlePrint, printData } = usePrint<SalesTransaction>({
     documentTitle: "Receipt",

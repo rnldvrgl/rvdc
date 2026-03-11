@@ -39,7 +39,8 @@ import {
   useServices,
 } from "@/lib/queries/services/useServices"
 import { Kanban, List, Plus, Wrench } from "lucide-react"
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 type ViewMode = "table" | "kanban"
 
@@ -52,6 +53,10 @@ export default function ServicesPage() {
   // Search params
   const searchParams = useSearchParameters()
   const { filter, ordering, search, page, limit } = searchParams
+
+  // Next.js router and URL params for handling view parameter from Command Palette
+  const router = useRouter()
+  const urlSearchParams = useSearchParams()
 
   // Data fetching
   const {
@@ -80,6 +85,22 @@ export default function ServicesPage() {
 
   // Entity sheet for create/edit
   const { entityState, openEntity, closeEntity } = useEntitySheet<Service>()
+
+  // Handle opening detail sheet from Command Palette search
+  const viewId = urlSearchParams?.get("view")
+  const { data: viewService } = useService(viewId ? Number(viewId) : undefined)
+
+  useEffect(() => {
+    if (viewId && viewService) {
+      // Open the detail sheet with the fetched service
+      state.handleView(viewService)
+
+      // Clear the view parameter from URL
+      const newUrl = new URL(window.location.href)
+      newUrl.searchParams.delete("view")
+      router.replace(newUrl.pathname + newUrl.search, { scroll: false })
+    }
+  }, [viewId, viewService, state, router])
 
   const handleEdit = (service: Service) => {
     openEntity(service)
