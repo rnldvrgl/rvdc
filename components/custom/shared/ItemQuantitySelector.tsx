@@ -12,6 +12,7 @@ import {
 import { Item, ItemEntry } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { AlertTriangle, Info, Minus, Plus, X } from "lucide-react"
+import { useState } from "react"
 
 export default function ItemQuantitySelector({
   items,
@@ -97,6 +98,12 @@ export default function ItemQuantitySelector({
   const handleRemove = (idx: number) => {
     onChange(items.filter((_, i) => i !== idx))
   }
+
+  // Track which quantity inputs are being actively edited (so we don't override user typing)
+  const [editingQty, setEditingQty] = useState<Record<number, string>>({})
+
+  const isKgItem = (item: Item) => item.unit_of_measure === "kg"
+  const stepAmount = (item: Item) => (isKgItem(item) ? 0.25 : 1)
 
   const getPrices = (itm: ItemEntry) => {
     const retail = Number(itm.item.retail_price) || 0
@@ -226,35 +233,60 @@ export default function ItemQuantitySelector({
                               variant="outline"
                               size="icon"
                               className="size-8 rounded-r-none"
-                              onClick={() =>
-                                handleUpdate(
-                                  idx,
-                                  "quantity",
-                                  Math.max(0.01, itm.quantity - 1),
+                              onClick={() => {
+                                const step = stepAmount(itm.item)
+                                const newVal = Math.max(
+                                  step,
+                                  Math.round((itm.quantity - step) * 100) / 100,
                                 )
+                                handleUpdate(idx, "quantity", newVal)
+                                setEditingQty((prev) => {
+                                  const next = { ...prev }
+                                  delete next[idx]
+                                  return next
+                                })
+                              }}
+                              disabled={
+                                disabled || itm.quantity <= stepAmount(itm.item)
                               }
-                              disabled={disabled || itm.quantity <= 0.01}
                             >
                               <Minus className="size-3" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Decrease quantity</p>
+                            <p>Decrease by {stepAmount(itm.item)}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                       <Input
                         type="number"
                         min={0.01}
-                        step="0.01"
-                        value={itm.quantity}
-                        onChange={(e) =>
-                          handleUpdate(
-                            idx,
-                            "quantity",
-                            parseFloat(e.target.value) || 0.01,
-                          )
-                        }
+                        step={isKgItem(itm.item) ? "0.25" : "1"}
+                        value={editingQty[idx] ?? itm.quantity}
+                        onChange={(e) => {
+                          setEditingQty((prev) => ({
+                            ...prev,
+                            [idx]: e.target.value,
+                          }))
+                        }}
+                        onBlur={() => {
+                          const raw = editingQty[idx]
+                          if (raw !== undefined) {
+                            const parsed = parseFloat(raw)
+                            handleUpdate(
+                              idx,
+                              "quantity",
+                              parsed > 0
+                                ? Math.round(parsed * 100) / 100
+                                : 0.01,
+                            )
+                            setEditingQty((prev) => {
+                              const next = { ...prev }
+                              delete next[idx]
+                              return next
+                            })
+                          }
+                        }}
                         className="h-8 w-16 rounded-none border-x-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         disabled={disabled}
                       />
@@ -266,16 +298,24 @@ export default function ItemQuantitySelector({
                               variant="outline"
                               size="icon"
                               className="size-8 rounded-l-none"
-                              onClick={() =>
-                                handleUpdate(idx, "quantity", itm.quantity + 1)
-                              }
+                              onClick={() => {
+                                const step = stepAmount(itm.item)
+                                const newVal =
+                                  Math.round((itm.quantity + step) * 100) / 100
+                                handleUpdate(idx, "quantity", newVal)
+                                setEditingQty((prev) => {
+                                  const next = { ...prev }
+                                  delete next[idx]
+                                  return next
+                                })
+                              }}
                               disabled={disabled}
                             >
                               <Plus className="size-3" />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Increase quantity</p>
+                            <p>Increase by {stepAmount(itm.item)}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>

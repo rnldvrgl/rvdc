@@ -36,12 +36,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ApplianceItemUsed, Stock } from "@/lib/constants/interface"
+import { ApplianceItemUsed, Item, Stock } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useApplianceItemMutations } from "@/lib/mutations/services/useApplianceItemMutations"
-import { useItems } from "@/lib/queries/inventory/useItems"
 import { useApplianceItems } from "@/lib/queries/services/useApplianceItems"
+import { useItemChoices } from "@/lib/queries/useChoices"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
 import { useQueryClient } from "@tanstack/react-query"
 import { Edit, Info, Package, Plus, Trash2 } from "lucide-react"
@@ -75,15 +75,12 @@ export default function AppliancePartsManager({
 
   const { data: partsUsed = [], isLoading } = useApplianceItems(applianceId)
 
-  // Fetch items for selection
-  const { data: itemsData, isLoading: itemsLoading } = useItems({
-    page: 1,
-    limit: 100,
-  })
+  // Fetch all items for selection (unpaginated)
+  const { data: itemsData, isLoading: itemsLoading } = useItemChoices()
 
   const { addItem, updateItem, deleteItem } = useApplianceItemMutations()
 
-  const items = itemsData?.results || []
+  const items: Item[] = itemsData ?? []
   const selectedItem = items.find((i) => i.id === selectedItemId)
 
   // Transform items to ComboBox options
@@ -530,10 +527,11 @@ export default function AppliancePartsManager({
                 type="number"
                 min="0.01"
                 step={
-                  selectedItem &&
-                  ["kg", "ft"].includes(selectedItem.unit_of_measure)
-                    ? "0.01"
-                    : "1"
+                  selectedItem && selectedItem.unit_of_measure === "kg"
+                    ? "0.25"
+                    : selectedItem && selectedItem.unit_of_measure === "ft"
+                      ? "0.01"
+                      : "1"
                 }
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
