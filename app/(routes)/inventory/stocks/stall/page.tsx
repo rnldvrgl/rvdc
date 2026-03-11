@@ -7,6 +7,7 @@ import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import AddStockForm from "@/components/forms/inventory/AddStockForm"
+import PullOutForm from "@/components/forms/inventory/PullOutForm"
 import RestockForm from "@/components/forms/inventory/RestockForm"
 import StockAuditDialog from "@/components/forms/inventory/StockAuditDialog"
 import StockThresholdForm from "@/components/forms/inventory/StockThresholdForm"
@@ -71,6 +72,12 @@ export default function StocksPage() {
     closeEntity: closeViewSheet,
   } = useEntitySheet<Stock>()
 
+  const {
+    entityState: { open: pullOutOpen, entity: pullOutEntity },
+    openEntity: openPullOutSheet,
+    closeEntity: closePullOutSheet,
+  } = useEntitySheet<Stock>()
+
   const [auditStock, setAuditStock] = useState<Stock | null>(null)
   const [auditOpen, setAuditOpen] = useState(false)
   const openAudit = (stock: Stock) => {
@@ -115,6 +122,7 @@ export default function StocksPage() {
         onAddStock: openAddStockSheet,
         onView: handleView,
         onAudit: openAudit,
+        onPullOut: openPullOutSheet,
         role,
       })
 
@@ -316,6 +324,24 @@ export default function StocksPage() {
             renderForm={({ forceClose, entity }) =>
               entity ? (
                 <AddStockForm
+                  onClose={forceClose}
+                  stock={entity}
+                />
+              ) : null
+            }
+          />
+
+          {/* Pull Out Sheet */}
+          <EntitySheet<Stock>
+            open={pullOutOpen}
+            onClose={closePullOutSheet}
+            entity={pullOutEntity}
+            title="Pull Out Stock"
+            description="Remove stock from this stall location."
+            withCloseConfirmation
+            renderForm={({ forceClose, entity }) =>
+              entity ? (
+                <PullOutForm
                   onClose={forceClose}
                   stock={entity}
                 />

@@ -45,7 +45,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
   CreditCard,
   Package,
-  PackageMinus,
   Printer,
   Receipt,
   RefreshCw,
@@ -69,7 +68,7 @@ export default function SalesTransactionForm({
 }: SalesTransactionFormProps) {
   const { assigned_stall, role } = useCurrentUser()
   const baseSchema = z.object({
-    transaction_type: z.enum(["sale", "replacement", "pull_out"]),
+    transaction_type: z.enum(["sale", "replacement"]),
     stall:
       role === "admin"
         ? z.number({
@@ -100,7 +99,7 @@ export default function SalesTransactionForm({
   })
 
   const formSchema = baseSchema.superRefine((data, ctx) => {
-    if (data.transaction_type !== "pull_out" && !data.client_id) {
+    if (!data.client_id) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Client is required",
@@ -125,7 +124,10 @@ export default function SalesTransactionForm({
   const form = useForm<FormValues>({
     resolver,
     defaultValues: {
-      transaction_type: initialData?.transaction_type ?? "sale",
+      transaction_type:
+        initialData?.transaction_type === "replacement"
+          ? "replacement"
+          : "sale",
       stall: initialData?.stall?.id ?? null,
       client_id: initialData?.client?.id,
       note: initialData?.note ?? "",
@@ -423,11 +425,6 @@ export default function SalesTransactionForm({
                           label: "Replacement",
                           icon: RefreshCw,
                         },
-                        {
-                          value: "pull_out" as const,
-                          label: "Pull Out",
-                          icon: PackageMinus,
-                        },
                       ].map((opt) => (
                         <Button
                           key={opt.value}
@@ -457,21 +454,14 @@ export default function SalesTransactionForm({
             )}
 
             {/* Type badge for existing transactions */}
-            {initialData?.transaction_type &&
-              initialData.transaction_type !== "sale" && (
-                <Badge
-                  variant={
-                    initialData.transaction_type === "replacement"
-                      ? "secondary"
-                      : "outline"
-                  }
-                  className="text-xs"
-                >
-                  {initialData.transaction_type === "replacement"
-                    ? "Replacement"
-                    : "Pull Out"}
-                </Badge>
-              )}
+            {initialData?.transaction_type === "replacement" && (
+              <Badge
+                variant="secondary"
+                className="text-xs"
+              >
+                Replacement
+              </Badge>
+            )}
 
             {role && role === "admin" && (
               <FormField
@@ -501,49 +491,25 @@ export default function SalesTransactionForm({
             )}
 
             <div className="grid gap-3">
-              {transactionType !== "pull_out" && (
-                <FormField
-                  name="client_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Client</FormLabel>
-                      <ComboBox
-                        disabled={isDisabled}
-                        options={clients.map((c) => ({
-                          value: c.id,
-                          label: `${c.full_name}${c.contact_number ? ` (${c.contact_number})` : ""}`,
-                        }))}
-                        value={field.value ? Number(field.value) : null}
-                        onChange={(val) => field.onChange(val ?? null)}
-                        placeholder="Select client"
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              {transactionType === "pull_out" && (
-                <FormField
-                  name="client_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Client (optional)</FormLabel>
-                      <ComboBox
-                        disabled={isDisabled}
-                        options={clients.map((c) => ({
-                          value: c.id,
-                          label: `${c.full_name}${c.contact_number ? ` (${c.contact_number})` : ""}`,
-                        }))}
-                        value={field.value ? Number(field.value) : null}
-                        onChange={(val) => field.onChange(val ?? null)}
-                        placeholder="Select client (optional)"
-                      />
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <FormField
+                name="client_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel required>Client</FormLabel>
+                    <ComboBox
+                      disabled={isDisabled}
+                      options={clients.map((c) => ({
+                        value: c.id,
+                        label: `${c.full_name}${c.contact_number ? ` (${c.contact_number})` : ""}`,
+                      }))}
+                      value={field.value ? Number(field.value) : null}
+                      onChange={(val) => field.onChange(val ?? null)}
+                      placeholder="Select client"
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -569,20 +535,12 @@ export default function SalesTransactionForm({
                   name="note"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>
-                        {transactionType === "replacement"
-                          ? "Replacement Reason"
-                          : "Pull Out Note"}
-                      </FormLabel>
+                      <FormLabel>Replacement Reason</FormLabel>
                       <FormControl>
                         <Textarea
                           disabled={isDisabled}
                           {...field}
-                          placeholder={
-                            transactionType === "replacement"
-                              ? "e.g. Warranty replacement for defective belt"
-                              : "e.g. Defective motor - pulled out from inventory"
-                          }
+                          placeholder="e.g. Warranty replacement for defective belt"
                           rows={2}
                         />
                       </FormControl>
@@ -738,9 +696,7 @@ export default function SalesTransactionForm({
             )}
             {isFreeTransaction && (
               <p className="text-xs text-muted-foreground">
-                {transactionType === "replacement"
-                  ? "Items will be deducted from stock as free replacements."
-                  : "Items will be removed from inventory."}
+                Items will be deducted from stock as free replacements.
               </p>
             )}
           </div>
@@ -765,9 +721,7 @@ export default function SalesTransactionForm({
                   ? "Update Transaction"
                   : transactionType === "replacement"
                     ? "Create Replacement"
-                    : transactionType === "pull_out"
-                      ? "Create Pull Out"
-                      : "Create Transaction"}
+                    : "Create Transaction"}
             </Button>
           )}
         </form>

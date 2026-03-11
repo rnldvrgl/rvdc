@@ -32,6 +32,7 @@ export interface GetColumnsProps<T> {
   onPrint?: (item: T) => void
   onAddStock?: (item: T) => void
   onAudit?: (item: T) => void
+  onPullOut?: (item: T) => void
 
   // Status actions
   onSold?: (item: T) => void

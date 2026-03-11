@@ -6,6 +6,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import {
   ClipboardCheck,
   Edit,
+  PackageMinus,
   PackagePlus,
   Plus,
   RotateCcw,
@@ -17,6 +18,7 @@ export function getStallStockColumns({
   onRestock,
   onAddStock,
   onAudit,
+  onPullOut,
   onRestore,
   onHardDelete,
   role,
@@ -146,6 +148,12 @@ export function getStallStockColumns({
                 label: "Add Stock",
                 icon: Plus,
                 onClick: () => onAddStock?.(stock),
+              },
+              {
+                label: "Pull Out",
+                icon: PackageMinus,
+                onClick: () => onPullOut?.(stock),
+                destructive: true,
               },
               ...(role === "admin"
                 ? [

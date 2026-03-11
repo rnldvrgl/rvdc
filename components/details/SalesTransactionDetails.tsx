@@ -1,7 +1,6 @@
 "use client"
 
 import { Detail } from "@/components/details/Detail"
-import { SalesReturnDialog } from "@/components/sales/SalesReturnDialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -34,7 +33,6 @@ import {
   Hash,
   Package,
   Receipt,
-  RotateCcw,
   ShoppingCart,
   Store,
   Undo2,
@@ -51,7 +49,6 @@ export function SalesTransactionDetails({
 }) {
   const [voidOpen, setVoidOpen] = useState(false)
   const [voidReason, setVoidReason] = useState("")
-  const [returnOpen, setReturnOpen] = useState(false)
   const { voidTransaction, unvoidTransaction } = useSalesTransactionMutations()
 
   const isVoiding = voidTransaction.status === "pending"
@@ -88,18 +85,8 @@ export function SalesTransactionDetails({
           <Badge variant={getBadgeVariant(entity.payment_status)}>
             {entity.payment_status.toUpperCase()}
           </Badge>
-          {entity.transaction_type && entity.transaction_type !== "sale" && (
-            <Badge
-              variant={
-                entity.transaction_type === "replacement"
-                  ? "secondary"
-                  : "outline"
-              }
-            >
-              {entity.transaction_type === "replacement"
-                ? "Replacement"
-                : "Pull Out"}
-            </Badge>
+          {entity.transaction_type === "replacement" && (
+            <Badge variant="secondary">Replacement</Badge>
           )}
         </div>
 
@@ -116,24 +103,14 @@ export function SalesTransactionDetails({
               {isUnvoiding ? "Restoring…" : "Unvoid"}
             </Button>
           ) : (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setReturnOpen(true)}
-              >
-                <RotateCcw className="size-4 mr-1.5" />
-                Return
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setVoidOpen(true)}
-              >
-                <Ban className="size-4 mr-1.5" />
-                Void
-              </Button>
-            </>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setVoidOpen(true)}
+            >
+              <Ban className="size-4 mr-1.5" />
+              Void
+            </Button>
           )}
         </div>
       </div>
@@ -186,16 +163,6 @@ export function SalesTransactionDetails({
         </DialogContent>
       </Dialog>
 
-      {/* Return Dialog */}
-      <SalesReturnDialog
-        open={returnOpen}
-        onClose={() => {
-          setReturnOpen(false)
-          onClose()
-        }}
-        transaction={entity}
-      />
-
       {/* General Info */}
       <Card>
         <CardHeader>
@@ -239,13 +206,17 @@ export function SalesTransactionDetails({
             />
             <Detail
               label="Total Amount"
-              value={`₱ ${
-                entity.computed_total
-                  ? parseFloat(entity.computed_total).toLocaleString()
-                  : entity.items
-                      .reduce((sum, item) => sum + item.line_total, 0)
-                      .toLocaleString()
-              }`}
+              value={
+                entity.transaction_type === "replacement"
+                  ? "Free (Replacement)"
+                  : `₱ ${
+                      entity.computed_total
+                        ? parseFloat(entity.computed_total).toLocaleString()
+                        : entity.items
+                            .reduce((sum, item) => sum + item.line_total, 0)
+                            .toLocaleString()
+                    }`
+              }
               icon={<CreditCard className="size-4" />}
             />
             <Detail
@@ -308,11 +279,23 @@ export function SalesTransactionDetails({
                         </div>
                       </TableCell>
                       <TableCell>
-                        {formatCurrency(item.final_price_per_unit)}
+                        {entity.transaction_type === "replacement" ? (
+                          <span className="text-muted-foreground italic">
+                            Free
+                          </span>
+                        ) : (
+                          formatCurrency(item.final_price_per_unit)
+                        )}
                       </TableCell>
                       <TableCell>{item.quantity}</TableCell>
                       <TableCell className="text-right font-semibold">
-                        {formatCurrency(item.line_total)}
+                        {entity.transaction_type === "replacement" ? (
+                          <span className="text-muted-foreground italic">
+                            Free
+                          </span>
+                        ) : (
+                          formatCurrency(item.line_total)
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

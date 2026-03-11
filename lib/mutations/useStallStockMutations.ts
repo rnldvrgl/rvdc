@@ -110,11 +110,35 @@ export function useStallStockMutations() {
     },
   })
 
+  const pullOutStallStock = useApiMutation({
+    mutationFn: ({
+      stock_id,
+      quantity,
+      reason,
+    }: {
+      stock_id: number
+      quantity: number
+      reason: string
+    }) =>
+      api.post(`/inventory/stocks/${stock_id}/pull-out/`, {
+        quantity,
+        reason,
+      }),
+    successMessage: "Stock pulled out successfully.",
+    invalidateQueries: sharedInvalidations,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["stall-stocks", variables.stock_id],
+      })
+    },
+  })
+
   return {
     updateStallStock,
     softDeleteStallStock,
     restockStallStock,
     addStallStock,
     auditStallStock,
+    pullOutStallStock,
   }
 }

@@ -68,10 +68,10 @@ export function getSalesTransactionColumns({
         if (!type || type === "sale") return null
         return (
           <Badge
-            variant={type === "replacement" ? "secondary" : "outline"}
+            variant="secondary"
             className="text-[10px]"
           >
-            {type === "replacement" ? "Replacement" : "Pull Out"}
+            Replacement
           </Badge>
         )
       },
@@ -92,19 +92,32 @@ export function getSalesTransactionColumns({
     {
       accessorKey: "computed_total",
       header: "Total Amount",
-      cell: ({ getValue }) =>
-        safeCell(getValue() ? formatCurrency(Number(getValue())) : null),
+      cell: ({ row }) => {
+        if (row.original.transaction_type === "replacement") {
+          return <span className="text-muted-foreground italic">Free</span>
+        }
+        const val = row.original.computed_total
+        return safeCell(val ? formatCurrency(Number(val)) : null)
+      },
     },
     {
       accessorKey: "total_paid",
       header: "Total Payment",
-      cell: ({ getValue }) =>
-        safeCell(getValue() ? formatCurrency(Number(getValue())) : null),
+      cell: ({ row }) => {
+        if (row.original.transaction_type === "replacement") {
+          return <span className="text-muted-foreground italic">—</span>
+        }
+        const val = row.original.total_paid
+        return safeCell(val ? formatCurrency(Number(val)) : null)
+      },
     },
     {
       accessorKey: "balance",
       header: "Balance",
       cell: ({ row }) => {
+        if (row.original.transaction_type === "replacement") {
+          return <span className="text-muted-foreground italic">—</span>
+        }
         const total = Number(row.original.computed_total || 0)
         const paid = Number(row.original.total_paid || 0)
         const balance = total - paid
