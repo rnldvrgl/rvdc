@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Item, ItemEntry } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/helpers"
-import { AlertTriangle, Minus, Plus, X } from "lucide-react"
+import { AlertTriangle, Info, Minus, Plus, X } from "lucide-react"
 
 export default function ItemQuantitySelector({
   items,
@@ -183,9 +183,40 @@ export default function ItemQuantitySelector({
                 <div className="flex items-start gap-2 flex-wrap sm:flex-nowrap">
                   {/* Quantity stepper */}
                   <div className="space-y-1">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                      Qty
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                        Qty
+                      </span>
+                      {itm.item.unit_of_measure === "kg" && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="size-3 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="right"
+                              className="max-w-[200px]"
+                            >
+                              <div className="space-y-1.5">
+                                <p className="font-semibold text-xs">
+                                  Fraction to Decimal:
+                                </p>
+                                <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+                                  <span>1/4 kg</span>
+                                  <span className="font-mono">= 0.25</span>
+                                  <span>1/2 kg</span>
+                                  <span className="font-mono">= 0.5</span>
+                                  <span>3/4 kg</span>
+                                  <span className="font-mono">= 0.75</span>
+                                  <span>1 kg</span>
+                                  <span className="font-mono">= 1</span>
+                                </div>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
                     <div className="flex items-center">
                       <TooltipProvider>
                         <Tooltip>

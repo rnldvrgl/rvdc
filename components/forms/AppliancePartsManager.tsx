@@ -44,7 +44,7 @@ import { useItems } from "@/lib/queries/inventory/useItems"
 import { useApplianceItems } from "@/lib/queries/services/useApplianceItems"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
 import { useQueryClient } from "@tanstack/react-query"
-import { Edit, Package, Plus, Trash2 } from "lucide-react"
+import { Edit, Info, Package, Plus, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -496,7 +496,36 @@ export default function AppliancePartsManager({
             )}
 
             <div className="space-y-2">
-              <Label>Quantity</Label>
+              <div className="flex items-center gap-1.5">
+                <Label>Quantity</Label>
+                {selectedItem && selectedItem.unit_of_measure === "kg" && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="size-3.5 text-muted-foreground hover:text-foreground transition-colors cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="right"
+                      className="max-w-[200px]"
+                    >
+                      <div className="space-y-1.5">
+                        <p className="font-semibold text-xs">
+                          Fraction to Decimal:
+                        </p>
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+                          <span>1/4 kg</span>
+                          <span className="font-mono">= 0.25</span>
+                          <span>1/2 kg</span>
+                          <span className="font-mono">= 0.5</span>
+                          <span>3/4 kg</span>
+                          <span className="font-mono">= 0.75</span>
+                          <span>1 kg</span>
+                          <span className="font-mono">= 1</span>
+                        </div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
               <Input
                 type="number"
                 min="0.01"
