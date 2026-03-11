@@ -40,7 +40,7 @@ import {
 } from "@/lib/queries/services/useServices"
 import { Kanban, List, Plus, Wrench } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 type ViewMode = "table" | "kanban"
 
@@ -90,17 +90,28 @@ export default function ServicesPage() {
   // Entity sheet for create/edit
   const { entityState, openEntity, closeEntity } = useEntitySheet<Service>()
 
+  // Track if we've already opened the view to avoid re-opening
+  const hasOpenedView = useRef(false)
+
   useEffect(() => {
-    if (viewId && viewService) {
+    if (viewId && viewService && !hasOpenedView.current) {
       // Open the detail sheet with the fetched service
       state.handleView(viewService)
+      hasOpenedView.current = true
 
       // Clear the view parameter from URL
       const newUrl = new URL(window.location.href)
       newUrl.searchParams.delete("view")
       router.replace(newUrl.pathname + newUrl.search, { scroll: false })
     }
-  }, [viewId, viewService, state, router])
+  }, [viewId, viewService, router])
+
+  // Reset the flag when viewId changes or is cleared
+  useEffect(() => {
+    if (!viewId) {
+      hasOpenedView.current = false
+    }
+  }, [viewId])
 
   const handleEdit = (service: Service) => {
     openEntity(service)

@@ -24,7 +24,7 @@ import {
 } from "@/lib/queries/sales/useSalesTransactions"
 import { Plus, ShoppingCart } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 const emptyData = {
   count: 0,
@@ -84,21 +84,32 @@ export default function SalesTransactionsPage() {
     closeEntity: closeEdit,
   } = useEntitySheet<SalesTransaction>()
 
+  const { printRef, handlePrint, printData } = usePrint<SalesTransaction>({
+    documentTitle: "Receipt",
+  })
+
+  // Track if we've already opened the view to avoid re-opening
+  const hasOpenedView = useRef(false)
+
   useEffect(() => {
-    if (viewId && viewTransaction) {
+    if (viewId && viewTransaction && !hasOpenedView.current) {
       // Open the detail sheet with the fetched transaction
       openView(viewTransaction)
+      hasOpenedView.current = true
 
       // Clear the view parameter from URL
       const newUrl = new URL(window.location.href)
       newUrl.searchParams.delete("view")
       router.replace(newUrl.pathname + newUrl.search, { scroll: false })
     }
-  }, [viewId, viewTransaction, openView, router])
+  }, [viewId, viewTransaction, router])
 
-  const { printRef, handlePrint, printData } = usePrint<SalesTransaction>({
-    documentTitle: "Receipt",
-  })
+  // Reset the flag when viewId changes or is cleared
+  useEffect(() => {
+    if (!viewId) {
+      hasOpenedView.current = false
+    }
+  }, [viewId])
 
   const handleRestore = (tx: SalesTransaction) => {
     if (tx?.id) restoreItem.mutate(tx.id)
