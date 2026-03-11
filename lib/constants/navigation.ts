@@ -12,6 +12,7 @@ import {
   CreditCard,
   FileSpreadsheet,
   FileText,
+  Keyboard,
   Layers,
   LayoutDashboard,
   Package,
@@ -91,6 +92,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     href: "/reports",
     icon: FileSpreadsheet,
     permission: "view_reports",
+  },
+  shortcuts: {
+    name: "Shortcuts",
+    href: "/shortcuts",
+    icon: Keyboard,
+    permission: "view_shortcuts",
   },
   payroll: {
     name: "Payroll",
@@ -323,5 +330,6 @@ export const orderedNavigation: NavigationEntry[] = [
   baseNavigation.attendance,
   // System Management
   baseNavigation.reports,
+  baseNavigation.shortcuts,
   baseNavigation.settings,
 ]

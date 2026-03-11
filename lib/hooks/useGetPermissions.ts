@@ -25,6 +25,7 @@ export function useGetPermissions(
       "view_sales",
       "view_services",
       "view_remittances",
+      "view_shortcuts",
     ]
 
     // Admin & Manager permissions
