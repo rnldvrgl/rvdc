@@ -146,12 +146,12 @@ function CollectionSection({
 export default function PaymentCollectionPage() {
   // Fetch outstanding data
   const { data: servicesData, isLoading: loadingServices } = useServices({
-    filter: { payment_status: ["unpaid", "partial"] },
-    limit: 50,
+    filter: { payment_status: "unpaid,partial" },
+    limit: 200,
   })
   const { data: salesData, isLoading: loadingSales } = useSalesTransactions({
-    filter: { payment_status: ["unpaid", "partial"] },
-    limit: 50,
+    filter: { payment_status: "unpaid,partial" },
+    limit: 200,
   })
   const { data: remittancesData, isLoading: loadingRemittances } =
     useRemittancesRecords({
