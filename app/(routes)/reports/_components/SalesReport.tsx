@@ -80,7 +80,7 @@ export function SalesReport() {
   return (
     <div className="space-y-6">
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-2 2xl:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-5">
             <p className="text-sm text-muted-foreground">Transactions</p>

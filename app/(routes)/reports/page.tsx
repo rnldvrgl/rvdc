@@ -86,7 +86,7 @@ export default function ReportsPage() {
           description="View financial reports, performance analytics, and export data to CSV."
           breadcrumbs={["Dashboard", "Reports"]}
           actionButton={
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex flex-col xl:flex-row items-center gap-4">
               <StallFilter stalls={stalls} />
               <DateRangePicker classNames="mx-auto" />
             </div>

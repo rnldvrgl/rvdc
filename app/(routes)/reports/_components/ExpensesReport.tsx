@@ -85,7 +85,7 @@ export function ExpensesReport() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid lg:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-5">
             <p className="text-sm text-muted-foreground">Total Expenses</p>
@@ -108,7 +108,7 @@ export function ExpensesReport() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Category breakdown */}
         <Card>
           <CardHeader className="pb-3">
@@ -138,7 +138,7 @@ export function ExpensesReport() {
         </Card>
 
         {/* Expense table */}
-        <Card className="lg:col-span-2">
+        <Card className="xl:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-base">
               Expense Records ({expenses.length})
