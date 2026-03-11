@@ -140,7 +140,10 @@ export default function ClientDetailPage() {
   // Collect all related_transaction IDs from services to exclude from standalone sales
   const serviceRelatedTransactionIds = new Set(
     services
-      .map((s: Service) => s.related_transaction)
+      .flatMap((s: Service) => [
+        s.related_transaction,
+        s.related_sub_transaction,
+      ])
       .filter((id): id is number => id != null),
   )
 
@@ -390,7 +393,7 @@ export default function ClientDetailPage() {
             className="gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
-            Sales ({salesTransactions.length})
+            Sales ({standaloneSalesTransactions.length})
           </TabsTrigger>
           <TabsTrigger
             value="payments"

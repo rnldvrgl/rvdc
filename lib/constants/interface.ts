@@ -985,6 +985,7 @@ export interface Service {
   service_type: ServiceType
   service_mode: ServiceMode
   related_transaction?: number | null
+  related_sub_transaction?: number | null
   description?: string
   override_address?: string
   override_contact_person?: string
@@ -1040,6 +1041,7 @@ export interface ServicePayload {
   service_type: ServiceType
   service_mode: ServiceMode
   related_transaction?: number | null
+  related_sub_transaction?: number | null
   description?: string
   override_address?: string
   override_contact_person?: string
