@@ -1,7 +1,6 @@
 "use client"
 
 import { getSalesTransactionColumns } from "@/app/(routes)/sales/columns"
-import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTransactionPrintContent"
@@ -9,7 +8,9 @@ import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import { SalesTransactionDetails } from "@/components/details/SalesTransactionDetails"
 import SalesTransactionForm from "@/components/forms/SalesTransactionForm"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SalesTransaction } from "@/lib/constants/interface"
 import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -21,10 +22,13 @@ import {
   useSalesTransaction,
   useSalesTransactionFilters,
   useSalesTransactions,
+  useVoidedSalesTransactions,
 } from "@/lib/queries/sales/useSalesTransactions"
-import { Plus, ShoppingCart } from "lucide-react"
+import { Archive, Ban, List, Plus, ShoppingCart } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
+
+type TabValue = "active" | "voided" | "archived"
 
 const emptyData = {
   count: 0,
@@ -37,7 +41,7 @@ export default function SalesTransactionsPage() {
   const { role } = useCurrentUser()
   const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
   const { page, limit, search, ordering, filter } = searchParams
-  const [isArchived, setIsArchived] = useState(false)
+  const [activeTab, setActiveTab] = useState<TabValue>("active")
 
   // Next.js router and URL params for handling view parameter from Command Palette
   const router = useRouter()
@@ -57,15 +61,21 @@ export default function SalesTransactionsPage() {
     filter,
   })
   const { filters, orderingOptions } = useSalesTransactionFilters()
-  const { deleteTransaction } = useSalesTransactionMutations()
+  const { deleteTransaction, unvoidTransaction, hardDeleteVoided } =
+    useSalesTransactionMutations()
 
   const { archivedQuery, restoreItem, hardDeleteItem } =
     useArchive<SalesTransaction>(
       "sales/transactions/",
       "sales-transactions",
       searchParams,
-      isArchived,
+      activeTab === "archived",
     )
+
+  const voidedQuery = useVoidedSalesTransactions({
+    ...searchParams,
+    enabled: activeTab === "voided",
+  })
 
   // Sheets
   const {
@@ -117,28 +127,64 @@ export default function SalesTransactionsPage() {
   const handleHardDelete = (tx: SalesTransaction) => {
     if (tx?.id) hardDeleteItem.mutate(tx.id)
   }
+  const handleUnvoid = (tx: SalesTransaction) => {
+    if (tx?.id) unvoidTransaction.mutate(tx.id)
+  }
+  const handleHardDeleteVoided = (tx: SalesTransaction) => {
+    if (tx?.id) hardDeleteVoided.mutate(tx.id)
+  }
 
-  const columns = isArchived
-    ? getSalesTransactionColumns({
-        onEdit: () => {},
-        onDelete: () => {},
-        onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
-        role: role ?? "guest",
-      })
-    : getSalesTransactionColumns({
-        onView: openView,
-        onEdit: openEdit,
-        onPrint: handlePrint,
-        onDelete: (tx) => {
-          if (tx?.id) deleteTransaction.mutate(tx.id)
-        },
-        role: role ?? "guest",
-      })
+  const columns =
+    activeTab === "archived"
+      ? getSalesTransactionColumns({
+          onEdit: () => {},
+          onDelete: () => {},
+          onRestore: handleRestore,
+          onHardDelete: handleHardDelete,
+          role: role ?? "guest",
+          mode: "archived",
+        })
+      : activeTab === "voided"
+        ? getSalesTransactionColumns({
+            onEdit: () => {},
+            onDelete: () => {},
+            onView: openView,
+            onUnvoid: handleUnvoid,
+            onHardDelete: handleHardDeleteVoided,
+            role: role ?? "guest",
+            mode: "voided",
+          })
+        : getSalesTransactionColumns({
+            onView: openView,
+            onEdit: openEdit,
+            onPrint: handlePrint,
+            onDelete: (tx) => {
+              if (tx?.id) deleteTransaction.mutate(tx.id)
+            },
+            role: role ?? "guest",
+            mode: "active",
+          })
 
-  const tableData = isArchived
-    ? archivedQuery.data || emptyData
-    : (data ?? emptyData)
+  const tableData =
+    activeTab === "archived"
+      ? archivedQuery.data || emptyData
+      : activeTab === "voided"
+        ? voidedQuery.data || emptyData
+        : (data ?? emptyData)
+
+  const currentRefetch =
+    activeTab === "archived"
+      ? archivedQuery.refetch
+      : activeTab === "voided"
+        ? voidedQuery.refetch
+        : refetch
+
+  const currentLoading =
+    activeTab === "archived"
+      ? archivedQuery.isLoading
+      : activeTab === "voided"
+        ? voidedQuery.isLoading
+        : isLoading
 
   return (
     <Wrapper>
@@ -159,18 +205,18 @@ export default function SalesTransactionsPage() {
         description="Track sales transactions, manage customer orders, and monitor revenue performance across all stalls."
         breadcrumbs={["Dashboard", "Sales", "Transactions"]}
         actionButton={
-          !isArchived ? (
+          activeTab === "active" ? (
             <Button onClick={() => openCreate()}>
               <Plus className="size-4 mr-2" />
               New Sale
             </Button>
           ) : undefined
         }
-        onRefresh={isArchived ? archivedQuery.refetch : refetch}
+        onRefresh={currentRefetch}
       />
 
       {/* Create Transaction Sheet */}
-      {!isArchived && (
+      {activeTab === "active" && (
         <EntitySheet<SalesTransaction>
           className="sm:min-w-lg md:min-w-xl lg:min-w-2xl"
           open={createSheet.open}
@@ -185,7 +231,7 @@ export default function SalesTransactionsPage() {
       )}
 
       {/* Edit Transaction Sheet */}
-      {!isArchived && (
+      {activeTab === "active" && (
         <EntitySheet<SalesTransaction>
           className="sm:min-w-lg md:min-w-xl lg:min-w-2xl"
           open={editSheet.open}
@@ -221,39 +267,92 @@ export default function SalesTransactionsPage() {
         }
       />
 
-      <ArchiveToggle
-        isArchived={isArchived}
-        onToggle={setIsArchived}
-        archivedCount={archivedQuery.data?.count}
-      />
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as TabValue)}
+      >
+        <TabsList>
+          <TabsTrigger
+            value="active"
+            className="gap-1.5"
+          >
+            <List className="size-3.5" />
+            Active
+          </TabsTrigger>
+          <TabsTrigger
+            value="voided"
+            className="gap-1.5"
+          >
+            <Ban className="size-3.5" />
+            Voided
+            {voidedQuery.data?.count !== undefined &&
+              voidedQuery.data.count > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="ml-1 h-5 min-w-5 rounded-full px-1.5 text-[10px]"
+                >
+                  {voidedQuery.data.count}
+                </Badge>
+              )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="archived"
+            className="gap-1.5"
+          >
+            <Archive className="size-3.5" />
+            Archived
+            {archivedQuery.data?.count !== undefined &&
+              archivedQuery.data.count > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="ml-1 h-5 min-w-5 rounded-full px-1.5 text-[10px]"
+                >
+                  {archivedQuery.data.count}
+                </Badge>
+              )}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Main Content */}
       <DataTable
-        title={isArchived ? "Archived Transactions" : "Sales Transactions"}
-        description={
-          isArchived
-            ? "Restore or permanently delete archived sales"
-            : "Manage and track all sales transactions"
+        title={
+          activeTab === "archived"
+            ? "Archived Transactions"
+            : activeTab === "voided"
+              ? "Voided Transactions"
+              : "Sales Transactions"
         }
-        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
+        description={
+          activeTab === "archived"
+            ? "Restore or permanently delete archived sales"
+            : activeTab === "voided"
+              ? "View voided transactions or permanently delete them"
+              : "Manage and track all sales transactions"
+        }
+        isLoading={currentLoading}
         columns={columns}
         data={tableData}
-        enableExport={!isArchived}
+        enableExport={activeTab === "active"}
         exportFileName="sales_transactions"
         defaultRangePreset="Today"
-        filters={filters}
-        orderingOptions={orderingOptions}
-        onRefresh={isArchived ? archivedQuery.refetch : refetch}
+        filters={activeTab === "active" ? filters : undefined}
+        orderingOptions={activeTab === "active" ? orderingOptions : undefined}
+        onRefresh={currentRefetch}
         emptyIcon={ShoppingCart}
         emptyTitle={
-          isArchived
+          activeTab === "archived"
             ? "No archived transactions"
-            : "No sales transactions found"
+            : activeTab === "voided"
+              ? "No voided transactions"
+              : "No sales transactions found"
         }
         emptyDescription={
-          isArchived
+          activeTab === "archived"
             ? "Deleted sales will appear here"
-            : "Record your first sale to start tracking revenue"
+            : activeTab === "voided"
+              ? "Voided sales will appear here"
+              : "Record your first sale to start tracking revenue"
         }
       />
     </Wrapper>

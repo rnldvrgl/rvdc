@@ -61,7 +61,10 @@ export function useSalesTransactionMutations() {
       data: SalesTransactionVoidingPayload
     }) => api.post(`${url}${id}/void/`, data),
     successMessage: "Sales transaction voided.",
-    invalidateQueries: commonInvalidations,
+    invalidateQueries: [
+      ...commonInvalidations,
+      { queryKey: ["sales-transactions-voided"] },
+    ],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["sales-transaction", `${variables.id}`],
@@ -72,12 +75,24 @@ export function useSalesTransactionMutations() {
   const unvoidTransaction = useApiMutation({
     mutationFn: (id: number) => api.post(`${url}${id}/unvoid/`),
     successMessage: "Sales transaction restored.",
-    invalidateQueries: commonInvalidations,
+    invalidateQueries: [
+      ...commonInvalidations,
+      { queryKey: ["sales-transactions-voided"] },
+    ],
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({
         queryKey: ["sales-transaction", `${id}`],
       })
     },
+  })
+
+  const hardDeleteVoided = useApiMutation({
+    mutationFn: (id: number) => api.delete(`${url}${id}/hard-delete-voided/`),
+    successMessage: "Transaction permanently deleted.",
+    invalidateQueries: [
+      ...commonInvalidations,
+      { queryKey: ["sales-transactions-voided"] },
+    ],
   })
 
   return {
@@ -86,5 +101,6 @@ export function useSalesTransactionMutations() {
     deleteTransaction,
     voidTransaction,
     unvoidTransaction,
+    hardDeleteVoided,
   }
 }

@@ -30,3 +30,14 @@ export function useSalesTransactionFilters() {
     `${salesTransactionsUrl}filters/`,
   )
 }
+
+export function useVoidedSalesTransactions(
+  props: PaginatedFilterProps & { enabled?: boolean } = {},
+) {
+  return usePaginatedQuery<SalesTransaction>({
+    ...props,
+    url: `${salesTransactionsUrl}voided/`,
+    queryKeyBase: "sales-transactions-voided",
+    enabled: props.enabled,
+  })
+}

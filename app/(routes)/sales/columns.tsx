@@ -4,13 +4,22 @@ import { GetColumnsProps, SalesTransaction } from "@/lib/constants/interface"
 import {
   formatCurrency,
   getBadgeVariant,
-  getBoolBadgeVariant,
   getHashedStallBadgeClass,
   safeCell,
 } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef, Row } from "@tanstack/react-table"
-import { Archive, Edit, Eye, Printer, RotateCcw, Trash2 } from "lucide-react"
+import {
+  Archive,
+  Edit,
+  Eye,
+  Printer,
+  RotateCcw,
+  Trash2,
+  Undo2,
+} from "lucide-react"
+
+type SalesColumnsMode = "active" | "voided" | "archived"
 
 export function getSalesTransactionColumns({
   role,
@@ -20,7 +29,12 @@ export function getSalesTransactionColumns({
   onDelete,
   onRestore,
   onHardDelete,
-}: GetColumnsProps<SalesTransaction>): ColumnDef<SalesTransaction>[] {
+  onUnvoid,
+  mode = "active",
+}: GetColumnsProps<SalesTransaction> & {
+  onUnvoid?: (item: SalesTransaction) => void
+  mode?: SalesColumnsMode
+}): ColumnDef<SalesTransaction>[] {
   const columns: ColumnDef<SalesTransaction>[] = [
     ...(role === "admin"
       ? [
@@ -43,9 +57,7 @@ export function getSalesTransactionColumns({
       header: "Client",
       cell: ({ row }) =>
         safeCell(
-          `${row.original.client?.full_name ?? ""} (${
-            row.original.client?.contact_number ?? ""
-          })`,
+          `${row.original.client?.full_name ?? ""} ${row.original.client?.contact_number && `(${row.original.client?.contact_number})`}`,
         ),
     },
     {
@@ -87,40 +99,32 @@ export function getSalesTransactionColumns({
     },
     {
       accessorKey: "payment_status",
-      header: "Paid",
+      header: "Status",
       cell: ({ getValue }) => (
         <Badge variant={getBadgeVariant(getValue() as string)}>
           {safeCell(getValue())}
         </Badge>
       ),
     },
-    {
-      accessorKey: "voided",
-      header: "Voided",
-      cell: ({ getValue }) => {
-        const voided = Boolean(getValue())
-        return (
-          <Badge
-            variant={getBoolBadgeVariant({
-              status: voided,
-              reverse: true,
-            })}
-          >
-            {voided ? "Yes" : "No"}
-          </Badge>
-        )
-      },
-    },
+    ...(mode === "voided"
+      ? [
+          {
+            accessorKey: "void_reason" as const,
+            header: "Void Reason",
+            cell: ({ getValue }: { getValue: () => unknown }) =>
+              safeCell(getValue() as string) || "—",
+          },
+        ]
+      : []),
     {
       id: "action",
       header: "Action",
       cell: ({ row }) => {
-        // Check if this is a service-related transaction (has items with null inventory item)
         const isServiceTransaction = row.original.items?.some(
           (item) => item.item === null,
         )
 
-        if (onRestore && onHardDelete) {
+        if (mode === "archived" && onRestore && onHardDelete) {
           return (
             <DataTableActions
               items={[
@@ -136,6 +140,41 @@ export function getSalesTransactionColumns({
                   destructive: true,
                   confirmText: `Permanently delete this transaction? This cannot be undone.`,
                 },
+              ]}
+            />
+          )
+        }
+
+        if (mode === "voided") {
+          return (
+            <DataTableActions
+              items={[
+                {
+                  label: "View",
+                  icon: Eye,
+                  onClick: () => onView?.(row.original),
+                },
+                ...(onUnvoid
+                  ? [
+                      {
+                        label: "Unvoid",
+                        icon: Undo2,
+                        onClick: () => onUnvoid(row.original),
+                        confirmText: `Restore this voided transaction? Stock will be deducted again.`,
+                      },
+                    ]
+                  : []),
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(row.original),
+                        destructive: true,
+                        confirmText: `Permanently delete this voided transaction? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

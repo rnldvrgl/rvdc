@@ -410,7 +410,7 @@ export default function SalesTransactionForm({
                       disabled={isDisabled}
                       options={clients.map((c) => ({
                         value: c.id,
-                        label: `${c.full_name} (${c.contact_number})`,
+                        label: `${c.full_name} ${c.contact_number && `(${c.contact_number})`}`,
                       }))}
                       value={field.value ? Number(field.value) : null}
                       onChange={(val) => field.onChange(val ?? null)}
