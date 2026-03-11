@@ -199,10 +199,10 @@ export default function ItemQuantitySelector({
                                 handleUpdate(
                                   idx,
                                   "quantity",
-                                  Math.max(1, itm.quantity - 1),
+                                  Math.max(0.01, itm.quantity - 1),
                                 )
                               }
-                              disabled={disabled || itm.quantity <= 1}
+                              disabled={disabled || itm.quantity <= 0.01}
                             >
                               <Minus className="size-3" />
                             </Button>
@@ -214,16 +214,17 @@ export default function ItemQuantitySelector({
                       </TooltipProvider>
                       <Input
                         type="number"
-                        min={1}
+                        min={0.01}
+                        step="0.01"
                         value={itm.quantity}
                         onChange={(e) =>
                           handleUpdate(
                             idx,
                             "quantity",
-                            parseInt(e.target.value) || 1,
+                            parseFloat(e.target.value) || 0.01,
                           )
                         }
-                        className="h-8 w-14 rounded-none border-x-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="h-8 w-16 rounded-none border-x-0 text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         disabled={disabled}
                       />
                       <TooltipProvider>

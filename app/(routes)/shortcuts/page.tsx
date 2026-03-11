@@ -2,7 +2,6 @@
 
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
-import { Button } from "@/components/ui/button"
 import {
     Card,
     CardContent,
@@ -10,9 +9,8 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
-import { Keyboard, Printer } from "lucide-react"
+import { Keyboard } from "lucide-react"
 
 type RoleGuide = "admin" | "clerk" | "manager"
 
@@ -153,10 +151,12 @@ function ShortcutTable({ items }: { items: ShortcutEntry[] }) {
       {items.map((item) => (
         <div
           key={item.shortcut}
-          className="flex items-center justify-between py-2 border-b border-dashed last:border-0"
+          className="flex items-center justify-between gap-3 group"
         >
-          <span className="text-sm">{item.description}</span>
-          <kbd className="inline-flex items-center gap-1 px-2 py-1 text-xs font-mono bg-muted border rounded shrink-0">
+          <span className="text-sm text-foreground/90 group-hover:text-foreground transition-colors">
+            {item.description}
+          </span>
+          <kbd className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold font-mono bg-secondary/60 text-secondary-foreground border border-border/50 rounded-md shadow-sm shrink-0 group-hover:bg-secondary/80 group-hover:border-border transition-all">
             {item.shortcut}
           </kbd>
         </div>
@@ -172,65 +172,62 @@ function GuideContent({ role }: { role: RoleGuide }) {
   const tips = tipsByRole[role === "manager" ? "manager" : role]
 
   return (
-    <div className="grid gap-6 md:grid-cols-2">
-      {/* General Shortcuts Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>General</CardTitle>
-          <CardDescription>
-            Essential shortcuts available to all users
+    <div className="space-y-4">
+      {/* General & Quick Create Actions */}
+      <Card className="border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">General & Quick Actions</CardTitle>
+          <CardDescription className="text-sm">
+            Essential shortcuts and instant record creation
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <ShortcutTable items={general} />
-        </CardContent>
-      </Card>
-
-      {/* Quick Create Actions Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Create Actions</CardTitle>
-          <CardDescription>
-            Create records from anywhere (Ctrl + Alt + Key)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ShortcutTable items={create} />
+        <CardContent className="space-y-4">
+          {general.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">General</h4>
+              <ShortcutTable items={general} />
+            </div>
+          )}
+          {create.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quick Create (Ctrl + Alt + Key)</h4>
+              <ShortcutTable items={create} />
+            </div>
+          )}
         </CardContent>
       </Card>
 
       {/* Navigation Shortcuts Card */}
-      <Card className="md:col-span-2">
-        <CardHeader>
-          <CardTitle>Navigation Shortcuts</CardTitle>
-          <CardDescription>
-            Jump to any page instantly (Alt + Shift + Key)
+      <Card className="border-border/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Page Navigation</CardTitle>
+          <CardDescription className="text-sm">
+            Jump to any page with Alt + Shift + Key
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <ShortcutTable items={nav.slice(0, Math.ceil(nav.length / 2))} />
-            <ShortcutTable items={nav.slice(Math.ceil(nav.length / 2))} />
-          </div>
+          <ShortcutTable items={nav} />
         </CardContent>
       </Card>
 
       {/* Tips Card */}
-      <Card className="md:col-span-2">
-        <CardHeader>
-          <CardTitle>Tips & Tricks</CardTitle>
-          <CardDescription>
-            Maximize your productivity with these tips
+      <Card className="border-border/40 bg-muted/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <span className="text-primary">💡</span> Tips & Best Practices
+          </CardTitle>
+          <CardDescription className="text-sm">
+            Get the most out of keyboard shortcuts
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-2">
             {tips.map((tip, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="text-primary font-bold shrink-0">
-                  {i + 1}.
+              <li key={i} className="flex gap-2.5 text-sm leading-relaxed">
+                <span className="flex items-center justify-center size-5 rounded-full bg-primary/10 text-primary text-xs font-semibold shrink-0 mt-0.5">
+                  {i + 1}
                 </span>
-                <span>{tip}</span>
+                <span className="text-foreground/80">{tip}</span>
               </li>
             ))}
           </ul>
@@ -241,38 +238,20 @@ function GuideContent({ role }: { role: RoleGuide }) {
 }
 
 export default function ShortcutsGuidePage() {
-  const { role } = useCurrentUser()
-  const userRole: RoleGuide =
-    role === "admin" || role === "manager" ? "admin" : "clerk"
+  const { canManage } = useCurrentUser()
 
   return (
     <Wrapper>
       <PageHeader
         icon={Keyboard}
         title="Keyboard Shortcuts"
-        description="Quick reference guide for all keyboard shortcuts in the system"
-        actionButton={
-          <Button onClick={() => window.print()} size="sm" className="gap-2">
-            <Printer className="size-4" />
-            Print / Save as PDF
-          </Button>
-        }
+        description="Master these shortcuts to work faster and more efficiently"
       />
-
-      <Tabs defaultValue={userRole} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="admin">Admin / Manager</TabsTrigger>
-          <TabsTrigger value="clerk">Clerk</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="admin" className="mt-6">
-          <GuideContent role="admin" />
-        </TabsContent>
-
-        <TabsContent value="clerk" className="mt-6">
-          <GuideContent role="clerk" />
-        </TabsContent>
-      </Tabs>
+      {canManage ? (
+        <GuideContent role="admin" />
+      ) : (
+        <GuideContent role="clerk" />
+      )}
     </Wrapper>
   )
 }

@@ -91,7 +91,7 @@ export default function SalesTransactionForm({
       .array(
         z.object({
           item_id: z.number(),
-          quantity: z.number().min(1, "Quantity must be at least 1"),
+          quantity: z.number().min(0.01, "Quantity must be at least 0.01"),
           final_price_per_unit: z.number().min(0),
           print_price_per_unit: z.number().min(0).optional(),
         }),
