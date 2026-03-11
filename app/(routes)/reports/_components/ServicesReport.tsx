@@ -36,7 +36,14 @@ export function ServicesReport() {
 
   const services = useMemo(() => serviceData?.results ?? [], [serviceData])
 
-  const { totalRevenue, totalMainRevenue, totalSubRevenue, totalCost, totalPaid, byStatus } = useMemo(() => {
+  const {
+    totalRevenue,
+    totalMainRevenue,
+    totalSubRevenue,
+    totalCost,
+    totalPaid,
+    byStatus,
+  } = useMemo(() => {
     const totalRevenue = services.reduce(
       (s, svc) => s + Number(svc.total_revenue ?? 0),
       0,
@@ -65,7 +72,14 @@ export function ServicesReport() {
       },
       {} as Record<string, number>,
     )
-    return { totalRevenue, totalMainRevenue, totalSubRevenue, totalCost, totalPaid, byStatus }
+    return {
+      totalRevenue,
+      totalMainRevenue,
+      totalSubRevenue,
+      totalCost,
+      totalPaid,
+      byStatus,
+    }
   }, [services])
 
   const handleExport = () => {
@@ -75,8 +89,14 @@ export function ServicesReport() {
       { header: "Type", accessor: (r) => r.service_type ?? "" },
       { header: "Mode", accessor: (r) => r.service_mode ?? "" },
       { header: "Status", accessor: (r) => r.status ?? "" },
-      { header: "Main Stall", accessor: (r) => Number(r.main_stall_revenue ?? 0) },
-      { header: "Sub Stall", accessor: (r) => Number(r.sub_stall_revenue ?? 0) },
+      {
+        header: "Main Stall",
+        accessor: (r) => Number(r.main_stall_revenue ?? 0),
+      },
+      {
+        header: "Sub Stall",
+        accessor: (r) => Number(r.sub_stall_revenue ?? 0),
+      },
       { header: "Revenue", accessor: (r) => Number(r.total_revenue ?? 0) },
       { header: "Cost", accessor: (r) => Number(r.total_cost ?? 0) },
       { header: "Paid", accessor: (r) => Number(r.total_paid ?? 0) },
