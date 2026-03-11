@@ -180,6 +180,14 @@ export default function ClientDetailPage() {
     (sum: number, s: Service) => sum + parseFloat(s.total_revenue || "0"),
     0,
   )
+  const serviceMainRevenue = services.reduce(
+    (sum: number, s: Service) => sum + parseFloat(s.main_stall_revenue || "0"),
+    0,
+  )
+  const serviceSubRevenue = services.reduce(
+    (sum: number, s: Service) => sum + parseFloat(s.sub_stall_revenue || "0"),
+    0,
+  )
   const servicePaid = services.reduce(
     (sum: number, s: Service) => sum + parseFloat(s.total_paid || "0"),
     0,
@@ -208,10 +216,28 @@ export default function ClientDetailPage() {
   )
   const salesBalance = salesRevenue - salesPaid
 
+  // Standalone sales stall breakdown
+  const salesMainRevenue = standaloneSalesTransactions
+    .filter((t) => t.stall?.name?.toLowerCase().includes("main"))
+    .reduce(
+      (sum: number, t: SalesTransaction) =>
+        sum + parseFloat(String(t.computed_total || "0")),
+      0,
+    )
+  const salesSubRevenue = standaloneSalesTransactions
+    .filter((t) => t.stall?.name?.toLowerCase().includes("sub"))
+    .reduce(
+      (sum: number, t: SalesTransaction) =>
+        sum + parseFloat(String(t.computed_total || "0")),
+      0,
+    )
+
   // Combined totals
   const totalRevenue = serviceRevenue + salesRevenue
   const totalPaid = servicePaid + salesPaid
   const totalBalance = serviceBalance + salesBalance
+  const totalMainRevenue = serviceMainRevenue + salesMainRevenue
+  const totalSubRevenue = serviceSubRevenue + salesSubRevenue
 
   const handleViewService = (service: Service) => {
     setSelectedService(service)
@@ -318,7 +344,7 @@ export default function ClientDetailPage() {
       </Card>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-500/10">
@@ -343,6 +369,22 @@ export default function ClientDetailPage() {
                 {formatCurrency(totalRevenue)}
               </p>
             </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Main Stall</p>
+            <p className="text-base font-semibold leading-none truncate">
+              {formatCurrency(totalMainRevenue)}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">Sub Stall</p>
+            <p className="text-base font-semibold leading-none truncate">
+              {formatCurrency(totalSubRevenue)}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -393,7 +435,7 @@ export default function ClientDetailPage() {
             className="gap-2"
           >
             <ShoppingCart className="h-4 w-4" />
-            Sales ({standaloneSalesTransactions.length})
+            Sales ({salesTransactions.length})
           </TabsTrigger>
           <TabsTrigger
             value="payments"
@@ -440,7 +482,13 @@ export default function ClientDetailPage() {
                       <TableHead className="hidden md:table-cell">
                         Date
                       </TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="hidden lg:table-cell text-right">
+                        Main
+                      </TableHead>
+                      <TableHead className="hidden lg:table-cell text-right">
+                        Sub
+                      </TableHead>
+                      <TableHead className="text-right">Total</TableHead>
                       <TableHead className="text-right">Payment</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -486,6 +534,16 @@ export default function ClientDetailPage() {
                         <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
                           {formatDate(service.created_at)}
                         </TableCell>
+                        <TableCell className="hidden lg:table-cell text-right text-sm text-muted-foreground">
+                          {Number(service.main_stall_revenue) > 0
+                            ? formatCurrency(service.main_stall_revenue)
+                            : "—"}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-right text-sm text-muted-foreground">
+                          {Number(service.sub_stall_revenue) > 0
+                            ? formatCurrency(service.sub_stall_revenue)
+                            : "—"}
+                        </TableCell>
                         <TableCell className="text-right font-medium">
                           {formatCurrency(service.total_revenue)}
                         </TableCell>
@@ -512,7 +570,9 @@ export default function ClientDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Sales Transactions</CardTitle>
-              <CardDescription>Items purchased from sub stall</CardDescription>
+              <CardDescription>
+                All sales transactions across main and sub stall
+              </CardDescription>
             </CardHeader>
             <CardContent className="px-2 pb-2 pt-0">
               {salesLoading ? (
@@ -524,7 +584,7 @@ export default function ClientDetailPage() {
                     />
                   ))}
                 </div>
-              ) : standaloneSalesTransactions.length === 0 ? (
+              ) : salesTransactions.length === 0 ? (
                 <div className="py-12 text-center text-muted-foreground">
                   No sales transactions found for this client.
                 </div>
@@ -538,80 +598,92 @@ export default function ClientDetailPage() {
                       <TableHead className="hidden md:table-cell">
                         Stall
                       </TableHead>
+                      <TableHead className="hidden sm:table-cell">
+                        Source
+                      </TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                       <TableHead className="text-right">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {standaloneSalesTransactions.map(
-                      (transaction: SalesTransaction) => {
-                        const itemCount = transaction.items?.length || 0
-                        const totalItems =
-                          transaction.items?.reduce(
-                            (sum, item) => sum + item.quantity,
-                            0,
-                          ) || 0
+                    {salesTransactions.map((transaction: SalesTransaction) => {
+                      const itemCount = transaction.items?.length || 0
+                      const totalItems =
+                        transaction.items?.reduce(
+                          (sum, item) => sum + item.quantity,
+                          0,
+                        ) || 0
+                      const isServiceRelated = serviceRelatedTransactionIds.has(
+                        transaction.id,
+                      )
 
-                        return (
-                          <TableRow
-                            key={transaction.id}
-                            className="cursor-pointer"
-                            onClick={() => openSalesView(transaction)}
-                          >
-                            <TableCell className="font-medium">
-                              {transaction.manual_receipt_number ||
-                                transaction.system_receipt_number
-                                  ?.slice(0, 8)
-                                  .toUpperCase()}
-                            </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
-                              {formatDate(transaction.created_at)}
-                            </TableCell>
-                            <TableCell>
-                              <div className="text-sm">
-                                <span className="font-medium">
-                                  {itemCount} item{itemCount !== 1 ? "s" : ""}
-                                </span>
-                                <span className="text-muted-foreground">
-                                  {" "}
-                                  ({totalItems} qty)
-                                </span>
-                              </div>
-                              {transaction.items &&
-                                transaction.items.length > 0 && (
-                                  <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-0.5">
-                                    {transaction.items
-                                      .filter((item) => item.item)
-                                      .map(
-                                        (item) =>
-                                          `${item.item.name} (${item.quantity})`,
-                                      )
-                                      .join(", ")}
-                                  </p>
-                                )}
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                              {transaction.stall?.name || "—"}
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {formatCurrency(transaction.computed_total || 0)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Badge
-                                variant={getBadgeVariant(
-                                  transaction.payment_status,
-                                )}
-                                className="text-xs"
-                              >
-                                {paymentStatusLabels[
-                                  transaction.payment_status
-                                ] || transaction.payment_status}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      },
-                    )}
+                      return (
+                        <TableRow
+                          key={transaction.id}
+                          className="cursor-pointer"
+                          onClick={() => openSalesView(transaction)}
+                        >
+                          <TableCell className="font-medium">
+                            {transaction.manual_receipt_number ||
+                              transaction.system_receipt_number
+                                ?.slice(0, 8)
+                                .toUpperCase()}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {formatDate(transaction.created_at)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <span className="font-medium">
+                                {itemCount} item{itemCount !== 1 ? "s" : ""}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {" "}
+                                ({totalItems} qty)
+                              </span>
+                            </div>
+                            {transaction.items &&
+                              transaction.items.length > 0 && (
+                                <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-0.5">
+                                  {transaction.items
+                                    .filter((item) => item.item)
+                                    .map(
+                                      (item) =>
+                                        `${item.item.name} (${item.quantity})`,
+                                    )
+                                    .join(", ")}
+                                </p>
+                              )}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                            {transaction.stall?.name || "—"}
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${isServiceRelated ? "border-blue-500/30 text-blue-600 dark:text-blue-400" : ""}`}
+                            >
+                              {isServiceRelated ? "Service" : "Walk-in"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatCurrency(transaction.computed_total || 0)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge
+                              variant={getBadgeVariant(
+                                transaction.payment_status,
+                              )}
+                              className="text-xs"
+                            >
+                              {paymentStatusLabels[
+                                transaction.payment_status
+                              ] || transaction.payment_status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
                   </TableBody>
                 </Table>
               )}
