@@ -88,6 +88,7 @@ export function Sidebar() {
   return (
     <>
       <CommandPalette
+        permissions={userPermissions}
         onAction={(action) => {
           switch (action) {
             case "addSale":

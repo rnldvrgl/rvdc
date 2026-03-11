@@ -9,9 +9,14 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command"
-import { NavigationGroup, NavigationLink } from "@/lib/constants/interface"
+import {
+  Item,
+  NavigationGroup,
+  NavigationLink,
+} from "@/lib/constants/interface"
 import { orderedNavigation } from "@/lib/constants/navigation"
 import { useClients } from "@/lib/queries/clients/useClients"
+import { useItems } from "@/lib/queries/inventory/useItems"
 import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useServices } from "@/lib/queries/services/useServices"
 import {
@@ -23,19 +28,21 @@ import {
   Plus,
   Search,
   ShoppingCart,
+  Tag,
   Users,
   Wrench,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
-// Quick-create actions
+// Quick-create actions with permission requirements
 const quickActions = [
   {
     label: "New Sale",
     icon: CircleDollarSign,
     action: "addSale",
     keywords: "create add sale transaction",
+    permission: "shortcut_add_sale",
   },
   {
     label: "New Client",
@@ -43,6 +50,7 @@ const quickActions = [
     action: "addClient",
     keywords: "create add client customer",
     shortcut: "Ctrl+Shift+C",
+    permission: "shortcut_add_client",
   },
   {
     label: "New Service",
@@ -50,6 +58,7 @@ const quickActions = [
     action: "addService",
     keywords: "create add service repair installation",
     shortcut: "Ctrl+Shift+S",
+    permission: "shortcut_add_service",
   },
   {
     label: "New Expense",
@@ -57,20 +66,37 @@ const quickActions = [
     action: "addExpense",
     keywords: "create add expense cost",
     shortcut: "Ctrl+Shift+E",
+    permission: "shortcut_add_expense",
   },
   {
     label: "New Remittance",
     icon: FileText,
     action: "addRemittance",
     keywords: "create add remittance cash",
+    permission: "shortcut_add_remittance",
   },
   {
     label: "New Cheque Collection",
     icon: CreditCard,
     action: "addChequeCollection",
     keywords: "create add cheque collection check payment",
+    permission: "manage_cheque_collections",
+  },
+  {
+    label: "Price Checker",
+    icon: Tag,
+    action: "priceChecker",
+    keywords: "price check item cost retail wholesale technician lookup",
+    permission: "view_items",
   },
 ]
+
+function peso(v: string | number) {
+  return `\u20B1${Number(v).toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
+}
 
 // Flatten navigation tree into searchable items
 function flattenNavigation() {
@@ -111,16 +137,33 @@ function flattenNavigation() {
 
 interface CommandPaletteProps {
   onAction?: (action: string) => void
+  permissions?: string[]
 }
 
-export function CommandPalette({ onAction }: CommandPaletteProps) {
+export function CommandPalette({
+  onAction,
+  permissions = [],
+}: CommandPaletteProps) {
   const [open, setOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [debouncedQuery, setDebouncedQuery] = useState("")
+  const [priceCheckerMode, setPriceCheckerMode] = useState(false)
+  const [priceQuery, setPriceQuery] = useState("")
+  const [debouncedPriceQuery, setDebouncedPriceQuery] = useState("")
   const router = useRouter()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const navItems = useMemo(() => flattenNavigation(), [])
+
+  // Filter quick actions by permissions
+  const allowedQuickActions = useMemo(
+    () =>
+      permissions.length > 0
+        ? quickActions.filter((a) => permissions.includes(a.permission))
+        : quickActions,
+    [permissions],
+  )
 
   // Debounce search input
   useEffect(() => {
@@ -132,16 +175,30 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
     }
   }, [searchQuery])
 
+  // Debounce price checker input
+  useEffect(() => {
+    priceDebounceRef.current = setTimeout(() => {
+      setDebouncedPriceQuery(priceQuery)
+    }, 300)
+    return () => {
+      if (priceDebounceRef.current !== null)
+        clearTimeout(priceDebounceRef.current)
+    }
+  }, [priceQuery])
+
   // Reset search when dialog closes
   useEffect(() => {
     if (!open) {
       setSearchQuery("")
       setDebouncedQuery("")
+      setPriceCheckerMode(false)
+      setPriceQuery("")
+      setDebouncedPriceQuery("")
     }
   }, [open])
 
   // Global search queries (only fire when there's a debounced query of 2+ chars)
-  const enableSearch = debouncedQuery.length >= 2
+  const enableSearch = !priceCheckerMode && debouncedQuery.length >= 2
   const { data: clientsData, isLoading: clientsLoading } = useClients({
     search: enableSearch ? debouncedQuery : undefined,
     limit: 5,
@@ -157,6 +214,15 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
     limit: 5,
     page: 1,
   })
+
+  // Price checker item search
+  const enablePriceSearch = priceCheckerMode && debouncedPriceQuery.length >= 2
+  const { data: itemsData, isLoading: itemsLoading } = useItems({
+    search: enablePriceSearch ? debouncedPriceQuery : undefined,
+    limit: 10,
+    page: 1,
+  })
+  const priceItems: Item[] = enablePriceSearch ? (itemsData?.results ?? []) : []
 
   const clients = enableSearch ? (clientsData?.results ?? []) : []
   const services = enableSearch ? (servicesData?.results ?? []) : []
@@ -248,190 +314,313 @@ export function CommandPalette({ onAction }: CommandPaletteProps) {
 
   const handleAction = useCallback(
     (action: string) => {
+      if (action === "priceChecker") {
+        setPriceCheckerMode(true)
+        setSearchQuery("")
+        return
+      }
       setOpen(false)
       onAction?.(action)
     },
     [onAction],
   )
 
+  // Whether to show cost price (admin only — manage_stockroom)
+  const showCostPrice = permissions.includes("manage_stockroom")
+
   return (
     <CommandDialog
       open={open}
       onOpenChange={setOpen}
-      title="Command Palette"
-      description="Search pages, actions, and more..."
+      title={priceCheckerMode ? "Price Checker" : "Command Palette"}
+      description={
+        priceCheckerMode
+          ? "Search for an item to see its prices"
+          : "Search pages, actions, and more..."
+      }
     >
-      <CommandInput
-        placeholder="Type a command or search..."
-        value={searchQuery}
-        onValueChange={setSearchQuery}
-      />
+      {priceCheckerMode ? (
+        <CommandInput
+          placeholder="Type item name to check prices..."
+          value={priceQuery}
+          onValueChange={setPriceQuery}
+        />
+      ) : (
+        <CommandInput
+          placeholder="Type a command or search..."
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+        />
+      )}
       <CommandList>
-        <CommandEmpty>
-          <div className="flex flex-col items-center gap-2 py-4">
-            {isSearching ? (
-              <Loader2 className="size-8 text-muted-foreground/50 animate-spin" />
-            ) : (
-              <Search className="size-8 text-muted-foreground/50" />
-            )}
-            <p className="text-sm text-muted-foreground">
-              {isSearching ? "Searching..." : "No results found"}
-            </p>
-          </div>
-        </CommandEmpty>
-
-        {/* Quick Actions */}
-        <CommandGroup heading="Quick Actions">
-          {quickActions.map((item) => (
-            <CommandItem
-              key={item.action}
-              value={item.keywords}
-              onSelect={() => handleAction(item.action)}
-              className="gap-3"
-            >
-              <div className="flex items-center justify-center size-8 rounded-md bg-primary/10 text-primary">
-                <item.icon className="size-4" />
-              </div>
-              <div className="flex items-center gap-2 flex-1">
-                <span>{item.label}</span>
-                <Plus className="size-3 text-muted-foreground" />
-              </div>
-              {item.shortcut && (
-                <kbd className="pointer-events-none text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
-                  {item.shortcut}
-                </kbd>
-              )}
-            </CommandItem>
-          ))}
-        </CommandGroup>
-
-        <CommandSeparator />
-
-        {/* Search Results */}
-        {enableSearch && hasSearchResults && (
+        {priceCheckerMode ? (
           <>
-            {clients.length > 0 && (
-              <CommandGroup heading="Clients">
-                {clients.map((client) => (
+            <CommandEmpty>
+              <div className="flex flex-col items-center gap-2 py-4">
+                {itemsLoading ? (
+                  <Loader2 className="size-8 text-muted-foreground/50 animate-spin" />
+                ) : (
+                  <Tag className="size-8 text-muted-foreground/50" />
+                )}
+                <p className="text-sm text-muted-foreground">
+                  {itemsLoading
+                    ? "Searching items..."
+                    : debouncedPriceQuery.length < 2
+                      ? "Type at least 2 characters to search"
+                      : "No items found"}
+                </p>
+              </div>
+            </CommandEmpty>
+            {priceItems.length > 0 && (
+              <CommandGroup heading="Item Prices">
+                {priceItems.map((item) => (
                   <CommandItem
-                    key={`client-${client.id}`}
-                    value={`client ${client.full_name}`}
-                    onSelect={() => handleNavigate(`/clients`)}
-                    className="gap-3"
+                    key={item.id}
+                    value={`${item.name} ${item.sku}`}
+                    className="flex-col items-start gap-1 py-3"
                   >
-                    <div className="flex items-center justify-center size-8 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                      <Users className="size-4" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span>{client.full_name}</span>
-                      {client.contact_number && (
-                        <span className="text-xs text-muted-foreground">
-                          {client.contact_number}
+                    <div className="flex items-center gap-2 w-full">
+                      <Tag className="size-4 text-primary shrink-0" />
+                      <span className="font-medium">{item.name}</span>
+                      {item.sku && (
+                        <span className="text-xs text-muted-foreground ml-auto font-mono">
+                          {item.sku}
                         </span>
+                      )}
+                    </div>
+                    <div
+                      className={`grid grid-cols-3 ${showCostPrice ? "sm:grid-cols-4" : ""} gap-x-4 gap-y-1 w-full pl-6 mt-1`}
+                    >
+                      <div>
+                        <span className="text-xs text-muted-foreground">
+                          Retail
+                        </span>
+                        <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                          {peso(item.retail_price)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">
+                          Technician
+                        </span>
+                        <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+                          {peso(item.technician_price)}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">
+                          Wholesale
+                        </span>
+                        <p className="text-sm font-semibold text-violet-600 dark:text-violet-400">
+                          {peso(item.wholesale_price)}
+                        </p>
+                      </div>
+                      {showCostPrice && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">
+                            Cost
+                          </span>
+                          <p className="text-sm font-semibold text-muted-foreground">
+                            {peso(item.cost_price)}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </CommandItem>
                 ))}
               </CommandGroup>
             )}
-            {services.length > 0 && (
-              <CommandGroup heading="Services">
-                {services.map((service) => (
-                  <CommandItem
-                    key={`service-${service.id}`}
-                    value={`service ${service.id} ${service.client?.full_name}`}
-                    onSelect={() => handleNavigate(`/services`)}
-                    className="gap-3"
-                  >
-                    <div className="flex items-center justify-center size-8 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                      <Wrench className="size-4" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span>Service #{service.id}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {service.client?.full_name} &middot; {service.status}
-                      </span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
-            {sales.length > 0 && (
-              <CommandGroup heading="Sales">
-                {sales.map((sale) => (
-                  <CommandItem
-                    key={`sale-${sale.id}`}
-                    value={`sale ${sale.manual_receipt_number || sale.system_receipt_number} ${sale.client?.full_name}`}
-                    onSelect={() => handleNavigate(`/sales`)}
-                    className="gap-3"
-                  >
-                    <div className="flex items-center justify-center size-8 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                      <ShoppingCart className="size-4" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span>{sale.manual_receipt_number || `#${sale.id}`}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {sale.client?.full_name} &middot; {sale.payment_status}
-                      </span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
             <CommandSeparator />
+            <CommandGroup>
+              <CommandItem
+                onSelect={() => {
+                  setPriceCheckerMode(false)
+                  setPriceQuery("")
+                  setDebouncedPriceQuery("")
+                }}
+                className="gap-3 justify-center text-muted-foreground"
+              >
+                ← Back to Command Palette
+              </CommandItem>
+            </CommandGroup>
+          </>
+        ) : (
+          <>
+            <CommandEmpty>
+              <div className="flex flex-col items-center gap-2 py-4">
+                {isSearching ? (
+                  <Loader2 className="size-8 text-muted-foreground/50 animate-spin" />
+                ) : (
+                  <Search className="size-8 text-muted-foreground/50" />
+                )}
+                <p className="text-sm text-muted-foreground">
+                  {isSearching ? "Searching..." : "No results found"}
+                </p>
+              </div>
+            </CommandEmpty>
+
+            {/* Quick Actions */}
+            <CommandGroup heading="Quick Actions">
+              {allowedQuickActions.map((item) => (
+                <CommandItem
+                  key={item.action}
+                  value={item.keywords}
+                  onSelect={() => handleAction(item.action)}
+                  className="gap-3"
+                >
+                  <div className="flex items-center justify-center size-8 rounded-md bg-primary/10 text-primary">
+                    <item.icon className="size-4" />
+                  </div>
+                  <div className="flex items-center gap-2 flex-1">
+                    <span>{item.label}</span>
+                    {item.action !== "priceChecker" && (
+                      <Plus className="size-3 text-muted-foreground" />
+                    )}
+                  </div>
+                  {item.shortcut && (
+                    <kbd className="pointer-events-none text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
+                      {item.shortcut}
+                    </kbd>
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+
+            <CommandSeparator />
+
+            {/* Search Results */}
+            {enableSearch && hasSearchResults && (
+              <>
+                {clients.length > 0 && (
+                  <CommandGroup heading="Clients">
+                    {clients.map((client) => (
+                      <CommandItem
+                        key={`client-${client.id}`}
+                        value={`client ${client.full_name}`}
+                        onSelect={() => handleNavigate(`/clients`)}
+                        className="gap-3"
+                      >
+                        <div className="flex items-center justify-center size-8 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                          <Users className="size-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span>{client.full_name}</span>
+                          {client.contact_number && (
+                            <span className="text-xs text-muted-foreground">
+                              {client.contact_number}
+                            </span>
+                          )}
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+                {services.length > 0 && (
+                  <CommandGroup heading="Services">
+                    {services.map((service) => (
+                      <CommandItem
+                        key={`service-${service.id}`}
+                        value={`service ${service.id} ${service.client?.full_name}`}
+                        onSelect={() => handleNavigate(`/services`)}
+                        className="gap-3"
+                      >
+                        <div className="flex items-center justify-center size-8 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                          <Wrench className="size-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span>Service #{service.id}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {service.client?.full_name} &middot;{" "}
+                            {service.status}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+                {sales.length > 0 && (
+                  <CommandGroup heading="Sales">
+                    {sales.map((sale) => (
+                      <CommandItem
+                        key={`sale-${sale.id}`}
+                        value={`sale ${sale.manual_receipt_number || sale.system_receipt_number} ${sale.client?.full_name}`}
+                        onSelect={() => handleNavigate(`/sales`)}
+                        className="gap-3"
+                      >
+                        <div className="flex items-center justify-center size-8 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                          <ShoppingCart className="size-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span>
+                            {sale.manual_receipt_number || `#${sale.id}`}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {sale.client?.full_name} &middot;{" "}
+                            {sale.payment_status}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+                <CommandSeparator />
+              </>
+            )}
+
+            {/* Navigation Pages */}
+            <CommandGroup heading="Pages">
+              {navItems.map((item) => (
+                <CommandItem
+                  key={item.href}
+                  value={item.keywords}
+                  onSelect={() => handleNavigate(item.href)}
+                  className="gap-3"
+                >
+                  <div className="flex items-center justify-center size-8 rounded-md bg-muted text-muted-foreground">
+                    <item.icon className="size-4" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span>{item.name}</span>
+                    {item.group !== "Pages" && (
+                      <span className="text-xs text-muted-foreground">
+                        {item.group}
+                      </span>
+                    )}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+
+            <CommandSeparator />
+
+            {/* Keyboard Shortcuts Reference */}
+            <CommandGroup heading="Keyboard Shortcuts">
+              {[
+                { keys: "Alt+D", label: "Go to Dashboard" },
+                { keys: "Alt+S", label: "Go to Services" },
+                { keys: "Alt+C", label: "Go to Clients" },
+                { keys: "Alt+I", label: "Go to Inventory" },
+                { keys: "Alt+E", label: "Go to Expenses" },
+                { keys: "Alt+A", label: "Go to Attendance" },
+                { keys: "Alt+P", label: "Go to Payroll" },
+              ].map((shortcut) => (
+                <CommandItem
+                  key={shortcut.keys}
+                  value={`shortcut ${shortcut.label}`}
+                  className="gap-3 justify-between"
+                  onSelect={() => {}}
+                >
+                  <span className="text-muted-foreground">
+                    {shortcut.label}
+                  </span>
+                  <kbd className="pointer-events-none text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
+                    {shortcut.keys}
+                  </kbd>
+                </CommandItem>
+              ))}
+            </CommandGroup>
           </>
         )}
-
-        {/* Navigation Pages */}
-        <CommandGroup heading="Pages">
-          {navItems.map((item) => (
-            <CommandItem
-              key={item.href}
-              value={item.keywords}
-              onSelect={() => handleNavigate(item.href)}
-              className="gap-3"
-            >
-              <div className="flex items-center justify-center size-8 rounded-md bg-muted text-muted-foreground">
-                <item.icon className="size-4" />
-              </div>
-              <div className="flex flex-col">
-                <span>{item.name}</span>
-                {item.group !== "Pages" && (
-                  <span className="text-xs text-muted-foreground">
-                    {item.group}
-                  </span>
-                )}
-              </div>
-            </CommandItem>
-          ))}
-        </CommandGroup>
-
-        <CommandSeparator />
-
-        {/* Keyboard Shortcuts Reference */}
-        <CommandGroup heading="Keyboard Shortcuts">
-          {[
-            { keys: "Alt+D", label: "Go to Dashboard" },
-            { keys: "Alt+S", label: "Go to Services" },
-            { keys: "Alt+C", label: "Go to Clients" },
-            { keys: "Alt+I", label: "Go to Inventory" },
-            { keys: "Alt+E", label: "Go to Expenses" },
-            { keys: "Alt+A", label: "Go to Attendance" },
-            { keys: "Alt+P", label: "Go to Payroll" },
-          ].map((shortcut) => (
-            <CommandItem
-              key={shortcut.keys}
-              value={`shortcut ${shortcut.label}`}
-              className="gap-3 justify-between"
-              onSelect={() => {}}
-            >
-              <span className="text-muted-foreground">{shortcut.label}</span>
-              <kbd className="pointer-events-none text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
-                {shortcut.keys}
-              </kbd>
-            </CommandItem>
-          ))}
-        </CommandGroup>
       </CommandList>
     </CommandDialog>
   )
