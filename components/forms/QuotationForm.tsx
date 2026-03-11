@@ -406,27 +406,23 @@ export default function QuotationForm({
         si_number: p.si_number ?? "",
       }))
     }
-    return [
-      {
-        id: generateId(),
-        label: "Down payment",
-        amount: 0,
-        payment_method: "cash",
-        payment_date: undefined,
-        reference_number: "",
-        si_number: "",
-      },
-      {
-        id: generateId(),
-        label: "Full payment",
-        amount: 0,
-        payment_method: "cash",
-        payment_date: undefined,
-        reference_number: "",
-        si_number: "",
-      },
-    ]
+    return []
   })
+
+  const addPayment = () => {
+    setPaymentRecords((prev) => [
+      ...prev,
+      {
+        id: generateId(),
+        label: "",
+        amount: 0,
+        payment_method: "cash",
+        payment_date: undefined,
+        reference_number: "",
+        si_number: "",
+      },
+    ])
+  }
 
   // Signatures
   const [authorizedSignature, setAuthorizedSignature] = useState(
@@ -1065,20 +1061,7 @@ export default function QuotationForm({
             variant="outline"
             size="sm"
             className="h-7 text-xs border-dashed text-blue-600 border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-            onClick={() =>
-              setPaymentRecords((prev) => [
-                ...prev,
-                {
-                  id: generateId(),
-                  label: "",
-                  amount: 0,
-                  payment_method: "cash",
-                  payment_date: undefined,
-                  reference_number: "",
-                  si_number: "",
-                },
-              ])
-            }
+            onClick={addPayment}
           >
             <Plus className="mr-1 h-3 w-3" />
             Add Payment
@@ -1089,6 +1072,15 @@ export default function QuotationForm({
           printed quotation.
         </p>
         <div className="space-y-3">
+          {paymentRecords.length === 0 && (
+            <div className="text-xs text-muted-foreground border border-dashed rounded-md p-4 text-center">
+              No payment schedule yet.
+              <div className="mt-2">
+                Click <span className="font-medium">Add Payment</span> to create
+                one.
+              </div>
+            </div>
+          )}
           {paymentRecords.map((rec) => (
             <div
               key={rec.id}
@@ -1147,9 +1139,7 @@ export default function QuotationForm({
                       className="h-8 w-8 text-muted-foreground hover:text-destructive self-end"
                       onClick={() =>
                         setPaymentRecords((prev) =>
-                          prev.length > 1
-                            ? prev.filter((r) => r.id !== rec.id)
-                            : prev,
+                          prev.filter((r) => r.id !== rec.id),
                         )
                       }
                     >
