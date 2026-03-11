@@ -24,6 +24,7 @@ import {
   Control,
   Controller,
   FieldArrayWithId,
+  FieldPath,
   UseFieldArrayAppend,
   UseFieldArrayRemove,
   UseFormSetValue,
@@ -65,7 +66,10 @@ export default function PaymentMethodSelector<
   totalItemsAmount = 0,
   clientId,
 }: PaymentMethodSelectorProps<T>) {
-  const watchedPayments = useWatch({ control, name: "payments" as any })
+  const watchedPayments = useWatch({
+    control,
+    name: "payments" as FieldPath<T>,
+  })
   const { data: chequeChoices = [], rawData: chequeRawData = [] } =
     useChequeChoices(clientId ?? undefined)
 
