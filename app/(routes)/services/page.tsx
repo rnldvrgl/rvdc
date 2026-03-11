@@ -58,6 +58,10 @@ export default function ServicesPage() {
   const router = useRouter()
   const urlSearchParams = useSearchParams()
 
+  // Handle opening detail sheet from Command Palette search
+  const viewId = urlSearchParams?.get("view") || null
+  const { data: viewService } = useService(viewId ? Number(viewId) : undefined)
+
   // Data fetching
   const {
     data: services,
@@ -85,10 +89,6 @@ export default function ServicesPage() {
 
   // Entity sheet for create/edit
   const { entityState, openEntity, closeEntity } = useEntitySheet<Service>()
-
-  // Handle opening detail sheet from Command Palette search
-  const viewId = urlSearchParams?.get("view")
-  const { data: viewService } = useService(viewId ? Number(viewId) : undefined)
 
   useEffect(() => {
     if (viewId && viewService) {

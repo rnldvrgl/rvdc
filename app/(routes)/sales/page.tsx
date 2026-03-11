@@ -43,6 +43,12 @@ export default function SalesTransactionsPage() {
   const router = useRouter()
   const urlSearchParams = useSearchParams()
 
+  // Handle opening detail sheet from Command Palette search
+  const viewId = urlSearchParams?.get("view") || null
+  const { data: viewTransaction } = useSalesTransaction(
+    viewId ? Number(viewId) : undefined,
+  )
+
   const { data, isLoading, refetch } = useSalesTransactions({
     page,
     limit,
@@ -77,12 +83,6 @@ export default function SalesTransactionsPage() {
     openEntity: openEdit,
     closeEntity: closeEdit,
   } = useEntitySheet<SalesTransaction>()
-
-  // Handle opening detail sheet from Command Palette search
-  const viewId = urlSearchParams?.get("view")
-  const { data: viewTransaction } = useSalesTransaction(
-    viewId ? Number(viewId) : undefined,
-  )
 
   useEffect(() => {
     if (viewId && viewTransaction) {
