@@ -264,22 +264,21 @@ export default function ShortcutsGuidePage() {
         dangerouslySetInnerHTML={{
           __html: `
           @media print {
-            * {
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            body {
+            body, html {
               background: white !important;
               color: black !important;
             }
             @page {
               margin: 1cm;
             }
+            .print\\:hidden {
+              display: none !important;
+            }
           }
         `,
         }}
       />
-      <div className="min-h-screen bg-white print:bg-white text-foreground print:text-black">
+      <div className="min-h-screen bg-white text-foreground print:bg-white print:text-black">
         {/* Toolbar — hidden in print */}
         <div className="print:hidden fixed top-4 right-4 z-50 flex items-center gap-2">
           <div className="flex items-center bg-muted rounded-lg p-1 gap-1">
