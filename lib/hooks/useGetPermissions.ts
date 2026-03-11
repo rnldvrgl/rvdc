@@ -50,13 +50,16 @@ export function useGetPermissions(
       "shortcut_add_expense",
       "shortcut_add_sale",
       "shortcut_add_remittance",
-      "shortcut_add_service",
     ]
+
+    // Admin & Manager only shortcuts
+    const adminShortcuts = ["shortcut_add_service"]
 
     const permissionsMap: Record<Roles, string[]> = {
       admin: [
         ...commonAdminPermissions,
         ...commonShortcuts,
+        ...adminShortcuts,
         ...commonManagementPermissions,
         ...commonPermissions,
         "manage_calendar_events",
@@ -76,6 +79,7 @@ export function useGetPermissions(
         ...commonAdminPermissions,
         ...commonEmployeePermissions,
         ...commonShortcuts,
+        ...adminShortcuts,
         ...commonManagementPermissions,
         ...commonPermissions,
       ],

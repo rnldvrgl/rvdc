@@ -20,11 +20,15 @@ import { useItems } from "@/lib/queries/inventory/useItems"
 import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useServices } from "@/lib/queries/services/useServices"
 import {
+  Banknote,
   CircleDollarSign,
   Coins,
   CreditCard,
+  FileSpreadsheet,
   FileText,
+  LayoutDashboard,
   Loader2,
+  Package,
   Plus,
   Search,
   ShoppingCart,
@@ -42,6 +46,7 @@ const quickActions = [
     icon: CircleDollarSign,
     action: "addSale",
     keywords: "create add sale transaction",
+    shortcut: "Ctrl+Alt+S",
     permission: "shortcut_add_sale",
   },
   {
@@ -49,7 +54,7 @@ const quickActions = [
     icon: Users,
     action: "addClient",
     keywords: "create add client customer",
-    shortcut: "Ctrl+Shift+C",
+    shortcut: "Ctrl+Alt+C",
     permission: "shortcut_add_client",
   },
   {
@@ -57,7 +62,7 @@ const quickActions = [
     icon: Wrench,
     action: "addService",
     keywords: "create add service repair installation",
-    shortcut: "Ctrl+Shift+S",
+    shortcut: "Ctrl+Alt+V",
     permission: "shortcut_add_service",
   },
   {
@@ -65,14 +70,15 @@ const quickActions = [
     icon: Coins,
     action: "addExpense",
     keywords: "create add expense cost",
-    shortcut: "Ctrl+Shift+E",
+    shortcut: "Ctrl+Alt+E",
     permission: "shortcut_add_expense",
   },
   {
     label: "New Remittance",
-    icon: FileText,
+    icon: Banknote,
     action: "addRemittance",
     keywords: "create add remittance cash",
+    shortcut: "Ctrl+Alt+R",
     permission: "shortcut_add_remittance",
   },
   {
@@ -80,6 +86,7 @@ const quickActions = [
     icon: CreditCard,
     action: "addChequeCollection",
     keywords: "create add cheque collection check payment",
+    shortcut: "Ctrl+Alt+Q",
     permission: "manage_cheque_collections",
   },
   {
@@ -87,8 +94,23 @@ const quickActions = [
     icon: Tag,
     action: "priceChecker",
     keywords: "price check item cost retail wholesale technician lookup",
+    shortcut: "Ctrl+Alt+P",
     permission: "view_items",
   },
+]
+
+// Navigation shortcuts
+const navigationShortcuts = [
+  { keys: "Alt+Shift+D", label: "Go to Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "view_dashboard" },
+  { keys: "Alt+Shift+S", label: "Go to Services", href: "/services", icon: Wrench, permission: "view_services" },
+  { keys: "Alt+Shift+C", label: "Go to Clients", href: "/clients", icon: Users, permission: "view_clients" },
+  { keys: "Alt+Shift+A", label: "Go to Sales", href: "/sales", icon: CircleDollarSign, permission: "view_sales" },
+  { keys: "Alt+Shift+I", label: "Go to Inventory", href: "/inventory/items", icon: Package, permission: "view_items" },
+  { keys: "Alt+Shift+E", label: "Go to Expenses", href: "/expenses/manage", icon: Coins, permission: "view_expenses" },
+  { keys: "Alt+Shift+R", label: "Go to Reports", href: "/reports", icon: FileSpreadsheet, permission: "view_reports" },
+  { keys: "Alt+Shift+T", label: "Go to Attendance", href: "/attendance/overview", icon: FileText, permission: "manage_attendance" },
+  { keys: "Alt+Shift+P", label: "Go to Payroll", href: "/payroll/weekly", icon: FileText, permission: "view_payroll" },
+  { keys: "Alt+Shift+M", label: "Go to Remittances", href: "/receivables/remittances", icon: Banknote, permission: "view_remittances" },
 ]
 
 function peso(v: string | number) {
@@ -162,6 +184,15 @@ export function CommandPalette({
       permissions.length > 0
         ? quickActions.filter((a) => permissions.includes(a.permission))
         : quickActions,
+    [permissions],
+  )
+
+  // Filter navigation shortcuts by permissions
+  const allowedNavShortcuts = useMemo(
+    () =>
+      permissions.length > 0
+        ? navigationShortcuts.filter((s) => permissions.includes(s.permission))
+        : navigationShortcuts,
     [permissions],
   )
 
@@ -248,9 +279,47 @@ export function CommandPalette({
       // Skip remaining shortcuts if inside an input or dialog is open
       if (isInput || open) return
 
-      // Alt + shortcut combos for navigation
-      if (e.altKey && !e.ctrlKey && !e.metaKey) {
-        switch (e.key) {
+      // Ctrl+Alt + key for quick-create actions
+      if ((e.metaKey || e.ctrlKey) && e.altKey && !e.shiftKey) {
+        const key = e.key.toLowerCase()
+        switch (key) {
+          case "s":
+            e.preventDefault()
+            onAction?.("addSale")
+            break
+          case "c":
+            e.preventDefault()
+            onAction?.("addClient")
+            break
+          case "v":
+            e.preventDefault()
+            onAction?.("addService")
+            break
+          case "e":
+            e.preventDefault()
+            onAction?.("addExpense")
+            break
+          case "r":
+            e.preventDefault()
+            onAction?.("addRemittance")
+            break
+          case "q":
+            e.preventDefault()
+            onAction?.("addChequeCollection")
+            break
+          case "p":
+            e.preventDefault()
+            setPriceCheckerMode(true)
+            setOpen(true)
+            break
+        }
+        return
+      }
+
+      // Alt+Shift + key for navigation
+      if (e.altKey && e.shiftKey && !e.ctrlKey && !e.metaKey) {
+        const key = e.key.toLowerCase()
+        switch (key) {
           case "d":
             e.preventDefault()
             router.push("/dashboard")
@@ -263,6 +332,10 @@ export function CommandPalette({
             e.preventDefault()
             router.push("/clients")
             break
+          case "a":
+            e.preventDefault()
+            router.push("/sales")
+            break
           case "i":
             e.preventDefault()
             router.push("/inventory/items")
@@ -271,7 +344,11 @@ export function CommandPalette({
             e.preventDefault()
             router.push("/expenses/manage")
             break
-          case "a":
+          case "r":
+            e.preventDefault()
+            router.push("/reports")
+            break
+          case "t":
             e.preventDefault()
             router.push("/attendance/overview")
             break
@@ -279,23 +356,9 @@ export function CommandPalette({
             e.preventDefault()
             router.push("/payroll/weekly")
             break
-        }
-      }
-
-      // Ctrl/Cmd + Shift + shortcut for quick-create actions
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey) {
-        switch (e.key) {
-          case "S":
+          case "m":
             e.preventDefault()
-            onAction?.("addService")
-            break
-          case "C":
-            e.preventDefault()
-            onAction?.("addClient")
-            break
-          case "E":
-            e.preventDefault()
-            onAction?.("addExpense")
+            router.push("/receivables/remittances")
             break
         }
       }
@@ -594,25 +657,22 @@ export function CommandPalette({
             <CommandSeparator />
 
             {/* Keyboard Shortcuts Reference */}
-            <CommandGroup heading="Keyboard Shortcuts">
-              {[
-                { keys: "Alt+D", label: "Go to Dashboard" },
-                { keys: "Alt+S", label: "Go to Services" },
-                { keys: "Alt+C", label: "Go to Clients" },
-                { keys: "Alt+I", label: "Go to Inventory" },
-                { keys: "Alt+E", label: "Go to Expenses" },
-                { keys: "Alt+A", label: "Go to Attendance" },
-                { keys: "Alt+P", label: "Go to Payroll" },
-              ].map((shortcut) => (
+            <CommandGroup heading="Navigation Shortcuts">
+              {allowedNavShortcuts.map((shortcut) => (
                 <CommandItem
                   key={shortcut.keys}
                   value={`shortcut ${shortcut.label}`}
+                  onSelect={() => handleNavigate(shortcut.href)}
                   className="gap-3 justify-between"
-                  onSelect={() => {}}
                 >
-                  <span className="text-muted-foreground">
-                    {shortcut.label}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center size-8 rounded-md bg-muted text-muted-foreground">
+                      <shortcut.icon className="size-4" />
+                    </div>
+                    <span className="text-muted-foreground">
+                      {shortcut.label}
+                    </span>
+                  </div>
                   <kbd className="pointer-events-none text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
                     {shortcut.keys}
                   </kbd>
