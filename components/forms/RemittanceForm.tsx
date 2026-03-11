@@ -6,10 +6,11 @@ import {
   Banknote,
   Info,
   Minus,
+  Pencil,
   Plus,
   Wallet,
 } from "lucide-react"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -91,6 +92,31 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
       return declared === count
     })
   const [remitAll, setRemitAll] = useState(defaultRemitAll)
+
+  // Manual sales adjustment state
+  const [adjustSales, setAdjustSales] = useState(false)
+  const [salesOverrides, setSalesOverrides] = useState({
+    cash: "",
+    gcash: "",
+    credit: "",
+    debit: "",
+    cheque: "",
+    expenses: "",
+  })
+
+  // Pre-fill overrides when preview loads
+  useEffect(() => {
+    if (preview && !isEditing) {
+      setSalesOverrides({
+        cash: preview.total_sales_cash,
+        gcash: preview.total_sales_gcash,
+        credit: preview.total_sales_credit,
+        debit: preview.total_sales_debit,
+        cheque: preview.total_sales_cheque,
+        expenses: preview.total_expenses,
+      })
+    }
+  }, [preview, isEditing])
 
   const form = useForm<RemittanceRecordPayload>({
     resolver: zodResolver(RemittanceRecordSchema),
@@ -238,6 +264,22 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
       stall: stallId,
     }
 
+    // Include manual overrides if adjusted
+    if (adjustSales && !isEditing) {
+      const cash = parseFloat(salesOverrides.cash)
+      const gcash = parseFloat(salesOverrides.gcash)
+      const credit = parseFloat(salesOverrides.credit)
+      const debit = parseFloat(salesOverrides.debit)
+      const cheque = parseFloat(salesOverrides.cheque)
+      const expenses = parseFloat(salesOverrides.expenses)
+      if (!isNaN(cash)) payload.override_sales_cash = cash
+      if (!isNaN(gcash)) payload.override_sales_gcash = gcash
+      if (!isNaN(credit)) payload.override_sales_credit = credit
+      if (!isNaN(debit)) payload.override_sales_debit = debit
+      if (!isNaN(cheque)) payload.override_sales_cheque = cheque
+      if (!isNaN(expenses)) payload.override_expenses = expenses
+    }
+
     if (isEditing) {
       updateRemittance.mutate(
         { id: initialData.id!, data: payload },
@@ -364,46 +406,147 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                 Expected for{" "}
                 {format(new Date(preview.date + "T00:00:00"), "MMM dd, yyyy")}
               </p>
-              {preview.already_exists && (
-                <Badge
-                  variant="destructive"
-                  className="text-xs"
+              <div className="flex items-center gap-2">
+                {preview.already_exists && (
+                  <Badge
+                    variant="destructive"
+                    className="text-xs"
+                  >
+                    Already submitted
+                  </Badge>
+                )}
+                <Button
+                  type="button"
+                  variant={adjustSales ? "default" : "outline"}
+                  size="sm"
+                  className="h-7 text-xs gap-1.5"
+                  onClick={() => setAdjustSales(!adjustSales)}
                 >
-                  Already submitted
-                </Badge>
-              )}
-            </div>
-            <div className="grid grid-cols-1 gap-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Cash Sales</span>
-                <span className="font-medium tabular-nums">
-                  {formatCurrency(preview.total_sales_cash)}
-                </span>
+                  <Pencil className="size-3" />
+                  {adjustSales ? "Editing" : "Adjust"}
+                </Button>
               </div>
-              {Number(preview.cod_from_previous) > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    + Previous Day Drawer
-                  </span>
-                  <span className="font-medium tabular-nums">
-                    {formatCurrency(preview.cod_from_previous)}
-                  </span>
-                </div>
-              )}
-              {Number(preview.total_expenses) > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">− Expenses</span>
-                  <span className="font-medium tabular-nums text-red-600">
-                    {formatCurrency(preview.total_expenses)}
-                  </span>
-                </div>
-              )}
             </div>
+
+            {adjustSales ? (
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                {[
+                  { key: "cash" as const, label: "Cash Sales" },
+                  { key: "gcash" as const, label: "GCash Sales" },
+                  { key: "credit" as const, label: "Credit Sales" },
+                  { key: "debit" as const, label: "Debit Sales" },
+                  { key: "cheque" as const, label: "Cheque Sales" },
+                  { key: "expenses" as const, label: "Expenses" },
+                ].map(({ key, label }) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between gap-3"
+                  >
+                    <span
+                      className={cn(
+                        "text-muted-foreground shrink-0",
+                        key === "expenses" && "text-red-600",
+                      )}
+                    >
+                      {key === "expenses" ? "− " : ""}
+                      {label}
+                    </span>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step="0.01"
+                      className="h-7 w-32 text-right text-sm font-medium tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                      value={salesOverrides[key]}
+                      onChange={(e) =>
+                        setSalesOverrides((prev) => ({
+                          ...prev,
+                          [key]: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                ))}
+                <div className="text-[11px] text-muted-foreground flex items-center gap-1 mt-1">
+                  <Info className="size-3" />
+                  Adjust values to match your manual records
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Cash Sales</span>
+                  <span className="font-medium tabular-nums">
+                    {formatCurrency(preview.total_sales_cash)}
+                  </span>
+                </div>
+                {Number(preview.total_sales_gcash) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">GCash Sales</span>
+                    <span className="font-medium tabular-nums">
+                      {formatCurrency(preview.total_sales_gcash)}
+                    </span>
+                  </div>
+                )}
+                {Number(preview.total_sales_credit) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Credit Sales</span>
+                    <span className="font-medium tabular-nums">
+                      {formatCurrency(preview.total_sales_credit)}
+                    </span>
+                  </div>
+                )}
+                {Number(preview.total_sales_debit) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Debit Sales</span>
+                    <span className="font-medium tabular-nums">
+                      {formatCurrency(preview.total_sales_debit)}
+                    </span>
+                  </div>
+                )}
+                {Number(preview.total_sales_cheque) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Cheque Sales</span>
+                    <span className="font-medium tabular-nums">
+                      {formatCurrency(preview.total_sales_cheque)}
+                    </span>
+                  </div>
+                )}
+                {Number(preview.cod_from_previous) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      + Previous Day Drawer
+                    </span>
+                    <span className="font-medium tabular-nums">
+                      {formatCurrency(preview.cod_from_previous)}
+                    </span>
+                  </div>
+                )}
+                {Number(preview.total_expenses) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">− Expenses</span>
+                    <span className="font-medium tabular-nums text-red-600">
+                      {formatCurrency(preview.total_expenses)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
             <Separator />
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold">Expected to Remit</span>
               <span className="text-lg font-bold tabular-nums text-primary">
-                {formatCurrency(preview.expected_remittance)}
+                {adjustSales
+                  ? formatCurrency(
+                      Math.max(
+                        0,
+                        (parseFloat(salesOverrides.cash) || 0) +
+                          parseFloat(String(preview.cod_from_previous) || "0") -
+                          (parseFloat(salesOverrides.expenses) || 0),
+                      ),
+                    )
+                  : formatCurrency(preview.expected_remittance)}
               </span>
             </div>
           </div>

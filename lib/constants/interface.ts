@@ -613,6 +613,7 @@ export interface RemittanceRecord {
   balance: string
 
   is_remitted: boolean
+  manually_adjusted: boolean
   notes: string
 
   remitted_by: {

@@ -53,7 +53,19 @@ export function getRemittanceColumns({
         "Cash Collected",
         "Total cash collected from sales",
       ),
-      cell: ({ getValue }) => formatCurrency(getValue() as number),
+      cell: ({ row }) => (
+        <span className="flex items-center gap-1.5">
+          {formatCurrency(row.original.total_sales_cash)}
+          {row.original.manually_adjusted && (
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1 py-0 text-amber-600 border-amber-300"
+            >
+              Adjusted
+            </Badge>
+          )}
+        </span>
+      ),
       enableSorting: true,
     },
 

@@ -100,6 +100,14 @@ export const RemittanceRecordSchema = z.object({
   // Backdating support
   remittance_date: z.string().optional(), // "YYYY-MM-DD" or empty
   mark_as_acknowledged: z.boolean().optional(),
+
+  // Manual sales overrides (optional — system auto-computes if omitted)
+  override_sales_cash: z.number().min(0).optional().nullable(),
+  override_sales_gcash: z.number().min(0).optional().nullable(),
+  override_sales_credit: z.number().min(0).optional().nullable(),
+  override_sales_debit: z.number().min(0).optional().nullable(),
+  override_sales_cheque: z.number().min(0).optional().nullable(),
+  override_expenses: z.number().min(0).optional().nullable(),
 })
 
 export const ChequeCollectionSchema = z
