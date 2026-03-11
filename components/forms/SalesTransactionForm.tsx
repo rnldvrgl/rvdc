@@ -674,11 +674,11 @@ export default function SalesTransactionForm({
                   )}
                 </div>
                 <PaymentMethodSelector
-                  control={form.control}
-                  fields={fields}
-                  append={append}
+                  control={form.control as never}
+                  fields={fields as never}
+                  append={append as never}
                   remove={remove}
-                  setValue={form.setValue}
+                  setValue={form.setValue as never}
                   disabled={isDisabled}
                   required
                   totalItemsAmount={totalItemsAmount}
