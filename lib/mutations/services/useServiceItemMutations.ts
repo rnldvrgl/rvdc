@@ -30,13 +30,8 @@ export function useServiceItemMutations() {
   })
 
   const updateItem = useApiMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: number
-      data: ServiceItemUsedPayload
-    }) => api.patch(`${url}${id}/`, data),
+    mutationFn: ({ id, data }: { id: number; data: ServiceItemUsedPayload }) =>
+      api.patch(`${url}${id}/`, data),
     successMessage: "Part updated successfully.",
     invalidateQueries: [
       { queryKey: ["services"] },

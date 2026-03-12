@@ -36,7 +36,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ServiceItemUsed, Item, Stock } from "@/lib/constants/interface"
+import { Item, ServiceItemUsed, Stock } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useServiceItemMutations } from "@/lib/mutations/services/useServiceItemMutations"
@@ -250,7 +250,8 @@ export default function ServicePartsManager({
         </CardHeader>
         <CardContent>
           <p className="text-xs text-muted-foreground mb-3">
-            Parts used for pre-installation work (chipping, piping) or general materials not tied to a specific unit.
+            Parts used for pre-installation work (chipping, piping) or general
+            materials not tied to a specific unit.
           </p>
           {partsUsed.length === 0 ? (
             <div className="text-center py-6">
@@ -280,7 +281,10 @@ export default function ServicePartsManager({
                         <div className="flex items-center gap-2">
                           {part.item_name}
                           {part.is_free && (
-                            <Badge variant="success" className="text-xs">
+                            <Badge
+                              variant="success"
+                              className="text-xs"
+                            >
                               FREE
                             </Badge>
                           )}
@@ -291,7 +295,10 @@ export default function ServicePartsManager({
                       </TableCell>
                       <TableCell className="text-right">
                         {part.is_free ? (
-                          <Badge variant="success" className="text-xs">
+                          <Badge
+                            variant="success"
+                            className="text-xs"
+                          >
                             FREE
                           </Badge>
                         ) : (part.discount_amount &&
