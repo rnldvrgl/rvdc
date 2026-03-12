@@ -228,7 +228,7 @@ export default function ItemQuantitySelector({
                 </div>
 
                 {/* Row 2: Qty + Prices + Total */}
-                <div className="flex items-start gap-2 flex-wrap sm:flex-nowrap">
+                <div className="flex items-end gap-2 flex-wrap sm:flex-nowrap">
                   {/* Quantity stepper */}
                   <div className="space-y-1">
                     <div className="flex items-center gap-1">
