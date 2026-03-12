@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Item, ItemEntry } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/helpers"
-import { AlertTriangle, Info, Minus, Plus, X } from "lucide-react"
+import { AlertTriangle, Info, Minus, Pencil, Plus, X } from "lucide-react"
 import { useState } from "react"
 
 export default function ItemQuantitySelector({
@@ -45,10 +45,22 @@ export default function ItemQuantitySelector({
     onChange([...items, newItem])
   }
 
+  const handleAddCustom = () => {
+    const customItem: ItemEntry = {
+      item: null,
+      description: "",
+      quantity: 1,
+      final_price_per_unit: 0,
+      print_price_per_unit: 0,
+    }
+    onChange([...items, customItem])
+  }
+
   /** Check if an item is duplicated in the list */
   const getDuplicateIndices = () => {
     const seen = new Map<number, number[]>()
     items.forEach((itm, idx) => {
+      if (!itm.item) return
       const id = itm.item.id
       if (!seen.has(id)) seen.set(id, [])
       seen.get(id)!.push(idx)
@@ -103,9 +115,13 @@ export default function ItemQuantitySelector({
   const [editingQty, setEditingQty] = useState<Record<number, string>>({})
 
   const isKgItem = (item: Item) => item.unit_of_measure === "kg"
-  const stepAmount = (item: Item) => (isKgItem(item) ? 0.25 : 1)
+  const stepAmount = (item: Item | null) => (item && isKgItem(item) ? 0.25 : 1)
 
   const getPrices = (itm: ItemEntry) => {
+    if (!itm.item) {
+      const effective = itm.final_price_per_unit ?? 0
+      return { retail: 0, wholesale: 0, technician: 0, effective }
+    }
     const retail = Number(itm.item.retail_price) || 0
     const wholesale = Number(itm.item.wholesale_price) || 0
     const technician = Number(itm.item.technician_price) || 0
@@ -125,45 +141,70 @@ export default function ItemQuantitySelector({
       {items.length > 0 ? (
         <div className="space-y-2">
           {items.map((itm, idx) => {
+            const isCustom = !itm.item
             const { retail, wholesale, technician, effective } = getPrices(itm)
             const lineTotal = itm.quantity * effective
-            const availableStock = getAvailableStock(itm.item.id)
+            const availableStock = itm.item
+              ? getAvailableStock(itm.item.id)
+              : undefined
             const isOverStock =
               availableStock !== undefined && itm.quantity > availableStock
             const isDuplicate = duplicateIndices.has(idx)
             return (
               <div
-                key={itm.item.id + "-" + idx}
+                key={(itm.item?.id ?? "custom") + "-" + idx}
                 className={`rounded-lg border p-3 space-y-2 transition-colors ${
                   isOverStock
                     ? "border-amber-400/60 dark:border-amber-600/40 bg-amber-50/30 dark:bg-amber-950/10"
-                    : "hover:bg-muted/30"
+                    : isCustom
+                      ? "border-violet-300/60 dark:border-violet-600/40 bg-violet-50/20 dark:bg-violet-950/10"
+                      : "hover:bg-muted/30"
                 }`}
               >
-                {/* Row 1: Item selector + remove */}
+                {/* Row 1: Item selector / Custom description + remove */}
                 <div className="flex items-center gap-2">
                   <div className="flex-1 min-w-0">
-                    <ComboBox
-                      disabled={disabled}
-                      onChange={(val) => {
-                        const found = allItems.find(
-                          (c) => c.id.toString() === val,
-                        )
-                        if (found) handleUpdateItem(idx, found)
-                      }}
-                      value={itm.item.id.toString()}
-                      options={allItems.map((c) => {
-                        const stock = getAvailableStock(c.id)
-                        return {
-                          label:
-                            stock !== undefined
-                              ? `${c.name} (${stock})`
-                              : c.name,
-                          value: c.id.toString(),
-                        }
-                      })}
-                      placeholder="Select item"
-                    />
+                    {isCustom ? (
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Pencil className="size-3.5 text-violet-500" />
+                          <span className="text-[10px] font-medium text-violet-600 dark:text-violet-400 uppercase tracking-wide">
+                            Custom
+                          </span>
+                        </div>
+                        <Input
+                          placeholder="e.g. Motor Rewind"
+                          value={itm.description ?? ""}
+                          onChange={(e) =>
+                            handleUpdate(idx, "description", e.target.value)
+                          }
+                          disabled={disabled}
+                          className="h-8"
+                        />
+                      </div>
+                    ) : (
+                      <ComboBox
+                        disabled={disabled}
+                        onChange={(val) => {
+                          const found = allItems.find(
+                            (c) => c.id.toString() === val,
+                          )
+                          if (found) handleUpdateItem(idx, found)
+                        }}
+                        value={itm.item?.id.toString() ?? ""}
+                        options={allItems.map((c) => {
+                          const stock = getAvailableStock(c.id)
+                          return {
+                            label:
+                              stock !== undefined
+                                ? `${c.name} (${stock})`
+                                : c.name,
+                            value: c.id.toString(),
+                          }
+                        })}
+                        placeholder="Select item"
+                      />
+                    )}
                   </div>
                   <TooltipProvider>
                     <Tooltip>
@@ -194,7 +235,7 @@ export default function ItemQuantitySelector({
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wide">
                         Qty
                       </span>
-                      {itm.item.unit_of_measure === "kg" && (
+                      {itm.item?.unit_of_measure === "kg" && (
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -260,7 +301,7 @@ export default function ItemQuantitySelector({
                       </TooltipProvider>
                       <Input
                         type="number"
-                        min={isKgItem(itm.item) ? 0.25 : 1}
+                        min={itm.item && isKgItem(itm.item) ? 0.25 : 1}
                         step="any"
                         value={editingQty[idx] ?? itm.quantity}
                         onChange={(e) => {
@@ -322,7 +363,7 @@ export default function ItemQuantitySelector({
                     </div>
                   </div>
 
-                  {allowPriceChange && (
+                  {(allowPriceChange || isCustom) && (
                     <>
                       {/* Sell price */}
                       <div className="space-y-1 w-28">
@@ -374,7 +415,8 @@ export default function ItemQuantitySelector({
                           min={0}
                           step="0.01"
                           value={
-                            itm.print_price_per_unit ?? itm.item.retail_price
+                            itm.print_price_per_unit ??
+                            (itm.item ? itm.item.retail_price : 0)
                           }
                           onChange={(e) =>
                             handleUpdate(
@@ -432,7 +474,7 @@ export default function ItemQuantitySelector({
                         Duplicate
                       </span>
                     )}
-                    {allowPriceChange && (
+                    {allowPriceChange && !isCustom && (
                       <span>
                         R: {formatCurrency(retail)} · W:{" "}
                         {formatCurrency(wholesale)} · T:{" "}
@@ -458,27 +500,49 @@ export default function ItemQuantitySelector({
         </div>
       )}
 
-      {/* Add button */}
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="w-full border-dashed"
-              onClick={handleAdd}
-              disabled={disabled || allItems.length === 0}
-            >
-              <Plus className="size-3.5 mr-1.5" />
-              Add Item
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>Add a new item to the transaction</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      {/* Add buttons */}
+      <div className="flex gap-2">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex-1 border-dashed"
+                onClick={handleAdd}
+                disabled={disabled || allItems.length === 0}
+              >
+                <Plus className="size-3.5 mr-1.5" />
+                Add Item
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Add an inventory item</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="flex-1 border-dashed border-violet-300 dark:border-violet-700 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-950/30"
+                onClick={handleAddCustom}
+                disabled={disabled}
+              >
+                <Pencil className="size-3.5 mr-1.5" />
+                Custom Item
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Add a non-inventory item (e.g. Motor Rewind)</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   )
 }

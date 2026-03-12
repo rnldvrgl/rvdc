@@ -118,7 +118,9 @@ export const SalesTransactionPrintContent = React.forwardRef<
             className="flex text-sm space-x-1.5"
           >
             <div className="w-6">{item.quantity}</div>
-            <div className="flex-1">{item.item?.name ?? "Unnamed"}</div>
+            <div className="flex-1">
+              {item.item?.name ?? item.description ?? "Custom Item"}
+            </div>
             <div className="w-20 text-right">{formatCurrency(unitPrice)}</div>
             <div className="w-20 text-right">{formatCurrency(lineTotal)}</div>
           </div>

@@ -165,10 +165,11 @@ export interface ProductCategoryPayload {
 // Item
 // ---------------------
 export interface ItemEntry {
-  item: Item
+  item: Item | null
   quantity: number
   final_price_per_unit?: number
   print_price_per_unit?: number
+  description?: string
 }
 
 export interface Item {
@@ -397,7 +398,7 @@ export interface SalesPayment {
 // Sales Item
 export interface SalesItem {
   id: number
-  item: Item
+  item: Item | null
   description: string
   quantity: number
   final_price_per_unit: string
@@ -446,9 +447,10 @@ export interface SalesTransactionPayload {
   transaction_type?: string
   note?: string | null
   items: {
-    item: number
+    item: number | null
     quantity: number
     final_price_per_unit: number
+    description?: string
   }[]
   payments: {
     payment_type: string

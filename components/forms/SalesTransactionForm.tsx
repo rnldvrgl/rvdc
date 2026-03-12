@@ -86,7 +86,8 @@ export default function SalesTransactionForm({
     items: z
       .array(
         z.object({
-          item_id: z.number(),
+          item_id: z.number().nullable(),
+          description: z.string().optional(),
           quantity: z.number().min(0.01, "Quantity must be at least 0.01"),
           final_price_per_unit: z.number().min(0),
           print_price_per_unit: z.number().min(0).optional(),
@@ -137,7 +138,8 @@ export default function SalesTransactionForm({
         })) ?? [],
       items:
         initialData?.items?.map((i) => ({
-          item_id: i.item?.id ?? 0,
+          item_id: i.item?.id ?? null,
+          description: i.item ? undefined : i.description,
           quantity: i.quantity ?? 0,
           final_price_per_unit:
             Number(i.final_price_per_unit) ?? Number(i.item?.retail_price) ?? 0,
@@ -233,7 +235,8 @@ export default function SalesTransactionForm({
     // Items setup
     const initialItems =
       initialData.items?.map((i) => ({
-        item_id: i.item?.id ?? 0,
+        item_id: i.item?.id ?? null,
+        description: i.item ? undefined : i.description,
         quantity: i.quantity ?? 0,
         final_price_per_unit:
           Number(i.final_price_per_unit) ?? Number(i.item?.retail_price) ?? 0,
@@ -244,6 +247,8 @@ export default function SalesTransactionForm({
       initialData.items?.map((i) => ({
         item: i.item ?? null,
         quantity: i.quantity ?? 0,
+        description: i.item ? undefined : i.description,
+        final_price_per_unit: Number(i.final_price_per_unit) ?? 0,
       })) ?? [],
     )
 
@@ -274,6 +279,9 @@ export default function SalesTransactionForm({
       manual_receipt_number: data.manual_receipt_number ?? null,
       items: data.items.map((i) => ({
         item: i.item_id,
+        ...(i.item_id === null && i.description
+          ? { description: i.description }
+          : {}),
         quantity: i.quantity,
         final_price_per_unit: isFree ? 0 : i.final_price_per_unit,
       })),
@@ -327,6 +335,8 @@ export default function SalesTransactionForm({
       data.items?.map((i) => ({
         item: i.item ?? null,
         quantity: i.quantity ?? 0,
+        description: i.item ? undefined : i.description,
+        final_price_per_unit: Number(i.final_price_per_unit) ?? 0,
       })) ?? [],
   })
 
@@ -572,7 +582,8 @@ export default function SalesTransactionForm({
                 form.setValue(
                   "items",
                   updatedItems.map((i) => ({
-                    item_id: i.item?.id ?? 0,
+                    item_id: i.item?.id ?? null,
+                    description: i.item ? undefined : (i.description ?? ""),
                     quantity: i.quantity,
                     final_price_per_unit: isFreeTransaction
                       ? 0
