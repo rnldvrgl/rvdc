@@ -302,6 +302,30 @@ export default function AppliancePartsManager({
                               FREE
                             </Badge>
                           )}
+                          {part.stock_request_status === "pending" && (
+                            <Badge
+                              variant="warning"
+                              className="text-xs"
+                            >
+                              Stock Pending
+                            </Badge>
+                          )}
+                          {part.stock_request_status === "approved" && (
+                            <Badge
+                              variant="success"
+                              className="text-xs"
+                            >
+                              Stock Approved
+                            </Badge>
+                          )}
+                          {part.stock_request_status === "declined" && (
+                            <Badge
+                              variant="destructive"
+                              className="text-xs"
+                            >
+                              Stock Declined
+                            </Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">

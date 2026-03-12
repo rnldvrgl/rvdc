@@ -920,6 +920,7 @@ export interface ApplianceItemUsed {
   expense?: number | null
   is_cancelled?: boolean
   cancelled_at?: string | null
+  stock_request_status?: "pending" | "approved" | "declined" | null
 }
 
 export interface ApplianceItemUsedPayload {
@@ -957,6 +958,7 @@ export interface ServiceItemUsed {
   expense?: number | null
   is_cancelled?: boolean
   cancelled_at?: string | null
+  stock_request_status?: "pending" | "approved" | "declined" | null
 }
 
 export interface ServiceItemUsedPayload {
@@ -969,6 +971,34 @@ export interface ServiceItemUsedPayload {
   discount_percentage?: number
   discount_reason?: string
   apply_copper_tube_promo?: boolean
+}
+
+// Stock Request
+export interface StockRequest {
+  id: number
+  item: number
+  item_name: string
+  item_sku: string
+  stall: number
+  stall_name: string
+  requested_quantity: string
+  status: "pending" | "approved" | "declined" | "cancelled"
+  source: "service_appliance" | "service"
+  service: number | null
+  service_id: number | null
+  appliance_item: number | null
+  service_item: number | null
+  notes: string
+  requested_by: number | null
+  requested_by_name: string | null
+  approved_by: number | null
+  approved_by_name: string | null
+  approved_at: string | null
+  decline_reason: string
+  declined_at: string | null
+  available_stock: number
+  created_at: string
+  updated_at: string
 }
 
 // Technician Assignment
