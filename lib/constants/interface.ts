@@ -187,6 +187,24 @@ export interface Item {
   created_at: string
   updated_at: string
   display_name?: string
+  price_history?: ItemPriceHistory[]
+}
+
+export interface ItemPriceHistory {
+  id: number
+  item: number
+  retail_price: string
+  wholesale_price: string
+  technician_price: string
+  cost_price: string
+  old_retail_price?: string | null
+  old_wholesale_price?: string | null
+  old_technician_price?: string | null
+  old_cost_price?: string | null
+  price_change_amount?: string | null
+  change_type: "initial" | "price"
+  notes: string
+  changed_at: string
 }
 
 export interface ItemPayload {
