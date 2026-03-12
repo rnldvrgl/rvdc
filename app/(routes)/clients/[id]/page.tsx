@@ -610,7 +610,8 @@ export default function ClientDetailPage() {
                       const itemCount = transaction.items?.length || 0
                       const totalItems =
                         transaction.items?.reduce(
-                          (sum, item) => sum + item.quantity,
+                          (sum, item) =>
+                            sum + parseFloat(String(item.quantity)),
                           0,
                         ) || 0
                       const isServiceRelated = serviceRelatedTransactionIds.has(
@@ -646,10 +647,14 @@ export default function ClientDetailPage() {
                               transaction.items.length > 0 && (
                                 <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-0.5">
                                   {transaction.items
-                                    .map(
-                                      (item) =>
-                                        `${item.item?.name ?? item.description} (${item.quantity})`,
-                                    )
+                                    .map((item) => {
+                                      const qty = parseFloat(
+                                        String(item.quantity),
+                                      )
+                                      const qtyDisplay =
+                                        qty % 1 === 0 ? qty.toFixed(0) : qty
+                                      return `${item.item?.name ?? item.description} (x${qtyDisplay})`
+                                    })
                                     .join(", ")}
                                 </p>
                               )}
