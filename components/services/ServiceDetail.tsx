@@ -113,6 +113,8 @@ export default function ServiceDetail({
   const [paymentNotes, setPaymentNotes] = useState("")
   const [selectedCheque, setSelectedCheque] = useState<number | null>(null)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [reopenDialogOpen, setReopenDialogOpen] = useState(false)
+  const [reopenReason, setReopenReason] = useState("")
   const [cancelReason, setCancelReason] = useState("")
   const [refundDialogOpen, setRefundDialogOpen] = useState(false)
   const [refundAmount, setRefundAmount] = useState("")
@@ -138,6 +140,7 @@ export default function ServiceDetail({
     cancelService,
     refundService,
     updateService,
+    reopenService,
   } = useServiceMutations()
   const { updateAppliance } = useServiceApplianceMutations()
 
@@ -251,6 +254,19 @@ export default function ServiceDetail({
         onRefresh?.()
       },
     })
+  }
+
+  const handleReopen = () => {
+    reopenService.mutate(
+      { id: service.id, reason: reopenReason },
+      {
+        onSuccess: () => {
+          setReopenDialogOpen(false)
+          setReopenReason("")
+          onRefresh?.()
+        },
+      },
+    )
   }
 
   const handleAddPayment = () => {
@@ -597,6 +613,24 @@ export default function ServiceDetail({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Print Service Receipt</TooltipContent>
+            </Tooltip>
+          )}
+          {isCompleted && canManage && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => setReopenDialogOpen(true)}
+                >
+                  <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                  Reopen
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Reopen service to add/remove parts, then re-complete
+              </TooltipContent>
             </Tooltip>
           )}
           {canComplete && canManage && (
@@ -2134,6 +2168,53 @@ export default function ServiceDetail({
         onConfirm={handleComplete}
         confirmText={hasUnfinishedAppliances ? "Close" : "Complete Service"}
       />
+
+      {/* Reopen Service Dialog */}
+      <Dialog
+        open={reopenDialogOpen}
+        onOpenChange={(open) => {
+          setReopenDialogOpen(open)
+          if (!open) setReopenReason("")
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reopen Service for Revision</DialogTitle>
+            <DialogDescription>
+              This will void the existing transactions, return consumed stock to
+              inventory, and set the service back to &quot;In Progress&quot; so
+              you can edit parts/items. Customer payments will NOT be affected.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="reopen_reason">Reason (optional)</Label>
+            <Textarea
+              id="reopen_reason"
+              placeholder="e.g. Need to add missing parts"
+              value={reopenReason}
+              onChange={(e) => setReopenReason(e.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setReopenDialogOpen(false)
+                setReopenReason("")
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleReopen}
+              disabled={reopenService.isPending}
+            >
+              <RotateCcw className="mr-1 h-3.5 w-3.5" />
+              {reopenService.isPending ? "Reopening..." : "Reopen Service"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Payment Recording Dialog */}
       <Dialog

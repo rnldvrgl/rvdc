@@ -128,6 +128,21 @@ export function useServiceMutations() {
     },
   })
 
+  const reopenService = useApiMutation({
+    mutationFn: ({ id, reason }: { id: number; reason?: string }) =>
+      api.post(`${url}${id}/reopen/`, { reason }),
+    successMessage: "Service reopened for revision.",
+    invalidateQueries: [
+      { queryKey: ["services"] },
+      { queryKey: ["stocks"] },
+      { queryKey: ["sales-transactions"] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
+    },
+  })
+
   return {
     addService,
     updateService,
@@ -136,5 +151,6 @@ export function useServiceMutations() {
     recordPayment,
     cancelService,
     refundService,
+    reopenService,
   }
 }
