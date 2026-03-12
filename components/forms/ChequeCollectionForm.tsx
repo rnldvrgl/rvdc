@@ -4,6 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 
+import {
+  ClientComboBox,
+  useClients,
+} from "@/components/custom/inputs/ClientComboBox"
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import DatePicker from "@/components/custom/inputs/DatePicker"
 import { Badge } from "@/components/ui/badge"
@@ -26,11 +30,7 @@ import { ChequeCollection } from "@/lib/constants/interface"
 import { ChequeCollectionSchema } from "@/lib/constants/schema"
 import { ChequeCollectionPayload } from "@/lib/constants/types"
 import { useChequeCollectionMutations } from "@/lib/mutations/useChequeCollectionMutations"
-import {
-  useBanksChoices,
-  useClientChoices,
-  useUsersChoices,
-} from "@/lib/queries/useChoices"
+import { useBanksChoices, useUsersChoices } from "@/lib/queries/useChoices"
 import { formatBackDate } from "@/lib/utils/helpers/date"
 import {
   Banknote,
@@ -104,7 +104,7 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
   const [sameAsClient, setSameAsClient] = useState(true)
   const { addChequeCollection, updateChequeCollection } =
     useChequeCollectionMutations()
-  const { data: clients, isLoading: clientsLoading } = useClientChoices()
+  const { clients, isLoading: clientsLoading } = useClients()
   const { data: users, isLoading: usersLoading } = useUsersChoices()
   const { data: banks } = useBanksChoices()
 
@@ -145,11 +145,6 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
 
   const mutationLoading =
     addChequeCollection.isPending || updateChequeCollection.isPending
-
-  const clientOptions = useMemo(() => {
-    if (clientsLoading) return [{ value: "", label: "Loading..." }]
-    return clients?.map((c) => ({ value: c.id, label: c.full_name })) ?? []
-  }, [clients, clientsLoading])
 
   const userOptions = useMemo(() => {
     if (usersLoading) return [{ value: "", label: "Loading..." }]
@@ -217,12 +212,11 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
                 <FormItem>
                   <FormLabel required>Client</FormLabel>
                   <FormControl>
-                    <ComboBox
-                      options={clientOptions}
+                    <ClientComboBox
                       value={field.value ?? null}
                       onChange={field.onChange}
-                      placeholder="Select client"
                       disabled={mutationLoading || clientsLoading}
+                      nameOnly
                     />
                   </FormControl>
                   <FormMessage />

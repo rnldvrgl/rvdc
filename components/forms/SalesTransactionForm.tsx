@@ -1,5 +1,6 @@
 "use client"
 
+import { ClientComboBox } from "@/components/custom/inputs/ClientComboBox"
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntityDialog from "@/components/custom/shared/EntityDialog"
@@ -28,18 +29,14 @@ import {
   Stall,
   Stock,
 } from "@/lib/constants/interface"
-import { Client, PaginatedResult } from "@/lib/constants/types"
+import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheetDialog } from "@/lib/hooks/useEntityDialog"
 import { useItemSelection } from "@/lib/hooks/useItemSelection"
 import { usePrint } from "@/lib/hooks/usePrint"
 import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
-import {
-  useClientChoices,
-  useItemChoices,
-  useStallChoices,
-} from "@/lib/queries/useChoices"
+import { useItemChoices, useStallChoices } from "@/lib/queries/useChoices"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
@@ -156,9 +153,7 @@ export default function SalesTransactionForm({
   const [createdTransaction, setCreatedTransaction] =
     useState<SalesTransaction | null>(null)
   const { data: allItemsData } = useItemChoices()
-  const { data: clientsData } = useClientChoices()
   const allItems: Item[] = allItemsData ?? []
-  const clients: Client[] = clientsData ?? []
 
   // Fetch stock levels for the selected stall
   const selectedStallId =
@@ -496,15 +491,10 @@ export default function SalesTransactionForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel required>Client</FormLabel>
-                    <ComboBox
+                    <ClientComboBox
                       disabled={isDisabled}
-                      options={clients.map((c) => ({
-                        value: c.id,
-                        label: `${c.full_name}${c.contact_number ? ` (${c.contact_number})` : ""}`,
-                      }))}
                       value={field.value ? Number(field.value) : null}
                       onChange={(val) => field.onChange(val ?? null)}
-                      placeholder="Select client"
                     />
                     <FormMessage />
                   </FormItem>

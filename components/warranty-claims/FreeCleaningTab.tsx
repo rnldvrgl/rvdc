@@ -1,6 +1,6 @@
 "use client"
 
-import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import { ClientComboBox } from "@/components/custom/inputs/ClientComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -8,19 +8,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { AirconUnits } from "@/lib/constants/interface"
-import { Client } from "@/lib/constants/types"
 import { useWarrantyClaimMutations } from "@/lib/mutations/installations/useWarrantyClaimMutations"
 import { useAirconUnits } from "@/lib/queries/useAircons"
-import {
-  useClientChoices,
-  useTechnicianChoices,
-} from "@/lib/queries/useChoices"
+import { useTechnicianChoices } from "@/lib/queries/useChoices"
 import { formatDate } from "date-fns"
 import { CheckCircle2, Info, SprayCan } from "lucide-react"
 import { useState } from "react"
 
 export default function FreeCleaningTab() {
-  const { data: clientsData } = useClientChoices()
   const { data: techniciansData } = useTechnicianChoices()
   const { redeemFreeCleaningBatch } = useWarrantyClaimMutations()
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null)
@@ -50,12 +45,6 @@ export default function FreeCleaningTab() {
     unitsData?.results?.filter(
       (u: AirconUnits) => u.free_cleaning_redeemed === true,
     ) ?? []
-
-  const clientOptions =
-    clientsData?.map((c: Client) => ({
-      value: c.id,
-      label: c.full_name,
-    })) ?? []
 
   const toggleUnit = (unitId: number) => {
     setSelectedUnits((prev) =>
@@ -128,11 +117,11 @@ export default function FreeCleaningTab() {
         <CardContent className="space-y-4">
           <div>
             <Label>Client</Label>
-            <ComboBox
+            <ClientComboBox
               value={selectedClientId}
               onChange={handleClientChange}
-              options={clientOptions}
               placeholder="Select a client..."
+              nameOnly
             />
           </div>
           <div>

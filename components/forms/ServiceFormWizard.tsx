@@ -1,5 +1,9 @@
 "use client"
 
+import {
+  ClientComboBox,
+  useClients,
+} from "@/components/custom/inputs/ClientComboBox"
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { Badge } from "@/components/ui/badge"
@@ -19,10 +23,7 @@ import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { AssignmentType, ServicePayload } from "@/lib/constants/interface"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
-import {
-  useClientChoices,
-  useTechnicianChoices,
-} from "@/lib/queries/useChoices"
+import { useTechnicianChoices } from "@/lib/queries/useChoices"
 import { cn } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
@@ -132,7 +133,7 @@ export default function ServiceFormWizard({
     mode: "onChange",
   })
 
-  const { data: clients = [] } = useClientChoices()
+  const { clients } = useClients()
   const { data: technicians = [] } = useTechnicianChoices()
 
   const selectedMode = useWatch({ control: form.control, name: "service_mode" })
@@ -381,11 +382,7 @@ export default function ServiceFormWizard({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel required>Client</FormLabel>
-                  <ComboBox
-                    options={clients.map((c) => ({
-                      value: c.id,
-                      label: `${c.full_name} (${c.contact_number})`,
-                    }))}
+                  <ClientComboBox
                     value={field.value ?? null}
                     onChange={field.onChange}
                     placeholder="Search and select a client"

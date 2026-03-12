@@ -1,5 +1,6 @@
 "use client"
 
+import { ClientComboBox } from "@/components/custom/inputs/ClientComboBox"
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,11 +15,9 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { AirconUnits, ClaimType } from "@/lib/constants/interface"
-import { Client } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useWarrantyClaimMutations } from "@/lib/mutations/installations/useWarrantyClaimMutations"
 import { useAirconUnits } from "@/lib/queries/useAircons"
-import { useClientChoices } from "@/lib/queries/useChoices"
 import { Info, ShieldCheck } from "lucide-react"
 import { useState } from "react"
 import { SubmitHandler, useForm } from "react-hook-form"
@@ -27,7 +26,6 @@ import ExistingClaimsList from "./ExistingClaimsList"
 export default function WarrantyClaimsTab() {
   const { canManage } = useCurrentUser()
   const { addWarrantyClaim } = useWarrantyClaimMutations()
-  const { data: clientsData } = useClientChoices()
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null)
   const [selectedUnitId, setSelectedUnitId] = useState<number | null>(null)
 
@@ -45,12 +43,6 @@ export default function WarrantyClaimsTab() {
         (u.is_sold || u.unit_status === "Installed") &&
         u.warranty_status === "Under Warranty",
     ) ?? []
-
-  const clientOptions =
-    clientsData?.map((c: Client) => ({
-      value: c.id,
-      label: c.full_name,
-    })) ?? []
 
   const claimTypeOptions = [
     { value: "repair" as const, label: "Repair" },
@@ -130,11 +122,11 @@ export default function WarrantyClaimsTab() {
             <CardContent className="space-y-4">
               <div>
                 <Label>Client</Label>
-                <ComboBox
+                <ClientComboBox
                   value={selectedClientId}
                   onChange={handleClientChange}
-                  options={clientOptions}
                   placeholder="Select a client..."
+                  nameOnly
                 />
               </div>
             </CardContent>
