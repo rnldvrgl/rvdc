@@ -32,7 +32,7 @@ export function BirthdayReminders() {
 
   if (birthdays.length === 0) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950">
@@ -54,8 +54,8 @@ export function BirthdayReminders() {
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="h-full">
+      <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950">
             <Cake className="size-4 text-pink-600 dark:text-pink-400" />
@@ -63,41 +63,39 @@ export function BirthdayReminders() {
           Upcoming Birthdays
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {birthdays.map((birthday, index) => {
-            const birthdayDate = new Date(birthday.start)
-            const isToday = birthdayDate.toDateString() === today.toDateString()
+      <CardContent className="space-y-2">
+        {birthdays.map((birthday, index) => {
+          const birthdayDate = new Date(birthday.start)
+          const isToday = birthdayDate.toDateString() === today.toDateString()
 
-            return (
-              <div
-                key={index}
-                className="flex items-center gap-3 p-3 rounded-lg border transition-colors hover:bg-accent/50 border-pink-200/50 dark:border-pink-900/30"
-              >
-                <div className="size-9 shrink-0 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
-                  {birthday.extendedProps.user_name?.[0]?.toUpperCase() || "?"}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">
-                    {birthday.extendedProps.user_name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {isToday ? (
-                      <span className="text-pink-600 dark:text-pink-400 font-medium">
-                        Today 🎉
-                      </span>
-                    ) : (
-                      format(birthdayDate, "MMM dd")
-                    )}
-                  </p>
-                </div>
-                {isToday && (
-                  <Sparkles className="size-4 text-pink-500 animate-pulse shrink-0" />
-                )}
+          return (
+            <div
+              key={index}
+              className="flex items-center gap-3 p-3 rounded-lg border transition-colors hover:bg-accent/50 border-pink-200/50 dark:border-pink-900/30"
+            >
+              <div className="size-9 shrink-0 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                {birthday.extendedProps.user_name?.[0]?.toUpperCase() || "?"}
               </div>
-            )
-          })}
-        </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">
+                  {birthday.extendedProps.user_name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isToday ? (
+                    <span className="text-pink-600 dark:text-pink-400 font-medium">
+                      Today 🎉
+                    </span>
+                  ) : (
+                    format(birthdayDate, "MMM dd")
+                  )}
+                </p>
+              </div>
+              {isToday && (
+                <Sparkles className="size-4 text-pink-500 animate-pulse shrink-0" />
+              )}
+            </div>
+          )
+        })}
       </CardContent>
     </Card>
   )

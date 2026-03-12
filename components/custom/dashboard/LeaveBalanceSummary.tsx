@@ -14,7 +14,7 @@ export function LeaveBalanceSummary() {
   }
 
   return (
-    <Card className="relative">
+    <Card className="relative h-full">
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Plane className="size-5" />

@@ -18,7 +18,11 @@ type AlertItem = {
   threshold: number
 }
 
-export function InventoryReorderAlerts() {
+export function InventoryReorderAlerts({
+  stallOnly = false,
+}: {
+  stallOnly?: boolean
+}) {
   // Fetch accurate counts from backend
   const { data: stallCounts } = useStallStockStatusCounts()
   const { data: stockRoomCounts } = useStockRoomStatusCounts()
@@ -78,15 +82,15 @@ export function InventoryReorderAlerts() {
   // Use backend counts (accurate across all pages)
   const stallNoStockCount = stallCounts?.no_stock ?? 0
   const stallLowStockCount = stallCounts?.low_stock ?? 0
-  const srNoStockCount = stockRoomCounts?.no_stock ?? 0
-  const srLowStockCount = stockRoomCounts?.low_stock ?? 0
+  const srNoStockCount = stallOnly ? 0 : (stockRoomCounts?.no_stock ?? 0)
+  const srLowStockCount = stallOnly ? 0 : (stockRoomCounts?.low_stock ?? 0)
 
   const total =
     stallNoStockCount + stallLowStockCount + srNoStockCount + srLowStockCount
 
   if (total === 0) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <Package className="size-4" />
@@ -106,7 +110,7 @@ export function InventoryReorderAlerts() {
   }
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <Package className="size-4" />

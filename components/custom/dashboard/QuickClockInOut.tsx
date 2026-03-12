@@ -186,7 +186,7 @@ export function QuickClockInOut() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Clock className="size-5" />
@@ -205,7 +205,7 @@ export function QuickClockInOut() {
   // Outside clock in window - only prevent if haven't clocked in yet
   if (!canClockInNow && !hasClockedIn) {
     return (
-      <Card className="relative">
+      <Card className="relative h-full">
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <Clock className="size-5" />
@@ -246,7 +246,7 @@ export function QuickClockInOut() {
   }
 
   return (
-    <Card className="relative">
+    <Card className="relative h-full">
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Clock className="size-5" />

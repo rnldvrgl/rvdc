@@ -6,9 +6,8 @@ import { EmployeePerformanceStats } from "@/components/custom/dashboard/Employee
 import { InventoryReorderAlerts } from "@/components/custom/dashboard/InventoryReorderAlerts"
 import { LeaveBalanceSummary } from "@/components/custom/dashboard/LeaveBalanceSummary"
 import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
-import { RecentTransactions } from "@/components/custom/dashboard/RecentTransactions"
 import { RemindersAlerts } from "@/components/custom/dashboard/RemindersAlerts"
-import { SalesSummary } from "@/components/custom/dashboard/SalesSummary"
+import { SubStallSettlement } from "@/components/custom/dashboard/SubStallSettlement"
 import { WarrantyExpirationAlerts } from "@/components/custom/dashboard/WarrantyExpirationAlerts"
 import DateRangePicker from "@/components/custom/inputs/DateRangePicker"
 import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
@@ -19,7 +18,7 @@ import { WidgetErrorBoundary } from "@/components/custom/shared/WidgetErrorBound
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useGetSummary } from "@/lib/queries/analytics/useGetAnalytics"
-import { BarChart3, TrendingUp } from "lucide-react"
+import { BarChart3 } from "lucide-react"
 import { FormProvider, useForm } from "react-hook-form"
 
 type DashboardFormValues = {
@@ -84,76 +83,81 @@ const DashboardPage = () => {
         />
 
         <div className="space-y-6">
-          {/* Role-Based Dashboard Components */}
-          {role === "technician" && (
+          {/* Employee Section (technician, clerk, manager) */}
+          {(role === "technician" ||
+            role === "clerk" ||
+            role === "manager") && (
             <div className="space-y-6">
               {payrollIncluded && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <QuickClockInOut />
-                  <LeaveBalanceSummary />
+                <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                  {/* Clock In/Out - Hero widget */}
+                  <div className="lg:flex-[2] min-w-0">
+                    <QuickClockInOut />
+                  </div>
+
+                  {/* Right column - stacked widgets */}
+                  <div className="lg:flex-1 flex flex-col gap-4 lg:gap-6 min-w-0">
+                    <LeaveBalanceSummary />
+
+                    {/* Sub Stall Settlement for Manager */}
+                    {role === "manager" && (
+                      <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
+                        <SubStallSettlement />
+                      </WidgetErrorBoundary>
+                    )}
+
+                    {/* Inventory Alerts for Clerk */}
+                    {role === "clerk" && (
+                      <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
+                        <InventoryReorderAlerts stallOnly />
+                      </WidgetErrorBoundary>
+                    )}
+
+                    {/* Birthday Reminders for Technician */}
+                    {role === "technician" && <BirthdayReminders />}
+                  </div>
                 </div>
               )}
-              <BirthdayReminders />
-            </div>
-          )}
 
-          {role === "clerk" && (
-            <div className="space-y-6">
-              {/* Top Row - Quick Actions */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                <div className="xl:col-span-2">
-                  <QuickClockInOut />
-                </div>
-                <div className="xl:col-span-2">
-                  <LeaveBalanceSummary />
-                </div>
-              </div>
-
-              {/* Middle Row - Transactions & Sales */}
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <RecentTransactions />
-                <SalesSummary />
-              </div>
-
-              {/* Bottom Row - Birthdays */}
-              <BirthdayReminders />
-            </div>
-          )}
-
-          {role === "manager" && (
-            <div className="space-y-6">
-              {/* Top Row - Quick Actions */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                <div className="xl:col-span-2">
-                  <QuickClockInOut />
-                </div>
-                <div className="xl:col-span-2">
-                  <LeaveBalanceSummary />
-                </div>
-              </div>
-
-              {/* Bottom Row - Birthdays */}
-              <BirthdayReminders />
-            </div>
-          )}
-
-          {role === "admin" && (
-            <div className="grid gap-6 lg:grid-cols-2">
-              <WidgetErrorBoundary fallbackTitle="Reminders failed to load">
-                <RemindersAlerts />
-              </WidgetErrorBoundary>
-              <WidgetErrorBoundary fallbackTitle="Birthdays failed to load">
+              {(role === "manager" || role === "clerk") && (
                 <BirthdayReminders />
-              </WidgetErrorBoundary>
-              <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
-                <InventoryReorderAlerts />
-              </WidgetErrorBoundary>
-              <WidgetErrorBoundary fallbackTitle="Warranty alerts failed to load">
-                <WarrantyExpirationAlerts />
+              )}
+            </div>
+          )}
+
+          {/* Admin Dashboard */}
+          {role === "admin" && (
+            <div className="space-y-6">
+              {/* Alerts */}
+              <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+                <WidgetErrorBoundary fallbackTitle="Reminders failed to load">
+                  <RemindersAlerts />
+                </WidgetErrorBoundary>
+                <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
+                  <InventoryReorderAlerts />
+                </WidgetErrorBoundary>
+                <WidgetErrorBoundary fallbackTitle="Warranty alerts failed to load">
+                  <WarrantyExpirationAlerts />
+                </WidgetErrorBoundary>
+              </div>
+
+              {/* Calendar */}
+              <DashboardCalendar />
+
+              {/* KPI Summary */}
+              <SummaryCards />
+
+              {/* Charts */}
+              <DashboardCharts />
+
+              {/* Employee Performance */}
+              <WidgetErrorBoundary fallbackTitle="Employee performance failed to load">
+                <EmployeePerformanceStats />
               </WidgetErrorBoundary>
             </div>
           )}
 
+          {/* Calendar for non-admin roles */}
           {(role === "technician" || role === "clerk") && (
             <DashboardCalendar
               withSettings={false}
@@ -168,36 +172,7 @@ const DashboardPage = () => {
               ]}
             />
           )}
-          {(role === "admin" || role === "manager") && <DashboardCalendar />}
-
-          {/* Analytics - Admin & Manager Only */}
-          {role === "admin" && (
-            <div className="space-y-8">
-              {/* Section Header */}
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <TrendingUp className="size-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold">Analytics & Metrics</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Track your business performance and growth
-                  </p>
-                </div>
-              </div>
-
-              {/* Summary Cards */}
-              <SummaryCards />
-
-              {/* Charts */}
-              <DashboardCharts />
-
-              {/* Employee Performance */}
-              <WidgetErrorBoundary fallbackTitle="Employee performance failed to load">
-                <EmployeePerformanceStats />
-              </WidgetErrorBoundary>
-            </div>
-          )}
+          {role === "manager" && <DashboardCalendar />}
         </div>
       </Wrapper>
     </FormProvider>
