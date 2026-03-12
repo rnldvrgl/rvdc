@@ -131,10 +131,7 @@ export default function SalesTransactionForm({
       client_id: initialData?.client?.id,
       note: initialData?.note ?? "",
       manual_receipt_number: initialData?.manual_receipt_number ?? "",
-      order_discount: initialData?.order_discount_rate
-        ? Number(initialData.order_discount_rate) *
-          Number(initialData.subtotal || 0)
-        : 0,
+      order_discount: Number(initialData?.order_discount || 0),
       payments:
         initialData?.payments?.map((i) => ({
           payment_type: i.payment_type,
@@ -283,15 +280,14 @@ export default function SalesTransactionForm({
       (acc, i) => acc + i.quantity * i.final_price_per_unit,
       0,
     )
-    const discountRate =
-      subtotal > 0 ? Math.min(data.order_discount || 0, subtotal) / subtotal : 0
+    const discount = isFree ? 0 : Math.min(data.order_discount || 0, subtotal)
     const payload = {
       transaction_type: data.transaction_type,
       stall: role == "admin" ? data.stall : (assigned_stall?.id ?? null),
       client: data.client_id ?? null,
       note: data.note || null,
       manual_receipt_number: data.manual_receipt_number ?? null,
-      order_discount_rate: isFree ? 0 : discountRate,
+      order_discount: discount,
       items: data.items.map((i) => ({
         item: i.item_id,
         ...(i.item_id === null && i.description

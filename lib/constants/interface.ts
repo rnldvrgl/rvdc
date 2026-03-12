@@ -454,7 +454,7 @@ export interface SalesTransaction {
   payments: SalesPayment[]
 
   // Computed props if you send them from serializer
-  order_discount_rate?: number
+  order_discount?: number
   subtotal?: string
   computed_total?: string
   total_items?: number
@@ -467,7 +467,7 @@ export interface SalesTransactionPayload {
   manual_receipt_number: string | null
   transaction_type?: string
   note?: string | null
-  order_discount_rate?: number
+  order_discount?: number
   items: {
     item: number | null
     quantity: number
