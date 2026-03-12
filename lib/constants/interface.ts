@@ -915,6 +915,42 @@ export interface ApplianceItemUsedPayload {
   discount_reason?: string
 }
 
+// Service-Level Item Used (not tied to any appliance)
+export interface ServiceItemUsed {
+  id: number
+  service: number
+  item: number
+  item_name: string
+  item_sku: string
+  item_price: string
+  quantity: number
+  is_free: boolean
+  free_quantity: number
+  promo_name?: string
+  charged_quantity: number
+  discount_amount?: string
+  discount_percentage?: string
+  discount_reason?: string
+  discounted_price?: string
+  line_total: string
+  stall_stock_id?: number | null
+  expense?: number | null
+  is_cancelled?: boolean
+  cancelled_at?: string | null
+}
+
+export interface ServiceItemUsedPayload {
+  service: number
+  item: number
+  quantity: number
+  stall_stock?: number | null
+  is_free?: boolean
+  discount_amount?: number
+  discount_percentage?: number
+  discount_reason?: string
+  apply_copper_tube_promo?: boolean
+}
+
 // Technician Assignment
 export interface TechnicianAssignment {
   id: number
