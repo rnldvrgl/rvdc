@@ -1450,7 +1450,7 @@ export default function ServiceDetail({
           {/* Service-Level Parts (chipping, pre-installation materials) */}
           <ServicePartsManager
             serviceId={service.id}
-            disabled={isCompleted || !canManage}
+            disabled={isCompleted}
             onUpdate={onRefresh}
           />
 

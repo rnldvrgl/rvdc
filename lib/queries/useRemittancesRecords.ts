@@ -49,3 +49,27 @@ export function useRemittancePreview({
     staleTime: 1000 * 30, // 30s – fresh enough for preview
   })
 }
+
+export interface SubStallPayable {
+  date: string
+  sub_stall_id: number
+  sub_stall_name: string
+  sales_cash: string
+  sales_gcash: string
+  sales_credit: string
+  sales_debit: string
+  sales_cheque: string
+  total_sales: string
+  e_payments_total: string
+  total_expenses: string
+  cash_payable: string
+}
+
+export function useSubStallPayable({ date }: { date?: string } = {}) {
+  return useApiQuery<SubStallPayable>({
+    queryKey: ["sub-stall-payable", date],
+    url: `${remittanceUrl}sub-stall-payable/`,
+    params: { date },
+    staleTime: 1000 * 60, // 1min
+  })
+}

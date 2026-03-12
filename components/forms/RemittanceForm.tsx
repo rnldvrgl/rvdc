@@ -20,6 +20,7 @@ import useUserProfileStore from "@/lib/store/useUserProfileStore"
 
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import DatePicker from "@/components/custom/inputs/DatePicker"
+import { AdminPasswordDialog } from "@/components/custom/shared/AdminPasswordDialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -63,7 +64,7 @@ interface Props {
 }
 
 export default function RemittanceForm({ initialData, onClose }: Props) {
-  const { role } = useCurrentUser()
+  const { role, isAdmin } = useCurrentUser()
   const userProfile = useUserProfileStore((s) => s.userProfile)
   const { data: stalls } = useStallChoices({})
   const { addRemittance, updateRemittance } = useRemittanceMutations()
@@ -103,6 +104,20 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
     cheque: "",
     expenses: "",
   })
+
+  // Admin authorization for non-admin override adjustments
+  const [adminDialogOpen, setAdminDialogOpen] = useState(false)
+  const [adminCredentials, setAdminCredentials] = useState<{
+    admin_username: string
+    admin_password: string
+  } | null>(null)
+  // Track if the dialog was opened for the "adjust" toggle or for submission
+  const [adminDialogPurpose, setAdminDialogPurpose] = useState<
+    "adjust" | "submit"
+  >("adjust")
+  // Temp payload for deferred submission after admin verification
+  const [pendingPayload, setPendingPayload] =
+    useState<RemittanceRecordPayload | null>(null)
 
   // Pre-fill overrides when preview loads
   useEffect(() => {
@@ -251,6 +266,17 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
     [setValue, getValues, remitAll],
   )
 
+  const submitPayload = (payload: RemittanceRecordPayload) => {
+    if (isEditing) {
+      updateRemittance.mutate(
+        { id: initialData.id!, data: payload },
+        { onSuccess: onClose },
+      )
+    } else {
+      addRemittance.mutate(payload, { onSuccess: onClose })
+    }
+  }
+
   const onSubmit = (data: RemittanceRecordPayload) => {
     if (isRemitted) return
 
@@ -278,15 +304,55 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
       if (!isNaN(debit)) payload.override_sales_debit = debit
       if (!isNaN(cheque)) payload.override_sales_cheque = cheque
       if (!isNaN(expenses)) payload.override_expenses = expenses
+
+      // Non-admin: attach admin credentials if available, or prompt
+      if (!isAdmin) {
+        if (adminCredentials) {
+          payload.admin_username = adminCredentials.admin_username
+          payload.admin_password = adminCredentials.admin_password
+        } else {
+          setPendingPayload(payload)
+          setAdminDialogPurpose("submit")
+          setAdminDialogOpen(true)
+          return
+        }
+      }
     }
 
-    if (isEditing) {
-      updateRemittance.mutate(
-        { id: initialData.id!, data: payload },
-        { onSuccess: onClose },
-      )
+    submitPayload(payload)
+  }
+
+  const handleAdminVerified = (credentials: {
+    admin_username: string
+    admin_password: string
+  }) => {
+    setAdminCredentials(credentials)
+    if (adminDialogPurpose === "adjust") {
+      setAdjustSales(true)
+    } else if (adminDialogPurpose === "submit" && pendingPayload) {
+      const finalPayload = {
+        ...pendingPayload,
+        admin_username: credentials.admin_username,
+        admin_password: credentials.admin_password,
+      }
+      setPendingPayload(null)
+      submitPayload(finalPayload)
+    }
+  }
+
+  const handleAdjustToggle = () => {
+    if (adjustSales) {
+      // Turning off adjustments
+      setAdjustSales(false)
+      setAdminCredentials(null)
+      return
+    }
+    // Turning on: admin skips dialog, non-admin needs verification
+    if (isAdmin) {
+      setAdjustSales(true)
     } else {
-      addRemittance.mutate(payload, { onSuccess: onClose })
+      setAdminDialogPurpose("adjust")
+      setAdminDialogOpen(true)
     }
   }
 
@@ -420,7 +486,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                   variant={adjustSales ? "default" : "outline"}
                   size="sm"
                   className="h-7 text-xs gap-1.5"
-                  onClick={() => setAdjustSales(!adjustSales)}
+                  onClick={handleAdjustToggle}
                 >
                   <Pencil className="size-3" />
                   {adjustSales ? "Editing" : "Adjust"}
@@ -697,6 +763,13 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
           </Button>
         </div>
       </form>
+
+      <AdminPasswordDialog
+        open={adminDialogOpen}
+        onOpenChange={setAdminDialogOpen}
+        onVerified={handleAdminVerified}
+        description="Adjusting expected sales requires admin approval. Enter admin credentials to proceed."
+      />
     </Form>
   )
 }

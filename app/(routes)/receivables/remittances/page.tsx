@@ -8,6 +8,8 @@ import { RemittanceDetails } from "@/components/details/RemittanceDetails"
 import RemittanceForm from "@/components/forms/RemittanceForm"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 import { RemittanceRecord } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
@@ -16,8 +18,10 @@ import { useRemittanceMutations } from "@/lib/mutations/useRemittanceMutations"
 import {
   useRemittancesRecordFilters,
   useRemittancesRecords,
+  useSubStallPayable,
 } from "@/lib/queries/useRemittancesRecords"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
+import { formatDate } from "@/lib/utils/helpers/date"
 import {
   ArrowRightLeft,
   Banknote,
@@ -25,6 +29,7 @@ import {
   Clock,
   DollarSign,
   Plus,
+  Store,
   TrendingDown,
   TrendingUp,
   Wallet,
@@ -46,6 +51,7 @@ export default function RemittancesPage() {
   })
   const { filters, orderingOptions } = useRemittancesRecordFilters()
   const { deleteRemittance, markRemitted } = useRemittanceMutations()
+  const { data: subStallPayable } = useSubStallPayable()
 
   // Compute summary stats from loaded results
   const stats = useMemo(() => {
@@ -122,72 +128,147 @@ export default function RemittancesPage() {
       />
 
       {/* Summary Stat Cards */}
-      {!isLoading && stats.total > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {!isLoading && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard
             label="Declared"
             value={formatCurrency(stats.totalDeclared)}
             icon={<Wallet className="size-4" />}
-            muted
+            variant="muted"
           />
           <StatCard
             label="Remitted"
             value={formatCurrency(stats.totalRemitted)}
             icon={<Banknote className="size-4" />}
-            highlight
+            variant="primary"
           />
           <StatCard
             label="COD Carried"
             value={formatCurrency(stats.totalCOD)}
             icon={<ArrowRightLeft className="size-4" />}
-            className={stats.totalCOD > 0 ? "text-amber-600" : ""}
+            variant={stats.totalCOD > 0 ? "warning" : "default"}
           />
-          <StatCard
-            label="Status"
-            value={
-              <div className="flex flex-wrap items-center gap-1.5">
-                {stats.pending > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="gap-1 text-xs"
-                  >
-                    <Clock className="size-3" />
-                    {stats.pending} pending
-                  </Badge>
-                )}
-                {stats.acknowledged > 0 && (
-                  <Badge
-                    variant="success"
-                    className="gap-1 text-xs"
-                  >
-                    <CheckCircle2 className="size-3" />
-                    {stats.acknowledged}
-                  </Badge>
-                )}
-                {stats.shortCount > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="gap-1 text-xs"
-                  >
-                    <TrendingDown className="size-3" />
-                    {stats.shortCount} short
-                  </Badge>
-                )}
-                {stats.overCount > 0 && (
-                  <Badge
-                    variant="warning"
-                    className="gap-1 text-xs"
-                  >
-                    <TrendingUp className="size-3" />
-                    {stats.overCount} over
-                  </Badge>
-                )}
-              </div>
-            }
-            icon={<DollarSign className="size-4" />}
-          />
+          <StatusCard stats={stats} />
         </div>
       )}
+
+      {/* Sub Stall Payable — Daily cash settlement owed to sub stall */}
+      {role === "manager" &&
+        subStallPayable &&
+        Number(subStallPayable.total_sales) > 0 && (
+          <Card className="p-0 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-4">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center size-8 rounded-md bg-primary/10">
+                  <Store className="size-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold leading-tight">
+                    {subStallPayable.sub_stall_name}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Daily Settlement
+                  </p>
+                </div>
+              </div>
+              <Badge
+                variant="outline"
+                className="text-xs font-normal px-3 py-1"
+              >
+                {formatDate(subStallPayable.date, "MMM dd, yyyy")}
+              </Badge>
+            </div>
+
+            <CardContent className="p-0">
+              {/* Cash Payable — hero */}
+              <div className="relative mx-3 mb-4 rounded-lg overflow-hidden border border-primary/20 shadow-sm">
+                <div className="relative px-4 py-3.5 flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <p className="text-[11px] font-medium">Cash to Pay</p>
+                    <p className="text-2xl font-bold tabular-nums tracking-tight">
+                      {formatCurrency(subStallPayable.cash_payable)}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-center size-10 rounded-full bg-primary/10">
+                    <Banknote className="size-6 text-primary" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Breakdown rows */}
+              <div className="px-4 pb-4 space-y-2.5">
+                {/* Cash calculation */}
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex items-center justify-between py-0.5">
+                    <span className="text-muted-foreground">Cash Sales</span>
+                    <span className="font-semibold tabular-nums">
+                      {formatCurrency(subStallPayable.sales_cash)}
+                    </span>
+                  </div>
+                  {Number(subStallPayable.total_expenses) > 0 && (
+                    <div className="flex items-center justify-between py-0.5">
+                      <span className="text-destructive">− Expenses</span>
+                      <span className="font-semibold tabular-nums text-destructive">
+                        {formatCurrency(subStallPayable.total_expenses)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* E-payments — received directly by admin */}
+                {Number(subStallPayable.e_payments_total) > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        E-Payments (received by admin)
+                      </p>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+                        {Number(subStallPayable.sales_gcash) > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">GCash</span>
+                            <span className="tabular-nums text-muted-foreground font-medium">
+                              {formatCurrency(subStallPayable.sales_gcash)}
+                            </span>
+                          </div>
+                        )}
+                        {Number(subStallPayable.sales_credit) > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">
+                              Credit
+                            </span>
+                            <span className="tabular-nums text-muted-foreground font-medium">
+                              {formatCurrency(subStallPayable.sales_credit)}
+                            </span>
+                          </div>
+                        )}
+                        {Number(subStallPayable.sales_debit) > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Debit</span>
+                            <span className="tabular-nums text-muted-foreground font-medium">
+                              {formatCurrency(subStallPayable.sales_debit)}
+                            </span>
+                          </div>
+                        )}
+                        {Number(subStallPayable.sales_cheque) > 0 && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">
+                              Cheque
+                            </span>
+                            <span className="tabular-nums text-muted-foreground font-medium">
+                              {formatCurrency(subStallPayable.sales_cheque)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
       {/* Create Remittance Sheet */}
       <EntitySheet
@@ -279,41 +360,139 @@ function StatCard({
   label,
   value,
   icon,
-  highlight,
-  muted,
-  className,
+  variant = "default",
 }: {
   label: string
-  value: React.ReactNode
+  value: string
   icon: React.ReactNode
-  highlight?: boolean
-  muted?: boolean
-  className?: string
+  variant?: "default" | "primary" | "warning" | "muted"
 }) {
   return (
     <div
       className={cn(
-        "rounded-lg border p-3 space-y-1",
-        highlight && "border-primary/30 bg-primary/3",
+        "relative overflow-hidden rounded-xl border p-4 transition-all hover:shadow-md",
+        variant === "primary" && "border-primary/30 bg-primary/5",
+        variant === "warning" && "border-amber-500/30 bg-amber-500/5",
+        variant === "muted" && "bg-muted/30",
+        variant === "default" && "bg-card",
       )}
     >
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        {icon}
-        {label}
+      <div className="flex items-center justify-between mb-3">
+        <div
+          className={cn(
+            "flex items-center justify-center size-9 rounded-lg",
+            variant === "primary" && "bg-primary/15",
+            variant === "warning" && "bg-amber-500/15",
+            variant === "muted" && "bg-muted-foreground/10",
+            variant === "default" && "bg-primary/10",
+          )}
+        >
+          <div
+            className={cn(
+              variant === "primary" && "text-primary",
+              variant === "warning" && "text-amber-600",
+              variant === "muted" && "text-muted-foreground",
+              variant === "default" && "text-primary",
+            )}
+          >
+            {icon}
+          </div>
+        </div>
       </div>
-      {typeof value === "string" ? (
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {label}
+        </p>
         <p
           className={cn(
-            "text-xl font-bold tabular-nums",
-            muted && "text-muted-foreground",
-            className,
+            "text-2xl font-bold tabular-nums tracking-tight",
+            variant === "warning" && "text-amber-600",
+            variant === "muted" && "text-muted-foreground",
           )}
         >
           {value}
         </p>
-      ) : (
-        <div className={className}>{value}</div>
-      )}
+      </div>
+    </div>
+  )
+}
+
+function StatusCard({
+  stats,
+}: {
+  stats: {
+    pending: number
+    acknowledged: number
+    shortCount: number
+    overCount: number
+  }
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-xl border bg-card p-4 transition-all hover:shadow-md">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-center size-9 rounded-lg bg-primary/10">
+          <DollarSign className="size-4 text-primary" />
+        </div>
+      </div>
+      <div className="space-y-1 mb-3">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Status
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {stats.pending > 0 && (
+          <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-2.5 py-2">
+            <Clock className="size-4 text-muted-foreground shrink-0" />
+            <div className="min-w-0">
+              <p className="text-lg font-bold tabular-nums leading-none">
+                {stats.pending}
+              </p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                Pending
+              </p>
+            </div>
+          </div>
+        )}
+        {stats.acknowledged > 0 && (
+          <div className="flex items-center gap-2 rounded-lg bg-green-500/10 px-2.5 py-2">
+            <CheckCircle2 className="size-4 text-green-600 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-lg font-bold tabular-nums leading-none text-green-600">
+                {stats.acknowledged}
+              </p>
+              <p className="text-[10px] text-green-600/70 uppercase tracking-wide">
+                Done
+              </p>
+            </div>
+          </div>
+        )}
+        {stats.shortCount > 0 && (
+          <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-2.5 py-2">
+            <TrendingDown className="size-4 text-destructive shrink-0" />
+            <div className="min-w-0">
+              <p className="text-lg font-bold tabular-nums leading-none text-destructive">
+                {stats.shortCount}
+              </p>
+              <p className="text-[10px] text-destructive/70 uppercase tracking-wide">
+                Short
+              </p>
+            </div>
+          </div>
+        )}
+        {stats.overCount > 0 && (
+          <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 px-2.5 py-2">
+            <TrendingUp className="size-4 text-amber-600 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-lg font-bold tabular-nums leading-none text-amber-600">
+                {stats.overCount}
+              </p>
+              <p className="text-[10px] text-amber-600/70 uppercase tracking-wide">
+                Over
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

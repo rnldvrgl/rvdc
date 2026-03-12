@@ -231,9 +231,13 @@ export default function ServicePartsManager({
             <span className="font-medium uppercase tracking-wide">
               Service-Level Parts
             </span>
-            {partsUsed.length > 0 && (
-              <span className="text-xs font-normal">({partsUsed.length})</span>
-            )}
+            <Badge>
+              {partsUsed.length > 0 && (
+                <span className="text-xs font-normal">
+                  ({partsUsed.length})
+                </span>
+              )}
+            </Badge>
           </CardTitle>
           {!disabled && (
             <Button
