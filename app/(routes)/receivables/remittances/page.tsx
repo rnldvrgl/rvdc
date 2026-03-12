@@ -129,7 +129,7 @@ export default function RemittancesPage() {
 
       {/* Summary Stat Cards */}
       {!isLoading && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid md:grid-cols-3 gap-4">
           <StatCard
             label="Declared"
             value={formatCurrency(stats.totalDeclared)}
@@ -148,9 +148,9 @@ export default function RemittancesPage() {
             icon={<ArrowRightLeft className="size-4" />}
             variant={stats.totalCOD > 0 ? "warning" : "default"}
           />
-          <StatusCard stats={stats} />
         </div>
       )}
+      <StatusCard stats={stats} />
 
       {/* Sub Stall Payable — Daily cash settlement owed to sub stall */}
       {role === "manager" &&
@@ -439,7 +439,7 @@ function StatusCard({
           Status
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid md:grid-cols-2 gap-2">
         {stats.pending > 0 && (
           <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-2.5 py-2">
             <Clock className="size-4 text-muted-foreground shrink-0" />
