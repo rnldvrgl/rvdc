@@ -326,7 +326,10 @@ export default function AppliancePartsManager({
                         <div className="flex items-center gap-2">
                           <span>{part.item_name}</span>
                           {!part.item && part.custom_description && (
-                            <Badge variant="secondary" className="text-xs">
+                            <Badge
+                              variant="secondary"
+                              className="text-xs"
+                            >
                               Custom
                             </Badge>
                           )}
@@ -381,16 +384,16 @@ export default function AppliancePartsManager({
                             parseFloat(part.discount_percentage) > 0) ? (
                           <div className="flex flex-col items-end gap-1">
                             <span className="line-through text-xs text-muted-foreground">
-                              {formatCurrency(part.item_price)}
+                              {formatCurrency(part.item_price || 0)}
                             </span>
                             <span className="text-green-600">
                               {formatCurrency(
-                                part.discounted_price || part.item_price,
+                                part.discounted_price || part.item_price || 0,
                               )}
                             </span>
                           </div>
                         ) : (
-                          formatCurrency(part.item_price)
+                          formatCurrency(part.item_price || 0)
                         )}
                       </TableCell>
                       <TableCell className="text-right font-semibold">
@@ -558,51 +561,55 @@ export default function AppliancePartsManager({
                   <ComboBox
                     options={itemOptions}
                     value={selectedItemId}
-                    onChange={(value) => setSelectedItemId(value as number | null)}
+                    onChange={(value) =>
+                      setSelectedItemId(value as number | null)
+                    }
                     placeholder="Select item..."
                     searchPlaceholder="Search items..."
                     disabled={itemsLoading}
                   />
                 </div>
 
-            {/* Stock availability info for selected item */}
-            {selectedItem && selectedItemStock && (
-              <div className="rounded-md border bg-muted/50 p-3 space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Available Stock:
-                  </span>
-                  <span
-                    className={cn(
-                      "font-semibold",
-                      selectedItemStock.status === "no_stock" && "text-red-600",
-                      selectedItemStock.status === "low_stock" &&
-                        "text-amber-600",
-                      selectedItemStock.status === "high_stock" &&
-                        "text-green-600",
+                {/* Stock availability info for selected item */}
+                {selectedItem && selectedItemStock && (
+                  <div className="rounded-md border bg-muted/50 p-3 space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Available Stock:
+                      </span>
+                      <span
+                        className={cn(
+                          "font-semibold",
+                          selectedItemStock.status === "no_stock" &&
+                            "text-red-600",
+                          selectedItemStock.status === "low_stock" &&
+                            "text-amber-600",
+                          selectedItemStock.status === "high_stock" &&
+                            "text-green-600",
+                        )}
+                      >
+                        {selectedItemStock.available_quantity}{" "}
+                        {selectedItem.unit_of_measure}
+                      </span>
+                    </div>
+                    {Number(selectedItem.waste_tolerance_percentage) > 0 && (
+                      <div className="flex items-center justify-between text-xs text-amber-600">
+                        <span>Waste Tolerance:</span>
+                        <span>±{selectedItem.waste_tolerance_percentage}%</span>
+                      </div>
                     )}
-                  >
-                    {selectedItemStock.available_quantity}{" "}
-                    {selectedItem.unit_of_measure}
-                  </span>
-                </div>
-                {Number(selectedItem.waste_tolerance_percentage) > 0 && (
-                  <div className="flex items-center justify-between text-xs text-amber-600">
-                    <span>Waste Tolerance:</span>
-                    <span>±{selectedItem.waste_tolerance_percentage}%</span>
+                    {selectedItemStock.status === "no_stock" && (
+                      <p className="text-xs text-red-600 font-medium">
+                        ⚠ No stock available
+                      </p>
+                    )}
+                    {selectedItemStock.status === "low_stock" && (
+                      <p className="text-xs text-amber-600">⚠ Low stock</p>
+                    )}
                   </div>
                 )}
-                {selectedItemStock.status === "no_stock" && (
-                  <p className="text-xs text-red-600 font-medium">
-                    ⚠ No stock available
-                  </p>
-                )}
-                {selectedItemStock.status === "low_stock" && (
-                  <p className="text-xs text-amber-600">⚠ Low stock</p>
-                )}
-              </div>
-            )}
               </>
+            )}
 
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
@@ -779,7 +786,8 @@ export default function AppliancePartsManager({
                                   items.find((i) => i.id === selectedItemId)
                                     ?.retail_price || 0,
                                 )
-                            const subtotal = unitPrice * parseFloat(quantity || "0")
+                            const subtotal =
+                              unitPrice * parseFloat(quantity || "0")
                             const discount =
                               discountType === "percentage"
                                 ? (subtotal * parseFloat(discountValue)) / 100

@@ -6,7 +6,9 @@ import { useQueryClient } from "@tanstack/react-query"
 
 interface ApplianceItemUsedPayload {
   appliance: number
-  item: number
+  item?: number | null
+  custom_description?: string
+  custom_price?: number
   quantity: number
   unit_price_at_time?: number
   stall_stock?: number

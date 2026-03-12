@@ -848,7 +848,8 @@ export default function ServiceDetail({
                   const partsOriginalCost = appliance.items_used
                     ? appliance.items_used.reduce(
                         (sum, part) =>
-                          sum + parseFloat(part.item_price) * part.quantity,
+                          sum +
+                          parseFloat(part.item_price || "0") * part.quantity,
                         0,
                       )
                     : 0
@@ -1025,8 +1026,9 @@ export default function ServiceDetail({
                                         {!part.is_free && partHasDiscount && (
                                           <span className="text-xs line-through">
                                             {formatCurrency(
-                                              parseFloat(part.item_price) *
-                                                part.quantity,
+                                              parseFloat(
+                                                part.item_price || "0",
+                                              ) * part.quantity,
                                             )}
                                           </span>
                                         )}
