@@ -65,13 +65,12 @@ export function getSalesTransactionColumns({
       header: "Type",
       cell: ({ getValue }) => {
         const type = getValue() as string
-        if (!type || type === "sale") return null
         return (
           <Badge
             variant="secondary"
             className="text-[10px]"
           >
-            Replacement
+            {type === "replacement" ? "Replacement" : "Sale"}
           </Badge>
         )
       },

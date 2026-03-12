@@ -76,6 +76,7 @@ export default function SalesTransactionForm({
     client_id: z.number().nullable().optional(),
     note: z.string().optional(),
     manual_receipt_number: z.string().optional(),
+    order_discount: z.number().min(0).optional(),
     payments: z.array(
       z.object({
         payment_type: z.string().min(1, "Payment type is required"),
@@ -130,6 +131,10 @@ export default function SalesTransactionForm({
       client_id: initialData?.client?.id,
       note: initialData?.note ?? "",
       manual_receipt_number: initialData?.manual_receipt_number ?? "",
+      order_discount: initialData?.order_discount_rate
+        ? Number(initialData.order_discount_rate) *
+          Number(initialData.subtotal || 0)
+        : 0,
       payments:
         initialData?.payments?.map((i) => ({
           payment_type: i.payment_type,
@@ -207,14 +212,17 @@ export default function SalesTransactionForm({
   const watchedItems = form.watch("items")
   const watchedPayments = form.watch("payments")
   const transactionType = form.watch("transaction_type")
+  const watchedDiscount = form.watch("order_discount") || 0
   const isFreeTransaction = transactionType !== "sale"
 
   const totalItemsAmount = watchedItems.reduce(
     (acc, i) => acc + i.quantity * i.final_price_per_unit,
     0,
   )
+  const discountAmount = Math.min(watchedDiscount, totalItemsAmount)
+  const grandTotal = totalItemsAmount - discountAmount
   const totalPayments = watchedPayments.reduce((acc, p) => acc + p.amount, 0)
-  const changeDue = totalPayments - totalItemsAmount
+  const changeDue = totalPayments - grandTotal
 
   useEffect(() => {
     if (!initialData) return
@@ -271,12 +279,19 @@ export default function SalesTransactionForm({
 
   const handleSubmit = (data: FormValues) => {
     const isFree = data.transaction_type !== "sale"
+    const subtotal = data.items.reduce(
+      (acc, i) => acc + i.quantity * i.final_price_per_unit,
+      0,
+    )
+    const discountRate =
+      subtotal > 0 ? Math.min(data.order_discount || 0, subtotal) / subtotal : 0
     const payload = {
       transaction_type: data.transaction_type,
       stall: role == "admin" ? data.stall : (assigned_stall?.id ?? null),
       client: data.client_id ?? null,
       note: data.note || null,
       manual_receipt_number: data.manual_receipt_number ?? null,
+      order_discount_rate: isFree ? 0 : discountRate,
       items: data.items.map((i) => ({
         item: i.item_id,
         ...(i.item_id === null && i.description
@@ -611,6 +626,53 @@ export default function SalesTransactionForm({
 
           <Separator />
 
+          {/* Transaction Discount - only for regular sales */}
+          {!isFreeTransaction && (
+            <FormField
+              control={form.control}
+              name="order_discount"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    Transaction Discount
+                  </FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                        ₱
+                      </span>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={totalItemsAmount}
+                        step={0.01}
+                        placeholder="0.00"
+                        className="pl-7"
+                        disabled={isDisabled}
+                        {...field}
+                        value={field.value || ""}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value)
+                          field.onChange(isNaN(val) ? 0 : val)
+                        }}
+                      />
+                    </div>
+                  </FormControl>
+                  {discountAmount > 0 && totalItemsAmount > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {((discountAmount / totalItemsAmount) * 100).toFixed(1)}%
+                      off · Total after discount:{" "}
+                      <span className="font-medium">
+                        {formatCurrency(grandTotal)}
+                      </span>
+                    </p>
+                  )}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
           {/* Payments - only for regular sales */}
           {!isFreeTransaction && (
             <>
@@ -640,7 +702,7 @@ export default function SalesTransactionForm({
                   setValue={form.setValue as never}
                   disabled={isDisabled}
                   required
-                  totalItemsAmount={totalItemsAmount}
+                  totalItemsAmount={grandTotal}
                   clientId={form.watch("client_id")}
                 />
                 {form.formState.errors.payments && (
@@ -669,6 +731,22 @@ export default function SalesTransactionForm({
             </div>
             {!isFreeTransaction && (
               <>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Discount</span>
+                    <span className="font-medium text-destructive">
+                      -{formatCurrency(discountAmount)}
+                    </span>
+                  </div>
+                )}
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total</span>
+                    <span className="font-semibold">
+                      {formatCurrency(grandTotal)}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
                     Paid · {watchedPayments.length} payment

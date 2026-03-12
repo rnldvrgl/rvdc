@@ -421,6 +421,7 @@ export interface SalesItem {
   quantity: number
   final_price_per_unit: string
   print_price_per_unit?: string | number
+  line_discount_rate?: number
   line_total: number
 }
 
@@ -453,6 +454,8 @@ export interface SalesTransaction {
   payments: SalesPayment[]
 
   // Computed props if you send them from serializer
+  order_discount_rate?: number
+  subtotal?: string
   computed_total?: string
   total_items?: number
   total_paid?: number
@@ -464,10 +467,12 @@ export interface SalesTransactionPayload {
   manual_receipt_number: string | null
   transaction_type?: string
   note?: string | null
+  order_discount_rate?: number
   items: {
     item: number | null
     quantity: number
     final_price_per_unit: number
+    line_discount_rate?: number
     description?: string
   }[]
   payments: {
