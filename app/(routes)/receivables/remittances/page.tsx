@@ -150,14 +150,23 @@ export default function RemittancesPage() {
           />
         </div>
       )}
-      <div className={role === "manager" ? "grid lg:grid-cols-2 gap-4" : ""}>
-        <StatusCard stats={stats} />
+      <div
+        className={
+          role === "manager"
+            ? "grid lg:grid-cols-[1fr_auto] gap-4 items-start"
+            : ""
+        }
+      >
+        {/* Status + Settlement stacked or side-by-side */}
+        <div className="space-y-4">
+          <StatusCard stats={stats} />
+        </div>
 
         {/* Sub Stall Payable — Daily settlement from services */}
         {role === "manager" &&
           subStallPayable &&
           Number(subStallPayable.total_sales) > 0 && (
-            <Card className="p-0 overflow-hidden">
+            <Card className="p-0 overflow-hidden w-full lg:w-80">
               {/* Header */}
               <div className="flex items-center justify-between px-4 pt-4">
                 <div className="flex items-center gap-2">
@@ -272,9 +281,9 @@ export default function RemittancesPage() {
                         <Separator />
                         <div className="space-y-1.5">
                           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Services
+                            Services ({subStallPayable.services.length})
                           </p>
-                          <div className="grid gap-y-1.5 text-xs">
+                          <div className="max-h-32 overflow-y-auto grid gap-y-1.5 text-xs pr-1">
                             {subStallPayable.services.map((svc) => (
                               <div
                                 key={svc.service_id}
@@ -456,71 +465,51 @@ function StatusCard({
   }
 }) {
   return (
-    <div className="relative overflow-hidden rounded-xl border bg-card p-4 transition-all hover:shadow-md">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center justify-center size-9 rounded-lg bg-primary/10">
-          <DollarSign className="size-4 text-primary" />
+    <div className="flex flex-wrap gap-2">
+      {stats.pending > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+          <Clock className="size-3.5 text-muted-foreground shrink-0" />
+          <span className="text-sm font-bold tabular-nums">
+            {stats.pending}
+          </span>
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">
+            Pending
+          </span>
         </div>
-      </div>
-      <div className="space-y-1 mb-3">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Status
-        </p>
-      </div>
-      <div className="grid md:grid-cols-2 gap-2">
-        {stats.pending > 0 && (
-          <div className="flex items-center gap-2 rounded-lg bg-secondary/50 px-2.5 py-2">
-            <Clock className="size-4 text-muted-foreground shrink-0" />
-            <div className="min-w-0">
-              <p className="text-lg font-bold tabular-nums leading-none">
-                {stats.pending}
-              </p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
-                Pending
-              </p>
-            </div>
-          </div>
-        )}
-        {stats.acknowledged > 0 && (
-          <div className="flex items-center gap-2 rounded-lg bg-green-500/10 px-2.5 py-2">
-            <CheckCircle2 className="size-4 text-green-600 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-lg font-bold tabular-nums leading-none text-green-600">
-                {stats.acknowledged}
-              </p>
-              <p className="text-[10px] text-green-600/70 uppercase tracking-wide">
-                Done
-              </p>
-            </div>
-          </div>
-        )}
-        {stats.shortCount > 0 && (
-          <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-2.5 py-2">
-            <TrendingDown className="size-4 text-destructive shrink-0" />
-            <div className="min-w-0">
-              <p className="text-lg font-bold tabular-nums leading-none text-destructive">
-                {stats.shortCount}
-              </p>
-              <p className="text-[10px] text-destructive/70 uppercase tracking-wide">
-                Short
-              </p>
-            </div>
-          </div>
-        )}
-        {stats.overCount > 0 && (
-          <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 px-2.5 py-2">
-            <TrendingUp className="size-4 text-amber-600 shrink-0" />
-            <div className="min-w-0">
-              <p className="text-lg font-bold tabular-nums leading-none text-amber-600">
-                {stats.overCount}
-              </p>
-              <p className="text-[10px] text-amber-600/70 uppercase tracking-wide">
-                Over
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
+      {stats.acknowledged > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2">
+          <CheckCircle2 className="size-3.5 text-green-600 shrink-0" />
+          <span className="text-sm font-bold tabular-nums text-green-600">
+            {stats.acknowledged}
+          </span>
+          <span className="text-xs text-green-600/70 uppercase tracking-wide">
+            Done
+          </span>
+        </div>
+      )}
+      {stats.shortCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
+          <TrendingDown className="size-3.5 text-destructive shrink-0" />
+          <span className="text-sm font-bold tabular-nums text-destructive">
+            {stats.shortCount}
+          </span>
+          <span className="text-xs text-destructive/70 uppercase tracking-wide">
+            Short
+          </span>
+        </div>
+      )}
+      {stats.overCount > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
+          <TrendingUp className="size-3.5 text-amber-600 shrink-0" />
+          <span className="text-sm font-bold tabular-nums text-amber-600">
+            {stats.overCount}
+          </span>
+          <span className="text-xs text-amber-600/70 uppercase tracking-wide">
+            Over
+          </span>
+        </div>
+      )}
     </div>
   )
 }
