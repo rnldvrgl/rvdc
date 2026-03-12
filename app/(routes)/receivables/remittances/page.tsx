@@ -1,6 +1,5 @@
 "use client"
 
-import { SubStallSettlement } from "@/components/custom/dashboard/SubStallSettlement"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
@@ -140,8 +139,6 @@ export default function RemittancesPage() {
           />
         </div>
       )}
-
-      <SubStallSettlement className="w-full lg:w-80 lg:ml-auto" />
 
       {/* Create Remittance Sheet */}
       <EntitySheet
