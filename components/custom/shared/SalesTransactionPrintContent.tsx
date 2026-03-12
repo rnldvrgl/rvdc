@@ -44,6 +44,8 @@ export const SalesTransactionPrintContent = React.forwardRef<
 
   const { shop_name, address, tin_id } = useGetReceiptDetails(stall?.name ?? "")
 
+  const discount = Number(entity?.order_discount || 0)
+
   const printTotal =
     entity?.items?.reduce((acc, item) => {
       const unitPrice = isFakePrint
@@ -53,11 +55,13 @@ export const SalesTransactionPrintContent = React.forwardRef<
       return acc + unitPrice * item.quantity
     }, 0) ?? 0
 
+  const discountedTotal = isFakePrint ? printTotal : printTotal - discount
+
   const paymentsTotal = isFakePrint
     ? printTotal
     : (entity?.payments?.reduce((acc, p) => acc + Number(p.amount), 0) ?? 0)
 
-  const printChangeDue = paymentsTotal - printTotal
+  const printChangeDue = paymentsTotal - discountedTotal
 
   return (
     <div
@@ -134,6 +138,22 @@ export const SalesTransactionPrintContent = React.forwardRef<
         value={formatCurrency(printTotal)}
         bold
       />
+
+      {!isFakePrint && discount > 0 && (
+        <PrintRow
+          label="Discount:"
+          value={`-${formatCurrency(discount)}`}
+          bold
+        />
+      )}
+
+      {!isFakePrint && discount > 0 && (
+        <PrintRow
+          label="Net:"
+          value={formatCurrency(discountedTotal)}
+          bold
+        />
+      )}
 
       {isFakePrint ? (
         <PrintRow

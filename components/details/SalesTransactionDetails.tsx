@@ -305,6 +305,49 @@ export function SalesTransactionDetails({
           ) : (
             <p className="text-sm text-muted-foreground">No items listed.</p>
           )}
+
+          {/* Totals summary */}
+          {entity.items?.length > 0 &&
+            entity.transaction_type !== "replacement" && (
+              <div className="mt-4 flex justify-end">
+                <div className="w-64 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>
+                      {formatCurrency(
+                        entity.subtotal
+                          ? parseFloat(entity.subtotal)
+                          : entity.items.reduce(
+                              (sum, item) => sum + item.line_total,
+                              0,
+                            ),
+                      )}
+                    </span>
+                  </div>
+                  {Number(entity.order_discount || 0) > 0 && (
+                    <div className="flex justify-between text-destructive">
+                      <span>Discount</span>
+                      <span>
+                        - {formatCurrency(Number(entity.order_discount))}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-semibold border-t pt-1">
+                    <span>Total</span>
+                    <span>
+                      {formatCurrency(
+                        entity.computed_total
+                          ? parseFloat(entity.computed_total)
+                          : entity.items.reduce(
+                              (sum, item) => sum + item.line_total,
+                              0,
+                            ),
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
         </CardContent>
       </Card>
 
@@ -349,7 +392,10 @@ export function SalesTransactionDetails({
                         </div>
                       </TableCell>
                       <TableCell>
-                        {formatDate(new Date(payment.payment_date))}
+                        {formatDate(
+                          new Date(payment.payment_date),
+                          "MMM dd, yyyy",
+                        )}
                       </TableCell>
                       <TableCell className="text-right font-semibold">
                         {formatCurrency(payment.amount)}
