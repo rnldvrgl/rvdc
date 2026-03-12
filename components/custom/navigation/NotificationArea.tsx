@@ -114,7 +114,7 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
         if (typeof expenseId === "number") {
           setSheet({ type: "expense_created", id: expenseId })
         } else {
-          router.push("/expenses")
+          router.push("/expenses/manage")
           setOpen(false)
         }
         break

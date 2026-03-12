@@ -113,7 +113,7 @@ function getSummaryGroups(
           Receipt,
           "danger",
           trend(data.total_expense, prev?.total_expense),
-          "/expenses",
+          "/expenses/manage",
         ),
         buildCard(
           "Unit Cost (Aircon)",
