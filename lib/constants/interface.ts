@@ -21,6 +21,8 @@ export interface UseApiMutationProps<TVariables, TData> {
   usePromiseToast?: boolean // Enable toast.promise instead of toast.success/error
   loadingMessage?: string // Message shown during loading
   errorMessage?: string // Custom error message (overrides DRF error handling)
+  // Retry configuration
+  retry?: number | false // Override retry count for this mutation (default: 0 = no retry)
 }
 
 export interface GetColumnsProps<T> {

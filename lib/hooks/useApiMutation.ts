@@ -24,12 +24,14 @@ export function useApiMutation<TVariables, TData>({
   usePromiseToast = false,
   loadingMessage = "Processing...",
   errorMessage,
+  retry,
 }: UseApiMutationProps<TVariables, TData>) {
   const queryClient = useQueryClient()
   const { handleError } = useDRFToastError()
 
   const mutation = useMutation<TData, unknown, TVariables>({
     mutationFn,
+    retry,
     onSuccess: (data, variables) => {
       // Only show success toast if not using promise toast
       // (promise toast handles success automatically)

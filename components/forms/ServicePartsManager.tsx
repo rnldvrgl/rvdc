@@ -811,11 +811,16 @@ export default function ServicePartsManager({
             <Button
               onClick={handleSavePart}
               disabled={
-                isCustom
+                addItem.isPending ||
+                updateItem.isPending ||
+                (isCustom
                   ? !customDescription.trim() || !customPrice || !quantity
-                  : !selectedItemId || !quantity
+                  : !selectedItemId || !quantity)
               }
             >
+              {(addItem.isPending || updateItem.isPending) && (
+                <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              )}
               {editingPartId ? "Update Part" : "Add Part"}
             </Button>
           </DialogFooter>

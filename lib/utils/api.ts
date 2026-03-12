@@ -7,6 +7,7 @@ import { toast } from "sonner"
 const baseURL = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"}/api`
 const api = axios.create({
   baseURL,
+  timeout: 30000, // 30 seconds — prevents indefinitely hanging requests
   headers: {
     "Content-Type": "application/json",
   },
