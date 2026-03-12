@@ -51,9 +51,7 @@ export default function RemittancesPage() {
   })
   const { filters, orderingOptions } = useRemittancesRecordFilters()
   const { deleteRemittance, markRemitted } = useRemittanceMutations()
-  const { data: subStallPayable } = useSubStallPayable({
-    date: new Date().toISOString().split("T")[0],
-  }) // default to today's payable
+  const { data: subStallPayable } = useSubStallPayable()
 
   // Compute summary stats from loaded results
   const stats = useMemo(() => {
@@ -155,7 +153,7 @@ export default function RemittancesPage() {
       <div className={role === "manager" ? "grid lg:grid-cols-2 gap-4" : ""}>
         <StatusCard stats={stats} />
 
-        {/* Sub Stall Payable — Daily cash settlement owed to sub stall */}
+        {/* Sub Stall Payable — Daily settlement from services */}
         {role === "manager" &&
           subStallPayable &&
           Number(subStallPayable.total_sales) > 0 && (
@@ -171,7 +169,7 @@ export default function RemittancesPage() {
                       {subStallPayable.sub_stall_name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Daily Settlement
+                      Daily Settlement (Services)
                     </p>
                   </div>
                 </div>
@@ -201,22 +199,16 @@ export default function RemittancesPage() {
 
                 {/* Breakdown rows */}
                 <div className="px-4 pb-4 space-y-2.5">
-                  {/* Cash calculation */}
+                  {/* Cash from services */}
                   <div className="space-y-1.5 text-sm">
                     <div className="flex items-center justify-between py-0.5">
-                      <span className="text-muted-foreground">Cash Sales</span>
+                      <span className="text-muted-foreground">
+                        Cash (Service Parts)
+                      </span>
                       <span className="font-semibold tabular-nums">
                         {formatCurrency(subStallPayable.sales_cash)}
                       </span>
                     </div>
-                    {Number(subStallPayable.total_expenses) > 0 && (
-                      <div className="flex items-center justify-between py-0.5">
-                        <span className="text-destructive">− Expenses</span>
-                        <span className="font-semibold tabular-nums text-destructive">
-                          {formatCurrency(subStallPayable.total_expenses)}
-                        </span>
-                      </div>
-                    )}
                   </div>
 
                   {/* E-payments — received directly by admin */}
@@ -272,6 +264,35 @@ export default function RemittancesPage() {
                       </div>
                     </>
                   )}
+
+                  {/* Services breakdown */}
+                  {subStallPayable.services &&
+                    subStallPayable.services.length > 0 && (
+                      <>
+                        <Separator />
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            Services
+                          </p>
+                          <div className="grid gap-y-1.5 text-xs">
+                            {subStallPayable.services.map((svc) => (
+                              <div
+                                key={svc.service_id}
+                                className="flex items-center justify-between"
+                              >
+                                <span className="text-muted-foreground">
+                                  #{svc.service_id}{" "}
+                                  {svc.client_name && `— ${svc.client_name}`}
+                                </span>
+                                <span className="tabular-nums font-medium">
+                                  {formatCurrency(svc.paid_today)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
                 </div>
               </CardContent>
             </Card>
