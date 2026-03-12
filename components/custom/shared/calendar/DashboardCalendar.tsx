@@ -1240,7 +1240,7 @@ const DashboardCalendar = ({
 
                     <div className="space-y-1">
                       <div className="hidden lg:block">
-                        {dayEvents.slice(0, 3).map((event, eventIndex) => (
+                        {dayEvents.slice(0, 2).map((event, eventIndex) => (
                           <CalendarEventItem
                             key={eventIndex}
                             event={event}
@@ -1248,15 +1248,15 @@ const DashboardCalendar = ({
                             onClick={handleEventClick}
                           />
                         ))}
-                        {dayEvents.length > 3 && (
+                        {dayEvents.length > 2 && (
                           <div className="text-sm text-muted-foreground text-center mt-2">
-                            +{dayEvents.length - 3} more
+                            +{dayEvents.length - 2} more
                           </div>
                         )}
                       </div>
 
                       <div className="hidden sm:block lg:hidden">
-                        {dayEvents.slice(0, 3).map((event, eventIndex) => (
+                        {dayEvents.slice(0, 2).map((event, eventIndex) => (
                           <CalendarEventItem
                             key={eventIndex}
                             event={event}
