@@ -171,7 +171,7 @@ const DashboardPage = () => {
           {(role === "admin" || role === "manager") && <DashboardCalendar />}
 
           {/* Analytics - Admin & Manager Only */}
-          {(role === "admin" || role === "manager") && (
+          {role === "admin" && (
             <div className="space-y-8">
               {/* Section Header */}
               <div className="flex items-center gap-3">

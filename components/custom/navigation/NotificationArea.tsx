@@ -37,6 +37,9 @@ const typeToIcon: Record<string, typeof Bell> = {
   stock_out: AlertTriangle,
   stock_reorder: Package,
   stock_restocked: Package,
+  stock_request_created: Package,
+  stock_request_approved: Package,
+  stock_request_declined: AlertTriangle,
   transfer_created: Truck,
   service_created: Calendar,
   service_updated: Calendar,
@@ -149,9 +152,22 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
 
       case "stock_low":
       case "stock_out":
-      case "stock_reorder":
-      case "stock_restocked": {
+      case "stock_reorder": {
         router.push("/inventory/stocks/stockroom")
+        setOpen(false)
+        break
+      }
+
+      case "stock_restocked": {
+        router.push("/inventory/stock-requests")
+        setOpen(false)
+        break
+      }
+
+      case "stock_request_created":
+      case "stock_request_approved":
+      case "stock_request_declined": {
+        router.push("/inventory/stock-requests")
         setOpen(false)
         break
       }
@@ -268,6 +284,10 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
                                     "bg-green-100 dark:bg-green-950",
                                   n.type === "stock_restocked" &&
                                     "bg-purple-100 dark:bg-purple-950",
+                                  (n.type === "stock_request_created" ||
+                                    n.type === "stock_request_approved" ||
+                                    n.type === "stock_request_declined") &&
+                                    "bg-purple-100 dark:bg-purple-950",
                                   n.type === "transfer_created" &&
                                     "bg-orange-100 dark:bg-orange-950",
                                   n.type === "payment_received" &&
@@ -297,6 +317,10 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
                                     n.type === "appointment_reminder" &&
                                       "text-green-700 dark:text-green-400",
                                     n.type === "stock_restocked" &&
+                                      "text-purple-700 dark:text-purple-400",
+                                    (n.type === "stock_request_created" ||
+                                      n.type === "stock_request_approved" ||
+                                      n.type === "stock_request_declined") &&
                                       "text-purple-700 dark:text-purple-400",
                                     n.type === "transfer_created" &&
                                       "text-orange-700 dark:text-orange-400",

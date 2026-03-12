@@ -25,13 +25,9 @@ import { formatDate } from "@/lib/utils/helpers/date"
 import {
   ArrowRightLeft,
   Banknote,
-  CheckCircle2,
-  Clock,
   DollarSign,
   Plus,
   Store,
-  TrendingDown,
-  TrendingUp,
   Wallet,
 } from "lucide-react"
 import { useMemo } from "react"
@@ -150,155 +146,141 @@ export default function RemittancesPage() {
           />
         </div>
       )}
-      {/* Status badges and Settlement Card */}
-      {role === "manager" ? (
-        <div className="flex flex-col lg:flex-row gap-4 items-start">
-          <StatusCard stats={stats} />
-          {subStallPayable && Number(subStallPayable.total_sales) > 0 && (
-            <Card className="p-0 overflow-hidden w-full lg:w-80 lg:ml-auto">
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 pt-4">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center size-8 rounded-md bg-primary/10">
-                    <Store className="size-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold leading-tight">
-                      {subStallPayable.sub_stall_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Daily Settlement (Services)
-                    </p>
-                  </div>
+
+      {subStallPayable && Number(subStallPayable.total_sales) > 0 && (
+        <Card className="p-0 overflow-hidden w-full lg:w-80 lg:ml-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 pt-4">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center size-8 rounded-md bg-primary/10">
+                <Store className="size-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold leading-tight">
+                  {subStallPayable.sub_stall_name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Daily Settlement (Services)
+                </p>
+              </div>
+            </div>
+            <Badge
+              variant="outline"
+              className="text-xs font-normal px-3 py-1"
+            >
+              {formatDate(subStallPayable.date, "MMM dd, yyyy")}
+            </Badge>
+          </div>
+
+          <CardContent className="p-0">
+            {/* Cash Payable — hero */}
+            <div className="relative mx-3 mb-4 rounded-lg overflow-hidden border border-primary/20 shadow-sm">
+              <div className="relative px-4 py-3.5 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <p className="text-[11px] font-medium">Cash to Pay</p>
+                  <p className="text-2xl font-bold tabular-nums tracking-tight">
+                    {formatCurrency(subStallPayable.cash_payable)}
+                  </p>
                 </div>
-                <Badge
-                  variant="outline"
-                  className="text-xs font-normal px-3 py-1"
-                >
-                  {formatDate(subStallPayable.date, "MMM dd, yyyy")}
-                </Badge>
+                <div className="flex items-center justify-center size-10 rounded-full bg-primary/10">
+                  <Banknote className="size-6 text-primary" />
+                </div>
+              </div>
+            </div>
+
+            {/* Breakdown rows */}
+            <div className="px-4 pb-4 space-y-2.5">
+              {/* Cash from services */}
+              <div className="space-y-1.5 text-sm">
+                <div className="flex items-center justify-between py-0.5">
+                  <span className="text-muted-foreground">
+                    Cash (Service Parts)
+                  </span>
+                  <span className="font-semibold tabular-nums">
+                    {formatCurrency(subStallPayable.sales_cash)}
+                  </span>
+                </div>
               </div>
 
-              <CardContent className="p-0">
-                {/* Cash Payable — hero */}
-                <div className="relative mx-3 mb-4 rounded-lg overflow-hidden border border-primary/20 shadow-sm">
-                  <div className="relative px-4 py-3.5 flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <p className="text-[11px] font-medium">Cash to Pay</p>
-                      <p className="text-2xl font-bold tabular-nums tracking-tight">
-                        {formatCurrency(subStallPayable.cash_payable)}
+              {/* E-payments — received directly by admin */}
+              {Number(subStallPayable.e_payments_total) > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      E-Payments (received by admin)
+                    </p>
+                    <div className="grid gap-x-4 gap-y-1.5 text-xs">
+                      {Number(subStallPayable.sales_gcash) > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">GCash</span>
+                          <span className="tabular-nums text-muted-foreground font-medium">
+                            {formatCurrency(subStallPayable.sales_gcash)}
+                          </span>
+                        </div>
+                      )}
+                      {Number(subStallPayable.sales_credit) > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Credit</span>
+                          <span className="tabular-nums text-muted-foreground font-medium">
+                            {formatCurrency(subStallPayable.sales_credit)}
+                          </span>
+                        </div>
+                      )}
+                      {Number(subStallPayable.sales_debit) > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Debit</span>
+                          <span className="tabular-nums text-muted-foreground font-medium">
+                            {formatCurrency(subStallPayable.sales_debit)}
+                          </span>
+                        </div>
+                      )}
+                      {Number(subStallPayable.sales_cheque) > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Cheque</span>
+                          <span className="tabular-nums text-muted-foreground font-medium">
+                            {formatCurrency(subStallPayable.sales_cheque)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Services breakdown */}
+              {subStallPayable.services &&
+                subStallPayable.services.length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        Services ({subStallPayable.services.length})
                       </p>
-                    </div>
-                    <div className="flex items-center justify-center size-10 rounded-full bg-primary/10">
-                      <Banknote className="size-6 text-primary" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Breakdown rows */}
-                <div className="px-4 pb-4 space-y-2.5">
-                  {/* Cash from services */}
-                  <div className="space-y-1.5 text-sm">
-                    <div className="flex items-center justify-between py-0.5">
-                      <span className="text-muted-foreground">
-                        Cash (Service Parts)
-                      </span>
-                      <span className="font-semibold tabular-nums">
-                        {formatCurrency(subStallPayable.sales_cash)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* E-payments — received directly by admin */}
-                  {Number(subStallPayable.e_payments_total) > 0 && (
-                    <>
-                      <Separator />
-                      <div className="space-y-1.5">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                          E-Payments (received by admin)
-                        </p>
-                        <div className="grid gap-x-4 gap-y-1.5 text-xs">
-                          {Number(subStallPayable.sales_gcash) > 0 && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">
-                                GCash
-                              </span>
-                              <span className="tabular-nums text-muted-foreground font-medium">
-                                {formatCurrency(subStallPayable.sales_gcash)}
-                              </span>
-                            </div>
-                          )}
-                          {Number(subStallPayable.sales_credit) > 0 && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">
-                                Credit
-                              </span>
-                              <span className="tabular-nums text-muted-foreground font-medium">
-                                {formatCurrency(subStallPayable.sales_credit)}
-                              </span>
-                            </div>
-                          )}
-                          {Number(subStallPayable.sales_debit) > 0 && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">
-                                Debit
-                              </span>
-                              <span className="tabular-nums text-muted-foreground font-medium">
-                                {formatCurrency(subStallPayable.sales_debit)}
-                              </span>
-                            </div>
-                          )}
-                          {Number(subStallPayable.sales_cheque) > 0 && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">
-                                Cheque
-                              </span>
-                              <span className="tabular-nums text-muted-foreground font-medium">
-                                {formatCurrency(subStallPayable.sales_cheque)}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Services breakdown */}
-                  {subStallPayable.services &&
-                    subStallPayable.services.length > 0 && (
-                      <>
-                        <Separator />
-                        <div className="space-y-1.5">
-                          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                            Services ({subStallPayable.services.length})
-                          </p>
-                          <div className="max-h-32 overflow-y-auto grid gap-y-1.5 text-xs pr-1">
-                            {subStallPayable.services.map((svc) => (
-                              <div
-                                key={svc.service_id}
-                                className="flex items-center justify-between"
-                              >
-                                <span className="text-muted-foreground">
-                                  #{svc.service_id}{" "}
-                                  {svc.client_name && `— ${svc.client_name}`}
-                                </span>
-                                <span className="tabular-nums font-medium">
-                                  {formatCurrency(svc.paid_today)}
-                                </span>
-                              </div>
-                            ))}
+                      <div className="max-h-32 overflow-y-auto grid gap-y-1.5 text-xs pr-1">
+                        {subStallPayable.services.map((svc) => (
+                          <div
+                            key={svc.service_id}
+                            className="flex items-center justify-between"
+                          >
+                            <span className="text-muted-foreground">
+                              #{svc.service_id}{" "}
+                              {svc.client_name && `— ${svc.client_name}`}
+                            </span>
+                            <span className="tabular-nums font-medium">
+                              {formatCurrency(svc.paid_today)}
+                            </span>
                           </div>
-                        </div>
-                      </>
-                    )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      ) : (
-        <StatusCard stats={stats} />
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+            </div>
+          </CardContent>
+        </Card>
       )}
+
       {/* Create Remittance Sheet */}
       <EntitySheet
         open={createSheet.open}
@@ -442,66 +424,6 @@ function StatCard({
           {value}
         </p>
       </div>
-    </div>
-  )
-}
-
-function StatusCard({
-  stats,
-}: {
-  stats: {
-    pending: number
-    acknowledged: number
-    shortCount: number
-    overCount: number
-  }
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {stats.pending > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-          <Clock className="size-3.5 text-muted-foreground shrink-0" />
-          <span className="text-sm font-bold tabular-nums">
-            {stats.pending}
-          </span>
-          <span className="text-xs text-muted-foreground uppercase tracking-wide">
-            Pending
-          </span>
-        </div>
-      )}
-      {stats.acknowledged > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2">
-          <CheckCircle2 className="size-3.5 text-green-600 shrink-0" />
-          <span className="text-sm font-bold tabular-nums text-green-600">
-            {stats.acknowledged}
-          </span>
-          <span className="text-xs text-green-600/70 uppercase tracking-wide">
-            Done
-          </span>
-        </div>
-      )}
-      {stats.shortCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2">
-          <TrendingDown className="size-3.5 text-destructive shrink-0" />
-          <span className="text-sm font-bold tabular-nums text-destructive">
-            {stats.shortCount}
-          </span>
-          <span className="text-xs text-destructive/70 uppercase tracking-wide">
-            Short
-          </span>
-        </div>
-      )}
-      {stats.overCount > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2">
-          <TrendingUp className="size-3.5 text-amber-600 shrink-0" />
-          <span className="text-sm font-bold tabular-nums text-amber-600">
-            {stats.overCount}
-          </span>
-          <span className="text-xs text-amber-600/70 uppercase tracking-wide">
-            Over
-          </span>
-        </div>
-      )}
     </div>
   )
 }
