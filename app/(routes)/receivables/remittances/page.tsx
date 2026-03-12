@@ -150,23 +150,12 @@ export default function RemittancesPage() {
           />
         </div>
       )}
-      <div
-        className={
-          role === "manager"
-            ? "grid lg:grid-cols-[1fr_auto] gap-4 items-start"
-            : ""
-        }
-      >
-        {/* Status + Settlement stacked or side-by-side */}
-        <div className="space-y-4">
+      {/* Status badges and Settlement Card */}
+      {role === "manager" ? (
+        <div className="flex flex-col lg:flex-row gap-4 items-start">
           <StatusCard stats={stats} />
-        </div>
-
-        {/* Sub Stall Payable — Daily settlement from services */}
-        {role === "manager" &&
-          subStallPayable &&
-          Number(subStallPayable.total_sales) > 0 && (
-            <Card className="p-0 overflow-hidden w-full lg:w-80">
+          {subStallPayable && Number(subStallPayable.total_sales) > 0 && (
+            <Card className="p-0 overflow-hidden w-full lg:w-80 lg:ml-auto">
               {/* Header */}
               <div className="flex items-center justify-between px-4 pt-4">
                 <div className="flex items-center gap-2">
@@ -306,7 +295,10 @@ export default function RemittancesPage() {
               </CardContent>
             </Card>
           )}
-      </div>
+        </div>
+      ) : (
+        <StatusCard stats={stats} />
+      )}
       {/* Create Remittance Sheet */}
       <EntitySheet
         open={createSheet.open}
