@@ -72,6 +72,9 @@ export default function ServicePartsManager({
   const [discountValue, setDiscountValue] = useState("")
   const [discountReason, setDiscountReason] = useState("")
   const [isFree, setIsFree] = useState(false)
+  const [isCustom, setIsCustom] = useState(false)
+  const [customDescription, setCustomDescription] = useState("")
+  const [customPrice, setCustomPrice] = useState("")
 
   const { data: partsUsed = [], isLoading } = useServiceItems(serviceId)
 
@@ -96,9 +99,16 @@ export default function ServicePartsManager({
   const selectedItemStock = stockData?.results?.[0]
 
   const handleSavePart = async () => {
-    if (!selectedItemId || !quantity) {
-      toast.error("Please fill in all fields")
-      return
+    if (isCustom) {
+      if (!customDescription.trim() || !customPrice || !quantity) {
+        toast.error("Please fill in description, price, and quantity")
+        return
+      }
+    } else {
+      if (!selectedItemId || !quantity) {
+        toast.error("Please fill in all fields")
+        return
+      }
     }
 
     const qty = parseFloat(quantity)
@@ -107,21 +117,39 @@ export default function ServicePartsManager({
       return
     }
 
-    const payload = {
-      service: serviceId,
-      item: selectedItemId,
-      quantity: Math.round(qty * 100) / 100,
-      is_free: isFree,
-      discount_amount:
-        !isFree && discountType === "fixed"
-          ? Math.round(parseFloat(discountValue || "0") * 100) / 100
-          : 0,
-      discount_percentage:
-        !isFree && discountType === "percentage"
-          ? Math.round(parseFloat(discountValue || "0") * 100) / 100
-          : 0,
-      discount_reason: isFree ? undefined : discountReason || undefined,
-    }
+    const payload = isCustom
+      ? {
+          service: serviceId,
+          item: null as null,
+          custom_description: customDescription.trim(),
+          custom_price: Math.round(parseFloat(customPrice) * 100) / 100,
+          quantity: Math.round(qty * 100) / 100,
+          is_free: isFree,
+          discount_amount:
+            !isFree && discountType === "fixed"
+              ? Math.round(parseFloat(discountValue || "0") * 100) / 100
+              : 0,
+          discount_percentage:
+            !isFree && discountType === "percentage"
+              ? Math.round(parseFloat(discountValue || "0") * 100) / 100
+              : 0,
+          discount_reason: isFree ? undefined : discountReason || undefined,
+        }
+      : {
+          service: serviceId,
+          item: selectedItemId,
+          quantity: Math.round(qty * 100) / 100,
+          is_free: isFree,
+          discount_amount:
+            !isFree && discountType === "fixed"
+              ? Math.round(parseFloat(discountValue || "0") * 100) / 100
+              : 0,
+          discount_percentage:
+            !isFree && discountType === "percentage"
+              ? Math.round(parseFloat(discountValue || "0") * 100) / 100
+              : 0,
+          discount_reason: isFree ? undefined : discountReason || undefined,
+        }
 
     const resetForm = () => {
       setDialogOpen(false)
@@ -129,6 +157,9 @@ export default function ServicePartsManager({
       setSelectedItemId(null)
       setQuantity("1")
       setIsFree(false)
+      setIsCustom(false)
+      setCustomDescription("")
+      setCustomPrice("")
       setDiscountType("none")
       setDiscountValue("")
       setDiscountReason("")
@@ -162,7 +193,19 @@ export default function ServicePartsManager({
 
   const handleEditPart = (part: ServiceItemUsed) => {
     setEditingPartId(part.id)
-    setSelectedItemId(part.item)
+
+    if (!part.item && !!part.custom_description) {
+      setIsCustom(true)
+      setCustomDescription(part.custom_description || "")
+      setCustomPrice(part.custom_price || "")
+      setSelectedItemId(null)
+    } else {
+      setIsCustom(false)
+      setCustomDescription("")
+      setCustomPrice("")
+      setSelectedItemId(part.item)
+    }
+
     setQuantity(part.quantity.toString())
     setIsFree(part.is_free || false)
 
@@ -280,6 +323,14 @@ export default function ServicePartsManager({
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           {part.item_name}
+                          {!part.item && part.custom_description && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs"
+                            >
+                              Custom
+                            </Badge>
+                          )}
                           {part.is_free && (
                             <Badge
                               variant="success"
@@ -331,16 +382,16 @@ export default function ServicePartsManager({
                             parseFloat(part.discount_percentage) > 0) ? (
                           <div className="flex flex-col items-end gap-1">
                             <span className="line-through text-xs text-muted-foreground">
-                              {formatCurrency(part.item_price)}
+                              {formatCurrency(part.item_price || 0)}
                             </span>
                             <span className="text-green-600">
                               {formatCurrency(
-                                part.discounted_price || part.item_price,
+                                part.discounted_price || part.item_price || 0,
                               )}
                             </span>
                           </div>
                         ) : (
-                          formatCurrency(part.item_price)
+                          formatCurrency(part.item_price || 0)
                         )}
                       </TableCell>
                       <TableCell className="text-right font-semibold">
@@ -432,6 +483,9 @@ export default function ServicePartsManager({
             setSelectedItemId(null)
             setQuantity("1")
             setIsFree(false)
+            setIsCustom(false)
+            setCustomDescription("")
+            setCustomPrice("")
             setDiscountType("none")
             setDiscountValue("")
             setDiscountReason("")
@@ -451,54 +505,107 @@ export default function ServicePartsManager({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Item</Label>
-              <ComboBox
-                options={itemOptions}
-                value={selectedItemId}
-                onChange={(value) => setSelectedItemId(value as number | null)}
-                placeholder="Select item..."
-                searchPlaceholder="Search items..."
-                disabled={itemsLoading}
+            {/* Custom Item Toggle */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="service_parts_is_custom"
+                checked={isCustom}
+                onCheckedChange={(checked) => {
+                  setIsCustom(checked === true)
+                  if (checked === true) {
+                    setSelectedItemId(null)
+                  } else {
+                    setCustomDescription("")
+                    setCustomPrice("")
+                  }
+                }}
+                className="cursor-pointer"
               />
+              <Label
+                htmlFor="service_parts_is_custom"
+                className="text-sm font-medium cursor-pointer"
+              >
+                Custom Item (not in inventory)
+              </Label>
             </div>
 
-            {/* Stock availability info */}
-            {selectedItem && selectedItemStock && (
-              <div className="rounded-md border bg-muted/50 p-3 space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Available Stock:
-                  </span>
-                  <span
-                    className={cn(
-                      "font-semibold",
-                      selectedItemStock.status === "no_stock" && "text-red-600",
-                      selectedItemStock.status === "low_stock" &&
-                        "text-amber-600",
-                      selectedItemStock.status === "high_stock" &&
-                        "text-green-600",
-                    )}
-                  >
-                    {selectedItemStock.available_quantity}{" "}
-                    {selectedItem.unit_of_measure}
-                  </span>
+            {isCustom ? (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Input
+                    value={customDescription}
+                    onChange={(e) => setCustomDescription(e.target.value)}
+                    placeholder="e.g., Copper tubing 1/4 inch"
+                  />
                 </div>
-                {Number(selectedItem.waste_tolerance_percentage) > 0 && (
-                  <div className="flex items-center justify-between text-xs text-amber-600">
-                    <span>Waste Tolerance:</span>
-                    <span>±{selectedItem.waste_tolerance_percentage}%</span>
+                <div className="space-y-2">
+                  <Label>Unit Price (₱)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={customPrice}
+                    onChange={(e) => setCustomPrice(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label>Item</Label>
+                  <ComboBox
+                    options={itemOptions}
+                    value={selectedItemId}
+                    onChange={(value) =>
+                      setSelectedItemId(value as number | null)
+                    }
+                    placeholder="Select item..."
+                    searchPlaceholder="Search items..."
+                    disabled={itemsLoading}
+                  />
+                </div>
+
+                {/* Stock availability info */}
+                {selectedItem && selectedItemStock && (
+                  <div className="rounded-md border bg-muted/50 p-3 space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">
+                        Available Stock:
+                      </span>
+                      <span
+                        className={cn(
+                          "font-semibold",
+                          selectedItemStock.status === "no_stock" &&
+                            "text-red-600",
+                          selectedItemStock.status === "low_stock" &&
+                            "text-amber-600",
+                          selectedItemStock.status === "high_stock" &&
+                            "text-green-600",
+                        )}
+                      >
+                        {selectedItemStock.available_quantity}{" "}
+                        {selectedItem.unit_of_measure}
+                      </span>
+                    </div>
+                    {Number(selectedItem.waste_tolerance_percentage) > 0 && (
+                      <div className="flex items-center justify-between text-xs text-amber-600">
+                        <span>Waste Tolerance:</span>
+                        <span>±{selectedItem.waste_tolerance_percentage}%</span>
+                      </div>
+                    )}
+                    {selectedItemStock.status === "no_stock" && (
+                      <p className="text-xs text-red-600 font-medium">
+                        No stock available
+                      </p>
+                    )}
+                    {selectedItemStock.status === "low_stock" && (
+                      <p className="text-xs text-amber-600">Low stock</p>
+                    )}
                   </div>
                 )}
-                {selectedItemStock.status === "no_stock" && (
-                  <p className="text-xs text-red-600 font-medium">
-                    No stock available
-                  </p>
-                )}
-                {selectedItemStock.status === "low_stock" && (
-                  <p className="text-xs text-amber-600">Low stock</p>
-                )}
-              </div>
+              </>
             )}
 
             <div className="space-y-2">
@@ -639,16 +746,18 @@ export default function ServicePartsManager({
               )}
             </div>
 
-            {selectedItemId && (
+            {(selectedItemId || (isCustom && customPrice)) && (
               <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="font-semibold text-primary">
                     {formatCurrency(
-                      Number(
-                        items.find((i) => i.id === selectedItemId)
-                          ?.retail_price || 0,
-                      ) * parseFloat(quantity || "0"),
+                      (isCustom
+                        ? parseFloat(customPrice || "0")
+                        : Number(
+                            items.find((i) => i.id === selectedItemId)
+                              ?.retail_price || 0,
+                          )) * parseFloat(quantity || "0"),
                     )}
                   </span>
                 </div>
@@ -668,10 +777,12 @@ export default function ServicePartsManager({
                         {formatCurrency(
                           (() => {
                             const subtotal =
-                              Number(
-                                items.find((i) => i.id === selectedItemId)
-                                  ?.retail_price || 0,
-                              ) * parseFloat(quantity || "0")
+                              (isCustom
+                                ? parseFloat(customPrice || "0")
+                                : Number(
+                                    items.find((i) => i.id === selectedItemId)
+                                      ?.retail_price || 0,
+                                  )) * parseFloat(quantity || "0")
                             const discount =
                               discountType === "percentage"
                                 ? (subtotal * parseFloat(discountValue)) / 100
@@ -699,7 +810,11 @@ export default function ServicePartsManager({
             </Button>
             <Button
               onClick={handleSavePart}
-              disabled={!selectedItemId || !quantity}
+              disabled={
+                isCustom
+                  ? !customDescription.trim() || !customPrice || !quantity
+                  : !selectedItemId || !quantity
+              }
             >
               {editingPartId ? "Update Part" : "Add Part"}
             </Button>

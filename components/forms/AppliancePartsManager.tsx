@@ -72,6 +72,9 @@ export default function AppliancePartsManager({
   const [discountValue, setDiscountValue] = useState("")
   const [discountReason, setDiscountReason] = useState("")
   const [isFree, setIsFree] = useState(false)
+  const [isCustom, setIsCustom] = useState(false)
+  const [customDescription, setCustomDescription] = useState("")
+  const [customPrice, setCustomPrice] = useState("")
 
   const { data: partsUsed = [], isLoading } = useApplianceItems(applianceId)
 
@@ -99,9 +102,16 @@ export default function AppliancePartsManager({
   const selectedItemStock = stockData?.results?.[0]
 
   const handleSavePart = async () => {
-    if (!selectedItemId || !quantity) {
-      toast.error("Please fill in all fields")
-      return
+    if (isCustom) {
+      if (!customDescription.trim() || !customPrice || !quantity) {
+        toast.error("Please fill in description, price, and quantity")
+        return
+      }
+    } else {
+      if (!selectedItemId || !quantity) {
+        toast.error("Please fill in all fields")
+        return
+      }
     }
 
     const qty = parseFloat(quantity)
@@ -110,9 +120,8 @@ export default function AppliancePartsManager({
       return
     }
 
-    const payload = {
+    const basePayload = {
       appliance: applianceId,
-      item: selectedItemId,
       quantity: Math.round(qty * 100) / 100,
       is_free: isFree,
       discount_amount:
@@ -126,12 +135,24 @@ export default function AppliancePartsManager({
       discount_reason: isFree ? undefined : discountReason || undefined,
     }
 
+    const payload = isCustom
+      ? {
+          ...basePayload,
+          item: null,
+          custom_description: customDescription.trim(),
+          custom_price: Math.round(parseFloat(customPrice) * 100) / 100,
+        }
+      : { ...basePayload, item: selectedItemId }
+
     const resetForm = () => {
       setDialogOpen(false)
       setEditingPartId(null)
       setSelectedItemId(null)
       setQuantity("1")
       setIsFree(false)
+      setIsCustom(false)
+      setCustomDescription("")
+      setCustomPrice("")
       setDiscountType("none")
       setDiscountValue("")
       setDiscountReason("")
@@ -173,7 +194,17 @@ export default function AppliancePartsManager({
 
   const handleEditPart = (part: ApplianceItemUsed) => {
     setEditingPartId(part.id)
-    setSelectedItemId(part.item)
+    const partIsCustom = !part.item && !!part.custom_description
+    setIsCustom(partIsCustom)
+    if (partIsCustom) {
+      setSelectedItemId(null)
+      setCustomDescription(part.custom_description || "")
+      setCustomPrice(part.custom_price?.toString() || "")
+    } else {
+      setSelectedItemId(part.item)
+      setCustomDescription("")
+      setCustomPrice("")
+    }
     setQuantity(part.quantity.toString())
     setIsFree(part.is_free || false)
 
@@ -293,7 +324,12 @@ export default function AppliancePartsManager({
                     <TableRow key={part.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          {part.item_name}
+                          <span>{part.item_name}</span>
+                          {!part.item && part.custom_description && (
+                            <Badge variant="secondary" className="text-xs">
+                              Custom
+                            </Badge>
+                          )}
                           {part.is_free && (
                             <Badge
                               variant="success"
@@ -445,6 +481,9 @@ export default function AppliancePartsManager({
             // Reset form when closing
             setEditingPartId(null)
             setSelectedItemId(null)
+            setIsCustom(false)
+            setCustomDescription("")
+            setCustomPrice("")
             setQuantity("1")
             setIsFree(false)
             setDiscountType("none")
@@ -466,17 +505,65 @@ export default function AppliancePartsManager({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Item</Label>
-              <ComboBox
-                options={itemOptions}
-                value={selectedItemId}
-                onChange={(value) => setSelectedItemId(value as number | null)}
-                placeholder="Select item..."
-                searchPlaceholder="Search items..."
-                disabled={itemsLoading}
+            {/* Custom / Inventory Toggle */}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="parts_is_custom"
+                checked={isCustom}
+                onCheckedChange={(checked) => {
+                  setIsCustom(checked === true)
+                  if (checked) {
+                    setSelectedItemId(null)
+                  } else {
+                    setCustomDescription("")
+                    setCustomPrice("")
+                  }
+                }}
+                className="cursor-pointer"
               />
+              <Label
+                htmlFor="parts_is_custom"
+                className="text-sm font-medium cursor-pointer"
+              >
+                Custom Item (not in inventory)
+              </Label>
             </div>
+
+            {isCustom ? (
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Description</Label>
+                  <Input
+                    value={customDescription}
+                    onChange={(e) => setCustomDescription(e.target.value)}
+                    placeholder="e.g., Drain hose, mounting bracket..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Price per Unit (₱)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={customPrice}
+                    onChange={(e) => setCustomPrice(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label>Item</Label>
+                  <ComboBox
+                    options={itemOptions}
+                    value={selectedItemId}
+                    onChange={(value) => setSelectedItemId(value as number | null)}
+                    placeholder="Select item..."
+                    searchPlaceholder="Search items..."
+                    disabled={itemsLoading}
+                  />
+                </div>
 
             {/* Stock availability info for selected item */}
             {selectedItem && selectedItemStock && (
@@ -515,6 +602,7 @@ export default function AppliancePartsManager({
                 )}
               </div>
             )}
+              </>
 
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
@@ -655,16 +743,18 @@ export default function AppliancePartsManager({
               )}
             </div>
 
-            {selectedItemId && (
+            {(selectedItemId || isCustom) && (
               <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="font-semibold text-primary">
                     {formatCurrency(
-                      Number(
-                        items.find((i) => i.id === selectedItemId)
-                          ?.retail_price || 0,
-                      ) * parseInt(quantity || "0"),
+                      (isCustom
+                        ? parseFloat(customPrice || "0")
+                        : Number(
+                            items.find((i) => i.id === selectedItemId)
+                              ?.retail_price || 0,
+                          )) * parseFloat(quantity || "0"),
                     )}
                   </span>
                 </div>
@@ -683,11 +773,13 @@ export default function AppliancePartsManager({
                       <span className="font-bold text-primary">
                         {formatCurrency(
                           (() => {
-                            const subtotal =
-                              Number(
-                                items.find((i) => i.id === selectedItemId)
-                                  ?.retail_price || 0,
-                              ) * parseInt(quantity || "0")
+                            const unitPrice = isCustom
+                              ? parseFloat(customPrice || "0")
+                              : Number(
+                                  items.find((i) => i.id === selectedItemId)
+                                    ?.retail_price || 0,
+                                )
+                            const subtotal = unitPrice * parseFloat(quantity || "0")
                             const discount =
                               discountType === "percentage"
                                 ? (subtotal * parseFloat(discountValue)) / 100
@@ -715,7 +807,11 @@ export default function AppliancePartsManager({
             </Button>
             <Button
               onClick={handleSavePart}
-              disabled={!selectedItemId || !quantity}
+              disabled={
+                isCustom
+                  ? !customDescription.trim() || !customPrice || !quantity
+                  : !selectedItemId || !quantity
+              }
             >
               {editingPartId ? "Update Part" : "Add Part"}
             </Button>

@@ -907,10 +907,12 @@ export interface ServiceAppliancePayload {
 export interface ApplianceItemUsed {
   id: number
   appliance: number
-  item: number
+  item: number | null
+  custom_description?: string
+  custom_price?: string | null
   item_name: string
-  item_sku: string
-  item_price: string
+  item_sku: string | null
+  item_price: string | null
   quantity: number
   is_free: boolean
   free_quantity: number
@@ -930,7 +932,9 @@ export interface ApplianceItemUsed {
 
 export interface ApplianceItemUsedPayload {
   appliance: number
-  item: number
+  item?: number | null
+  custom_description?: string
+  custom_price?: number
   quantity: number
   stall_stock?: number | null
   is_free?: boolean
@@ -945,10 +949,12 @@ export interface ApplianceItemUsedPayload {
 export interface ServiceItemUsed {
   id: number
   service: number
-  item: number
+  item: number | null
+  custom_description?: string
+  custom_price?: string | null
   item_name: string
-  item_sku: string
-  item_price: string
+  item_sku: string | null
+  item_price: string | null
   quantity: number
   is_free: boolean
   free_quantity: number
@@ -968,7 +974,9 @@ export interface ServiceItemUsed {
 
 export interface ServiceItemUsedPayload {
   service: number
-  item: number
+  item?: number | null
+  custom_description?: string
+  custom_price?: number
   quantity: number
   stall_stock?: number | null
   is_free?: boolean
