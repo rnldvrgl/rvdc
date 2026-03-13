@@ -20,7 +20,7 @@ import { Plus, Receipt } from "lucide-react"
 import { getChequeCollectionColumns } from "./columns"
 
 export default function ChequeCollectionsPage() {
-  const { role, isAdmin } = useCurrentUser()
+  const { role, isAdmin, canManage } = useCurrentUser()
   const { page, limit, search, ordering, filter } = useSearchParameters({
     defaultRangePreset: "Last 30 Days",
   })
@@ -67,9 +67,9 @@ export default function ChequeCollectionsPage() {
         title="Cheque Collections"
         description="Manage and track cheque collections from clients with comprehensive payment monitoring and reconciliation."
         breadcrumbs={["Dashboard", "Receivables", "Cheques"]}
-        isAdminOnly={!isAdmin}
+        isAdminOnly={!canManage}
         actionButton={
-          isAdmin && (
+          canManage && (
             <Button onClick={() => openCreate()}>
               <Plus className="size-4 mr-2" />
               New Collection

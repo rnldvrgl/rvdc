@@ -88,17 +88,22 @@ export function getChequeCollectionColumns({
       id: "action",
       header: "Actions",
       cell: ({ row }) => {
+        const isAdminOrManager = role === "admin" || role === "manager"
         const actions = [
           {
             label: "View",
             icon: Eye,
             onClick: () => onView?.(row.original),
           },
-          {
-            label: "Edit",
-            icon: Edit,
-            onClick: () => onEdit?.(row.original),
-          },
+          ...(isAdminOrManager
+            ? [
+                {
+                  label: "Edit",
+                  icon: Edit,
+                  onClick: () => onEdit?.(row.original),
+                },
+              ]
+            : []),
           ...(role === "admin"
             ? [
                 {

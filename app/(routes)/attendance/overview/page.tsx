@@ -10,6 +10,7 @@ import { useAttendanceStats } from "@/lib/hooks/useAttendanceStats"
 import { useNavigation } from "@/lib/hooks/useNavigation"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useDailyAttendances } from "@/lib/queries/useAttendance"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { convertAttendanceForCalendar } from "@/lib/utils/attendance"
 import { Users } from "lucide-react"
@@ -20,6 +21,7 @@ type SelectedEmployeeType =
   | undefined
 
 const AttendanceOverviewPage = () => {
+  const { isAdmin } = useCurrentUser()
   const { filter } = useSearchParameters()
   const { push } = useNavigation()
   const { data: employeeChoicesData } = useEmployeeChoices({
@@ -88,7 +90,7 @@ const AttendanceOverviewPage = () => {
             `${selectedEmployee?.employee_name || "All Employees"}`,
           ]}
           onRefresh={refetch}
-          actionButton={<MarkAbsentDialog />}
+          actionButton={isAdmin ? <MarkAbsentDialog /> : undefined}
           variant="compact"
         />
 

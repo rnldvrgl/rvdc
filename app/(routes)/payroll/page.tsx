@@ -11,15 +11,15 @@ import { useEffect } from "react"
  * - Employees -> My payroll view (/payroll/slip)
  */
 export default function PayrollPage() {
-  const { isAdmin } = useCurrentUser()
+  const { canManage } = useCurrentUser()
 
   useEffect(() => {
-    if (isAdmin) {
+    if (canManage) {
       redirect("/payroll/weekly")
     } else {
       redirect("/payroll/slip")
     }
-  }, [isAdmin])
+  }, [canManage])
 
   return <PageLoadingSkeleton message="Redirecting..." />
 }

@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import {
   useApproveOvertimeRequest,
   useCreateOvertimeRequest,
@@ -26,6 +27,7 @@ import { formatDateToYMD } from "@/lib/utils/helpers"
 import { getOvertimeRequestsColumns } from "./columns"
 
 export default function OvertimePage() {
+  const { isAdmin } = useCurrentUser()
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
   const { data: overtimeRequests, isLoading } = useOvertimeRequests()
@@ -64,7 +66,7 @@ export default function OvertimePage() {
     onApprove: handleApprove,
     onReject: handleReject,
     onDelete: handleDelete,
-    isAdmin: true,
+    isAdmin,
   })
 
   return (

@@ -142,7 +142,7 @@ export default function PayrollPage() {
           icon={PhilippinePesoIcon}
           onRefresh={isArchived ? archivedQuery.refetch : refetch}
           actionButton={
-            !isArchived ? (
+            isAdmin && !isArchived ? (
               <div className="flex gap-2">
                 <Button
                   variant="outline"
@@ -158,7 +158,6 @@ export default function PayrollPage() {
               </div>
             ) : undefined
           }
-          isAdminOnly
         />
 
         {/* Summary Statistics */}
@@ -225,11 +224,13 @@ export default function PayrollPage() {
 
         {/* View Toggle & Archive */}
         <div className="flex items-center justify-between gap-2">
-          <ArchiveToggle
-            isArchived={isArchived}
-            onToggle={setIsArchived}
-            archivedCount={archivedQuery.data?.count}
-          />
+          {isAdmin && (
+            <ArchiveToggle
+              isArchived={isArchived}
+              onToggle={setIsArchived}
+              archivedCount={archivedQuery.data?.count}
+            />
+          )}
           {!isArchived && (
             <div className="flex items-center border rounded-lg p-0.5 bg-muted/50">
               <Button
@@ -267,9 +268,9 @@ export default function PayrollPage() {
             isLoading={isArchived ? archivedQuery.isLoading : isLoading}
             filters={filters}
             orderingOptions={orderingOptions}
-            enableRowSelection={!isArchived}
+            enableRowSelection={isAdmin && !isArchived}
             bulkActions={
-              !isArchived
+              isAdmin && !isArchived
                 ? [
                     {
                       label: "Mark as Paid",
