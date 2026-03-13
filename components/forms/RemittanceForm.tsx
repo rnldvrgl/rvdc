@@ -78,7 +78,9 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
     initialData?.stall ??
       (role === "admin" ? undefined : userProfile?.assigned_stall?.id),
   )
-  const [previewDate, setPreviewDate] = useState<string | undefined>(undefined)
+  const [previewDate, setPreviewDate] = useState<string | undefined>(
+    format(new Date(), "yyyy-MM-dd"),
+  )
   const { data: preview, isLoading: previewLoading } = useRemittancePreview({
     stall: isEditing ? undefined : previewStall,
     date: previewDate,
@@ -140,7 +142,8 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         initialData?.stall ??
         (role === "admin" ? undefined : userProfile?.assigned_stall?.id),
       notes: initialData?.notes ?? "",
-      remittance_date: undefined,
+      remittance_date:
+        initialData?.remittance_date ?? format(new Date(), "yyyy-MM-dd"),
       mark_as_acknowledged: false,
       cash_breakdown: {
         ...Object.fromEntries(
@@ -160,7 +163,8 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
 
   // Watch date for backdated indicator
   const watchedDate = watch("remittance_date")
-  const isBackdated = !isEditing && !!watchedDate
+  const todayStr = format(new Date(), "yyyy-MM-dd")
+  const isBackdated = !isEditing && !!watchedDate && watchedDate !== todayStr
 
   // Watch all cash_breakdown fields for live totals
   const watchedBreakdown = useWatch({ control, name: "cash_breakdown" })
@@ -399,23 +403,19 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
               render={({ field }) => {
                 const dateValue = field.value
                   ? new Date(field.value + "T00:00:00")
-                  : undefined
+                  : new Date()
 
                 return (
                   <DatePicker
                     label="Remittance Date"
-                    placeholder="Today (default)"
+                    placeholder="Select date"
                     field={{
                       value: dateValue,
                       onChange: (date: Date | undefined) => {
-                        if (!date) {
-                          field.onChange(undefined)
-                          setPreviewDate(undefined)
-                        } else {
-                          const formatted = format(date, "yyyy-MM-dd")
-                          field.onChange(formatted)
-                          setPreviewDate(formatted)
-                        }
+                        const d = date || new Date()
+                        const formatted = format(d, "yyyy-MM-dd")
+                        field.onChange(formatted)
+                        setPreviewDate(formatted)
                       },
                     }}
                     withMinMaxDate

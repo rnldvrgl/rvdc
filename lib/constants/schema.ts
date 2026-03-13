@@ -97,8 +97,8 @@ export const RemittanceRecordSchema = z.object({
 
   is_remitted: z.boolean().optional(),
 
-  // Backdating support
-  remittance_date: z.string().optional(), // "YYYY-MM-DD" or empty
+  // Business date for this remittance (defaults to today)
+  remittance_date: z.string().min(1, "Remittance date is required"),
   mark_as_acknowledged: z.boolean().optional(),
 
   // Manual sales overrides (optional — system auto-computes if omitted)
