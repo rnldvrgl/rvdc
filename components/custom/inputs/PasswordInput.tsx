@@ -1,4 +1,3 @@
-import { Box } from "@/components/ui/box"
 import { Button } from "@/components/ui/button"
 import {
   FormControl,
@@ -47,7 +46,7 @@ export function PasswordField({
         <FormItem>
           {label && <FormLabel required={required}>{label}</FormLabel>}
           <FormControl>
-            <Box className="relative">
+            <div className="relative">
               {showIcon && (
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 z-10" />
               )}
@@ -72,7 +71,7 @@ export function PasswordField({
                   className: "size-6",
                 })}
               </Button>
-            </Box>
+            </div>
           </FormControl>
           <FormMessage />
           {description && <FormDescription>{description}</FormDescription>}
