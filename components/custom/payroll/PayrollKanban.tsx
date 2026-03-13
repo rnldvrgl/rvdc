@@ -188,12 +188,12 @@ function PayrollCard({ payroll }: { payroll: WeeklyPayroll }) {
         <div className="flex items-center justify-between pt-1 border-t">
           <div>
             <p className="text-[10px] text-muted-foreground">Gross</p>
-            <p className="text-xs font-medium">₱{formatCurrency(grossPay)}</p>
+            <p className="text-xs font-medium">{formatCurrency(grossPay)}</p>
           </div>
           <div className="text-right">
             <p className="text-[10px] text-muted-foreground">Net Pay</p>
             <p className="text-sm font-bold text-green-600 dark:text-green-400">
-              ₱{formatCurrency(netPay)}
+              {formatCurrency(netPay)}
             </p>
           </div>
         </div>

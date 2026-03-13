@@ -1,3 +1,4 @@
+import { STALE_TIME } from "@/lib/constants/general"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 
 export interface SystemSettings {
@@ -18,6 +19,6 @@ export function useSystemSettings() {
   return useApiQuery<SystemSettings>({
     queryKey: ["system-settings"],
     url: "/users/settings/",
-    staleTime: 1000 * 60 * 60 * 24,
+    staleTime: STALE_TIME.STATIC,
   })
 }

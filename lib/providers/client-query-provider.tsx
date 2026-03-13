@@ -1,5 +1,6 @@
 "use client"
 
+import { STALE_TIME } from "@/lib/constants/general"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { ReactNode, useState } from "react"
@@ -19,7 +20,7 @@ export function QueryClientContextProvider({
             retry: 1,
             retryDelay: (attemptIndex) =>
               Math.min(1000 * 2 ** attemptIndex, 30000),
-            staleTime: 5 * 60 * 1000, // 5 minutes — avoid refetching fresh data
+            staleTime: STALE_TIME.DEFAULT,
             gcTime: 10 * 60 * 1000, // 10 minutes — keep unused cache longer
             refetchOnWindowFocus: false, // only refetch explicitly or when stale
           },

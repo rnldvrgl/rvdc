@@ -172,17 +172,7 @@ export function isPathActive(item: NavListItem, path: string): boolean {
   return false
 }
 
-export function formatCurrency(value: number | string) {
-  if (value == null) return "N/A"
-  const num = typeof value === "string" ? parseFloat(value) : value
-  if (isNaN(num)) return "N/A"
-  return num.toLocaleString("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
+export { formatCurrency } from "@/lib/utils/currency"
 
 export function safeCell(value: unknown): string {
   const EMPTY_DASH = "—"

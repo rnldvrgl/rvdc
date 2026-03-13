@@ -106,7 +106,7 @@ export function EarningsSection({
       <Separator className="my-2 mt-auto" />
       <div className="flex justify-between font-semibold text-green-700 dark:text-green-400 text-sm">
         <span>Total</span>
-        <span>₱{formatCurrency(totalEarnings)}</span>
+        <span>{formatCurrency(totalEarnings)}</span>
       </div>
     </div>
   )
@@ -121,7 +121,7 @@ function EarningItem({ label, amount }: EarningItemProps) {
   return (
     <div className="flex justify-between text-xs sm:text-sm">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">₱{formatCurrency(amount)}</span>
+      <span className="font-medium">{formatCurrency(amount)}</span>
     </div>
   )
 }
@@ -164,7 +164,7 @@ function AdditionalEarningItem({
         )}
       </div>
       <div className="flex items-center gap-2 shrink-0">
-        <span className="font-medium">₱{formatCurrency(earningAmount)}</span>
+        <span className="font-medium">{formatCurrency(earningAmount)}</span>
         {canDelete && (
           <Button
             variant="destructive"

@@ -4,7 +4,7 @@ import {
   LateBadge,
 } from "@/components/custom/attendance/AttendanceBadges"
 import { DailyAttendance } from "@/lib/constants/types"
-import { formatTime } from "@/lib/utils/attendance"
+import { formatAttendanceTime } from "@/lib/utils/attendance"
 import { Clock } from "lucide-react"
 
 interface AttendanceRecordItemProps {
@@ -62,8 +62,10 @@ export const AttendanceRecordItem = ({ record }: AttendanceRecordItemProps) => {
               <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground bg-slate-100 dark:bg-slate-800/50 rounded-full px-3 py-1.5">
                 <Clock className="h-3.5 w-3.5" />
                 <span>
-                  {formatTime(record.clock_in)} →{" "}
-                  {record.clock_out ? formatTime(record.clock_out) : "Pending"}
+                  {formatAttendanceTime(record.clock_in)} →{" "}
+                  {record.clock_out
+                    ? formatAttendanceTime(record.clock_out)
+                    : "Pending"}
                 </span>
               </div>
             ) : isLeave ? (

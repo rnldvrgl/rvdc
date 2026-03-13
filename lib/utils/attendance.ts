@@ -72,7 +72,7 @@ export const getLeaveTypeColor = (type: LeaveType): string => {
 }
 
 // Format time (HH:MM AM/PM)
-export const formatTime = (dateTimeString: string | null): string => {
+export const formatAttendanceTime = (dateTimeString: string | null): string => {
   if (!dateTimeString) return "-"
 
   try {
@@ -92,7 +92,7 @@ export const formatTime = (dateTimeString: string | null): string => {
 }
 
 // Format date (MMM DD, YYYY)
-export const formatDate = (dateString: string): string => {
+export const formatAttendanceDate = (dateString: string): string => {
   if (!dateString) return "-"
 
   try {
@@ -109,18 +109,6 @@ export const formatDate = (dateString: string): string => {
     // error is handled by mutation
     return "-"
   }
-}
-
-// Format hours (e.g., "8.00 hrs")
-export const formatHours = (hours: string | number): string => {
-  const hoursNum = typeof hours === "string" ? parseFloat(hours) : hours
-  return `${hoursNum.toFixed(2)} hrs`
-}
-
-// Format currency (PHP)
-export const formatCurrency = (amount: string | number): string => {
-  const amountNum = typeof amount === "string" ? parseFloat(amount) : amount
-  return `₱${amountNum.toFixed(2)}`
 }
 
 // Calculate late status
@@ -197,9 +185,11 @@ export const convertAttendanceForCalendar = (
     employeeName: attendance.employee_name,
     date: attendance.date,
     status: mapAttendanceToCalendarStatus(attendance),
-    checkIn: attendance.clock_in ? formatTime(attendance.clock_in) : undefined,
+    checkIn: attendance.clock_in
+      ? formatAttendanceTime(attendance.clock_in)
+      : undefined,
     checkOut: attendance.clock_out
-      ? formatTime(attendance.clock_out)
+      ? formatAttendanceTime(attendance.clock_out)
       : undefined,
     hours: parseFloat(attendance.paid_hours || "0"),
     isLate: attendance.is_late,

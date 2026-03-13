@@ -1,3 +1,4 @@
+import { STALE_TIME } from "@/lib/constants/general"
 import { RemittanceRecord } from "@/lib/constants/interface"
 import type { PaginatedFilterProps } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
@@ -46,7 +47,7 @@ export function useRemittancePreview({
     url: `${remittanceUrl}preview/`,
     params: { stall, date },
     enabled: !!stall,
-    staleTime: 1000 * 30, // 30s – fresh enough for preview
+    staleTime: STALE_TIME.REAL_TIME,
   })
 }
 
@@ -76,6 +77,6 @@ export function useSubStallPayable() {
   return useApiQuery<SubStallPayable>({
     queryKey: ["sub-stall-payable"],
     url: `${remittanceUrl}sub-stall-payable/`,
-    staleTime: 1000 * 60, // 1min
+    staleTime: STALE_TIME.SHORT,
   })
 }

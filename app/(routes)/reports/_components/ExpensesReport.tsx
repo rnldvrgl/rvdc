@@ -192,7 +192,11 @@ export function ExpensesReport() {
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant={exp.is_paid ? "success" : "secondary"}
+                            variant={
+                              exp.payment_status === "paid"
+                                ? "success"
+                                : "secondary"
+                            }
                             className="text-xs"
                           >
                             {exp.payment_status?.toUpperCase() ?? "UNPAID"}

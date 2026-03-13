@@ -1,3 +1,4 @@
+import { STALE_TIME } from "@/lib/constants/general"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 
 export interface PendingApplianceInfo {
@@ -32,6 +33,6 @@ export function usePendingItemsStats(enabled = true) {
     queryKey: ["pending-items-stats"],
     url: "/services/services/pending-items-stats/",
     enabled,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: STALE_TIME.FRESH,
   })
 }

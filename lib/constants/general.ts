@@ -58,3 +58,19 @@ export enum AirconTypes {
   PORTABLE = "portable",
   CENTRALIZED = "centralized",
 }
+
+/** Centralized staleTime constants for React Query caching */
+export const STALE_TIME = {
+  /** 30 seconds — near real-time data (notifications, cursor queries) */
+  REAL_TIME: 30 * 1000,
+  /** 1 minute — frequently changing data (remittance previews) */
+  SHORT: 60 * 1000,
+  /** 2 minutes — moderately fresh data (pending items) */
+  FRESH: 2 * 60 * 1000,
+  /** 5 minutes — default for most list/detail queries */
+  DEFAULT: 5 * 60 * 1000,
+  /** 24 hours — rarely changing data (user profile, system settings) */
+  STATIC: 24 * 60 * 60 * 1000,
+  /** Infinity — immutable reference data (PSGC geodata) */
+  IMMUTABLE: Infinity,
+} as const

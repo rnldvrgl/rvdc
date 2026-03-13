@@ -105,7 +105,7 @@ export function DeductionsSection({
                   {label}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">₱{formatCurrency(amount)}</span>
+                  <span className="font-medium">{formatCurrency(amount)}</span>
                   {canDeleteItem && (
                     <Button
                       variant="destructive"
@@ -131,7 +131,7 @@ export function DeductionsSection({
           <Separator className="my-2" />
           <div className="flex justify-between font-semibold text-red-700 dark:text-red-400 text-xs sm:text-sm">
             <span>Total Deductions</span>
-            <span>₱{formatCurrency(totalDeductions)}</span>
+            <span>{formatCurrency(totalDeductions)}</span>
           </div>
         </>
       )}

@@ -78,7 +78,7 @@ export default function MyPayrollPage() {
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Total Earned</p>
                   <p className="text-lg font-bold truncate">
-                    ₱{formatCurrency(totalNetPay)}
+                    {formatCurrency(totalNetPay)}
                   </p>
                 </div>
               </CardContent>
@@ -140,7 +140,7 @@ export default function MyPayrollPage() {
                             <span className="text-xs">Gross</span>
                           </div>
                           <p className="font-medium">
-                            ₱{formatCurrency(gross)}
+                            {formatCurrency(gross)}
                           </p>
                         </div>
                         <div>
@@ -149,14 +149,14 @@ export default function MyPayrollPage() {
                             <span className="text-xs">Deductions</span>
                           </div>
                           <p className="font-medium text-red-600 dark:text-red-400">
-                            ₱{formatCurrency(deductions)}
+                            {formatCurrency(deductions)}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground">Net Pay</p>
                         <p className="text-base font-bold text-green-600 dark:text-green-400">
-                          ₱{formatCurrency(net)}
+                          {formatCurrency(net)}
                         </p>
                       </div>
                     </div>

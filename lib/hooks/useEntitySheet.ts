@@ -1,16 +1,5 @@
+import { EntityState, useEntitySheetReturn } from '@/lib/constants/interface'
 import { useState } from 'react'
-
-type EntityState<T> = {
-  open: boolean
-  entity?: T
-}
-
-type useEntitySheetReturn<T> = {
-  entityState: EntityState<T>
-  openEntity: (entity?: T) => void
-  closeEntity: () => Promise<void>
-  toggleEntity: (entity?: T) => void
-}
 
 export function useEntitySheet<T>(
   beforeClose?: () => boolean | Promise<boolean>,

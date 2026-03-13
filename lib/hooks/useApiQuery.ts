@@ -1,3 +1,4 @@
+import { STALE_TIME } from "@/lib/constants/general"
 import api from "@/lib/utils/api"
 import {
   useQuery,
@@ -28,7 +29,7 @@ export function useApiQuery<T>({
       const res = await api.get<T>(url, { params })
       return res.data
     },
-    staleTime: staleTime || 1000 * 60 * 5,
+    staleTime: staleTime || STALE_TIME.DEFAULT,
     refetchInterval: refetchInterval,
     ...options,
     select: options?.select,

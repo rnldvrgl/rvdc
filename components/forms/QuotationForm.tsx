@@ -1024,7 +1024,7 @@ export default function QuotationForm({
         <div className="mt-4 ml-auto w-full sm:w-[320px] md:w-[360px] lg:w-[400px] space-y-1.5 text-sm">
           <div className="flex justify-between text-muted-foreground">
             <span>Subtotal</span>
-            <span>&#8369;{formatCurrency(subtotal)}</span>
+            <span>{formatCurrency(subtotal)}</span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="text-muted-foreground">Discount</span>
@@ -1043,7 +1043,7 @@ export default function QuotationForm({
           <Separator />
           <div className="flex justify-between font-semibold text-base text-emerald-700">
             <span>Total</span>
-            <span>&#8369;{formatCurrency(total)}</span>
+            <span>{formatCurrency(total)}</span>
           </div>
         </div>
       </section>

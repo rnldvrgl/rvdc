@@ -1,3 +1,4 @@
+import { STALE_TIME } from "@/lib/constants/general"
 import { CursorPaginatedResponse } from "@/lib/constants/types"
 import api from "@/lib/utils/api"
 import { useInfiniteQuery } from "@tanstack/react-query"
@@ -23,7 +24,7 @@ export function useFlattenedCursorInfiniteQuery<T>(
     },
     getNextPageParam: (lastPage) => extractCursorFromUrl(lastPage.next),
     initialPageParam: null,
-    staleTime: 30 * 1000, // 30 seconds — prevent over-fetching on re-mounts
+    staleTime: STALE_TIME.REAL_TIME,
   })
 
   const items = query.data?.pages.flatMap((page) => page.results) ?? []

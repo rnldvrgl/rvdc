@@ -52,11 +52,11 @@ export function EmployeeInfoCard({
         </div>
         <div className="flex justify-between gap-2">
           <span className="text-muted-foreground">Daily:</span>
-          <span className="font-medium">₱{formatCurrency(dailyRate)}</span>
+          <span className="font-medium">{formatCurrency(dailyRate)}</span>
         </div>
         <div className="flex justify-between gap-2">
           <span className="text-muted-foreground">Hourly:</span>
-          <span className="font-medium">₱{formatCurrency(hourlyRate)}</span>
+          <span className="font-medium">{formatCurrency(hourlyRate)}</span>
         </div>
       </div>
     </div>

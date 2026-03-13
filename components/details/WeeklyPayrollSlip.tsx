@@ -233,7 +233,7 @@ export function WeeklyPayrollSlip({
             Net Pay
           </p>
           <p className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-            ₱ {formatCurrency(netPay)}
+            {formatCurrency(netPay)}
           </p>
         </div>
       </div>

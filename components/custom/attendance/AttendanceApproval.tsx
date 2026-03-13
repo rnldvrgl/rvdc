@@ -27,7 +27,11 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
 import { usePendingAttendanceApprovals } from "@/lib/queries/useAttendance"
-import { canApprove, formatDate, formatTime } from "@/lib/utils/attendance"
+import {
+  canApprove,
+  formatAttendanceDate,
+  formatAttendanceTime,
+} from "@/lib/utils/attendance"
 import { formatMinutesToHours } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
 import {
@@ -130,7 +134,7 @@ export function AttendanceApproval() {
       {
         accessorKey: "date",
         header: "Date",
-        cell: ({ row }) => formatDate(row.original.date),
+        cell: ({ row }) => formatAttendanceDate(row.original.date),
       },
       {
         accessorKey: "clock_in",
@@ -138,7 +142,7 @@ export function AttendanceApproval() {
         cell: ({ row }) => {
           const attendance = row.original
           const clockInTime = attendance.clock_in
-            ? formatTime(attendance.clock_in)
+            ? formatAttendanceTime(attendance.clock_in)
             : "—"
           return (
             <div>
@@ -157,7 +161,9 @@ export function AttendanceApproval() {
         accessorKey: "clock_out",
         header: "Clock Out",
         cell: ({ row }) =>
-          row.original.clock_out ? formatTime(row.original.clock_out) : "—",
+          row.original.clock_out
+            ? formatAttendanceTime(row.original.clock_out)
+            : "—",
       },
       {
         accessorKey: "paid_hours",
@@ -328,7 +334,7 @@ export function AttendanceApproval() {
             <DrawerTitle>Uniform Penalties</DrawerTitle>
             <DrawerDescription>
               {drawerAttendance?.employee_name} —{" "}
-              {drawerAttendance && formatDate(drawerAttendance.date)}
+              {drawerAttendance && formatAttendanceDate(drawerAttendance.date)}
             </DrawerDescription>
           </DrawerHeader>
           <div className="p-4">

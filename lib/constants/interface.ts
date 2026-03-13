@@ -79,18 +79,6 @@ export interface EntityDialogProps<T> {
   renderForm: (props: { onClose: () => void; entity?: T }) => React.ReactNode
 }
 
-export interface EntityDialogState<T> {
-  open: boolean
-  entity: T | undefined
-}
-
-export interface useEntitySheetReturn<T> {
-  entityState: EntityDialogState<T>
-  openEntity: (entity?: T) => void
-  closeEntity: () => void
-  toggleEntity: () => void
-}
-
 // ---------------------
 // User
 // ---------------------
@@ -371,7 +359,6 @@ export interface Expense {
   category_data?: ExpenseCategory
   total_price: number
   paid_amount: number
-  is_paid: boolean
   payment_status: "unpaid" | "partial" | "paid"
   payment_method?: string
   description: string

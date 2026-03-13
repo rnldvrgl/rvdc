@@ -326,10 +326,9 @@ const QuotationPrintContent = React.forwardRef<
                 {item.quantity}
               </td>
               <td className="py-2 px-3 text-right border-b border-r border-gray-300">
-                &#8369;{formatCurrency(Number(item.unit_price))}
+                {formatCurrency(Number(item.unit_price))}
               </td>
               <td className="py-2 px-3 text-right border-b border-gray-300">
-                &#8369;
                 {formatCurrency(item.quantity * Number(item.unit_price))}
               </td>
             </tr>
@@ -360,7 +359,7 @@ const QuotationPrintContent = React.forwardRef<
           <span></span>
           <span className="text-right">Subtotal</span>
           <span className="text-right">
-            &#8369;{formatCurrency(Number(q.subtotal))}
+            {formatCurrency(Number(q.subtotal))}
           </span>
         </div>
         {Number(q.discount_amount) > 0 && (
@@ -368,7 +367,7 @@ const QuotationPrintContent = React.forwardRef<
             <span></span>
             <span className="text-right">Discount</span>
             <span className="text-right">
-              -&#8369;{formatCurrency(Number(q.discount_amount))}
+              -{formatCurrency(Number(q.discount_amount))}
             </span>
           </div>
         )}
@@ -376,7 +375,7 @@ const QuotationPrintContent = React.forwardRef<
           <span></span>
           <span className="text-right">Total</span>
           <span className="text-right">
-            &#8369;{formatCurrency(Number(q.total))}
+            {formatCurrency(Number(q.total))}
           </span>
         </div>
       </div>
@@ -425,7 +424,7 @@ const QuotationPrintContent = React.forwardRef<
                   </td>
 
                   <td className="py-1.5 px-3 text-right border border-gray-300">
-                    &#8369;{formatCurrency(Number(p.amount))}
+                    {formatCurrency(Number(p.amount))}
                   </td>
                   <td className="py-1.5 px-3 text-center border border-gray-300">
                     {p.reference_number || "—"}

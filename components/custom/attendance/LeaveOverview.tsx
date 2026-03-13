@@ -33,7 +33,7 @@ import {
   useMyLeaveBalance,
   usePendingLeaveApprovals,
 } from "@/lib/queries/useAttendance"
-import { canApprove, formatDate } from "@/lib/utils/attendance"
+import { canApprove, formatAttendanceDate } from "@/lib/utils/attendance"
 import {
   CheckCircle,
   Clock,
@@ -115,9 +115,9 @@ const formatLeaveDate = (leave: LeaveRequest) => {
     leave.end_date &&
     leave.start_date !== leave.end_date
   ) {
-    return `${formatDate(leave.start_date)} - ${formatDate(leave.end_date)}`
+    return `${formatAttendanceDate(leave.start_date)} - ${formatAttendanceDate(leave.end_date)}`
   }
-  return formatDate(leave.start_date || leave.date)
+  return formatAttendanceDate(leave.start_date || leave.date)
 }
 
 const formatLeaveDuration = (leave: LeaveRequest) => {

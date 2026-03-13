@@ -1,5 +1,6 @@
 "use client"
 
+import { STALE_TIME } from "@/lib/constants/general"
 import { Schedule } from "@/lib/constants/interface"
 import api from "@/lib/utils/api"
 import { useQuery } from "@tanstack/react-query"
@@ -18,7 +19,7 @@ export function useSchedulesByService(serviceId: number | undefined) {
       return data.results || []
     },
     enabled: !!serviceId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: STALE_TIME.DEFAULT,
   })
 }
 

@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useMyOffenses } from "@/lib/queries/useAttendance"
-import { formatDate } from "@/lib/utils/attendance"
+import { formatAttendanceDate } from "@/lib/utils/attendance"
 import {
   AlertCircle,
   AlertTriangle,
@@ -313,7 +313,7 @@ export default function MyOffenses() {
                     <div className="flex items-center gap-1 text-xs text-muted-foreground sm:shrink-0">
                       <Calendar className="h-3 w-3" />
                       <span className="whitespace-nowrap">
-                        {formatDate(offense.date)}
+                        {formatAttendanceDate(offense.date)}
                       </span>
                     </div>
                   </div>
@@ -333,7 +333,10 @@ export default function MyOffenses() {
                           <>
                             <span className="hidden sm:inline">•</span>
                             <span>
-                              From {formatDate(offense.suspension_start_date)}
+                              From{" "}
+                              {formatAttendanceDate(
+                                offense.suspension_start_date,
+                              )}
                             </span>
                           </>
                         )}

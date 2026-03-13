@@ -63,7 +63,7 @@ export function getQuotationColumns({
       header: "Total",
       cell: ({ getValue }) => (
         <span className="font-medium tabular-nums">
-          &#8369;{formatCurrency(getValue() as number)}
+          {formatCurrency(getValue() as number)}
         </span>
       ),
     },

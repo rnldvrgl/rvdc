@@ -17,7 +17,7 @@ import {
   useLeaveRequests,
 } from "@/lib/queries/useAttendance"
 import { usePayrollSettings } from "@/lib/queries/usePayroll"
-import { canClockInOut, formatTime } from "@/lib/utils/attendance"
+import { canClockInOut, formatAttendanceTime } from "@/lib/utils/attendance"
 import { formatDateToYMD, formatMinutesToHours } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import {
@@ -411,7 +411,9 @@ export function ClockInOut({
                     <p className="text-xs text-muted-foreground">Clock In</p>
                     <p className="text-sm font-medium">
                       {currentStatus.attendance.clock_in
-                        ? formatTime(currentStatus.attendance.clock_in)
+                        ? formatAttendanceTime(
+                            currentStatus.attendance.clock_in,
+                          )
                         : "—"}
                     </p>
                   </div>
@@ -423,7 +425,9 @@ export function ClockInOut({
                     <p className="text-xs text-muted-foreground">Clock Out</p>
                     <p className="text-sm font-medium">
                       {currentStatus.attendance.clock_out
-                        ? formatTime(currentStatus.attendance.clock_out)
+                        ? formatAttendanceTime(
+                            currentStatus.attendance.clock_out,
+                          )
                         : "—"}
                     </p>
                   </div>
