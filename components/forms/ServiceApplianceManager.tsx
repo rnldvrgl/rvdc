@@ -25,6 +25,7 @@ import {
   ServiceAppliance,
   ServiceAppliancePayload,
 } from "@/lib/constants/interface"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
 import { useAirconUnits } from "@/lib/queries/useAircons"
 import {
@@ -34,6 +35,7 @@ import {
 import { formatCurrency } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
+import { formatDate } from "date-fns"
 import {
   ArrowRight,
   CheckCircle,
@@ -70,14 +72,9 @@ interface ServiceApplianceManagerProps {
 }
 
 const applianceStatusOptions: { value: ApplianceStatus; label: string }[] = [
-  { value: "received", label: "Received" },
-  { value: "diagnosed", label: "Diagnosed" },
-  { value: "in_repair", label: "In Repair" },
+  { value: "pending", label: "Pending" },
   { value: "completed", label: "Completed" },
-  { value: "ready_for_pickup", label: "Ready for Pickup" },
-  { value: "delivered", label: "Delivered" },
-  { value: "reserved", label: "Reserved" },
-  { value: "installed", label: "Installed" },
+  { value: "cancelled", label: "Cancelled" },
 ]
 
 // ─── Zod Schema ─────────────────────────────────────────────────────────────────
@@ -89,30 +86,17 @@ const applianceFormSchema = z.object({
   serial_number: z.string(),
   issue_reported: z.string(),
   diagnosis_notes: z.string(),
-  status: z.enum([
-    "received",
-    "diagnosed",
-    "in_repair",
-    "completed",
-    "ready_for_pickup",
-    "delivered",
-    "reserved",
-    "installed",
-  ]),
+  status: z.enum(["pending", "completed", "cancelled"]),
   labor_fee: z.coerce.number().min(0, "Labor fee must be non-negative"),
   labor_is_free: z.boolean(),
   labor_original_amount: z.coerce.number().min(0),
   labor_discount_amount: z.coerce.number().min(0).optional(),
-  labor_discount_percentage: z.coerce
-    .number()
-    .min(0)
-    .max(100, "Percentage cannot exceed 100")
-    .optional(),
   labor_discount_reason: z.string().optional(),
   unit_price: z.coerce.number().min(0).nullable().optional(),
   labor_warranty_months: z.coerce.number().min(0),
   unit_warranty_months: z.coerce.number().min(0),
   warranty_notes: z.string(),
+  parts_needed_notes: z.string(),
   assigned_technicians: z.array(z.number()),
   unit_type: z.enum(["brand_new", "second_hand"]).optional(),
   unit_id: z.number().optional(),
@@ -127,13 +111,14 @@ const DEFAULT_VALUES: ApplianceFormValues = {
   serial_number: "",
   issue_reported: "",
   diagnosis_notes: "",
-  status: "received",
+  status: "pending",
   labor_fee: 0,
   labor_is_free: false,
   labor_original_amount: 0,
   labor_warranty_months: 0,
   unit_warranty_months: 0,
   warranty_notes: "",
+  parts_needed_notes: "",
   assigned_technicians: [],
 }
 
@@ -150,6 +135,7 @@ export default function ServiceApplianceManager({
   canManageParts = true,
 }: ServiceApplianceManagerProps) {
   const queryClient = useQueryClient()
+  const { role } = useCurrentUser()
   const { data: applianceTypes = [] } = useApplianceTypeChoices()
   const { data: users = [], isLoading: usersLoading } = useTechnicianChoices()
 
@@ -160,7 +146,7 @@ export default function ServiceApplianceManager({
     limit: 100,
   })
 
-  const { addAppliance, updateAppliance, deleteAppliance } =
+  const { addAppliance, updateAppliance, deleteAppliance, toggleItemsChecked } =
     useServiceApplianceMutations()
 
   // ─── Form ───────────────────────────────────────────────────────────────────
@@ -176,7 +162,6 @@ export default function ServiceApplianceManager({
   const laborIsFree = watch("labor_is_free")
   const laborFee = watch("labor_fee")
   const laborDiscountAmount = watch("labor_discount_amount")
-  const laborDiscountPercentage = watch("labor_discount_percentage")
   const brand = watch("brand")
   const model = watch("model")
   const serialNumber = watch("serial_number")
@@ -189,6 +174,7 @@ export default function ServiceApplianceManager({
   const laborWarrantyMonths = watch("labor_warranty_months")
   const unitWarrantyMonths = watch("unit_warranty_months")
   const warrantyNotes = watch("warranty_notes")
+  const partsNeededNotes = watch("parts_needed_notes")
 
   // ─── Local UI State ─────────────────────────────────────────────────────────
 
@@ -277,7 +263,7 @@ export default function ServiceApplianceManager({
   const handleAdd = () => {
     reset({
       ...DEFAULT_VALUES,
-      status: isInstallation ? "reserved" : "received",
+      status: "pending",
       assigned_technicians: serviceTechnicians || [],
       ...(isInstallation && { unit_type: "brand_new" }),
     })
@@ -319,13 +305,11 @@ export default function ServiceApplianceManager({
       labor_discount_amount: appliance.labor_discount_amount
         ? parseFloat(appliance.labor_discount_amount)
         : undefined,
-      labor_discount_percentage: appliance.labor_discount_percentage
-        ? parseFloat(appliance.labor_discount_percentage)
-        : undefined,
       labor_discount_reason: appliance.labor_discount_reason || undefined,
       labor_warranty_months: appliance.labor_warranty_months || 0,
       unit_warranty_months: appliance.unit_warranty_months || 0,
       warranty_notes: appliance.warranty_notes || "",
+      parts_needed_notes: appliance.parts_needed_notes || "",
       unit_price: appliance.unit_price
         ? parseFloat(appliance.unit_price)
         : undefined,
@@ -344,10 +328,8 @@ export default function ServiceApplianceManager({
     setIsEditing(true)
 
     if (
-      (appliance.labor_discount_amount &&
-        parseFloat(appliance.labor_discount_amount) > 0) ||
-      (appliance.labor_discount_percentage &&
-        parseFloat(appliance.labor_discount_percentage) > 0)
+      appliance.labor_discount_amount &&
+      parseFloat(appliance.labor_discount_amount) > 0
     ) {
       setShowLaborDiscount(true)
     }
@@ -356,7 +338,6 @@ export default function ServiceApplianceManager({
   const onSubmit = async (data: ApplianceFormValues) => {
     const fee = data.labor_fee || 0
     const discAmt = data.labor_discount_amount || 0
-    const discPct = data.labor_discount_percentage || 0
 
     if (discAmt > 0 && discAmt > fee) {
       toast.error(
@@ -364,19 +345,8 @@ export default function ServiceApplianceManager({
       )
       return
     }
-    if (discPct > 0) {
-      const calculated = (fee * discPct) / 100
-      if (calculated > fee) {
-        toast.error(
-          `Labor discount (${discPct}% = ₱${calculated.toFixed(2)}) cannot exceed labor fee (₱${fee.toFixed(2)})`,
-        )
-        return
-      }
-    }
 
-    const hasDiscount =
-      (discAmt !== undefined && discAmt > 0) ||
-      (discPct !== undefined && discPct > 0)
+    const hasDiscount = discAmt > 0
 
     const payload: ServiceAppliancePayload = {
       service: serviceId,
@@ -386,20 +356,20 @@ export default function ServiceApplianceManager({
       serial_number: data.serial_number || undefined,
       issue_reported: data.issue_reported || "",
       diagnosis_notes: data.diagnosis_notes || "",
-      status: data.status || (isInstallation ? "reserved" : "received"),
+      status: data.status || "pending",
       labor_fee: Math.round(fee * 100) / 100,
       labor_is_free: data.labor_is_free || false,
       labor_original_amount:
         Math.round((data.labor_original_amount || 0) * 100) / 100,
       labor_discount_amount: discAmt > 0 ? Math.round(discAmt * 100) / 100 : 0,
-      labor_discount_percentage:
-        discPct > 0 ? Math.round(discPct * 100) / 100 : 0,
+      labor_discount_percentage: 0,
       labor_discount_reason: hasDiscount
         ? data.labor_discount_reason || ""
         : "",
       labor_warranty_months: data.labor_warranty_months || 0,
       unit_warranty_months: data.unit_warranty_months || 0,
       warranty_notes: data.warranty_notes || "",
+      parts_needed_notes: data.parts_needed_notes || "",
       assigned_technician:
         data.assigned_technicians && data.assigned_technicians.length > 0
           ? data.assigned_technicians[0]
@@ -930,60 +900,27 @@ export default function ServiceApplianceManager({
                 </Button>
 
                 {showLaborDiscount && (
-                  <div className="grid grid-cols-3 gap-3 rounded-lg border bg-muted/30 p-3">
+                  <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/30 p-3">
                     <div className="space-y-2">
-                      <Label className="text-xs font-medium">Type</Label>
-                      <ComboBox
-                        options={[
-                          { value: "none", label: "None" },
-                          { value: "percentage", label: "%" },
-                          { value: "fixed", label: "₱" },
-                        ]}
-                        value={
-                          laborDiscountAmount !== undefined
-                            ? "fixed"
-                            : laborDiscountPercentage !== undefined
-                              ? "percentage"
-                              : "none"
-                        }
-                        onChange={(v) => {
-                          if (v === "none") {
-                            setField("labor_discount_amount", undefined)
-                            setField("labor_discount_percentage", undefined)
-                            setField("labor_discount_reason", undefined)
-                          } else if (v === "fixed") {
-                            setField("labor_discount_amount", 0)
-                            setField("labor_discount_percentage", undefined)
-                          } else {
-                            setField("labor_discount_amount", undefined)
-                            setField("labor_discount_percentage", 0)
-                          }
-                        }}
-                        placeholder="Select type"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Amount</Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={
-                          laborDiscountAmount ?? laborDiscountPercentage ?? ""
-                        }
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 0
-                          if (laborDiscountAmount !== undefined) {
-                            setField("labor_discount_amount", val)
-                          } else if (laborDiscountPercentage !== undefined) {
-                            setField("labor_discount_percentage", val)
-                          }
-                        }}
-                        disabled={
-                          laborDiscountAmount === undefined &&
-                          laborDiscountPercentage === undefined
-                        }
-                      />
+                      <Label className="text-xs font-medium">Amount (₱)</Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={laborDiscountAmount ?? ""}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 0
+                              setField("labor_discount_amount", val)
+                            }}
+                            placeholder="0"
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Enter discount in peso amount
+                        </TooltipContent>
+                      </Tooltip>
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Reason</Label>
@@ -992,10 +929,6 @@ export default function ServiceApplianceManager({
                         value={laborDiscountReason || ""}
                         onChange={(e) =>
                           setField("labor_discount_reason", e.target.value)
-                        }
-                        disabled={
-                          laborDiscountAmount === undefined &&
-                          laborDiscountPercentage === undefined
                         }
                       />
                     </div>
@@ -1033,6 +966,21 @@ export default function ServiceApplianceManager({
                     placeholder="Technician's diagnosis and findings"
                     rows={2}
                     className="resize-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium flex items-center gap-1.5">
+                    <Package className="h-3.5 w-3.5 text-orange-500" />
+                    Parts Needed
+                  </Label>
+                  <Textarea
+                    value={partsNeededNotes || ""}
+                    onChange={(e) =>
+                      setField("parts_needed_notes", e.target.value)
+                    }
+                    placeholder="List parts the technician reported are needed (for clerk reference)"
+                    rows={2}
+                    className="resize-none border-orange-200 focus-visible:ring-orange-300"
                   />
                 </div>
               </>
@@ -1145,6 +1093,8 @@ export default function ServiceApplianceManager({
                 onUpdate={onUpdate}
                 getStatusLabel={getStatusLabel}
                 updateAppliance={updateAppliance}
+                toggleItemsChecked={toggleItemsChecked}
+                canConfirmItems={role === "clerk" || role === "admin"}
                 invalidateServiceQueries={invalidateServiceQueries}
               />
             ))}
@@ -1183,18 +1133,32 @@ const INSTALLATION_STATUS_FLOW: {
   variant: "success" | "outline" | "secondary" | "destructive"
 }[] = [
   {
-    from: "reserved",
-    to: "installed",
-    label: "Mark as Installed",
+    from: "pending",
+    to: "completed",
+    label: "Mark Completed",
     icon: CheckCircle,
     variant: "success",
   },
   {
-    from: "installed",
-    to: "reserved",
-    label: "Return to Reserved",
+    from: "pending",
+    to: "cancelled",
+    label: "Cancel",
     icon: RotateCcw,
-    variant: "outline",
+    variant: "destructive",
+  },
+  {
+    from: "completed",
+    to: "pending",
+    label: "Reopen",
+    icon: RotateCcw,
+    variant: "secondary",
+  },
+  {
+    from: "cancelled",
+    to: "pending",
+    label: "Reopen",
+    icon: RotateCcw,
+    variant: "secondary",
   },
 ]
 
@@ -1206,73 +1170,30 @@ const REPAIR_STATUS_FLOW: {
   variant: "success" | "outline" | "secondary" | "destructive"
 }[] = [
   {
-    from: "received",
-    to: "diagnosed",
-    label: "Mark Diagnosed",
-    icon: ArrowRight,
-    variant: "outline",
-  },
-  {
-    from: "diagnosed",
-    to: "in_repair",
-    label: "Start Repair",
-    icon: ArrowRight,
-    variant: "outline",
-  },
-  {
-    from: "in_repair",
+    from: "pending",
     to: "completed",
     label: "Mark Completed",
     icon: CheckCircle,
     variant: "success",
   },
   {
-    from: "completed",
-    to: "ready_for_pickup",
-    label: "Ready for Pickup",
-    icon: ArrowRight,
-    variant: "outline",
-  },
-  {
-    from: "ready_for_pickup",
-    to: "delivered",
-    label: "Mark Delivered",
-    icon: CheckCircle,
-    variant: "success",
-  },
-  // Reverse actions
-  {
-    from: "diagnosed",
-    to: "received",
-    label: "Back to Received",
+    from: "pending",
+    to: "cancelled",
+    label: "Cancel",
     icon: RotateCcw,
-    variant: "secondary",
-  },
-  {
-    from: "in_repair",
-    to: "diagnosed",
-    label: "Back to Diagnosed",
-    icon: RotateCcw,
-    variant: "secondary",
+    variant: "destructive",
   },
   {
     from: "completed",
-    to: "in_repair",
-    label: "Re-open Repair",
+    to: "pending",
+    label: "Reopen",
     icon: RotateCcw,
     variant: "secondary",
   },
   {
-    from: "ready_for_pickup",
-    to: "completed",
-    label: "Back to Completed",
-    icon: RotateCcw,
-    variant: "secondary",
-  },
-  {
-    from: "delivered",
-    to: "ready_for_pickup",
-    label: "Unmark Delivered",
+    from: "cancelled",
+    to: "pending",
+    label: "Reopen",
     icon: RotateCcw,
     variant: "secondary",
   },
@@ -1299,6 +1220,11 @@ interface ApplianceCardProps {
       data: ServiceAppliancePayload
     }) => Promise<unknown>
   }
+  toggleItemsChecked: {
+    mutateAsync: (args: { id: number; serviceId?: number }) => Promise<unknown>
+    isPending: boolean
+  }
+  canConfirmItems: boolean
   invalidateServiceQueries: () => Promise<void>
 }
 
@@ -1318,6 +1244,8 @@ function ApplianceCard({
   onUpdate,
   getStatusLabel,
   updateAppliance,
+  toggleItemsChecked,
+  canConfirmItems,
   invalidateServiceQueries,
 }: ApplianceCardProps) {
   const [statusLoading, setStatusLoading] = useState(false)
@@ -1510,6 +1438,113 @@ function ApplianceCard({
           </div>
         )}
 
+        {/* Parts Needed Notes (from manager/technician) */}
+        {appliance.parts_needed_notes && (
+          <div className="space-y-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-orange-600 dark:text-orange-400 flex items-center gap-1">
+              <Package className="h-3 w-3" />
+              Parts Needed
+            </p>
+            <p className="text-sm leading-relaxed bg-orange-50 dark:bg-orange-950/20 p-2.5 rounded-md border border-orange-200/50 dark:border-orange-900/50">
+              {appliance.parts_needed_notes}
+            </p>
+          </div>
+        )}
+
+        {/* Items Confirmed Toggle — only when parts_needed_notes exists */}
+        {appliance.parts_needed_notes && (
+          <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
+            <div className="flex items-center gap-2 min-w-0">
+              {appliance.items_checked ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Parts have been reviewed and confirmed by clerk
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Package className="h-4 w-4 text-orange-500 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Clerk needs to review and confirm parts
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              <div className="min-w-0">
+                <p className="text-sm font-medium">
+                  {appliance.items_checked
+                    ? "Items Confirmed"
+                    : "Items Not Yet Confirmed"}
+                </p>
+                {appliance.items_checked && appliance.items_checked_by && (
+                  <p className="text-xs text-muted-foreground">
+                    by {appliance.items_checked_by_name || "Unknown"}{" "}
+                    {appliance.items_checked_at &&
+                      `· ${formatDate(new Date(appliance.items_checked_at), "MMM d, yyyy h:mm a")}`}
+                  </p>
+                )}
+              </div>
+            </div>
+            {canConfirmItems && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant={appliance.items_checked ? "outline" : "default"}
+                    size="sm"
+                    disabled={
+                      toggleItemsChecked.isPending ||
+                      (!appliance.items_checked &&
+                        (!appliance.items_used ||
+                          appliance.items_used.length === 0))
+                    }
+                    onClick={async () => {
+                      try {
+                        await toggleItemsChecked.mutateAsync({
+                          id: appliance.id,
+                          serviceId,
+                        })
+                        toast.success(
+                          appliance.items_checked
+                            ? "Items marked as not confirmed"
+                            : "Items confirmed successfully",
+                        )
+                        await invalidateServiceQueries()
+                      } catch {
+                        // handled by useApiMutation
+                      }
+                    }}
+                    className="h-7 text-xs shrink-0"
+                  >
+                    {appliance.items_checked ? (
+                      <>
+                        <RotateCcw className="mr-1 h-3 w-3" />
+                        Unconfirm
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="mr-1 h-3 w-3" />
+                        Confirm Items
+                      </>
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {appliance.items_checked
+                    ? "Mark items as needing re-review"
+                    : !appliance.items_used || appliance.items_used.length === 0
+                      ? "Add parts first before confirming"
+                      : "Confirm that all listed parts are correct and complete"}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        )}
+
         {/* Financial Summary — compact inline */}
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-muted/30 p-3 text-sm">
           {/* Labor Fee */}
@@ -1531,17 +1566,12 @@ function ApplianceCard({
                     ),
                   )}
                 </span>
-                {((appliance.labor_discount_amount &&
-                  parseFloat(appliance.labor_discount_amount) > 0) ||
-                  (appliance.labor_discount_percentage &&
-                    parseFloat(appliance.labor_discount_percentage) > 0)) && (
-                  <span className="text-xs text-green-600">
-                    {appliance.labor_discount_percentage &&
-                    parseFloat(appliance.labor_discount_percentage) > 0
-                      ? `${appliance.labor_discount_percentage}% off`
-                      : `₱${appliance.labor_discount_amount} off`}
-                  </span>
-                )}
+                {appliance.labor_discount_amount &&
+                  parseFloat(appliance.labor_discount_amount) > 0 && (
+                    <span className="text-xs text-green-600">
+                      ₱{appliance.labor_discount_amount} off
+                    </span>
+                  )}
               </div>
             )}
           </div>

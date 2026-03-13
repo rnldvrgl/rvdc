@@ -5,6 +5,7 @@ import { BirthdayReminders } from "@/components/custom/dashboard/BirthdayReminde
 import { EmployeePerformanceStats } from "@/components/custom/dashboard/EmployeePerformanceStats"
 import { InventoryReorderAlerts } from "@/components/custom/dashboard/InventoryReorderAlerts"
 import { LeaveBalanceSummary } from "@/components/custom/dashboard/LeaveBalanceSummary"
+import { PendingItemsAlert } from "@/components/custom/dashboard/PendingItemsAlert"
 import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
 import { RemindersAlerts } from "@/components/custom/dashboard/RemindersAlerts"
 import { SubStallSettlement } from "@/components/custom/dashboard/SubStallSettlement"
@@ -113,6 +114,13 @@ const DashboardPage = () => {
                       </WidgetErrorBoundary>
                     )}
 
+                    {/* Pending Items for Clerk */}
+                    {role === "clerk" && (
+                      <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
+                        <PendingItemsAlert />
+                      </WidgetErrorBoundary>
+                    )}
+
                     {/* Birthday Reminders for Technician */}
                     {role === "technician" && <BirthdayReminders />}
                   </div>
@@ -138,6 +146,9 @@ const DashboardPage = () => {
                 </WidgetErrorBoundary>
                 <WidgetErrorBoundary fallbackTitle="Warranty alerts failed to load">
                   <WarrantyExpirationAlerts />
+                </WidgetErrorBoundary>
+                <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
+                  <PendingItemsAlert />
                 </WidgetErrorBoundary>
               </div>
 

@@ -42,6 +42,7 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { usePrint } from "@/lib/hooks/usePrint"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
+import { useServiceItems } from "@/lib/queries/services/useServiceItems"
 import { useChequeChoices } from "@/lib/queries/useChoices"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
 import {
@@ -106,7 +107,7 @@ export default function ServiceDetail({
   onEdit,
   onRefresh,
 }: ServiceDetailProps) {
-  const { canManage } = useCurrentUser()
+  const { canManage, role } = useCurrentUser()
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState("")
@@ -124,9 +125,6 @@ export default function ServiceDetail({
   const [refundMethod, setRefundMethod] = useState<
     "cash" | "gcash" | "bank_transfer"
   >("cash")
-  const [discountType, setDiscountType] = useState<
-    "none" | "percentage" | "fixed"
-  >("none")
   const [discountValue, setDiscountValue] = useState("")
   const [discountReason, setDiscountReason] = useState("")
   const [scheduleDeliveryDialogOpen, setScheduleDeliveryDialogOpen] =
@@ -142,6 +140,7 @@ export default function ServiceDetail({
     refundService,
     updateService,
     reopenService,
+    toggleServiceItemsChecked,
   } = useServiceMutations()
   const { updateAppliance } = useServiceApplianceMutations()
 
@@ -169,28 +168,15 @@ export default function ServiceDetail({
   // Initialize discount form with existing values
   useEffect(() => {
     const discountAmount = parseFloat(service.service_discount_amount || "0")
-    const discountPercentage = parseFloat(
-      service.service_discount_percentage || "0",
-    )
 
-    if (discountPercentage > 0) {
-      setDiscountType("percentage")
-      setDiscountValue(service.service_discount_percentage || "")
-    } else if (discountAmount > 0) {
-      setDiscountType("fixed")
+    if (discountAmount > 0) {
       setDiscountValue(service.service_discount_amount || "")
     } else {
-      setDiscountType("none")
       setDiscountValue("")
     }
 
     setDiscountReason(service.discount_reason || "")
-  }, [
-    service.id,
-    service.service_discount_amount,
-    service.service_discount_percentage,
-    service.discount_reason,
-  ])
+  }, [service.id, service.service_discount_amount, service.discount_reason])
 
   // Auto-fill payment amount when cheque is selected
   useEffect(() => {
@@ -206,23 +192,15 @@ export default function ServiceDetail({
 
   // Calculate discount amount
   const calculateDiscount = () => {
-    if (discountType === "none" || !discountValue) return 0
+    if (!discountValue) return 0
     const value = parseFloat(discountValue)
     if (isNaN(value)) return 0
-
-    if (discountType === "percentage") {
-      return (parseFloat(service.total_revenue || "0") * value) / 100
-    }
     return value
   }
 
   // Check if all appliances are ready for completion
   const hasUnfinishedAppliances = service.appliances?.some(
-    (appliance) =>
-      appliance.status !== "completed" &&
-      appliance.status !== "ready_for_pickup" &&
-      appliance.status !== "delivered" &&
-      appliance.status !== "installed",
+    (appliance) => appliance.status === "pending",
   )
 
   const handleComplete = () => {
@@ -230,6 +208,15 @@ export default function ServiceDetail({
     if (hasUnfinishedAppliances) {
       toast.error(
         "Cannot complete service. Some appliances are not finished yet. Please update appliance status to 'Completed' or 'Ready for Pickup' first.",
+      )
+      setCompleteDialogOpen(false)
+      return
+    }
+
+    // Validate items have been confirmed
+    if (service.has_pending_items) {
+      toast.error(
+        "Cannot complete service. Items have not been confirmed for all appliances. Please ask the clerk to confirm parts/items used.",
       )
       setCompleteDialogOpen(false)
       return
@@ -389,8 +376,8 @@ export default function ServiceDetail({
   }
 
   const handleApplyDiscount = () => {
-    // Allow removing discount by selecting "none"
-    if (discountType === "none") {
+    // Allow removing discount
+    if (!discountValue || parseFloat(discountValue) <= 0) {
       updateService.mutate(
         {
           id: service.id,
@@ -402,7 +389,6 @@ export default function ServiceDetail({
         },
         {
           onSuccess: () => {
-            setDiscountType("none")
             setDiscountValue("")
             setDiscountReason("")
           },
@@ -414,43 +400,21 @@ export default function ServiceDetail({
       return
     }
 
-    if (!discountValue || parseFloat(discountValue) <= 0) {
-      toast.error("Please enter a valid discount value")
-      return
-    }
-
-    // Validate percentage discount
-    if (discountType === "percentage") {
-      const percentage = parseFloat(discountValue)
-      if (percentage > 100) {
-        toast.error("Percentage discount cannot exceed 100%")
-        return
-      }
-    }
-
     updateService.mutate(
       {
         id: service.id,
         data: {
           service_discount_amount:
-            discountType === "fixed"
-              ? Math.round(parseFloat(discountValue) * 100) / 100
-              : 0,
-          service_discount_percentage:
-            discountType === "percentage"
-              ? Math.round(parseFloat(discountValue) * 100) / 100
-              : 0,
+            Math.round(parseFloat(discountValue) * 100) / 100,
+          service_discount_percentage: 0,
           discount_reason: discountReason,
         },
       },
       {
         onSuccess: () => {
-          setDiscountType("none")
-          setDiscountValue("")
-          setDiscountReason("")
+          toast.success("Discount applied successfully")
         },
         onSettled: () => {
-          // Call onRefresh after query invalidation completes
           onRefresh?.()
         },
       },
@@ -836,10 +800,8 @@ export default function ServiceDetail({
                       "0",
                   )
                   const hasLaborDiscount =
-                    ((appliance.labor_discount_amount &&
-                      parseFloat(appliance.labor_discount_amount) > 0) ||
-                      (appliance.labor_discount_percentage &&
-                        parseFloat(appliance.labor_discount_percentage) > 0)) &&
+                    appliance.labor_discount_amount &&
+                    parseFloat(appliance.labor_discount_amount) > 0 &&
                     !appliance.labor_is_free
 
                   const partsCost = parseFloat(
@@ -938,12 +900,7 @@ export default function ServiceDetail({
                                     variant="outline"
                                     className="text-green-600 border-green-600 text-xs px-1.5 py-0"
                                   >
-                                    {appliance.labor_discount_percentage &&
-                                    parseFloat(
-                                      appliance.labor_discount_percentage,
-                                    ) > 0
-                                      ? `${appliance.labor_discount_percentage}%`
-                                      : `₱${appliance.labor_discount_amount}`}
+                                    ₱{appliance.labor_discount_amount} off
                                   </Badge>
                                 </div>
                               )}
@@ -985,11 +942,8 @@ export default function ServiceDetail({
                               <div className="ml-4 mt-1 space-y-1 text-xs">
                                 {appliance.items_used.map((part) => {
                                   const partHasDiscount =
-                                    (part.discount_amount &&
-                                      parseFloat(part.discount_amount) > 0) ||
-                                    (part.discount_percentage &&
-                                      parseFloat(part.discount_percentage) > 0)
-
+                                    part.discount_amount &&
+                                    parseFloat(part.discount_amount) > 0
                                   return (
                                     <div
                                       key={part.id}
@@ -1012,12 +966,7 @@ export default function ServiceDetail({
                                               variant="outline"
                                               className="text-green-600 border-green-600 text-xs px-1 py-0"
                                             >
-                                              {part.discount_percentage &&
-                                              parseFloat(
-                                                part.discount_percentage,
-                                              ) > 0
-                                                ? `${part.discount_percentage}%`
-                                                : `₱${part.discount_amount}`}
+                                              ₱{part.discount_amount} off
                                             </Badge>
                                           )
                                         )}
@@ -1077,129 +1026,74 @@ export default function ServiceDetail({
                 Financial Summary
               </p>
               {/* Show service-level discount if exists */}
-              {((service.service_discount_amount &&
-                parseFloat(service.service_discount_amount) > 0) ||
-                (service.service_discount_percentage &&
-                  parseFloat(service.service_discount_percentage) > 0)) && (
-                <>
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="text-muted-foreground">Original Amount</p>
-                    <p className="line-through">
-                      {(() => {
-                        // Calculate subtotal from appliances (before service discount)
-                        const appliancesSubtotal =
-                          service.appliances?.reduce((total, appliance) => {
-                            const laborFee = parseFloat(
-                              appliance.discounted_labor_fee ||
-                                appliance.labor_fee ||
-                                "0",
-                            )
-                            const partsCost = parseFloat(
-                              appliance.total_parts_cost || "0",
-                            )
-                            // Per-appliance unit price (brand_new linked by serial or second-hand)
-                            const linkedUnit =
-                              service.service_type === "installation" &&
-                              service.installation_units &&
-                              appliance.serial_number
-                                ? service.installation_units.find(
-                                    (u) =>
-                                      u.serial_number ===
-                                      appliance.serial_number,
-                                  )
-                                : null
-                            const unitPrice = linkedUnit
-                              ? appliance.unit_price
-                                ? parseFloat(appliance.unit_price)
-                                : parseFloat(
-                                    linkedUnit.sale_price ||
-                                      linkedUnit.model?.selling_price ||
-                                      linkedUnit.model?.retail_price ||
-                                      "0",
-                                  )
-                              : appliance.unit_price
-                                ? parseFloat(appliance.unit_price)
-                                : 0
-                            return total + laborFee + partsCost + unitPrice
-                          }, 0) || 0
-
-                        return formatCurrency(appliancesSubtotal)
-                      })()}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <p className="text-muted-foreground">Service Discount</p>
-                    <div className="flex items-center gap-2">
-                      <Badge
-                        variant="outline"
-                        className="text-green-600 border-green-600"
-                      >
-                        {service.service_discount_percentage &&
-                        parseFloat(service.service_discount_percentage) > 0
-                          ? `${service.service_discount_percentage}% off`
-                          : `₱${service.service_discount_amount} off`}
-                      </Badge>
-                      <p className="text-green-600 font-medium">
-                        -
+              {service.service_discount_amount &&
+                parseFloat(service.service_discount_amount) > 0 && (
+                  <>
+                    <div className="flex items-center justify-between text-sm">
+                      <p className="text-muted-foreground">Original Amount</p>
+                      <p className="line-through">
                         {(() => {
-                          const discountAmount = parseFloat(
-                            service.service_discount_amount || "0",
-                          )
-                          const discountPercentage = parseFloat(
-                            service.service_discount_percentage || "0",
-                          )
+                          // Calculate subtotal from appliances (before service discount)
+                          const appliancesSubtotal =
+                            service.appliances?.reduce((total, appliance) => {
+                              const laborFee = parseFloat(
+                                appliance.discounted_labor_fee ||
+                                  appliance.labor_fee ||
+                                  "0",
+                              )
+                              const partsCost = parseFloat(
+                                appliance.total_parts_cost || "0",
+                              )
+                              // Per-appliance unit price (brand_new linked by serial or second-hand)
+                              const linkedUnit =
+                                service.service_type === "installation" &&
+                                service.installation_units &&
+                                appliance.serial_number
+                                  ? service.installation_units.find(
+                                      (u) =>
+                                        u.serial_number ===
+                                        appliance.serial_number,
+                                    )
+                                  : null
+                              const unitPrice = linkedUnit
+                                ? appliance.unit_price
+                                  ? parseFloat(appliance.unit_price)
+                                  : parseFloat(
+                                      linkedUnit.sale_price ||
+                                        linkedUnit.model?.selling_price ||
+                                        linkedUnit.model?.retail_price ||
+                                        "0",
+                                    )
+                                : appliance.unit_price
+                                  ? parseFloat(appliance.unit_price)
+                                  : 0
+                              return total + laborFee + partsCost + unitPrice
+                            }, 0) || 0
 
-                          // If percentage discount, calculate from subtotal
-                          if (discountPercentage > 0 && discountAmount === 0) {
-                            const appliancesSubtotal =
-                              service.appliances?.reduce((total, appliance) => {
-                                const laborFee = parseFloat(
-                                  appliance.discounted_labor_fee ||
-                                    appliance.labor_fee ||
-                                    "0",
-                                )
-                                const partsCost = parseFloat(
-                                  appliance.total_parts_cost || "0",
-                                )
-                                // Per-appliance unit price
-                                const linkedUnit =
-                                  service.service_type === "installation" &&
-                                  service.installation_units &&
-                                  appliance.serial_number
-                                    ? service.installation_units.find(
-                                        (u) =>
-                                          u.serial_number ===
-                                          appliance.serial_number,
-                                      )
-                                    : null
-                                const unitPrice = linkedUnit
-                                  ? appliance.unit_price
-                                    ? parseFloat(appliance.unit_price)
-                                    : parseFloat(
-                                        linkedUnit.sale_price ||
-                                          linkedUnit.model?.selling_price ||
-                                          linkedUnit.model?.retail_price ||
-                                          "0",
-                                      )
-                                  : appliance.unit_price
-                                    ? parseFloat(appliance.unit_price)
-                                    : 0
-                                return total + laborFee + partsCost + unitPrice
-                              }, 0) || 0
-
-                            const calculatedDiscount =
-                              (appliancesSubtotal * discountPercentage) / 100
-                            return formatCurrency(calculatedDiscount)
-                          }
-
-                          return formatCurrency(discountAmount)
+                          return formatCurrency(appliancesSubtotal)
                         })()}
                       </p>
                     </div>
-                  </div>
-                  <Separator />
-                </>
-              )}
+                    <div className="flex items-center justify-between text-sm">
+                      <p className="text-muted-foreground">Service Discount</p>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className="text-green-600 border-green-600"
+                        >
+                          ₱{service.service_discount_amount} off
+                        </Badge>
+                        <p className="text-green-600 font-medium">
+                          -
+                          {formatCurrency(
+                            parseFloat(service.service_discount_amount || "0"),
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <Separator />
+                  </>
+                )}
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-muted-foreground">
                   Total Revenue
@@ -1448,6 +1342,17 @@ export default function ServiceDetail({
               canManageParts={!isCompleted}
             />
           )}
+
+          {/* Service-Level Parts Needed Notes & Confirmation */}
+          <ServicePartsReview
+            service={service}
+            canManage={canManage}
+            role={role}
+            isCompleted={isCompleted}
+            updateService={updateService}
+            toggleServiceItemsChecked={toggleServiceItemsChecked}
+            onRefresh={onRefresh}
+          />
 
           {/* Service-Level Parts (chipping, pre-installation materials) */}
           <ServicePartsManager
@@ -1761,51 +1666,32 @@ export default function ServiceDetail({
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs">Discount Type</Label>
-                    <Select
-                      value={discountType}
-                      onValueChange={(value: "none" | "percentage" | "fixed") =>
-                        setDiscountType(value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Discount</SelectItem>
-                        <SelectItem value="percentage">
-                          Percentage (%)
-                        </SelectItem>
-                        <SelectItem value="fixed">Fixed Amount (₱)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label className="text-xs">Amount (₱)</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={discountValue}
+                          onChange={(e) => setDiscountValue(e.target.value)}
+                          placeholder="0"
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Enter discount in peso amount
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs">Amount / Percentage</Label>
+                    <Label className="text-xs">Reason</Label>
                     <Input
-                      type="number"
-                      min="0"
-                      max={discountType === "percentage" ? "100" : undefined}
-                      step={discountType === "percentage" ? "1" : "0.01"}
-                      value={discountValue}
-                      onChange={(e) => setDiscountValue(e.target.value)}
-                      disabled={discountType === "none"}
-                      placeholder={
-                        discountType === "percentage" ? "0-100" : "0.00"
-                      }
+                      placeholder="Senior Citizen, Loyalty, Promo, etc."
+                      value={discountReason}
+                      onChange={(e) => setDiscountReason(e.target.value)}
                     />
                   </div>
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="text-xs">Reason</Label>
-                  <Input
-                    placeholder="Senior Citizen, Loyalty, Promo, etc."
-                    value={discountReason}
-                    onChange={(e) => setDiscountReason(e.target.value)}
-                    disabled={discountType === "none"}
-                  />
                 </div>
 
                 {calculateDiscount() > 0 && (
@@ -1827,7 +1713,7 @@ export default function ServiceDetail({
                 >
                   {updateService.isPending
                     ? "Applying..."
-                    : discountType === "none"
+                    : !discountValue || parseFloat(discountValue) <= 0
                       ? "Remove Discount"
                       : "Apply Discount"}
                 </Button>
@@ -1835,54 +1721,43 @@ export default function ServiceDetail({
             )}
 
           {/* Display Applied Discount */}
-          {((service.service_discount_amount &&
-            parseFloat(service.service_discount_amount.toString()) > 0) ||
-            (service.service_discount_percentage &&
-              parseFloat(service.service_discount_percentage.toString()) >
-                0)) && (
-            <div className="rounded-lg border border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20 px-4 py-3 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-medium uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1.5">
-                  Applied Discount
-                  <Badge
-                    variant="success"
-                    className="text-[10px] h-4 px-1.5"
-                  >
-                    Active
-                  </Badge>
-                </p>
-                <p className="text-sm font-bold text-green-600">
-                  -
-                  {formatCurrency(
-                    service.service_discount_amount &&
-                      parseFloat(service.service_discount_amount.toString()) > 0
-                      ? parseFloat(service.service_discount_amount.toString())
-                      : (parseFloat(service.total_revenue || "0") *
-                          parseFloat(
-                            (
-                              service.service_discount_percentage || 0
-                            ).toString(),
-                          )) /
-                          100,
+          {service.service_discount_amount &&
+            parseFloat(service.service_discount_amount.toString()) > 0 && (
+              <div className="rounded-lg border border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20 px-4 py-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1.5">
+                    Applied Discount
+                    <Badge
+                      variant="success"
+                      className="text-[10px] h-4 px-1.5"
+                    >
+                      Active
+                    </Badge>
+                  </p>
+                  <p className="text-sm font-bold text-green-600">
+                    -
+                    {formatCurrency(
+                      parseFloat(service.service_discount_amount.toString()),
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>
+                    ₱
+                    {formatCurrency(
+                      parseFloat(service.service_discount_amount.toString()),
+                    )}{" "}
+                    off
+                  </span>
+                  {service.discount_reason && (
+                    <>
+                      <span>·</span>
+                      <span>{service.discount_reason}</span>
+                    </>
                   )}
-                </p>
+                </div>
               </div>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <span>
-                  {service.service_discount_percentage &&
-                  parseFloat(service.service_discount_percentage.toString()) > 0
-                    ? `${service.service_discount_percentage}%`
-                    : `Fixed: ${formatCurrency(parseFloat((service.service_discount_amount || 0).toString()))}`}
-                </span>
-                {service.discount_reason && (
-                  <>
-                    <span>·</span>
-                    <span>{service.discount_reason}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
+            )}
 
           {/* Payment Summary — removed, now in summary strip above */}
 
@@ -2171,12 +2046,18 @@ export default function ServiceDetail({
         description={
           hasUnfinishedAppliances
             ? `Warning: Some appliances are not finished yet. Please update their status before completing the service.`
-            : service.appliances && service.appliances.length > 0
-              ? `Complete service #${service.id}? This will finalize stock consumption, create transactions, and mark the service as completed.`
-              : `Complete service #${service.id}? Note: This service has no appliances/items. No sales transactions will be created.`
+            : service.has_pending_items
+              ? `Warning: Items have not been confirmed for all appliances. Please ask the clerk to confirm parts/items used before completing.`
+              : service.appliances && service.appliances.length > 0
+                ? `Complete service #${service.id}? This will finalize stock consumption, create transactions, and mark the service as completed.`
+                : `Complete service #${service.id}? Note: This service has no appliances/items. No sales transactions will be created.`
         }
         onConfirm={handleComplete}
-        confirmText={hasUnfinishedAppliances ? "Close" : "Complete Service"}
+        confirmText={
+          hasUnfinishedAppliances || service.has_pending_items
+            ? "Close"
+            : "Complete Service"
+        }
       />
 
       {/* Reopen Service Dialog */}
@@ -2717,6 +2598,224 @@ export default function ServiceDetail({
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+// ─── Service-Level Parts Review Sub-Component ────────────────────────────────
+
+interface ServicePartsReviewProps {
+  service: Service
+  canManage: boolean
+  role: string | undefined
+  isCompleted: boolean
+  updateService: {
+    mutateAsync: (args: {
+      id: number
+      data: Record<string, unknown>
+    }) => Promise<unknown>
+    isPending: boolean
+  }
+  toggleServiceItemsChecked: {
+    mutateAsync: (id: number) => Promise<unknown>
+    isPending: boolean
+  }
+  onRefresh?: () => void
+}
+
+function ServicePartsReview({
+  service,
+  canManage,
+  role,
+  isCompleted,
+  updateService,
+  toggleServiceItemsChecked,
+  onRefresh,
+}: ServicePartsReviewProps) {
+  const [editingNotes, setEditingNotes] = useState(false)
+  const [notesValue, setNotesValue] = useState(
+    service.service_parts_needed_notes || "",
+  )
+
+  const { data: serviceItems = [] } = useServiceItems(service.id)
+  const canConfirmItems = role === "clerk" || role === "admin"
+  const hasPartsNeeded = !!service.service_parts_needed_notes
+
+  // Sync local state when service data changes
+  useEffect(() => {
+    setNotesValue(service.service_parts_needed_notes || "")
+  }, [service.service_parts_needed_notes])
+
+  const handleSaveNotes = async () => {
+    try {
+      await updateService.mutateAsync({
+        id: service.id,
+        data: { service_parts_needed_notes: notesValue },
+      })
+      setEditingNotes(false)
+      toast.success("Service parts needed notes updated")
+      onRefresh?.()
+    } catch {
+      // handled by useApiMutation
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Service Parts Needed Notes — managers can edit */}
+      {(hasPartsNeeded || (canManage && !isCompleted)) && (
+        <div className="rounded-lg border bg-card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium uppercase tracking-wide text-orange-600 dark:text-orange-400 flex items-center gap-1">
+              <Package className="h-3 w-3" />
+              Service-Level Parts Needed
+            </p>
+            {canManage && !isCompleted && !editingNotes && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditingNotes(true)}
+                className="h-6 text-xs"
+              >
+                <Edit className="mr-1 h-3 w-3" />
+                {hasPartsNeeded ? "Edit" : "Add Notes"}
+              </Button>
+            )}
+          </div>
+
+          {editingNotes ? (
+            <div className="space-y-2">
+              <Textarea
+                value={notesValue}
+                onChange={(e) => setNotesValue(e.target.value)}
+                placeholder="Describe what service-level parts are needed (e.g., copper pipe, insulation tube for chipping)..."
+                rows={3}
+                className="text-sm"
+              />
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setNotesValue(service.service_parts_needed_notes || "")
+                    setEditingNotes(false)
+                  }}
+                  className="h-7 text-xs"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={updateService.isPending}
+                  onClick={handleSaveNotes}
+                  className="h-7 text-xs"
+                >
+                  Save Notes
+                </Button>
+              </div>
+            </div>
+          ) : hasPartsNeeded ? (
+            <p className="text-sm leading-relaxed bg-orange-50 dark:bg-orange-950/20 p-2.5 rounded-md border border-orange-200/50 dark:border-orange-900/50">
+              {service.service_parts_needed_notes}
+            </p>
+          ) : null}
+
+          {/* Items Confirmed Toggle — only when service_parts_needed_notes exists */}
+          {hasPartsNeeded && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
+              <div className="flex items-center gap-2 min-w-0">
+                {service.service_items_checked ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Service-level parts have been reviewed and confirmed by
+                      clerk
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Package className="h-4 w-4 text-orange-500 shrink-0" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Clerk needs to review and confirm service-level parts
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    {service.service_items_checked
+                      ? "Service Items Confirmed"
+                      : "Service Items Not Yet Confirmed"}
+                  </p>
+                  {service.service_items_checked &&
+                    service.service_items_checked_by && (
+                      <p className="text-xs text-muted-foreground">
+                        by {service.service_items_checked_by_name || "Unknown"}{" "}
+                        {service.service_items_checked_at &&
+                          `· ${formatDate(new Date(service.service_items_checked_at), "MMM d, yyyy h:mm a")}`}
+                      </p>
+                    )}
+                </div>
+              </div>
+              {canConfirmItems && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant={
+                        service.service_items_checked ? "outline" : "default"
+                      }
+                      size="sm"
+                      disabled={toggleServiceItemsChecked.isPending}
+                      onClick={async () => {
+                        try {
+                          await toggleServiceItemsChecked.mutateAsync(
+                            service.id,
+                          )
+                          toast.success(
+                            service.service_items_checked
+                              ? "Service items marked as not confirmed"
+                              : "Service items confirmed successfully",
+                          )
+                          onRefresh?.()
+                        } catch {
+                          // handled by useApiMutation
+                        }
+                      }}
+                      className="h-7 text-xs shrink-0"
+                    >
+                      {service.service_items_checked ? (
+                        <>
+                          <RotateCcw className="mr-1 h-3 w-3" />
+                          Unconfirm
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="mr-1 h-3 w-3" />
+                          Confirm Items
+                        </>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {service.service_items_checked
+                      ? "Mark service items as needing re-review"
+                      : serviceItems.length === 0
+                        ? "Add parts first before confirming"
+                        : "Confirm that all listed service-level parts are correct and complete"}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

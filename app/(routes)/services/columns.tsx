@@ -27,6 +27,7 @@ import {
   CheckCircle,
   Edit,
   Eye,
+  Package,
   RotateCcw,
   Shield,
   Sparkles,
@@ -263,6 +264,7 @@ export function getServiceColumns({
         const warranty = hasActiveWarranty(service)
         const freeCleaning = hasFreeCleaningAvailable(service)
         const applianceCount = service.appliances?.length || 0
+        const pendingItems = service.has_pending_items
 
         return (
           <div className="min-w-0">
@@ -270,6 +272,14 @@ export function getServiceColumns({
               <span className="font-medium text-sm truncate max-w-32">
                 {safeCell(service.client?.full_name || "Unknown")}
               </span>
+              {pendingItems && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Package className="h-3 w-3 text-orange-500 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>Items pending review</TooltipContent>
+                </Tooltip>
+              )}
               {warranty && (
                 <Tooltip>
                   <TooltipTrigger asChild>

@@ -19,6 +19,9 @@ export function useServiceItemMutations() {
       { queryKey: ["remittances"] },
       { queryKey: ["summary"] },
       { queryKey: ["cash_flow"] },
+      { queryKey: ["notifications"] },
+      { queryKey: ["unread-notification-count"] },
+      { queryKey: ["pending-items-stats"] },
     ],
     onSuccess: (_, variables) => {
       if (variables.service) {
@@ -40,6 +43,9 @@ export function useServiceItemMutations() {
       { queryKey: ["remittances"] },
       { queryKey: ["summary"] },
       { queryKey: ["cash_flow"] },
+      { queryKey: ["notifications"] },
+      { queryKey: ["unread-notification-count"] },
+      { queryKey: ["pending-items-stats"] },
     ],
     onSuccess: (_, variables) => {
       if (variables.data.service) {
@@ -61,6 +67,9 @@ export function useServiceItemMutations() {
       { queryKey: ["remittances"] },
       { queryKey: ["summary"] },
       { queryKey: ["cash_flow"] },
+      { queryKey: ["notifications"] },
+      { queryKey: ["unread-notification-count"] },
+      { queryKey: ["pending-items-stats"] },
     ],
     onSuccess: (_, variables) => {
       if (variables.serviceId) {

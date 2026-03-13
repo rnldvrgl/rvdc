@@ -826,15 +826,7 @@ export type ServiceStatus =
   | "in_progress"
   | "completed"
   | "cancelled"
-export type ApplianceStatus =
-  | "received"
-  | "diagnosed"
-  | "in_repair"
-  | "completed"
-  | "ready_for_pickup"
-  | "delivered"
-  | "reserved"
-  | "installed"
+export type ApplianceStatus = "pending" | "completed" | "cancelled"
 export type AssignmentType = "repair" | "pickup" | "delivery" | "inspect"
 
 // Appliance Type
@@ -875,6 +867,11 @@ export interface ServiceAppliance {
   items_used?: ApplianceItemUsed[]
   technician_assignments?: TechnicianAssignment[]
   total_parts_cost?: string
+  parts_needed_notes?: string
+  items_checked?: boolean
+  items_checked_by?: number | null
+  items_checked_by_name?: string | null
+  items_checked_at?: string | null
 }
 
 export interface ServiceAppliancePayload {
@@ -897,6 +894,7 @@ export interface ServiceAppliancePayload {
   labor_warranty_months?: number
   unit_warranty_months?: number
   warranty_notes?: string
+  parts_needed_notes?: string
   // Aircon installation data (optional, only for installation services)
   aircon_installation_data?: {
     unit_type: "brand_new" | "second_hand"
@@ -1144,6 +1142,12 @@ export interface Service {
     scheduled_time: string | null
     status: string
   } | null
+  has_pending_items?: boolean
+  service_parts_needed_notes?: string
+  service_items_checked?: boolean
+  service_items_checked_by?: number | null
+  service_items_checked_by_name?: string | null
+  service_items_checked_at?: string | null
 }
 
 export interface ServicePayload {
@@ -1170,6 +1174,8 @@ export interface ServicePayload {
   // Complementary service fields
   is_complementary?: boolean
   complementary_reason?: string
+  // Service-level parts review
+  service_parts_needed_notes?: string
   technician_assignments?: TechnicianAssignmentPayload[]
 }
 

@@ -143,6 +143,20 @@ export function useServiceMutations() {
     },
   })
 
+  const toggleServiceItemsChecked = useApiMutation({
+    mutationFn: (id: number) =>
+      api.post(`${url}${id}/toggle-service-items-checked/`),
+    invalidateQueries: [
+      { queryKey: ["services"] },
+      { queryKey: ["pending-items-stats"] },
+      { queryKey: ["notifications"] },
+      { queryKey: ["unread-notification-count"] },
+    ],
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
+    },
+  })
+
   return {
     addService,
     updateService,
@@ -152,5 +166,6 @@ export function useServiceMutations() {
     cancelService,
     refundService,
     reopenService,
+    toggleServiceItemsChecked,
   }
 }

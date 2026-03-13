@@ -35,6 +35,9 @@ export function useApplianceItemMutations() {
       { queryKey: ["remittances"] },
       { queryKey: ["summary"] },
       { queryKey: ["cash_flow"] },
+      { queryKey: ["notifications"] },
+      { queryKey: ["unread-notification-count"] },
+      { queryKey: ["pending-items-stats"] },
     ],
     onSuccess: (_, variables) => {
       if (variables.appliance) {
@@ -66,6 +69,9 @@ export function useApplianceItemMutations() {
       { queryKey: ["remittances"] },
       { queryKey: ["summary"] },
       { queryKey: ["cash_flow"] },
+      { queryKey: ["notifications"] },
+      { queryKey: ["unread-notification-count"] },
+      { queryKey: ["pending-items-stats"] },
     ],
     onSuccess: (_, variables) => {
       if (variables.data.appliance) {
@@ -92,6 +98,9 @@ export function useApplianceItemMutations() {
       { queryKey: ["remittances"] },
       { queryKey: ["summary"] },
       { queryKey: ["cash_flow"] },
+      { queryKey: ["notifications"] },
+      { queryKey: ["unread-notification-count"] },
+      { queryKey: ["pending-items-stats"] },
     ],
     onSuccess: (_, variables) => {
       if (variables.applianceId) {

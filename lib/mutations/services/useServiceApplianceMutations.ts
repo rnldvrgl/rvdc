@@ -40,6 +40,9 @@ export function useServiceApplianceMutations() {
       { queryKey: ["remittances"] },
       { queryKey: ["summary"] },
       { queryKey: ["cash_flow"] },
+      { queryKey: ["notifications"] },
+      { queryKey: ["unread-notification-count"] },
+      { queryKey: ["pending-items-stats"] },
     ],
     onSuccess: (_, variables) => {
       if (variables.data.service) {
@@ -71,9 +74,29 @@ export function useServiceApplianceMutations() {
     },
   })
 
+  const toggleItemsChecked = useApiMutation({
+    mutationFn: ({ id }: { id: number; serviceId?: number }) =>
+      api.post(`${url}${id}/toggle-items-checked/`),
+    invalidateQueries: [
+      { queryKey: ["service-appliances"] },
+      { queryKey: ["services"] },
+      { queryKey: ["pending-items-stats"] },
+      { queryKey: ["notifications"] },
+      { queryKey: ["unread-notification-count"] },
+    ],
+    onSuccess: (_, variables) => {
+      if (variables.serviceId) {
+        queryClient.invalidateQueries({
+          queryKey: ["service", `${variables.serviceId}`],
+        })
+      }
+    },
+  })
+
   return {
     addAppliance,
     updateAppliance,
     deleteAppliance,
+    toggleItemsChecked,
   }
 }

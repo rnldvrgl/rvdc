@@ -17,13 +17,6 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Table,
   TableBody,
   TableCell,
@@ -66,9 +59,6 @@ export default function ServicePartsManager({
   const [quantity, setQuantity] = useState("1")
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<number | null>(null)
-  const [discountType, setDiscountType] = useState<
-    "none" | "percentage" | "fixed"
-  >("none")
   const [discountValue, setDiscountValue] = useState("")
   const [discountReason, setDiscountReason] = useState("")
   const [isFree, setIsFree] = useState(false)
@@ -126,13 +116,10 @@ export default function ServicePartsManager({
           quantity: Math.round(qty * 100) / 100,
           is_free: isFree,
           discount_amount:
-            !isFree && discountType === "fixed"
+            !isFree && discountValue
               ? Math.round(parseFloat(discountValue || "0") * 100) / 100
               : 0,
-          discount_percentage:
-            !isFree && discountType === "percentage"
-              ? Math.round(parseFloat(discountValue || "0") * 100) / 100
-              : 0,
+          discount_percentage: 0,
           discount_reason: isFree ? undefined : discountReason || undefined,
         }
       : {
@@ -141,13 +128,10 @@ export default function ServicePartsManager({
           quantity: Math.round(qty * 100) / 100,
           is_free: isFree,
           discount_amount:
-            !isFree && discountType === "fixed"
+            !isFree && discountValue
               ? Math.round(parseFloat(discountValue || "0") * 100) / 100
               : 0,
-          discount_percentage:
-            !isFree && discountType === "percentage"
-              ? Math.round(parseFloat(discountValue || "0") * 100) / 100
-              : 0,
+          discount_percentage: 0,
           discount_reason: isFree ? undefined : discountReason || undefined,
         }
 
@@ -160,7 +144,6 @@ export default function ServicePartsManager({
       setIsCustom(false)
       setCustomDescription("")
       setCustomPrice("")
-      setDiscountType("none")
       setDiscountValue("")
       setDiscountReason("")
     }
@@ -209,14 +192,10 @@ export default function ServicePartsManager({
     setQuantity(part.quantity.toString())
     setIsFree(part.is_free || false)
 
-    if (part.discount_percentage && parseFloat(part.discount_percentage) > 0) {
-      setDiscountType("percentage")
-      setDiscountValue(part.discount_percentage)
-    } else if (part.discount_amount && parseFloat(part.discount_amount) > 0) {
-      setDiscountType("fixed")
+    // Set discount values
+    if (part.discount_amount && parseFloat(part.discount_amount) > 0) {
       setDiscountValue(part.discount_amount)
     } else {
-      setDiscountType("none")
       setDiscountValue("")
     }
 
@@ -376,10 +355,8 @@ export default function ServicePartsManager({
                           >
                             FREE
                           </Badge>
-                        ) : (part.discount_amount &&
-                            parseFloat(part.discount_amount) > 0) ||
-                          (part.discount_percentage &&
-                            parseFloat(part.discount_percentage) > 0) ? (
+                        ) : part.discount_amount &&
+                          parseFloat(part.discount_amount) > 0 ? (
                           <div className="flex flex-col items-end gap-1">
                             <span className="line-through text-xs text-muted-foreground">
                               {formatCurrency(part.item_price || 0)}
@@ -398,15 +375,10 @@ export default function ServicePartsManager({
                         <div className="flex flex-col items-end gap-1">
                           <span>{formatCurrency(part.line_total)}</span>
                           {!part.is_free &&
-                            ((part.discount_amount &&
-                              parseFloat(part.discount_amount) > 0) ||
-                              (part.discount_percentage &&
-                                parseFloat(part.discount_percentage) > 0)) && (
+                            part.discount_amount &&
+                            parseFloat(part.discount_amount) > 0 && (
                               <span className="text-xs text-green-600">
-                                {part.discount_percentage &&
-                                parseFloat(part.discount_percentage) > 0
-                                  ? `${part.discount_percentage}% off`
-                                  : `₱${part.discount_amount} off`}
+                                ₱{part.discount_amount} off
                               </span>
                             )}
                         </div>
@@ -486,7 +458,6 @@ export default function ServicePartsManager({
             setIsCustom(false)
             setCustomDescription("")
             setCustomPrice("")
-            setDiscountType("none")
             setDiscountValue("")
             setDiscountReason("")
           }
@@ -675,7 +646,6 @@ export default function ServicePartsManager({
                 onCheckedChange={(checked) => {
                   setIsFree(checked === true)
                   if (checked === true) {
-                    setDiscountType("none")
                     setDiscountValue("")
                     setDiscountReason("")
                   }
@@ -700,37 +670,24 @@ export default function ServicePartsManager({
                   Discount not applicable for free parts
                 </p>
               ) : (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-2">
-                    <Label className="text-xs">Type</Label>
-                    <Select
-                      value={discountType}
-                      onValueChange={(value: "none" | "percentage" | "fixed") =>
-                        setDiscountType(value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        <SelectItem value="percentage">%</SelectItem>
-                        <SelectItem value="fixed">&#x20B1;</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs">Amount</Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={discountValue}
-                      onChange={(e) => setDiscountValue(e.target.value)}
-                      disabled={discountType === "none"}
-                      placeholder="0"
-                    />
+                    <Label className="text-xs">Amount (₱)</Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={discountValue}
+                          onChange={(e) => setDiscountValue(e.target.value)}
+                          placeholder="0"
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Enter discount in peso amount
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
 
                   <div className="space-y-2">
@@ -739,7 +696,6 @@ export default function ServicePartsManager({
                       placeholder="Optional"
                       value={discountReason}
                       onChange={(e) => setDiscountReason(e.target.value)}
-                      disabled={discountType === "none"}
                     />
                   </div>
                 </div>
@@ -761,14 +717,12 @@ export default function ServicePartsManager({
                     )}
                   </span>
                 </div>
-                {discountType !== "none" && discountValue && (
+                {discountValue && parseFloat(discountValue) > 0 && (
                   <>
                     <div className="flex items-center justify-between border-t pt-2">
                       <span className="text-green-600">Discount</span>
                       <span className="text-sm text-green-600">
-                        {discountType === "percentage"
-                          ? `${discountValue}% off`
-                          : `-${formatCurrency(parseFloat(discountValue))}`}
+                        -₱{discountValue}
                       </span>
                     </div>
                     <div className="flex items-center justify-between border-t pt-2">
@@ -783,10 +737,7 @@ export default function ServicePartsManager({
                                     items.find((i) => i.id === selectedItemId)
                                       ?.retail_price || 0,
                                   )) * parseFloat(quantity || "0")
-                            const discount =
-                              discountType === "percentage"
-                                ? (subtotal * parseFloat(discountValue)) / 100
-                                : parseFloat(discountValue)
+                            const discount = parseFloat(discountValue)
                             return subtotal - discount
                           })(),
                         )}
