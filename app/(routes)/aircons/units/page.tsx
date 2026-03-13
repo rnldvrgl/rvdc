@@ -211,6 +211,7 @@ export default function AirconUnitsPage() {
       />
 
       <DataTable
+        enableVirtualization
         title="Aircon Units Inventory"
         description="Track and manage all aircon units in stock"
         isLoading={isArchived ? archivedQuery.isLoading : isLoading}

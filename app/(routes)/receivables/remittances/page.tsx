@@ -198,6 +198,7 @@ export default function RemittancesPage() {
 
       {/* Main Content */}
       <DataTable
+        enableVirtualization
         title="Remittances"
         description="Daily cash remittances and financial tracking"
         isLoading={isLoading}

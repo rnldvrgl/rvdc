@@ -162,6 +162,7 @@ export default function ClientsPage() {
 
       {/* Main Content */}
       <DataTable
+        enableVirtualization
         title={isArchived ? "Archived Clients" : "Clients"}
         description={
           isArchived

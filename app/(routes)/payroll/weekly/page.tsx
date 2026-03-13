@@ -263,6 +263,7 @@ export default function PayrollPage() {
           />
         ) : (
           <DataTable
+            enableVirtualization
             data={tableData}
             columns={columns}
             isLoading={isArchived ? archivedQuery.isLoading : isLoading}

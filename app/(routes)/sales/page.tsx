@@ -316,6 +316,7 @@ export default function SalesTransactionsPage() {
 
       {/* Main Content */}
       <DataTable
+        enableVirtualization
         title={
           activeTab === "archived"
             ? "Archived Transactions"

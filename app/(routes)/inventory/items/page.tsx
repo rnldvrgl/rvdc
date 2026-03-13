@@ -135,6 +135,7 @@ export default function ItemsPage() {
 
       {/* Main Content */}
       <DataTable
+        enableVirtualization
         title="Inventory Items"
         description="Manage your product catalog and inventory"
         isLoading={isArchived ? archivedQuery.isLoading : isLoading}

@@ -325,6 +325,7 @@ export default function StockRoomStocksPage() {
 
       {/* Main Content */}
       <DataTable
+        enableVirtualization
         title="Stockroom Inventory"
         description="Central warehouse inventory management and tracking"
         isLoading={isArchived ? archivedQuery.isLoading : isLoading}

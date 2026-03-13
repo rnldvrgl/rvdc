@@ -177,6 +177,7 @@ export default function ExpensesPage() {
 
       {/* Main Content */}
       <DataTable
+        enableVirtualization
         title={isArchived ? "Archived Expenses" : "Expenses"}
         description={
           isArchived

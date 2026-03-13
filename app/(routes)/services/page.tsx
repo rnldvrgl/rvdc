@@ -217,6 +217,7 @@ export default function ServicesPage() {
       {/* Conditional view rendering */}
       {isArchived ? (
         <DataTable<Service, unknown>
+          enableVirtualization
           columns={columns}
           data={tableData}
           isLoading={archivedQuery.isLoading}
@@ -228,6 +229,7 @@ export default function ServicesPage() {
         />
       ) : viewMode === "table" ? (
         <DataTable<Service, unknown>
+          enableVirtualization
           columns={columns}
           data={tableData}
           isLoading={isLoading}

@@ -7,8 +7,9 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import { useVirtualizer } from "@tanstack/react-virtual"
 import { AnimatePresence, motion } from "framer-motion"
-import React from "react"
+import React, { useRef } from "react"
 
 import { DataTableDateRangeFilter } from "@/components/custom/table/components/DataTableDateRangeFilter"
 import { DataTableFilterDropdown } from "@/components/custom/table/components/DataTableFilterDropdown"
@@ -53,6 +54,64 @@ export interface BulkAction<TData> {
   onClick: (selectedRows: TData[]) => void
 }
 
+// Memoized row component to prevent unnecessary re-renders
+const DataTableRow = React.memo(function DataTableRow({
+  row,
+  index,
+  onRowClick,
+}: {
+  row: ReturnType<
+    ReturnType<typeof useReactTable>["getRowModel"]
+  >["rows"][number]
+  index: number
+  onRowClick?: (original: unknown) => void
+}) {
+  return (
+    <motion.tr
+      key={row.id}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{
+        duration: 0.2,
+        delay: Math.min(index * 0.02, 0.3),
+      }}
+      className={cn(
+        "border-b border-border/40 transition-all hover:bg-muted/40 data-[state=selected]:bg-muted/60",
+        onRowClick && "cursor-pointer hover:shadow-sm",
+      )}
+      onClick={() => onRowClick?.(row.original)}
+    >
+      {row.getVisibleCells().map((cell) => {
+        const colId = cell.column.id
+        const isActionColumn = ["action", "actions"].includes(colId)
+        const isSelectColumn = colId === "_select"
+
+        return (
+          <TableCell
+            key={cell.id}
+            className={cn(
+              "h-14 px-4 py-2.5 text-sm",
+              isActionColumn && "text-center",
+              isSelectColumn && "px-3",
+            )}
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </TableCell>
+        )
+      })}
+    </motion.tr>
+  )
+}) as React.MemoExoticComponent<
+  React.FC<{
+    row: ReturnType<
+      ReturnType<typeof useReactTable>["getRowModel"]
+    >["rows"][number]
+    index: number
+    onRowClick?: (original: unknown) => void
+  }>
+>
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: PaginatedResult<TData>
@@ -72,6 +131,7 @@ interface DataTableProps<TData, TValue> {
   onRowClick?: (row: TData) => void
   enableExport?: boolean
   exportFileName?: string
+  enableVirtualization?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -92,6 +152,7 @@ export function DataTable<TData, TValue>({
   onRowClick,
   enableExport = false,
   exportFileName = "export",
+  enableVirtualization = false,
 }: DataTableProps<TData, TValue>) {
   const {
     page,
@@ -208,6 +269,18 @@ export function DataTable<TData, TValue>({
     },
     getCoreRowModel: getCoreRowModel(),
   })
+
+  // Virtualization setup
+  const rows = table.getRowModel().rows
+  const tableContainerRef = useRef<HTMLDivElement>(null)
+  const virtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 56, // h-14 = 56px
+    overscan: 5,
+    enabled: enableVirtualization && rows.length > 50,
+  })
+  const isVirtualized = enableVirtualization && rows.length > 50
 
   const handleExportCSV = React.useCallback(() => {
     const rows = data.results ?? []
@@ -526,7 +599,13 @@ export function DataTable<TData, TValue>({
 
       {/* Table Container */}
       <div className="relative overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
-        <div className="overflow-x-auto">
+        <div
+          ref={tableContainerRef}
+          className={cn(
+            "overflow-x-auto",
+            isVirtualized && "max-h-[600px] overflow-y-auto",
+          )}
+        >
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/30 hover:bg-muted/50 border-b border-border/40">
@@ -571,51 +650,90 @@ export function DataTable<TData, TValue>({
                     ))}
                   </TableRow>
                 ))
-              ) : table.getRowModel().rows.length > 0 ? (
-                // Data rows with animation
-                <AnimatePresence mode="wait">
-                  {table.getRowModel().rows.map((row, i) => (
-                    <motion.tr
-                      key={row.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{
-                        duration: 0.2,
-                        delay: Math.min(i * 0.02, 0.3),
-                      }}
-                      className={cn(
-                        "border-b border-border/40 transition-all hover:bg-muted/40 data-[state=selected]:bg-muted/60",
-                        onRowClick && "cursor-pointer hover:shadow-sm",
-                      )}
-                      onClick={() => onRowClick?.(row.original)}
-                    >
-                      {row.getVisibleCells().map((cell) => {
-                        const colId = cell.column.id
-                        const isActionColumn = ["action", "actions"].includes(
-                          colId,
-                        )
-                        const isSelectColumn = colId === "_select"
-
-                        return (
-                          <TableCell
-                            key={cell.id}
-                            className={cn(
-                              "h-14 px-4 py-2.5 text-sm",
-                              isActionColumn && "text-center",
-                              isSelectColumn && "px-3",
-                            )}
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        )
-                      })}
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
+              ) : rows.length > 0 ? (
+                isVirtualized ? (
+                  // Virtualized rows for large datasets
+                  <>
+                    {virtualizer.getVirtualItems().length > 0 && (
+                      <tr>
+                        <td
+                          colSpan={allColumns.length}
+                          style={{
+                            height:
+                              virtualizer.getVirtualItems()[0]?.start ?? 0,
+                            padding: 0,
+                          }}
+                        />
+                      </tr>
+                    )}
+                    {virtualizer.getVirtualItems().map((virtualRow) => {
+                      const row = rows[virtualRow.index]
+                      return (
+                        <TableRow
+                          key={row.id}
+                          className={cn(
+                            "border-b border-border/40 transition-all hover:bg-muted/40 data-[state=selected]:bg-muted/60",
+                            onRowClick && "cursor-pointer hover:shadow-sm",
+                          )}
+                          onClick={() => onRowClick?.(row.original)}
+                        >
+                          {row.getVisibleCells().map((cell) => {
+                            const colId = cell.column.id
+                            const isActionColumn = [
+                              "action",
+                              "actions",
+                            ].includes(colId)
+                            const isSelectColumn = colId === "_select"
+                            return (
+                              <TableCell
+                                key={cell.id}
+                                className={cn(
+                                  "h-14 px-4 py-2.5 text-sm",
+                                  isActionColumn && "text-center",
+                                  isSelectColumn && "px-3",
+                                )}
+                              >
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext(),
+                                )}
+                              </TableCell>
+                            )
+                          })}
+                        </TableRow>
+                      )
+                    })}
+                    {virtualizer.getVirtualItems().length > 0 && (
+                      <tr>
+                        <td
+                          colSpan={allColumns.length}
+                          style={{
+                            height:
+                              virtualizer.getTotalSize() -
+                              (virtualizer.getVirtualItems().at(-1)?.end ?? 0),
+                            padding: 0,
+                          }}
+                        />
+                      </tr>
+                    )}
+                  </>
+                ) : (
+                  // Animated rows for normal datasets
+                  <AnimatePresence mode="wait">
+                    {rows.map((row, i) => (
+                      <DataTableRow
+                        key={row.id}
+                        row={row}
+                        index={i}
+                        onRowClick={
+                          onRowClick
+                            ? (original) => onRowClick(original as TData)
+                            : undefined
+                        }
+                      />
+                    ))}
+                  </AnimatePresence>
+                )
               ) : (
                 // Empty state
                 <TableRow>

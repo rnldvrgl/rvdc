@@ -166,6 +166,7 @@ export default function QuotationsPage() {
           />
 
           <DataTable
+            enableVirtualization
             title={isArchived ? "Archived Quotations" : "Quotations"}
             description={
               isArchived

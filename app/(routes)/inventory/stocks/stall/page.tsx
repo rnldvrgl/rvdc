@@ -360,6 +360,7 @@ export default function StocksPage() {
 
       {/* Main Content */}
       <DataTable
+        enableVirtualization
         title="Stall Inventory"
         description="Real-time inventory levels across all stall locations"
         isLoading={isArchived ? archivedQuery.isLoading : isLoading}

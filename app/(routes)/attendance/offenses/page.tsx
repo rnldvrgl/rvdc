@@ -195,6 +195,7 @@ export default function OffensesPage() {
         )}
         {/* DataTable */}
         <DataTable
+          enableVirtualization
           title="Offense Records"
           description="Track and manage employee policy violations"
           isLoading={isArchived ? archivedQuery.isLoading : isLoading}

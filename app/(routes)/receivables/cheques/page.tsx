@@ -127,6 +127,7 @@ export default function ChequeCollectionsPage() {
 
       {/* Main Content */}
       <DataTable
+        enableVirtualization
         title="Cheque Collections"
         description="Client cheque payments and collection tracking"
         isLoading={isLoading}
