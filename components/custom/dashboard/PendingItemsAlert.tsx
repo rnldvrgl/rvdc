@@ -39,7 +39,7 @@ export function PendingItemsAlert() {
             variant="destructive"
             className="ml-auto text-xs"
           >
-            {data.total_unchecked_appliances}
+            {data.total_pending_items ?? data.total_unchecked_appliances}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -47,8 +47,8 @@ export function PendingItemsAlert() {
         <p className="text-xs text-muted-foreground">
           {data.total_pending_services} service
           {data.total_pending_services > 1 ? "s" : ""} with{" "}
-          {data.total_unchecked_appliances} unchecked appliance
-          {data.total_unchecked_appliances > 1 ? "s" : ""}
+          {data.total_pending_items ?? data.total_unchecked_appliances} pending
+          {" "}review{(data.total_pending_items ?? data.total_unchecked_appliances) > 1 ? "s" : ""}
         </p>
 
         <div className="space-y-2">
@@ -64,8 +64,13 @@ export function PendingItemsAlert() {
                   {svc.client_name || "Unknown Client"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {svc.service_type} · {svc.unchecked_appliances} of{" "}
-                  {svc.total_appliances} unchecked
+                  {svc.service_type}
+                  {svc.unchecked_appliances > 0 && (
+                    <> · {svc.unchecked_appliances} of{" "}{svc.total_appliances} unchecked</>
+                  )}
+                  {svc.has_service_level_pending && (
+                    <> · service parts pending</>
+                  )}
                 </p>
               </div>
               <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />

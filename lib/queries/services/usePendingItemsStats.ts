@@ -15,12 +15,15 @@ export interface PendingServiceInfo {
   created_at: string
   total_appliances: number
   unchecked_appliances: number
+  has_service_level_pending: boolean
   appliances: PendingApplianceInfo[]
 }
 
 export interface PendingItemsStats {
   total_pending_services: number
   total_unchecked_appliances: number
+  total_service_level_pending: number
+  total_pending_items: number
   services: PendingServiceInfo[]
 }
 

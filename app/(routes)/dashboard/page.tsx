@@ -133,7 +133,7 @@ const DashboardPage = () => {
           {role === "admin" && (
             <div className="space-y-6">
               {/* Alerts */}
-              <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-6 lg:grid-cols-2">
                 <WidgetErrorBoundary fallbackTitle="Reminders failed to load">
                   <RemindersAlerts />
                 </WidgetErrorBoundary>
