@@ -90,40 +90,36 @@ const DashboardPage = () => {
             role === "manager") && (
             <div className="space-y-6">
               {payrollIncluded && (
-                <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-                  {/* Clock In/Out - Hero widget */}
-                  <div className="lg:flex-[2] min-w-0">
-                    <QuickClockInOut />
-                  </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                  {/* Clock In/Out */}
+                  <QuickClockInOut />
 
-                  {/* Right column - stacked widgets */}
-                  <div className="lg:flex-1 flex flex-col gap-4 lg:gap-6 min-w-0">
-                    <LeaveBalanceSummary />
+                  {/* Pending Items for Clerk */}
+                  {role === "clerk" && (
+                    <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
+                      <PendingItemsAlert />
+                    </WidgetErrorBoundary>
+                  )}
 
-                    {/* Sub Stall Settlement for Manager */}
-                    {role === "manager" && (
-                      <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
-                        <SubStallSettlement />
-                      </WidgetErrorBoundary>
-                    )}
+                  {/* Sub Stall Settlement for Manager */}
+                  {role === "manager" && (
+                    <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
+                      <SubStallSettlement />
+                    </WidgetErrorBoundary>
+                  )}
 
-                    {/* Inventory Alerts for Clerk */}
-                    {role === "clerk" && (
-                      <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
-                        <InventoryReorderAlerts stallOnly />
-                      </WidgetErrorBoundary>
-                    )}
+                  {/* Leave Balance */}
+                  <LeaveBalanceSummary />
 
-                    {/* Pending Items for Clerk */}
-                    {role === "clerk" && (
-                      <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
-                        <PendingItemsAlert />
-                      </WidgetErrorBoundary>
-                    )}
+                  {/* Inventory Alerts for Clerk */}
+                  {role === "clerk" && (
+                    <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
+                      <InventoryReorderAlerts stallOnly />
+                    </WidgetErrorBoundary>
+                  )}
 
-                    {/* Birthday Reminders for Technician */}
-                    {role === "technician" && <BirthdayReminders />}
-                  </div>
+                  {/* Birthday Reminders for Technician */}
+                  {role === "technician" && <BirthdayReminders />}
                 </div>
               )}
 
