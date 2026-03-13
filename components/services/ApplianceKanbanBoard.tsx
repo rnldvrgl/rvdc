@@ -2,10 +2,7 @@
 
 import { applianceStatusLabels } from "@/app/(routes)/services/columns"
 import { Badge } from "@/components/ui/badge"
-import type {
-  ApplianceStatus,
-  ServiceAppliance,
-} from "@/lib/constants/interface"
+import type { ServiceAppliance } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/helpers"
 
 import {
@@ -48,7 +45,7 @@ interface ApplianceKanbanBoardProps {
 }
 
 type KanbanColumn = {
-  id: ApplianceStatus
+  id: string
   label: string
   icon: React.ReactNode
 }
@@ -320,14 +317,16 @@ export default function ApplianceKanbanBoard({
 
   // Determine if this is an installation service based on appliance statuses
   const hasInstallationStatuses = appliances.some(
-    (a) => a.status === "reserved" || a.status === "installed",
+    (a) =>
+      (a.status as string) === "reserved" ||
+      (a.status as string) === "installed",
   )
   const columns = hasInstallationStatuses
     ? INSTALLATION_COLUMNS
     : REPAIR_COLUMNS
 
   // Only show columns that have appliances or are transition targets
-  const activeStatuses = new Set(appliances.map((a) => a.status))
+  const activeStatuses = new Set(appliances.map((a) => a.status as string))
   const transitionTargets = new Set<string>()
   appliances.forEach((a) => {
     const targets = APPLIANCE_TRANSITIONS[a.status] || []

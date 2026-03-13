@@ -20,7 +20,7 @@ import { Plus, Receipt } from "lucide-react"
 import { getChequeCollectionColumns } from "./columns"
 
 export default function ChequeCollectionsPage() {
-  const { role, isAdmin, canManage } = useCurrentUser()
+  const { role, canManage } = useCurrentUser()
   const { page, limit, search, ordering, filter } = useSearchParameters({
     defaultRangePreset: "Last 30 Days",
   })
