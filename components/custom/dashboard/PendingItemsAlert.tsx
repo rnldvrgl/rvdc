@@ -47,8 +47,11 @@ export function PendingItemsAlert() {
         <p className="text-xs text-muted-foreground">
           {data.total_pending_services} service
           {data.total_pending_services > 1 ? "s" : ""} with{" "}
-          {data.total_pending_items ?? data.total_unchecked_appliances} pending
-          {" "}review{(data.total_pending_items ?? data.total_unchecked_appliances) > 1 ? "s" : ""}
+          {data.total_pending_items ?? data.total_unchecked_appliances} pending{" "}
+          review
+          {(data.total_pending_items ?? data.total_unchecked_appliances) > 1
+            ? "s"
+            : ""}
         </p>
 
         <div className="space-y-2">
@@ -66,7 +69,11 @@ export function PendingItemsAlert() {
                 <p className="text-xs text-muted-foreground">
                   {svc.service_type}
                   {svc.unchecked_appliances > 0 && (
-                    <> · {svc.unchecked_appliances} of{" "}{svc.total_appliances} unchecked</>
+                    <>
+                      {" "}
+                      · {svc.unchecked_appliances} of {svc.total_appliances}{" "}
+                      unchecked
+                    </>
                   )}
                   {svc.has_service_level_pending && (
                     <> · service parts pending</>
