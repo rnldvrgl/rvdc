@@ -624,6 +624,7 @@ export interface RemittanceRecord {
     name: string
   }
 
+  remittance_date: string
   created_at: string
 
   total_sales_cash: string
