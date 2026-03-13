@@ -3,11 +3,11 @@
 import { ListCardSkeleton } from "@/components/custom/shared/skeletons"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCalendarEvents } from "@/lib/queries/calendar/useCalendarEvents"
-import { formatDateToYMD } from "@/lib/utils/helpers"
+import { cn, formatDateToYMD } from "@/lib/utils/helpers"
 import { format } from "date-fns"
 import { Cake, Sparkles } from "lucide-react"
 
-export function BirthdayReminders() {
+export function BirthdayReminders({ className }: { className?: string }) {
   const today = new Date()
   const nextWeek = new Date()
   nextWeek.setDate(today.getDate() + 7)
@@ -54,7 +54,7 @@ export function BirthdayReminders() {
   }
 
   return (
-    <Card className="h-full">
+    <Card className={cn("h-full", className)}>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950">

@@ -119,7 +119,9 @@ const DashboardPage = () => {
                   )}
 
                   {/* Birthday Reminders for Technician */}
-                  {role === "technician" && <BirthdayReminders />}
+                  {role === "technician" && (
+                    <BirthdayReminders className="lg:col-span-2" />
+                  )}
                 </div>
               )}
 
