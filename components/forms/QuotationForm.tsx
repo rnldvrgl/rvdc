@@ -31,8 +31,8 @@ import type {
   QuotationPaymentMethod,
 } from "@/lib/constants/types"
 import { useQuotationMutations } from "@/lib/mutations/useQuotationMutations"
-import { useClients } from "@/lib/queries/clients/useClients"
 import { useAirconUnits } from "@/lib/queries/useAircons"
+import { useClientChoices } from "@/lib/queries/useChoices"
 import { useEmployees } from "@/lib/queries/useEmployees"
 import { useQuotationTemplates } from "@/lib/queries/useQuotationTemplates"
 import { formatCurrency } from "@/lib/utils/currency"
@@ -297,8 +297,8 @@ export default function QuotationForm({
   )
 
   // ── Client ──
-  const { data: clientsData } = useClients({ limit: 200 })
-  const clients = useMemo(() => clientsData?.results ?? [], [clientsData])
+  const { data: clientsData } = useClientChoices()
+  const clients = useMemo(() => clientsData ?? [], [clientsData])
 
   // ── Authorized Representatives (admin & managers) ──
   const { data: employeesData } = useEmployees({
