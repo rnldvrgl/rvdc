@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils/helpers"
+import { motion } from "framer-motion"
 import { LucideIcon, Minus, TrendingDown, TrendingUp } from "lucide-react"
 import Link from "next/link"
 
@@ -22,39 +23,39 @@ interface StatsCardProps {
 
 const variantStyles = {
   default: {
-    bg: "bg-gradient-to-br from-slate-50/90 to-slate-100/70 dark:from-slate-900/60 dark:to-slate-800/40",
-    icon: "bg-gradient-to-br from-slate-100 to-slate-200/80 dark:from-slate-800 dark:to-slate-700/60",
-    iconColor: "text-slate-700 dark:text-slate-300",
-    border: "border-slate-200/80 dark:border-slate-700/50",
-    glow: "hover:shadow-slate-200/50 dark:hover:shadow-slate-800/30",
+    bg: "bg-card",
+    icon: "bg-secondary",
+    iconColor: "text-foreground",
+    border: "border-border",
+    glow: "",
   },
   success: {
-    bg: "bg-gradient-to-br from-emerald-50/80 to-emerald-100/60 dark:from-emerald-950/40 dark:to-emerald-900/30",
-    icon: "bg-gradient-to-br from-emerald-100 to-emerald-200/80 dark:from-emerald-900 dark:to-emerald-800/60",
-    iconColor: "text-emerald-700 dark:text-emerald-300",
-    border: "border-emerald-200/70 dark:border-emerald-700/40",
-    glow: "hover:shadow-emerald-200/50 dark:hover:shadow-emerald-800/30",
+    bg: "bg-card",
+    icon: "bg-primary/10 dark:bg-primary/20",
+    iconColor: "text-primary",
+    border: "border-border",
+    glow: "",
   },
   warning: {
-    bg: "bg-gradient-to-br from-amber-50/80 to-orange-100/60 dark:from-amber-950/40 dark:to-orange-900/30",
-    icon: "bg-gradient-to-br from-amber-100 to-amber-200/80 dark:from-amber-900 dark:to-amber-800/60",
-    iconColor: "text-amber-700 dark:text-amber-300",
-    border: "border-amber-200/70 dark:border-amber-700/40",
-    glow: "hover:shadow-amber-200/50 dark:hover:shadow-amber-800/30",
+    bg: "bg-card",
+    icon: "bg-accent",
+    iconColor: "text-accent-foreground",
+    border: "border-border",
+    glow: "",
   },
   danger: {
-    bg: "bg-gradient-to-br from-red-50/80 to-rose-100/60 dark:from-red-950/40 dark:to-rose-900/30",
-    icon: "bg-gradient-to-br from-red-100 to-red-200/80 dark:from-red-900 dark:to-red-800/60",
-    iconColor: "text-red-700 dark:text-red-300",
-    border: "border-red-200/70 dark:border-red-700/40",
-    glow: "hover:shadow-red-200/50 dark:hover:shadow-red-800/30",
+    bg: "bg-card",
+    icon: "bg-destructive/10 dark:bg-destructive/20",
+    iconColor: "text-destructive",
+    border: "border-border",
+    glow: "",
   },
   info: {
-    bg: "bg-gradient-to-br from-blue-50/80 to-indigo-100/60 dark:from-blue-950/40 dark:to-indigo-900/30",
-    icon: "bg-gradient-to-br from-blue-100 to-blue-200/80 dark:from-blue-900 dark:to-blue-800/60",
-    iconColor: "text-blue-700 dark:text-blue-300",
-    border: "border-blue-200/70 dark:border-blue-700/40",
-    glow: "hover:shadow-blue-200/50 dark:hover:shadow-blue-800/30",
+    bg: "bg-card",
+    icon: "bg-primary/10 dark:bg-primary/20",
+    iconColor: "text-primary",
+    border: "border-border",
+    glow: "",
   },
 }
 
@@ -102,54 +103,65 @@ export default function StatsCard({
   }
 
   const card = (
-    <Card
-      className={cn(
-        "group overflow-hidden border shadow-sm hover:shadow-lg transition-all duration-300",
-        styles.bg,
-        styles.border,
-        styles.glow,
-        href && "cursor-pointer hover:-translate-y-0.5",
-        className,
-      )}
-    >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">{title}</p>
-        </div>
-        <div
-          className={cn(
-            "p-3 rounded-xl shadow-sm transition-transform duration-300 group-hover:scale-110",
-            styles.icon,
-          )}
-        >
-          <Icon className={cn("size-5", styles.iconColor)} />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="text-3xl font-bold tracking-tight text-foreground">
-          {typeof value === "string"
-            ? value
-            : typeof value === "number"
-              ? value.toLocaleString()
-              : value}
-        </div>
-        {trend && (
+    <motion.div whileHover={{ y: -2, transition: { duration: 0.2 } }}>
+      <Card
+        className={cn(
+          "group overflow-hidden border shadow-sm hover:shadow-lg transition-shadow duration-300",
+          styles.bg,
+          styles.border,
+          styles.glow,
+          href && "cursor-pointer",
+          className,
+        )}
+      >
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          </div>
           <div
             className={cn(
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
-              trendColor,
+              "p-3 rounded-xl shadow-sm transition-transform duration-300 group-hover:scale-110",
+              styles.icon,
             )}
           >
-            {TrendIcon && <TrendIcon className="size-3.5" />}
-            <span>
-              {trend.value > 0 ? "+" : ""}
-              {trend.value}%
-            </span>
-            <span className="opacity-70">{trend.label}</span>
+            <Icon className={cn("size-5", styles.iconColor)} />
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <motion.div
+            className="text-3xl font-bold tracking-tight text-foreground"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            key={String(value)}
+          >
+            {typeof value === "string"
+              ? value
+              : typeof value === "number"
+                ? value.toLocaleString()
+                : value}
+          </motion.div>
+          {trend && (
+            <motion.div
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium",
+                trendColor,
+              )}
+            >
+              {TrendIcon && <TrendIcon className="size-3.5" />}
+              <span>
+                {trend.value > 0 ? "+" : ""}
+                {trend.value}%
+              </span>
+              <span className="opacity-70">{trend.label}</span>
+            </motion.div>
+          )}
+        </CardContent>
+      </Card>
+    </motion.div>
   )
 
   if (href) {

@@ -51,7 +51,9 @@ export function EmployeePerformanceStats() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Wrench className="size-5 text-purple-500" />
+            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-950">
+              <Wrench className="size-4 text-purple-600 dark:text-purple-400" />
+            </div>
             Top Service Types
             <Badge
               variant="secondary"
@@ -115,7 +117,9 @@ export function EmployeePerformanceStats() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Trophy className="size-5 text-yellow-500" />
+            <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-950">
+              <Trophy className="size-4 text-yellow-600 dark:text-yellow-400" />
+            </div>
             Top Technicians
             <Badge
               variant="secondary"
@@ -186,7 +190,9 @@ export function EmployeePerformanceStats() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Timer className="size-5 text-red-500" />
+            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950">
+              <Timer className="size-4 text-red-600 dark:text-red-400" />
+            </div>
             Most Late Arrivals
             <Badge
               variant="outline"
@@ -242,7 +248,9 @@ export function EmployeePerformanceStats() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUp className="size-5 text-green-500" />
+            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950">
+              <TrendingUp className="size-4 text-green-600 dark:text-green-400" />
+            </div>
             Most Punctual
             <Badge
               variant="outline"

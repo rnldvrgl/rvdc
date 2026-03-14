@@ -15,8 +15,10 @@ export function PendingItemsAlert() {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-500" />
+          <CardTitle className="text-base flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950">
+              <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
+            </div>
             Items Review
           </CardTitle>
         </CardHeader>
@@ -31,9 +33,11 @@ export function PendingItemsAlert() {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium flex items-center gap-2">
-          <Package className="h-4 w-4 text-orange-500" />
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-950">
+            <Package className="size-4 text-orange-600 dark:text-orange-400" />
+          </div>
           Items Pending Review
           <Badge
             variant="destructive"
@@ -43,44 +47,43 @@ export function PendingItemsAlert() {
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-xs text-muted-foreground">
-          {data.total_pending_services} service
-          {data.total_pending_services > 1 ? "s" : ""} with{" "}
-          {data.total_pending_items ?? data.total_unchecked_appliances} pending{" "}
-          review
-          {(data.total_pending_items ?? data.total_unchecked_appliances) > 1
-            ? "s"
-            : ""}
-        </p>
-
+      <CardContent className="space-y-2">
         <div className="space-y-2">
           {data.services.slice(0, 5).map((svc) => (
             <button
               key={svc.service_id}
               type="button"
               onClick={() => router.push(`/services?view=${svc.service_id}`)}
-              className="flex items-center justify-between gap-2 rounded-md border p-2.5 text-sm hover:bg-muted/50 transition-colors w-full text-left"
+              className="group flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all w-full text-left cursor-pointer"
             >
-              <div className="min-w-0">
-                <p className="font-medium truncate">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate capitalize">
                   {svc.client_name || "Unknown Client"}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {svc.service_type}
                   {svc.unchecked_appliances > 0 && (
                     <>
                       {" "}
                       · {svc.unchecked_appliances} of {svc.total_appliances}{" "}
-                      unchecked
+                      Unchecked
                     </>
                   )}
-                  {svc.has_service_level_pending && (
-                    <> · service parts pending</>
-                  )}
+                  {svc.has_service_level_pending && <> · Parts Pending</>}
                 </p>
               </div>
-              <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              {(svc.unchecked_appliances > 0 ||
+                svc.has_service_level_pending) && (
+                <Badge
+                  variant="outline"
+                  className="shrink-0 text-xs border-orange-200 text-orange-700 dark:border-orange-800 dark:text-orange-400"
+                >
+                  {svc.unchecked_appliances > 0
+                    ? svc.unchecked_appliances
+                    : "!"}
+                </Badge>
+              )}
+              <ArrowRight className="size-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
             </button>
           ))}
         </div>
@@ -88,10 +91,10 @@ export function PendingItemsAlert() {
         {data.total_pending_services > 5 && (
           <Link
             href="/services"
-            className="flex items-center justify-center gap-1 text-xs text-primary hover:underline pt-1"
+            className="group flex items-center justify-center gap-1 text-xs text-primary hover:underline pt-1"
           >
-            View all {data.total_pending_services} services
-            <ArrowRight className="h-3 w-3" />
+            View All {data.total_pending_services} Services
+            <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
           </Link>
         )}
       </CardContent>

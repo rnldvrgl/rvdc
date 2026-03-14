@@ -1,5 +1,6 @@
 "use client"
 
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   useStallStocks,
@@ -92,8 +93,10 @@ export function InventoryReorderAlerts({
     return (
       <Card className="h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Package className="size-4" />
+          <CardTitle className="text-base flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Package className="size-4 text-primary" />
+            </div>
             Inventory Alerts
           </CardTitle>
         </CardHeader>
@@ -112,163 +115,136 @@ export function InventoryReorderAlerts({
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Package className="size-4" />
+        <CardTitle className="text-base flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Package className="size-4 text-primary" />
+          </div>
           Inventory Alerts
-          <span className="ml-auto text-xs font-normal text-muted-foreground">
-            {total} alert{total !== 1 ? "s" : ""}
-          </span>
+          <Badge
+            variant="destructive"
+            className="ml-auto text-xs"
+          >
+            {total}
+          </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Stockroom Out of Stock */}
+      <CardContent className="space-y-2">
         {srNoStockCount > 0 && (
           <Link
             href="/inventory/stocks/stockroom?status=no_stock"
-            className="block"
+            className="group block"
           >
-            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10 p-3 hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors cursor-pointer">
-              <div className="flex items-center gap-2 mb-2">
-                <Warehouse className="size-4 text-red-600" />
-                <span className="text-sm font-semibold text-red-700 dark:text-red-400">
-                  Stockroom - Out of Stock ({srNoStockCount})
-                </span>
-                <ArrowRight className="size-3.5 ml-auto text-red-600" />
+            <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+              <div className="p-1.5 rounded-md bg-red-100 dark:bg-red-950/50 shrink-0">
+                <Warehouse className="size-3.5 text-red-600 dark:text-red-400" />
               </div>
-              <div className="space-y-1.5">
-                {stockRoomOutOfStockItems.map((item, i) => (
-                  <div
-                    key={`sr-oos-${i}`}
-                    className="flex items-center justify-between text-xs"
-                  >
-                    <span className="text-red-800 dark:text-red-300 truncate max-w-[70%]">
-                      {item.name}
-                    </span>
-                    <span className="text-red-600 dark:text-red-400 shrink-0 font-medium">
-                      0 units
-                    </span>
-                  </div>
-                ))}
-                {srNoStockCount > 3 && (
-                  <p className="text-xs text-red-500 font-medium">
-                    +{srNoStockCount - 3} more items
-                  </p>
-                )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Stockroom · Out of Stock</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {stockRoomOutOfStockItems
+                    .map((i) => i.name)
+                    .slice(0, 2)
+                    .join(", ")}
+                  {srNoStockCount > 2 && ` +${srNoStockCount - 2} more`}
+                </p>
               </div>
+              <Badge
+                variant="destructive"
+                className="shrink-0 text-xs"
+              >
+                {srNoStockCount}
+              </Badge>
+              <ArrowRight className="size-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
             </div>
           </Link>
         )}
 
-        {/* Stockroom Low Stock */}
         {srLowStockCount > 0 && (
           <Link
             href="/inventory/stocks/stockroom?status=low_stock"
-            className="block"
+            className="group block"
           >
-            <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-3 hover:bg-amber-100/50 dark:hover:bg-amber-900/20 transition-colors cursor-pointer">
-              <div className="flex items-center gap-2 mb-2">
-                <Warehouse className="size-4 text-amber-600" />
-                <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                  Stockroom - Low Stock ({srLowStockCount})
-                </span>
-                <ArrowRight className="size-3.5 ml-auto text-amber-600" />
+            <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+              <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-950/50 shrink-0">
+                <Warehouse className="size-3.5 text-amber-600 dark:text-amber-400" />
               </div>
-              <div className="space-y-1.5">
-                {stockRoomLowStockItems.map((item, i) => (
-                  <div
-                    key={`sr-low-${i}`}
-                    className="flex items-center justify-between text-xs"
-                  >
-                    <span className="text-amber-800 dark:text-amber-300 truncate max-w-[50%]">
-                      {item.name}
-                    </span>
-                    <span className="text-amber-600 dark:text-amber-400 shrink-0 font-medium">
-                      {item.quantity} / {item.threshold}
-                    </span>
-                  </div>
-                ))}
-                {srLowStockCount > 3 && (
-                  <p className="text-xs text-amber-500 font-medium">
-                    +{srLowStockCount - 3} more items
-                  </p>
-                )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Stockroom · Low Stock</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {stockRoomLowStockItems
+                    .map((i) => i.name)
+                    .slice(0, 2)
+                    .join(", ")}
+                  {srLowStockCount > 2 && ` +${srLowStockCount - 2} more`}
+                </p>
               </div>
+              <Badge
+                variant="outline"
+                className="shrink-0 text-xs border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400"
+              >
+                {srLowStockCount}
+              </Badge>
+              <ArrowRight className="size-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
             </div>
           </Link>
         )}
 
-        {/* Stall Out of Stock */}
         {stallNoStockCount > 0 && (
           <Link
             href="/inventory/stocks/stall?status=no_stock"
-            className="block"
+            className="group block"
           >
-            <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50/50 dark:bg-red-900/10 p-3 hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors cursor-pointer">
-              <div className="flex items-center gap-2 mb-2">
-                <Store className="size-4 text-red-600" />
-                <span className="text-sm font-semibold text-red-700 dark:text-red-400">
-                  Stall - Out of Stock ({stallNoStockCount})
-                </span>
-                <ArrowRight className="size-3.5 ml-auto text-red-600" />
+            <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+              <div className="p-1.5 rounded-md bg-red-100 dark:bg-red-950/50 shrink-0">
+                <Store className="size-3.5 text-red-600 dark:text-red-400" />
               </div>
-              <div className="space-y-1.5">
-                {stallOutOfStockItems.map((item, i) => (
-                  <div
-                    key={`st-oos-${i}`}
-                    className="flex items-center justify-between text-xs"
-                  >
-                    <span className="text-red-800 dark:text-red-300 truncate max-w-[70%]">
-                      {item.name}
-                    </span>
-                    <span className="text-red-600 dark:text-red-400 shrink-0 font-medium">
-                      0 units
-                    </span>
-                  </div>
-                ))}
-                {stallNoStockCount > 3 && (
-                  <p className="text-xs text-red-500 font-medium">
-                    +{stallNoStockCount - 3} more items
-                  </p>
-                )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Stall · Out of Stock</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {stallOutOfStockItems
+                    .map((i) => i.name)
+                    .slice(0, 2)
+                    .join(", ")}
+                  {stallNoStockCount > 2 && ` +${stallNoStockCount - 2} more`}
+                </p>
               </div>
+              <Badge
+                variant="destructive"
+                className="shrink-0 text-xs"
+              >
+                {stallNoStockCount}
+              </Badge>
+              <ArrowRight className="size-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
             </div>
           </Link>
         )}
 
-        {/* Stall Low Stock */}
         {stallLowStockCount > 0 && (
           <Link
             href="/inventory/stocks/stall?status=low_stock"
-            className="block"
+            className="group block"
           >
-            <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-3 hover:bg-amber-100/50 dark:hover:bg-amber-900/20 transition-colors cursor-pointer">
-              <div className="flex items-center gap-2 mb-2">
-                <Store className="size-4 text-amber-600" />
-                <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-                  Stall - Low Stock ({stallLowStockCount})
-                </span>
-                <ArrowRight className="size-3.5 ml-auto text-amber-600" />
+            <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+              <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-950/50 shrink-0">
+                <Store className="size-3.5 text-amber-600 dark:text-amber-400" />
               </div>
-              <div className="space-y-1.5">
-                {stallLowStockItems.map((item, i) => (
-                  <div
-                    key={`st-low-${i}`}
-                    className="flex items-center justify-between text-xs"
-                  >
-                    <span className="text-amber-800 dark:text-amber-300 truncate max-w-[50%]">
-                      {item.name}
-                    </span>
-                    <span className="text-amber-600 dark:text-amber-400 shrink-0 font-medium">
-                      {item.quantity} / {item.threshold}
-                    </span>
-                  </div>
-                ))}
-                {stallLowStockCount > 3 && (
-                  <p className="text-xs text-amber-500 font-medium">
-                    +{stallLowStockCount - 3} more items
-                  </p>
-                )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Stall · Low Stock</p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {stallLowStockItems
+                    .map((i) => i.name)
+                    .slice(0, 2)
+                    .join(", ")}
+                  {stallLowStockCount > 2 && ` +${stallLowStockCount - 2} more`}
+                </p>
               </div>
+              <Badge
+                variant="outline"
+                className="shrink-0 text-xs border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400"
+              >
+                {stallLowStockCount}
+              </Badge>
+              <ArrowRight className="size-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
             </div>
           </Link>
         )}

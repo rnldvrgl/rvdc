@@ -81,56 +81,39 @@ export function RemindersAlerts() {
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {pendingLeaves && pendingLeaves.length > 0 && (
               <Link
                 href="/attendance/leaves"
-                className="block group"
+                className="group block"
               >
-                <div className="p-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/50 dark:to-amber-900/20 hover:shadow-md transition-all duration-200 group-hover:border-amber-300 dark:group-hover:border-amber-800">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/50 shrink-0">
-                      <CalendarDays className="size-4 text-amber-700 dark:text-amber-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                          Pending Leave Approvals
-                        </p>
-                        <ArrowRight className="size-4 text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                      <p
-                        className="text-xs text-amber-700 dark:text-amber-300 mb-2"
-                        suppressHydrationWarning
-                      >
-                        {pendingLeaves.length} leave request
-                        {pendingLeaves.length > 1 ? "s" : ""} awaiting approval
-                      </p>
-                      <div className="space-y-1.5">
-                        {pendingLeaves.slice(0, 3).map((leave) => (
-                          <div
-                            key={leave.id}
-                            className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400"
-                          >
-                            <div className="size-1 rounded-full bg-amber-600" />
-                            <p className="truncate">
-                              <span className="font-medium">
-                                {leave.employee_name}
-                              </span>{" "}
-                              — {leave.leave_type_display || leave.leave_type} (
-                              {leave.days_count} day
-                              {parseFloat(leave.days_count) !== 1 ? "s" : ""})
-                            </p>
-                          </div>
-                        ))}
-                        {pendingLeaves.length > 3 && (
-                          <p className="text-xs text-amber-600 dark:text-amber-500 font-medium pl-3">
-                            +{pendingLeaves.length - 3} more...
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+                  <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-950/50 shrink-0">
+                    <CalendarDays className="size-3.5 text-amber-600 dark:text-amber-400" />
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">
+                      Pending Leave Approvals
+                    </p>
+                    <p
+                      className="text-xs text-muted-foreground mt-0.5 truncate"
+                      suppressHydrationWarning
+                    >
+                      {pendingLeaves
+                        .slice(0, 2)
+                        .map((l) => l.employee_name)
+                        .join(", ")}
+                      {pendingLeaves.length > 2 &&
+                        ` +${pendingLeaves.length - 2} more`}
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 text-xs border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400"
+                  >
+                    {pendingLeaves.length}
+                  </Badge>
+                  <ArrowRight className="size-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </div>
               </Link>
             )}
@@ -138,51 +121,37 @@ export function RemindersAlerts() {
             {overdueServices.length > 0 && (
               <Link
                 href="/services"
-                className="block group"
+                className="group block"
               >
-                <div className="p-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/50 dark:to-red-900/20 hover:shadow-md transition-all duration-200 group-hover:border-red-300 dark:group-hover:border-red-800">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/50 shrink-0">
-                      <TimerOff className="size-4 text-red-700 dark:text-red-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <p className="text-sm font-semibold text-red-900 dark:text-red-100">
-                          Overdue Services
-                        </p>
-                        <ArrowRight className="size-4 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                      <p
-                        className="text-xs text-red-700 dark:text-red-300 mb-2"
-                        suppressHydrationWarning
-                      >
-                        {overdueServices.length} service
-                        {overdueServices.length > 1 ? "s" : ""} past target
-                        completion date
-                      </p>
-                      <div className="space-y-1.5">
-                        {overdueServices.slice(0, 3).map((service) => (
-                          <div
-                            key={service.id}
-                            className="flex items-center gap-2 text-xs text-red-700 dark:text-red-400"
-                          >
-                            <div className="size-1 rounded-full bg-red-600" />
-                            <p className="truncate">
-                              <span className="font-medium">#{service.id}</span>
-                              {service.client?.full_name
-                                ? ` — ${service.client.full_name}`
-                                : ""}
-                            </p>
-                          </div>
-                        ))}
-                        {overdueServices.length > 3 && (
-                          <p className="text-xs text-red-600 dark:text-red-500 font-medium pl-3">
-                            +{overdueServices.length - 3} more...
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+                  <div className="p-1.5 rounded-md bg-red-100 dark:bg-red-950/50 shrink-0">
+                    <TimerOff className="size-3.5 text-red-600 dark:text-red-400" />
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">Overdue Services</p>
+                    <p
+                      className="text-xs text-muted-foreground mt-0.5 truncate"
+                      suppressHydrationWarning
+                    >
+                      {overdueServices
+                        .slice(0, 2)
+                        .map((s) =>
+                          s.client?.full_name
+                            ? `#${s.id} ${s.client.full_name}`
+                            : `#${s.id}`,
+                        )
+                        .join(", ")}
+                      {overdueServices.length > 2 &&
+                        ` +${overdueServices.length - 2} more`}
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 text-xs border-red-200 text-red-700 dark:border-red-800 dark:text-red-400"
+                  >
+                    {overdueServices.length}
+                  </Badge>
+                  <ArrowRight className="size-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </div>
               </Link>
             )}
@@ -190,53 +159,37 @@ export function RemindersAlerts() {
             {unpaidServices.length > 0 && (
               <Link
                 href="/services"
-                className="block group"
+                className="group block"
               >
-                <div className="p-4 rounded-xl border border-orange-200 dark:border-orange-900/50 bg-gradient-to-br from-orange-50 to-orange-100/50 dark:from-orange-950/50 dark:to-orange-900/20 hover:shadow-md transition-all duration-200 group-hover:border-orange-300 dark:group-hover:border-orange-800">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/50 shrink-0">
-                      <CreditCard className="size-4 text-orange-700 dark:text-orange-400" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <p className="text-sm font-semibold text-orange-900 dark:text-orange-100">
-                          Unpaid Services
-                        </p>
-                        <ArrowRight className="size-4 text-orange-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                      <p
-                        className="text-xs text-orange-700 dark:text-orange-300 mb-2"
-                        suppressHydrationWarning
-                      >
-                        {unpaidServices.length} completed service
-                        {unpaidServices.length > 1 ? "s" : ""} awaiting payment
-                      </p>
-                      <div className="space-y-1.5">
-                        {unpaidServices.slice(0, 3).map((service) => (
-                          <div
-                            key={service.id}
-                            className="flex items-center gap-2 text-xs text-orange-700 dark:text-orange-400"
-                          >
-                            <div className="size-1 rounded-full bg-orange-600" />
-                            <p className="truncate">
-                              <span className="font-medium">#{service.id}</span>
-                              {service.client?.full_name
-                                ? ` — ${service.client.full_name}`
-                                : ""}
-                              {service.payment_status === "partial"
-                                ? " (Partial)"
-                                : " (Unpaid)"}
-                            </p>
-                          </div>
-                        ))}
-                        {unpaidServices.length > 3 && (
-                          <p className="text-xs text-orange-600 dark:text-orange-500 font-medium pl-3">
-                            +{unpaidServices.length - 3} more...
-                          </p>
-                        )}
-                      </div>
-                    </div>
+                <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+                  <div className="p-1.5 rounded-md bg-orange-100 dark:bg-orange-950/50 shrink-0">
+                    <CreditCard className="size-3.5 text-orange-600 dark:text-orange-400" />
                   </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">Unpaid Services</p>
+                    <p
+                      className="text-xs text-muted-foreground mt-0.5 truncate"
+                      suppressHydrationWarning
+                    >
+                      {unpaidServices
+                        .slice(0, 2)
+                        .map((s) =>
+                          s.client?.full_name
+                            ? `#${s.id} ${s.client.full_name}`
+                            : `#${s.id}`,
+                        )
+                        .join(", ")}
+                      {unpaidServices.length > 2 &&
+                        ` +${unpaidServices.length - 2} more`}
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="shrink-0 text-xs border-orange-200 text-orange-700 dark:border-orange-800 dark:text-orange-400"
+                  >
+                    {unpaidServices.length}
+                  </Badge>
+                  <ArrowRight className="size-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </div>
               </Link>
             )}

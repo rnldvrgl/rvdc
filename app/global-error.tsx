@@ -1,6 +1,5 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { AlertTriangle, RefreshCw } from "lucide-react"
 import { useEffect } from "react"
 
@@ -28,13 +27,13 @@ export default function GlobalError({
               A critical error occurred. Please try refreshing the page.
             </p>
           </div>
-          <Button
+          <button
             onClick={reset}
-            size="lg"
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90 transition-colors"
           >
-            <RefreshCw className="size-4 mr-2" />
+            <RefreshCw className="size-4" />
             Try Again
-          </Button>
+          </button>
         </div>
       </body>
     </html>

@@ -9,11 +9,12 @@ import { PendingItemsAlert } from "@/components/custom/dashboard/PendingItemsAle
 import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
 import { RemindersAlerts } from "@/components/custom/dashboard/RemindersAlerts"
 import { SubStallSettlement } from "@/components/custom/dashboard/SubStallSettlement"
-import { WarrantyExpirationAlerts } from "@/components/custom/dashboard/WarrantyExpirationAlerts"
 import DateRangePicker from "@/components/custom/inputs/DateRangePicker"
 import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
 import DashboardCharts from "@/components/custom/shared/charts/DashboardCharts"
-import SummaryCards from "@/components/custom/shared/charts/SummaryCards"
+import GradientMetricCards from "@/components/custom/shared/charts/GradientMetricCards"
+import HeroStatsSection from "@/components/custom/shared/charts/HeroStatsSection"
+import { SectionReveal } from "@/components/custom/shared/charts/MotionWrappers"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { WidgetErrorBoundary } from "@/components/custom/shared/WidgetErrorBoundary"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
@@ -90,43 +91,47 @@ const DashboardPage = () => {
             role === "manager") && (
             <div className="space-y-6">
               {payrollIncluded && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                  {/* Clock In/Out */}
-                  <QuickClockInOut />
+                <SectionReveal delay={0.05}>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+                    {/* Clock In/Out */}
+                    <QuickClockInOut />
 
-                  {/* Pending Items for Clerk */}
-                  {role === "clerk" && (
-                    <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
-                      <PendingItemsAlert />
-                    </WidgetErrorBoundary>
-                  )}
+                    {/* Pending Items for Clerk */}
+                    {role === "clerk" && (
+                      <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
+                        <PendingItemsAlert />
+                      </WidgetErrorBoundary>
+                    )}
 
-                  {/* Sub Stall Settlement for Manager */}
-                  {role === "manager" && (
-                    <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
-                      <SubStallSettlement />
-                    </WidgetErrorBoundary>
-                  )}
+                    {/* Sub Stall Settlement for Manager */}
+                    {role === "manager" && (
+                      <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
+                        <SubStallSettlement />
+                      </WidgetErrorBoundary>
+                    )}
 
-                  {/* Leave Balance */}
-                  <LeaveBalanceSummary />
+                    {/* Leave Balance */}
+                    <LeaveBalanceSummary />
 
-                  {/* Inventory Alerts for Clerk */}
-                  {role === "clerk" && (
-                    <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
-                      <InventoryReorderAlerts stallOnly />
-                    </WidgetErrorBoundary>
-                  )}
+                    {/* Inventory Alerts for Clerk */}
+                    {role === "clerk" && (
+                      <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
+                        <InventoryReorderAlerts stallOnly />
+                      </WidgetErrorBoundary>
+                    )}
 
-                  {/* Birthday Reminders for Technician */}
-                  {role === "technician" && (
-                    <BirthdayReminders className="lg:col-span-2" />
-                  )}
-                </div>
+                    {/* Birthday Reminders for Technician */}
+                    {role === "technician" && (
+                      <BirthdayReminders className="lg:col-span-2" />
+                    )}
+                  </div>
+                </SectionReveal>
               )}
 
               {(role === "manager" || role === "clerk") && (
-                <BirthdayReminders />
+                <SectionReveal delay={0.1}>
+                  <BirthdayReminders />
+                </SectionReveal>
               )}
             </div>
           )}
@@ -134,54 +139,78 @@ const DashboardPage = () => {
           {/* Admin Dashboard */}
           {role === "admin" && (
             <div className="space-y-6">
-              {/* Alerts */}
-              <div className="grid gap-6 lg:grid-cols-2">
-                <WidgetErrorBoundary fallbackTitle="Reminders failed to load">
-                  <RemindersAlerts />
-                </WidgetErrorBoundary>
-                <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
-                  <InventoryReorderAlerts />
-                </WidgetErrorBoundary>
-                <WidgetErrorBoundary fallbackTitle="Warranty alerts failed to load">
-                  <WarrantyExpirationAlerts />
-                </WidgetErrorBoundary>
-                <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
-                  <PendingItemsAlert />
-                </WidgetErrorBoundary>
-              </div>
+              <SectionReveal delay={0.05}>
+                {/* Calendar */}
+                <DashboardCalendar />
+              </SectionReveal>
 
-              {/* Calendar */}
-              <DashboardCalendar />
+              <SectionReveal delay={0.1}>
+                {/* Hero Stats */}
+                <HeroStatsSection />
+              </SectionReveal>
 
-              {/* KPI Summary */}
-              <SummaryCards />
+              {/* Colorful Gradient Metric Cards */}
+              <SectionReveal delay={0.15}>
+                <GradientMetricCards />
+              </SectionReveal>
 
-              {/* Charts */}
-              <DashboardCharts />
+              {/* Charts: Cash Flow, Top Items, Top Clients */}
+              <SectionReveal delay={0.2}>
+                <DashboardCharts />
+              </SectionReveal>
 
-              {/* Employee Performance */}
-              <WidgetErrorBoundary fallbackTitle="Employee performance failed to load">
-                <EmployeePerformanceStats />
-              </WidgetErrorBoundary>
+              {/* Bottom: Alerts + Employee Performance */}
+              <SectionReveal delay={0.25}>
+                <div className="space-y-6">
+                  {/* Alerts row */}
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <WidgetErrorBoundary fallbackTitle="Reminders failed to load">
+                      <RemindersAlerts />
+                    </WidgetErrorBoundary>
+                    <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
+                      <InventoryReorderAlerts />
+                    </WidgetErrorBoundary>
+                  </div>
+
+                  {/* Pending Items + Birthday Reminders */}
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
+                      <PendingItemsAlert />
+                    </WidgetErrorBoundary>
+                    <BirthdayReminders />
+                  </div>
+
+                  {/* Employee Performance - full width */}
+                  <WidgetErrorBoundary fallbackTitle="Employee performance failed to load">
+                    <EmployeePerformanceStats />
+                  </WidgetErrorBoundary>
+                </div>
+              </SectionReveal>
             </div>
           )}
 
           {/* Calendar for non-admin roles */}
           {(role === "technician" || role === "clerk") && (
-            <DashboardCalendar
-              withSettings={false}
-              withRefresh={false}
-              eventTypes={[
-                "birthday",
-                "custom_event",
-                "holiday",
-                "half_day",
-                "shop_closed",
-                "leave",
-              ]}
-            />
+            <SectionReveal delay={0.15}>
+              <DashboardCalendar
+                withSettings={false}
+                withRefresh={false}
+                eventTypes={[
+                  "birthday",
+                  "custom_event",
+                  "holiday",
+                  "half_day",
+                  "shop_closed",
+                  "leave",
+                ]}
+              />
+            </SectionReveal>
           )}
-          {role === "manager" && <DashboardCalendar />}
+          {role === "manager" && (
+            <SectionReveal delay={0.15}>
+              <DashboardCalendar />
+            </SectionReveal>
+          )}
         </div>
       </Wrapper>
     </FormProvider>

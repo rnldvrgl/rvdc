@@ -1,5 +1,10 @@
 "use client"
 
+import {
+  FadeUpItem,
+  SectionReveal,
+  StaggerGrid,
+} from "@/components/custom/shared/charts/MotionWrappers"
 import { ModernStatCardSkeleton } from "@/components/custom/shared/skeletons"
 import { AnalyticsSummary } from "@/lib/constants/interface"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
@@ -194,29 +199,30 @@ const SummaryCards = () => {
   return (
     <div className="space-y-8">
       {summaryGroups.map((group, idx) => (
-        <div
+        <SectionReveal
           key={idx}
-          className="space-y-4"
+          delay={idx * 0.1}
         >
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-1 bg-linear-to-b from-primary to-primary/50 rounded-full" />
-            <h3 className="text-lg font-semibold text-foreground">
-              {group.title}
-            </h3>
-          </div>
-          {isLoading ? (
-            <ModernStatCardSkeleton count={group.cards.length} />
-          ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
-              {group.cards.map((card, i) => (
-                <StatsCard
-                  key={i}
-                  {...card}
-                />
-              ))}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-1 bg-linear-to-b from-primary to-primary/50 rounded-full" />
+              <h3 className="text-lg font-semibold text-foreground">
+                {group.title}
+              </h3>
             </div>
-          )}
-        </div>
+            {isLoading ? (
+              <ModernStatCardSkeleton count={group.cards.length} />
+            ) : (
+              <StaggerGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+                {group.cards.map((card, i) => (
+                  <FadeUpItem key={i}>
+                    <StatsCard {...card} />
+                  </FadeUpItem>
+                ))}
+              </StaggerGrid>
+            )}
+          </div>
+        </SectionReveal>
       ))}
     </div>
   )
