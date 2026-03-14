@@ -107,7 +107,23 @@ export default function PayrollSettingsPage() {
 
   const form = useForm<PayrollSettingsForm>({
     resolver: zodResolver(payrollSettingsSchema),
-    defaultValues: {},
+    defaultValues: {
+      shift_start: "",
+      shift_end: "",
+      grace_minutes: 0,
+      clock_out_tolerance_minutes: 30,
+      auto_close_enabled: false,
+      attendance_system_start_date: null,
+      overtime_multiplier: 1.25,
+      night_diff_multiplier: 0.1,
+      cash_ban_contribution_amount: 100,
+      cash_ban_enabled: false,
+      holiday_day_hours: 8,
+      holiday_regular_pct: 1.0,
+      holiday_special_pct: 0.3,
+      regular_holiday_no_work_pays: false,
+      special_holiday_no_work_pays: false,
+    },
   })
 
   const { formState, reset } = form

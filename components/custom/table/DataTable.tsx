@@ -7,7 +7,6 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { useVirtualizer } from "@tanstack/react-virtual"
 import { AnimatePresence, motion } from "framer-motion"
 import React, { useRef } from "react"
 
@@ -54,8 +53,8 @@ export interface BulkAction<TData> {
   onClick: (selectedRows: TData[]) => void
 }
 
-// Memoized row component to prevent unnecessary re-renders
-const DataTableRow = React.memo(function DataTableRow({
+// Animated row component
+function DataTableRow({
   row,
   index,
   onRowClick,
@@ -76,6 +75,7 @@ const DataTableRow = React.memo(function DataTableRow({
         duration: 0.2,
         delay: Math.min(index * 0.02, 0.3),
       }}
+      data-state={row.getIsSelected() ? "selected" : undefined}
       className={cn(
         "border-b border-border/40 transition-all hover:bg-muted/40 data-[state=selected]:bg-muted/60",
         onRowClick && "cursor-pointer hover:shadow-sm",
@@ -95,6 +95,11 @@ const DataTableRow = React.memo(function DataTableRow({
               isActionColumn && "text-center",
               isSelectColumn && "px-3",
             )}
+            onClick={
+              isSelectColumn || isActionColumn
+                ? (e: React.MouseEvent) => e.stopPropagation()
+                : undefined
+            }
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </TableCell>
@@ -102,15 +107,7 @@ const DataTableRow = React.memo(function DataTableRow({
       })}
     </motion.tr>
   )
-}) as React.MemoExoticComponent<
-  React.FC<{
-    row: ReturnType<
-      ReturnType<typeof useReactTable>["getRowModel"]
-    >["rows"][number]
-    index: number
-    onRowClick?: (original: unknown) => void
-  }>
->
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -171,10 +168,10 @@ export function DataTable<TData, TValue>({
 
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({})
 
-  // Reset selection when page/data changes
+  // Reset selection when page changes
   React.useEffect(() => {
     setRowSelection({})
-  }, [page, data])
+  }, [page])
 
   // Build columns with optional selection checkbox
   const allColumns = React.useMemo(() => {
@@ -192,14 +189,19 @@ export function DataTable<TData, TValue>({
           className="translate-y-0.5"
         />
       ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-          className="translate-y-0.5"
-        />
-      ),
+      cell: ({ row }) => {
+        const isSelected = row.getIsSelected()
+        return (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(value) => {
+              row.toggleSelected(!!value)
+            }}
+            aria-label="Select row"
+            className="translate-y-0.5"
+          />
+        )
+      },
       enableSorting: false,
       enableHiding: false,
     }
@@ -244,6 +246,7 @@ export function DataTable<TData, TValue>({
     manualSorting: true,
     enableMultiSort: true,
     enableRowSelection,
+    getRowId: (row) => String((row as Record<string, unknown>)?.id ?? row),
     state: {
       pagination: {
         pageIndex: page - 1,
@@ -270,16 +273,8 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
   })
 
-  // Virtualization setup
   const rows = table.getRowModel().rows
   const tableContainerRef = useRef<HTMLDivElement>(null)
-  const virtualizer = useVirtualizer({
-    count: rows.length,
-    getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 56, // h-14 = 56px
-    overscan: 5,
-    enabled: enableVirtualization && rows.length > 50,
-  })
   const isVirtualized = enableVirtualization && rows.length > 50
 
   const handleExportCSV = React.useCallback(() => {
@@ -429,14 +424,7 @@ export function DataTable<TData, TValue>({
   const startIndex = (page - 1) * limit + 1
   const endIndex = Math.min(page * limit, totalCount)
 
-  const selectedRows = React.useMemo(() => {
-    const results = data?.results ?? []
-    return Object.keys(rowSelection)
-      .filter((key) => rowSelection[key])
-      .map((key) => results[Number(key)])
-      .filter(Boolean)
-  }, [rowSelection, data])
-
+  const selectedRows = table.getSelectedRowModel().rows.map((r) => r.original)
   const selectedCount = selectedRows.length
 
   return (
@@ -651,89 +639,20 @@ export function DataTable<TData, TValue>({
                   </TableRow>
                 ))
               ) : rows.length > 0 ? (
-                isVirtualized ? (
-                  // Virtualized rows for large datasets
-                  <>
-                    {virtualizer.getVirtualItems().length > 0 && (
-                      <tr>
-                        <td
-                          colSpan={allColumns.length}
-                          style={{
-                            height:
-                              virtualizer.getVirtualItems()[0]?.start ?? 0,
-                            padding: 0,
-                          }}
-                        />
-                      </tr>
-                    )}
-                    {virtualizer.getVirtualItems().map((virtualRow) => {
-                      const row = rows[virtualRow.index]
-                      return (
-                        <TableRow
-                          key={row.id}
-                          className={cn(
-                            "border-b border-border/40 transition-all hover:bg-muted/40 data-[state=selected]:bg-muted/60",
-                            onRowClick && "cursor-pointer hover:shadow-sm",
-                          )}
-                          onClick={() => onRowClick?.(row.original)}
-                        >
-                          {row.getVisibleCells().map((cell) => {
-                            const colId = cell.column.id
-                            const isActionColumn = [
-                              "action",
-                              "actions",
-                            ].includes(colId)
-                            const isSelectColumn = colId === "_select"
-                            return (
-                              <TableCell
-                                key={cell.id}
-                                className={cn(
-                                  "h-14 px-4 py-2.5 text-sm",
-                                  isActionColumn && "text-center",
-                                  isSelectColumn && "px-3",
-                                )}
-                              >
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext(),
-                                )}
-                              </TableCell>
-                            )
-                          })}
-                        </TableRow>
-                      )
-                    })}
-                    {virtualizer.getVirtualItems().length > 0 && (
-                      <tr>
-                        <td
-                          colSpan={allColumns.length}
-                          style={{
-                            height:
-                              virtualizer.getTotalSize() -
-                              (virtualizer.getVirtualItems().at(-1)?.end ?? 0),
-                            padding: 0,
-                          }}
-                        />
-                      </tr>
-                    )}
-                  </>
-                ) : (
-                  // Animated rows for normal datasets
-                  <AnimatePresence mode="wait">
-                    {rows.map((row, i) => (
-                      <DataTableRow
-                        key={row.id}
-                        row={row}
-                        index={i}
-                        onRowClick={
-                          onRowClick
-                            ? (original) => onRowClick(original as TData)
-                            : undefined
-                        }
-                      />
-                    ))}
-                  </AnimatePresence>
-                )
+                <>
+                  {rows.map((row, i) => (
+                    <DataTableRow
+                      key={row.id}
+                      row={row}
+                      index={isVirtualized ? 0 : i}
+                      onRowClick={
+                        onRowClick
+                          ? (original) => onRowClick(original as TData)
+                          : undefined
+                      }
+                    />
+                  ))}
+                </>
               ) : (
                 // Empty state
                 <TableRow>

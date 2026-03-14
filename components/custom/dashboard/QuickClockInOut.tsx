@@ -12,6 +12,7 @@ import { useDailyAttendances } from "@/lib/queries/useAttendance"
 import { usePayrollSettings } from "@/lib/queries/usePayroll"
 import { useUserProfile } from "@/lib/queries/useUserProfile"
 import { formatDateToYMD, formatMinutesToHours } from "@/lib/utils/helpers"
+import { AnimatePresence, motion } from "framer-motion"
 import {
   AlertCircle,
   CheckCircle,
@@ -256,12 +257,16 @@ export function QuickClockInOut() {
       </CardHeader>
       <CardContent className="space-y-4 sm:space-y-6">
         <div className="text-center py-3 sm:py-4">
-          <p
-            className="text-2xl sm:text-3xl font-bold"
+          <motion.p
+            className="text-2xl sm:text-3xl font-bold tabular-nums"
             suppressHydrationWarning
+            key={formatTime(currentTime)}
+            initial={{ opacity: 0.7, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
           >
             {formatTime(currentTime)}
-          </p>
+          </motion.p>
           <p
             className="text-xs sm:text-sm text-muted-foreground mt-1"
             suppressHydrationWarning
@@ -313,53 +318,62 @@ export function QuickClockInOut() {
         )}
 
         <div className="space-y-3">
-          {attendance ? (
-            <div className="grid gap-3">
-              {/* Clock Times */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
-                  <LogIn className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">Clock In</p>
-                    <p className="text-sm font-medium">
-                      {attendanceStatus?.attendance?.clock_in
-                        ? formatTime(
-                            new Date(attendanceStatus.attendance.clock_in),
-                          )
-                        : "—"}
-                    </p>
+          <AnimatePresence mode="wait">
+            {attendance ? (
+              <motion.div
+                className="grid gap-3"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+              >
+                {/* Clock Times */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
+                    <LogIn className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground">Clock In</p>
+                      <p className="text-sm font-medium">
+                        {attendanceStatus?.attendance?.clock_in
+                          ? formatTime(
+                              new Date(attendanceStatus.attendance.clock_in),
+                            )
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
+                    <LogOut className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground">Clock Out</p>
+                      <p className="text-sm font-medium">
+                        {attendanceStatus?.attendance?.clock_out
+                          ? formatTime(
+                              new Date(attendanceStatus.attendance.clock_out),
+                            )
+                          : "—"}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
-                  <LogOut className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">Clock Out</p>
-                    <p className="text-sm font-medium">
-                      {attendanceStatus?.attendance?.clock_out
-                        ? formatTime(
-                            new Date(attendanceStatus.attendance.clock_out),
-                          )
-                        : "—"}
-                    </p>
+                {/* Total Hours */}
+                {attendance.paid_hours && (
+                  <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
+                    <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground">
+                        Paid Hours
+                      </p>
+                      <p className="text-sm font-medium">
+                        {attendance.paid_hours}h
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              {/* Total Hours */}
-              {attendance.paid_hours && (
-                <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
-                  <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground">Paid Hours</p>
-                    <p className="text-sm font-medium">
-                      {attendance.paid_hours}h
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : null}
+                )}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
           {/* Late Status */}
           {attendanceStatus?.attendance?.is_late && (
             <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
@@ -395,17 +409,25 @@ export function QuickClockInOut() {
               </div>
             )}
           {/* Completed Message */}
-          {hasClockedOut && (
-            <Alert variant="success">
-              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
-              <AlertTitle className="font-medium">
-                Attendance Recorded
-              </AlertTitle>
-              <AlertDescription>
-                Your attendance for today has been recorded successfully.
-              </AlertDescription>
-            </Alert>
-          )}
+          <AnimatePresence>
+            {hasClockedOut && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                <Alert variant="success">
+                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                  <AlertTitle className="font-medium">
+                    Attendance Recorded
+                  </AlertTitle>
+                  <AlertDescription>
+                    Your attendance for today has been recorded successfully.
+                  </AlertDescription>
+                </Alert>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Leave Message */}
           {leaveMessage && (
@@ -434,61 +456,85 @@ export function QuickClockInOut() {
           {/* Action Buttons */}
           {showActions && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Button
-                onClick={handleClockIn}
-                disabled={hasClockedIn || clockIn.isPending}
-                className="h-10 sm:h-11"
-                size="lg"
-                variant="success"
-              >
-                {clockIn.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <LogIn className="mr-2 h-4 w-4" />
-                    Clock In
-                  </>
-                )}
-              </Button>
-              <Button
-                onClick={handleClockOut}
-                disabled={!hasClockedIn || hasClockedOut || clockOut.isPending}
-                variant="destructive"
-                className="h-10 sm:h-11"
-                size="lg"
-              >
-                {clockOut.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Clock Out
-                  </>
-                )}
-              </Button>
+              <motion.div whileTap={{ scale: 0.97 }}>
+                <Button
+                  onClick={handleClockIn}
+                  disabled={hasClockedIn || clockIn.isPending}
+                  className="h-10 sm:h-11 w-full"
+                  size="lg"
+                  variant="success"
+                >
+                  {clockIn.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Clock In
+                    </>
+                  )}
+                </Button>
+              </motion.div>
+              <motion.div whileTap={{ scale: 0.97 }}>
+                <Button
+                  onClick={handleClockOut}
+                  disabled={
+                    !hasClockedIn || hasClockedOut || clockOut.isPending
+                  }
+                  variant="destructive"
+                  className="h-10 sm:h-11 w-full"
+                  size="lg"
+                >
+                  {clockOut.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Clock Out
+                    </>
+                  )}
+                </Button>
+              </motion.div>
             </div>
           )}
 
           {/* Error Messages */}
-          {clockIn.isError && (
-            <Alert variant="destructive">
-              <XCircle className="h-4 w-4" />
-              <AlertTitle>Clock In Failed</AlertTitle>
-              <AlertDescription>
-                Please try again or contact support if the issue persists
-              </AlertDescription>
-            </Alert>
-          )}
+          <AnimatePresence>
+            {clockIn.isError && (
+              <motion.div
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertTitle>Clock In Failed</AlertTitle>
+                  <AlertDescription>
+                    Please try again or contact support if the issue persists
+                  </AlertDescription>
+                </Alert>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {clockOut.isError && (
-            <Alert variant="destructive">
-              <XCircle className="h-4 w-4" />
-              <AlertTitle>Clock Out Failed</AlertTitle>
-              <AlertDescription>
-                Please try again or contact support if the issue persists
-              </AlertDescription>
-            </Alert>
-          )}
+          <AnimatePresence>
+            {clockOut.isError && (
+              <motion.div
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertTitle>Clock Out Failed</AlertTitle>
+                  <AlertDescription>
+                    Please try again or contact support if the issue persists
+                  </AlertDescription>
+                </Alert>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </CardContent>
     </Card>
