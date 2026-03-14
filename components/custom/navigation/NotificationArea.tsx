@@ -205,18 +205,14 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
         onOpenChange={setOpen}
       >
         <DropdownMenuTrigger asChild>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="relative"
-          >
-            <Bell className="size-4 text-foreground" />
+          <button className="relative flex items-center justify-center size-9 rounded-xl text-primary bg-primary/90 dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/40 transition-colors cursor-pointer">
+            <Bell className="size-4 text-white" />
             {unreadCountData && unreadCountData?.unread_count > 0 && (
               <span className="absolute top-0 right-0 inline-flex size-4 items-center justify-center rounded-full bg-destructive text-white text-[10px]">
                 {unreadCountData.unread_count}
               </span>
             )}
-          </Button>
+          </button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent

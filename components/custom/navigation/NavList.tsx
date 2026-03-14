@@ -92,7 +92,7 @@ export default function NavList({
                 }}
                 variant="ghost"
                 style={{ paddingLeft }}
-                className="w-full justify-start rounded-lg hover:bg-muted hover:text-foreground text-muted-foreground transition-all duration-150 focus:outline-none focus:ring-0"
+                className="w-full justify-start rounded-xl hover:bg-muted hover:text-foreground text-muted-foreground transition-all duration-200 focus:outline-none focus:ring-0"
               >
                 <item.icon className="size-4" />
                 <span className="ml-2">{item.name}</span>
@@ -105,8 +105,8 @@ export default function NavList({
                 variant="ghost"
                 onClick={() => toggleMenu(item.name)}
                 style={{ paddingLeft }}
-                className={`flex items-center w-full justify-between group rounded-lg
-                  text-sm font-medium transition-all duration-150
+                className={`flex items-center w-full justify-between group rounded-xl
+                  text-sm font-medium transition-all duration-200
                   text-muted-foreground hover:bg-muted hover:text-foreground
                   ${isActive ? "text-primary bg-primary/10" : ""}
                   focus:outline-none focus:ring-0

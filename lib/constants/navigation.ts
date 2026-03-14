@@ -273,12 +273,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Settings,
     children: [
       {
-        name: "User Profile",
-        href: "/settings/profile",
-        icon: Settings,
-        permission: "view_settings",
-      },
-      {
         name: "Appliance Types",
         href: "/settings/appliance-types",
         icon: Wrench,

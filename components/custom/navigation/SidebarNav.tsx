@@ -2,10 +2,7 @@
 
 import NavList from "@/components/custom/navigation/NavList"
 import NotificationArea from "@/components/custom/navigation/NotificationArea"
-import { UserProfile } from "@/components/custom/navigation/UserProfile"
 import { DeveloperCredit } from "@/components/custom/shared/DeveloperCredit"
-import { ModeToggle } from "@/components/custom/theme/ModeToggle"
-import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -14,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { User } from "@/lib/constants/interface"
+import { SHOP_INFO } from "@/lib/constants/meta"
 import { useSidebarCollapse } from "@/lib/hooks/useSidebarCollapse"
 import { useAuthentications } from "@/lib/mutations/useAuthentication"
 import { cn, getDisplayImage } from "@/lib/utils/helpers"
@@ -21,15 +19,18 @@ import { getToken } from "@/lib/utils/tokens"
 import { RemixiconComponentType } from "@remixicon/react"
 import { AnimatePresence, motion } from "framer-motion"
 import {
+  Computer,
   LogOutIcon,
   LucideIcon,
   Menu,
-  PanelLeftClose,
-  PanelLeftOpen,
+  Moon,
+  Sun,
+  UserIcon,
   X,
 } from "lucide-react"
+import { useTheme } from "next-themes"
 import Image from "next/image"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 type SidebarItem = {
   name: string
@@ -55,103 +56,30 @@ export default function SidebarNav({
   onAction?: (action: string) => void
   user: User | null
 }) {
-  const refresh = getToken("refresh")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden"
+    } else {
+      document.body.style.overflow = ""
+    }
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [mobileMenuOpen])
+
+  const { collapsed, setCollapsed } = useSidebarCollapse()
+  const { theme, setTheme } = useTheme()
+  const refresh = getToken("refresh")
   const { useLogout } = useAuthentications()
   const logout = useLogout()
-  const displayImage = getDisplayImage(user?.profile_image)
-  const hasCustomImage =
-    user?.profile_image && !user.profile_image.includes("default_image")
-  const { collapsed, setCollapsed, toggle } = useSidebarCollapse()
 
-  const renderUserHeader = () => (
-    <div
-      className={cn(
-        "flex items-center shrink-0",
-        collapsed ? "justify-center" : "justify-between px-2",
-      )}
-    >
-      <AnimatePresence mode="wait">
-        {user ? (
-          <motion.div
-            key="userLoaded"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className={cn(
-              "flex items-center",
-              collapsed ? "justify-center" : "gap-3",
-            )}
-          >
-            {hasCustomImage ? (
-              <Image
-                src={displayImage}
-                alt={`${user?.first_name} ${user?.last_name}`}
-                width={collapsed ? 32 : 34}
-                height={collapsed ? 32 : 34}
-                className={cn(
-                  "rounded-full object-cover ring-2 ring-primary/10 shrink-0",
-                  collapsed ? "h-8 w-8" : "h-[34px] w-[34px]",
-                )}
-              />
-            ) : (
-              <div
-                className={cn(
-                  "flex items-center justify-center rounded-full bg-primary/10 text-primary font-semibold shrink-0",
-                  collapsed ? "h-8 w-8 text-xs" : "h-[34px] w-[34px] text-sm",
-                )}
-              >
-                {user?.first_name?.[0]?.toUpperCase()}
-              </div>
-            )}
-            {!collapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.15, delay: 0.03 }}
-                className="flex-1 min-w-0"
-              >
-                <p className="text-[10px] text-muted-foreground/60 font-medium leading-tight">
-                  Welcome back
-                </p>
-                <p className="text-sm font-semibold text-foreground truncate leading-tight">
-                  {user?.first_name}
-                </p>
-              </motion.div>
-            )}
-          </motion.div>
-        ) : (
-          <div
-            className={cn(
-              "flex items-center",
-              collapsed ? "justify-center" : "gap-3",
-            )}
-          >
-            <Skeleton
-              className={cn(
-                "rounded-full shrink-0",
-                collapsed ? "h-8 w-8" : "h-[34px] w-[34px]",
-              )}
-            />
-            {!collapsed && (
-              <div className="flex flex-col gap-1">
-                <Skeleton className="h-2 w-14" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-            )}
-          </div>
-        )}
-      </AnimatePresence>
-
-      {!collapsed && (
-        <div className="flex items-center gap-0.5 shrink-0">
-          <NotificationArea align="start" />
-          <ModeToggle />
-        </div>
-      )}
-    </div>
-  )
+  const cycleTheme = () => {
+    const themes = ["light", "dark", "system"] as const
+    const idx = themes.indexOf(theme as (typeof themes)[number])
+    setTheme(themes[(idx + 1) % themes.length])
+  }
 
   const renderNav = (close?: () => void) => (
     <div className="flex-1 flex flex-col space-y-3">
@@ -173,77 +101,62 @@ export default function SidebarNav({
 
   return (
     <TooltipProvider delayDuration={0}>
-      {/* Large screens */}
+      {/* Large screens - Sidebar */}
       <motion.aside
-        animate={{ width: collapsed ? 64 : 288 }}
-        transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-        className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:flex-col bg-sidebar border-r border-sidebar-border/50 h-full relative"
+        animate={{ width: collapsed ? 108 : 288 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
+        className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:flex-col h-full relative"
       >
-        {/* Edge toggle button */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <motion.button
-              onClick={toggle}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={cn(
-                "absolute -right-3 top-10 z-10 flex size-7 items-center justify-center rounded-full",
-                "bg-linear-to-br from-primary to-primary/80 shadow-lg shadow-primary/25",
-                "hover:shadow-xl hover:shadow-primary/30 transition-all duration-300",
-                "ring-2 ring-background",
-                "group",
-              )}
-            >
-              <AnimatePresence
-                mode="wait"
-                initial={false}
-              >
-                {collapsed ? (
-                  <motion.div
-                    key="expand"
-                    initial={{ opacity: 0, x: -4 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 4 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <PanelLeftOpen className="size-3.5 text-primary-foreground" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="collapse"
-                    initial={{ opacity: 0, x: 4 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -4 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <PanelLeftClose className="size-3.5 text-primary-foreground" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          </TooltipTrigger>
-          <TooltipContent
-            side="right"
-            sideOffset={12}
-            className="font-medium"
-          >
-            <p>{collapsed ? "Expand sidebar" : "Collapse sidebar"}</p>
-          </TooltipContent>
-        </Tooltip>
-
-        {/* Content */}
         <div
           className={cn(
-            "flex flex-col h-full overflow-hidden transition-[padding] duration-200",
-            collapsed ? "px-2 py-4" : "px-3 py-4",
+            "flex flex-col h-[calc(100%-24px)] my-4 bg-sidebar border border-sidebar-border/60 shadow-sm overflow-hidden transition-[padding,border-radius] duration-200 rounded-2xl",
+            collapsed ? "mx-4 px-4 py-4" : "ml-4 mr-0 px-4 py-4",
           )}
         >
-          {/* User */}
-          {renderUserHeader()}
+          {/* Company / Brand */}
+          <div
+            className={cn(
+              "flex items-center shrink-0 mb-3",
+              collapsed ? "justify-center" : "gap-2.5 px-1",
+            )}
+          >
+            <div
+              className={cn(
+                "flex items-center justify-center shrink-0 rounded-xl overflow-hidden",
+                collapsed ? "size-10" : "size-9",
+              )}
+            >
+              <Image
+                src="/rvdc_logo.png"
+                alt="RVDC"
+                width={40}
+                height={40}
+                className="size-full object-cover bg-white"
+              />
+            </div>
+            {!collapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -10, filter: "blur(4px)" }}
+                animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                transition={{ duration: 0.25, delay: 0.08, ease: "easeOut" }}
+                className="flex-1 min-w-0"
+              >
+                <p className="text-sm font-bold text-foreground truncate leading-tight">
+                  RVDC
+                </p>
+                <p className="text-[10px] text-muted-foreground/60 font-medium truncate leading-tight">
+                  {SHOP_INFO.name.replace("RVDC ", "")}
+                </p>
+              </motion.div>
+            )}
+          </div>
+
+          <div className={cn("mb-2", collapsed ? "mx-auto w-8" : "mx-1")}>
+            <div className="h-px bg-sidebar-border/40" />
+          </div>
 
           {/* Navigation */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden mt-4 min-h-0">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-thin pr-1">
             <AnimatePresence
               mode="wait"
               initial={false}
@@ -251,76 +164,83 @@ export default function SidebarNav({
               {collapsed ? (
                 <motion.div
                   key="collapsed-nav"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.12 }}
-                  className="flex flex-col items-center gap-0.5"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="flex flex-col items-center gap-1"
                 >
                   {sections
                     .flatMap((s) => s.items)
-                    .map((item) => (
-                      <Tooltip key={item.name}>
-                        <TooltipTrigger asChild>
-                          {item.href ? (
-                            <a
-                              href={item.href}
-                              title={item.name}
-                              className={cn(
-                                "flex items-center justify-center size-9 rounded-lg transition-all duration-150",
-                                activePath.startsWith(item.href)
-                                  ? "bg-primary/10 text-primary"
-                                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                              )}
-                            >
-                              <item.icon className="size-[18px]" />
-                            </a>
-                          ) : item.action ? (
-                            <button
-                              onClick={() => onAction?.(item.action!)}
-                              title={item.name}
-                              className="flex items-center justify-center size-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-150"
-                            >
-                              <item.icon className="size-[18px]" />
-                            </button>
-                          ) : item.children ? (
-                            <button
-                              onClick={() => setCollapsed(false)}
-                              title={item.name}
-                              className={cn(
-                                "flex items-center justify-center size-9 rounded-lg transition-all duration-150 cursor-pointer",
-                                item.children.some(
-                                  (c) =>
-                                    c.href && activePath.startsWith(c.href),
-                                )
-                                  ? "bg-primary/10 text-primary"
-                                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                              )}
-                            >
-                              <item.icon className="size-[18px]" />
-                            </button>
-                          ) : (
-                            <div className="flex items-center justify-center size-9 rounded-lg text-muted-foreground">
-                              <item.icon className="size-[18px]" />
-                            </div>
-                          )}
-                        </TooltipTrigger>
-                        <TooltipContent
-                          side="right"
-                          sideOffset={8}
-                        >
-                          <p>{item.name}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ))}
+                    .map((item) => {
+                      const isActive = item.href
+                        ? activePath.startsWith(item.href)
+                        : item.children
+                          ? item.children.some(
+                              (c) => c.href && activePath.startsWith(c.href),
+                            )
+                          : false
+
+                      return (
+                        <Tooltip key={item.name}>
+                          <TooltipTrigger asChild>
+                            {item.href ? (
+                              <a
+                                href={item.href}
+                                title={item.name}
+                                className={cn(
+                                  "flex items-center justify-center size-10 rounded-xl transition-all duration-200",
+                                  isActive
+                                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                                )}
+                              >
+                                <item.icon className="size-[18px]" />
+                              </a>
+                            ) : item.action ? (
+                              <button
+                                onClick={() => onAction?.(item.action!)}
+                                title={item.name}
+                                className="flex items-center justify-center size-10 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200"
+                              >
+                                <item.icon className="size-[18px]" />
+                              </button>
+                            ) : item.children ? (
+                              <button
+                                onClick={() => setCollapsed(false)}
+                                title={item.name}
+                                className={cn(
+                                  "flex items-center justify-center size-10 rounded-xl transition-all duration-200 cursor-pointer",
+                                  isActive
+                                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                                )}
+                              >
+                                <item.icon className="size-[18px]" />
+                              </button>
+                            ) : (
+                              <div className="flex items-center justify-center size-10 rounded-xl text-muted-foreground">
+                                <item.icon className="size-[18px]" />
+                              </div>
+                            )}
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="right"
+                            sideOffset={8}
+                          >
+                            <p>{item.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )
+                    })}
                 </motion.div>
               ) : (
                 <motion.div
                   key="expanded-nav"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.12 }}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -8 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
                 >
                   {renderNav()}
                 </motion.div>
@@ -328,99 +248,55 @@ export default function SidebarNav({
             </AnimatePresence>
           </div>
 
-          {/* Bottom actions */}
-          <div className="shrink-0 pt-2">
-            {collapsed ? (
-              <div className="flex flex-col items-center gap-0.5">
-                <ModeToggle />
-                <NotificationArea align="start" />
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => logout.mutateAsync(refresh)}
-                      title="Sign out"
-                      className="flex items-center justify-center size-9 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all duration-150"
-                    >
-                      <LogOutIcon className="size-[18px]" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="right"
-                    sideOffset={8}
-                  >
-                    <p>Sign out</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8"
-                  onClick={() => logout.mutateAsync(refresh)}
-                >
-                  <LogOutIcon className="size-3.5" />
-                  <span className="ml-2 text-xs">Sign out</span>
-                </Button>
-                <DeveloperCredit
-                  variant="subtle"
-                  size="sm"
-                />
-              </div>
-            )}
-          </div>
+          {/* Bottom: Credit */}
+          {!collapsed && (
+            <div className="shrink-0 pt-2">
+              <DeveloperCredit
+                variant="subtle"
+                size="sm"
+              />
+            </div>
+          )}
         </div>
       </motion.aside>
 
-      {/* Small screens - Full screen mobile menu */}
-      <div className="lg:hidden flex h-16 items-center justify-between bg-sidebar border-b border-sidebar-border px-6">
+      {/* Small screens - Mobile top bar */}
+      <div className="lg:hidden flex h-14 items-center justify-between bg-sidebar border-b border-sidebar-border/50 px-4">
         <div className="flex items-center gap-3">
+          <Image
+            src={getDisplayImage(user?.profile_image)}
+            alt={user ? `${user.first_name} ${user.last_name}` : "User"}
+            width={32}
+            height={32}
+            className="size-8 rounded-full object-cover ring-2 ring-primary/10"
+          />
           <AnimatePresence>
             {user ? (
-              <motion.div
-                key="userMobileLoaded"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ duration: 0.4 }}
-                className="flex items-center gap-3"
+              <motion.span
+                key="userMobileName"
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3 }}
+                className="font-semibold text-sm truncate"
               >
-                {hasCustomImage ? (
-                  <Image
-                    src={displayImage}
-                    alt={`${user?.first_name} ${user?.last_name}`}
-                    width={36}
-                    height={36}
-                    className="h-9 w-9 rounded-full object-cover border border-border"
-                  />
-                ) : (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/30 text-primary font-semibold text-sm">
-                    {user?.first_name?.[0]?.toUpperCase()}
-                  </div>
-                )}
-                <span className="font-semibold text-sm">
-                  {user?.first_name} {user?.last_name}
-                </span>
-              </motion.div>
+                {user.first_name} {user.last_name}
+              </motion.span>
             ) : (
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-9 w-9 rounded-full" />
-                <Skeleton className="h-4 w-24" />
-              </div>
+              <Skeleton className="h-4 w-24" />
             )}
           </AnimatePresence>
         </div>
 
         <div className="flex items-center gap-2">
           <NotificationArea align="end" />
-          <Button
-            size="icon"
-            className="rounded-lg"
+          <button
+            type="button"
             onClick={() => setMobileMenuOpen(true)}
+            className="flex items-center justify-center size-9 rounded-xl text-white bg-primary/90 dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/40 transition-colors cursor-pointer"
+            aria-label="Open menu"
           >
-            <Menu className="h-5 w-5" />
-          </Button>
+            <Menu className="size-[18px]" />
+          </button>
         </div>
       </div>
 
@@ -428,89 +304,123 @@ export default function SidebarNav({
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
+            key="mobile-panel"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-0 z-50 bg-background flex flex-col"
+            className="lg:hidden fixed inset-0 z-50 bg-sidebar flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-sidebar-border shrink-0 bg-sidebar">
+            <div className="flex items-center justify-between p-4 border-b border-sidebar-border/50 shrink-0">
               <div className="flex items-center gap-3">
-                {user &&
-                  (hasCustomImage ? (
-                    <Image
-                      src={displayImage}
-                      alt={`${user?.first_name} ${user?.last_name}`}
-                      width={40}
-                      height={40}
-                      className="h-10 w-10 rounded-full object-cover border border-border"
-                    />
-                  ) : (
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/30 text-primary font-semibold text-lg">
-                      {user?.first_name?.[0]?.toUpperCase()}
-                    </div>
-                  ))}
-                <div>
-                  <p className="text-sm font-semibold">
-                    {user?.first_name} {user?.last_name}
+                <div className="flex items-center justify-center size-9 rounded-lg overflow-hidden">
+                  <Image
+                    src="/rvdc_logo.png"
+                    alt="RVDC"
+                    width={36}
+                    height={36}
+                    className="size-full object-cover bg-white"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground truncate">
+                    RVDC
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {user?.role || "User"}
+                  <p className="text-[10px] text-muted-foreground/60 font-medium truncate">
+                    {SHOP_INFO.name.replace("RVDC ", "")}
                   </p>
                 </div>
               </div>
-              <Button
-                size="icon"
-                variant="ghost"
+              <button
+                type="button"
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-full"
+                className="flex items-center justify-center size-9 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+                aria-label="Close menu"
               >
-                <X className="h-5 w-5" />
-              </Button>
+                <X className="size-[18px]" />
+              </button>
             </div>
+
             {/* Scrollable Navigation */}
-            <div className="flex-1 overflow-y-auto">
-              <div className="py-6 px-6">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1, duration: 0.3 }}
-                  className="space-y-6"
-                >
-                  {sections.length > 0 &&
-                    sections.map((section, i) =>
-                      section.items.length > 0 ? (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.1 + i * 0.05, duration: 0.3 }}
-                        >
-                          <NavList
-                            title={section.title}
-                            items={section.items}
-                            activePath={activePath}
-                            close={() => setMobileMenuOpen(false)}
-                            onAction={(action) => {
-                              onAction?.(action)
-                              setMobileMenuOpen(false)
-                            }}
-                          />
-                        </motion.div>
-                      ) : null,
-                    )}
-                </motion.div>
+            <div className="flex-1 overflow-y-auto scrollbar-thin">
+              <div className="py-4 px-3">
+                {sections.length > 0 &&
+                  sections.map((section, i) =>
+                    section.items.length > 0 ? (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -16 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{
+                          delay: 0.12 + i * 0.04,
+                          duration: 0.25,
+                          ease: "easeOut",
+                        }}
+                      >
+                        <NavList
+                          title={section.title}
+                          items={section.items}
+                          activePath={activePath}
+                          close={() => setMobileMenuOpen(false)}
+                          onAction={(action) => {
+                            onAction?.(action)
+                            setMobileMenuOpen(false)
+                          }}
+                        />
+                      </motion.div>
+                    ) : null,
+                  )}
               </div>
             </div>
+
             {/* Footer */}
-            <div className="shrink-0 py-2 px-4 border-t border-border space-y-3 mb-2">
-              <UserProfile user={user} />
-              <DeveloperCredit
-                variant="subtle"
-                size="sm"
-              />
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.25 }}
+              className="shrink-0 border-t border-sidebar-border/40"
+            >
+              <div className="px-3 py-2 space-y-0.5">
+                <button
+                  type="button"
+                  onClick={cycleTheme}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  {theme === "dark" ? (
+                    <Moon className="size-4 shrink-0" />
+                  ) : theme === "light" ? (
+                    <Sun className="size-4 shrink-0" />
+                  ) : (
+                    <Computer className="size-4 shrink-0" />
+                  )}
+                  Theme
+                  <span className="ml-auto text-xs capitalize">{theme}</span>
+                </button>
+                <a
+                  href="/settings/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <UserIcon className="size-4 shrink-0" />
+                  Profile
+                </a>
+                <button
+                  type="button"
+                  onClick={() => logout.mutateAsync(refresh)}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <LogOutIcon className="size-4 shrink-0" />
+                  Sign out
+                </button>
+              </div>
+              <div className="px-4 py-2">
+                <DeveloperCredit
+                  variant="subtle"
+                  size="sm"
+                />
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,5 +1,4 @@
 "use client"
-import { useSidebarCollapse } from "@/lib/hooks/useSidebarCollapse"
 import { cn } from "@/lib/utils/helpers"
 
 type WrapperProps = {
@@ -9,8 +8,8 @@ type WrapperProps = {
 }
 
 const maxWidthMap = {
-  default: "max-w-7xl",
-  wide: "max-w-[1800px]",
+  default: "max-w-full",
+  wide: "max-w-full",
   full: "max-w-full",
   narrow: "max-w-3xl",
 }
@@ -20,18 +19,13 @@ export function Wrapper({
   maxWidth = "default",
   className,
 }: WrapperProps) {
-  const { collapsed } = useSidebarCollapse()
-
-  const resolvedMaxWidth = maxWidth
-    ? (maxWidthMap[maxWidth as keyof typeof maxWidthMap] ?? maxWidth)
-    : collapsed
-      ? "max-w-[1800px]"
-      : "max-w-7xl"
+  const resolvedMaxWidth =
+    maxWidthMap[maxWidth as keyof typeof maxWidthMap] ?? maxWidth
 
   return (
     <div
       className={cn(
-        "container mx-auto p-2 md:p-4 xl:p-6 space-y-8 transition-all duration-300",
+        " px-3 md:px-4 py-4 space-y-8 transition-all duration-300",
         resolvedMaxWidth,
         className,
       )}

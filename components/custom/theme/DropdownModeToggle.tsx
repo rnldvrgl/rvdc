@@ -1,40 +1,37 @@
 import {
   DropdownMenuGroup,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Computer, Moon, Sun } from 'lucide-react'
-import { useTheme } from 'next-themes'
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu"
+import { Moon, Sun } from "lucide-react"
+import { useTheme } from "next-themes"
+
+const themeOptions = [
+  { value: "light", label: "Light", icon: Sun },
+  { value: "dark", label: "Dark", icon: Moon },
+] as const
 
 const DropdownModeToggle = () => {
   const { theme, setTheme } = useTheme()
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }
+
+  const current = themeOptions.find((t) => t.value === theme) ?? themeOptions[0]
+  const CurrentIcon = current.icon
+
   return (
     <DropdownMenuGroup>
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger>Theme</DropdownMenuSubTrigger>
-        <DropdownMenuSubContent>
-          <DropdownMenuRadioGroup
-            value={theme}
-            onValueChange={(value) => setTheme(value)}
-          >
-            <DropdownMenuRadioItem value="light">
-              <Sun className="mr-2 size-4" />
-              Light
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="dark">
-              <Moon className="mr-2 size-4" />
-              Dark
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="system">
-              <Computer className="mr-2 size-4" />
-              System
-            </DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuSubContent>
-      </DropdownMenuSub>
+      <DropdownMenuItem
+        onClick={toggleTheme}
+        className="cursor-pointer"
+      >
+        <CurrentIcon className="mr-2 size-4" />
+        Theme
+        <span className="ml-auto text-xs text-muted-foreground capitalize">
+          {current.label}
+        </span>
+      </DropdownMenuItem>
     </DropdownMenuGroup>
   )
 }
