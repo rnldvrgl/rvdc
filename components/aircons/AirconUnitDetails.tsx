@@ -46,7 +46,7 @@ export function AirconUnitDetails({
     rejected: {
       label: "Rejected",
       bg: "bg-red-50",
-      text: "text-red-700",
+      text: "text-destructive",
       ring: "ring-red-600/20",
     },
     in_progress: {
@@ -91,7 +91,7 @@ export function AirconUnitDetails({
               > = {
                 Installed: {
                   bg: "bg-emerald-50",
-                  text: "text-emerald-700",
+                  text: "text-success",
                   ring: "ring-emerald-600/20",
                 },
                 "For Installation": {
@@ -238,7 +238,7 @@ export function AirconUnitDetails({
                 > = {
                   Installed: {
                     bg: "bg-emerald-50",
-                    text: "text-emerald-700",
+                    text: "text-success",
                     ring: "ring-emerald-600/20",
                   },
                   "For Installation": {

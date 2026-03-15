@@ -39,7 +39,7 @@ const statusConfig: Record<
   },
   encashed: {
     variant: "success",
-    className: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    className: "bg-emerald-100 text-success border-emerald-200",
     label: "Encashed",
   },
   returned: {
@@ -162,7 +162,7 @@ export function ChequeCollectionDetails({
       {/* Cheque Details */}
       <div className="rounded-xl border bg-background p-5 shadow-sm space-y-4">
         <div className="flex items-center gap-2 mb-3">
-          <div className="flex items-center justify-center size-9 rounded-lg bg-emerald-100 text-emerald-600">
+          <div className="flex items-center justify-center size-9 rounded-lg bg-emerald-100 text-success">
             <Receipt className="size-5" />
           </div>
           <h3 className="text-base font-semibold">Cheque Details</h3>
@@ -245,12 +245,12 @@ export function ChequeCollectionDetails({
               <div className="flex items-center gap-2">
                 <CheckCircle2
                   className={`size-5 ${
-                    difference > 0 ? "text-emerald-600" : "text-rose-600"
+                    difference > 0 ? "text-success" : "text-destructive"
                   }`}
                 />
                 <span
                   className={`text-sm font-semibold ${
-                    difference > 0 ? "text-emerald-700" : "text-rose-700"
+                    difference > 0 ? "text-success" : "text-rose-700"
                   }`}
                 >
                   Difference
@@ -258,7 +258,7 @@ export function ChequeCollectionDetails({
               </div>
               <span
                 className={`text-lg font-bold ${
-                  difference > 0 ? "text-emerald-700" : "text-rose-700"
+                  difference > 0 ? "text-success" : "text-rose-700"
                 }`}
               >
                 {difference > 0 ? "+" : ""}

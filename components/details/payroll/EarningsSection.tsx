@@ -42,8 +42,8 @@ export function EarningsSection({
   return (
     <div className="rounded-lg border border-green-200/60 dark:border-green-900/40 bg-linear-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/10 dark:to-emerald-950/10 p-3 flex flex-col">
       <div className="flex items-center gap-2 mb-2.5">
-        <Plus className="h-4 w-4 text-green-600 dark:text-green-400" />
-        <h3 className="text-sm sm:text-base font-semibold text-green-700 dark:text-green-400">
+        <Plus className="h-4 w-4 text-success" />
+        <h3 className="text-sm sm:text-base font-semibold text-success">
           Earnings
         </h3>
       </div>
@@ -104,7 +104,7 @@ export function EarningsSection({
         )}
       </div>
       <Separator className="my-2 mt-auto" />
-      <div className="flex justify-between font-semibold text-green-700 dark:text-green-400 text-sm">
+      <div className="flex justify-between font-semibold text-success text-sm">
         <span>Total</span>
         <span>{formatCurrency(totalEarnings)}</span>
       </div>

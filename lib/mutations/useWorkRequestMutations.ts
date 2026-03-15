@@ -19,7 +19,7 @@ export type BatchWorkRequestInput = {
 
 const invalidateQueries = [
   { queryKey: ["attendance", "work-requests"] },
-  { queryKey: ["attendance", "daily-attendance", "current-status"] },
+  { queryKey: ["current-attendance-status"] },
 ]
 
 export function useCreateWorkRequest() {

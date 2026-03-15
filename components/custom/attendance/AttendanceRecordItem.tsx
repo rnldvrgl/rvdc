@@ -85,7 +85,7 @@ export const AttendanceRecordItem = ({ record }: AttendanceRecordItemProps) => {
 
               {record.late_penalty_amount &&
                 parseFloat(record.late_penalty_amount) > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
+                  <span className="px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-destructive">
                     Late ₱{record.late_penalty_amount}
                   </span>
                 )}

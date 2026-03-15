@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { TUserProfile } from "@/lib/constants/types"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { AlertCircle, Loader, Save } from "lucide-react"
 
 import { UseFormReturn } from "react-hook-form"
@@ -45,6 +46,7 @@ const UserProfileForm = ({
   hasChanges = false,
   isSubmitting = false,
 }: UserProfileFormProps) => {
+  const { role } = useCurrentUser()
   const { formState } = form
   const { errors } = formState
 
@@ -213,30 +215,33 @@ const UserProfileForm = ({
               />
 
               {/* E-Signature */}
-              <FormField
-                control={form.control}
-                name="e_signature"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      E-Signature{" "}
-                      <span className="text-xs font-normal text-muted-foreground">
-                        (optional — used for quotations)
-                      </span>
-                    </FormLabel>
-                    <FormControl>
-                      <ImageUpload
-                        type="e_signature"
-                        fieldName={field.name}
-                        handleFileChange={eSignatureUpload.handleFileChange}
-                        handleFileRemove={eSignatureUpload.handleFileRemove}
-                        image={eSignatureUpload.image}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {role === "manager" ||
+                (role === "admin" && (
+                  <FormField
+                    control={form.control}
+                    name="e_signature"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          E-Signature{" "}
+                          <span className="text-xs font-normal text-muted-foreground">
+                            (optional — used for quotations)
+                          </span>
+                        </FormLabel>
+                        <FormControl>
+                          <ImageUpload
+                            type="e_signature"
+                            fieldName={field.name}
+                            handleFileChange={eSignatureUpload.handleFileChange}
+                            handleFileRemove={eSignatureUpload.handleFileRemove}
+                            image={eSignatureUpload.image}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
 
               {/* Password Section */}
               <div className="pt-6 border-t">
@@ -268,7 +273,7 @@ const UserProfileForm = ({
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 border-t">
                 <div className="text-sm text-muted-foreground">
                   {hasChanges ? (
-                    <span className="text-amber-600 dark:text-amber-400">
+                    <span className="text-warning">
                       You have unsaved changes
                     </span>
                   ) : (

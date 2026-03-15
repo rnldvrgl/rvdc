@@ -1041,7 +1041,7 @@ export default function QuotationForm({
             />
           </div>
           <Separator />
-          <div className="flex justify-between font-semibold text-base text-emerald-700">
+          <div className="flex justify-between font-semibold text-base text-success">
             <span>Total</span>
             <span>{formatCurrency(total)}</span>
           </div>

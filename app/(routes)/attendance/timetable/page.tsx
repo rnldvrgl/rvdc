@@ -3,13 +3,9 @@
 import { ClockInOut } from "@/components/custom/attendance/ClockInOut"
 import { GradientStatCard } from "@/components/custom/attendance/GradientStatCard"
 import { RecentActivitySection } from "@/components/custom/attendance/RecentActivitySection"
-import { StatCard } from "@/components/custom/attendance/StatCard"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
-import {
-  GRADIENT_CARD_CONFIGS,
-  STAT_CARD_CONFIGS,
-} from "@/lib/constants/attendanceCards"
+import { GRADIENT_CARD_CONFIGS } from "@/lib/constants/attendanceCards"
 import { useAttendanceStats } from "@/lib/hooks/useAttendanceStats"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useDailyAttendances } from "@/lib/queries/useAttendance"
@@ -62,31 +58,6 @@ const AttendancePage = () => {
           onSuccess={() => refetch()}
           yesterdayAttendance={yesterdayAttendance ?? undefined}
         />
-
-        {/* Summary Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-          {STAT_CARD_CONFIGS.map((config) => {
-            const value = stats[`${config.key}Count` as keyof typeof stats]
-            const subtitle =
-              typeof config.getSubtitle === "function"
-                ? config.getSubtitle(stats.approvedCount, stats.totalCount)
-                : config.getSubtitle
-
-            return (
-              <StatCard
-                key={config.key}
-                title={config.title}
-                value={value as number}
-                subtitle={subtitle}
-                icon={config.icon}
-                iconBgColor={config.iconBgColor}
-                iconColor={config.iconColor}
-                valueColor={config.valueColor}
-                isLoading={isLoading}
-              />
-            )
-          })}
-        </div>
 
         {/* Additional Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">

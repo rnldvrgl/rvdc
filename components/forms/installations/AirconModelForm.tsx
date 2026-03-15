@@ -100,7 +100,7 @@ function PriceHistoryTimeline({ history }: { history: ModelPriceHistory[] }) {
                       className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm ${
                         isUp
                           ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
-                          : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                          : "bg-emerald-100 text-success dark:bg-emerald-900/30 dark:text-emerald-300"
                       }`}
                     >
                       {isUp ? (
@@ -271,7 +271,7 @@ export default function AirconModelForm({
                     <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                       Savings
                     </span>
-                    <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                    <span className="text-lg font-bold text-success dark:text-emerald-300">
                       {formatCurrency(
                         (
                           parseFloat(retailPrice) - parseFloat(promoPrice)
@@ -551,7 +551,7 @@ export default function AirconModelForm({
                       <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
                         Selling Price
                       </span>
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400">
+                      <p className="text-xs text-success">
                         Save{" "}
                         {formatCurrency(
                           (
@@ -560,7 +560,7 @@ export default function AirconModelForm({
                         )}
                       </p>
                     </div>
-                    <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                    <span className="text-lg font-bold text-success dark:text-emerald-300">
                       {formatCurrency(parseFloat(promoPrice).toFixed(2))}
                     </span>
                   </div>

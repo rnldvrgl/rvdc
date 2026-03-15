@@ -722,7 +722,7 @@ export default function SalesTransactionForm({
                   <span
                     className={`text-base font-bold ${
                       changeDue >= 0
-                        ? "text-emerald-600 dark:text-emerald-400"
+                        ? "text-success"
                         : "text-destructive"
                     }`}
                   >

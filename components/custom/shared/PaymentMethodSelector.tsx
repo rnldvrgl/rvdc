@@ -283,10 +283,10 @@ export default function PaymentMethodSelector({
             </div>
             {remainingBalance > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-amber-600 dark:text-amber-400">
+                <span className="text-warning">
                   Remaining
                 </span>
-                <span className="font-medium text-amber-600 dark:text-amber-400 tabular-nums">
+                <span className="font-medium text-warning tabular-nums">
                   {formatCurrency(remainingBalance)}
                 </span>
               </div>

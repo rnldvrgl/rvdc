@@ -183,7 +183,7 @@ export default function StockAuditDialog({
                       value={
                         auditData?.reserved_quantity ?? stock.reserved_quantity
                       }
-                      className="text-amber-600 dark:text-amber-400"
+                      className="text-warning"
                     />
                     <BreakdownItem
                       label="Available"
@@ -191,7 +191,7 @@ export default function StockAuditDialog({
                         auditData?.available_quantity ??
                         stock.available_quantity
                       }
-                      className="text-green-600 dark:text-green-400"
+                      className="text-success"
                     />
                   </div>
                 </CardContent>
@@ -265,9 +265,9 @@ export default function StockAuditDialog({
                   <CardContent className="px-6 py-3">
                     <div className="flex items-center gap-2">
                       {hasDiscrepancy ? (
-                        <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <AlertTriangle className="size-5 text-warning shrink-0" />
                       ) : (
-                        <CheckCircle2 className="size-5 text-green-600 dark:text-green-400 shrink-0" />
+                        <CheckCircle2 className="size-5 text-success shrink-0" />
                       )}
                       <div>
                         <p className="text-sm font-semibold">

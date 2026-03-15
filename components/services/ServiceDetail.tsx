@@ -1725,7 +1725,7 @@ export default function ServiceDetail({
             parseFloat(service.service_discount_amount.toString()) > 0 && (
               <div className="rounded-lg border border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20 px-4 py-3 space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium uppercase tracking-wider text-green-700 dark:text-green-400 flex items-center gap-1.5">
+                  <p className="text-xs font-medium uppercase tracking-wider text-success flex items-center gap-1.5">
                     Applied Discount
                     <Badge
                       variant="success"

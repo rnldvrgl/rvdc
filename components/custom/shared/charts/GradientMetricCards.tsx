@@ -71,7 +71,7 @@ function buildMetricCards(
       trend: trend(data.total_outstanding, prev?.total_outstanding),
       accent: {
         iconBg: "bg-amber-100 dark:bg-amber-950/50",
-        iconColor: "text-amber-600 dark:text-amber-400",
+        iconColor: "text-warning",
         border: "border-amber-300 dark:border-amber-700",
         ring: "ring-amber-200/50 dark:ring-amber-800/30",
       },
@@ -110,7 +110,7 @@ function buildMetricCards(
       trend: trend(data.service_completion_rate, prev?.service_completion_rate),
       accent: {
         iconBg: "bg-emerald-100 dark:bg-emerald-950/50",
-        iconColor: "text-emerald-600 dark:text-emerald-400",
+        iconColor: "text-success",
         border: "border-emerald-300 dark:border-emerald-700",
         ring: "ring-emerald-200/50 dark:ring-emerald-800/30",
       },

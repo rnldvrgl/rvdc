@@ -156,7 +156,7 @@ export default function BulkGeneratePayrollForm({
             {/* Created */}
             {result.created.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-sm font-medium text-green-700 dark:text-green-400">
+                <p className="text-sm font-medium text-success">
                   Successfully Created
                 </p>
                 {result.created.map((p) => (
@@ -196,7 +196,7 @@ export default function BulkGeneratePayrollForm({
             {/* Errors */}
             {result.errors.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                <p className="text-sm font-medium text-destructive">
                   Errors
                 </p>
                 {result.errors.map((e) => (
@@ -205,7 +205,7 @@ export default function BulkGeneratePayrollForm({
                     className="flex items-center justify-between border border-red-200 dark:border-red-800 rounded-md px-3 py-2 text-sm"
                   >
                     <span>{e.employee_name}</span>
-                    <span className="text-xs text-red-600 dark:text-red-400">
+                    <span className="text-xs text-destructive">
                       {e.error}
                     </span>
                   </div>

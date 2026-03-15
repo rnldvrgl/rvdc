@@ -32,7 +32,7 @@ export function BirthdayReminders({ className }: { className?: string }) {
 
   if (birthdays.length === 0) {
     return (
-      <Card className="h-full">
+      <Card className={cn("h-full", className)}>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950">

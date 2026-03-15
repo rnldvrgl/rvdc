@@ -59,8 +59,8 @@ export function DeductionsSection({
   return (
     <div className="rounded-lg border border-red-200/60 dark:border-red-900/40 bg-linear-to-br from-red-50/30 to-rose-50/30 dark:from-red-950/10 dark:to-rose-950/10 p-3 flex flex-col">
       <div className="flex items-center gap-2 mb-2.5">
-        <Minus className="h-4 w-4 text-red-600 dark:text-red-400" />
-        <h3 className="text-sm sm:text-base font-semibold text-red-700 dark:text-red-400">
+        <Minus className="h-4 w-4 text-destructive" />
+        <h3 className="text-sm sm:text-base font-semibold text-destructive">
           Deductions
         </h3>
       </div>
@@ -129,7 +129,7 @@ export function DeductionsSection({
       {totalDeductions > 0 && (
         <>
           <Separator className="my-2" />
-          <div className="flex justify-between font-semibold text-red-700 dark:text-red-400 text-xs sm:text-sm">
+          <div className="flex justify-between font-semibold text-destructive text-xs sm:text-sm">
             <span>Total Deductions</span>
             <span>{formatCurrency(totalDeductions)}</span>
           </div>

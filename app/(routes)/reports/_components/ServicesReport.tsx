@@ -121,7 +121,7 @@ export function ServicesReport() {
         <Card>
           <CardContent className="p-5">
             <p className="text-sm text-muted-foreground">Revenue</p>
-            <p className="text-2xl font-bold text-emerald-600">
+            <p className="text-2xl font-bold text-success">
               {peso(totalRevenue)}
             </p>
           </CardContent>

@@ -477,7 +477,7 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
                 <span
                   className={`text-lg font-bold ${
                     difference > 0
-                      ? "text-emerald-700"
+                      ? "text-success"
                       : difference < 0
                         ? "text-rose-700"
                         : "text-muted-foreground"

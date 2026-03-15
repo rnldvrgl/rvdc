@@ -394,7 +394,7 @@ export default function ClientDetailPage() {
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Paid</p>
-              <p className="text-lg font-semibold leading-none truncate text-green-600 dark:text-green-400">
+              <p className="text-lg font-semibold leading-none truncate text-success">
                 {formatCurrency(totalPaid)}
               </p>
             </div>
@@ -408,7 +408,7 @@ export default function ClientDetailPage() {
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Balance</p>
               <p
-                className={`text-lg font-semibold leading-none truncate ${totalBalance > 0 ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}
+                className={`text-lg font-semibold leading-none truncate ${totalBalance > 0 ? "text-destructive" : "text-muted-foreground"}`}
               >
                 {formatCurrency(totalBalance)}
               </p>
@@ -773,7 +773,7 @@ export default function ClientDetailPage() {
                         <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                           {payment.received_by_name || "—"}
                         </TableCell>
-                        <TableCell className="text-right font-semibold text-green-600 dark:text-green-400">
+                        <TableCell className="text-right font-semibold text-success">
                           {formatCurrency(payment.amount)}
                         </TableCell>
                       </TableRow>

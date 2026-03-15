@@ -99,7 +99,7 @@ export function SalesReport() {
         <Card>
           <CardContent className="p-5">
             <p className="text-sm text-muted-foreground">Collected</p>
-            <p className="text-2xl font-bold text-emerald-600">
+            <p className="text-2xl font-bold text-success">
               {peso(totalPaid)}
             </p>
           </CardContent>

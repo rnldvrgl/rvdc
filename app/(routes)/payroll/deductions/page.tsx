@@ -82,7 +82,7 @@ function DeductionRow({
             "shrink-0 flex items-center justify-center h-10 w-10 rounded-lg",
             isRecurring
               ? "bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
-              : "bg-amber-100 text-amber-600 dark:bg-amber-950 dark:text-amber-400",
+              : "bg-amber-100 text-warning dark:bg-amber-950 ",
           )}
         >
           {isRecurring ? (

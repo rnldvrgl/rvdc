@@ -139,7 +139,7 @@ export function UniformPenaltyCheckboxes({
 			</div>
 
 			{totalPenalty > 0 && (
-				<div className="pt-2 border-t text-sm font-semibold text-red-600 dark:text-red-400">
+				<div className="pt-2 border-t text-sm font-semibold text-destructive">
 					Total Penalty: ₱{totalPenalty}
 				</div>
 			)}

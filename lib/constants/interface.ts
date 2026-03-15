@@ -312,6 +312,7 @@ export interface Notification {
   is_read: boolean
   created_at: string
   relative_time: string
+  formatted_date: string
 }
 
 // Expense Category

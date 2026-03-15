@@ -468,7 +468,7 @@ export default function ItemQuantitySelector({
                           availableStock <= 0
                             ? "text-destructive font-medium"
                             : availableStock <= 5
-                              ? "text-amber-600 dark:text-amber-400"
+                              ? "text-warning"
                               : ""
                         }
                       >
@@ -476,13 +476,13 @@ export default function ItemQuantitySelector({
                       </span>
                     )}
                     {isOverStock && (
-                      <span className="text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
+                      <span className="text-warning flex items-center gap-0.5">
                         <AlertTriangle className="size-3" />
                         Exceeds stock
                       </span>
                     )}
                     {isDuplicate && (
-                      <span className="text-amber-600 dark:text-amber-400 flex items-center gap-0.5">
+                      <span className="text-warning flex items-center gap-0.5">
                         <AlertTriangle className="size-3" />
                         Duplicate
                       </span>

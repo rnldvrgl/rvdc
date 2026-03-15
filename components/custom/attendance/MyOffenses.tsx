@@ -22,13 +22,13 @@ const getOffenseTypeBadge = (offenseType: string) => {
   > = {
     AWOL: {
       color:
-        "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900",
+        "bg-red-50 text-destructive border-red-200 dark:bg-red-950/50  dark:border-red-900",
       icon: UserX,
       label: "AWOL",
     },
     LATE: {
       color:
-        "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900",
+        "bg-amber-50 text-warning border-amber-200 dark:bg-amber-950/50  dark:border-amber-900",
       icon: Clock,
       label: "Late",
     },
@@ -66,7 +66,7 @@ const getSeverityBadge = (severity: string) => {
   > = {
     WARNING: {
       color:
-        "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-400 dark:border-amber-900",
+        "bg-amber-50 text-warning border-amber-200 dark:bg-amber-950/50  dark:border-amber-900",
       icon: AlertTriangle,
       label: "Warning",
     },
@@ -78,7 +78,7 @@ const getSeverityBadge = (severity: string) => {
     },
     TERMINATION: {
       color:
-        "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/50 dark:text-red-400 dark:border-red-900",
+        "bg-red-50 text-destructive border-red-200 dark:bg-red-950/50  dark:border-red-900",
       icon: UserX,
       label: "Termination",
     },
@@ -173,7 +173,7 @@ export default function MyOffenses() {
                   Total
                 </p>
                 <p
-                  className={`text-3xl font-bold mt-1 ${hasReachedLimit ? "text-red-600 dark:text-red-500" : ""}`}
+                  className={`text-3xl font-bold mt-1 ${hasReachedLimit ? "text-destructive" : ""}`}
                 >
                   {totalOffenses}
                 </p>
@@ -188,14 +188,14 @@ export default function MyOffenses() {
                 <AlertTriangle
                   className={`h-5 w-5 ${
                     hasReachedLimit
-                      ? "text-red-600 dark:text-red-500"
+                      ? "text-destructive"
                       : "text-slate-500"
                   }`}
                 />
               </div>
             </div>
             {hasReachedLimit && (
-              <p className="text-xs text-red-600 dark:text-red-500 mt-2 font-medium">
+              <p className="text-xs text-destructive mt-2 font-medium">
                 Type limit reached
               </p>
             )}
@@ -244,7 +244,7 @@ export default function MyOffenses() {
                 <p className="text-3xl font-bold mt-1">{terminationCount}</p>
               </div>
               <div className="h-12 w-12 rounded-full bg-red-50 dark:bg-red-950/50 flex items-center justify-center">
-                <UserX className="h-5 w-5 text-red-600 dark:text-red-500" />
+                <UserX className="h-5 w-5 text-destructive" />
               </div>
             </div>
           </CardContent>
@@ -257,7 +257,7 @@ export default function MyOffenses() {
           <div className="flex gap-3">
             <div className="shrink-0 mt-0.5">
               <div className="h-8 w-8 rounded-full bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
-                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-500" />
+                <AlertTriangle className="h-4 w-4 text-destructive" />
               </div>
             </div>
             <div className="flex-1">
@@ -290,7 +290,7 @@ export default function MyOffenses() {
           {offenses?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8">
               <div className="h-12 w-12 rounded-full bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center mb-3">
-                <AlertTriangle className="h-6 w-6 text-emerald-600 dark:text-emerald-500 opacity-50" />
+                <AlertTriangle className="h-6 w-6 text-success opacity-50" />
               </div>
               <h3 className="font-semibold">No Offenses</h3>
               <p className="text-sm text-muted-foreground text-center mt-1 max-w-xs">
@@ -402,7 +402,7 @@ export default function MyOffenses() {
             <div className="flex gap-4">
               <div className="shrink-0">
                 <div className="h-10 w-10 rounded-lg bg-red-50 dark:bg-red-950/50 flex items-center justify-center">
-                  <UserX className="h-5 w-5 text-red-600 dark:text-red-500" />
+                  <UserX className="h-5 w-5 text-destructive" />
                 </div>
               </div>
               <div className="flex-1">

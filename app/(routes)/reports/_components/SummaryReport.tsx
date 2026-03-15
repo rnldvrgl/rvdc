@@ -85,7 +85,7 @@ export function SummaryReport() {
       label: "Total Revenue",
       value: peso(summary?.total_revenue ?? 0),
       icon: DollarSign,
-      color: "text-emerald-600",
+      color: "text-success",
     },
     {
       label: "Total Sales",
@@ -115,7 +115,7 @@ export function SummaryReport() {
       label: "Total Expenses",
       value: peso(summary?.total_expense ?? 0),
       icon: TrendingDown,
-      color: "text-rose-600",
+      color: "text-destructive",
     },
     {
       label: "Unit Cost (Aircon)",
@@ -127,7 +127,7 @@ export function SummaryReport() {
       label: "Net Income",
       value: peso(summary?.net_income ?? 0),
       icon: TrendingUp,
-      color: "text-emerald-600",
+      color: "text-success",
     },
     {
       label: "Outstanding",
@@ -325,7 +325,7 @@ export function SummaryReport() {
                         <TableCell className="text-sm">
                           {displayDate(row.date)}
                         </TableCell>
-                        <TableCell className="text-right text-sm text-emerald-600">
+                        <TableCell className="text-right text-sm text-success">
                           {peso(row.income)}
                         </TableCell>
                         <TableCell className="text-right text-sm text-rose-600">
@@ -333,7 +333,7 @@ export function SummaryReport() {
                         </TableCell>
                         <TableCell
                           className={`text-right text-sm font-semibold ${
-                            net >= 0 ? "text-emerald-600" : "text-rose-600"
+                            net >= 0 ? "text-success" : "text-destructive"
                           }`}
                         >
                           {peso(net)}

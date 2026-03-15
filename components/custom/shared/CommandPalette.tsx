@@ -458,7 +458,7 @@ export function CommandPalette({
                         <span className="text-xs text-muted-foreground">
                           Retail
                         </span>
-                        <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                        <p className="text-sm font-semibold text-success">
                           {peso(item.retail_price)}
                         </p>
                       </div>
@@ -587,7 +587,7 @@ export function CommandPalette({
                         onSelect={() => handleNavigate(`/services?view=${service.id}`)}
                         className="gap-3"
                       >
-                        <div className="flex items-center justify-center size-8 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <div className="flex items-center justify-center size-8 rounded-md bg-amber-500/10 text-warning">
                           <Wrench className="size-4" />
                         </div>
                         <div className="flex flex-col">
@@ -610,7 +610,7 @@ export function CommandPalette({
                         onSelect={() => handleNavigate(`/sales?view=${sale.id}`)}
                         className="gap-3"
                       >
-                        <div className="flex items-center justify-center size-8 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        <div className="flex items-center justify-center size-8 rounded-md bg-emerald-500/10 text-success">
                           <ShoppingCart className="size-4" />
                         </div>
                         <div className="flex flex-col">

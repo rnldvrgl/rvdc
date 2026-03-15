@@ -7,10 +7,16 @@ import {
   BellOff,
   Calendar,
   Check,
+  CheckCircle2,
+  Clock,
+  DollarSign,
   Package,
   Receipt,
+  ShieldCheck,
   Truck,
+  UserCheck,
   X,
+  XCircle,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
@@ -30,27 +36,198 @@ import {
   useUnreadNotificationCount,
 } from "@/lib/queries/useNotifications"
 
-const typeToIcon: Record<string, typeof Bell> = {
-  expense_created: Receipt,
-  appointment_reminder: Calendar,
-  stock_low: AlertTriangle,
-  stock_out: AlertTriangle,
-  stock_reorder: Package,
-  stock_restocked: Package,
-  stock_request_created: Package,
-  stock_request_approved: Package,
-  stock_request_declined: AlertTriangle,
-  transfer_created: Truck,
-  service_created: Calendar,
-  service_updated: Calendar,
-  service_completed: Check,
-  service_cancelled: AlertTriangle,
-  service_assigned: Calendar,
-  payment_received: Receipt,
-  payment_overdue: AlertTriangle,
-  warranty_claim_created: AlertTriangle,
-  warranty_claim_approved: Check,
-  warranty_expiring: AlertTriangle,
+/* ─── Type → visual config ─── */
+type NotifStyle = {
+  icon: typeof Bell
+  bg: string
+  text: string
+}
+
+const typeStyles: Record<string, NotifStyle> = {
+  // Inventory
+  stock_low: {
+    icon: AlertTriangle,
+    bg: "bg-amber-100 dark:bg-amber-900/40",
+    text: "text-amber-600 dark:text-amber-400",
+  },
+  stock_out: {
+    icon: AlertTriangle,
+    bg: "bg-red-100 dark:bg-red-900/40",
+    text: "text-red-600 dark:text-red-400",
+  },
+  stock_reorder: {
+    icon: Package,
+    bg: "bg-amber-100 dark:bg-amber-900/40",
+    text: "text-amber-600 dark:text-amber-400",
+  },
+  stock_restocked: {
+    icon: Package,
+    bg: "bg-purple-100 dark:bg-purple-900/40",
+    text: "text-purple-600 dark:text-purple-400",
+  },
+  stock_request_created: {
+    icon: Package,
+    bg: "bg-purple-100 dark:bg-purple-900/40",
+    text: "text-purple-600 dark:text-purple-400",
+  },
+  stock_request_approved: {
+    icon: CheckCircle2,
+    bg: "bg-green-100 dark:bg-green-900/40",
+    text: "text-green-600 dark:text-green-400",
+  },
+  stock_request_declined: {
+    icon: XCircle,
+    bg: "bg-red-100 dark:bg-red-900/40",
+    text: "text-red-600 dark:text-red-400",
+  },
+  transfer_created: {
+    icon: Truck,
+    bg: "bg-orange-100 dark:bg-orange-900/40",
+    text: "text-orange-600 dark:text-orange-400",
+  },
+  // Expense
+  expense_created: {
+    icon: Receipt,
+    bg: "bg-blue-100 dark:bg-blue-900/40",
+    text: "text-blue-600 dark:text-blue-400",
+  },
+  // Service
+  service_created: {
+    icon: Calendar,
+    bg: "bg-indigo-100 dark:bg-indigo-900/40",
+    text: "text-indigo-600 dark:text-indigo-400",
+  },
+  service_updated: {
+    icon: Calendar,
+    bg: "bg-indigo-100 dark:bg-indigo-900/40",
+    text: "text-indigo-600 dark:text-indigo-400",
+  },
+  service_completed: {
+    icon: CheckCircle2,
+    bg: "bg-green-100 dark:bg-green-900/40",
+    text: "text-green-600 dark:text-green-400",
+  },
+  service_cancelled: {
+    icon: XCircle,
+    bg: "bg-gray-100 dark:bg-gray-800/40",
+    text: "text-gray-600 dark:text-gray-400",
+  },
+  service_assigned: {
+    icon: Calendar,
+    bg: "bg-indigo-100 dark:bg-indigo-900/40",
+    text: "text-indigo-600 dark:text-indigo-400",
+  },
+  appointment_reminder: {
+    icon: Calendar,
+    bg: "bg-blue-100 dark:bg-blue-900/40",
+    text: "text-blue-600 dark:text-blue-400",
+  },
+  items_pending_review: {
+    icon: Package,
+    bg: "bg-amber-100 dark:bg-amber-900/40",
+    text: "text-amber-600 dark:text-amber-400",
+  },
+  // Payment
+  payment_received: {
+    icon: Receipt,
+    bg: "bg-emerald-100 dark:bg-emerald-900/40",
+    text: "text-emerald-600 dark:text-emerald-400",
+  },
+  payment_overdue: {
+    icon: AlertTriangle,
+    bg: "bg-red-100 dark:bg-red-900/40",
+    text: "text-red-600 dark:text-red-400",
+  },
+  // Warranty
+  warranty_claim_created: {
+    icon: AlertTriangle,
+    bg: "bg-amber-100 dark:bg-amber-900/40",
+    text: "text-amber-600 dark:text-amber-400",
+  },
+  warranty_claim_approved: {
+    icon: CheckCircle2,
+    bg: "bg-green-100 dark:bg-green-900/40",
+    text: "text-green-600 dark:text-green-400",
+  },
+  warranty_claim_rejected: {
+    icon: XCircle,
+    bg: "bg-red-100 dark:bg-red-900/40",
+    text: "text-red-600 dark:text-red-400",
+  },
+  warranty_expiring: {
+    icon: AlertTriangle,
+    bg: "bg-amber-100 dark:bg-amber-900/40",
+    text: "text-amber-600 dark:text-amber-400",
+  },
+  // Attendance / HR — Approved
+  attendance_approved: {
+    icon: CheckCircle2,
+    bg: "bg-green-100 dark:bg-green-900/40",
+    text: "text-green-600 dark:text-green-400",
+  },
+  leave_request_approved: {
+    icon: CheckCircle2,
+    bg: "bg-green-100 dark:bg-green-900/40",
+    text: "text-green-600 dark:text-green-400",
+  },
+  work_request_approved: {
+    icon: UserCheck,
+    bg: "bg-green-100 dark:bg-green-900/40",
+    text: "text-green-600 dark:text-green-400",
+  },
+  overtime_approved: {
+    icon: Clock,
+    bg: "bg-blue-100 dark:bg-blue-900/40",
+    text: "text-blue-600 dark:text-blue-400",
+  },
+  // Attendance / HR — Rejected
+  attendance_rejected: {
+    icon: XCircle,
+    bg: "bg-red-100 dark:bg-red-900/40",
+    text: "text-red-600 dark:text-red-400",
+  },
+  leave_request_rejected: {
+    icon: XCircle,
+    bg: "bg-red-100 dark:bg-red-900/40",
+    text: "text-red-600 dark:text-red-400",
+  },
+  work_request_declined: {
+    icon: XCircle,
+    bg: "bg-red-100 dark:bg-red-900/40",
+    text: "text-red-600 dark:text-red-400",
+  },
+  overtime_rejected: {
+    icon: XCircle,
+    bg: "bg-red-100 dark:bg-red-900/40",
+    text: "text-red-600 dark:text-red-400",
+  },
+  // Payroll
+  payroll_available: {
+    icon: DollarSign,
+    bg: "bg-emerald-100 dark:bg-emerald-900/40",
+    text: "text-emerald-600 dark:text-emerald-400",
+  },
+  // System
+  system_alert: {
+    icon: Bell,
+    bg: "bg-gray-100 dark:bg-gray-800/40",
+    text: "text-gray-600 dark:text-gray-400",
+  },
+  report_ready: {
+    icon: ShieldCheck,
+    bg: "bg-blue-100 dark:bg-blue-900/40",
+    text: "text-blue-600 dark:text-blue-400",
+  },
+}
+
+const fallbackStyle: NotifStyle = {
+  icon: Bell,
+  bg: "bg-muted",
+  text: "text-muted-foreground",
+}
+
+function getStyle(type: string): NotifStyle {
+  return typeStyles[type] ?? fallbackStyle
 }
 
 /** Group notifications by "Today", "Yesterday", "Older" */
@@ -192,6 +369,40 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
         break
       }
 
+      case "attendance_approved":
+      case "attendance_rejected": {
+        router.push("/attendance")
+        setOpen(false)
+        break
+      }
+
+      case "leave_request_approved":
+      case "leave_request_rejected": {
+        router.push("/attendance/leave-requests")
+        setOpen(false)
+        break
+      }
+
+      case "overtime_approved":
+      case "overtime_rejected": {
+        router.push("/attendance/overtime")
+        setOpen(false)
+        break
+      }
+
+      case "work_request_approved":
+      case "work_request_declined": {
+        router.push("/attendance/work-requests")
+        setOpen(false)
+        break
+      }
+
+      case "payroll_available": {
+        router.push("/payroll")
+        setOpen(false)
+        break
+      }
+
       default:
         router.push("/")
         setOpen(false)
@@ -208,195 +419,164 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
           <button className="relative flex items-center justify-center size-9 rounded-xl text-primary bg-primary/90 dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/40 transition-colors cursor-pointer">
             <Bell className="size-4 text-white" />
             {unreadCountData && unreadCountData?.unread_count > 0 && (
-              <span className="absolute top-0 right-0 inline-flex size-4 items-center justify-center rounded-full bg-destructive text-white text-[10px]">
-                {unreadCountData.unread_count}
+              <span className="absolute -top-0.5 -right-0.5 inline-flex size-[18px] items-center justify-center rounded-full bg-destructive text-white text-[10px] font-bold ring-2 ring-background">
+                {unreadCountData.unread_count > 99
+                  ? "99+"
+                  : unreadCountData.unread_count}
               </span>
             )}
           </button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent
-          className="w-[420px] p-0"
+          className="w-[400px] p-0 rounded-xl shadow-xl border-border/50"
           align={align}
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b">
-            <h3 className="font-semibold text-base">Notifications</h3>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-sm">Notifications</h3>
+              {unreadCountData && unreadCountData.unread_count > 0 && (
+                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 rounded-full bg-primary/10 text-primary text-[11px] font-semibold">
+                  {unreadCountData.unread_count}
+                </span>
+              )}
+            </div>
             {hasUnread && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 text-xs font-medium hover:bg-accent"
+                className="h-7 text-xs font-medium text-muted-foreground hover:text-foreground"
                 onClick={(e) => {
                   e.stopPropagation()
                   markAllAsRead.mutate(undefined)
                 }}
               >
-                <Check className="size-3.5 mr-1.5" />
+                <Check className="size-3 mr-1" />
                 Mark all read
               </Button>
             )}
           </div>
 
-          <div className="max-h-[520px] overflow-y-auto">
+          {/* Notification list */}
+          <div className="max-h-[480px] overflow-y-auto">
             {grouped.length > 0 ? (
               <>
                 {grouped.map((group) => (
                   <div key={group.label}>
-                    <div className="sticky top-0 z-10 bg-popover/95 backdrop-blur-sm px-4 py-2 border-b">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    {/* Group label */}
+                    <div className="sticky top-0 z-10 bg-popover/95 backdrop-blur-sm px-4 py-1.5 border-b">
+                      <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                         {group.label}
                       </span>
                     </div>
-                    <div className="divide-y">
-                      {group.items.map((n) => {
-                        const Icon = typeToIcon[n.type] ?? Bell
-                        return (
+
+                    {/* Items */}
+                    {group.items.map((n) => {
+                      const style = getStyle(n.type)
+                      const Icon = style.icon
+                      return (
+                        <div
+                          key={n.id ?? `${n.type}-${n.created_at}`}
+                          className={clsx(
+                            "group relative flex items-start gap-3 px-4 py-3 transition-all cursor-pointer",
+                            "hover:bg-accent/40",
+                            !n.is_read
+                              ? "bg-primary/3 dark:bg-primary/6"
+                              : "opacity-75 hover:opacity-100",
+                          )}
+                          onClick={() => {
+                            handleNotificationClick(n)
+                            if (!n.is_read) markAsRead.mutate(n.id)
+                          }}
+                        >
+                          {/* Unread indicator line */}
+                          {!n.is_read && (
+                            <div className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-primary" />
+                          )}
+
+                          {/* Icon badge */}
                           <div
-                            key={n.id ?? `${n.type}-${n.created_at}`}
                             className={clsx(
-                              "group relative flex items-start gap-3 px-4 py-3 transition-colors hover:bg-accent/50",
-                              !n.is_read && "bg-accent/20",
+                              "shrink-0 mt-0.5 flex items-center justify-center size-9 rounded-xl transition-transform group-hover:scale-105",
+                              style.bg,
                             )}
                           >
-                            <div
-                              className="flex-1 flex items-start gap-3 cursor-pointer"
-                              onClick={() => {
-                                handleNotificationClick(n)
-                                if (!n.is_read) {
-                                  markAsRead.mutate(n.id)
-                                }
-                              }}
-                            >
-                              <div
+                            <Icon className={clsx("size-4", style.text)} />
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0 space-y-0.5">
+                            <div className="flex items-start justify-between gap-2">
+                              <p
                                 className={clsx(
-                                  "shrink-0 mt-0.5 p-2 rounded-lg",
-                                  n.type === "stock_low" &&
-                                    "bg-yellow-100 dark:bg-yellow-950",
-                                  n.type === "stock_out" &&
-                                    "bg-red-100 dark:bg-red-950",
-                                  n.type === "expense_created" &&
-                                    "bg-blue-100 dark:bg-blue-950",
-                                  n.type === "appointment_reminder" &&
-                                    "bg-green-100 dark:bg-green-950",
-                                  n.type === "stock_restocked" &&
-                                    "bg-purple-100 dark:bg-purple-950",
-                                  (n.type === "stock_request_created" ||
-                                    n.type === "stock_request_approved" ||
-                                    n.type === "stock_request_declined") &&
-                                    "bg-purple-100 dark:bg-purple-950",
-                                  n.type === "transfer_created" &&
-                                    "bg-orange-100 dark:bg-orange-950",
-                                  n.type === "payment_received" &&
-                                    "bg-emerald-100 dark:bg-emerald-950",
-                                  n.type === "payment_overdue" &&
-                                    "bg-red-100 dark:bg-red-950",
-                                  (n.type === "service_created" ||
-                                    n.type === "service_updated" ||
-                                    n.type === "service_assigned") &&
-                                    "bg-indigo-100 dark:bg-indigo-950",
-                                  n.type === "service_completed" &&
-                                    "bg-green-100 dark:bg-green-950",
-                                  n.type === "service_cancelled" &&
-                                    "bg-gray-100 dark:bg-gray-950",
-                                  !n.type && "bg-muted",
+                                  "text-[13px] leading-snug line-clamp-1",
+                                  !n.is_read
+                                    ? "font-semibold text-foreground"
+                                    : "font-medium text-foreground/80",
                                 )}
                               >
-                                <Icon
-                                  className={clsx(
-                                    "size-4",
-                                    n.type === "stock_low" &&
-                                      "text-yellow-700 dark:text-yellow-400",
-                                    n.type === "stock_out" &&
-                                      "text-red-700 dark:text-red-400",
-                                    n.type === "expense_created" &&
-                                      "text-blue-700 dark:text-blue-400",
-                                    n.type === "appointment_reminder" &&
-                                      "text-green-700 dark:text-green-400",
-                                    n.type === "stock_restocked" &&
-                                      "text-purple-700 dark:text-purple-400",
-                                    (n.type === "stock_request_created" ||
-                                      n.type === "stock_request_approved" ||
-                                      n.type === "stock_request_declined") &&
-                                      "text-purple-700 dark:text-purple-400",
-                                    n.type === "transfer_created" &&
-                                      "text-orange-700 dark:text-orange-400",
-                                    n.type === "payment_received" &&
-                                      "text-emerald-700 dark:text-emerald-400",
-                                    n.type === "payment_overdue" &&
-                                      "text-red-700 dark:text-red-400",
-                                    (n.type === "service_created" ||
-                                      n.type === "service_updated" ||
-                                      n.type === "service_assigned") &&
-                                      "text-indigo-700 dark:text-indigo-400",
-                                    n.type === "service_completed" &&
-                                      "text-green-700 dark:text-green-400",
-                                    n.type === "service_cancelled" &&
-                                      "text-gray-700 dark:text-gray-400",
-                                    !n.type && "text-muted-foreground",
-                                  )}
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0 space-y-1">
-                                <div className="flex items-start justify-between gap-2">
-                                  <p className="text-sm font-medium leading-tight">
-                                    {n.title || n.message}
-                                  </p>
-                                  {!n.is_read && (
-                                    <span className="shrink-0 mt-1 size-2 rounded-full bg-blue-600 dark:bg-blue-500" />
-                                  )}
-                                </div>
-                                {n.title &&
-                                  n.message &&
-                                  n.message !== n.title && (
-                                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                                      {n.message}
-                                    </p>
-                                  )}
-                                <p className="text-xs text-muted-foreground font-medium">
-                                  {n.relative_time}
-                                </p>
-                              </div>
+                                {n.title || n.message}
+                              </p>
                             </div>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {!n.is_read && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-7 w-7 shrink-0"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    markAsRead.mutate(n.id)
-                                  }}
-                                  title="Mark as read"
-                                >
-                                  <Check className="size-3.5" />
-                                </Button>
+                            {n.title && n.message && n.message !== n.title && (
+                              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                {n.message}
+                              </p>
+                            )}
+                            <p className="text-[11px] text-muted-foreground/70 font-medium">
+                              {n.relative_time}
+                              {n.formatted_date && (
+                                <span className="text-muted-foreground/50">
+                                  {" "}
+                                  &middot; {n.formatted_date}
+                                </span>
                               )}
+                            </p>
+                          </div>
+
+                          {/* Actions (hover) */}
+                          <div className="shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!n.is_read && (
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 shrink-0 hover:bg-destructive/10 hover:text-destructive"
+                                className="size-7 rounded-lg"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  deleteNotification.mutate(n.id)
+                                  markAsRead.mutate(n.id)
                                 }}
-                                title="Delete"
+                                title="Mark as read"
                               >
-                                <X className="size-3.5" />
+                                <Check className="size-3.5" />
                               </Button>
-                            </div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 rounded-lg hover:bg-destructive/10 hover:text-destructive"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                deleteNotification.mutate(n.id)
+                              }}
+                              title="Delete"
+                            >
+                              <X className="size-3.5" />
+                            </Button>
                           </div>
-                        )
-                      })}
-                    </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 ))}
+
+                {/* Infinite scroll trigger */}
                 {hasNextPage && (
                   <div
                     ref={loadMoreRef}
-                    className="flex justify-center py-4 border-t"
+                    className="flex justify-center py-3 border-t"
                   >
-                    <span className="text-xs text-muted-foreground font-medium">
+                    <span className="text-[11px] text-muted-foreground font-medium">
                       {isFetchingNextPage
                         ? "Loading more..."
                         : "Scroll for more"}
@@ -405,15 +585,17 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
                 )}
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                <div className="rounded-full bg-muted p-4 mb-4">
-                  <BellOff className="size-8 text-muted-foreground" />
+              /* Empty state */
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <div className="rounded-2xl bg-muted/60 p-5 mb-4">
+                  <BellOff className="size-7 text-muted-foreground/60" />
                 </div>
-                <h4 className="font-semibold text-sm mb-1">
-                  No notifications yet
+                <h4 className="font-semibold text-sm mb-1 text-foreground/80">
+                  All caught up!
                 </h4>
-                <p className="text-xs text-muted-foreground max-w-[280px]">
-                  When you receive notifications, they&apos;ll appear here
+                <p className="text-xs text-muted-foreground max-w-60 leading-relaxed">
+                  You have no notifications right now. We&apos;ll let you know
+                  when something needs your attention.
                 </p>
               </div>
             )}

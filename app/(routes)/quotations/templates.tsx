@@ -386,7 +386,7 @@ export default function QuotationTemplatesManager() {
           <div className="space-y-3">
             <div className="flex items-center gap-3 px-1">
               <div className="flex items-center justify-center h-9 w-9 rounded-lg border-2 border-emerald-500/20">
-                <Coins className="h-5 w-5 text-emerald-600" />
+                <Coins className="h-5 w-5 text-success" />
               </div>
               <div className="flex-1">
                 <h4 className="text-sm font-semibold text-foreground">

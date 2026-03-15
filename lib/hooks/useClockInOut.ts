@@ -34,6 +34,7 @@ export function useClockInOut() {
   const workRequest = attendanceStatus?.work_request ?? null
   const hasApprovedWorkRequest = workRequest?.status === "approved"
   const hasPendingWorkRequest = workRequest?.status === "pending"
+  const hasDeclinedWorkRequest = workRequest?.status === "declined"
 
   const BUSINESS_START_HOUR = settings?.shift_start
     ? getHourFromTime(settings.shift_start)
@@ -102,5 +103,6 @@ export function useClockInOut() {
     workRequest,
     hasApprovedWorkRequest,
     hasPendingWorkRequest,
+    hasDeclinedWorkRequest,
   }
 }

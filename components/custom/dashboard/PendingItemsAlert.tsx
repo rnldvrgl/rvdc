@@ -17,7 +17,7 @@ export function PendingItemsAlert() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950">
-              <CheckCircle className="size-4 text-green-600 dark:text-green-400" />
+              <CheckCircle className="size-4 text-success" />
             </div>
             Items Review
           </CardTitle>

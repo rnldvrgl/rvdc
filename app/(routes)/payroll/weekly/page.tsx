@@ -182,7 +182,7 @@ export default function PayrollPage() {
                   Total Deductions
                 </CardTitle>
                 <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <FileText className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <FileText className="h-5 w-5 text-destructive" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -201,7 +201,7 @@ export default function PayrollPage() {
                   Total Net Pay
                 </CardTitle>
                 <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                  <PhilippinePesoIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <PhilippinePesoIcon className="h-5 w-5 text-success" />
                 </div>
               </CardHeader>
               <CardContent>

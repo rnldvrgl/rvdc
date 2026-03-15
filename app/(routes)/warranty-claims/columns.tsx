@@ -38,7 +38,7 @@ const statusConfig: Record<
   rejected: {
     label: "Rejected",
     bg: "bg-red-50",
-    text: "text-red-700",
+    text: "text-destructive",
   },
   in_progress: {
     label: "In Progress",
@@ -212,7 +212,7 @@ export function getWarrantyClaimColumns({
               )}
               {onComplete && claim.is_approved && (
                 <DropdownMenuItem onClick={() => onComplete(claim)}>
-                  <CheckCircle className="size-4 mr-2 text-emerald-600" />
+                  <CheckCircle className="size-4 mr-2 text-success" />
                   Mark Complete
                 </DropdownMenuItem>
               )}

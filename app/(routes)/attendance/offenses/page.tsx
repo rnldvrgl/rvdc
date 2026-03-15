@@ -125,7 +125,7 @@ export default function OffensesPage() {
                   Total Employees with Offenses
                 </CardTitle>
                 <div className="h-10 w-10 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
-                  <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                  <AlertTriangle className="h-5 w-5 text-warning" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -171,7 +171,7 @@ export default function OffensesPage() {
                   Critical Attention
                 </CardTitle>
                 <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                  <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <AlertCircle className="h-5 w-5 text-destructive" />
                 </div>
               </CardHeader>
               <CardContent>

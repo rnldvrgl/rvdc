@@ -89,7 +89,7 @@ export function RemindersAlerts() {
               >
                 <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
                   <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-950/50 shrink-0">
-                    <CalendarDays className="size-3.5 text-amber-600 dark:text-amber-400" />
+                    <CalendarDays className="size-3.5 text-warning" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">
@@ -109,7 +109,7 @@ export function RemindersAlerts() {
                   </div>
                   <Badge
                     variant="outline"
-                    className="shrink-0 text-xs border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400"
+                    className="shrink-0 text-xs border-amber-200 text-warning dark:border-amber-800"
                   >
                     {pendingLeaves.length}
                   </Badge>
@@ -125,7 +125,7 @@ export function RemindersAlerts() {
               >
                 <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
                   <div className="p-1.5 rounded-md bg-red-100 dark:bg-red-950/50 shrink-0">
-                    <TimerOff className="size-3.5 text-red-600 dark:text-red-400" />
+                    <TimerOff className="size-3.5 text-destructive" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">Overdue Services</p>
@@ -147,7 +147,7 @@ export function RemindersAlerts() {
                   </div>
                   <Badge
                     variant="outline"
-                    className="shrink-0 text-xs border-red-200 text-red-700 dark:border-red-800 dark:text-red-400"
+                    className="shrink-0 text-xs border-red-200 text-destructive dark:border-red-800"
                   >
                     {overdueServices.length}
                   </Badge>

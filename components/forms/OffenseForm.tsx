@@ -190,7 +190,7 @@ export default function OffenseForm({
         {/* Auto-Severity Info for New Offense */}
         {!offense && (
           <Alert className="border-emerald-200 bg-linear-to-r from-emerald-50 to-emerald-100 dark:from-emerald-950/20 dark:to-emerald-900/20 dark:border-emerald-800">
-            <Info className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <Info className="h-4 w-4 text-success" />
             <AlertDescription className="text-sm">
               <div className="font-semibold text-emerald-900 dark:text-emerald-200 mb-1">
                 Automatic Severity Assignment

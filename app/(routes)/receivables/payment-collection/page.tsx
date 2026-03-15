@@ -276,14 +276,14 @@ export default function PaymentCollectionPage() {
           value={peso(salesDue)}
           count={sales.length}
           icon={Receipt}
-          color="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+          color="bg-green-100 text-success dark:bg-green-900/30 "
         />
         <SummaryCard
           title="Remittances"
           value={peso(remittanceDue)}
           count={remittances.length}
           icon={Banknote}
-          color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+          color="bg-amber-100 text-warning dark:bg-amber-900/30 "
         />
         <SummaryCard
           title="Cheques"

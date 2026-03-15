@@ -196,7 +196,7 @@ export const statusConfig: Record<
 > = {
   pending: {
     label: "Pending",
-    color: "text-amber-700 dark:text-amber-400",
+    color: "text-warning",
     bgColor: "bg-amber-50 dark:bg-amber-950/30",
     borderColor: "border-amber-200 dark:border-amber-800",
     dotColor: "bg-amber-500",
@@ -210,14 +210,14 @@ export const statusConfig: Record<
   },
   completed: {
     label: "Completed",
-    color: "text-emerald-700 dark:text-emerald-400",
+    color: "text-success",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
     borderColor: "border-emerald-200 dark:border-emerald-800",
     dotColor: "bg-emerald-500",
   },
   cancelled: {
     label: "Cancelled",
-    color: "text-red-700 dark:text-red-400",
+    color: "text-destructive",
     bgColor: "bg-red-50 dark:bg-red-950/30",
     borderColor: "border-red-200 dark:border-red-800",
     dotColor: "bg-red-500",

@@ -67,9 +67,9 @@ const getTrendIcon = (trendValue: number) => {
 
 const getTrendColor = (trendValue: number) => {
   if (trendValue > 0)
-    return "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50"
+    return "text-success bg-emerald-50 dark:bg-emerald-950/50"
   if (trendValue < 0)
-    return "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50"
+    return "text-destructive bg-red-50 dark:bg-red-950/50"
   return "text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/50"
 }
 

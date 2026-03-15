@@ -55,7 +55,7 @@ function TimeCard({ label, hours, color }: TimeCardProps) {
   const colorClasses = {
     blue: "text-blue-600 dark:text-blue-400",
     orange: "text-orange-600 dark:text-orange-400",
-    green: "text-green-600 dark:text-green-400",
+    green: "text-success",
     purple: "text-purple-600 dark:text-purple-400",
   }
 

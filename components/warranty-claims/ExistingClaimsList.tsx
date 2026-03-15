@@ -79,7 +79,7 @@ export default function ExistingClaimsList() {
     rejected: {
       label: "Rejected",
       bg: "bg-red-50",
-      text: "text-red-700",
+      text: "text-destructive",
       ring: "ring-red-600/20",
     },
     in_progress: {

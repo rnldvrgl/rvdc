@@ -110,7 +110,7 @@ export function getStallStockColumns({
         )
         if (val <= 0) return <span className="text-muted-foreground">—</span>
         return (
-          <span className="text-amber-600 dark:text-amber-400 font-medium">
+          <span className="text-warning font-medium">
             {val}%
           </span>
         )

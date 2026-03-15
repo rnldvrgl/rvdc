@@ -53,7 +53,7 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
         case "present":
           return (
             <CheckCircle
-              className={cn(baseClasses, "text-green-600 dark:text-green-400")}
+              className={cn(baseClasses, "text-success")}
             />
           )
         case "late":
@@ -61,14 +61,14 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
             <AlertTriangle
               className={cn(
                 baseClasses,
-                "text-yellow-600 dark:text-yellow-400",
+                "text-warning",
               )}
             />
           )
         case "absent":
           return (
             <XCircle
-              className={cn(baseClasses, "text-red-600 dark:text-red-400")}
+              className={cn(baseClasses, "text-destructive")}
             />
           )
         case "leave":
@@ -99,14 +99,14 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
     case "birthday":
       return (
         <Cake
-          className={cn(baseClasses, "text-green-600 dark:text-green-400")}
+          className={cn(baseClasses, "text-success")}
         />
       )
     case "holiday": {
       const isRegular = event.extendedProps.holiday_type === "regular"
       return isRegular ? (
         <Building
-          className={cn(baseClasses, "text-red-600 dark:text-red-400")}
+          className={cn(baseClasses, "text-destructive")}
         />
       ) : (
         <CalendarDays
@@ -129,7 +129,7 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
         case "EMERGENCY":
           return (
             <AlertTriangle
-              className={cn(baseClasses, "text-amber-600 dark:text-amber-400")}
+              className={cn(baseClasses, "text-warning")}
             />
           )
         default:
@@ -185,7 +185,7 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
             <Wrench
               className={cn(
                 baseClasses,
-                "text-yellow-600 dark:text-yellow-400",
+                "text-warning",
               )}
             />
           )
@@ -224,7 +224,7 @@ export function EventIcon({ event, size = "sm", className }: EventIconProps) {
       )
     case "shop_closed":
       return (
-        <Store className={cn(baseClasses, "text-red-600 dark:text-red-400")} />
+        <Store className={cn(baseClasses, "text-destructive")} />
       )
     default:
       return null

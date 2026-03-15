@@ -118,7 +118,7 @@ export function EmployeePerformanceStats() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-950">
-              <Trophy className="size-4 text-yellow-600 dark:text-yellow-400" />
+              <Trophy className="size-4 text-warning" />
             </div>
             Top Technicians
             <Badge
@@ -172,7 +172,7 @@ export function EmployeePerformanceStats() {
                       }
                       className={`text-xs tabular-nums ${
                         tech.completion_rate >= 80
-                          ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20"
+                          ? "bg-green-500/10 text-success border-green-500/20"
                           : ""
                       }`}
                     >
@@ -191,12 +191,12 @@ export function EmployeePerformanceStats() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950">
-              <Timer className="size-4 text-red-600 dark:text-red-400" />
+              <Timer className="size-4 text-destructive" />
             </div>
             Most Late Arrivals
             <Badge
               variant="outline"
-              className="ml-auto text-xs border-red-200 text-red-600 dark:border-red-800 dark:text-red-400"
+              className="ml-auto text-xs border-red-200 text-destructive dark:border-red-800"
             >
               Attendance
             </Badge>
@@ -233,7 +233,7 @@ export function EmployeePerformanceStats() {
                   </div>
                   <Badge
                     variant="outline"
-                    className="text-xs tabular-nums border-red-200 text-red-600 dark:border-red-800 dark:text-red-400"
+                    className="text-xs tabular-nums border-red-200 text-destructive dark:border-red-800"
                   >
                     {emp.late_count} {emp.late_count === 1 ? "day" : "days"}
                   </Badge>
@@ -249,12 +249,12 @@ export function EmployeePerformanceStats() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950">
-              <TrendingUp className="size-4 text-green-600 dark:text-green-400" />
+              <TrendingUp className="size-4 text-success" />
             </div>
             Most Punctual
             <Badge
               variant="outline"
-              className="ml-auto text-xs border-green-200 text-green-600 dark:border-green-800 dark:text-green-400"
+              className="ml-auto text-xs border-green-200 text-success dark:border-green-800"
             >
               On-Time
             </Badge>
@@ -296,10 +296,10 @@ export function EmployeePerformanceStats() {
                     variant="outline"
                     className={`text-xs tabular-nums ${
                       emp.punctuality_rate >= 90
-                        ? "border-green-200 text-green-600 dark:border-green-800 dark:text-green-400"
+                        ? "border-green-200 text-success dark:border-green-800"
                         : emp.punctuality_rate >= 70
                           ? "border-yellow-200 text-yellow-600 dark:border-yellow-800 dark:text-yellow-400"
-                          : "border-red-200 text-red-600 dark:border-red-800 dark:text-red-400"
+                          : "border-red-200 text-destructive dark:border-red-800"
                     }`}
                   >
                     {emp.punctuality_rate}%

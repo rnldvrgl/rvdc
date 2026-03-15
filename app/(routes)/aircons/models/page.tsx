@@ -218,13 +218,13 @@ export default function AirconModelsPage() {
                   entity.promo_price &&
                   parseFloat(entity.promo_price) > 0 ? (
                     <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-700/40 dark:bg-emerald-900/20 ">
-                      <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-success">
                         Promo Price
                       </p>
-                      <p className="mt-1 text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                      <p className="mt-1 text-lg font-bold text-success dark:text-emerald-300">
                         {formatCurrency(entity.promo_price)}
                       </p>
-                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-800/40 dark:text-emerald-300">
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-success dark:bg-emerald-800/40 dark:text-emerald-300">
                         Save{" "}
                         {formatCurrency(
                           (
@@ -284,7 +284,7 @@ export default function AirconModelsPage() {
                     </p>
                   </div>
                   <div className="rounded-xl border border-amber-200 bg-linear-to-br from-amber-50 to-orange-50 px-4 py-4 dark:border-amber-700/40 dark:from-amber-900/20 dark:to-orange-900/20">
-                    <p className="text-[11px] font-medium uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-warning">
                       Labor
                     </p>
                     <p className="mt-1 text-2xl font-black text-amber-700 dark:text-amber-300">
@@ -360,7 +360,7 @@ export default function AirconModelsPage() {
                                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm ${
                                       isUp
                                         ? "bg-rose-100 text-rose-700 ring-1 ring-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:ring-rose-800"
-                                        : "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-800"
+                                        : "bg-emerald-100 text-success ring-1 ring-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-800"
                                     }`}
                                   >
                                     {isUp ? (

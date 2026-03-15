@@ -429,7 +429,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
             {/* Backdated info banner + auto-acknowledge */}
             {isBackdated && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30 p-3 space-y-3">
-                <div className="flex gap-2 text-sm text-amber-700 dark:text-amber-400">
+                <div className="flex gap-2 text-sm text-warning">
                   <Info className="size-4 mt-0.5 shrink-0" />
                   <div>
                     <p className="font-medium">Backdated entry</p>
@@ -445,7 +445,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                   render={({ field }) => (
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <p className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                        <p className="text-sm font-medium text-warning">
                           Mark as acknowledged
                         </p>
                         <p className="text-xs text-amber-600 dark:text-amber-500">
@@ -828,8 +828,8 @@ function DenominationRow({
           className={cn(
             "text-xs font-semibold px-2.5 py-0.5",
             config.type === "bill"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400"
-              : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400",
+              ? "border-emerald-200 bg-emerald-50 text-success dark:border-emerald-800 dark:bg-emerald-950 "
+              : "border-amber-200 bg-amber-50 text-warning dark:border-amber-800 dark:bg-amber-950 ",
           )}
         >
           {config.label}

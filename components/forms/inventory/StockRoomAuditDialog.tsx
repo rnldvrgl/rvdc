@@ -180,12 +180,12 @@ export default function StockRoomAuditDialog({
                     <BreakdownItem
                       label="Reserved"
                       value={0}
-                      className="text-amber-600 dark:text-amber-400"
+                      className="text-warning"
                     />
                     <BreakdownItem
                       label="Available"
                       value={systemQty}
-                      className="text-green-600 dark:text-green-400"
+                      className="text-success"
                     />
                   </div>
                 </CardContent>
@@ -226,9 +226,9 @@ export default function StockRoomAuditDialog({
                   <CardContent className="px-6 py-3">
                     <div className="flex items-center gap-2">
                       {hasDiscrepancy ? (
-                        <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <AlertTriangle className="size-5 text-warning shrink-0" />
                       ) : (
-                        <CheckCircle2 className="size-5 text-green-600 dark:text-green-400 shrink-0" />
+                        <CheckCircle2 className="size-5 text-success shrink-0" />
                       )}
                       <div>
                         <p className="text-sm font-semibold">

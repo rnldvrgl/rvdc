@@ -196,7 +196,7 @@ export default function StocksPage() {
                       </label>
                       <p className="text-base font-medium">
                         {entity.track_stock ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-success dark:bg-green-900/30 ">
                             <div className="size-1.5 rounded-full bg-current"></div>
                             Enabled
                           </span>
@@ -215,7 +215,7 @@ export default function StocksPage() {
                         <label className="text-sm font-medium text-muted-foreground">
                           Waste Tolerance
                         </label>
-                        <p className="text-base font-medium text-amber-600 dark:text-amber-400">
+                        <p className="text-base font-medium text-warning">
                           {entity.item.waste_tolerance_percentage}%
                         </p>
                         <p className="text-xs text-muted-foreground mt-0.5">

@@ -77,7 +77,7 @@ export function getAirconUnitsColumns({
         > = {
           Installed: {
             bg: "bg-emerald-50",
-            text: "text-emerald-700",
+            text: "text-success",
             ring: "ring-emerald-600/20",
           },
           "For Installation": {

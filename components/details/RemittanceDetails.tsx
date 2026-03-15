@@ -341,8 +341,8 @@ export function RemittanceDetails({
                         className={cn(
                           "text-[10px] px-1.5 py-0",
                           type === "bill"
-                            ? "border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400"
-                            : "border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400",
+                            ? "border-emerald-200 text-success dark:border-emerald-800 "
+                            : "border-amber-200 text-warning dark:border-amber-800",
                         )}
                       >
                         {label}

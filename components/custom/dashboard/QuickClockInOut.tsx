@@ -3,6 +3,7 @@
 import { AutoCloseWarningBadge } from "@/components/custom/attendance/AttendanceBadges"
 import RedirectRoute from "@/components/custom/navigation/RedirectRoute"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useClockInOut } from "@/lib/hooks/useClockInOut"
@@ -49,8 +50,10 @@ export function QuickClockInOut() {
     formatTime,
     isMarkedAbsent,
     isShopClosed,
+    workRequest,
     hasApprovedWorkRequest,
     hasPendingWorkRequest,
+    hasDeclinedWorkRequest,
   } = useClockInOut()
 
   const createWorkRequest = useCreateWorkRequest()
@@ -164,11 +167,12 @@ export function QuickClockInOut() {
     todayLeave && (!isHalfDay || !canClockInHalfDay())
 
   // Determine if actions should be shown
+  const isShopClosedToday = isShopClosed || !!shopClosedEvent
   const showActions =
     canClockInOutToday &&
     !isClockDisabledByLeave &&
-    !isMarkedAbsent &&
-    (!isShopClosed || hasApprovedWorkRequest)
+    (!isMarkedAbsent || hasApprovedWorkRequest) &&
+    (!isShopClosedToday || hasApprovedWorkRequest)
 
   const handleClockIn = () => {
     if (!profile?.id) return
@@ -301,57 +305,98 @@ export function QuickClockInOut() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Holiday</AlertTitle>
             <AlertDescription suppressHydrationWarning>
-              Today is {todayHoliday.title}. Enjoy your day off!
+              Today is {todayHoliday.title}.
             </AlertDescription>
           </Alert>
         )}
 
-        {/* Shop Closed Alert */}
+        {/* Shop Closed */}
         {(shopClosedEvent || isShopClosed) && (
-          <Alert variant={hasApprovedWorkRequest ? "info" : "destructive"}>
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Shop Closed</AlertTitle>
-            <AlertDescription>
-              {hasApprovedWorkRequest ? (
-                "Your request to work today has been approved. You can clock in/out."
-              ) : hasPendingWorkRequest ? (
-                "Your request to work today is pending approval."
-              ) : (
-                <>
-                  The shop is closed today
-                  {shopClosedEvent?.extendedProps.reason &&
-                  shopClosedEvent.extendedProps.reason.toLowerCase() !==
-                    "shop closed"
-                    ? ` \u2014 ${shopClosedEvent.extendedProps.reason}`
-                    : ""}
-                  .
-                </>
+          <div
+            className={`rounded-lg p-4 space-y-3 ${
+              hasApprovedWorkRequest
+                ? "border border-green-200 dark:border-green-900 bg-green-50/50 dark:bg-green-950/20"
+                : hasPendingWorkRequest
+                  ? "border border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20"
+                  : hasDeclinedWorkRequest
+                    ? "border border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20"
+                    : "border border-border bg-muted/50"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <AlertCircle
+                  className={`h-4 w-4 ${
+                    hasApprovedWorkRequest
+                      ? "text-success"
+                      : hasPendingWorkRequest
+                        ? "text-warning"
+                        : hasDeclinedWorkRequest
+                          ? "text-destructive"
+                          : "text-muted-foreground"
+                  }`}
+                />
+                <span>Shop Closed</span>
+              </div>
+              {hasApprovedWorkRequest && (
+                <Badge variant="success">
+                  <CheckCircle className="h-3 w-3" />
+                  Approved
+                </Badge>
               )}
-            </AlertDescription>
-            {!hasApprovedWorkRequest && !hasPendingWorkRequest && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-2"
-                disabled={createWorkRequest.isPending}
-                onClick={() => {
-                  createWorkRequest.mutate({ date: todayStr })
-                }}
-              >
-                {createWorkRequest.isPending ? (
-                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                ) : (
-                  <Hand className="h-3 w-3 mr-1" />
-                )}
-                Request to Work
-              </Button>
-            )}
-          </Alert>
+              {hasPendingWorkRequest && (
+                <Badge variant="warning">
+                  <Clock className="h-3 w-3" />
+                  Pending
+                </Badge>
+              )}
+              {hasDeclinedWorkRequest && (
+                <Badge variant="destructive">
+                  <XCircle className="h-3 w-3" />
+                  Declined
+                </Badge>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {hasApprovedWorkRequest
+                ? "Your work request has been approved. You can clock in/out."
+                : hasPendingWorkRequest
+                  ? "Your work request is pending admin approval."
+                  : hasDeclinedWorkRequest
+                    ? `Your work request has been declined.${workRequest?.decline_reason ? ` Reason: ${workRequest.decline_reason}` : ""}`
+                    : `The shop is closed today${
+                        shopClosedEvent?.extendedProps.reason &&
+                        shopClosedEvent.extendedProps.reason.toLowerCase() !==
+                          "shop closed"
+                          ? ` \u2014 ${shopClosedEvent.extendedProps.reason}`
+                          : ""
+                      }.`}
+            </p>
+            {!hasApprovedWorkRequest &&
+              !hasPendingWorkRequest &&
+              !hasDeclinedWorkRequest && (
+                <Button
+                  size="sm"
+                  className="w-full"
+                  disabled={createWorkRequest.isPending}
+                  onClick={() => {
+                    createWorkRequest.mutate({ date: todayStr })
+                  }}
+                >
+                  {createWorkRequest.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Hand className="h-4 w-4 mr-2" />
+                  )}
+                  Request to Work
+                </Button>
+              )}
+          </div>
         )}
 
         <div className="space-y-3">
           <AnimatePresence mode="wait">
-            {attendance ? (
+            {attendance && attendance.clock_in ? (
               <motion.div
                 className="grid gap-3"
                 initial={{ opacity: 0, y: 8 }}
@@ -361,7 +406,7 @@ export function QuickClockInOut() {
                 {/* Clock Times */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
-                    <LogIn className="h-4 w-4 text-green-600 dark:text-green-400 shrink-0" />
+                    <LogIn className="h-4 w-4 text-success shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground">Clock In</p>
                       <p className="text-sm font-medium">
@@ -375,7 +420,7 @@ export function QuickClockInOut() {
                   </div>
 
                   <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-muted/50">
-                    <LogOut className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+                    <LogOut className="h-4 w-4 text-destructive shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground">Clock Out</p>
                       <p className="text-sm font-medium">
@@ -409,11 +454,9 @@ export function QuickClockInOut() {
           {/* Late Status */}
           {attendanceStatus?.attendance?.is_late && (
             <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900">
-              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <AlertCircle className="h-4 w-4 text-warning shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-amber-600 dark:text-amber-400">
-                  Late Status
-                </p>
+                <p className="text-xs text-warning">Late Status</p>
                 <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
                   Late by{" "}
                   {formatMinutesToHours(
@@ -427,11 +470,9 @@ export function QuickClockInOut() {
           {attendanceStatus?.attendance?.late_penalty_amount &&
             parseFloat(attendanceStatus.attendance.late_penalty_amount) > 0 && (
               <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900">
-                <PhilippinePeso className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+                <PhilippinePeso className="h-4 w-4 text-destructive shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-red-600 dark:text-red-400">
-                    Late Penalty
-                  </p>
+                  <p className="text-xs text-destructive">Late Penalty</p>
                   <p className="text-sm font-medium text-red-900 dark:text-red-200">
                     {parseFloat(
                       attendanceStatus.attendance.late_penalty_amount,
@@ -449,7 +490,7 @@ export function QuickClockInOut() {
                 transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
                 <Alert variant="success">
-                  <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+                  <CheckCircle className="h-5 w-5 text-success shrink-0 mt-0.5" />
                   <AlertTitle className="font-medium">
                     Attendance Recorded
                   </AlertTitle>
@@ -472,8 +513,8 @@ export function QuickClockInOut() {
             </Alert>
           )}
 
-          {/* Absent Message */}
-          {isMarkedAbsent && (
+          {/* Absent Message - only show when NOT shop closed day */}
+          {isMarkedAbsent && !isShopClosedToday && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Marked as Absent</AlertTitle>

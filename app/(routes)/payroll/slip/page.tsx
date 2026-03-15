@@ -73,7 +73,7 @@ export default function MyPayrollPage() {
             <Card>
               <CardContent className="p-4 flex items-center gap-3">
                 <div className="size-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
-                  <PhilippinePesoIcon className="size-5 text-green-600 dark:text-green-400" />
+                  <PhilippinePesoIcon className="size-5 text-success" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Total Earned</p>
@@ -148,14 +148,14 @@ export default function MyPayrollPage() {
                             <Minus className="size-3" />
                             <span className="text-xs">Deductions</span>
                           </div>
-                          <p className="font-medium text-red-600 dark:text-red-400">
+                          <p className="font-medium text-destructive">
                             {formatCurrency(deductions)}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-muted-foreground">Net Pay</p>
-                        <p className="text-base font-bold text-green-600 dark:text-green-400">
+                        <p className="text-base font-bold text-success">
                           {formatCurrency(net)}
                         </p>
                       </div>

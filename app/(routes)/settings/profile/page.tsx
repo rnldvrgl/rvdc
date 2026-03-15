@@ -309,7 +309,7 @@ export default function SettingsPage() {
                   : "Not provided"}
               </Info>
               <Info label="Cash Ban Balance">
-                <span className="inline-flex items-center gap-1.5 font-semibold text-green-600 dark:text-green-400">
+                <span className="inline-flex items-center gap-1.5 font-semibold text-success">
                   <Wallet className="size-3" />₱
                   {Number(userProfile.cash_ban_balance || 0).toLocaleString()}
                 </span>

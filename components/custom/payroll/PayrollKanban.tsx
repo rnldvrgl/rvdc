@@ -192,7 +192,7 @@ function PayrollCard({ payroll }: { payroll: WeeklyPayroll }) {
           </div>
           <div className="text-right">
             <p className="text-[10px] text-muted-foreground">Net Pay</p>
-            <p className="text-sm font-bold text-green-600 dark:text-green-400">
+            <p className="text-sm font-bold text-success">
               {formatCurrency(netPay)}
             </p>
           </div>

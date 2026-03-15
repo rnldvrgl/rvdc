@@ -153,12 +153,12 @@ export default function ItemCategoriesPage() {
                       </label>
                       <p className="text-base font-medium">
                         {!entity.is_deleted ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-success dark:bg-green-900/30 ">
                             <div className="size-1.5 rounded-full bg-current"></div>
                             Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-destructive dark:bg-red-900/30 ">
                             <div className="size-1.5 rounded-full bg-current"></div>
                             Deleted
                           </span>
