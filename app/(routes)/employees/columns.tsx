@@ -13,11 +13,9 @@ export function getEmployeeColumns({
   onDelete,
   onView,
   onRestore,
-  onHardDelete,
 }: GetColumnsProps<Employee> & {
   onManageBenefits?: (employee: Employee) => void
   onRestore?: (employee: Employee) => void
-  onHardDelete?: (employee: Employee) => void
 }): ColumnDef<Employee>[] {
   return [
     {

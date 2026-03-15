@@ -114,7 +114,6 @@ export default function ItemQuantitySelector({
   // Track which quantity inputs are being actively edited (so we don't override user typing)
   const [editingQty, setEditingQty] = useState<Record<number, string>>({})
 
-  const isKgItem = (item: Item) => item.unit_of_measure === "kg"
   const allowsDecimal = (item: Item | null) =>
     !!item && ["kg", "ft"].includes(item.unit_of_measure)
   const stepAmount = (item: Item | null) => {
