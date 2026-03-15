@@ -215,6 +215,8 @@ export interface Stall {
   id: number
   name: string
   location: string
+  stall_type: "main" | "sub" | "other"
+  is_system: boolean
   is_deleted: boolean
   created_at: string
   updated_at: string

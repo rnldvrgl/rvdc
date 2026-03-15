@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { useClockInOut } from "@/lib/hooks/useClockInOut"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useCreateWorkRequest } from "@/lib/mutations/useWorkRequestMutations"
 import useCalendarEvents from "@/lib/queries/calendar/useCalendarEvents"
 import {
   useDailyAttendance,
@@ -25,6 +26,7 @@ import {
   CheckCircle,
   Clock,
   FileText,
+  Hand,
   Loader2,
   LogIn,
   LogOut,
@@ -78,7 +80,11 @@ export function ClockInOut({
     canClockInOutToday,
     isMarkedAbsent,
     isShopClosed,
+    hasApprovedWorkRequest,
+    hasPendingWorkRequest,
   } = useClockInOut()
+
+  const createWorkRequest = useCreateWorkRequest()
 
   const canClock = canClockInOut(role || "")
 
@@ -218,9 +224,13 @@ export function ClockInOut({
   const leaveMessage = getLeaveMessage()
   const clockDisabled = isClockDisabledByLeave()
 
-  // Show actions only if can clock in/out today, not disabled by leave, not marked as absent, and not shop closed
+  // Show actions only if can clock in/out today, not disabled by leave, not marked as absent,
+  // and either not shop closed OR has an approved work request
   const showActions =
-    canClockInOutToday && !clockDisabled && !isMarkedAbsent && !isShopClosed
+    canClockInOutToday &&
+    !clockDisabled &&
+    !isMarkedAbsent &&
+    (!isShopClosed || hasApprovedWorkRequest)
 
   if (!canClock || !user_id) {
     return (
@@ -329,19 +339,44 @@ export function ClockInOut({
 
         {/* Shop Closed Alert */}
         {(shopClosedEvent || isShopClosed) && (
-          <Alert variant="destructive">
+          <Alert variant={hasApprovedWorkRequest ? "info" : "destructive"}>
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Shop Closed</AlertTitle>
             <AlertDescription>
-              The shop is closed today
-              {shopClosedEvent?.extendedProps.reason &&
-              shopClosedEvent.extendedProps.reason.toLowerCase() !==
-                "shop closed"
-                ? ` — ${shopClosedEvent.extendedProps.reason}`
-                : ""}
-              . Clock in/out is not available. For emergency services, contact
-              your manager to override.
+              {hasApprovedWorkRequest ? (
+                "Your request to work today has been approved. You can clock in/out."
+              ) : hasPendingWorkRequest ? (
+                "Your request to work today is pending approval."
+              ) : (
+                <>
+                  The shop is closed today
+                  {shopClosedEvent?.extendedProps.reason &&
+                  shopClosedEvent.extendedProps.reason.toLowerCase() !==
+                    "shop closed"
+                    ? ` — ${shopClosedEvent.extendedProps.reason}`
+                    : ""}
+                  .
+                </>
+              )}
             </AlertDescription>
+            {!hasApprovedWorkRequest && !hasPendingWorkRequest && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                disabled={createWorkRequest.isPending}
+                onClick={() => {
+                  createWorkRequest.mutate({ date: today })
+                }}
+              >
+                {createWorkRequest.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <Hand className="h-3 w-3 mr-1" />
+                )}
+                Request to Work
+              </Button>
+            )}
           </Alert>
         )}
 

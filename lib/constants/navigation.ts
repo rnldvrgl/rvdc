@@ -13,6 +13,7 @@ import {
   CreditCard,
   FileSpreadsheet,
   FileText,
+  Hand,
   Keyboard,
   Layers,
   LayoutDashboard,
@@ -175,6 +176,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         href: "/attendance/my-overtime",
         icon: Clock,
         permission: "manage_attendance",
+      },
+      {
+        name: "Work Requests",
+        href: "/attendance/work-requests",
+        icon: Hand,
+        permission: "manage_attendance_admin",
       },
       {
         name: "Offenses",

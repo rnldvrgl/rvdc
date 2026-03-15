@@ -466,10 +466,29 @@ export type DailyAttendance = AttendanceRecord & {
   suspension_info: SuspensionInfo | null
 }
 
+export type WorkRequestStatus = "pending" | "approved" | "declined"
+
+export type WorkRequest = {
+  id: number
+  employee: number
+  employee_name: string
+  date: string
+  reason: string
+  status: WorkRequestStatus
+  status_display: string
+  reviewed_by: number | null
+  reviewed_by_name: string | null
+  reviewed_at: string | null
+  decline_reason: string
+  created_at: string
+  updated_at: string
+}
+
 export type CurrentAttendanceStatus = {
   attendance: DailyAttendance | null
   is_suspended: boolean
   suspension_info: SuspensionInfo | null
+  work_request: WorkRequest | null
 }
 
 export type ClockInPayload = {

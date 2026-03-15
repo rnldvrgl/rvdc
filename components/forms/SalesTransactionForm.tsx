@@ -1,7 +1,6 @@
 "use client"
 
 import { ClientComboBox } from "@/components/custom/inputs/ClientComboBox"
-import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntityDialog from "@/components/custom/shared/EntityDialog"
 import ItemQuantitySelector from "@/components/custom/shared/ItemQuantitySelector"
@@ -26,12 +25,10 @@ import {
   Item,
   ItemEntry,
   SalesTransaction,
-  Stall,
   Stock,
 } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
-import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheetDialog } from "@/lib/hooks/useEntityDialog"
 import { useItemSelection } from "@/lib/hooks/useItemSelection"
 import { usePrint } from "@/lib/hooks/usePrint"
@@ -63,16 +60,9 @@ export default function SalesTransactionForm({
   initialData,
   onClose,
 }: SalesTransactionFormProps) {
-  const { assigned_stall, role } = useCurrentUser()
   const baseSchema = z.object({
     transaction_type: z.enum(["sale", "replacement"]),
-    stall:
-      role === "admin"
-        ? z.number({
-            required_error: "Stall is required",
-            invalid_type_error: "Stall is required",
-          })
-        : z.number().nullable().optional(),
+    stall: z.number().nullable().optional(),
     client_id: z.number().nullable().optional(),
     note: z.string().optional(),
     manual_receipt_number: z.string().optional(),
@@ -151,17 +141,21 @@ export default function SalesTransactionForm({
     mode: "onChange",
   })
 
-  const [stall, setStall] = useState<Stall | null>(null)
   const { data: stalls } = useStallChoices({})
+
+  // Always use the sub stall for sales
+  const subStall = useMemo(
+    () => stalls?.find((s) => s.stall_type === "sub") ?? null,
+    [stalls],
+  )
 
   const [createdTransaction, setCreatedTransaction] =
     useState<SalesTransaction | null>(null)
   const { data: allItemsData } = useItemChoices()
   const allItems: Item[] = allItemsData ?? []
 
-  // Fetch stock levels for the selected stall
-  const selectedStallId =
-    role === "admin" ? form.watch("stall") : assigned_stall?.id
+  // Fetch stock levels for the sub stall
+  const selectedStallId = subStall?.id
   const { data: stockData } = useApiQuery<PaginatedResult<Stock>>({
     queryKey: ["stall-stocks-for-sale", selectedStallId],
     url: "/inventory/stocks/",
@@ -225,16 +219,11 @@ export default function SalesTransactionForm({
     if (!initialData) return
 
     // Ensure choices are loaded before setting
-    if (!allItemsData || (role === "admin" && !stalls)) return
+    if (!allItemsData || !stalls) return
 
-    // Stall setup
-    if (role === "admin") {
-      const found = stalls?.find((s) => s.id === initialData.stall?.id) ?? null
-      setStall(found)
-      form.setValue("stall", found?.id ?? null)
-    } else if (assigned_stall) {
-      setStall(assigned_stall)
-      form.setValue("stall", assigned_stall.id)
+    // Stall setup — always use sub stall
+    if (subStall) {
+      form.setValue("stall", subStall.id)
     }
 
     // Items setup
@@ -272,7 +261,7 @@ export default function SalesTransactionForm({
       })) ?? [],
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData, allItemsData, stalls, assigned_stall, role])
+  }, [initialData, allItemsData, stalls, subStall])
 
   const handleSubmit = (data: FormValues) => {
     const isFree = data.transaction_type !== "sale"
@@ -283,7 +272,7 @@ export default function SalesTransactionForm({
     const discount = isFree ? 0 : Math.min(data.order_discount || 0, subtotal)
     const payload = {
       transaction_type: data.transaction_type,
-      stall: role == "admin" ? data.stall : (assigned_stall?.id ?? null),
+      stall: subStall?.id ?? null,
       client: data.client_id ?? null,
       note: data.note || null,
       manual_receipt_number: data.manual_receipt_number ?? null,
@@ -357,7 +346,7 @@ export default function SalesTransactionForm({
         <SalesTransactionPrintContent
           ref={printRef}
           entity={createdTransaction}
-          stall={stall}
+          stall={subStall}
         />
       </div>
 
@@ -477,33 +466,6 @@ export default function SalesTransactionForm({
               >
                 Replacement
               </Badge>
-            )}
-
-            {role && role === "admin" && (
-              <FormField
-                name="stall"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Stall</FormLabel>
-                    <ComboBox
-                      disabled={isDisabled}
-                      options={
-                        stalls?.map((s) => ({
-                          value: s.id,
-                          label: s.name,
-                        })) ?? []
-                      }
-                      value={field.value ? Number(field.value) : null}
-                      onChange={(val) => {
-                        field.onChange(val ?? null)
-                        setStall(stalls?.find((s) => s.id === val) ?? null)
-                      }}
-                      placeholder="Select stall"
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             )}
 
             <div className="grid gap-3">

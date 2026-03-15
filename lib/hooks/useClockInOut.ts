@@ -29,6 +29,12 @@ export function useClockInOut() {
     attendanceStatus?.attendance?.attendance_type === "ABSENT"
   const isShopClosed =
     attendanceStatus?.attendance?.attendance_type === "SHOP_CLOSED"
+
+  // Work request status for shop-closed days
+  const workRequest = attendanceStatus?.work_request ?? null
+  const hasApprovedWorkRequest = workRequest?.status === "approved"
+  const hasPendingWorkRequest = workRequest?.status === "pending"
+
   const BUSINESS_START_HOUR = settings?.shift_start
     ? getHourFromTime(settings.shift_start)
     : 8
@@ -93,5 +99,8 @@ export function useClockInOut() {
     formatTime,
     isMarkedAbsent,
     isShopClosed,
+    workRequest,
+    hasApprovedWorkRequest,
+    hasPendingWorkRequest,
   }
 }

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useClockInOut } from "@/lib/hooks/useClockInOut"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useCreateWorkRequest } from "@/lib/mutations/useWorkRequestMutations"
 import { useCalendarEvents } from "@/lib/queries/calendar/useCalendarEvents"
 import { useDailyAttendances } from "@/lib/queries/useAttendance"
 import { usePayrollSettings } from "@/lib/queries/usePayroll"
@@ -17,6 +18,7 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  Hand,
   Loader2,
   LogIn,
   LogOut,
@@ -47,7 +49,11 @@ export function QuickClockInOut() {
     formatTime,
     isMarkedAbsent,
     isShopClosed,
+    hasApprovedWorkRequest,
+    hasPendingWorkRequest,
   } = useClockInOut()
+
+  const createWorkRequest = useCreateWorkRequest()
 
   const yesterdayAttendance = attendanceData?.results[1] || null
 
@@ -162,7 +168,7 @@ export function QuickClockInOut() {
     canClockInOutToday &&
     !isClockDisabledByLeave &&
     !isMarkedAbsent &&
-    !isShopClosed
+    (!isShopClosed || hasApprovedWorkRequest)
 
   const handleClockIn = () => {
     if (!profile?.id) return
@@ -302,18 +308,44 @@ export function QuickClockInOut() {
 
         {/* Shop Closed Alert */}
         {(shopClosedEvent || isShopClosed) && (
-          <Alert variant="destructive">
+          <Alert variant={hasApprovedWorkRequest ? "info" : "destructive"}>
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Shop Closed</AlertTitle>
             <AlertDescription>
-              The shop is closed today
-              {shopClosedEvent?.extendedProps.reason &&
-              shopClosedEvent.extendedProps.reason.toLowerCase() !==
-                "shop closed"
-                ? ` \u2014 ${shopClosedEvent.extendedProps.reason}`
-                : ""}
-              . For emergency services, contact your manager.
+              {hasApprovedWorkRequest ? (
+                "Your request to work today has been approved. You can clock in/out."
+              ) : hasPendingWorkRequest ? (
+                "Your request to work today is pending approval."
+              ) : (
+                <>
+                  The shop is closed today
+                  {shopClosedEvent?.extendedProps.reason &&
+                  shopClosedEvent.extendedProps.reason.toLowerCase() !==
+                    "shop closed"
+                    ? ` \u2014 ${shopClosedEvent.extendedProps.reason}`
+                    : ""}
+                  .
+                </>
+              )}
             </AlertDescription>
+            {!hasApprovedWorkRequest && !hasPendingWorkRequest && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                disabled={createWorkRequest.isPending}
+                onClick={() => {
+                  createWorkRequest.mutate({ date: todayStr })
+                }}
+              >
+                {createWorkRequest.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <Hand className="h-3 w-3 mr-1" />
+                )}
+                Request to Work
+              </Button>
+            )}
           </Alert>
         )}
 
