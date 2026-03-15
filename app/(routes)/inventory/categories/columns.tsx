@@ -19,7 +19,7 @@ export function getCategoryColumns({
       header: "Action",
       cell: ({ row }) => {
         const category = row.original
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           return (
             <DataTableActions
               items={[
@@ -28,13 +28,17 @@ export function getCategoryColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(category),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(category),
-                  destructive: true,
-                  confirmText: `Permanently delete ${category.name}? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(category),
+                        destructive: true,
+                        confirmText: `Permanently delete ${category.name}? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

@@ -115,7 +115,14 @@ export default function ItemQuantitySelector({
   const [editingQty, setEditingQty] = useState<Record<number, string>>({})
 
   const isKgItem = (item: Item) => item.unit_of_measure === "kg"
-  const stepAmount = (item: Item | null) => (item && isKgItem(item) ? 0.25 : 1)
+  const allowsDecimal = (item: Item | null) =>
+    !!item && ["kg", "ft"].includes(item.unit_of_measure)
+  const stepAmount = (item: Item | null) => {
+    if (!item) return 1
+    if (item.unit_of_measure === "kg") return 0.25
+    if (item.unit_of_measure === "ft") return 0.5
+    return 1
+  }
 
   const getPrices = (itm: ItemEntry) => {
     if (!itm.item) {
@@ -301,8 +308,14 @@ export default function ItemQuantitySelector({
                       </TooltipProvider>
                       <Input
                         type="number"
-                        min={itm.item && isKgItem(itm.item) ? 0.25 : 1}
-                        step="any"
+                        min={
+                          itm.item?.unit_of_measure === "kg"
+                            ? 0.25
+                            : itm.item?.unit_of_measure === "ft"
+                              ? 0.01
+                              : 1
+                        }
+                        step={allowsDecimal(itm.item) ? "any" : "1"}
                         value={editingQty[idx] ?? itm.quantity}
                         onChange={(e) => {
                           setEditingQty((prev) => ({
@@ -314,13 +327,14 @@ export default function ItemQuantitySelector({
                           const raw = editingQty[idx]
                           if (raw !== undefined) {
                             const parsed = parseFloat(raw)
-                            handleUpdate(
-                              idx,
-                              "quantity",
-                              parsed > 0
+                            const rounded = allowsDecimal(itm.item)
+                              ? parsed > 0
                                 ? Math.round(parsed * 100) / 100
-                                : 0.01,
-                            )
+                                : 0.01
+                              : parsed > 0
+                                ? Math.round(parsed) || 1
+                                : 1
+                            handleUpdate(idx, "quantity", rounded)
                             setEditingQty((prev) => {
                               const next = { ...prev }
                               delete next[idx]

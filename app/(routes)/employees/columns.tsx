@@ -5,7 +5,7 @@ import { GetColumnsProps } from "@/lib/constants/interface"
 import { Employee } from "@/lib/constants/types"
 import { safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
-import { Archive, Edit, Eye, RotateCcw, Trash2 } from "lucide-react"
+import { Edit, Eye, RotateCcw, UserX } from "lucide-react"
 import Link from "next/link"
 
 export function getEmployeeColumns({
@@ -78,20 +78,13 @@ export function getEmployeeColumns({
         return (
           <DataTableActions
             items={
-              onRestore && onHardDelete
+              onRestore
                 ? [
                     {
-                      label: "Restore",
+                      label: "Reactivate",
                       icon: RotateCcw,
                       onClick: () => onRestore(employee),
-                      confirmText: `Restore ${employee.first_name} ${employee.last_name}?`,
-                    },
-                    {
-                      label: "Delete Permanently",
-                      icon: Trash2,
-                      onClick: () => onHardDelete(employee),
-                      destructive: true,
-                      confirmText: `Permanently delete ${employee.first_name} ${employee.last_name}?`,
+                      confirmText: `Reactivate ${employee.first_name} ${employee.last_name}?`,
                     },
                   ]
                 : [
@@ -110,10 +103,10 @@ export function getEmployeeColumns({
                       onClick: () => onEdit(employee),
                     },
                     {
-                      label: "Archive",
-                      icon: Archive,
+                      label: "Deactivate",
+                      icon: UserX,
                       onClick: () => onDelete(employee),
-                      confirmText: `Archive ${employee.first_name} ${employee.last_name}?`,
+                      confirmText: `Deactivate ${employee.first_name} ${employee.last_name}? They will no longer be able to log in or process transactions.`,
                     },
                   ]
             }

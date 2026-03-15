@@ -509,7 +509,7 @@ export function getServiceColumns({
         const canComplete =
           service.status === "in_progress" || service.status === "pending"
 
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           return (
             <DataTableActions
               items={[
@@ -518,13 +518,17 @@ export function getServiceColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(service),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(service),
-                  destructive: true,
-                  confirmText: `Permanently delete service #${service.id}? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(service),
+                        destructive: true,
+                        confirmText: `Permanently delete service #${service.id}? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

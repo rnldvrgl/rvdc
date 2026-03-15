@@ -135,7 +135,6 @@ export default function ServicesPage() {
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
       })
     : getServiceColumns({
         role,

@@ -88,7 +88,6 @@ export default function OffensesPage() {
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
         isAdmin,
       })
     : getOffenseColumns({

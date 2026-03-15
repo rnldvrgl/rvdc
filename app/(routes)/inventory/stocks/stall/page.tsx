@@ -112,7 +112,6 @@ export default function StocksPage() {
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
         role,
       })
     : getStallStockColumns({

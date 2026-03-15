@@ -43,7 +43,6 @@ import {
   Plus,
   Repeat,
   RotateCcw,
-  Trash2,
   Zap,
 } from "lucide-react"
 import { useState } from "react"
@@ -263,15 +262,11 @@ function DeductionRow({
 function ArchivedRow({
   deduction,
   onRestore,
-  onDelete,
   restorePending,
-  deletePending,
 }: {
   deduction: ManualDeduction
   onRestore: (id: number) => void
-  onDelete: (id: number) => void
   restorePending: boolean
-  deletePending: boolean
 }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 px-3 sm:px-4 py-3 rounded-lg border bg-muted/30">
@@ -328,49 +323,6 @@ function ArchivedRow({
               <p>Restore this deduction to the active list</p>
             </TooltipContent>
           </Tooltip>
-          <AlertDialog>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="h-8 text-xs"
-                    disabled={deletePending}
-                  >
-                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                    <span className="hidden sm:inline">Delete</span>
-                    <span className="sm:hidden">Del</span>
-                  </Button>
-                </AlertDialogTrigger>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">
-                  Permanently delete this deduction. This action cannot be
-                  undone.
-                </p>
-              </TooltipContent>
-            </Tooltip>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Permanently?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to permanently delete &quot;
-                  {deduction.name}&quot;? This action cannot be undone and all
-                  data will be lost.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => onDelete(deduction.id)}
-                  className="bg-destructive hover:bg-destructive/90"
-                >
-                  Delete Permanently
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
         </div>
       </div>
     </div>
@@ -773,9 +725,7 @@ export default function CompanyDeductionsPage() {
                       key={d.id}
                       deduction={d}
                       onRestore={(id) => restoreItem.mutate(id)}
-                      onDelete={(id) => hardDeleteItem.mutate(id)}
                       restorePending={restoreItem.isPending}
-                      deletePending={hardDeleteItem.isPending}
                     />
                   ))}
                 </div>

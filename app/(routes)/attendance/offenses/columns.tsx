@@ -214,7 +214,7 @@ export function getOffenseColumns({
       header: "Action",
       cell: ({ row }) => {
         const offense = row.original
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           return (
             <DataTableActions
               items={[
@@ -223,13 +223,17 @@ export function getOffenseColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(offense),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(offense),
-                  destructive: true,
-                  confirmText: `Permanently delete offense for ${offense.employee_name}? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(offense),
+                        destructive: true,
+                        confirmText: `Permanently delete offense for ${offense.employee_name}? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

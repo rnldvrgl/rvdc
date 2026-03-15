@@ -106,6 +106,12 @@ export default function ServicePartsManager({
       toast.error("Quantity must be greater than 0")
       return
     }
+    const isDecimalUnit =
+      selectedItem && ["kg", "ft"].includes(selectedItem.unit_of_measure)
+    const roundedQty =
+      isCustom || isDecimalUnit
+        ? Math.round(qty * 100) / 100
+        : Math.round(qty) || 1
 
     const payload = isCustom
       ? {
@@ -113,7 +119,7 @@ export default function ServicePartsManager({
           item: null as null,
           custom_description: customDescription.trim(),
           custom_price: Math.round(parseFloat(customPrice) * 100) / 100,
-          quantity: Math.round(qty * 100) / 100,
+          quantity: roundedQty,
           is_free: isFree,
           discount_amount:
             !isFree && discountValue
@@ -125,7 +131,7 @@ export default function ServicePartsManager({
       : {
           service: serviceId,
           item: selectedItemId,
-          quantity: Math.round(qty * 100) / 100,
+          quantity: roundedQty,
           is_free: isFree,
           discount_amount:
             !isFree && discountValue
@@ -619,9 +625,25 @@ export default function ServicePartsManager({
                       ? "0.01"
                       : "1"
                 }
-                step="any"
+                step={
+                  selectedItem &&
+                  ["kg", "ft"].includes(selectedItem.unit_of_measure)
+                    ? "any"
+                    : "1"
+                }
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
+                onBlur={() => {
+                  if (
+                    !selectedItem ||
+                    ["kg", "ft"].includes(selectedItem.unit_of_measure)
+                  )
+                    return
+                  const parsed = parseFloat(quantity)
+                  if (!isNaN(parsed) && parsed > 0) {
+                    setQuantity(String(Math.round(parsed) || 1))
+                  }
+                }}
                 placeholder={
                   selectedItem &&
                   ["kg", "ft"].includes(selectedItem.unit_of_measure)

@@ -163,7 +163,7 @@ export function getAirconUnitsColumns({
       cell: ({ row }) => {
         const unit = row.original
 
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           return (
             <DataTableActions
               items={[
@@ -172,13 +172,17 @@ export function getAirconUnitsColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(unit),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(unit),
-                  destructive: true,
-                  confirmText: `Permanently delete unit SN: ${unit.serial_number}? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(unit),
+                        destructive: true,
+                        confirmText: `Permanently delete unit SN: ${unit.serial_number}? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

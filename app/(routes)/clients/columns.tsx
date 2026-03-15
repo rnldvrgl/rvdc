@@ -96,7 +96,7 @@ export function getClientColumns({
         const client = row.original
         const is_blocklisted = client.is_blocklisted
 
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           return (
             <DataTableActions
               items={[
@@ -105,13 +105,17 @@ export function getClientColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(client),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(client),
-                  destructive: true,
-                  confirmText: `Permanently delete ${safeCell(client.full_name)}? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(client),
+                        destructive: true,
+                        confirmText: `Permanently delete ${safeCell(client.full_name)}? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

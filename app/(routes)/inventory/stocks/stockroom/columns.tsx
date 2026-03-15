@@ -85,7 +85,7 @@ export function getStockRoomStockColumns({
       header: "Action",
       cell: ({ row }) => {
         const stock = row.original
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           return (
             <DataTableActions
               items={[
@@ -94,13 +94,17 @@ export function getStockRoomStockColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(stock),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(stock),
-                  destructive: true,
-                  confirmText: `Permanently delete this stock entry? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(stock),
+                        destructive: true,
+                        confirmText: `Permanently delete this stock entry? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

@@ -80,7 +80,6 @@ export default function ItemCategoriesPage() {
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
       })
     : getCategoryColumns({
         onEdit: openEditSheet,

@@ -93,7 +93,6 @@ export default function ClientsPage() {
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
       })
     : getClientColumns({
         onEdit: openEditSheet,

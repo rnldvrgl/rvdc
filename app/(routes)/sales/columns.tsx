@@ -152,7 +152,7 @@ export function getSalesTransactionColumns({
           (item) => item.item === null,
         )
 
-        if (mode === "archived" && onRestore && onHardDelete) {
+        if (mode === "archived" && onRestore) {
           return (
             <DataTableActions
               items={[
@@ -161,13 +161,17 @@ export function getSalesTransactionColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(row.original),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(row.original),
-                  destructive: true,
-                  confirmText: `Permanently delete this transaction? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(row.original),
+                        destructive: true,
+                        confirmText: `Permanently delete this transaction? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

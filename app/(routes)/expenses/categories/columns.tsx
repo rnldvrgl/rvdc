@@ -115,7 +115,7 @@ export function getExpenseCategoryColumns({
         const category = row.original
         const isActive = category.is_active
 
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           return (
             <DataTableActions
               items={[
@@ -124,13 +124,17 @@ export function getExpenseCategoryColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(category),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(category),
-                  destructive: true,
-                  confirmText: `Permanently delete "${category.name}"? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(category),
+                        destructive: true,
+                        confirmText: `Permanently delete "${category.name}"? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

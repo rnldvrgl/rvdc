@@ -78,7 +78,7 @@ export function getHalfDayScheduleColumns({
       header: "Actions",
       cell: ({ row }) => {
         const schedule = row.original
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           return (
             <DataTableActions
               items={[
@@ -87,13 +87,17 @@ export function getHalfDayScheduleColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(schedule),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(schedule),
-                  destructive: true,
-                  confirmText: `Permanently delete this day schedule? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(schedule),
+                        destructive: true,
+                        confirmText: `Permanently delete this day schedule? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

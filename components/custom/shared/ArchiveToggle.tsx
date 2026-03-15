@@ -2,22 +2,31 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Archive, List } from "lucide-react"
+import { Archive, List, LucideIcon } from "lucide-react"
 
 interface ArchiveToggleProps {
   isArchived: boolean
   onToggle: (archived: boolean) => void
   archivedCount?: number
+  /** Custom label for the active tab (default: "Active") */
+  activeLabel?: string
+  /** Custom label for the archived/inactive tab (default: "Archived") */
+  archivedLabel?: string
+  /** Custom icon for the archived/inactive tab (default: Archive) */
+  archivedIcon?: LucideIcon
 }
 
 /**
- * Toggle between "Active" and "Archived" views.
+ * Toggle between "Active" and "Archived" (or custom label) views.
  * Drop this into any page above the DataTable.
  */
 export function ArchiveToggle({
   isArchived,
   onToggle,
   archivedCount,
+  activeLabel = "Active",
+  archivedLabel = "Archived",
+  archivedIcon: ArchivedIcon = Archive,
 }: ArchiveToggleProps) {
   return (
     <Tabs
@@ -30,14 +39,14 @@ export function ArchiveToggle({
           className="gap-1.5"
         >
           <List className="size-3.5" />
-          Active
+          {activeLabel}
         </TabsTrigger>
         <TabsTrigger
           value="archived"
           className="gap-1.5"
         >
-          <Archive className="size-3.5" />
-          Archived
+          <ArchivedIcon className="size-3.5" />
+          {archivedLabel}
           {archivedCount !== undefined && archivedCount > 0 && (
             <Badge
               variant="secondary"

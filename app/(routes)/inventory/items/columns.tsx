@@ -77,7 +77,7 @@ export function getItemColumns({
             header: "Action",
             cell: ({ row }: CellContext<Item, unknown>) => {
               const item = row.original
-              if (onRestore && onHardDelete) {
+              if (onRestore) {
                 return (
                   <DataTableActions
                     items={[
@@ -86,13 +86,17 @@ export function getItemColumns({
                         icon: RotateCcw,
                         onClick: () => onRestore(item),
                       },
-                      {
-                        label: "Delete Permanently",
-                        icon: Trash2,
-                        onClick: () => onHardDelete(item),
-                        destructive: true,
-                        confirmText: `Permanently delete ${item.name}? This cannot be undone.`,
-                      },
+                      ...(onHardDelete
+                        ? [
+                            {
+                              label: "Delete Permanently",
+                              icon: Trash2,
+                              onClick: () => onHardDelete(item),
+                              destructive: true,
+                              confirmText: `Permanently delete ${item.name}? This cannot be undone.`,
+                            },
+                          ]
+                        : []),
                     ]}
                   />
                 )

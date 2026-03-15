@@ -108,7 +108,6 @@ export default function PayrollPage() {
         onDelete: () => {},
         isAdmin,
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
       })
     : getPayrollColumns({
         onView: handleView,

@@ -140,7 +140,6 @@ export default function SalesTransactionsPage() {
           onEdit: () => {},
           onDelete: () => {},
           onRestore: handleRestore,
-          onHardDelete: handleHardDelete,
           role: role ?? "guest",
           mode: "archived",
         })
@@ -150,7 +149,6 @@ export default function SalesTransactionsPage() {
             onDelete: () => {},
             onView: openView,
             onUnvoid: handleUnvoid,
-            onHardDelete: handleHardDeleteVoided,
             role: role ?? "guest",
             mode: "voided",
           })

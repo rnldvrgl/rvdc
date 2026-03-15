@@ -91,7 +91,7 @@ export function getCalendarEventColumns({
       header: "Actions",
       cell: ({ row }) => {
         const event = row.original
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           return (
             <DataTableActions
               items={[
@@ -100,13 +100,17 @@ export function getCalendarEventColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(event),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(event),
-                  destructive: true,
-                  confirmText: `Permanently delete "${event.title}"? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(event),
+                        destructive: true,
+                        confirmText: `Permanently delete "${event.title}"? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

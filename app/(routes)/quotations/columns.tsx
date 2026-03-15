@@ -102,7 +102,7 @@ export function getQuotationColumns({
       cell: ({ row }) => {
         const q = row.original
 
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           // Calculate days remaining before auto-deletion
           const daysLeft = q.deleted_at
             ? Math.max(
@@ -134,14 +134,18 @@ export function getQuotationColumns({
                     icon: RotateCcw,
                     onClick: () => onRestore(q),
                   },
-                  {
-                    label: "Delete Permanently",
-                    icon: Trash2,
-                    onClick: () => onHardDelete(q),
-                    destructive: true,
-                    confirmText:
-                      "Permanently delete this quotation? This cannot be undone.",
-                  },
+                  ...(onHardDelete
+                    ? [
+                        {
+                          label: "Delete Permanently",
+                          icon: Trash2,
+                          onClick: () => onHardDelete(q),
+                          destructive: true,
+                          confirmText:
+                            "Permanently delete this quotation? This cannot be undone.",
+                        },
+                      ]
+                    : []),
                 ]}
               />
             </div>

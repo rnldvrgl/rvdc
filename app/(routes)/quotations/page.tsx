@@ -81,7 +81,6 @@ export default function QuotationsPage() {
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
       })
     : getQuotationColumns({
         onView: openView,

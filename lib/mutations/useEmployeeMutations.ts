@@ -34,7 +34,7 @@ export function useEmployeeMutations() {
 
   const deleteEmployee = useApiMutation({
     mutationFn: (id: number) => api.delete(`${url}${id}/`),
-    successMessage: "Employee archived successfully.",
+    successMessage: "Employee deactivated successfully.",
     invalidateQueries: [
       ...sharedInvalidations,
       { queryKey: ["employees-archived"] },

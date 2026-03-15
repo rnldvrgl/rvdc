@@ -147,7 +147,7 @@ export function getExpenseColumns({
       cell: ({ row }) => {
         const expense = row.original
 
-        if (onRestore && onHardDelete) {
+        if (onRestore) {
           return (
             <DataTableActions
               items={[
@@ -156,13 +156,17 @@ export function getExpenseColumns({
                   icon: RotateCcw,
                   onClick: () => onRestore(expense),
                 },
-                {
-                  label: "Delete Permanently",
-                  icon: Trash2,
-                  onClick: () => onHardDelete(expense),
-                  destructive: true,
-                  confirmText: `Permanently delete this expense? This cannot be undone.`,
-                },
+                ...(onHardDelete
+                  ? [
+                      {
+                        label: "Delete Permanently",
+                        icon: Trash2,
+                        onClick: () => onHardDelete(expense),
+                        destructive: true,
+                        confirmText: `Permanently delete this expense? This cannot be undone.`,
+                      },
+                    ]
+                  : []),
               ]}
             />
           )

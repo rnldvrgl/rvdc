@@ -26,6 +26,10 @@ export function useArchive<T>(
   queryKeyBase: string,
   paginationProps: PaginatedFilterProps,
   enabled = false,
+  options?: {
+    restoreMessage?: string
+    hardDeleteMessage?: string
+  },
 ) {
   const archivedQuery = usePaginatedQuery<T>({
     ...paginationProps,
@@ -36,7 +40,7 @@ export function useArchive<T>(
 
   const restoreItem = useApiMutation({
     mutationFn: (id: number) => api.post(`${baseUrl}${id}/restore/`),
-    successMessage: "Record restored successfully.",
+    successMessage: options?.restoreMessage ?? "Record restored successfully.",
     invalidateQueries: [
       { queryKey: [queryKeyBase] },
       { queryKey: [`${queryKeyBase}-archived`] },
@@ -45,7 +49,7 @@ export function useArchive<T>(
 
   const hardDeleteItem = useApiMutation({
     mutationFn: (id: number) => api.delete(`${baseUrl}${id}/hard-delete/`),
-    successMessage: "Record permanently deleted.",
+    successMessage: options?.hardDeleteMessage ?? "Record permanently deleted.",
     invalidateQueries: [
       { queryKey: [queryKeyBase] },
       { queryKey: [`${queryKeyBase}-archived`] },

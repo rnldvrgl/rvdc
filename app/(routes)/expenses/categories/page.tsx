@@ -116,9 +116,6 @@ export default function ExpenseCategoriesPage() {
         onRestore: (cat: ExpenseCategory) => {
           if (cat.id !== undefined) restoreItem.mutate(cat.id)
         },
-        onHardDelete: (cat: ExpenseCategory) => {
-          if (cat.id !== undefined) hardDeleteItem.mutate(cat.id)
-        },
       })
     : getExpenseCategoryColumns({
         onView: openView,

@@ -92,7 +92,6 @@ export default function StockRoomStocksPage() {
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
       })
     : getStockRoomStockColumns({
         onEdit: openEditSheet,

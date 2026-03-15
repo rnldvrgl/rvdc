@@ -15,7 +15,7 @@ import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useEmployeeMutations } from "@/lib/mutations/useEmployeeMutations"
 import { useEmployees } from "@/lib/queries/useEmployees"
-import { Plus, Users } from "lucide-react"
+import { Plus, Users, UserX } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -47,6 +47,10 @@ export default function EmployeesPage() {
     "employees",
     searchParams,
     isArchived,
+    {
+      restoreMessage: "Employee reactivated successfully.",
+      hardDeleteMessage: "Employee permanently deleted.",
+    },
   )
 
   // Separate sheets
@@ -85,7 +89,6 @@ export default function EmployeesPage() {
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
       })
     : getEmployeeColumns({
         onEdit: openEditSheet,
@@ -152,14 +155,16 @@ export default function EmployeesPage() {
         isArchived={isArchived}
         onToggle={setIsArchived}
         archivedCount={archivedQuery.data?.count}
+        archivedLabel="Inactive"
+        archivedIcon={UserX}
       />
 
       {/* Main Content */}
       <DataTable
-        title={isArchived ? "Archived Employees" : "Employees"}
+        title={isArchived ? "Inactive Employees" : "Employees"}
         description={
           isArchived
-            ? "Restore or permanently delete archived employees"
+            ? "Reactivate or permanently delete inactive employees"
             : "Manage your staff members and their information"
         }
         isLoading={isArchived ? archivedQuery.isLoading : isLoading}
@@ -167,10 +172,10 @@ export default function EmployeesPage() {
         data={tableData}
         withoutDateRangeFilter
         emptyIcon={Users}
-        emptyTitle={isArchived ? "No archived employees" : "No employees found"}
+        emptyTitle={isArchived ? "No inactive employees" : "No employees found"}
         emptyDescription={
           isArchived
-            ? "Archived employees will appear here"
+            ? "Inactive employees will appear here"
             : "Add your first employee to manage staff records"
         }
       />

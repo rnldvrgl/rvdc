@@ -88,7 +88,6 @@ export default function ExpensesPage() {
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
         role,
       })
     : getExpenseColumns({

@@ -182,7 +182,7 @@ export function getPayrollColumns({
         return (
           <DataTableActions
             items={
-              onRestore && onHardDelete
+              onRestore
                 ? [
                     {
                       label: "Restore",
@@ -190,13 +190,17 @@ export function getPayrollColumns({
                       onClick: () => onRestore(payroll),
                       confirmText: `Restore payroll for ${payroll.employee_name}?`,
                     },
-                    {
-                      label: "Delete Permanently",
-                      icon: Trash2,
-                      onClick: () => onHardDelete(payroll),
-                      destructive: true,
-                      confirmText: `Permanently delete payroll for ${payroll.employee_name}?`,
-                    },
+                    ...(onHardDelete
+                      ? [
+                          {
+                            label: "Delete Permanently",
+                            icon: Trash2,
+                            onClick: () => onHardDelete(payroll),
+                            destructive: true,
+                            confirmText: `Permanently delete payroll for ${payroll.employee_name}?`,
+                          },
+                        ]
+                      : []),
                   ]
                 : [
                     {

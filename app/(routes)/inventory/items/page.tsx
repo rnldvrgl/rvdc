@@ -70,7 +70,6 @@ export default function ItemsPage() {
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
         role: role || "guest",
       })
     : getItemColumns({
