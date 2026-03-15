@@ -61,13 +61,12 @@ export default function PayrollPage() {
   const { deletePayroll, bulkUpdateStatus } = usePayrollMutations()
   const { filters, orderingOptions } = useWeeklyPayrollFilters()
 
-  const { archivedQuery, restoreItem, hardDeleteItem } =
-    useArchive<WeeklyPayroll>(
-      "/payroll/weekly-payrolls/",
-      "payroll",
-      searchParams,
-      isArchived,
-    )
+  const { archivedQuery, restoreItem } = useArchive<WeeklyPayroll>(
+    "/payroll/weekly-payrolls/",
+    "payroll",
+    searchParams,
+    isArchived,
+  )
 
   const [bulkGenerateOpen, setBulkGenerateOpen] = useState(false)
 
@@ -96,10 +95,6 @@ export default function PayrollPage() {
 
   const handleRestore = (payroll: WeeklyPayroll) => {
     if (payroll.id !== undefined) restoreItem.mutate(payroll.id)
-  }
-
-  const handleHardDelete = (payroll: WeeklyPayroll) => {
-    if (payroll.id !== undefined) hardDeleteItem.mutate(payroll.id)
   }
 
   const columns = isArchived

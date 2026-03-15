@@ -41,7 +41,7 @@ export default function QuotationsPage() {
     filter,
   })
 
-  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Quotation>(
+  const { archivedQuery, restoreItem } = useArchive<Quotation>(
     "quotations/",
     "quotations",
     searchParams,
@@ -71,9 +71,6 @@ export default function QuotationsPage() {
   }
   const handleRestore = (q: Quotation) => {
     if (q.id !== undefined) restoreItem.mutate(q.id)
-  }
-  const handleHardDelete = (q: Quotation) => {
-    if (q.id !== undefined) hardDeleteItem.mutate(q.id)
   }
 
   const columns = isArchived

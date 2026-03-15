@@ -24,7 +24,7 @@ export default function ItemsPage() {
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const { deleteItem } = useItemMutations()
-  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Item>(
+  const { archivedQuery, restoreItem } = useArchive<Item>(
     "/inventory/items/",
     "items",
     searchParams,
@@ -59,10 +59,6 @@ export default function ItemsPage() {
 
   const handleRestore = (item: Item) => {
     if (item.id !== undefined) restoreItem.mutate(item.id)
-  }
-
-  const handleHardDelete = (item: Item) => {
-    if (item.id !== undefined) hardDeleteItem.mutate(item.id)
   }
 
   const columns = isArchived

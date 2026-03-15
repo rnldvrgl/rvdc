@@ -29,13 +29,12 @@ export default function StockRoomStocksPage() {
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const { softDeleteStockRoomStock } = useStockRoomStockMutations()
-  const { archivedQuery, restoreItem, hardDeleteItem } =
-    useArchive<StockRoomStock>(
-      "/inventory/stockroom/stocks/",
-      "stockroom-stocks",
-      searchParams,
-      isArchived,
-    )
+  const { archivedQuery, restoreItem } = useArchive<StockRoomStock>(
+    "/inventory/stockroom/stocks/",
+    "stockroom-stocks",
+    searchParams,
+    isArchived,
+  )
   const { data, isLoading, refetch } = useStockRoomStocks({
     page,
     limit,
@@ -77,10 +76,6 @@ export default function StockRoomStocksPage() {
 
   const handleRestore = (stock: StockRoomStock) => {
     if (stock.id !== undefined) restoreItem.mutate(stock.id)
-  }
-
-  const handleHardDelete = (stock: StockRoomStock) => {
-    if (stock.id !== undefined) hardDeleteItem.mutate(stock.id)
   }
 
   const handleView = (stock: StockRoomStock) => {

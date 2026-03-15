@@ -45,7 +45,7 @@ export default function ExpensesPage() {
   })
   const { filters, orderingOptions } = useExpenseFilters()
 
-  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Expense>(
+  const { archivedQuery, restoreItem } = useArchive<Expense>(
     "expenses/",
     "expenses",
     searchParams,
@@ -78,9 +78,6 @@ export default function ExpensesPage() {
 
   const handleRestore = (expense: Expense) => {
     if (expense.id !== undefined) restoreItem.mutate(expense.id)
-  }
-  const handleHardDelete = (expense: Expense) => {
-    if (expense.id !== undefined) hardDeleteItem.mutate(expense.id)
   }
 
   const columns = isArchived

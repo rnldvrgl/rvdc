@@ -77,7 +77,7 @@ export default function ServicesPage() {
 
   const { filters: filterDefs, orderingOptions } = useServiceFilters()
 
-  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Service>(
+  const { archivedQuery, restoreItem } = useArchive<Service>(
     "services/services/",
     "services",
     searchParams,
@@ -124,9 +124,6 @@ export default function ServicesPage() {
 
   const handleRestore = (service: Service) => {
     if (service?.id) restoreItem.mutate(service.id)
-  }
-  const handleHardDelete = (service: Service) => {
-    if (service?.id) hardDeleteItem.mutate(service.id)
   }
 
   const columns = isArchived

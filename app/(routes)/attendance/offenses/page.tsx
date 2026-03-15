@@ -32,7 +32,7 @@ export default function OffensesPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [offenseToDelete, setOffenseToDelete] = useState<number | null>(null)
 
-  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Offense>(
+  const { archivedQuery, restoreItem } = useArchive<Offense>(
     "/attendance/offenses/",
     "offenses",
     searchParams,
@@ -77,10 +77,6 @@ export default function OffensesPage() {
 
   const handleRestore = (offense: Offense) => {
     if (offense.id !== undefined) restoreItem.mutate(offense.id)
-  }
-
-  const handleHardDelete = (offense: Offense) => {
-    if (offense.id !== undefined) hardDeleteItem.mutate(offense.id)
   }
 
   const columns = isArchived

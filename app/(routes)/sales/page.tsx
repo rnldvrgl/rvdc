@@ -61,16 +61,15 @@ export default function SalesTransactionsPage() {
     filter,
   })
   const { filters, orderingOptions } = useSalesTransactionFilters()
-  const { deleteTransaction, unvoidTransaction, hardDeleteVoided } =
+  const { deleteTransaction, unvoidTransaction } =
     useSalesTransactionMutations()
 
-  const { archivedQuery, restoreItem, hardDeleteItem } =
-    useArchive<SalesTransaction>(
-      "sales/transactions/",
-      "sales-transactions",
-      searchParams,
-      activeTab === "archived",
-    )
+  const { archivedQuery, restoreItem } = useArchive<SalesTransaction>(
+    "sales/transactions/",
+    "sales-transactions",
+    searchParams,
+    activeTab === "archived",
+  )
 
   const voidedQuery = useVoidedSalesTransactions({
     ...searchParams,
@@ -124,14 +123,8 @@ export default function SalesTransactionsPage() {
   const handleRestore = (tx: SalesTransaction) => {
     if (tx?.id) restoreItem.mutate(tx.id)
   }
-  const handleHardDelete = (tx: SalesTransaction) => {
-    if (tx?.id) hardDeleteItem.mutate(tx.id)
-  }
   const handleUnvoid = (tx: SalesTransaction) => {
     if (tx?.id) unvoidTransaction.mutate(tx.id)
-  }
-  const handleHardDeleteVoided = (tx: SalesTransaction) => {
-    if (tx?.id) hardDeleteVoided.mutate(tx.id)
   }
 
   const columns =

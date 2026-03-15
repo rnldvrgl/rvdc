@@ -387,13 +387,12 @@ export default function CompanyDeductionsPage() {
   const toggleMutation = useToggleDeduction()
   const deleteMutation = useDeleteManualDeduction()
 
-  const { archivedQuery, restoreItem, hardDeleteItem } =
-    useArchive<ManualDeduction>(
-      "/payroll/manual-deductions/",
-      "manual-deductions",
-      searchParams,
-      isArchived,
-    )
+  const { archivedQuery, restoreItem } = useArchive<ManualDeduction>(
+    "/payroll/manual-deductions/",
+    "manual-deductions",
+    searchParams,
+    isArchived,
+  )
 
   const handleToggle = async (deduction: ManualDeduction) => {
     try {

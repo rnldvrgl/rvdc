@@ -67,13 +67,12 @@ export default function ExpenseCategoriesPage() {
   })
   const { filters, orderingOptions } = useExpenseCategoryFilters()
 
-  const { archivedQuery, restoreItem, hardDeleteItem } =
-    useArchive<ExpenseCategory>(
-      "/expenses/categories/",
-      "expense-categories",
-      searchParams,
-      isArchived,
-    )
+  const { archivedQuery, restoreItem } = useArchive<ExpenseCategory>(
+    "/expenses/categories/",
+    "expense-categories",
+    searchParams,
+    isArchived,
+  )
 
   const {
     entityState: viewSheet,

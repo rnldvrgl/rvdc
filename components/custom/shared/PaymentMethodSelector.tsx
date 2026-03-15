@@ -70,7 +70,8 @@ export default function PaymentMethodSelector({
   const remainingBalance = Math.max(0, totalItemsAmount - totalPayments)
 
   const handleAdd = () => {
-    append({ payment_type: "cash", amount: 0, cheque_collection: null })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    append({ payment_type: "cash", amount: 0, cheque_collection: null } as any)
   }
 
   const handleAddWithFill = () => {
@@ -78,7 +79,8 @@ export default function PaymentMethodSelector({
       payment_type: "cash",
       amount: remainingBalance > 0 ? remainingBalance : 0,
       cheque_collection: null,
-    })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
   }
 
   const handleFillRemaining = (

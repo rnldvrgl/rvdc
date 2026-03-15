@@ -31,7 +31,7 @@ export default function StocksPage() {
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const { softDeleteStallStock } = useStallStockMutations()
-  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Stock>(
+  const { archivedQuery, restoreItem } = useArchive<Stock>(
     "/inventory/stocks/",
     "stall-stocks",
     searchParams,
@@ -97,10 +97,6 @@ export default function StocksPage() {
 
   const handleRestore = (stock: Stock) => {
     if (stock.id !== undefined) restoreItem.mutate(stock.id)
-  }
-
-  const handleHardDelete = (stock: Stock) => {
-    if (stock.id !== undefined) hardDeleteItem.mutate(stock.id)
   }
 
   const handleView = (stock: Stock) => {

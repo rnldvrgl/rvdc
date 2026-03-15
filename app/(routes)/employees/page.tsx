@@ -42,7 +42,7 @@ export default function EmployeesPage() {
     filter,
   })
 
-  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Employee>(
+  const { archivedQuery, restoreItem } = useArchive<Employee>(
     "/users/employees/",
     "employees",
     searchParams,
@@ -78,10 +78,6 @@ export default function EmployeesPage() {
 
   const handleRestore = (employee: Employee) => {
     if (employee.id !== undefined) restoreItem.mutate(employee.id)
-  }
-
-  const handleHardDelete = (employee: Employee) => {
-    if (employee.id !== undefined) hardDeleteItem.mutate(employee.id)
   }
 
   const columns = isArchived

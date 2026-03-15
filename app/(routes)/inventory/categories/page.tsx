@@ -24,13 +24,12 @@ export default function ItemCategoriesPage() {
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const { deleteCategory } = useItemCategoryMutations()
-  const { archivedQuery, restoreItem, hardDeleteItem } =
-    useArchive<ProductCategory>(
-      "/inventory/categories/",
-      "item-categories",
-      searchParams,
-      isArchived,
-    )
+  const { archivedQuery, restoreItem } = useArchive<ProductCategory>(
+    "/inventory/categories/",
+    "item-categories",
+    searchParams,
+    isArchived,
+  )
   const { data, isLoading, refetch } = useItemCategories({
     page,
     limit,
@@ -65,10 +64,6 @@ export default function ItemCategoriesPage() {
 
   const handleRestore = (category: ProductCategory) => {
     if (category.id !== undefined) restoreItem.mutate(category.id)
-  }
-
-  const handleHardDelete = (category: ProductCategory) => {
-    if (category.id !== undefined) hardDeleteItem.mutate(category.id)
   }
 
   const handleView = (category: ProductCategory) => {

@@ -42,7 +42,7 @@ export default function ClientsPage() {
   })
   const { filters, orderingOptions } = useClientFilters()
 
-  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Client>(
+  const { archivedQuery, restoreItem } = useArchive<Client>(
     "/clients/",
     "clients",
     searchParams,
@@ -82,10 +82,6 @@ export default function ClientsPage() {
 
   const handleRestore = (client: Client) => {
     if (client.id !== undefined) restoreItem.mutate(client.id)
-  }
-
-  const handleHardDelete = (client: Client) => {
-    if (client.id !== undefined) hardDeleteItem.mutate(client.id)
   }
 
   const columns = isArchived
