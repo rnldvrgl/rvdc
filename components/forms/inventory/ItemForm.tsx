@@ -1,6 +1,7 @@
 "use client"
 
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,10 +28,12 @@ import {
   ProductCategory,
 } from "@/lib/constants/interface"
 import { useItemMutations } from "@/lib/mutations/useItemMutations"
+import { useCheckDuplicateItems } from "@/lib/queries/inventory/useCheckDuplicateItems"
 import { useCategoryChoices } from "@/lib/queries/useChoices"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { format } from "date-fns"
-import { ArrowDown, ArrowUp, History, Minus } from "lucide-react"
+import { AlertTriangle, ArrowDown, ArrowUp, History, Minus } from "lucide-react"
+import { useEffect, useState } from "react"
 import { SubmitHandler, useForm } from "react-hook-form"
 
 interface FormValues {
@@ -156,6 +159,25 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
 
   const { addItem, updateItem } = useItemMutations()
 
+  // Debounced duplicate checking
+  const watchedName = form.watch("name")
+  const watchedCategory = form.watch("category")
+  const [debouncedName, setDebouncedName] = useState(watchedName)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedName(watchedName), 400)
+    return () => clearTimeout(timer)
+  }, [watchedName])
+
+  const { data: duplicates } = useCheckDuplicateItems({
+    name: debouncedName,
+    categoryId: watchedCategory,
+    excludeId: item?.id,
+    enabled: debouncedName.trim().length >= 2,
+  })
+
+  const hasDuplicates = duplicates && duplicates.length > 0
+
   const handleSubmit: SubmitHandler<FormValues> = (data) => {
     const payload: ItemPayload = {
       name: data.name,
@@ -201,6 +223,48 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
                 </FormItem>
               )}
             />
+
+            {/* Duplicate warning */}
+            {hasDuplicates && (
+              <Alert variant="destructive" className="border-amber-500/50 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/50 dark:text-amber-200 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle className="text-sm font-semibold">
+                  Possible duplicate{duplicates.length > 1 ? "s" : ""} found
+                </AlertTitle>
+                <AlertDescription className="mt-2 space-y-1">
+                  {duplicates.map((d) => (
+                    <div
+                      key={d.id}
+                      className="flex items-center gap-2 text-xs"
+                    >
+                      <Badge
+                        variant="outline"
+                        className={
+                          d.match_type === "exact_same_category"
+                            ? "border-red-400 text-red-700 dark:border-red-500 dark:text-red-300"
+                            : d.match_type === "exact"
+                              ? "border-orange-400 text-orange-700 dark:border-orange-500 dark:text-orange-300"
+                              : "border-amber-400 text-amber-700 dark:border-amber-500 dark:text-amber-300"
+                        }
+                      >
+                        {d.match_type === "exact_same_category"
+                          ? "Exact + Same Category"
+                          : d.match_type === "exact"
+                            ? "Exact Match"
+                            : d.match_type === "contains"
+                              ? "Contains"
+                              : "Similar"}
+                      </Badge>
+                      <span className="font-medium">{d.name}</span>
+                      <span className="text-muted-foreground">
+                        ({d.sku})
+                        {d.category && ` · ${d.category}`}
+                      </span>
+                    </div>
+                  ))}
+                </AlertDescription>
+              </Alert>
+            )}
 
             <FormField
               control={form.control}
