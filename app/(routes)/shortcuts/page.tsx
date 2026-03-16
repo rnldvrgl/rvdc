@@ -81,7 +81,7 @@ const createShortcuts: ShortcutEntry[] = [
   },
   {
     shortcut: "Ctrl + Shift + Alt + 3",
-    description: "Pull Out from Stall",
+    description: "Pull Out from Stall (Qty Required)",
     roles: ["admin"],
   },
   {

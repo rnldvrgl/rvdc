@@ -125,10 +125,10 @@ const quickActions = [
     permission: "manage_stock",
   },
   {
-    label: "Pull Out from Stall",
+    label: "Pull Out from Stall (Qty Required)",
     icon: Package,
     action: "pullOutStall",
-    keywords: "pull out remove stall stock inventory",
+    keywords: "pull out remove stall stock inventory quantity",
     shortcut: "Ctrl+Shift+Alt+3",
     permission: "manage_stock",
   },
