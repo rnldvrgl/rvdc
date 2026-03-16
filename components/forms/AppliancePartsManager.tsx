@@ -474,7 +474,7 @@ export default function AppliancePartsManager({
           }
         }}
       >
-        <DialogContent className="max-w-sm! md:max-w-md!">
+        <DialogContent className="max-w-sm md:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {editingPartId ? "Edit Part" : "Add Part"}
@@ -486,7 +486,7 @@ export default function AppliancePartsManager({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 px-1">
             {/* Custom / Inventory Toggle */}
             <div className="flex items-center space-x-2">
               <Checkbox
