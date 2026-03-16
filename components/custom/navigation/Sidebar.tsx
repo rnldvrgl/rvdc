@@ -13,6 +13,7 @@ import RemittanceForm from "@/components/forms/RemittanceForm"
 
 import SalesTransactionForm from "@/components/forms/SalesTransactionForm"
 import ServiceFormWizard from "@/components/forms/ServiceFormWizard"
+import StockOperationDialog from "@/components/forms/inventory/StockOperationDialog"
 import useActivePath from "@/lib/hooks/useActivePath"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
@@ -52,6 +53,31 @@ const ENTITY_CONFIG = {
     title: "Add Cheque Collection",
     description: "Fill out the form below to record a cheque collection.",
     Form: ChequeCollectionForm,
+  },
+  restockStall: {
+    title: "Restock Stall",
+    description: "Add quantity to stall stock.",
+    Form: () => <StockOperationDialog operation="restock" type="stall" onClose={() => {}} />,
+  },
+  auditStall: {
+    title: "Audit Stall Stock",
+    description: "Reconcile and adjust stall stock quantities.",
+    Form: () => <StockOperationDialog operation="audit" type="stall" onClose={() => {}} />,
+  },
+  pullOutStall: {
+    title: "Pull Out from Stall",
+    description: "Remove stock from stall location.",
+    Form: () => <StockOperationDialog operation="pullout" type="stall" onClose={() => {}} />,
+  },
+  addStockroom: {
+    title: "Add to Stockroom",
+    description: "Add quantity to stockroom inventory.",
+    Form: () => <StockOperationDialog operation="restock" type="stock_room" onClose={() => {}} />,
+  },
+  auditStockroom: {
+    title: "Audit Stockroom",
+    description: "Reconcile and adjust stockroom quantities.",
+    Form: () => <StockOperationDialog operation="audit" type="stock_room" onClose={() => {}} />,
   },
 } as const
 
@@ -109,6 +135,21 @@ export function Sidebar() {
             case "addChequeCollection":
               handleOpenEntity("chequeCollection")
               break
+            case "restockStall":
+              handleOpenEntity("restockStall")
+              break
+            case "auditStall":
+              handleOpenEntity("auditStall")
+              break
+            case "pullOutStall":
+              handleOpenEntity("pullOutStall")
+              break
+            case "addStockroom":
+              handleOpenEntity("addStockroom")
+              break
+            case "auditStockroom":
+              handleOpenEntity("auditStockroom")
+              break
           }
         }}
       />
@@ -147,6 +188,21 @@ export function Sidebar() {
               break
             case "addChequeCollection":
               handleOpenEntity("chequeCollection")
+              break
+            case "restockStall":
+              handleOpenEntity("restockStall")
+              break
+            case "auditStall":
+              handleOpenEntity("auditStall")
+              break
+            case "pullOutStall":
+              handleOpenEntity("pullOutStall")
+              break
+            case "addStockroom":
+              handleOpenEntity("addStockroom")
+              break
+            case "auditStockroom":
+              handleOpenEntity("auditStockroom")
               break
           }
         }}

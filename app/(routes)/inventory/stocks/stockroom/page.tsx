@@ -17,8 +17,8 @@ import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useStockRoomStockMutations } from "@/lib/mutations/useStockRoomStockMutations"
 import {
-  useStockRoomFilters,
-  useStockRoomStocks,
+    useStockRoomFilters,
+    useStockRoomStocks,
 } from "@/lib/queries/inventory/useStocks"
 import { Eye, Plus, Warehouse } from "lucide-react"
 import { useState } from "react"

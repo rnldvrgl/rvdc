@@ -536,23 +536,23 @@ export function CommandPalette({
         switch (key) {
           case "1":
             e.preventDefault()
-            router.push("/inventory/stocks/stall?action=restock")
+            onAction?.("restockStall")
             break
           case "2":
             e.preventDefault()
-            router.push("/inventory/stocks/stall?action=audit")
+            onAction?.("auditStall")
             break
           case "3":
             e.preventDefault()
-            router.push("/inventory/stocks/stall?action=pullout")
+            onAction?.("pullOutStall")
             break
           case "4":
             e.preventDefault()
-            router.push("/inventory/stocks/stockroom?action=restock")
+            onAction?.("addStockroom")
             break
           case "5":
             e.preventDefault()
-            router.push("/inventory/stocks/stockroom?action=audit")
+            onAction?.("auditStockroom")
             break
         }
       }
@@ -581,31 +581,7 @@ export function CommandPalette({
         setSearchQuery("")
         return
       }
-      if (action === "restockStall") {
-        setOpen(false)
-        router.push("/inventory/stocks/stall?action=restock")
-        return
-      }
-      if (action === "auditStall") {
-        setOpen(false)
-        router.push("/inventory/stocks/stall?action=audit")
-        return
-      }
-      if (action === "pullOutStall") {
-        setOpen(false)
-        router.push("/inventory/stocks/stall?action=pullout")
-        return
-      }
-      if (action === "addStockroom") {
-        setOpen(false)
-        router.push("/inventory/stocks/stockroom?action=restock")
-        return
-      }
-      if (action === "auditStockroom") {
-        setOpen(false)
-        router.push("/inventory/stocks/stockroom?action=audit")
-        return
-      }
+      // All other actions are handled by parent (Sidebar)
       setOpen(false)
       onAction?.(action)
     },
