@@ -32,7 +32,7 @@ import type {
   QuotationType,
 } from "@/lib/constants/types"
 import { useQuotationMutations } from "@/lib/mutations/useQuotationMutations"
-import { useAirconUnits } from "@/lib/queries/useAircons"
+import { useAirconModels, useAirconUnits } from "@/lib/queries/useAircons"
 import { useClientChoices } from "@/lib/queries/useChoices"
 import { useEmployees } from "@/lib/queries/useEmployees"
 import { useQuotationTemplates } from "@/lib/queries/useQuotationTemplates"
@@ -61,6 +61,7 @@ interface QuotationFormProps {
 interface FormItem {
   id: string
   airconUnitId: number | null
+  airconModelId: number | null
   description: string
   qty: number
   price: number
@@ -298,6 +299,24 @@ export default function QuotationForm({
     [airconUnits],
   )
 
+  // ── Aircon Models (for Price List quotations) ──
+  const { data: airconModelsData } = useAirconModels({
+    limit: 500,
+  })
+  const airconModels = useMemo(
+    () => airconModelsData?.results ?? [],
+    [airconModelsData],
+  )
+  const airconModelOptions = useMemo(
+    () =>
+      airconModels.map((m) => ({
+        value: m.id,
+        label:
+          `${m.brand?.name ?? ""} ${m.name} ${m.horsepower ?? ""}hp${m.is_inverter ? " INV" : ""}`.trim(),
+      })),
+    [airconModels],
+  )
+
   // ── Client ──
   const { data: clientsData } = useClientChoices()
   const clients = useMemo(() => clientsData ?? [], [clientsData])
@@ -480,6 +499,7 @@ export default function QuotationForm({
       ? quotation.items.map((i) => ({
           id: generateId(),
           airconUnitId: i.aircon_unit ?? null,
+          airconModelId: i.aircon_model ?? null,
           description: i.description,
           qty: i.quantity,
           price: Number(i.unit_price),
@@ -489,6 +509,7 @@ export default function QuotationForm({
           {
             id: generateId(),
             airconUnitId: null,
+            airconModelId: null,
             description: "",
             qty: 1,
             price: 0,
@@ -541,6 +562,7 @@ export default function QuotationForm({
       {
         id: generateId(),
         airconUnitId: null,
+        airconModelId: null,
         description: "",
         qty: 1,
         price: 0,
@@ -602,6 +624,49 @@ export default function QuotationForm({
           ? {
               ...item,
               airconUnitId: null,
+              description: "",
+              price: 0,
+              qty: 1,
+              promoPrice: null,
+            }
+          : item,
+      ),
+    )
+  }, [])
+
+  // ── Aircon Model handlers (for Price List) ──
+  const handleAirconModelSelect = useCallback(
+    (itemId: string, modelId: number | null) => {
+      const model = airconModels.find((m) => m.id === modelId)
+      setItems((prev) =>
+        prev.map((item) => {
+          if (item.id !== itemId) return item
+          if (!model) return { ...item, airconModelId: null }
+          const desc =
+            `${model.brand?.name ?? ""}\n${model.is_inverter ? "Inverter" : "Non-Inverter"}\n${model.horsepower ?? ""}HP\n${model.name}`.trim()
+          return {
+            ...item,
+            airconModelId: model.id,
+            description: desc,
+            qty: 1,
+            price: Number(model.retail_price ?? model.selling_price ?? 0),
+            promoPrice: model.selling_price
+              ? Number(model.selling_price)
+              : null,
+          }
+        }),
+      )
+    },
+    [airconModels],
+  )
+
+  const handleAirconModelClear = useCallback((itemId: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              airconModelId: null,
               description: "",
               price: 0,
               qty: 1,
@@ -688,7 +753,8 @@ export default function QuotationForm({
       items: items
         .filter((i) => i.description.trim())
         .map((i) => ({
-          aircon_unit: i.airconUnitId || undefined,
+          aircon_unit: isPriceList ? undefined : i.airconUnitId || undefined,
+          aircon_model: isPriceList ? i.airconModelId || undefined : undefined,
           description: i.description,
           quantity: isPriceList ? 1 : i.qty,
           unit_price: i.price,
@@ -921,43 +987,83 @@ export default function QuotationForm({
                   <TooltipContent>Remove item</TooltipContent>
                 </Tooltip>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">
-                  Aircon Unit{" "}
-                  <span className="text-[10px]">
-                    (optional — auto-fills description & price)
-                  </span>
-                </Label>
-                <div className="flex items-center gap-1.5">
-                  <div className="flex-1">
-                    <ComboBox
-                      options={getUnitOptionsForItem(item.id)}
-                      value={item.airconUnitId}
-                      onChange={(v) =>
-                        handleAirconUnitSelect(item.id, v as number | null)
-                      }
-                      placeholder="Select aircon unit..."
-                      searchPlaceholder="Search serial, brand, model..."
-                    />
+              {isPriceList ? (
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">
+                    Aircon Model{" "}
+                    <span className="text-[10px]">
+                      (optional — auto-fills description & price)
+                    </span>
+                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex-1">
+                      <ComboBox
+                        options={airconModelOptions}
+                        value={item.airconModelId}
+                        onChange={(v) =>
+                          handleAirconModelSelect(item.id, v as number | null)
+                        }
+                        placeholder="Select aircon model..."
+                        searchPlaceholder="Search brand, model, HP..."
+                      />
+                    </div>
+                    {item.airconModelId && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleAirconModelClear(item.id)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove selected model</TooltipContent>
+                      </Tooltip>
+                    )}
                   </div>
-                  {item.airconUnitId && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleAirconUnitClear(item.id)}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Remove selected unit</TooltipContent>
-                    </Tooltip>
-                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">
+                    Aircon Unit{" "}
+                    <span className="text-[10px]">
+                      (optional — auto-fills description & price)
+                    </span>
+                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex-1">
+                      <ComboBox
+                        options={getUnitOptionsForItem(item.id)}
+                        value={item.airconUnitId}
+                        onChange={(v) =>
+                          handleAirconUnitSelect(item.id, v as number | null)
+                        }
+                        placeholder="Select aircon unit..."
+                        searchPlaceholder="Search serial, brand, model..."
+                      />
+                    </div>
+                    {item.airconUnitId && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleAirconUnitClear(item.id)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove selected unit</TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
+                </div>
+              )}
               <div
                 className={cn(
                   "grid gap-2",
