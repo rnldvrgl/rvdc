@@ -46,7 +46,9 @@ export function getStallStockColumns({
       accessorKey: "quantity",
       header: "Total Qty",
       cell: ({ row }) => {
-        const { quantity, item } = row.original
+        const { quantity, item, track_stock } = row.original
+        if (!track_stock)
+          return <span className="text-muted-foreground">—</span>
         return safeCell(`${quantity} ${item.unit_of_measure}`)
       },
     },
@@ -54,7 +56,9 @@ export function getStallStockColumns({
       accessorKey: "reserved_quantity",
       header: "Reserved",
       cell: ({ row }) => {
-        const { reserved_quantity, item } = row.original
+        const { reserved_quantity, item, track_stock } = row.original
+        if (!track_stock)
+          return <span className="text-muted-foreground">—</span>
         return (
           <span className="text-yellow-500 font-medium">
             {reserved_quantity} {item.unit_of_measure}
@@ -66,7 +70,9 @@ export function getStallStockColumns({
       accessorKey: "available_quantity",
       header: "Available",
       cell: ({ row }) => {
-        const { available_quantity, item } = row.original
+        const { available_quantity, item, track_stock } = row.original
+        if (!track_stock)
+          return <span className="text-muted-foreground">—</span>
         const isLow = available_quantity === 0
         return (
           <span
@@ -93,7 +99,17 @@ export function getStallStockColumns({
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const { status } = row.original
+        const { status, track_stock } = row.original
+        if (!track_stock) {
+          return (
+            <Badge
+              variant="outline"
+              className="bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-700"
+            >
+              Untracked
+            </Badge>
+          )
+        }
         return (
           <Badge variant={getBadgeVariant(status)}>
             {status.replace("_", " ")}
@@ -109,11 +125,7 @@ export function getStallStockColumns({
           row.original.item.waste_tolerance_percentage || "0",
         )
         if (val <= 0) return <span className="text-muted-foreground">—</span>
-        return (
-          <span className="text-warning font-medium">
-            {val}%
-          </span>
-        )
+        return <span className="text-warning font-medium">{val}%</span>
       },
     },
     action: {
@@ -148,29 +160,33 @@ export function getStallStockColumns({
         return (
           <DataTableActions
             items={[
-              {
-                label: "Add Stock",
-                icon: Plus,
-                onClick: () => onAddStock?.(stock),
-              },
-              {
-                label: "Pull Out",
-                icon: PackageMinus,
-                onClick: () => onPullOut?.(stock),
-                destructive: true,
-              },
-              ...(role === "admin"
+              ...(stock.track_stock
                 ? [
                     {
-                      label: "Restock",
-                      icon: PackagePlus,
-                      onClick: () => onRestock?.(stock),
+                      label: "Add Stock",
+                      icon: Plus,
+                      onClick: () => onAddStock?.(stock),
                     },
                     {
-                      label: "Audit Stock",
-                      icon: ClipboardCheck,
-                      onClick: () => onAudit?.(stock),
+                      label: "Pull Out",
+                      icon: PackageMinus,
+                      onClick: () => onPullOut?.(stock),
+                      destructive: true,
                     },
+                    ...(role === "admin"
+                      ? [
+                          {
+                            label: "Restock",
+                            icon: PackagePlus,
+                            onClick: () => onRestock?.(stock),
+                          },
+                          {
+                            label: "Audit Stock",
+                            icon: ClipboardCheck,
+                            onClick: () => onAudit?.(stock),
+                          },
+                        ]
+                      : []),
                   ]
                 : []),
               {

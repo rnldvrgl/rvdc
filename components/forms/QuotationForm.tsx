@@ -29,6 +29,7 @@ import type {
   Quotation,
   QuotationPayload,
   QuotationPaymentMethod,
+  QuotationType,
 } from "@/lib/constants/types"
 import { useQuotationMutations } from "@/lib/mutations/useQuotationMutations"
 import { useAirconUnits } from "@/lib/queries/useAircons"
@@ -63,6 +64,7 @@ interface FormItem {
   description: string
   qty: number
   price: number
+  promoPrice: number | null
 }
 
 function generateId() {
@@ -368,6 +370,13 @@ export default function QuotationForm({
   const [projectDescription, setProjectDescription] = useState(
     quotation?.project_description ?? "",
   )
+
+  // ── Quotation Type ──
+  const [quotationType, setQuotationType] = useState<QuotationType>(
+    quotation?.quotation_type ?? "standard",
+  )
+  const isPriceList = quotationType === "price_list"
+
   const [discountAmount, setDiscountAmount] = useState<number>(
     quotation?.discount_amount ?? 0,
   )
@@ -474,6 +483,7 @@ export default function QuotationForm({
           description: i.description,
           qty: i.quantity,
           price: Number(i.unit_price),
+          promoPrice: i.promo_price != null ? Number(i.promo_price) : null,
         }))
       : [
           {
@@ -482,6 +492,7 @@ export default function QuotationForm({
             description: "",
             qty: 1,
             price: 0,
+            promoPrice: null,
           },
         ],
   )
@@ -533,6 +544,7 @@ export default function QuotationForm({
         description: "",
         qty: 1,
         price: 0,
+        promoPrice: null,
       },
     ])
   }, [])
@@ -572,7 +584,10 @@ export default function QuotationForm({
             airconUnitId: unit.id,
             description: desc,
             qty: 1,
-            price: Number(model?.selling_price ?? model?.retail_price ?? 0),
+            price: Number(model?.retail_price ?? model?.selling_price ?? 0),
+            promoPrice: model?.selling_price
+              ? Number(model.selling_price)
+              : null,
           }
         }),
       )
@@ -584,7 +599,14 @@ export default function QuotationForm({
     setItems((prev) =>
       prev.map((item) =>
         item.id === itemId
-          ? { ...item, airconUnitId: null, description: "", price: 0, qty: 1 }
+          ? {
+              ...item,
+              airconUnitId: null,
+              description: "",
+              price: 0,
+              qty: 1,
+              promoPrice: null,
+            }
           : item,
       ),
     )
@@ -634,7 +656,7 @@ export default function QuotationForm({
     const validItems = items.filter((i) => i.description.trim())
     if (validItems.length === 0)
       errors.push("Add at least one line item with a description.")
-    if (validItems.some((i) => i.price <= 0))
+    if (!isPriceList && validItems.some((i) => i.price <= 0))
       errors.push("All items must have a price greater than 0.")
     if (!quoteDate) errors.push("Quote date is required.")
     if (!validUntil) errors.push("Valid until date is required.")
@@ -652,7 +674,8 @@ export default function QuotationForm({
       quote_date: format(quoteDate, "yyyy-MM-dd"),
       valid_until: format(validUntil, "yyyy-MM-dd"),
       project_description: projectDescription,
-      discount_amount: discountAmount,
+      quotation_type: quotationType,
+      discount_amount: isPriceList ? 0 : discountAmount,
       terms_conditions: arrayToLines(termsLines),
       payment_terms: arrayToLines(paymentLines),
       notes,
@@ -667,23 +690,26 @@ export default function QuotationForm({
         .map((i) => ({
           aircon_unit: i.airconUnitId || undefined,
           description: i.description,
-          quantity: i.qty,
+          quantity: isPriceList ? 1 : i.qty,
           unit_price: i.price,
+          promo_price: isPriceList ? i.promoPrice || null : null,
         })),
-      payments: paymentRecords
-        .filter((p) => p.label.trim())
-        .map((p) => ({
-          label: p.label,
-          amount: p.amount,
-          payment_method: (p.payment_method || "") as
-            | QuotationPaymentMethod
-            | "",
-          payment_date: p.payment_date
-            ? format(p.payment_date, "yyyy-MM-dd")
-            : null,
-          reference_number: p.reference_number,
-          si_number: p.si_number,
-        })),
+      payments: isPriceList
+        ? []
+        : paymentRecords
+            .filter((p) => p.label.trim())
+            .map((p) => ({
+              label: p.label,
+              amount: p.amount,
+              payment_method: (p.payment_method || "") as
+                | QuotationPaymentMethod
+                | "",
+              payment_date: p.payment_date
+                ? format(p.payment_date, "yyyy-MM-dd")
+                : null,
+              reference_number: p.reference_number,
+              si_number: p.si_number,
+            })),
     }
 
     if (isEdit && quotation) {
@@ -760,7 +786,24 @@ export default function QuotationForm({
         <h3 className="text-sm font-semibold text-foreground mb-3">
           Quote Details
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-3xl">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">
+              Quotation Type
+            </Label>
+            <Select
+              value={quotationType}
+              onValueChange={(v) => setQuotationType(v as QuotationType)}
+            >
+              <SelectTrigger className="h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard</SelectItem>
+                <SelectItem value="price_list">Price List</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Quote Date</Label>
             <Popover>
@@ -918,16 +961,18 @@ export default function QuotationForm({
               <div
                 className={cn(
                   "grid gap-2",
-                  item.airconUnitId
-                    ? "grid-cols-1 md:grid-cols-[1fr_180px] lg:grid-cols-[1fr_200px]"
-                    : "grid-cols-1 sm:grid-cols-[1fr_90px] md:grid-cols-[1fr_90px_180px] lg:grid-cols-[1fr_90px_200px]",
+                  isPriceList
+                    ? "grid-cols-1 sm:grid-cols-[1fr_150px_150px]"
+                    : item.airconUnitId
+                      ? "grid-cols-1 md:grid-cols-[1fr_180px] lg:grid-cols-[1fr_200px]"
+                      : "grid-cols-1 sm:grid-cols-[1fr_90px] md:grid-cols-[1fr_90px_180px] lg:grid-cols-[1fr_90px_200px]",
                 )}
               >
                 <DescriptionField
                   value={item.description}
                   onChange={(v) => updateItem(item.id, "description", v)}
                 />
-                {!item.airconUnitId && (
+                {!isPriceList && !item.airconUnitId && (
                   <div className="space-y-1">
                     <Label className="text-[11px] text-muted-foreground">
                       Qty
@@ -949,7 +994,7 @@ export default function QuotationForm({
                 )}
                 <div className="space-y-1">
                   <Label className="text-[11px] text-muted-foreground">
-                    Price
+                    {isPriceList ? "Retail Price" : "Price"}
                   </Label>
                   <Input
                     type="number"
@@ -967,6 +1012,30 @@ export default function QuotationForm({
                     className="h-9"
                   />
                 </div>
+                {isPriceList && (
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      Promo Price
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={item.promoPrice ?? ""}
+                      onChange={(e) =>
+                        updateItem(
+                          item.id,
+                          "promoPrice",
+                          e.target.value === ""
+                            ? 0
+                            : parseFloat(e.target.value) || 0,
+                        )
+                      }
+                      placeholder="0.00"
+                      className="h-9"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -1021,242 +1090,248 @@ export default function QuotationForm({
         </div>
 
         {/* Totals */}
-        <div className="mt-4 ml-auto w-full sm:w-[320px] md:w-[360px] lg:w-[400px] space-y-1.5 text-sm">
-          <div className="flex justify-between text-muted-foreground">
-            <span>Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
+        {!isPriceList && (
+          <div className="mt-4 ml-auto w-full sm:w-[320px] md:w-[360px] lg:w-[400px] space-y-1.5 text-sm">
+            <div className="flex justify-between text-muted-foreground">
+              <span>Subtotal</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-muted-foreground">Discount</span>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={discountAmount || ""}
+                onChange={(e) =>
+                  setDiscountAmount(parseFloat(e.target.value) || 0)
+                }
+                placeholder="0.00"
+                className="w-32 sm:w-40 md:w-44 h-8 text-right text-sm"
+              />
+            </div>
+            <Separator />
+            <div className="flex justify-between font-semibold text-base text-success">
+              <span>Total</span>
+              <span>{formatCurrency(total)}</span>
+            </div>
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-muted-foreground">Discount</span>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={discountAmount || ""}
-              onChange={(e) =>
-                setDiscountAmount(parseFloat(e.target.value) || 0)
-              }
-              placeholder="0.00"
-              className="w-32 sm:w-40 md:w-44 h-8 text-right text-sm"
-            />
-          </div>
-          <Separator />
-          <div className="flex justify-between font-semibold text-base text-success">
-            <span>Total</span>
-            <span>{formatCurrency(total)}</span>
-          </div>
-        </div>
+        )}
       </section>
 
       <Separator />
 
       {/* ── Section: Payment Schedule ─────────────────────── */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-foreground">
-            Payment Schedule
-          </h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs border-dashed text-blue-600 border-blue-300 hover:bg-blue-50 hover:text-blue-700"
-            onClick={addPayment}
-          >
-            <Plus className="mr-1 h-3 w-3" />
-            Add Payment
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground mb-3">
-          Track downpayment, completion payment, etc. These will appear on the
-          printed quotation.
-        </p>
-        <div className="space-y-3">
-          {paymentRecords.length === 0 && (
-            <div className="text-xs text-muted-foreground border border-dashed rounded-md p-4 text-center">
-              No payment schedule yet.
-              <div className="mt-2">
-                Click <span className="font-medium">Add Payment</span> to create
-                one.
-              </div>
-            </div>
-          )}
-          {paymentRecords.map((rec) => (
-            <div
-              key={rec.id}
-              className="group border rounded-md p-3 bg-muted/30 space-y-2"
+      {!isPriceList && (
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-foreground">
+              Payment Schedule
+            </h3>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs border-dashed text-blue-600 border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+              onClick={addPayment}
             >
-              {/* Row 1: Label + Amount + Delete */}
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_32px] md:grid-cols-[1fr_180px_32px] lg:grid-cols-[1fr_200px_32px] gap-2 items-end">
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">
-                    Label
-                  </Label>
-                  <Input
-                    value={rec.label}
-                    onChange={(e) =>
-                      setPaymentRecords((prev) =>
-                        prev.map((r) =>
-                          r.id === rec.id ? { ...r, label: e.target.value } : r,
-                        ),
-                      )
-                    }
-                    placeholder="e.g. Down payment, Full payment"
-                    className="h-8 text-sm"
-                  />
+              <Plus className="mr-1 h-3 w-3" />
+              Add Payment
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            Track downpayment, completion payment, etc. These will appear on the
+            printed quotation.
+          </p>
+          <div className="space-y-3">
+            {paymentRecords.length === 0 && (
+              <div className="text-xs text-muted-foreground border border-dashed rounded-md p-4 text-center">
+                No payment schedule yet.
+                <div className="mt-2">
+                  Click <span className="font-medium">Add Payment</span> to
+                  create one.
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">
-                    Amount (₱)
-                  </Label>
-                  <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={rec.amount || ""}
-                    onChange={(e) =>
-                      setPaymentRecords((prev) =>
-                        prev.map((r) =>
-                          r.id === rec.id
-                            ? {
-                                ...r,
-                                amount: parseFloat(e.target.value) || 0,
-                              }
-                            : r,
-                        ),
-                      )
-                    }
-                    placeholder="0.00"
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive self-end"
-                      onClick={() =>
+              </div>
+            )}
+            {paymentRecords.map((rec) => (
+              <div
+                key={rec.id}
+                className="group border rounded-md p-3 bg-muted/30 space-y-2"
+              >
+                {/* Row 1: Label + Amount + Delete */}
+                <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_32px] md:grid-cols-[1fr_180px_32px] lg:grid-cols-[1fr_200px_32px] gap-2 items-end">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      Label
+                    </Label>
+                    <Input
+                      value={rec.label}
+                      onChange={(e) =>
                         setPaymentRecords((prev) =>
-                          prev.filter((r) => r.id !== rec.id),
+                          prev.map((r) =>
+                            r.id === rec.id
+                              ? { ...r, label: e.target.value }
+                              : r,
+                          ),
+                        )
+                      }
+                      placeholder="e.g. Down payment, Full payment"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      Amount (₱)
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={rec.amount || ""}
+                      onChange={(e) =>
+                        setPaymentRecords((prev) =>
+                          prev.map((r) =>
+                            r.id === rec.id
+                              ? {
+                                  ...r,
+                                  amount: parseFloat(e.target.value) || 0,
+                                }
+                              : r,
+                          ),
+                        )
+                      }
+                      placeholder="0.00"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive self-end"
+                        onClick={() =>
+                          setPaymentRecords((prev) =>
+                            prev.filter((r) => r.id !== rec.id),
+                          )
+                        }
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Remove payment</TooltipContent>
+                  </Tooltip>
+                </div>
+                {/* Row 2: Payment Method + Date + Ref No. + S.I. No. */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      Payment Method
+                    </Label>
+                    <Select
+                      value={rec.payment_method}
+                      onValueChange={(v) =>
+                        setPaymentRecords((prev) =>
+                          prev.map((r) =>
+                            r.id === rec.id ? { ...r, payment_method: v } : r,
+                          ),
                         )
                       }
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Remove payment</TooltipContent>
-                </Tooltip>
-              </div>
-              {/* Row 2: Payment Method + Date + Ref No. + S.I. No. */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">
-                    Payment Method
-                  </Label>
-                  <Select
-                    value={rec.payment_method}
-                    onValueChange={(v) =>
-                      setPaymentRecords((prev) =>
-                        prev.map((r) =>
-                          r.id === rec.id ? { ...r, payment_method: v } : r,
-                        ),
-                      )
-                    }
-                  >
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="gcash">GCash</SelectItem>
-                      <SelectItem value="bank_transfer">
-                        Bank Transfer
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">
-                    Date
-                  </Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal h-8 text-sm",
-                          !rec.payment_date && "text-muted-foreground",
-                        )}
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cash">Cash</SelectItem>
+                        <SelectItem value="gcash">GCash</SelectItem>
+                        <SelectItem value="bank_transfer">
+                          Bank Transfer
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      Date
+                    </Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal h-8 text-sm",
+                            !rec.payment_date && "text-muted-foreground",
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                          {rec.payment_date
+                            ? format(rec.payment_date, "MM/dd/yyyy")
+                            : "Pick date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-auto p-0"
+                        align="start"
                       >
-                        <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                        {rec.payment_date
-                          ? format(rec.payment_date, "MM/dd/yyyy")
-                          : "Pick date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-auto p-0"
-                      align="start"
-                    >
-                      <Calendar
-                        mode="single"
-                        selected={rec.payment_date}
-                        onSelect={(d) =>
-                          setPaymentRecords((prev) =>
-                            prev.map((r) =>
-                              r.id === rec.id ? { ...r, payment_date: d } : r,
-                            ),
-                          )
-                        }
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">
-                    Ref No.
-                  </Label>
-                  <Input
-                    value={rec.reference_number}
-                    onChange={(e) =>
-                      setPaymentRecords((prev) =>
-                        prev.map((r) =>
-                          r.id === rec.id
-                            ? { ...r, reference_number: e.target.value }
-                            : r,
-                        ),
-                      )
-                    }
-                    placeholder="Reference #"
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground">
-                    S.I. No.
-                  </Label>
-                  <Input
-                    value={rec.si_number}
-                    onChange={(e) =>
-                      setPaymentRecords((prev) =>
-                        prev.map((r) =>
-                          r.id === rec.id
-                            ? { ...r, si_number: e.target.value }
-                            : r,
-                        ),
-                      )
-                    }
-                    placeholder="Sales Invoice #"
-                    className="h-8 text-sm"
-                  />
+                        <Calendar
+                          mode="single"
+                          selected={rec.payment_date}
+                          onSelect={(d) =>
+                            setPaymentRecords((prev) =>
+                              prev.map((r) =>
+                                r.id === rec.id ? { ...r, payment_date: d } : r,
+                              ),
+                            )
+                          }
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      Ref No.
+                    </Label>
+                    <Input
+                      value={rec.reference_number}
+                      onChange={(e) =>
+                        setPaymentRecords((prev) =>
+                          prev.map((r) =>
+                            r.id === rec.id
+                              ? { ...r, reference_number: e.target.value }
+                              : r,
+                          ),
+                        )
+                      }
+                      placeholder="Reference #"
+                      className="h-8 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      S.I. No.
+                    </Label>
+                    <Input
+                      value={rec.si_number}
+                      onChange={(e) =>
+                        setPaymentRecords((prev) =>
+                          prev.map((r) =>
+                            r.id === rec.id
+                              ? { ...r, si_number: e.target.value }
+                              : r,
+                          ),
+                        )
+                      }
+                      placeholder="Sales Invoice #"
+                      className="h-8 text-sm"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       <Separator />
 

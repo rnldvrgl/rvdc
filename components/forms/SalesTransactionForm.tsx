@@ -170,10 +170,25 @@ export default function SalesTransactionForm({
     const map = new Map<number, number>()
     if (stockData?.results) {
       for (const stock of stockData.results) {
-        map.set(stock.item.id, stock.available_quantity)
+        if (stock.track_stock) {
+          map.set(stock.item.id, stock.available_quantity)
+        }
       }
     }
     return map
+  }, [stockData])
+
+  // Build set of untracked item IDs
+  const untrackedItemIds = useMemo(() => {
+    const ids = new Set<number>()
+    if (stockData?.results) {
+      for (const stock of stockData.results) {
+        if (!stock.track_stock) {
+          ids.add(stock.item.id)
+        }
+      }
+    }
+    return ids
   }, [stockData])
 
   const { addTransaction, updateTransaction } = useSalesTransactionMutations()
@@ -554,6 +569,9 @@ export default function SalesTransactionForm({
               allItems={allItems}
               customItemTemplates={customItemTemplates}
               stockMap={stockMap.size > 0 ? stockMap : undefined}
+              untrackedItemIds={
+                untrackedItemIds.size > 0 ? untrackedItemIds : undefined
+              }
               onChange={(updatedItems) => {
                 form.setValue(
                   "items",

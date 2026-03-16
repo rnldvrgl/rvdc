@@ -22,6 +22,7 @@ export default function ItemQuantitySelector({
   allowPriceChange,
   stockMap,
   customItemTemplates,
+  untrackedItemIds,
 }: {
   items: ItemEntry[]
   allItems: Item[]
@@ -32,6 +33,8 @@ export default function ItemQuantitySelector({
   stockMap?: Map<number, number>
   /** Optional templates for quickly filling custom item rows */
   customItemTemplates?: CustomItemTemplate[]
+  /** Set of item IDs that have track_stock=false (skip stock display) */
+  untrackedItemIds?: Set<number>
 }) {
   const handleAdd = () => {
     if (allItems.length === 0) return
@@ -159,8 +162,13 @@ export default function ItemQuantitySelector({
             const availableStock = itm.item
               ? getAvailableStock(itm.item.id)
               : undefined
+            const isUntracked = itm.item
+              ? (untrackedItemIds?.has(itm.item.id) ?? false)
+              : false
             const isOverStock =
-              availableStock !== undefined && itm.quantity > availableStock
+              !isUntracked &&
+              availableStock !== undefined &&
+              itm.quantity > availableStock
             const isDuplicate = duplicateIndices.has(idx)
             return (
               <div
@@ -241,10 +249,13 @@ export default function ItemQuantitySelector({
                         }}
                         value={itm.item?.id.toString() ?? ""}
                         options={allItems.map((c) => {
+                          const isItemUntracked =
+                            untrackedItemIds?.has(c.id) ?? false
                           const stock = getAvailableStock(c.id)
                           return {
-                            label:
-                              stock !== undefined
+                            label: isItemUntracked
+                              ? `${c.name} (Untracked)`
+                              : stock !== undefined
                                 ? `${c.name} (${stock})`
                                 : c.name,
                             value: c.id.toString(),
@@ -500,11 +511,16 @@ export default function ItemQuantitySelector({
 
                 {/* Row 3: Indicators */}
                 {(availableStock !== undefined ||
+                  isUntracked ||
                   isDuplicate ||
                   isOverStock ||
                   allowPriceChange) && (
                   <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
-                    {availableStock !== undefined && (
+                    {isUntracked ? (
+                      <span className="text-violet-600 dark:text-violet-400 font-medium">
+                        Untracked
+                      </span>
+                    ) : availableStock !== undefined ? (
                       <span
                         className={
                           availableStock <= 0
@@ -516,7 +532,7 @@ export default function ItemQuantitySelector({
                       >
                         Stock: {availableStock}
                       </span>
-                    )}
+                    ) : null}
                     {isOverStock && (
                       <span className="text-warning flex items-center gap-0.5">
                         <AlertTriangle className="size-3" />

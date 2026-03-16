@@ -108,6 +108,7 @@ export type ClientPayload = Omit<Client, keyof BaseEntity>
 
 // Quotation
 export type QuotationStatus = "draft" | "sent" | "accepted" | "declined"
+export type QuotationType = "standard" | "price_list"
 
 export type QuotationItem = {
   id?: number
@@ -116,6 +117,7 @@ export type QuotationItem = {
   description: string
   quantity: number
   unit_price: number
+  promo_price?: number | null
   total_price?: number
 }
 
@@ -140,6 +142,7 @@ export type Quotation = BaseEntity & {
   quote_date: string
   valid_until: string
   project_description: string
+  quotation_type: QuotationType
   subtotal: number
   discount_amount: number
   total: number
@@ -169,6 +172,7 @@ export type QuotationPayload = {
   quote_date: string
   valid_until: string
   project_description: string
+  quotation_type?: QuotationType
   discount_amount: number
   terms_conditions: string
   payment_terms: string
