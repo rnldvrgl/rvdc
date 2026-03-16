@@ -80,6 +80,11 @@ const typeStyles: Record<string, NotifStyle> = {
     bg: "bg-red-100 dark:bg-red-900/40",
     text: "text-red-600 dark:text-red-400",
   },
+  stock_added_by_admin: {
+    icon: CheckCircle2,
+    bg: "bg-blue-100 dark:bg-blue-900/40",
+    text: "text-blue-600 dark:text-blue-400",
+  },
   transfer_created: {
     icon: Truck,
     bg: "bg-orange-100 dark:bg-orange-900/40",
@@ -345,6 +350,12 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
       case "stock_request_approved":
       case "stock_request_declined": {
         router.push("/inventory/stock-requests")
+        setOpen(false)
+        break
+      }
+
+      case "stock_added_by_admin": {
+        router.push("/inventory/stocks/stall")
         setOpen(false)
         break
       }

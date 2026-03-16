@@ -29,10 +29,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Item, ServiceItemUsed, Stock } from "@/lib/constants/interface"
+import {
+  CustomItemTemplate,
+  Item,
+  ServiceItemUsed,
+  Stock,
+} from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useServiceItemMutations } from "@/lib/mutations/services/useServiceItemMutations"
+import { useCustomItemTemplateChoices } from "@/lib/queries/inventory/useCustomItemTemplates"
 import { useServiceItems } from "@/lib/queries/services/useServiceItems"
 import { useItemChoices } from "@/lib/queries/useChoices"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
@@ -65,10 +71,14 @@ export default function ServicePartsManager({
   const [isCustom, setIsCustom] = useState(false)
   const [customDescription, setCustomDescription] = useState("")
   const [customPrice, setCustomPrice] = useState("")
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
+    null,
+  )
 
   const { data: partsUsed = [], isLoading } = useServiceItems(serviceId)
 
   const { data: itemsData, isLoading: itemsLoading } = useItemChoices()
+  const { data: templateData } = useCustomItemTemplateChoices()
 
   const { addItem, updateItem, deleteItem } = useServiceItemMutations()
 
@@ -78,6 +88,12 @@ export default function ServicePartsManager({
   const itemOptions = items.map((item) => ({
     value: item.id,
     label: `${item.name} — ${item.sku} • ${formatCurrency(item.retail_price)}`,
+  }))
+
+  const templates: CustomItemTemplate[] = templateData ?? []
+  const templateOptions = templates.map((t) => ({
+    value: t.id,
+    label: `${t.name} — ${formatCurrency(t.default_price)}`,
   }))
 
   const { data: stockData } = useApiQuery<PaginatedResult<Stock>>({
@@ -150,6 +166,7 @@ export default function ServicePartsManager({
       setIsCustom(false)
       setCustomDescription("")
       setCustomPrice("")
+      setSelectedTemplateId(null)
       setDiscountValue("")
       setDiscountReason("")
     }
@@ -466,6 +483,7 @@ export default function ServicePartsManager({
             setCustomPrice("")
             setDiscountValue("")
             setDiscountReason("")
+            setSelectedTemplateId(null)
           }
         }}
       >
@@ -527,6 +545,30 @@ export default function ServicePartsManager({
                     placeholder="0.00"
                   />
                 </div>
+                {templates.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Quick-fill from template
+                    </Label>
+                    <ComboBox
+                      options={templateOptions}
+                      value={selectedTemplateId}
+                      onChange={(value) => {
+                        const id = value as number | null
+                        setSelectedTemplateId(id)
+                        if (id) {
+                          const tpl = templates.find((t) => t.id === id)
+                          if (tpl) {
+                            setCustomDescription(tpl.name)
+                            setCustomPrice(tpl.default_price)
+                          }
+                        }
+                      }}
+                      placeholder="Select a template..."
+                      searchPlaceholder="Search templates..."
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <>

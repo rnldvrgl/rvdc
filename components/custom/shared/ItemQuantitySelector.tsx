@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Item, ItemEntry } from "@/lib/constants/interface"
+import { CustomItemTemplate, Item, ItemEntry } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { AlertTriangle, Info, Minus, Pencil, Plus, X } from "lucide-react"
 import { useState } from "react"
@@ -21,6 +21,7 @@ export default function ItemQuantitySelector({
   disabled,
   allowPriceChange,
   stockMap,
+  customItemTemplates,
 }: {
   items: ItemEntry[]
   allItems: Item[]
@@ -29,6 +30,8 @@ export default function ItemQuantitySelector({
   allowPriceChange?: boolean
   /** Map of item_id -> available_quantity for stock display */
   stockMap?: Map<number, number>
+  /** Optional templates for quickly filling custom item rows */
+  customItemTemplates?: CustomItemTemplate[]
 }) {
   const handleAdd = () => {
     if (allItems.length === 0) return
@@ -113,6 +116,9 @@ export default function ItemQuantitySelector({
 
   // Track which quantity inputs are being actively edited (so we don't override user typing)
   const [editingQty, setEditingQty] = useState<Record<number, string>>({})
+  const [selectedTemplateByRow, setSelectedTemplateByRow] = useState<
+    Record<number, string>
+  >({})
 
   const allowsDecimal = (item: Item | null) =>
     !!item && ["kg", "ft"].includes(item.unit_of_measure)
@@ -178,6 +184,42 @@ export default function ItemQuantitySelector({
                             Custom
                           </span>
                         </div>
+                        {(customItemTemplates?.length ?? 0) > 0 && (
+                          <div className="w-44 shrink-0">
+                            <ComboBox
+                              disabled={disabled}
+                              value={selectedTemplateByRow[idx] ?? ""}
+                              onChange={(val) => {
+                                const selectedValue = String(val ?? "")
+                                const selected = customItemTemplates?.find(
+                                  (t) => t.id.toString() === selectedValue,
+                                )
+                                if (!selected) return
+
+                                setSelectedTemplateByRow((prev) => ({
+                                  ...prev,
+                                  [idx]: selectedValue,
+                                }))
+                                handleUpdate(idx, "description", selected.name)
+                                handleUpdate(
+                                  idx,
+                                  "final_price_per_unit",
+                                  Number(selected.default_price),
+                                )
+                                handleUpdate(
+                                  idx,
+                                  "print_price_per_unit",
+                                  Number(selected.default_price),
+                                )
+                              }}
+                              options={customItemTemplates!.map((t) => ({
+                                label: `${t.name} (${formatCurrency(t.default_price)})`,
+                                value: t.id.toString(),
+                              }))}
+                              placeholder="Template"
+                            />
+                          </div>
+                        )}
                         <Input
                           placeholder="e.g. Motor Rewind"
                           value={itm.description ?? ""}

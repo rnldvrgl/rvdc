@@ -7,7 +7,6 @@ import {
 } from "@/lib/constants/types"
 import { RemixiconComponentType } from "@remixicon/react"
 import { LucideIcon } from "lucide-react"
-
 // ---------------------
 // API Mutations & Sheets
 // ---------------------
@@ -1003,6 +1002,25 @@ export interface StockRequest {
   available_stock: number
   created_at: string
   updated_at: string
+}
+
+export interface CustomItemTemplate {
+  id: number
+  name: string
+  default_price: string
+  description: string
+  is_active: boolean
+  created_by: number | null
+  created_by_name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CustomItemTemplatePayload {
+  name: string
+  default_price: string | number
+  description?: string
+  is_active?: boolean
 }
 
 // Technician Assignment

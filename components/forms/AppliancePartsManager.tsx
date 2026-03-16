@@ -29,10 +29,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { ApplianceItemUsed, Item, Stock } from "@/lib/constants/interface"
+import {
+  ApplianceItemUsed,
+  CustomItemTemplate,
+  Item,
+  Stock,
+} from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useApplianceItemMutations } from "@/lib/mutations/services/useApplianceItemMutations"
+import { useCustomItemTemplateChoices } from "@/lib/queries/inventory/useCustomItemTemplates"
 import { useApplianceItems } from "@/lib/queries/services/useApplianceItems"
 import { useItemChoices } from "@/lib/queries/useChoices"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
@@ -65,21 +71,31 @@ export default function AppliancePartsManager({
   const [isCustom, setIsCustom] = useState(false)
   const [customDescription, setCustomDescription] = useState("")
   const [customPrice, setCustomPrice] = useState("")
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
+    null,
+  )
 
   const { data: partsUsed = [], isLoading } = useApplianceItems(applianceId)
 
   // Fetch all items for selection (unpaginated)
   const { data: itemsData, isLoading: itemsLoading } = useItemChoices()
+  const { data: templateData } = useCustomItemTemplateChoices()
 
   const { addItem, updateItem, deleteItem } = useApplianceItemMutations()
 
   const items: Item[] = itemsData ?? []
+  const templates: CustomItemTemplate[] = templateData ?? []
   const selectedItem = items.find((i) => i.id === selectedItemId)
 
   // Transform items to ComboBox options
   const itemOptions = items.map((item) => ({
     value: item.id,
     label: `${item.name} — ${item.sku} • ${formatCurrency(item.retail_price)}`,
+  }))
+
+  const templateOptions = templates.map((t) => ({
+    value: t.id,
+    label: `${t.name} — ${formatCurrency(t.default_price)}`,
   }))
 
   // Fetch stock info for the selected item (to show availability)
@@ -146,6 +162,7 @@ export default function AppliancePartsManager({
       setIsCustom(false)
       setCustomDescription("")
       setCustomPrice("")
+      setSelectedTemplateId(null)
       setDiscountValue("")
       setDiscountReason("")
     }
@@ -471,6 +488,7 @@ export default function AppliancePartsManager({
             setIsFree(false)
             setDiscountValue("")
             setDiscountReason("")
+            setSelectedTemplateId(null)
           }
         }}
       >
@@ -532,6 +550,30 @@ export default function AppliancePartsManager({
                     placeholder="0.00"
                   />
                 </div>
+                {templates.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Quick-fill from template
+                    </Label>
+                    <ComboBox
+                      options={templateOptions}
+                      value={selectedTemplateId}
+                      onChange={(value) => {
+                        const id = value as number | null
+                        setSelectedTemplateId(id)
+                        if (id) {
+                          const tpl = templates.find((t) => t.id === id)
+                          if (tpl) {
+                            setCustomDescription(tpl.name)
+                            setCustomPrice(tpl.default_price)
+                          }
+                        }
+                      }}
+                      placeholder="Select a template..."
+                      searchPlaceholder="Search templates..."
+                    />
+                  </div>
+                )}
               </div>
             ) : (
               <>

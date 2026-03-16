@@ -33,6 +33,7 @@ import { useEntitySheetDialog } from "@/lib/hooks/useEntityDialog"
 import { useItemSelection } from "@/lib/hooks/useItemSelection"
 import { usePrint } from "@/lib/hooks/usePrint"
 import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
+import { useCustomItemTemplateChoices } from "@/lib/queries/inventory/useCustomItemTemplates"
 import { useItemChoices, useStallChoices } from "@/lib/queries/useChoices"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -152,6 +153,7 @@ export default function SalesTransactionForm({
   const [createdTransaction, setCreatedTransaction] =
     useState<SalesTransaction | null>(null)
   const { data: allItemsData } = useItemChoices()
+  const { data: customItemTemplates = [] } = useCustomItemTemplateChoices()
   const allItems: Item[] = allItemsData ?? []
 
   // Fetch stock levels for the sub stall
@@ -550,6 +552,7 @@ export default function SalesTransactionForm({
               disabled={isDisabled}
               items={items}
               allItems={allItems}
+              customItemTemplates={customItemTemplates}
               stockMap={stockMap.size > 0 ? stockMap : undefined}
               onChange={(updatedItems) => {
                 form.setValue(
@@ -721,9 +724,7 @@ export default function SalesTransactionForm({
                   </span>
                   <span
                     className={`text-base font-bold ${
-                      changeDue >= 0
-                        ? "text-success"
-                        : "text-destructive"
+                      changeDue >= 0 ? "text-success" : "text-destructive"
                     }`}
                   >
                     {formatCurrency(Math.abs(changeDue))}
