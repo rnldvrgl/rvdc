@@ -69,6 +69,31 @@ const createShortcuts: ShortcutEntry[] = [
     description: "Open Stock Checker",
     roles: ["admin", "manager", "clerk"],
   },
+  {
+    shortcut: "Ctrl + Shift + Alt + 1",
+    description: "Restock Stall",
+    roles: ["admin"],
+  },
+  {
+    shortcut: "Ctrl + Shift + Alt + 2",
+    description: "Audit Stall Stock",
+    roles: ["admin"],
+  },
+  {
+    shortcut: "Ctrl + Shift + Alt + 3",
+    description: "Pull Out from Stall",
+    roles: ["admin"],
+  },
+  {
+    shortcut: "Ctrl + Shift + Alt + 4",
+    description: "Add to Stockroom",
+    roles: ["admin"],
+  },
+  {
+    shortcut: "Ctrl + Shift + Alt + 5",
+    description: "Audit Stockroom",
+    roles: ["admin"],
+  },
 ]
 
 const navShortcuts: ShortcutEntry[] = [
@@ -120,7 +145,17 @@ const navShortcuts: ShortcutEntry[] = [
   {
     shortcut: "Alt + Shift + M",
     description: "Go to Remittances",
-    roles: ["admin", "manager"],
+    roles: ["admin", "manager", "clerk"],
+  },
+  {
+    shortcut: "Alt + Shift + L",
+    description: "Go to Stall Stocks",
+    roles: ["admin", "manager", "clerk"],
+  },
+  {
+    shortcut: "Alt + Shift + K",
+    description: "Go to Stockroom",
+    roles: ["admin"],
   },
 ]
 
@@ -129,10 +164,11 @@ const tipsByRole: Record<RoleGuide, string[]> = {
     "Press Ctrl + K anywhere to open the Command Palette — search pages, clients, services, and sales instantly.",
     "The Price Checker (Ctrl + Alt + P) lets you quickly look up retail, technician, wholesale, and cost prices for any item.",
     "The Stock Checker (Ctrl + Alt + I) shows stall and stockroom quantities, reserved stock, and availability status at a glance.",
+    "Stock operation shortcuts (Ctrl + Shift + Alt + 1-5) jump directly to restock, audit, and pull-out actions.",
     "Quick Create shortcuts work from any page — no need to navigate first.",
     "Navigation shortcuts only work when you're NOT focused on a text input.",
     "The Command Palette shows all actions available to Admin and Manager roles.",
-    "Only Admin can see cost prices in the Price Checker.",
+    "Only Admin can see cost prices in the Price Checker and access stockroom operations.",
   ],
   manager: [
     "Press Ctrl + K anywhere to open the Command Palette — search pages, clients, services, and sales instantly.",
@@ -141,7 +177,6 @@ const tipsByRole: Record<RoleGuide, string[]> = {
     "Quick Create shortcuts work from any page — no need to navigate first.",
     "Navigation shortcuts only work when you're NOT focused on a text input.",
     "The Command Palette shows all actions available to Admin and Manager roles.",
-    "You have the same shortcuts as Admin role.",
   ],
   clerk: [
     "Press Ctrl + K anywhere to open the Command Palette — search pages, clients, and sales instantly.",
@@ -192,13 +227,17 @@ function GuideContent({ role }: { role: RoleGuide }) {
         <CardContent className="space-y-4">
           {general.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">General</h4>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                General
+              </h4>
               <ShortcutTable items={general} />
             </div>
           )}
           {create.length > 0 && (
             <div>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Quick Create (Ctrl + Alt + Key)</h4>
+              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Quick Create (Ctrl + Alt + Key)
+              </h4>
               <ShortcutTable items={create} />
             </div>
           )}
@@ -231,7 +270,10 @@ function GuideContent({ role }: { role: RoleGuide }) {
         <CardContent>
           <ul className="space-y-2">
             {tips.map((tip, i) => (
-              <li key={i} className="flex gap-2.5 text-sm leading-relaxed">
+              <li
+                key={i}
+                className="flex gap-2.5 text-sm leading-relaxed"
+              >
                 <span className="flex items-center justify-center size-5 rounded-full bg-primary/10 text-primary text-xs font-semibold shrink-0 mt-0.5">
                   {i + 1}
                 </span>

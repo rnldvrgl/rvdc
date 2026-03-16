@@ -22,6 +22,7 @@ import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useServices } from "@/lib/queries/services/useServices"
 import {
   Banknote,
+  Box,
   CircleDollarSign,
   Coins,
   CreditCard,
@@ -107,6 +108,46 @@ const quickActions = [
     shortcut: "Ctrl+Alt+I",
     permission: "view_items",
   },
+  {
+    label: "Restock Stall",
+    icon: Package,
+    action: "restockStall",
+    keywords: "add restock stall stock inventory",
+    shortcut: "Ctrl+Shift+Alt+1",
+    permission: "manage_stock",
+  },
+  {
+    label: "Audit Stall Stock",
+    icon: Package,
+    action: "auditStall",
+    keywords: "audit stall stock inventory reconcile count",
+    shortcut: "Ctrl+Shift+Alt+2",
+    permission: "manage_stock",
+  },
+  {
+    label: "Pull Out from Stall",
+    icon: Package,
+    action: "pullOutStall",
+    keywords: "pull out remove stall stock inventory",
+    shortcut: "Ctrl+Shift+Alt+3",
+    permission: "manage_stock",
+  },
+  {
+    label: "Add to Stockroom",
+    icon: Box,
+    action: "addStockroom",
+    keywords: "add stockroom stock inventory",
+    shortcut: "Ctrl+Shift+Alt+4",
+    permission: "manage_stockroom",
+  },
+  {
+    label: "Audit Stockroom",
+    icon: Box,
+    action: "auditStockroom",
+    keywords: "audit stockroom stock inventory reconcile count",
+    shortcut: "Ctrl+Shift+Alt+5",
+    permission: "manage_stockroom",
+  },
 ]
 
 // Navigation shortcuts
@@ -121,6 +162,8 @@ const navigationShortcuts = [
   { keys: "Alt+Shift+T", label: "Go to Attendance", href: "/attendance/overview", icon: FileText, permission: "manage_attendance" },
   { keys: "Alt+Shift+P", label: "Go to Payroll", href: "/payroll/weekly", icon: FileText, permission: "view_payroll" },
   { keys: "Alt+Shift+M", label: "Go to Remittances", href: "/receivables/remittances", icon: Banknote, permission: "view_remittances" },
+  { keys: "Alt+Shift+L", label: "Go to Stall Stocks", href: "/inventory/stocks/stall", icon: Package, permission: "view_items" },
+  { keys: "Alt+Shift+K", label: "Go to Stockroom", href: "/inventory/stocks/stockroom", icon: Box, permission: "view_items" },
 ]
 
 function peso(v: string | number) {
@@ -402,6 +445,41 @@ export function CommandPalette({
             e.preventDefault()
             router.push("/receivables/remittances")
             break
+          case "l":
+            e.preventDefault()
+            router.push("/inventory/stocks/stall")
+            break
+          case "k":
+            e.preventDefault()
+            router.push("/inventory/stocks/stockroom")
+            break
+        }
+      }
+
+      // Ctrl+Shift+Alt + key for stock operations
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.altKey) {
+        const key = e.key
+        switch (key) {
+          case "1":
+            e.preventDefault()
+            router.push("/inventory/stocks/stall?action=restock")
+            break
+          case "2":
+            e.preventDefault()
+            router.push("/inventory/stocks/stall?action=audit")
+            break
+          case "3":
+            e.preventDefault()
+            router.push("/inventory/stocks/stall?action=pullout")
+            break
+          case "4":
+            e.preventDefault()
+            router.push("/inventory/stocks/stockroom?action=restock")
+            break
+          case "5":
+            e.preventDefault()
+            router.push("/inventory/stocks/stockroom?action=audit")
+            break
         }
       }
     }
@@ -427,6 +505,31 @@ export function CommandPalette({
       if (action === "stockChecker") {
         setStockCheckerMode(true)
         setSearchQuery("")
+        return
+      }
+      if (action === "restockStall") {
+        setOpen(false)
+        router.push("/inventory/stocks/stall?action=restock")
+        return
+      }
+      if (action === "auditStall") {
+        setOpen(false)
+        router.push("/inventory/stocks/stall?action=audit")
+        return
+      }
+      if (action === "pullOutStall") {
+        setOpen(false)
+        router.push("/inventory/stocks/stall?action=pullout")
+        return
+      }
+      if (action === "addStockroom") {
+        setOpen(false)
+        router.push("/inventory/stocks/stockroom?action=restock")
+        return
+      }
+      if (action === "auditStockroom") {
+        setOpen(false)
+        router.push("/inventory/stocks/stockroom?action=audit")
         return
       }
       setOpen(false)
