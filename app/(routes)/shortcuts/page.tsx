@@ -64,6 +64,11 @@ const createShortcuts: ShortcutEntry[] = [
     description: "Open Price Checker",
     roles: ["admin", "manager", "clerk"],
   },
+  {
+    shortcut: "Ctrl + Alt + I",
+    description: "Open Stock Checker",
+    roles: ["admin", "manager", "clerk"],
+  },
 ]
 
 const navShortcuts: ShortcutEntry[] = [
@@ -123,6 +128,7 @@ const tipsByRole: Record<RoleGuide, string[]> = {
   admin: [
     "Press Ctrl + K anywhere to open the Command Palette — search pages, clients, services, and sales instantly.",
     "The Price Checker (Ctrl + Alt + P) lets you quickly look up retail, technician, wholesale, and cost prices for any item.",
+    "The Stock Checker (Ctrl + Alt + I) shows stall and stockroom quantities, reserved stock, and availability status at a glance.",
     "Quick Create shortcuts work from any page — no need to navigate first.",
     "Navigation shortcuts only work when you're NOT focused on a text input.",
     "The Command Palette shows all actions available to Admin and Manager roles.",
@@ -131,6 +137,7 @@ const tipsByRole: Record<RoleGuide, string[]> = {
   manager: [
     "Press Ctrl + K anywhere to open the Command Palette — search pages, clients, services, and sales instantly.",
     "The Price Checker (Ctrl + Alt + P) lets you quickly look up retail, technician, wholesale, and cost prices for any item.",
+    "The Stock Checker (Ctrl + Alt + I) shows stall and stockroom quantities, reserved stock, and availability status at a glance.",
     "Quick Create shortcuts work from any page — no need to navigate first.",
     "Navigation shortcuts only work when you're NOT focused on a text input.",
     "The Command Palette shows all actions available to Admin and Manager roles.",
@@ -139,6 +146,7 @@ const tipsByRole: Record<RoleGuide, string[]> = {
   clerk: [
     "Press Ctrl + K anywhere to open the Command Palette — search pages, clients, and sales instantly.",
     "The Price Checker (Ctrl + Alt + P) lets you look up retail, technician, and wholesale prices for any item.",
+    "The Stock Checker (Ctrl + Alt + I) lets you quickly check stall and stockroom stock levels for any item.",
     "Quick Create shortcuts work from any page — no need to navigate first.",
     "Navigation shortcuts only work when you're NOT focused on a text input.",
     "You can view services and add parts used, but creating new services requires Admin or Manager access.",

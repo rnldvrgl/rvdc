@@ -17,6 +17,7 @@ import {
 import { orderedNavigation } from "@/lib/constants/navigation"
 import { useClients } from "@/lib/queries/clients/useClients"
 import { useItems } from "@/lib/queries/inventory/useItems"
+import { useStallStocks } from "@/lib/queries/inventory/useStocks"
 import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useServices } from "@/lib/queries/services/useServices"
 import {
@@ -34,6 +35,7 @@ import {
   ShoppingCart,
   Tag,
   Users,
+  Warehouse,
   Wrench,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -95,6 +97,14 @@ const quickActions = [
     action: "priceChecker",
     keywords: "price check item cost retail wholesale technician lookup",
     shortcut: "Ctrl+Alt+P",
+    permission: "view_items",
+  },
+  {
+    label: "Stock Checker",
+    icon: Warehouse,
+    action: "stockChecker",
+    keywords: "stock check inventory quantity stall stockroom available reserved",
+    shortcut: "Ctrl+Alt+I",
     permission: "view_items",
   },
 ]
@@ -172,9 +182,13 @@ export function CommandPalette({
   const [priceCheckerMode, setPriceCheckerMode] = useState(false)
   const [priceQuery, setPriceQuery] = useState("")
   const [debouncedPriceQuery, setDebouncedPriceQuery] = useState("")
+  const [stockCheckerMode, setStockCheckerMode] = useState(false)
+  const [stockQuery, setStockQuery] = useState("")
+  const [debouncedStockQuery, setDebouncedStockQuery] = useState("")
   const router = useRouter()
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const priceDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const stockDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const navItems = useMemo(() => flattenNavigation(), [])
 
@@ -217,6 +231,17 @@ export function CommandPalette({
     }
   }, [priceQuery])
 
+  // Debounce stock checker input
+  useEffect(() => {
+    stockDebounceRef.current = setTimeout(() => {
+      setDebouncedStockQuery(stockQuery)
+    }, 300)
+    return () => {
+      if (stockDebounceRef.current !== null)
+        clearTimeout(stockDebounceRef.current)
+    }
+  }, [stockQuery])
+
   // Reset search when dialog closes
   useEffect(() => {
     if (!open) {
@@ -225,11 +250,14 @@ export function CommandPalette({
       setPriceCheckerMode(false)
       setPriceQuery("")
       setDebouncedPriceQuery("")
+      setStockCheckerMode(false)
+      setStockQuery("")
+      setDebouncedStockQuery("")
     }
   }, [open])
 
   // Global search queries (only fire when there's a debounced query of 2+ chars)
-  const enableSearch = !priceCheckerMode && debouncedQuery.length >= 2
+  const enableSearch = !priceCheckerMode && !stockCheckerMode && debouncedQuery.length >= 2
   const { data: clientsData, isLoading: clientsLoading } = useClients({
     search: enableSearch ? debouncedQuery : undefined,
     limit: 5,
@@ -254,6 +282,15 @@ export function CommandPalette({
     page: 1,
   })
   const priceItems: Item[] = enablePriceSearch ? (itemsData?.results ?? []) : []
+
+  // Stock checker search
+  const enableStockSearch = stockCheckerMode && debouncedStockQuery.length >= 2
+  const { data: stocksData, isLoading: stocksLoading } = useStallStocks({
+    search: enableStockSearch ? debouncedStockQuery : undefined,
+    limit: 10,
+    page: 1,
+  })
+  const stockItems = enableStockSearch ? (stocksData?.results ?? []) : []
 
   const clients = enableSearch ? (clientsData?.results ?? []) : []
   const services = enableSearch ? (servicesData?.results ?? []) : []
@@ -310,6 +347,11 @@ export function CommandPalette({
           case "p":
             e.preventDefault()
             setPriceCheckerMode(true)
+            setOpen(true)
+            break
+          case "i":
+            e.preventDefault()
+            setStockCheckerMode(true)
             setOpen(true)
             break
         }
@@ -382,6 +424,11 @@ export function CommandPalette({
         setSearchQuery("")
         return
       }
+      if (action === "stockChecker") {
+        setStockCheckerMode(true)
+        setSearchQuery("")
+        return
+      }
       setOpen(false)
       onAction?.(action)
     },
@@ -395,11 +442,13 @@ export function CommandPalette({
     <CommandDialog
       open={open}
       onOpenChange={setOpen}
-      title={priceCheckerMode ? "Price Checker" : "Command Palette"}
+      title={priceCheckerMode ? "Price Checker" : stockCheckerMode ? "Stock Checker" : "Command Palette"}
       description={
         priceCheckerMode
           ? "Search for an item to see its prices"
-          : "Search pages, actions, and more..."
+          : stockCheckerMode
+            ? "Search for an item to check stock levels"
+            : "Search pages, actions, and more..."
       }
     >
       {priceCheckerMode ? (
@@ -407,6 +456,12 @@ export function CommandPalette({
           placeholder="Type item name to check prices..."
           value={priceQuery}
           onValueChange={setPriceQuery}
+        />
+      ) : stockCheckerMode ? (
+        <CommandInput
+          placeholder="Type item name to check stock..."
+          value={stockQuery}
+          onValueChange={setStockQuery}
         />
       ) : (
         <CommandInput
@@ -507,6 +562,116 @@ export function CommandPalette({
               </CommandItem>
             </CommandGroup>
           </>
+        ) : stockCheckerMode ? (
+          <>
+            <CommandEmpty>
+              <div className="flex flex-col items-center gap-2 py-4">
+                {stocksLoading ? (
+                  <Loader2 className="size-8 text-muted-foreground/50 animate-spin" />
+                ) : (
+                  <Warehouse className="size-8 text-muted-foreground/50" />
+                )}
+                <p className="text-sm text-muted-foreground">
+                  {stocksLoading
+                    ? "Searching stocks..."
+                    : debouncedStockQuery.length < 2
+                      ? "Type at least 2 characters to search"
+                      : "No items found"}
+                </p>
+              </div>
+            </CommandEmpty>
+            {stockItems.length > 0 && (
+              <CommandGroup heading="Stock Levels">
+                {stockItems.map((stock) => {
+                  const statusColor =
+                    stock.status === "no_stock"
+                      ? "text-red-600 dark:text-red-400"
+                      : stock.status === "low_stock"
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-emerald-600 dark:text-emerald-400"
+                  const statusLabel =
+                    stock.status === "no_stock"
+                      ? "No Stock"
+                      : stock.status === "low_stock"
+                        ? "Low Stock"
+                        : "In Stock"
+                  const stockRoomStatusColor =
+                    stock.stock_room_status === "no_stock"
+                      ? "text-red-600 dark:text-red-400"
+                      : stock.stock_room_status === "low_stock"
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-emerald-600 dark:text-emerald-400"
+                  const stockRoomStatusLabel =
+                    stock.stock_room_status === "no_stock"
+                      ? "No Stock"
+                      : stock.stock_room_status === "low_stock"
+                        ? "Low Stock"
+                        : "In Stock"
+                  return (
+                    <CommandItem
+                      key={stock.id}
+                      value={`${stock.item.name} ${stock.item.sku}`}
+                      className="flex-col items-start gap-1 py-3"
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <Warehouse className="size-4 text-primary shrink-0" />
+                        <span className="font-medium">{stock.item.name}</span>
+                        {stock.item.sku && (
+                          <span className="text-xs text-muted-foreground ml-auto font-mono">
+                            {stock.item.sku}
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-2 w-full pl-6 mt-1">
+                        {/* Stall Stock */}
+                        <div>
+                          <span className="text-xs text-muted-foreground">Stall</span>
+                          <div className="flex items-center gap-1.5">
+                            <p className={`text-sm font-semibold ${statusColor}`}>
+                              {stock.available_quantity} {stock.item.unit_of_measure}
+                            </p>
+                            <span className={`text-[10px] font-medium ${statusColor}`}>
+                              ({statusLabel})
+                            </span>
+                          </div>
+                          {stock.reserved_quantity > 0 && (
+                            <p className="text-[11px] text-muted-foreground">
+                              {stock.reserved_quantity} reserved
+                            </p>
+                          )}
+                        </div>
+                        {/* Stockroom */}
+                        <div>
+                          <span className="text-xs text-muted-foreground">Stockroom</span>
+                          <div className="flex items-center gap-1.5">
+                            <p className={`text-sm font-semibold ${stockRoomStatusColor}`}>
+                              {stock.stock_room_quantity} {stock.item.unit_of_measure}
+                            </p>
+                            <span className={`text-[10px] font-medium ${stockRoomStatusColor}`}>
+                              ({stockRoomStatusLabel})
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </CommandItem>
+                  )
+                })}
+              </CommandGroup>
+            )}
+            <CommandSeparator />
+            <CommandGroup>
+              <CommandItem
+                onSelect={() => {
+                  setStockCheckerMode(false)
+                  setStockQuery("")
+                  setDebouncedStockQuery("")
+                }}
+                className="gap-3 justify-center text-muted-foreground"
+              >
+                ← Back to Command Palette
+              </CommandItem>
+            </CommandGroup>
+          </>
         ) : (
           <>
             <CommandEmpty>
@@ -536,7 +701,7 @@ export function CommandPalette({
                   </div>
                   <div className="flex items-center gap-2 flex-1">
                     <span>{item.label}</span>
-                    {item.action !== "priceChecker" && (
+                    {item.action !== "priceChecker" && item.action !== "stockChecker" && (
                       <Plus className="size-3 text-muted-foreground" />
                     )}
                   </div>
