@@ -226,7 +226,10 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
 
             {/* Duplicate warning */}
             {hasDuplicates && (
-              <Alert variant="destructive" className="border-amber-500/50 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/50 dark:text-amber-200 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400">
+              <Alert
+                variant="destructive"
+                className="border-amber-500/50 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-950/50 dark:text-amber-200 [&>svg]:text-amber-600 dark:[&>svg]:text-amber-400"
+              >
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle className="text-sm font-semibold">
                   Possible duplicate{duplicates.length > 1 ? "s" : ""} found
@@ -257,8 +260,7 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
                       </Badge>
                       <span className="font-medium">{d.name}</span>
                       <span className="text-muted-foreground">
-                        ({d.sku})
-                        {d.category && ` · ${d.category}`}
+                        ({d.sku}){d.category && ` · ${d.category}`}
                       </span>
                     </div>
                   ))}

@@ -33,7 +33,7 @@ export function useCheckDuplicateItems({
       if (excludeId) params.exclude_id = String(excludeId)
       const res = await api.get<DuplicateMatch[]>(
         "/inventory/items/check-duplicates/",
-        { params }
+        { params },
       )
       return res.data
     },
