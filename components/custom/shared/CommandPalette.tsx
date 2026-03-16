@@ -104,7 +104,8 @@ const quickActions = [
     label: "Stock Checker",
     icon: Warehouse,
     action: "stockChecker",
-    keywords: "stock check inventory quantity stall stockroom available reserved",
+    keywords:
+      "stock check inventory quantity stall stockroom available reserved",
     shortcut: "Ctrl+Alt+I",
     permission: "view_items",
   },
@@ -152,18 +153,90 @@ const quickActions = [
 
 // Navigation shortcuts
 const navigationShortcuts = [
-  { keys: "Alt+Shift+D", label: "Go to Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: "view_dashboard" },
-  { keys: "Alt+Shift+S", label: "Go to Services", href: "/services", icon: Wrench, permission: "view_services" },
-  { keys: "Alt+Shift+C", label: "Go to Clients", href: "/clients", icon: Users, permission: "view_clients" },
-  { keys: "Alt+Shift+A", label: "Go to Sales", href: "/sales", icon: CircleDollarSign, permission: "view_sales" },
-  { keys: "Alt+Shift+I", label: "Go to Inventory", href: "/inventory/items", icon: Package, permission: "view_items" },
-  { keys: "Alt+Shift+E", label: "Go to Expenses", href: "/expenses/manage", icon: Coins, permission: "view_expenses" },
-  { keys: "Alt+Shift+R", label: "Go to Reports", href: "/reports", icon: FileSpreadsheet, permission: "view_reports" },
-  { keys: "Alt+Shift+T", label: "Go to Attendance", href: "/attendance/overview", icon: FileText, permission: "manage_attendance" },
-  { keys: "Alt+Shift+P", label: "Go to Payroll", href: "/payroll/weekly", icon: FileText, permission: "view_payroll" },
-  { keys: "Alt+Shift+M", label: "Go to Remittances", href: "/receivables/remittances", icon: Banknote, permission: "view_remittances" },
-  { keys: "Alt+Shift+L", label: "Go to Stall Stocks", href: "/inventory/stocks/stall", icon: Package, permission: "view_items" },
-  { keys: "Alt+Shift+K", label: "Go to Stockroom", href: "/inventory/stocks/stockroom", icon: Box, permission: "view_items" },
+  {
+    keys: "Alt+Shift+D",
+    label: "Go to Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    permission: "view_dashboard",
+  },
+  {
+    keys: "Alt+Shift+S",
+    label: "Go to Services",
+    href: "/services",
+    icon: Wrench,
+    permission: "view_services",
+  },
+  {
+    keys: "Alt+Shift+C",
+    label: "Go to Clients",
+    href: "/clients",
+    icon: Users,
+    permission: "view_clients",
+  },
+  {
+    keys: "Alt+Shift+A",
+    label: "Go to Sales",
+    href: "/sales",
+    icon: CircleDollarSign,
+    permission: "view_sales",
+  },
+  {
+    keys: "Alt+Shift+I",
+    label: "Go to Inventory",
+    href: "/inventory/items",
+    icon: Package,
+    permission: "view_items",
+  },
+  {
+    keys: "Alt+Shift+E",
+    label: "Go to Expenses",
+    href: "/expenses/manage",
+    icon: Coins,
+    permission: "view_expenses",
+  },
+  {
+    keys: "Alt+Shift+R",
+    label: "Go to Reports",
+    href: "/reports",
+    icon: FileSpreadsheet,
+    permission: "view_reports",
+  },
+  {
+    keys: "Alt+Shift+T",
+    label: "Go to Attendance",
+    href: "/attendance/overview",
+    icon: FileText,
+    permission: "manage_attendance",
+  },
+  {
+    keys: "Alt+Shift+P",
+    label: "Go to Payroll",
+    href: "/payroll/weekly",
+    icon: FileText,
+    permission: "view_payroll",
+  },
+  {
+    keys: "Alt+Shift+M",
+    label: "Go to Remittances",
+    href: "/receivables/remittances",
+    icon: Banknote,
+    permission: "view_remittances",
+  },
+  {
+    keys: "Alt+Shift+L",
+    label: "Go to Stall Stocks",
+    href: "/inventory/stocks/stall",
+    icon: Package,
+    permission: "view_items",
+  },
+  {
+    keys: "Alt+Shift+K",
+    label: "Go to Stockroom",
+    href: "/inventory/stocks/stockroom",
+    icon: Box,
+    permission: "view_items",
+  },
 ]
 
 function peso(v: string | number) {
@@ -300,7 +373,8 @@ export function CommandPalette({
   }, [open])
 
   // Global search queries (only fire when there's a debounced query of 2+ chars)
-  const enableSearch = !priceCheckerMode && !stockCheckerMode && debouncedQuery.length >= 2
+  const enableSearch =
+    !priceCheckerMode && !stockCheckerMode && debouncedQuery.length >= 2
   const { data: clientsData, isLoading: clientsLoading } = useClients({
     search: enableSearch ? debouncedQuery : undefined,
     limit: 5,
@@ -545,7 +619,13 @@ export function CommandPalette({
     <CommandDialog
       open={open}
       onOpenChange={setOpen}
-      title={priceCheckerMode ? "Price Checker" : stockCheckerMode ? "Stock Checker" : "Command Palette"}
+      title={
+        priceCheckerMode
+          ? "Price Checker"
+          : stockCheckerMode
+            ? "Stock Checker"
+            : "Command Palette"
+      }
       description={
         priceCheckerMode
           ? "Search for an item to see its prices"
@@ -728,12 +808,19 @@ export function CommandPalette({
                       <div className="grid grid-cols-2 gap-x-6 gap-y-2 w-full pl-6 mt-1">
                         {/* Stall Stock */}
                         <div>
-                          <span className="text-xs text-muted-foreground">Stall</span>
+                          <span className="text-xs text-muted-foreground">
+                            Stall
+                          </span>
                           <div className="flex items-center gap-1.5">
-                            <p className={`text-sm font-semibold ${statusColor}`}>
-                              {stock.available_quantity} {stock.item.unit_of_measure}
+                            <p
+                              className={`text-sm font-semibold ${statusColor}`}
+                            >
+                              {stock.available_quantity}{" "}
+                              {stock.item.unit_of_measure}
                             </p>
-                            <span className={`text-[10px] font-medium ${statusColor}`}>
+                            <span
+                              className={`text-[10px] font-medium ${statusColor}`}
+                            >
                               ({statusLabel})
                             </span>
                           </div>
@@ -745,12 +832,19 @@ export function CommandPalette({
                         </div>
                         {/* Stockroom */}
                         <div>
-                          <span className="text-xs text-muted-foreground">Stockroom</span>
+                          <span className="text-xs text-muted-foreground">
+                            Stockroom
+                          </span>
                           <div className="flex items-center gap-1.5">
-                            <p className={`text-sm font-semibold ${stockRoomStatusColor}`}>
-                              {stock.stock_room_quantity} {stock.item.unit_of_measure}
+                            <p
+                              className={`text-sm font-semibold ${stockRoomStatusColor}`}
+                            >
+                              {stock.stock_room_quantity}{" "}
+                              {stock.item.unit_of_measure}
                             </p>
-                            <span className={`text-[10px] font-medium ${stockRoomStatusColor}`}>
+                            <span
+                              className={`text-[10px] font-medium ${stockRoomStatusColor}`}
+                            >
                               ({stockRoomStatusLabel})
                             </span>
                           </div>
@@ -804,9 +898,10 @@ export function CommandPalette({
                   </div>
                   <div className="flex items-center gap-2 flex-1">
                     <span>{item.label}</span>
-                    {item.action !== "priceChecker" && item.action !== "stockChecker" && (
-                      <Plus className="size-3 text-muted-foreground" />
-                    )}
+                    {item.action !== "priceChecker" &&
+                      item.action !== "stockChecker" && (
+                        <Plus className="size-3 text-muted-foreground" />
+                      )}
                   </div>
                   {item.shortcut && (
                     <kbd className="pointer-events-none text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-mono">
@@ -852,7 +947,9 @@ export function CommandPalette({
                       <CommandItem
                         key={`service-${service.id}`}
                         value={`service ${service.id} ${service.client?.full_name}`}
-                        onSelect={() => handleNavigate(`/services?view=${service.id}`)}
+                        onSelect={() =>
+                          handleNavigate(`/services?view=${service.id}`)
+                        }
                         className="gap-3"
                       >
                         <div className="flex items-center justify-center size-8 rounded-md bg-amber-500/10 text-warning">
@@ -875,7 +972,9 @@ export function CommandPalette({
                       <CommandItem
                         key={`sale-${sale.id}`}
                         value={`sale ${sale.manual_receipt_number || sale.system_receipt_number} ${sale.client?.full_name}`}
-                        onSelect={() => handleNavigate(`/sales?view=${sale.id}`)}
+                        onSelect={() =>
+                          handleNavigate(`/sales?view=${sale.id}`)
+                        }
                         className="gap-3"
                       >
                         <div className="flex items-center justify-center size-8 rounded-md bg-emerald-500/10 text-success">
