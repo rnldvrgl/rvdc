@@ -12,6 +12,7 @@ import RestockForm from "@/components/forms/inventory/RestockForm"
 import StockAuditDialog from "@/components/forms/inventory/StockAuditDialog"
 import StockThresholdForm from "@/components/forms/inventory/StockThresholdForm"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Stock } from "@/lib/constants/interface"
 import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -19,15 +20,18 @@ import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useStallStockMutations } from "@/lib/mutations/useStallStockMutations"
 import {
-    useStallStocks,
-    useStockFilters,
+  useStallStocks,
+  useStockFilters,
 } from "@/lib/queries/inventory/useStocks"
 import { Eye, Package, Plus } from "lucide-react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
+
+type TrackTab = "all" | "tracked" | "untracked"
 
 export default function StocksPage() {
   const { isAdmin, role } = useCurrentUser()
   const [isArchived, setIsArchived] = useState(false)
+  const [trackTab, setTrackTab] = useState<TrackTab>("all")
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const { softDeleteStallStock } = useStallStockMutations()
@@ -38,12 +42,23 @@ export default function StocksPage() {
     isArchived,
   )
 
+  const trackFilter = useMemo(() => {
+    if (trackTab === "tracked") return { track_stock: "true" }
+    if (trackTab === "untracked") return { track_stock: "false" }
+    return {}
+  }, [trackTab])
+
+  const mergedFilter = useMemo(
+    () => ({ ...filter, ...trackFilter }),
+    [filter, trackFilter],
+  )
+
   const { data, isLoading, refetch } = useStallStocks({
     page,
     limit,
     search,
     ordering,
-    filter,
+    filter: mergedFilter,
   })
 
   const { filters, orderingOptions } = useStockFilters()
@@ -136,6 +151,20 @@ export default function StocksPage() {
         onToggle={setIsArchived}
         archivedCount={archivedQuery.data?.count}
       />
+
+      {!isArchived && (
+        <Tabs
+          value={trackTab}
+          onValueChange={(v) => setTrackTab(v as TrackTab)}
+          className="w-fit"
+        >
+          <TabsList>
+            <TabsTrigger value="all">All Items</TabsTrigger>
+            <TabsTrigger value="tracked">Tracked</TabsTrigger>
+            <TabsTrigger value="untracked">Untracked</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      )}
 
       {!isArchived && (
         <>

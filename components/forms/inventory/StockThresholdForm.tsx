@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
 import { Stock, StockPayload, StockRoomStock } from "@/lib/constants/interface"
 import { useStallStockMutations } from "@/lib/mutations/useStallStockMutations"
 import { useStockRoomStockMutations } from "@/lib/mutations/useStockRoomStockMutations"
@@ -19,6 +20,7 @@ import { SubmitHandler, useForm } from "react-hook-form"
 
 interface FormValues {
   low_stock_threshold: string
+  track_stock: boolean
 }
 
 interface StockThresholdFormProps {
@@ -32,9 +34,11 @@ export default function StockThresholdForm({
   type,
   onClose,
 }: StockThresholdFormProps) {
+  const isStallStock = "stall" in stock
   const form = useForm<FormValues>({
     defaultValues: {
       low_stock_threshold: stock?.low_stock_threshold?.toString() ?? "",
+      track_stock: isStallStock ? (stock as Stock).track_stock !== false : true,
     },
   })
 
@@ -58,6 +62,7 @@ export default function StockThresholdForm({
         stall_id: stock.stall.id,
         quantity: stock.quantity,
         low_stock_threshold: threshold,
+        track_stock: data.track_stock,
       }
 
       updateStallStock.mutate(
@@ -117,6 +122,34 @@ export default function StockThresholdForm({
         </div>
 
         <Separator />
+
+        {/* Track Stock Toggle */}
+        {type === "stall" && (
+          <FormField
+            control={form.control}
+            name="track_stock"
+            render={({ field }) => (
+              <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-sm font-medium">
+                    Track Stock
+                  </FormLabel>
+                  <p className="text-xs text-muted-foreground">
+                    {field.value
+                      ? "Stock levels are tracked. Reservations and deductions apply."
+                      : "Untracked — no stock operations, reservations, or deductions."}
+                  </p>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        )}
 
         {/* Threshold Input */}
         <FormField
