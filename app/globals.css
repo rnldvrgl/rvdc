@@ -263,7 +263,7 @@
     position: static !important;
     width: 50mm !important;
     max-width: 50mm !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
     background: white !important;
     color: black !important;
   }

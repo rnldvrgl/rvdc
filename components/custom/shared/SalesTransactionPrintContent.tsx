@@ -5,16 +5,8 @@ import useGetReceiptDetails from "@/lib/hooks/useGetReceiptDetails"
 import { formatDate } from "@/lib/utils/helpers/date"
 import React from "react"
 
-/* ─────────────────────────────────────────────────────────
-   58mm Thermal Receipt – pure <table> layout.
-   Every style is inline so it survives react-to-print's
-   iframe which has NO access to Tailwind / global CSS.
-   NO flexbox – tables are the most reliable for thermal
-   printer drivers.
-   ───────────────────────────────────────────────────────── */
-
 const FONT = "'Courier New', Courier, monospace"
-const DASH = "------------------------------"
+const DASH = "---------------------------"
 
 const peso = (n: number) =>
   "P" +
@@ -39,7 +31,7 @@ const CenterRow = ({
       colSpan={2}
       style={{
         fontFamily: FONT,
-        fontSize: size ?? "12px",
+        fontSize: size ?? "14px",
         fontWeight: bold ? 1000 : 700,
         textAlign: "center",
         padding: "1px 0",
@@ -95,7 +87,7 @@ const LR = ({
     <td
       style={{
         fontFamily: FONT,
-        fontSize: "13px",
+        fontSize: "14px",
         fontWeight: bold ? 900 : 700,
         textAlign: "right",
         padding: "1px 0",
@@ -153,7 +145,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
         width: "58mm",
         maxWidth: "58mm",
         margin: "0 auto",
-        padding: "2mm 0 10mm 0",
+        padding: "2mm 1mm 10mm 1mm",
         background: "#fff",
         color: "#000",
         fontFamily: FONT,
@@ -183,7 +175,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
             {tin_id}
           </CenterRow>
           <CenterRow size="13px">{address}</CenterRow>
-          <CenterRow size="1 3px">Tel: 0936-667-8269</CenterRow>
+          <CenterRow size="13px">Tel: 0936-667-8269</CenterRow>
 
           <Dash />
 
@@ -193,7 +185,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
               colSpan={2}
               style={{
                 fontFamily: FONT,
-                fontSize: "13px",
+                fontSize: "12px",
                 padding: "2px 0",
                 textAlign: "left",
               }}
@@ -206,7 +198,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
               colSpan={2}
               style={{
                 fontFamily: FONT,
-                fontSize: "13px",
+                fontSize: "12px",
                 padding: "2px 0",
                 textAlign: "left",
                 wordBreak: "break-word",
@@ -243,7 +235,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
                     colSpan={2}
                     style={{
                       fontFamily: FONT,
-                      fontSize: "13px",
+                      fontSize: "14px",
                       padding: "3px 0 1px",
                       wordBreak: "break-word",
                     }}
@@ -317,11 +309,12 @@ export const SalesTransactionPrintContent = React.forwardRef<
           {/* ── FOOTER ── */}
           <CenterRow size="13px">
             <br />
-            ----- THANK YOU! -----
+            ---- THANK YOU! ----
             <br />
             This serves as your
             <br />
             unofficial receipt
+            <br />
           </CenterRow>
         </tbody>
       </table>
