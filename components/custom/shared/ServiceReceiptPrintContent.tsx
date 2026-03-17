@@ -6,91 +6,102 @@ import {
   ServiceAppliance,
 } from "@/lib/constants/interface"
 import useGetReceiptDetails from "@/lib/hooks/useGetReceiptDetails"
-import { formatCurrency } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import React from "react"
 
-// ─── Primitives ──────────────────────────────────────────────
-type PrintRowProps = {
-  label: string
-  value: string
+const FONT = "'Courier New', Courier, monospace"
+const DASH = "---------------------------"
+
+const peso = (n: number) =>
+  "P" +
+  n.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+
+/* ── tiny helper components ─────────────────────────── */
+
+const CenterRow = ({
+  children,
+  bold,
+  size,
+}: {
+  children: React.ReactNode
   bold?: boolean
-}
-
-const PrintRow = ({ label, value, bold }: PrintRowProps) => (
-  <div className="flex justify-between text-sm">
-    <div className={bold ? "font-bold" : ""}>{label}</div>
-    <div className="text-right">{value}</div>
-  </div>
-)
-
-const Divider = () => (
-  <div className="whitespace-pre my-1">
-    --------------------------------------
-  </div>
-)
-
-const SectionTitle = ({ title }: { title: string }) => (
-  <div className="text-center text-md font-semibold mb-1">{title}</div>
-)
-
-// ─── Receipt header ──────────────────────────────────────────
-const ReceiptHeader = ({
-  shopName,
-  tinId,
-  address,
-  phone,
-}: {
-  shopName: string
-  tinId: string
-  address: string
-  phone?: string
+  size?: string
 }) => (
-  <div className="text-center text-sm">
-    <div className="font-bold text-xl">{shopName}</div>
-    <div className="grid">
-      <span className="font-semibold">NON-VAT Reg TIN #:</span>
-      {tinId}
-    </div>
-    <div>{address}</div>
-    {phone && (
-      <div>
-        <span className="font-semibold">Phone:</span> {phone}
-      </div>
-    )}
-  </div>
+  <tr>
+    <td
+      colSpan={2}
+      style={{
+        fontFamily: FONT,
+        fontSize: size ?? "14px",
+        fontWeight: bold ? 1000 : 700,
+        textAlign: "center",
+        padding: "1px 0",
+        wordBreak: "break-word",
+      }}
+    >
+      {children}
+    </td>
+  </tr>
 )
 
-// ─── Items table shared component ────────────────────────────
-const ItemsTable = ({
-  items,
+const Dash = () => (
+  <tr>
+    <td
+      colSpan={2}
+      style={{
+        fontFamily: FONT,
+        fontSize: "12px",
+        fontWeight: 700,
+        textAlign: "center",
+        padding: "2px 0",
+        whiteSpace: "pre",
+      }}
+    >
+      {DASH}
+    </td>
+  </tr>
+)
+
+/** Left / Right row — used for key-value lines */
+const LR = ({
+  left,
+  right,
+  bold,
 }: {
-  items: {
-    qty: number
-    description: string
-    unitPrice: number
-    total: number
-  }[]
+  left: string
+  right: string
+  bold?: boolean
 }) => (
-  <>
-    <div className="text-sm font-bold flex space-x-1.5">
-      <div className="w-6">Qty</div>
-      <div className="flex-1">Description</div>
-      <div className="w-20 text-right">Price</div>
-      <div className="w-20 text-right">Total</div>
-    </div>
-    {items.map((item, idx) => (
-      <div
-        key={idx}
-        className="flex text-sm space-x-1.5"
-      >
-        <div className="w-6">{item.qty}</div>
-        <div className="flex-1">{item.description}</div>
-        <div className="w-20 text-right">{formatCurrency(item.unitPrice)}</div>
-        <div className="w-20 text-right">{formatCurrency(item.total)}</div>
-      </div>
-    ))}
-  </>
+  <tr>
+    <td
+      style={{
+        fontFamily: FONT,
+        fontSize: "13px",
+        fontWeight: bold ? 900 : 700,
+        textAlign: "left",
+        padding: "1px 0",
+        verticalAlign: "top",
+      }}
+    >
+      {left}
+    </td>
+    <td
+      style={{
+        fontFamily: FONT,
+        fontSize: "14px",
+        fontWeight: bold ? 900 : 700,
+        textAlign: "right",
+        padding: "1px 0",
+        verticalAlign: "top",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {right}
+    </td>
+  </tr>
 )
 
 // ─── Helper: extract line items from service ─────────────────
@@ -215,71 +226,192 @@ const MainStallReceipt = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="thermal-receipt-print w-full max-w-[90%] font-roboto"
+      className="thermal-receipt-print"
+      style={{
+        width: "58mm",
+        maxWidth: "58mm",
+        margin: "0 auto",
+        padding: "2mm 1mm 10mm 1mm",
+        background: "#fff",
+        color: "#000",
+        fontFamily: FONT,
+        fontSize: "13px",
+        fontWeight: 700,
+        lineHeight: "1.3",
+        boxSizing: "border-box",
+      }}
     >
-      <ReceiptHeader
-        shopName={shop_name}
-        tinId={tin_id}
-        address={address}
-        phone="0936-667-8269"
-      />
-      <Divider />
-      <PrintRow
-        label="Date:"
-        value={formatDate(createdAt, "MM-dd-yyyy, hh:mm a")}
-        bold
-      />
-      <PrintRow
-        label="Client:"
-        value={service.client?.full_name ?? "N/A"}
-        bold
-      />
-      <PrintRow
-        label="Service #:"
-        value={`SVC-${service.id}`}
-        bold
-      />
-      <PrintRow
-        label="Type:"
-        value={`${service.service_type?.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())} (${service.service_mode?.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())})`}
-        bold
-      />
-      <Divider />
-      <SectionTitle title="SERVICE INVOICE - LABOR" />
-      <ItemsTable items={items} />
-      <Divider />
-      <PrintRow
-        label="Subtotal:"
-        value={formatCurrency(gross)}
-        bold
-      />
-      {mainDiscount > 0 && (
-        <PrintRow
-          label="Discount:"
-          value={`-${formatCurrency(mainDiscount)}`}
-          bold
-        />
-      )}
-      <PrintRow
-        label="Total:"
-        value={formatCurrency(netTotal)}
-        bold
-      />
-      <Divider />
-      <PrintRow
-        label="Amount Paid:"
-        value={formatCurrency(totalPaid)}
-        bold
-      />
-      <PrintRow
-        label="Balance Due:"
-        value={formatCurrency(Math.max(netTotal - totalPaid, 0))}
-        bold
-      />
-      <div className="mt-6 text-center grid place-items-center gap-2 text-sm">
-        <div>----- THANK YOU! -----</div>
-        <div>THIS SERVES AS YOUR UNOFFICIAL RECEIPT</div>
-      </div>
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          tableLayout: "fixed",
+        }}
+      >
+        <tbody>
+          {/* ── HEADER ── */}
+          <CenterRow
+            bold
+            size="14px"
+          >
+            {shop_name}
+          </CenterRow>
+          <CenterRow size="13px">
+            NON-VAT Reg TIN: <br />
+            {tin_id}
+          </CenterRow>
+          <CenterRow size="13px">{address}</CenterRow>
+          <CenterRow size="13px">Tel: 0936-667-8269</CenterRow>
+
+          <Dash />
+
+          {/* ── DATE / CLIENT / SERVICE INFO ── */}
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+              }}
+            >
+              {formatDate(createdAt, "MMM/dd/yyyy hh:mm a")}
+            </td>
+          </tr>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+                wordBreak: "break-word",
+              }}
+            >
+              {service.client?.full_name ?? "N/A"}
+            </td>
+          </tr>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+              }}
+            >
+              Service #: SVC-{service.id}
+            </td>
+          </tr>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+              }}
+            >
+              Type:{" "}
+              {service.service_type
+                ?.replace("_", " ")
+                .replace(/^\w/, (c) => c.toUpperCase())}{" "}
+              (
+              {service.service_mode
+                ?.replace("_", " ")
+                .replace(/^\w/, (c) => c.toUpperCase())}
+              )
+            </td>
+          </tr>
+
+          <Dash />
+          <CenterRow
+            bold
+            size="13px"
+          >
+            SERVICE INVOICE - LABOR
+          </CenterRow>
+          <Dash />
+
+          {/* ── ITEMS ── */}
+          {items.map((item, idx) => (
+            <React.Fragment key={idx}>
+              {/* Item description — full width */}
+              <tr>
+                <td
+                  colSpan={2}
+                  style={{
+                    fontFamily: FONT,
+                    fontSize: "14px",
+                    padding: "3px 0 1px",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {item.description}
+                </td>
+              </tr>
+              {/* qty x price    total */}
+              <LR
+                left={`${item.qty.toFixed(2)} x ${peso(item.unitPrice)}`}
+                right={peso(item.total)}
+              />
+            </React.Fragment>
+          ))}
+
+          <Dash />
+
+          {/* ── TOTALS ── */}
+          <LR
+            left="SUBTOTAL"
+            right={peso(gross)}
+            bold
+          />
+
+          {mainDiscount > 0 && (
+            <>
+              <LR
+                left="DISCOUNT"
+                right={`-${peso(mainDiscount)}`}
+              />
+              <LR
+                left="TOTAL"
+                right={peso(netTotal)}
+                bold
+              />
+            </>
+          )}
+
+          <Dash />
+
+          <LR
+            left="AMOUNT PAID"
+            right={peso(totalPaid)}
+            bold
+          />
+          <LR
+            left="BALANCE DUE"
+            right={peso(Math.max(netTotal - totalPaid, 0))}
+            bold
+          />
+
+          <Dash />
+
+          {/* ── FOOTER ── */}
+          <CenterRow size="13px">
+            <br />
+            ---- THANK YOU! ----
+            <br />
+            This serves as your
+            <br />
+            unofficial receipt
+            <br />
+          </CenterRow>
+        </tbody>
+      </table>
     </div>
   )
 })
@@ -312,55 +444,158 @@ const SubStallReceipt = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="thermal-receipt-print w-full max-w-[90%] font-roboto"
+      className="thermal-receipt-print"
+      style={{
+        width: "58mm",
+        maxWidth: "58mm",
+        margin: "0 auto",
+        padding: "2mm 1mm 10mm 1mm",
+        background: "#fff",
+        color: "#000",
+        fontFamily: FONT,
+        fontSize: "13px",
+        fontWeight: 700,
+        lineHeight: "1.3",
+        boxSizing: "border-box",
+      }}
     >
-      <ReceiptHeader
-        shopName={shop_name}
-        tinId={tin_id}
-        address={address}
-        phone="0936-667-8269"
-      />
-      <Divider />
-      <PrintRow
-        label="Date:"
-        value={formatDate(createdAt, "MM-dd-yyyy, hh:mm a")}
-        bold
-      />
-      <PrintRow
-        label="Client:"
-        value={service.client?.full_name ?? "N/A"}
-        bold
-      />
-      <PrintRow
-        label="Service #:"
-        value={`SVC-${service.id}`}
-        bold
-      />
-      <Divider />
-      <SectionTitle title="SERVICE INVOICE - PARTS" />
-      <ItemsTable items={partsItems} />
-      <Divider />
-      <PrintRow
-        label="Subtotal:"
-        value={formatCurrency(gross)}
-        bold
-      />
-      {subDiscount > 0 && (
-        <PrintRow
-          label="Discount:"
-          value={`-${formatCurrency(subDiscount)}`}
-          bold
-        />
-      )}
-      <PrintRow
-        label="Total:"
-        value={formatCurrency(netTotal)}
-        bold
-      />
-      <div className="mt-6 text-center grid place-items-center gap-2 text-sm">
-        <div>----- THANK YOU! -----</div>
-        <div>THIS SERVES AS YOUR UNOFFICIAL RECEIPT</div>
-      </div>
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          tableLayout: "fixed",
+        }}
+      >
+        <tbody>
+          {/* ── HEADER ── */}
+          <CenterRow
+            bold
+            size="14px"
+          >
+            {shop_name}
+          </CenterRow>
+          <CenterRow size="13px">
+            NON-VAT Reg TIN: <br />
+            {tin_id}
+          </CenterRow>
+          <CenterRow size="13px">{address}</CenterRow>
+          <CenterRow size="13px">Tel: 0936-667-8269</CenterRow>
+
+          <Dash />
+
+          {/* ── DATE / CLIENT / SERVICE INFO ── */}
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+              }}
+            >
+              {formatDate(createdAt, "MMM/dd/yyyy hh:mm a")}
+            </td>
+          </tr>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+                wordBreak: "break-word",
+              }}
+            >
+              {service.client?.full_name ?? "N/A"}
+            </td>
+          </tr>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+              }}
+            >
+              Service #: SVC-{service.id}
+            </td>
+          </tr>
+
+          <Dash />
+          <CenterRow
+            bold
+            size="13px"
+          >
+            SERVICE INVOICE - PARTS
+          </CenterRow>
+          <Dash />
+
+          {/* ── ITEMS ── */}
+          {partsItems.map((item, idx) => (
+            <React.Fragment key={idx}>
+              {/* Item description — full width */}
+              <tr>
+                <td
+                  colSpan={2}
+                  style={{
+                    fontFamily: FONT,
+                    fontSize: "14px",
+                    padding: "3px 0 1px",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {item.description}
+                </td>
+              </tr>
+              {/* qty x price    total */}
+              <LR
+                left={`${item.qty.toFixed(2)} x ${peso(item.unitPrice)}`}
+                right={peso(item.total)}
+              />
+            </React.Fragment>
+          ))}
+
+          <Dash />
+
+          {/* ── TOTALS ── */}
+          <LR
+            left="SUBTOTAL"
+            right={peso(gross)}
+            bold
+          />
+
+          {subDiscount > 0 && (
+            <>
+              <LR
+                left="DISCOUNT"
+                right={`-${peso(subDiscount)}`}
+              />
+              <LR
+                left="TOTAL"
+                right={peso(netTotal)}
+                bold
+              />
+            </>
+          )}
+
+          <Dash />
+
+          {/* ── FOOTER ── */}
+          <CenterRow size="13px">
+            <br />
+            ---- THANK YOU! ----
+            <br />
+            This serves as your
+            <br />
+            unofficial receipt
+            <br />
+          </CenterRow>
+        </tbody>
+      </table>
     </div>
   )
 })
@@ -411,133 +646,276 @@ const CombinedReceipt = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="thermal-receipt-print w-full max-w-[90%] font-roboto"
+      className="thermal-receipt-print"
+      style={{
+        width: "58mm",
+        maxWidth: "58mm",
+        margin: "0 auto",
+        padding: "2mm 1mm 10mm 1mm",
+        background: "#fff",
+        color: "#000",
+        fontFamily: FONT,
+        fontSize: "13px",
+        fontWeight: 700,
+        lineHeight: "1.3",
+        boxSizing: "border-box",
+      }}
     >
-      <ReceiptHeader
-        shopName={mainDetails.shop_name}
-        tinId={mainDetails.tin_id}
-        address={mainDetails.address}
-        phone="0936-667-8269"
-      />
-      <Divider />
-      <PrintRow
-        label="Date:"
-        value={formatDate(createdAt, "MM-dd-yyyy, hh:mm a")}
-        bold
-      />
-      <PrintRow
-        label="Client:"
-        value={service.client?.full_name ?? "N/A"}
-        bold
-      />
-      <PrintRow
-        label="Service #:"
-        value={`SVC-${service.id}`}
-        bold
-      />
-      <PrintRow
-        label="Type:"
-        value={`${service.service_type?.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())} - ${service.service_mode?.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())}`}
-        bold
-      />
-      <Divider />
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          tableLayout: "fixed",
+        }}
+      >
+        <tbody>
+          {/* ── HEADER ── */}
+          <CenterRow
+            bold
+            size="14px"
+          >
+            {mainDetails.shop_name}
+          </CenterRow>
+          <CenterRow size="13px">
+            NON-VAT Reg TIN: <br />
+            {mainDetails.tin_id}
+          </CenterRow>
+          <CenterRow size="13px">{mainDetails.address}</CenterRow>
+          <CenterRow size="13px">Tel: 0936-667-8269</CenterRow>
 
-      {/* LABOR & UNITS section */}
-      {mainItems.length > 0 && (
-        <>
-          <SectionTitle title="LABOR & SERVICES" />
-          <ItemsTable items={mainItems} />
-          <div className="text-sm font-bold flex justify-between mt-1">
-            <span>Subtotal (Labor):</span>
-            <span>{formatCurrency(mainGross)}</span>
-          </div>
-          <Divider />
-        </>
-      )}
+          <Dash />
 
-      {/* PARTS section */}
-      {partsItems.length > 0 && (
-        <>
-          <SectionTitle title="PARTS & ACCESSORIES" />
-          <ItemsTable items={partsItems} />
-          <div className="text-sm font-bold flex justify-between mt-1">
-            <span>Subtotal (Parts):</span>
-            <span>{formatCurrency(partsGross)}</span>
-          </div>
-          <Divider />
-        </>
-      )}
+          {/* ── DATE / CLIENT / SERVICE INFO ── */}
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+              }}
+            >
+              {formatDate(createdAt, "MMM/dd/yyyy hh:mm a")}
+            </td>
+          </tr>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+                wordBreak: "break-word",
+              }}
+            >
+              {service.client?.full_name ?? "N/A"}
+            </td>
+          </tr>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+              }}
+            >
+              Service #: SVC-{service.id}
+            </td>
+          </tr>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "left",
+              }}
+            >
+              Type:{" "}
+              {service.service_type
+                ?.replace("_", " ")
+                .replace(/^\w/, (c) => c.toUpperCase())}{" "}
+              -{" "}
+              {service.service_mode
+                ?.replace("_", " ")
+                .replace(/^\w/, (c) => c.toUpperCase())}
+            </td>
+          </tr>
 
-      {/* TOTALS */}
-      <PrintRow
-        label="Gross Total:"
-        value={formatCurrency(grandGross)}
-        bold
-      />
-      {serviceDiscount > 0 && (
-        <>
-          <PrintRow
-            label="Service Discount:"
-            value={`-${formatCurrency(serviceDiscount)}`}
+          <Dash />
+
+          {/* LABOR & UNITS section */}
+          {mainItems.length > 0 && (
+            <>
+              <CenterRow
+                bold
+                size="13px"
+              >
+                LABOR & SERVICES
+              </CenterRow>
+              {mainItems.map((item, idx) => (
+                <React.Fragment key={`main-${idx}`}>
+                  <tr>
+                    <td
+                      colSpan={2}
+                      style={{
+                        fontFamily: FONT,
+                        fontSize: "14px",
+                        padding: "3px 0 1px",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {item.description}
+                    </td>
+                  </tr>
+                  <LR
+                    left={`${item.qty.toFixed(2)} x ${peso(item.unitPrice)}`}
+                    right={peso(item.total)}
+                  />
+                </React.Fragment>
+              ))}
+              <LR
+                left="Subtotal (Labor):"
+                right={peso(mainGross)}
+                bold
+              />
+              <Dash />
+            </>
+          )}
+
+          {/* PARTS section */}
+          {partsItems.length > 0 && (
+            <>
+              <CenterRow
+                bold
+                size="13px"
+              >
+                PARTS & ACCESSORIES
+              </CenterRow>
+              {partsItems.map((item, idx) => (
+                <React.Fragment key={`parts-${idx}`}>
+                  <tr>
+                    <td
+                      colSpan={2}
+                      style={{
+                        fontFamily: FONT,
+                        fontSize: "14px",
+                        padding: "3px 0 1px",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {item.description}
+                    </td>
+                  </tr>
+                  <LR
+                    left={`${item.qty.toFixed(2)} x ${peso(item.unitPrice)}`}
+                    right={peso(item.total)}
+                  />
+                </React.Fragment>
+              ))}
+              <LR
+                left="Subtotal (Parts):"
+                right={peso(partsGross)}
+                bold
+              />
+              <Dash />
+            </>
+          )}
+
+          {/* TOTALS */}
+          <LR
+            left="GROSS TOTAL"
+            right={peso(grandGross)}
             bold
           />
-          {service.discount_reason && (
-            <div className="text-xs text-center italic">
-              ({service.discount_reason})
-            </div>
+
+          {serviceDiscount > 0 && (
+            <>
+              <LR
+                left="DISCOUNT"
+                right={`-${peso(serviceDiscount)}`}
+              />
+              {service.discount_reason && (
+                <tr>
+                  <td
+                    colSpan={2}
+                    style={{
+                      fontFamily: FONT,
+                      fontSize: "11px",
+                      fontStyle: "italic",
+                      textAlign: "center",
+                      padding: "1px 0",
+                    }}
+                  >
+                    ({service.discount_reason})
+                  </td>
+                </tr>
+              )}
+            </>
           )}
-        </>
-      )}
-      <PrintRow
-        label="Net Total:"
-        value={formatCurrency(grandTotal)}
-        bold
-      />
 
-      <Divider />
+          <LR
+            left="NET TOTAL"
+            right={peso(grandTotal)}
+            bold
+          />
 
-      {/* PAYMENTS */}
-      {payments.length > 0 ? (
-        <>
-          {payments.map((p, idx) => (
-            <PrintRow
-              key={idx}
-              label={`${p.payment_type.toUpperCase()}:`}
-              value={formatCurrency(Number(p.amount))}
-              bold
+          <Dash />
+
+          {/* PAYMENTS */}
+          {payments.length > 0 ? (
+            <>
+              {payments.map((p, idx) => (
+                <LR
+                  key={idx}
+                  left={p.payment_type.toUpperCase()}
+                  right={peso(Number(p.amount))}
+                />
+              ))}
+            </>
+          ) : (
+            <LR
+              left="PAYMENTS"
+              right="N/A"
             />
-          ))}
-        </>
-      ) : (
-        <PrintRow
-          label="Payments:"
-          value="N/A"
-          bold
-        />
-      )}
+          )}
 
-      <PrintRow
-        label="Total Paid:"
-        value={formatCurrency(totalPaid)}
-        bold
-      />
-      {totalRefunded > 0 && (
-        <PrintRow
-          label="Refunded:"
-          value={`-${formatCurrency(totalRefunded)}`}
-          bold
-        />
-      )}
-      <PrintRow
-        label="Balance Due:"
-        value={formatCurrency(balanceDue)}
-        bold
-      />
+          <LR
+            left="TOTAL PAID"
+            right={peso(totalPaid)}
+            bold
+          />
+          {totalRefunded > 0 && (
+            <LR
+              left="REFUNDED"
+              right={`-${peso(totalRefunded)}`}
+            />
+          )}
+          <LR
+            left="BALANCE DUE"
+            right={peso(balanceDue)}
+            bold
+          />
 
-      <div className="mt-6 text-center grid place-items-center gap-2 text-sm">
-        <div>----- THANK YOU! -----</div>
-        <div>THIS SERVES AS YOUR UNOFFICIAL RECEIPT</div>
-      </div>
+          <Dash />
+
+          {/* ── FOOTER ── */}
+          <CenterRow size="13px">
+            <br />
+            ---- THANK YOU! ----
+            <br />
+            This serves as your
+            <br />
+            unofficial receipt
+            <br />
+          </CenterRow>
+        </tbody>
+      </table>
     </div>
   )
 })
