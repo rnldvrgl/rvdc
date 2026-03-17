@@ -2,28 +2,111 @@
 
 import { SalesTransaction, Stall } from "@/lib/constants/interface"
 import useGetReceiptDetails from "@/lib/hooks/useGetReceiptDetails"
-import { formatCurrency } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import React from "react"
 
-type PrintRowProps = {
-  label: string
-  value: string
-  bold?: boolean
-  alignRight?: boolean
-}
+/* ─────────────────────────────────────────────────────────
+   58mm Thermal Receipt – pure <table> layout.
+   Every style is inline so it survives react-to-print's
+   iframe which has NO access to Tailwind / global CSS.
+   NO flexbox – tables are the most reliable for thermal
+   printer drivers.
+   ───────────────────────────────────────────────────────── */
 
-const PrintRow = ({ label, value, bold, alignRight }: PrintRowProps) => (
-  <div className="flex justify-between text-sm">
-    <div className={bold ? "font-bold" : ""}>{label}</div>
-    <div className={alignRight ? "text-right" : ""}>{value}</div>
-  </div>
+const FONT = "'Courier New', Courier, monospace"
+const DASH = "------------------------------------------------"
+
+/** Format to "P100.00" – plain ASCII 'P' instead of ₱ */
+const peso = (v: number) =>
+  "P" +
+  v.toLocaleString("en", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+
+/* ── tiny helper components ─────────────────────────── */
+
+const CenterRow = ({
+  children,
+  bold,
+  size,
+}: {
+  children: React.ReactNode
+  bold?: boolean
+  size?: string
+}) => (
+  <tr>
+    <td
+      colSpan={2}
+      style={{
+        fontFamily: FONT,
+        fontSize: size ?? "12px",
+        fontWeight: bold ? 900 : 700,
+        textAlign: "center",
+        padding: "1px 0",
+        wordBreak: "break-word",
+      }}
+    >
+      {children}
+    </td>
+  </tr>
 )
 
-const Divider = () => (
-  <div className="whitespace-pre my-1">
-    --------------------------------------
-  </div>
+const Dash = () => (
+  <tr>
+    <td
+      colSpan={2}
+      style={{
+        fontFamily: FONT,
+        fontSize: "12px",
+        fontWeight: 700,
+        textAlign: "center",
+        padding: "2px 0",
+        whiteSpace: "pre",
+      }}
+    >
+      {DASH}
+    </td>
+  </tr>
+)
+
+/** Left / Right row — used for key-value lines */
+const LR = ({
+  left,
+  right,
+  bold,
+}: {
+  left: string
+  right: string
+  bold?: boolean
+}) => (
+  <tr>
+    <td
+      style={{
+        fontFamily: FONT,
+        fontSize: "12px",
+        fontWeight: bold ? 900 : 700,
+        textAlign: "left",
+        padding: "1px 0",
+        verticalAlign: "top",
+      }}
+    >
+      {left}
+    </td>
+    <td
+      style={{
+        fontFamily: FONT,
+        fontSize: "12px",
+        fontWeight: bold ? 900 : 700,
+        textAlign: "right",
+        padding: "1px 0",
+        verticalAlign: "top",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {right}
+    </td>
+  </tr>
 )
 
 export const SalesTransactionPrintContent = React.forwardRef<
@@ -34,6 +117,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
   }
 >(({ entity, stall }, ref) => {
   const createdAt = new Date(entity?.created_at ?? Date.now())
+
   const isFakePrint = !!entity?.items?.some((item) => {
     const finalPrice = Number(
       item.final_price_per_unit ?? item.item?.retail_price ?? 0,
@@ -51,7 +135,6 @@ export const SalesTransactionPrintContent = React.forwardRef<
       const unitPrice = isFakePrint
         ? Number(item.print_price_per_unit ?? 0)
         : Number(item.final_price_per_unit ?? item.item?.retail_price ?? 0)
-
       return acc + unitPrice * item.quantity
     }, 0) ?? 0
 
@@ -66,129 +149,174 @@ export const SalesTransactionPrintContent = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="w-full max-w-[90%] font-roboto"
+      className="thermal-receipt-print"
+      style={{
+        width: "100%",
+        maxWidth: "90%",
+        margin: "0 auto",
+        padding: "4mm 0 10mm 0",
+        background: "#fff",
+        color: "#000",
+        fontFamily: FONT,
+        fontSize: "12px",
+        fontWeight: 700,
+        lineHeight: "1.3",
+        boxSizing: "border-box",
+      }}
     >
-      {/* HEADER */}
-      <div className="text-center text-sm">
-        <div className="font-bold text-xl">{shop_name}</div>
-        <div className="grid">
-          <span className="font-semibold">NON-VAT Reg TIN #:</span>
-          {tin_id}
-        </div>
-        <div>{address}</div>
-        <div>
-          <span className="font-semibold">Phone:</span> 0936-667-8269
-        </div>
-      </div>
-
-      <Divider />
-
-      {/* DETAILS */}
-      <PrintRow
-        label="Date:"
-        value={formatDate(createdAt, "MM-dd-yyyy, hh:mm a")}
-        bold
-      />
-      <PrintRow
-        label="Client:"
-        value={entity?.client?.full_name ?? "N/A"}
-        bold
-      />
-
-      <Divider />
-
-      {/* INVOICE */}
-      <div className="text-center text-md font-semibold mb-1">
-        SALES INVOICE
-      </div>
-
-      <div className="text-sm font-bold flex space-x-1.5">
-        <div className="w-6">Qty</div>
-        <div className="flex-1">Item</div>
-        <div className="w-20 text-right">Price</div>
-        <div className="w-20 text-right">Total</div>
-      </div>
-
-      {entity?.items.map((item, idx) => {
-        const unitPrice = isFakePrint
-          ? Number(item.print_price_per_unit ?? 0)
-          : Number(item.final_price_per_unit ?? item.item?.retail_price ?? 0)
-
-        const lineTotal = unitPrice * item.quantity
-
-        return (
-          <div
-            key={`${item.item?.id}-${idx}`}
-            className="flex text-sm space-x-1.5"
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          tableLayout: "auto",
+        }}
+      >
+        <tbody>
+          {/* ── HEADER ── */}
+          <CenterRow
+            bold
+            size="13px"
           >
-            <div className="w-6">{item.quantity}</div>
-            <div className="flex-1">
-              {item.item?.name ?? item.description ?? "Custom Item"}
-            </div>
-            <div className="w-20 text-right">{formatCurrency(unitPrice)}</div>
-            <div className="w-20 text-right">{formatCurrency(lineTotal)}</div>
-          </div>
-        )
-      })}
+            {shop_name}
+          </CenterRow>
+          <CenterRow size="11px">NON-VAT Reg TIN: {tin_id}</CenterRow>
+          <CenterRow size="11px">{address}</CenterRow>
+          <CenterRow size="11px">Tel: 0936-667-8269</CenterRow>
 
-      <Divider />
+          <Dash />
 
-      <PrintRow
-        label="Gross:"
-        value={formatCurrency(printTotal)}
-        bold
-      />
+          {/* ── DATE / CLIENT ── */}
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "center",
+              }}
+            >
+              {formatDate(createdAt, "MM/dd/yyyy hh:mm a")}
+            </td>
+          </tr>
+          <tr>
+            <td
+              colSpan={2}
+              style={{
+                fontFamily: FONT,
+                fontSize: "12px",
+                padding: "2px 0",
+                textAlign: "center",
+                wordBreak: "break-word",
+              }}
+            >
+              Client: {entity?.client?.full_name ?? "Walk-in"}
+            </td>
+          </tr>
 
-      {!isFakePrint && discount > 0 && (
-        <PrintRow
-          label="Discount:"
-          value={`-${formatCurrency(discount)}`}
-          bold
-        />
-      )}
+          <Dash />
+          <CenterRow bold>SALES INVOICE</CenterRow>
+          <Dash />
 
-      {!isFakePrint && discount > 0 && (
-        <PrintRow
-          label="Net:"
-          value={formatCurrency(discountedTotal)}
-          bold
-        />
-      )}
+          {/* ── ITEMS ── */}
+          {entity?.items.map((item, idx) => {
+            const unitPrice = isFakePrint
+              ? Number(item.print_price_per_unit ?? 0)
+              : Number(
+                  item.final_price_per_unit ?? item.item?.retail_price ?? 0,
+                )
+            const lineTotal = unitPrice * item.quantity
+            const name = item.item?.name || item.description || "Custom Item"
 
-      {isFakePrint ? (
-        <PrintRow
-          label="Cash:"
-          value={formatCurrency(printTotal)}
-          bold
-        />
-      ) : (
-        <>
-          {entity?.payments?.map((payment, idx) => (
-            <PrintRow
-              key={`${payment.payment_type}-${idx}`}
-              label={`${payment.payment_type.toUpperCase()}${payment.cheque_number ? ` (#${payment.cheque_number})` : ""}:`}
-              value={formatCurrency(Number(payment.amount))}
-              bold
+            return (
+              <React.Fragment key={`${item.item?.id ?? "c"}-${idx}`}>
+                {/* Item name — full width */}
+                <tr>
+                  <td
+                    colSpan={2}
+                    style={{
+                      fontFamily: FONT,
+                      fontSize: "12px",
+                      padding: "3px 0 1px",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {name}
+                  </td>
+                </tr>
+                {/* qty x price    total */}
+                <LR
+                  left={`${Number(item.quantity).toFixed(2)} x ${peso(unitPrice)}`}
+                  right={peso(lineTotal)}
+                />
+              </React.Fragment>
+            )
+          })}
+
+          <Dash />
+
+          {/* ── TOTALS ── */}
+          <LR
+            left="SUBTOTAL"
+            right={peso(printTotal)}
+            bold
+          />
+
+          {!isFakePrint && discount > 0 && (
+            <>
+              <LR
+                left="DISCOUNT"
+                right={`-${peso(discount)}`}
+              />
+              <LR
+                left="TOTAL"
+                right={peso(discountedTotal)}
+                bold
+              />
+            </>
+          )}
+
+          <Dash />
+
+          {/* ── PAYMENTS ── */}
+          {isFakePrint ? (
+            <LR
+              left="CASH"
+              right={peso(printTotal)}
             />
-          ))}
-        </>
-      )}
+          ) : (
+            entity?.payments?.map((payment, idx) => (
+              <LR
+                key={`${payment.payment_type}-${idx}`}
+                left={`${payment.payment_type.toUpperCase()}${payment.cheque_number ? ` #${payment.cheque_number}` : ""}`}
+                right={peso(Number(payment.amount))}
+              />
+            ))
+          )}
 
-      <PrintRow
-        label="Total Payment:"
-        value={formatCurrency(paymentsTotal)}
-        bold
-      />
-      <PrintRow
-        label="Change:"
-        value={formatCurrency(printChangeDue)}
-        bold
-      />
+          <LR
+            left="TOTAL PAID"
+            right={peso(paymentsTotal)}
+            bold
+          />
+          <LR
+            left="CHANGE"
+            right={peso(printChangeDue)}
+            bold
+          />
 
-      <div className="mt-6 text-center grid place-items-center gap-2 text-sm">
-        <div>----- THANK YOU! -----</div>
-        <div>THIS SERVES AS YOUR UNOFFICIAL RECEIPT</div>
-      </div>
+          <Dash />
+
+          {/* ── FOOTER ── */}
+          <CenterRow size="11px">
+            ----- THANK YOU! -----
+            <br />
+            This serves as your
+            <br />
+            unofficial receipt
+          </CenterRow>
+        </tbody>
+      </table>
     </div>
   )
 })

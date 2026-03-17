@@ -57,7 +57,6 @@ export default function ItemQuantitySelector({
       description: "",
       quantity: 1,
       final_price_per_unit: 0,
-      print_price_per_unit: 0,
     }
     onChange([...items, customItem])
   }
@@ -208,16 +207,23 @@ export default function ItemQuantitySelector({
                                   ...prev,
                                   [idx]: selectedValue,
                                 }))
-                                handleUpdate(idx, "description", selected.name)
-                                handleUpdate(
-                                  idx,
-                                  "final_price_per_unit",
-                                  Number(selected.default_price),
-                                )
-                                handleUpdate(
-                                  idx,
-                                  "print_price_per_unit",
-                                  Number(selected.default_price),
+                                // Update all fields in one onChange call to avoid
+                                // stale-closure race where only the last update wins
+                                onChange(
+                                  items.map((itm, i) =>
+                                    i === idx
+                                      ? {
+                                          ...itm,
+                                          description: selected.name,
+                                          final_price_per_unit: Number(
+                                            selected.default_price,
+                                          ),
+                                          print_price_per_unit: Number(
+                                            selected.default_price,
+                                          ),
+                                        }
+                                      : itm,
+                                  ),
                                 )
                               }}
                               options={customItemTemplates!.map((t) => ({
@@ -482,7 +488,8 @@ export default function ItemQuantitySelector({
                           step="0.01"
                           value={
                             itm.print_price_per_unit ??
-                            (itm.item ? itm.item.retail_price : 0)
+                            itm.final_price_per_unit ??
+                            (itm.item ? Number(itm.item.retail_price) : 0)
                           }
                           onChange={(e) =>
                             handleUpdate(

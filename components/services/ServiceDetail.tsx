@@ -2463,7 +2463,7 @@ export default function ServiceDetail({
       </Dialog>
 
       {/* Hidden print content */}
-      <div className="hidden">
+      <div className="fixed left-[-9999px] top-0">
         <ServiceReceiptPrintContent
           ref={serviceReceiptRef}
           service={service}

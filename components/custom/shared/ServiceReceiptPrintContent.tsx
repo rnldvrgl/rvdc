@@ -215,7 +215,7 @@ const MainStallReceipt = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="w-full max-w-[90%] font-roboto"
+      className="thermal-receipt-print w-full max-w-[90%] font-roboto"
     >
       <ReceiptHeader
         shopName={shop_name}
@@ -312,7 +312,7 @@ const SubStallReceipt = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="w-full max-w-[90%] font-roboto"
+      className="thermal-receipt-print w-full max-w-[90%] font-roboto"
     >
       <ReceiptHeader
         shopName={shop_name}
@@ -411,7 +411,7 @@ const CombinedReceipt = React.forwardRef<
   return (
     <div
       ref={ref}
-      className="w-full max-w-[90%] font-roboto"
+      className="thermal-receipt-print w-full max-w-[90%] font-roboto"
     >
       <ReceiptHeader
         shopName={mainDetails.shop_name}

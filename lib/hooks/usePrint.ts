@@ -23,6 +23,7 @@ export function usePrint<TData, TRef extends HTMLDivElement = HTMLDivElement>(
   const reactToPrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: options?.documentTitle ?? "Document",
+    suppressErrors: true,
     onBeforePrint: async () => {
       if (options?.onBeforePrint) {
         await options.onBeforePrint(printData)
@@ -40,7 +41,7 @@ export function usePrint<TData, TRef extends HTMLDivElement = HTMLDivElement>(
 
       if (data) setPrintData(data)
 
-      const toastId = showPrintDelayToast(3000, () => {
+      const toastId = showPrintDelayToast(1000, () => {
         cancelledRef.current = true
         toast.dismiss(toastId)
         toast.success("Print cancelled.")
@@ -54,7 +55,7 @@ export function usePrint<TData, TRef extends HTMLDivElement = HTMLDivElement>(
             toast.dismiss(toastId)
             reactToPrint?.()
           }
-        }, 3000)
+        }, 1000)
       }
     },
     [reactToPrint, options?.requireConfirmation],

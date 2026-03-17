@@ -181,7 +181,7 @@ export default function SalesTransactionsPage() {
     <Wrapper>
       {/* Hidden print component */}
       {printData && (
-        <div className="hidden">
+        <div className="fixed left-[-9999px] top-0">
           <SalesTransactionPrintContent
             ref={printRef}
             entity={printData as SalesTransaction}

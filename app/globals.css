@@ -186,21 +186,16 @@
   }
 }
 
-/* A4 Print Styles for Quotation */
+/* Print Styles */
 @media print {
-  @page {
-    size: A4;
-    margin: 0.5in;
-  }
-
   body {
     background: white !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Hide everything except the print content */
-  body > *:not(.quotation-print) {
+  /* Hide everything except print content */
+  body > *:not(.quotation-print):not(.thermal-receipt-print) {
     display: none !important;
   }
 
@@ -213,9 +208,12 @@
     display: none !important;
   }
 
+  /* ── Quotation (A4) ── */
   .quotation-print {
+    page: quotation-page;
     width: 100% !important;
     min-height: auto !important;
+    height: auto !important;
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none !important;
@@ -239,11 +237,6 @@
     background-color: #f9fafb !important;
   }
 
-  /* Multi-page support */
-  .quotation-print {
-    height: auto !important;
-  }
-
   .quotation-print table tbody tr {
     page-break-inside: avoid;
   }
@@ -252,17 +245,42 @@
     page-break-inside: avoid;
   }
 
-  /* Keep signature section together on same page */
   .quotation-print .signature-section {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
-  /* Prevent totals from breaking across pages */
   .quotation-print .quotation-totals {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
+
+  /* ── Thermal Receipt (58mm) ── */
+  .thermal-receipt-print {
+    page: thermal-page;
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 90% !important;
+    margin: 0 auto !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .thermal-receipt-print * {
+    visibility: visible !important;
+  }
+}
+
+@page quotation-page {
+  size: A4;
+  margin: 0.5in;
+}
+
+@page thermal-page {
+  size: 58mm auto;
+  margin: 0;
 }
 
 @keyframes fall {

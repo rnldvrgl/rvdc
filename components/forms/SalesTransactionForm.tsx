@@ -359,7 +359,7 @@ export default function SalesTransactionForm({
 
   return (
     <>
-      <div className="hidden">
+      <div className="fixed left-[-9999px] top-0">
         <SalesTransactionPrintContent
           ref={printRef}
           entity={createdTransaction}
