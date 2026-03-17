@@ -14,12 +14,11 @@ import React from "react"
    ───────────────────────────────────────────────────────── */
 
 const FONT = "'Courier New', Courier, monospace"
-const DASH = "------------------------------------------------"
+const DASH = "------------------------------"
 
-/** Format to "P100.00" – plain ASCII 'P' instead of ₱ */
-const peso = (v: number) =>
+const peso = (n: number) =>
   "P" +
-  v.toLocaleString("en", {
+  n.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
@@ -41,7 +40,7 @@ const CenterRow = ({
       style={{
         fontFamily: FONT,
         fontSize: size ?? "12px",
-        fontWeight: bold ? 900 : 700,
+        fontWeight: bold ? 1000 : 700,
         textAlign: "center",
         padding: "1px 0",
         wordBreak: "break-word",
@@ -84,7 +83,7 @@ const LR = ({
     <td
       style={{
         fontFamily: FONT,
-        fontSize: "12px",
+        fontSize: "13px",
         fontWeight: bold ? 900 : 700,
         textAlign: "left",
         padding: "1px 0",
@@ -96,7 +95,7 @@ const LR = ({
     <td
       style={{
         fontFamily: FONT,
-        fontSize: "12px",
+        fontSize: "13px",
         fontWeight: bold ? 900 : 700,
         textAlign: "right",
         padding: "1px 0",
@@ -151,14 +150,14 @@ export const SalesTransactionPrintContent = React.forwardRef<
       ref={ref}
       className="thermal-receipt-print"
       style={{
-        width: "100%",
-        maxWidth: "90%",
+        width: "58mm",
+        maxWidth: "58mm",
         margin: "0 auto",
-        padding: "4mm 0 10mm 0",
+        padding: "2mm 0 10mm 0",
         background: "#fff",
         color: "#000",
         fontFamily: FONT,
-        fontSize: "12px",
+        fontSize: "13px",
         fontWeight: 700,
         lineHeight: "1.3",
         boxSizing: "border-box",
@@ -168,20 +167,23 @@ export const SalesTransactionPrintContent = React.forwardRef<
         style={{
           width: "100%",
           borderCollapse: "collapse",
-          tableLayout: "auto",
+          tableLayout: "fixed",
         }}
       >
         <tbody>
           {/* ── HEADER ── */}
           <CenterRow
             bold
-            size="13px"
+            size="14px"
           >
             {shop_name}
           </CenterRow>
-          <CenterRow size="11px">NON-VAT Reg TIN: {tin_id}</CenterRow>
-          <CenterRow size="11px">{address}</CenterRow>
-          <CenterRow size="11px">Tel: 0936-667-8269</CenterRow>
+          <CenterRow size="13px">
+            NON-VAT Reg TIN: <br />
+            {tin_id}
+          </CenterRow>
+          <CenterRow size="13px">{address}</CenterRow>
+          <CenterRow size="1 3px">Tel: 0936-667-8269</CenterRow>
 
           <Dash />
 
@@ -191,12 +193,12 @@ export const SalesTransactionPrintContent = React.forwardRef<
               colSpan={2}
               style={{
                 fontFamily: FONT,
-                fontSize: "12px",
+                fontSize: "13px",
                 padding: "2px 0",
-                textAlign: "center",
+                textAlign: "left",
               }}
             >
-              {formatDate(createdAt, "MM/dd/yyyy hh:mm a")}
+              {formatDate(createdAt, "MMM/dd/yyyy hh:mm a")}
             </td>
           </tr>
           <tr>
@@ -204,18 +206,23 @@ export const SalesTransactionPrintContent = React.forwardRef<
               colSpan={2}
               style={{
                 fontFamily: FONT,
-                fontSize: "12px",
+                fontSize: "13px",
                 padding: "2px 0",
-                textAlign: "center",
+                textAlign: "left",
                 wordBreak: "break-word",
               }}
             >
-              Client: {entity?.client?.full_name ?? "Walk-in"}
+              {entity?.client?.full_name ?? "Walk-in"}
             </td>
           </tr>
 
           <Dash />
-          <CenterRow bold>SALES INVOICE</CenterRow>
+          <CenterRow
+            bold
+            size="13px"
+          >
+            SALES INVOICE
+          </CenterRow>
           <Dash />
 
           {/* ── ITEMS ── */}
@@ -236,7 +243,7 @@ export const SalesTransactionPrintContent = React.forwardRef<
                     colSpan={2}
                     style={{
                       fontFamily: FONT,
-                      fontSize: "12px",
+                      fontSize: "13px",
                       padding: "3px 0 1px",
                       wordBreak: "break-word",
                     }}
@@ -308,7 +315,8 @@ export const SalesTransactionPrintContent = React.forwardRef<
           <Dash />
 
           {/* ── FOOTER ── */}
-          <CenterRow size="11px">
+          <CenterRow size="13px">
+            <br />
             ----- THANK YOU! -----
             <br />
             This serves as your
