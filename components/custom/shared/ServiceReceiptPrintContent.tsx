@@ -4,8 +4,10 @@ import {
   AirconUnits,
   Service,
   ServiceAppliance,
+  ServiceItemUsed,
 } from "@/lib/constants/interface"
 import useGetReceiptDetails from "@/lib/hooks/useGetReceiptDetails"
+import { useServiceItems } from "@/lib/queries/services/useServiceItems"
 import { formatDate } from "@/lib/utils/helpers/date"
 import React from "react"
 
@@ -169,6 +171,31 @@ function getPartsItems(appliances: ServiceAppliance[]) {
         total: parseFloat(part.line_total ?? "0"),
       })
     }
+  }
+  return items
+}
+
+function getServiceLevelItems(serviceItems: ServiceItemUsed[]) {
+  const items: {
+    qty: number
+    description: string
+    unitPrice: number
+    total: number
+  }[] = []
+  for (const si of serviceItems) {
+    if (si.is_free || si.is_cancelled) continue
+    const chargedQty =
+      si.charged_quantity ?? si.quantity - (si.free_quantity ?? 0)
+    if (chargedQty <= 0) continue
+    const unitPrice = parseFloat(
+      si.discounted_price ?? si.item_price ?? si.custom_price ?? "0",
+    )
+    items.push({
+      qty: chargedQty,
+      description: si.item_name || si.custom_description || `Part #${si.item}`,
+      unitPrice,
+      total: parseFloat(si.line_total ?? "0"),
+    })
   }
   return items
 }
@@ -423,7 +450,10 @@ const SubStallReceipt = React.forwardRef<
   { service: Service; createdAt: Date }
 >(({ service, createdAt }, ref) => {
   const { shop_name, tin_id, address } = useGetReceiptDetails("Sub Stall")
-  const partsItems = getPartsItems(service.appliances ?? [])
+  const { data: serviceItems = [] } = useServiceItems(service.id)
+  const appliancePartsItems = getPartsItems(service.appliances ?? [])
+  const serviceLevelItems = getServiceLevelItems(serviceItems)
+  const partsItems = [...appliancePartsItems, ...serviceLevelItems]
   const gross = partsItems.reduce((sum, i) => sum + i.total, 0)
 
   // Apply service-level discount proportional to sub stall share
@@ -622,7 +652,10 @@ const CombinedReceipt = React.forwardRef<
       total: parseFloat(a.unit_price!),
     }))
   const mainItems = [...laborItems, ...unitItems, ...extraUnitPriceItems]
-  const partsItems = getPartsItems(service.appliances ?? [])
+  const { data: serviceItems = [] } = useServiceItems(service.id)
+  const appliancePartsItems = getPartsItems(service.appliances ?? [])
+  const serviceLevelItems = getServiceLevelItems(serviceItems)
+  const partsItems = [...appliancePartsItems, ...serviceLevelItems]
 
   const mainGross = mainItems.reduce((sum, i) => sum + i.total, 0)
   const partsGross = partsItems.reduce((sum, i) => sum + i.total, 0)
