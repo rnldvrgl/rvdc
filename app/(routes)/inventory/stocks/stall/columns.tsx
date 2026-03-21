@@ -171,7 +171,6 @@ export function getStallStockColumns({
                       label: "Pull Out",
                       icon: PackageMinus,
                       onClick: () => onPullOut?.(stock),
-                      destructive: true,
                     },
                     ...(role === "admin"
                       ? [

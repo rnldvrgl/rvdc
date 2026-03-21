@@ -368,6 +368,7 @@ export interface Expense {
   reference_number?: string
   vendor?: string
   source: "manual" | "service"
+  is_reimbursement: boolean
   is_deleted: boolean
   deleted_at?: string
   created_by: { id: number; name: string }
@@ -388,6 +389,7 @@ export interface ExpensePayload {
   payment_status?: "unpaid" | "partial" | "paid"
   payment_method?: string
   paid_amount?: number
+  is_reimbursement?: boolean
 }
 
 // Payment enums

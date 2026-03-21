@@ -53,6 +53,14 @@ export function ExpenseDetails({
             {entity.source}
           </Badge>
         )}
+        {entity?.is_reimbursement && (
+          <Badge
+            variant="outline"
+            className="border-green-500 text-green-600"
+          >
+            Reimbursement
+          </Badge>
+        )}
       </div>
 
       {/* Expense Info */}

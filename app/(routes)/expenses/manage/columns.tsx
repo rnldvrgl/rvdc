@@ -67,8 +67,20 @@ export function getExpenseColumns({
     {
       accessorKey: "description",
       header: "Description",
-      cell: ({ getValue }) => (
-        <p className="truncate max-w-96">{safeCell(getValue())}</p>
+      cell: ({ row }: { row: Row<Expense> }) => (
+        <div className="flex items-center gap-2">
+          <p className="truncate max-w-96">
+            {safeCell(row.original.description)}
+          </p>
+          {row.original.is_reimbursement && (
+            <Badge
+              variant="outline"
+              className="border-green-500 text-green-600 shrink-0"
+            >
+              Reimbursement
+            </Badge>
+          )}
+        </div>
       ),
     },
     {

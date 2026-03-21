@@ -32,7 +32,7 @@ import {
   Package,
   TriangleAlert,
 } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 
 interface FormValues {
@@ -56,12 +56,10 @@ export default function StockAuditDialog({
   const { data: auditData, isLoading } = useStockAudit(
     open && stock ? stock.id : null,
   )
-  const [reconciled, setReconciled] = useState(false)
 
   useEffect(() => {
     if (open) {
       form.reset({ physical_count: "" })
-      setReconciled(false)
     }
   }, [open, stock, form])
 
@@ -87,7 +85,7 @@ export default function StockAuditDialog({
       { stock_id: stock.id, physical_count: count },
       {
         onSuccess: () => {
-          setReconciled(true)
+          form.reset({ physical_count: "" })
         },
         onError: (err: unknown) => {
           handleError(err)
@@ -117,22 +115,6 @@ export default function StockAuditDialog({
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="size-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : reconciled ? (
-          <div className="space-y-4 py-4">
-            <div className="flex flex-col items-center gap-2 text-center">
-              <CheckCircle2 className="size-12 text-green-500" />
-              <p className="text-lg font-semibold">Stock Reconciled</p>
-              <p className="text-sm text-muted-foreground">
-                System quantity has been updated to match the physical count.
-              </p>
-            </div>
-            <Button
-              onClick={onClose}
-              className="w-full"
-            >
-              Done
-            </Button>
           </div>
         ) : (
           <Form {...form}>
