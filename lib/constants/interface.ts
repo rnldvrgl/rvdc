@@ -356,6 +356,7 @@ export interface ExpenseItem {
 export interface Expense {
   id: number
   stall: number | string
+  is_reimbursement: boolean
   stall_data: Stall
   category?: number
   category_data?: ExpenseCategory
