@@ -122,9 +122,16 @@ export function WeeklyPayrollSlip({
     allowances -
     additionalEarnings
 
+  // Get hours per day from payroll response (sourced from PayrollSettings), default to 8
+  const hoursPerDay = toNumber(payroll.holiday_day_hours || 8)
+
   // Calculate holiday hours
   const holidayHours =
     (holidayPayRegular + holidayPaySpecial) / toNumber(payroll.hourly_rate)
+
+  // Calculate days for display
+  const totalHours = regularHours + approvedOtHours
+  const totalDays = hoursPerDay > 0 ? totalHours / hoursPerDay : 0
 
   // Employee info
   const employeeName =
@@ -198,6 +205,8 @@ export function WeeklyPayrollSlip({
         approvedOtHours={approvedOtHours}
         holidayHours={holidayHours}
         nightDiffHours={nightDiffHours}
+        totalDays={totalDays}
+        hoursPerDay={hoursPerDay}
       />
 
       {/* Earnings and Deductions */}
@@ -214,6 +223,8 @@ export function WeeklyPayrollSlip({
           canDelete={canDelete}
           canManage={canManage}
           onDeleteEarning={setDeleteEarningId}
+          totalDays={totalDays}
+          dailyRate={employeeDailyRate}
         />
 
         <DeductionsSection
