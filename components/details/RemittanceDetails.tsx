@@ -94,6 +94,8 @@ export function RemittanceDetails({
   entity,
   onClose,
   onMarkAsRemitted,
+  onRecalculate,
+  recalculatePending,
   markAsRemittedPending,
 }: {
   entity: RemittanceRecord
