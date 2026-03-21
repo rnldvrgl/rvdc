@@ -15,6 +15,7 @@ import {
   DollarSign,
   FileText,
   Receipt,
+  RefreshCcw,
   Tag,
   Wallet,
 } from "lucide-react"
@@ -29,7 +30,7 @@ export function ExpenseDetails({
   return (
     <div className="space-y-6">
       {/* Status badges */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Badge
           variant={
             entity?.payment_status === "paid"
@@ -51,6 +52,23 @@ export function ExpenseDetails({
             className="capitalize"
           >
             {entity.source}
+          </Badge>
+        )}
+        {entity?.is_reimbursable && (
+          <Badge
+            variant={
+              entity.reimbursement_status === "reimbursed"
+                ? "default"
+                : entity.reimbursement_status === "partial"
+                  ? "secondary"
+                  : "destructive"
+            }
+          >
+            {entity.reimbursement_status === "reimbursed"
+              ? "Reimbursed"
+              : entity.reimbursement_status === "partial"
+                ? "Partially Reimbursed"
+                : "Pending Reimbursement"}
           </Badge>
         )}
       </div>
@@ -162,6 +180,63 @@ export function ExpenseDetails({
           </div>
         </CardContent>
       </Card>
+
+      {/* Reimbursement Info */}
+      {entity?.is_reimbursable && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <RefreshCcw className="size-4" />
+              Reimbursement Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <Detail
+                label="Total Amount"
+                value={formatCurrency(entity?.total_price ?? 0)}
+                icon={<DollarSign className="size-4" />}
+              />
+              <Detail
+                label="Reimbursed Amount"
+                value={formatCurrency(entity?.reimbursed_amount ?? 0)}
+                icon={<Wallet className="size-4" />}
+              />
+              <Detail
+                label="Remaining Balance"
+                value={formatCurrency(
+                  (entity?.total_price ?? 0) - (entity?.reimbursed_amount ?? 0),
+                )}
+                icon={<DollarSign className="size-4" />}
+              />
+              <Detail
+                label="Reimbursement Method"
+                value={entity?.reimbursement_method || "N/A"}
+                icon={<Wallet className="size-4" />}
+              />
+              <Detail
+                label="Reimbursed At"
+                value={
+                  entity?.reimbursed_at
+                    ? formatDate(
+                        new Date(entity.reimbursed_at),
+                        "EEE, MMM dd yyyy • hh:mm a",
+                      )
+                    : "Not yet reimbursed"
+                }
+                icon={<Clock className="size-4" />}
+              />
+              {entity?.reimbursement_notes && (
+                <Detail
+                  label="Notes"
+                  value={entity.reimbursement_notes}
+                  icon={<FileText className="size-4" />}
+                />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Footer */}
       <div className="flex justify-end border-t pt-4">

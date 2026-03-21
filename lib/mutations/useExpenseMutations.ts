@@ -1,6 +1,10 @@
 "use client"
 
-import { Expense, ExpensePayload } from "@/lib/constants/interface"
+import {
+  Expense,
+  ExpensePayload,
+  ExpenseReimbursementPayload,
+} from "@/lib/constants/interface"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
 import { useQueryClient } from "@tanstack/react-query"
@@ -72,11 +76,32 @@ export function useExpenseMutations() {
     },
   })
 
+  const recordReimbursement = useApiMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number
+      data: ExpenseReimbursementPayload
+    }) => api.post(`${url}${id}/record-reimbursement/`, data),
+    successMessage: "Reimbursement recorded successfully.",
+    invalidateQueries: [
+      { queryKey: ["expenses"] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["expense", `${variables.id}`],
+      })
+    },
+  })
+
   return {
     addExpense,
     updateExpense,
     deleteExpense,
     payExpense,
     markExpenseAsPaid,
+    recordReimbursement,
   }
 }

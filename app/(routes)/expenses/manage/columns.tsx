@@ -8,7 +8,7 @@ import {
 } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef, Row } from "@tanstack/react-table"
-import { Archive, Edit, Eye, RotateCcw, Trash2 } from "lucide-react"
+import { Archive, Edit, Eye, RefreshCcw, RotateCcw, Trash2 } from "lucide-react"
 
 export function getExpenseColumns({
   onView,
@@ -16,6 +16,7 @@ export function getExpenseColumns({
   onDelete,
   onRestore,
   onHardDelete,
+  onCustomAction,
   role,
 }: GetColumnsProps<Expense>): ColumnDef<Expense>[] {
   return [
@@ -130,6 +131,35 @@ export function getExpenseColumns({
         )
       },
     },
+    {
+      accessorKey: "reimbursement_status",
+      header: "Reimbursement",
+      cell: ({ row }: { row: Row<Expense> }) => {
+        const expense = row.original
+        if (!expense.is_reimbursable) {
+          return <span className="text-muted-foreground text-sm">—</span>
+        }
+        const variants: Record<
+          string,
+          "default" | "secondary" | "destructive" | "outline"
+        > = {
+          pending: "destructive",
+          partial: "secondary",
+          reimbursed: "default",
+        }
+        const labels: Record<string, string> = {
+          pending: "Pending",
+          partial: "Partial",
+          reimbursed: "Reimbursed",
+        }
+        return (
+          <Badge variant={variants[expense.reimbursement_status] || "outline"}>
+            {labels[expense.reimbursement_status] ||
+              expense.reimbursement_status}
+          </Badge>
+        )
+      },
+    },
 
     {
       accessorKey: "created_at",
@@ -180,6 +210,16 @@ export function getExpenseColumns({
                 icon: Eye,
                 onClick: () => onView?.(expense),
               },
+              ...(expense.is_reimbursable &&
+              expense.reimbursement_status !== "reimbursed"
+                ? [
+                    {
+                      label: "Record Reimbursement",
+                      icon: RefreshCcw,
+                      onClick: () => onCustomAction?.(expense),
+                    },
+                  ]
+                : []),
               ...(row.original.source === "manual" || !row.original.source
                 ? [
                     {

@@ -8,6 +8,7 @@ import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import { ExpenseDetails } from "@/components/details/ExpenseDetails"
 import ExpenseForm from "@/components/forms/ExpenseForm"
+import ReimbursementForm from "@/components/forms/ReimbursementForm"
 import { Button } from "@/components/ui/button"
 
 import { Expense } from "@/lib/constants/interface"
@@ -70,6 +71,12 @@ export default function ExpensesPage() {
     closeEntity: closeAddSheet,
   } = useEntitySheet<Expense>()
 
+  const {
+    entityState: reimburseSheet,
+    openEntity: openReimburse,
+    closeEntity: closeReimburse,
+  } = useEntitySheet<Expense>()
+
   const handleDelete = (expense: Expense) => {
     if (expense.id !== undefined) {
       deleteExpense.mutate(expense.id)
@@ -91,6 +98,7 @@ export default function ExpensesPage() {
         onView: openView,
         onEdit: openEdit,
         onDelete: handleDelete,
+        onCustomAction: openReimburse,
         role,
       })
 
@@ -162,6 +170,24 @@ export default function ExpensesPage() {
           description="Fill out the form below to add a new expense."
           withCloseConfirmation
           renderForm={({ forceClose }) => <ExpenseForm onClose={forceClose} />}
+        />
+      )}
+      {!isArchived && (
+        <EntitySheet<Expense>
+          open={reimburseSheet.open}
+          onClose={closeReimburse}
+          entity={reimburseSheet.entity}
+          title="Record Reimbursement"
+          description="Record a reimbursement received for this expense."
+          withCloseConfirmation
+          renderForm={({ forceClose, entity }) =>
+            entity ? (
+              <ReimbursementForm
+                expense={entity}
+                onClose={forceClose}
+              />
+            ) : null
+          }
         />
       )}
 
