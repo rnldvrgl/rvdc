@@ -5,6 +5,8 @@ interface TimeSummaryProps {
   approvedOtHours: number
   holidayHours: number
   nightDiffHours: number
+  totalDays?: number
+  hoursPerDay?: number
 }
 
 export function TimeSummary({
@@ -12,6 +14,8 @@ export function TimeSummary({
   approvedOtHours,
   holidayHours,
   nightDiffHours,
+  totalDays,
+  hoursPerDay,
 }: TimeSummaryProps) {
   return (
     <div className="rounded-lg border p-3">
@@ -41,6 +45,15 @@ export function TimeSummary({
           color="purple"
         />
       </div>
+      {typeof totalDays === "number" && hoursPerDay ? (
+        <div className="mt-3 text-xs text-muted-foreground text-center">
+          <span className="font-medium">Total Days:</span>{" "}
+          {totalDays.toFixed(2)}d &nbsp;
+          <span className="text-muted-foreground">
+            ({hoursPerDay}h per day)
+          </span>
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -38,7 +38,10 @@ export function EarningsSection({
   canDelete,
   canManage,
   onDeleteEarning,
-}: EarningsSectionProps) {
+  // Accept extra props for computation sample
+  totalDays,
+  dailyRate,
+}: EarningsSectionProps & { totalDays?: number; dailyRate?: number }) {
   return (
     <div className="rounded-lg border border-green-200/60 dark:border-green-900/40 bg-linear-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/10 dark:to-emerald-950/10 p-3 flex flex-col">
       <div className="flex items-center gap-2 mb-2.5">
@@ -48,10 +51,21 @@ export function EarningsSection({
         </h3>
       </div>
       <div className="space-y-1.5">
-        <EarningItem
-          label="Basic Pay"
-          amount={basicPay}
-        />
+        <div>
+          <EarningItem
+            label="Basic Pay"
+            amount={basicPay}
+          />
+          {typeof totalDays === "number" && dailyRate ? (
+            <div className="text-xs text-muted-foreground ml-2">
+              ({totalDays.toFixed(2)} days × ₱
+              {dailyRate.toLocaleString(undefined, {
+                maximumFractionDigits: 2,
+              })}
+              )
+            </div>
+          ) : null}
+        </div>
 
         {approvedOtPay > 0 && (
           <EarningItem

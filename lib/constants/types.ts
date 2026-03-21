@@ -370,6 +370,7 @@ export type WeeklyPayroll = {
   night_diff_hours: string | number
   approved_ot_hours: string | number
 
+  holiday_day_hours: string | number
   allowances: string | number
 
   additional_earnings_total: string | number

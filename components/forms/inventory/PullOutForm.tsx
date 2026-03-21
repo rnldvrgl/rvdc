@@ -1,5 +1,6 @@
 "use client"
 
+import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import { Badge, BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,6 +19,7 @@ import { useDRFToastError } from "@/lib/hooks/useDRFToastError"
 import { useStallStockMutations } from "@/lib/mutations/useStallStockMutations"
 import { getBadgeVariant } from "@/lib/utils/helpers"
 import { PackageMinus } from "lucide-react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 
 interface FormValues {
@@ -36,6 +38,11 @@ export default function PullOutForm({ stock, onClose }: PullOutFormProps) {
   })
   const { pullOutStallStock } = useStallStockMutations()
   const { handleError } = useDRFToastError()
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [pendingData, setPendingData] = useState<{
+    quantity: number
+    reason: string
+  } | null>(null)
 
   const stallVariant = getBadgeVariant(stock.status)
   const unit = stock.item?.unit_of_measure ?? "pcs"
@@ -58,8 +65,19 @@ export default function PullOutForm({ stock, onClose }: PullOutFormProps) {
       return
     }
 
+    setPendingData({ quantity, reason: data.reason })
+    setShowConfirm(true)
+  }
+
+  const handleConfirm = () => {
+    if (!pendingData) return
+    setShowConfirm(false)
     pullOutStallStock.mutate(
-      { stock_id: stock.id, quantity, reason: data.reason },
+      {
+        stock_id: stock.id,
+        quantity: pendingData.quantity,
+        reason: pendingData.reason,
+      },
       {
         onSuccess: onClose,
         onError: (err: unknown) => {
@@ -70,127 +88,141 @@ export default function PullOutForm({ stock, onClose }: PullOutFormProps) {
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-5"
-      >
-        {/* Item Info */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-          <div>
-            <p className="text-muted-foreground">Item</p>
-            <p className="font-medium">{stock.item?.display_name ?? "N/A"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Category</p>
-            <p className="font-medium">{stock.item?.category?.name ?? "N/A"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Stall</p>
-            <p className="font-medium">{stock.stall?.name ?? "N/A"}</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Unit</p>
-            <p className="font-medium">{unit}</p>
-          </div>
-        </div>
-
-        <Separator />
-
-        {/* Current Stock */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-          <div>
-            <p className="text-muted-foreground">Current Qty</p>
-            <div className="flex items-center gap-2">
+    <>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-5"
+        >
+          {/* Item Info */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <div>
+              <p className="text-muted-foreground">Item</p>
+              <p className="font-medium">{stock.item?.display_name ?? "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Category</p>
               <p className="font-medium">
-                {stock.quantity} {unit}
+                {stock.item?.category?.name ?? "N/A"}
               </p>
-              <Badge
-                variant={stallVariant as BadgeVariant}
-                className="capitalize"
-              >
-                {stock.status.replace("_", " ")}
-              </Badge>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Stall</p>
+              <p className="font-medium">{stock.stall?.name ?? "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Unit</p>
+              <p className="font-medium">{unit}</p>
             </div>
           </div>
-          <div>
-            <p className="text-muted-foreground">Available</p>
-            <p className="font-medium">
-              {stock.available_quantity} {unit}
-            </p>
-          </div>
-        </div>
 
-        <Separator />
+          <Separator />
 
-        {/* Quantity Input */}
-        <FormField
-          control={form.control}
-          name="quantity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Quantity to Pull Out <span className="text-destructive">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  placeholder={`Enter quantity (${unit})`}
-                  {...field}
-                  min={0.01}
-                  step="any"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Reason */}
-        <FormField
-          control={form.control}
-          name="reason"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Reason</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="e.g. Defective motor, damaged in transit"
-                  rows={2}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-              <p className="text-xs text-muted-foreground">
-                Stock will be deducted from this stall.
+          {/* Current Stock */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <div>
+              <p className="text-muted-foreground">Current Qty</p>
+              <div className="flex items-center gap-2">
+                <p className="font-medium">
+                  {stock.quantity} {unit}
+                </p>
+                <Badge
+                  variant={stallVariant as BadgeVariant}
+                  className="capitalize"
+                >
+                  {stock.status.replace("_", " ")}
+                </Badge>
+              </div>
+            </div>
+            <div>
+              <p className="text-muted-foreground">Available</p>
+              <p className="font-medium">
+                {stock.available_quantity} {unit}
               </p>
-            </FormItem>
-          )}
-        />
+            </div>
+          </div>
 
-        {/* Actions */}
-        <div className="flex gap-2 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            className="flex-1"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="destructive"
-            className="flex-1"
-            disabled={pullOutStallStock.status === "pending"}
-          >
-            <PackageMinus className="mr-2 size-4" />
-            {pullOutStallStock.status === "pending"
-              ? "Processing..."
-              : "Pull Out"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+          <Separator />
+
+          {/* Quantity Input */}
+          <FormField
+            control={form.control}
+            name="quantity"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Quantity to Pull Out{" "}
+                  <span className="text-destructive">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    placeholder={`Enter quantity (${unit})`}
+                    {...field}
+                    min={0.01}
+                    step="any"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Reason */}
+          <FormField
+            control={form.control}
+            name="reason"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Reason</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="e.g. Defective motor, damaged in transit"
+                    rows={2}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+                <p className="text-xs text-muted-foreground">
+                  Stock will be deducted from this stall.
+                </p>
+              </FormItem>
+            )}
+          />
+
+          {/* Actions */}
+          <div className="flex gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="destructive"
+              className="flex-1"
+              disabled={pullOutStallStock.status === "pending"}
+            >
+              <PackageMinus className="mr-2 size-4" />
+              {pullOutStallStock.status === "pending"
+                ? "Processing..."
+                : "Pull Out"}
+            </Button>
+          </div>
+        </form>
+      </Form>
+      <ConfirmDialog
+        open={showConfirm}
+        onCancel={() => setShowConfirm(false)}
+        onConfirm={handleConfirm}
+        title="Confirm Pull Out"
+        description={`Are you sure you want to pull out ${pendingData?.quantity ?? ""} ${unit} of "${stock.item?.display_name ?? "this item"}" from ${stock.stall?.name ?? "this stall"}?`}
+        confirmText="Pull Out"
+        Icon={PackageMinus}
+      />
+    </>
   )
 }

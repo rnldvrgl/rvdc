@@ -113,16 +113,24 @@ export function getPayrollColumns({
     },
     {
       accessorKey: "total_hours",
-      header: "Hours",
+      header: "Hours / Days",
       cell: ({ row }: { row: Row<WeeklyPayroll> }) => {
         const regularHours = Number(row.original.regular_hours || 0)
         const overtimeHours = Number(row.original.approved_ot_hours || 0)
         const totalHours = regularHours + overtimeHours
+        // Use 8 as default paid hours per day; can be replaced with payroll settings if available in row
+        const hoursPerDay = Number(row.original.holiday_day_hours || 8)
+        const totalDays = totalHours / hoursPerDay
         return (
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
             <div className="text-sm">
-              <div className="font-medium">{totalHours.toFixed(2)}h</div>
+              <div className="font-medium">
+                {totalHours.toFixed(2)}h
+                <span className="ml-1 text-xs text-muted-foreground">
+                  ({totalDays.toFixed(2)}d)
+                </span>
+              </div>
               <div className="text-xs text-muted-foreground">
                 {regularHours.toFixed(1)}r + {overtimeHours.toFixed(1)}ot
               </div>

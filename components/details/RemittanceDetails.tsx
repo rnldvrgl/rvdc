@@ -16,6 +16,7 @@ import {
   CreditCard,
   Landmark,
   Receipt,
+  RefreshCw,
   ShieldCheck,
   StickyNote,
   TrendingDown,
@@ -93,12 +94,16 @@ export function RemittanceDetails({
   entity,
   onClose,
   onMarkAsRemitted,
+  onRecalculate,
+  recalculatePending,
   markAsRemittedPending,
 }: {
   entity: RemittanceRecord
   onClose: () => void
   onMarkAsRemitted: () => void
   markAsRemittedPending: boolean
+  onRecalculate?: () => void
+  recalculatePending?: boolean
 }) {
   const { role } = useCurrentUser()
 
@@ -406,6 +411,19 @@ export function RemittanceDetails({
 
       {/* Footer */}
       <div className="flex justify-end gap-3 border-t pt-4">
+        {!entity.is_remitted && onRecalculate && (
+          <Button
+            variant="outline"
+            onClick={onRecalculate}
+            disabled={recalculatePending}
+            className="gap-1.5"
+          >
+            <RefreshCw
+              className={cn("size-4", recalculatePending && "animate-spin")}
+            />
+            {recalculatePending ? "Recalculating..." : "Recalculate"}
+          </Button>
+        )}
         {!entity.is_remitted && role === "admin" && (
           <Button
             variant="success"
