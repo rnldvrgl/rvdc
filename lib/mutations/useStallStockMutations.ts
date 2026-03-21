@@ -114,15 +114,12 @@ export function useStallStockMutations() {
     mutationFn: ({
       stock_id,
       quantity,
-      reason,
     }: {
       stock_id: number
       quantity: number
-      reason: string
     }) =>
       api.post(`/inventory/stocks/${stock_id}/pull-out/`, {
         quantity,
-        reason,
       }),
     successMessage: "Stock pulled out successfully.",
     invalidateQueries: sharedInvalidations,

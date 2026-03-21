@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { Textarea } from "@/components/ui/textarea"
 import { Stock } from "@/lib/constants/interface"
 import { useDRFToastError } from "@/lib/hooks/useDRFToastError"
 import { useStallStockMutations } from "@/lib/mutations/useStallStockMutations"
@@ -24,7 +23,6 @@ import { useForm } from "react-hook-form"
 
 interface FormValues {
   quantity: string
-  reason: string
 }
 
 interface PullOutFormProps {
@@ -34,14 +32,13 @@ interface PullOutFormProps {
 
 export default function PullOutForm({ stock, onClose }: PullOutFormProps) {
   const form = useForm<FormValues>({
-    defaultValues: { quantity: "", reason: "" },
+    defaultValues: { quantity: "" },
   })
   const { pullOutStallStock } = useStallStockMutations()
   const { handleError } = useDRFToastError()
   const [showConfirm, setShowConfirm] = useState(false)
   const [pendingData, setPendingData] = useState<{
     quantity: number
-    reason: string
   } | null>(null)
 
   const stallVariant = getBadgeVariant(stock.status)
@@ -65,7 +62,7 @@ export default function PullOutForm({ stock, onClose }: PullOutFormProps) {
       return
     }
 
-    setPendingData({ quantity, reason: data.reason })
+    setPendingData({ quantity })
     setShowConfirm(true)
   }
 
@@ -76,7 +73,6 @@ export default function PullOutForm({ stock, onClose }: PullOutFormProps) {
       {
         stock_id: stock.id,
         quantity: pendingData.quantity,
-        reason: pendingData.reason,
       },
       {
         onSuccess: onClose,
@@ -168,27 +164,9 @@ export default function PullOutForm({ stock, onClose }: PullOutFormProps) {
             )}
           />
 
-          {/* Reason */}
-          <FormField
-            control={form.control}
-            name="reason"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Reason</FormLabel>
-                <FormControl>
-                  <Textarea
-                    placeholder="e.g. Defective motor, damaged in transit"
-                    rows={2}
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-                <p className="text-xs text-muted-foreground">
-                  Stock will be deducted from this stall.
-                </p>
-              </FormItem>
-            )}
-          />
+          <p className="text-xs text-muted-foreground">
+            Stock will be deducted from this stall.
+          </p>
 
           {/* Actions */}
           <div className="flex gap-2 pt-2">
