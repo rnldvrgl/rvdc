@@ -40,7 +40,8 @@ export default function RemittancesPage() {
     filter,
   })
   const { filters, orderingOptions } = useRemittancesRecordFilters()
-  const { deleteRemittance, markRemitted } = useRemittanceMutations()
+  const { deleteRemittance, markRemitted, recalculateRemittance } =
+    useRemittanceMutations()
 
   // Compute summary stats from loaded results
   const stats = useMemo(() => {
@@ -191,6 +192,10 @@ export default function RemittancesPage() {
                 onClose()
               }}
               markAsRemittedPending={markRemitted.isPending}
+              onRecalculate={() => {
+                if (entity.id) recalculateRemittance.mutate(entity.id)
+              }}
+              recalculatePending={recalculateRemittance.isPending}
             />
           ) : null
         }
