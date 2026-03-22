@@ -6,14 +6,17 @@ import {
 } from "@/components/custom/shared/charts/MotionWrappers"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import {
   useCashFlow,
   useTopClients,
   useTopSellingItems,
 } from "@/lib/queries/analytics/useGetAnalytics"
+import { useStalls } from "@/lib/queries/inventory/useStalls"
 import { AnimatePresence, motion } from "framer-motion"
 import { DollarSign, Package, Users } from "lucide-react"
+import { useMemo, useState } from "react"
 import BarChart from "./BarChart"
 import TimeSeriesChart from "./TimeSeriesChart"
 
@@ -82,13 +85,26 @@ const ChartCard = ({
 
 export default function DashboardCharts() {
   const { start_date, end_date, stall } = useDateParamsFromForm()
+  const [cashFlowStallTab, setCashFlowStallTab] = useState<string>("all")
+
+  const { data: stallsData } = useStalls({ limit: 50 })
+  const stalls = stallsData?.results ?? []
+  const mainStall = stalls.find((s) => s.stall_type === "main")
+  const subStall = stalls.find((s) => s.stall_type === "sub")
+
+  const cashFlowStall = useMemo(() => {
+    if (cashFlowStallTab === "main" && mainStall) return mainStall.id
+    if (cashFlowStallTab === "sub" && subStall) return subStall.id
+    if (cashFlowStallTab === "all") return undefined
+    return stall
+  }, [cashFlowStallTab, mainStall, subStall, stall])
 
   const { data: topSellingItems, isLoading: topSellingItemsLoading } =
     useTopSellingItems({ start_date, end_date, stall })
   const { data: cashFlow, isLoading: cashFlowLoading } = useCashFlow({
     start_date,
     end_date,
-    stall,
+    stall: cashFlowStall,
   })
   const { data: topClients, isLoading: topClientsLoading } = useTopClients({
     start_date,
@@ -99,31 +115,97 @@ export default function DashboardCharts() {
   return (
     <StaggerGrid className="grid gap-6 lg:gap-8 xl:grid-cols-2">
       <FadeUpItem className="xl:col-span-2">
-        <ChartCard
-          title="Cash Flow Analysis"
-          icon={DollarSign}
-          description="Compare income vs expenses over time"
-          isLoading={cashFlowLoading}
+        <motion.div
+          whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
         >
-          <TimeSeriesChart
-            data={cashFlow || []}
-            lines={[
-              {
-                key: "income",
-                color: "#10b981",
-                label: "Income",
-                gradientId: "incomeGradient",
-              },
-              {
-                key: "expense",
-                color: "#f59e0b",
-                label: "Expense",
-                gradientId: "expenseFlowGradient",
-              },
-            ]}
-            height={280}
-          />
-        </ChartCard>
+          <Card className="overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow duration-300 bg-card h-full">
+            <CardHeader className="pb-4 border-b border-border">
+              <CardTitle className="text-base font-semibold flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20">
+                    <DollarSign className="size-4 text-primary" />
+                  </div>
+                  <div className="space-y-0.5">
+                    <span className="text-foreground">Cash Flow Analysis</span>
+                    <p className="text-xs font-normal text-muted-foreground">
+                      Compare income vs expenses over time
+                    </p>
+                  </div>
+                </div>
+                <Tabs
+                  value={cashFlowStallTab}
+                  onValueChange={setCashFlowStallTab}
+                >
+                  <TabsList className="h-8">
+                    <TabsTrigger
+                      value="all"
+                      className="text-xs px-3 h-7"
+                    >
+                      All
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="main"
+                      className="text-xs px-3 h-7"
+                    >
+                      Main
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="sub"
+                      className="text-xs px-3 h-7"
+                    >
+                      Sub
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="h-80 p-5">
+              <AnimatePresence mode="wait">
+                {cashFlowLoading ? (
+                  <motion.div
+                    key="skeleton"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Skeleton className="w-full h-full rounded-lg" />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="chart"
+                    className="w-full h-full"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{
+                      duration: 0.4,
+                      ease: [0.25, 0.46, 0.45, 0.94],
+                    }}
+                  >
+                    <TimeSeriesChart
+                      data={cashFlow || []}
+                      lines={[
+                        {
+                          key: "income",
+                          color: "#10b981",
+                          label: "Income",
+                          gradientId: "incomeGradient",
+                        },
+                        {
+                          key: "expense",
+                          color: "#f59e0b",
+                          label: "Expense",
+                          gradientId: "expenseFlowGradient",
+                        },
+                      ]}
+                      height={280}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </CardContent>
+          </Card>
+        </motion.div>
       </FadeUpItem>
 
       <FadeUpItem>

@@ -2,16 +2,18 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import {
   useGetSummary,
   useSalesOverTime,
   useUnpaidSalesStatus,
 } from "@/lib/queries/analytics/useGetAnalytics"
+import { useStalls } from "@/lib/queries/inventory/useStalls"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { AnimatePresence, motion } from "framer-motion"
 import { DollarSign, TrendingDown, TrendingUp } from "lucide-react"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import DonutChart from "./DonutChart"
 import TimeSeriesChart from "./TimeSeriesChart"
 
@@ -36,19 +38,32 @@ function getPreviousPeriod(startDate?: string, endDate?: string) {
 
 export default function HeroStatsSection() {
   const { start_date, end_date, stall } = useDateParamsFromForm()
+  const [stallTab, setStallTab] = useState<string>("all")
+
+  const { data: stallsData } = useStalls({ limit: 50 })
+  const stalls = stallsData?.results ?? []
+  const mainStall = stalls.find((s) => s.stall_type === "main")
+  const subStall = stalls.find((s) => s.stall_type === "sub")
+
+  const effectiveStall = useMemo(() => {
+    if (stallTab === "main" && mainStall) return mainStall.id
+    if (stallTab === "sub" && subStall) return subStall.id
+    if (stallTab === "all") return undefined
+    return stall
+  }, [stallTab, mainStall, subStall, stall])
 
   const { data: summary, isLoading: summaryLoading } = useGetSummary({
     start_date,
     end_date,
-    stall,
+    stall: effectiveStall,
   })
   const { data: salesOvertime, isLoading: salesLoading } = useSalesOverTime({
     start_date,
     end_date,
-    stall,
+    stall: effectiveStall,
   })
   const { data: unpaidStatus, isLoading: statusLoading } = useUnpaidSalesStatus(
-    { start_date, end_date, stall },
+    { start_date, end_date, stall: effectiveStall },
   )
 
   const { prev_start, prev_end } = useMemo(
@@ -58,7 +73,7 @@ export default function HeroStatsSection() {
   const { data: prevData } = useGetSummary({
     start_date: prev_start,
     end_date: prev_end,
-    stall,
+    stall: effectiveStall,
     enabled: !!prev_start && !!prev_end,
   })
 
@@ -122,8 +137,35 @@ export default function HeroStatsSection() {
                         )}
                       </div>
                     </div>
-                    <div className="p-3 rounded-xl bg-primary/10 dark:bg-primary/20">
-                      <DollarSign className="size-6 text-primary" />
+                    <div className="flex items-center gap-3">
+                      <Tabs
+                        value={stallTab}
+                        onValueChange={setStallTab}
+                      >
+                        <TabsList className="h-8">
+                          <TabsTrigger
+                            value="all"
+                            className="text-xs px-3 h-7"
+                          >
+                            All
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="main"
+                            className="text-xs px-3 h-7"
+                          >
+                            Main
+                          </TabsTrigger>
+                          <TabsTrigger
+                            value="sub"
+                            className="text-xs px-3 h-7"
+                          >
+                            Sub
+                          </TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                      <div className="p-3 rounded-xl bg-primary/10 dark:bg-primary/20">
+                        <DollarSign className="size-6 text-primary" />
+                      </div>
                     </div>
                   </div>
 
