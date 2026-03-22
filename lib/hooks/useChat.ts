@@ -1,6 +1,6 @@
 "use client"
 
-import { getToken } from "@/lib/utils/tokens"
+import { getToken, refreshAccessToken } from "@/lib/utils/tokens"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 export type ChatMessage = {
@@ -39,6 +39,7 @@ type UseChatOptions = {
 export function useChat({ onMessage }: UseChatOptions = {}) {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const reconnectAttemptRef = useRef(0)
   const callbackRef = useRef(onMessage)
   callbackRef.current = onMessage
 
@@ -89,6 +90,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
 
     ws.onopen = () => {
       setConnected(true)
+      reconnectAttemptRef.current = 0
       // Request presence on connect
       ws.send(JSON.stringify({ action: "presence" }))
       // Flush any pending history request (e.g., user opened a chat before WS was ready)
@@ -152,9 +154,23 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
       }
     }
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       setConnected(false)
-      reconnectTimer.current = setTimeout(connect, 5000)
+      if (event.code === 4001) {
+        refreshAccessToken().then((ok) => {
+          if (ok) {
+            reconnectAttemptRef.current = 0
+            reconnectTimer.current = setTimeout(connect, 1000)
+          }
+        })
+        return
+      }
+      const delay = Math.min(
+        5000 * Math.pow(2, reconnectAttemptRef.current),
+        60000,
+      )
+      reconnectAttemptRef.current += 1
+      reconnectTimer.current = setTimeout(connect, delay)
     }
 
     ws.onerror = () => {

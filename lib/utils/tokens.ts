@@ -43,3 +43,33 @@ export const removeAllTokens = () => {
     // error is handled by mutation
   }
 }
+
+/**
+ * Attempt to refresh the access token using the stored refresh token.
+ * Returns true if a new access token was obtained.
+ */
+export async function refreshAccessToken(): Promise<boolean> {
+  if (typeof window === "undefined") return false
+
+  try {
+    const refresh = getToken("refresh")
+    if (!refresh) return false
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
+    const res = await fetch(`${baseUrl}/api/auth/token/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh }),
+    })
+
+    if (res.ok) {
+      const data = await res.json()
+      setToken("access", data.access)
+      if (data.refresh) setToken("refresh", data.refresh)
+      return true
+    }
+  } catch {
+    // refresh failed
+  }
+  return false
+}

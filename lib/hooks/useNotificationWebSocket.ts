@@ -1,6 +1,6 @@
 "use client"
 
-import { getToken } from "@/lib/utils/tokens"
+import { getToken, refreshAccessToken } from "@/lib/utils/tokens"
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useRef } from "react"
 
@@ -23,6 +23,7 @@ export function useNotificationWebSocket({ onNotification }: Options = {}) {
   const queryClient = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const reconnectAttemptRef = useRef(0)
   const callbackRef = useRef(onNotification)
   callbackRef.current = onNotification
 
@@ -44,6 +45,10 @@ export function useNotificationWebSocket({ onNotification }: Options = {}) {
     )
     wsRef.current = ws
 
+    ws.onopen = () => {
+      reconnectAttemptRef.current = 0
+    }
+
     ws.onmessage = (event) => {
       try {
         const data: NotificationWSData = JSON.parse(event.data)
@@ -60,9 +65,24 @@ export function useNotificationWebSocket({ onNotification }: Options = {}) {
       }
     }
 
-    ws.onclose = () => {
-      // Reconnect after 5 seconds
-      reconnectTimer.current = setTimeout(connect, 5000)
+    ws.onclose = (event) => {
+      if (event.code === 4001) {
+        // Auth failure — try to refresh token, then reconnect once
+        refreshAccessToken().then((ok) => {
+          if (ok) {
+            reconnectAttemptRef.current = 0
+            reconnectTimer.current = setTimeout(connect, 1000)
+          }
+        })
+        return
+      }
+      // Exponential backoff: 5s, 10s, 20s, 40s, max 60s
+      const delay = Math.min(
+        5000 * Math.pow(2, reconnectAttemptRef.current),
+        60000,
+      )
+      reconnectAttemptRef.current += 1
+      reconnectTimer.current = setTimeout(connect, delay)
     }
 
     ws.onerror = () => {
