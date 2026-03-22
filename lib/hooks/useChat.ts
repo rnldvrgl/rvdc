@@ -1,6 +1,10 @@
 "use client"
 
-import { getToken, getValidAccessToken, refreshAccessToken } from "@/lib/utils/tokens"
+import {
+  getToken,
+  getValidAccessToken,
+  refreshAccessToken,
+} from "@/lib/utils/tokens"
 import { useCallback, useEffect, useRef, useState } from "react"
 
 export type ChatMessage = {
