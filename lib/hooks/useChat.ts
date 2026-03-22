@@ -47,6 +47,8 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
   const [messages, setMessages] = useState<Record<number, ChatMessage[]>>({})
   const [typingFrom, setTypingFrom] = useState<number | null>(null)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  // Track which partners have "seen" (read) our latest messages
+  const [seenBy, setSeenBy] = useState<Set<number>>(new Set())
 
   // Fetch chat users via REST
   const fetchUsers = useCallback(async () => {
@@ -119,7 +121,8 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
           clearTimeout(typingTimeoutRef.current)
           typingTimeoutRef.current = setTimeout(() => setTypingFrom(null), 3000)
         } else if (data.type === "read") {
-          // Partner read our messages
+          // Partner read our messages — mark as seen
+          setSeenBy((prev) => new Set(prev).add(data.from))
         } else if (data.type === "history") {
           setMessages((prev) => ({ ...prev, [data.with]: data.messages }))
         } else if (data.type === "presence") {
@@ -150,6 +153,12 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
   const sendMessage = useCallback((to: number, body: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ action: "send", to, body }))
+      // Clear seen state for this partner since we just sent a new message
+      setSeenBy((prev) => {
+        const next = new Set(prev)
+        next.delete(to)
+        return next
+      })
     }
   }, [])
 
@@ -201,6 +210,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
     loadHistory,
     sendTyping,
     markRead,
+    seenBy,
     fetchUsers,
   }
 }

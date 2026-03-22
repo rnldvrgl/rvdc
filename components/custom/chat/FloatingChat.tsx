@@ -2,13 +2,13 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Textarea } from "@/components/ui/textarea"
 import { type ChatMessage, useChat } from "@/lib/hooks/useChat"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { cn } from "@/lib/utils/helpers"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowLeft, ChevronDown, MessageCircle, Send, X } from "lucide-react"
+import { ArrowLeft, MessageCircle, Send, X } from "lucide-react"
 import Image from "next/image"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -103,7 +103,7 @@ function ChatBubble({
   return (
     <motion.button
       onClick={onClick}
-      className="fixed bottom-6 right-6 z-50 size-12 sm:size-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center"
+      className="fixed bottom-6 right-4 sm:right-6 z-50 size-12 sm:size-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center"
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       initial={{ scale: 0, opacity: 0 }}
@@ -112,13 +112,16 @@ function ChatBubble({
     >
       <MessageCircle className="size-5 sm:size-6" />
       {totalUnread > 0 && (
-        <motion.span
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="absolute -top-1 -right-1 size-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold"
-        >
-          {totalUnread > 9 ? "9+" : totalUnread}
-        </motion.span>
+        <>
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 size-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold"
+          >
+            {totalUnread > 9 ? "9+" : totalUnread}
+          </motion.span>
+          <span className="absolute inset-0 rounded-full animate-ping bg-primary/30" />
+        </>
       )}
     </motion.button>
   )
@@ -234,6 +237,7 @@ function MessageThread({
   messages,
   currentUserId,
   typingFrom,
+  seenByPartner,
   onSend,
   onTyping,
   onBack,
@@ -247,6 +251,7 @@ function MessageThread({
   messages: ChatMessage[]
   currentUserId: number
   typingFrom: number | null
+  seenByPartner: boolean
   onSend: (body: string) => void
   onTyping: () => void
   onBack: () => void
@@ -254,7 +259,7 @@ function MessageThread({
 }) {
   const [input, setInput] = useState("")
   const scrollRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingThrottle = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   // Auto-scroll to bottom on new messages
@@ -266,7 +271,7 @@ function MessageThread({
 
   // Focus input on mount
   useEffect(() => {
-    inputRef.current?.focus()
+    textareaRef.current?.focus()
   }, [])
 
   const handleSend = () => {
@@ -274,7 +279,11 @@ function MessageThread({
     if (!body) return
     onSend(body)
     setInput("")
-    inputRef.current?.focus()
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"
+    }
+    textareaRef.current?.focus()
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -284,8 +293,13 @@ function MessageThread({
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value)
+    // Auto-resize textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 96)}px`
+    }
     // Throttle typing indicator
     if (!typingThrottle.current) {
       onTyping()
@@ -351,8 +365,13 @@ function MessageThread({
             </p>
           </div>
         )}
-        {messages.map((msg) => {
+        {messages.map((msg, idx) => {
           const isMine = msg.from === currentUserId
+          // Find index of last outgoing message to show status
+          const lastMyMsgIdx = messages.findLastIndex(
+            (m) => m.from === currentUserId,
+          )
+          const showStatus = isMine && idx === lastMyMsgIdx
           return (
             <motion.div
               key={msg.id}
@@ -372,16 +391,35 @@ function MessageThread({
                 <p className="wrap-break-word whitespace-pre-wrap">
                   {msg.body}
                 </p>
-                <p
+                <div
                   className={cn(
-                    "text-[10px] mt-0.5",
-                    isMine
-                      ? "text-primary-foreground/60"
-                      : "text-muted-foreground",
+                    "flex items-center gap-1 mt-0.5",
+                    isMine ? "justify-end" : "",
                   )}
                 >
-                  {formatTime(msg.ts)}
-                </p>
+                  <span
+                    className={cn(
+                      "text-[10px]",
+                      isMine
+                        ? "text-primary-foreground/60"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {formatTime(msg.ts)}
+                  </span>
+                  {showStatus && (
+                    <span
+                      className={cn(
+                        "text-[10px]",
+                        seenByPartner
+                          ? "text-blue-300"
+                          : "text-primary-foreground/50",
+                      )}
+                    >
+                      {seenByPartner ? "· Seen" : "· Sent"}
+                    </span>
+                  )}
+                </div>
               </div>
             </motion.div>
           )
@@ -410,16 +448,17 @@ function MessageThread({
 
       {/* Input */}
       <div className="px-3 py-2 border-t border-border bg-card">
-        <div className="flex gap-2">
-          <Input
-            ref={inputRef}
+        <div className="flex gap-2 items-end">
+          <Textarea
+            ref={textareaRef}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
-            className="flex-1 h-9 text-sm"
+            placeholder="Type a message... (Shift+Enter for new line)"
+            className="flex-1 min-h-9 max-h-24 text-sm resize-none py-2"
             maxLength={2000}
             autoComplete="off"
+            rows={1}
           />
           <Button
             size="icon"
@@ -441,7 +480,7 @@ export default function FloatingChat() {
   const { role, user_id } = useCurrentUser()
   const [isOpen, setIsOpen] = useState(false)
   const [activeChat, setActiveChat] = useState<number | null>(null)
-  const [minimized, setMinimized] = useState(false)
+  const chatWindowRef = useRef<HTMLDivElement>(null)
 
   // Only available for admin, manager, clerk
   const canChat = role === "admin" || role === "manager" || role === "clerk"
@@ -454,6 +493,7 @@ export default function FloatingChat() {
     loadHistory,
     sendTyping,
     markRead,
+    seenBy,
   } = useChat({
     onMessage: (msg) => {
       if (msg.from !== user_id) {
@@ -507,13 +547,29 @@ export default function FloatingChat() {
   }, [])
 
   const handleToggle = useCallback(() => {
-    if (isOpen) {
-      setMinimized(!minimized)
-    } else {
-      setIsOpen(true)
-      setMinimized(false)
+    setIsOpen(true)
+  }, [])
+
+  // Click outside to close
+  useEffect(() => {
+    if (!isOpen) return
+    const handler = (e: MouseEvent) => {
+      if (
+        chatWindowRef.current &&
+        !chatWindowRef.current.contains(e.target as Node)
+      ) {
+        handleClose()
+      }
     }
-  }, [isOpen, minimized])
+    // Delay attaching so the opening click doesn't immediately close
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handler)
+    }, 0)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener("mousedown", handler)
+    }
+  }, [isOpen, handleClose])
 
   // Mark messages as read when opening a chat
   useEffect(() => {
@@ -528,13 +584,14 @@ export default function FloatingChat() {
     <>
       {/* Chat window */}
       <AnimatePresence>
-        {isOpen && !minimized && (
+        {isOpen && (
           <motion.div
+            ref={chatWindowRef}
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed bottom-20 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-80 h-[min(480px,calc(100dvh-6rem))] rounded-2xl border border-border bg-card shadow-2xl overflow-hidden flex flex-col"
+            className="fixed z-50 inset-0 sm:inset-auto sm:bottom-20 sm:right-6 sm:w-80 sm:h-[min(480px,calc(100dvh-6rem))] sm:rounded-2xl sm:border border-border bg-card sm:shadow-2xl overflow-hidden flex flex-col"
           >
             {activeChat && activePartner ? (
               <MessageThread
@@ -546,6 +603,7 @@ export default function FloatingChat() {
                 messages={messages[activeChat] || []}
                 currentUserId={user_id || 0}
                 typingFrom={typingFrom}
+                seenByPartner={seenBy.has(activeChat)}
                 onSend={handleSend}
                 onTyping={handleTyping}
                 onBack={handleBack}
@@ -562,37 +620,13 @@ export default function FloatingChat() {
         )}
       </AnimatePresence>
 
-      {/* Floating bubble */}
-      {isOpen && minimized ? (
-        <div className="fixed bottom-6 right-4 sm:right-6 z-50 flex items-center gap-2">
-          <motion.button
-            onClick={handleToggle}
-            className="size-12 sm:size-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <ChevronDown className="size-6 rotate-180" />
-            {totalUnread > 0 && (
-              <span className="absolute -top-1 -right-1 size-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold">
-                {totalUnread > 9 ? "9+" : totalUnread}
-              </span>
-            )}
-          </motion.button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 rounded-full bg-muted"
-            onClick={handleClose}
-          >
-            <X className="size-4" />
-          </Button>
-        </div>
-      ) : !isOpen ? (
+      {/* Floating bubble — only show when chat window is closed */}
+      {!isOpen && (
         <ChatBubble
           onClick={handleToggle}
           totalUnread={totalUnread}
         />
-      ) : null}
+      )}
     </>
   )
 }
