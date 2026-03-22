@@ -492,6 +492,9 @@ export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false)
   const [activeChat, setActiveChat] = useState<number | null>(null)
   const chatWindowRef = useRef<HTMLDivElement>(null)
+  // Prevent SSR/client hydration mismatch (Zustand reads localStorage on client)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
 
   // Only available for admin, manager, clerk
   const canChat = role === "admin" || role === "manager" || role === "clerk"
@@ -599,7 +602,7 @@ export default function FloatingChat() {
     }
   }, [activeChat, isOpen, markRead, messages])
 
-  if (!canChat) return null
+  if (!mounted || !canChat) return null
 
   return (
     <>

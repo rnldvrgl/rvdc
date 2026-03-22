@@ -1,6 +1,6 @@
 "use client"
 
-import { getToken } from "@/lib/utils/tokens"
+import { getToken, refreshAccessToken } from "@/lib/utils/tokens"
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useRef } from "react"
 
@@ -31,6 +31,7 @@ export function useAttendanceWebSocket({ onEvent }: Options = {}) {
   const queryClient = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const reconnectAttemptRef = useRef(0)
   const callbackRef = useRef(onEvent)
   callbackRef.current = onEvent
 
@@ -50,6 +51,10 @@ export function useAttendanceWebSocket({ onEvent }: Options = {}) {
       `${wsProtocol}://${host}/ws/attendance/?token=${token}`,
     )
     wsRef.current = ws
+
+    ws.onopen = () => {
+      reconnectAttemptRef.current = 0
+    }
 
     ws.onmessage = (event) => {
       try {
@@ -115,8 +120,22 @@ export function useAttendanceWebSocket({ onEvent }: Options = {}) {
       }
     }
 
-    ws.onclose = () => {
-      reconnectTimer.current = setTimeout(connect, 5000)
+    ws.onclose = (event) => {
+      if (event.code === 4001) {
+        refreshAccessToken().then((ok) => {
+          if (ok) {
+            reconnectAttemptRef.current = 0
+            reconnectTimer.current = setTimeout(connect, 1000)
+          }
+        })
+        return
+      }
+      const delay = Math.min(
+        5000 * Math.pow(2, reconnectAttemptRef.current),
+        60000,
+      )
+      reconnectAttemptRef.current += 1
+      reconnectTimer.current = setTimeout(connect, delay)
     }
 
     ws.onerror = () => {
