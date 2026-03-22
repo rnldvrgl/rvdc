@@ -1,4 +1,5 @@
 "use client"
+import FloatingChat from "@/components/custom/chat/FloatingChat"
 import { Navbar } from "@/components/custom/navigation/Navbar"
 import { Sidebar } from "@/components/custom/navigation/Sidebar"
 import { Background } from "@/components/custom/shared/Background"
@@ -40,6 +41,7 @@ export default function MainLayout({
       </div>
 
       <ScrollToTop />
+      <FloatingChat />
     </div>
   )
 }
