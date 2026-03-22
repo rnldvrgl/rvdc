@@ -22,6 +22,7 @@ type ChatUser = {
   is_online: boolean
   unread_count: number
   last_message: ChatMessage | null
+  last_seen: number | null
 }
 
 type WSEvent =
@@ -49,6 +50,8 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   // Track which partners have "seen" (read) our latest messages
   const [seenBy, setSeenBy] = useState<Set<number>>(new Set())
+  // Queue history requests when WS isn't ready yet
+  const pendingHistoryRef = useRef<number | null>(null)
 
   // Fetch chat users via REST
   const fetchUsers = useCallback(async () => {
@@ -88,6 +91,13 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
       setConnected(true)
       // Request presence on connect
       ws.send(JSON.stringify({ action: "presence" }))
+      // Flush any pending history request (e.g., user opened a chat before WS was ready)
+      if (pendingHistoryRef.current !== null) {
+        ws.send(
+          JSON.stringify({ action: "history", with: pendingHistoryRef.current }),
+        )
+        pendingHistoryRef.current = null
+      }
     }
 
     ws.onmessage = (event) => {
@@ -168,6 +178,9 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
       wsRef.current.send(
         JSON.stringify({ action: "history", with: withUserId }),
       )
+    } else {
+      // Queue for when WS connects
+      pendingHistoryRef.current = withUserId
     }
   }, [])
 
