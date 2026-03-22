@@ -305,8 +305,7 @@ export default function AppliancePartsManager({
             ...basePayload,
             item: null,
             custom_description: item.customDescription,
-            custom_price:
-              Math.round(parseFloat(item.customPrice) * 100) / 100,
+            custom_price: Math.round(parseFloat(item.customPrice) * 100) / 100,
           }
         : { ...basePayload, item: item.itemId }
 
@@ -328,15 +327,21 @@ export default function AppliancePartsManager({
       )
     }
     if (failCount > 0) {
-      toast.error(
-        `Failed to add ${failCount} part${failCount > 1 ? "s" : ""}`,
-      )
+      toast.error(`Failed to add ${failCount} part${failCount > 1 ? "s" : ""}`)
     }
 
     await new Promise((resolve) => setTimeout(resolve, 150))
     await queryClient.invalidateQueries({ queryKey: ["service"] })
+    await queryClient.invalidateQueries({ queryKey: ["services"] })
     await queryClient.invalidateQueries({ queryKey: ["service-appliances"] })
-    await queryClient.invalidateQueries({ queryKey: ["appliance-items"] })
+    await queryClient.invalidateQueries({
+      queryKey: ["appliance-items", applianceId],
+    })
+    await queryClient.invalidateQueries({
+      queryKey: ["service-appliance", `${applianceId}`],
+    })
+    await queryClient.invalidateQueries({ queryKey: ["stocks"] })
+    await queryClient.invalidateQueries({ queryKey: ["sales-transactions"] })
     if (onUpdate) await onUpdate()
   }
 
@@ -664,7 +669,10 @@ export default function AppliancePartsManager({
                         &times; {item.quantity}
                       </span>
                       {item.isFree && (
-                        <Badge variant="success" className="text-xs shrink-0">
+                        <Badge
+                          variant="success"
+                          className="text-xs shrink-0"
+                        >
                           FREE
                         </Badge>
                       )}
@@ -1052,7 +1060,10 @@ export default function AppliancePartsManager({
                   Add to List
                 </Button>
                 {pendingItems.length > 0 && (
-                  <Button onClick={handleSubmitAll} disabled={isSubmitting}>
+                  <Button
+                    onClick={handleSubmitAll}
+                    disabled={isSubmitting}
+                  >
                     {isSubmitting && (
                       <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     )}

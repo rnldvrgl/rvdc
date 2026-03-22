@@ -287,15 +287,12 @@ export default function ServicePartsManager({
             service: serviceId,
             item: null as null,
             custom_description: item.customDescription,
-            custom_price:
-              Math.round(parseFloat(item.customPrice) * 100) / 100,
+            custom_price: Math.round(parseFloat(item.customPrice) * 100) / 100,
             quantity: roundedQty,
             is_free: item.isFree,
             discount_amount:
               !item.isFree && item.discountValue
-                ? Math.round(
-                    parseFloat(item.discountValue || "0") * 100,
-                  ) / 100
+                ? Math.round(parseFloat(item.discountValue || "0") * 100) / 100
                 : 0,
             discount_percentage: 0,
             discount_reason: item.isFree
@@ -309,9 +306,7 @@ export default function ServicePartsManager({
             is_free: item.isFree,
             discount_amount:
               !item.isFree && item.discountValue
-                ? Math.round(
-                    parseFloat(item.discountValue || "0") * 100,
-                  ) / 100
+                ? Math.round(parseFloat(item.discountValue || "0") * 100) / 100
                 : 0,
             discount_percentage: 0,
             discount_reason: item.isFree
@@ -337,14 +332,17 @@ export default function ServicePartsManager({
       )
     }
     if (failCount > 0) {
-      toast.error(
-        `Failed to add ${failCount} part${failCount > 1 ? "s" : ""}`,
-      )
+      toast.error(`Failed to add ${failCount} part${failCount > 1 ? "s" : ""}`)
     }
 
     await new Promise((resolve) => setTimeout(resolve, 150))
     await queryClient.invalidateQueries({ queryKey: ["service"] })
-    await queryClient.invalidateQueries({ queryKey: ["service-items"] })
+    await queryClient.invalidateQueries({ queryKey: ["services"] })
+    await queryClient.invalidateQueries({
+      queryKey: ["service-items", serviceId],
+    })
+    await queryClient.invalidateQueries({ queryKey: ["stocks"] })
+    await queryClient.invalidateQueries({ queryKey: ["sales-transactions"] })
     if (onUpdate) await onUpdate()
   }
 
@@ -671,7 +669,10 @@ export default function ServicePartsManager({
                         &times; {item.quantity}
                       </span>
                       {item.isFree && (
-                        <Badge variant="success" className="text-xs shrink-0">
+                        <Badge
+                          variant="success"
+                          className="text-xs shrink-0"
+                        >
                           FREE
                         </Badge>
                       )}
@@ -1057,7 +1058,10 @@ export default function ServicePartsManager({
                   Add to List
                 </Button>
                 {pendingItems.length > 0 && (
-                  <Button onClick={handleSubmitAll} disabled={isSubmitting}>
+                  <Button
+                    onClick={handleSubmitAll}
+                    disabled={isSubmitting}
+                  >
                     {isSubmitting && (
                       <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     )}
