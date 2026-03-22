@@ -41,9 +41,10 @@ import { useApplianceItemMutations } from "@/lib/mutations/services/useAppliance
 import { useCustomItemTemplateChoices } from "@/lib/queries/inventory/useCustomItemTemplates"
 import { useApplianceItems } from "@/lib/queries/services/useApplianceItems"
 import { useItemChoices } from "@/lib/queries/useChoices"
+import api from "@/lib/utils/api"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
 import { useQueryClient } from "@tanstack/react-query"
-import { Edit, Info, Package, Plus, Trash2 } from "lucide-react"
+import { Edit, Info, Package, Plus, Trash2, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -74,6 +75,21 @@ export default function AppliancePartsManager({
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null,
   )
+  const [pendingItems, setPendingItems] = useState<
+    Array<{
+      id: string
+      isCustom: boolean
+      itemId: number | null
+      itemName: string
+      quantity: string
+      customDescription: string
+      customPrice: string
+      isFree: boolean
+      discountValue: string
+      discountReason: string
+    }>
+  >([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { data: partsUsed = [], isLoading } = useApplianceItems(applianceId)
 
@@ -199,6 +215,129 @@ export default function AppliancePartsManager({
     } catch {
       // error is handled by mutation
     }
+  }
+
+  const handleAddToList = () => {
+    if (isCustom) {
+      if (!customDescription.trim() || !customPrice || !quantity) {
+        toast.error("Please fill in description, price, and quantity")
+        return
+      }
+    } else {
+      if (!selectedItemId || !quantity) {
+        toast.error("Please fill in all fields")
+        return
+      }
+    }
+
+    const qty = parseFloat(quantity)
+    if (isNaN(qty) || qty <= 0) {
+      toast.error("Quantity must be greater than 0")
+      return
+    }
+
+    const itemName = isCustom
+      ? customDescription.trim()
+      : items.find((i) => i.id === selectedItemId)?.name || "Unknown"
+
+    setPendingItems((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        isCustom,
+        itemId: isCustom ? null : selectedItemId,
+        itemName,
+        quantity,
+        customDescription: customDescription.trim(),
+        customPrice,
+        isFree,
+        discountValue,
+        discountReason,
+      },
+    ])
+
+    // Reset form for next item
+    setSelectedItemId(null)
+    setQuantity("1")
+    setIsFree(false)
+    setIsCustom(false)
+    setCustomDescription("")
+    setCustomPrice("")
+    setSelectedTemplateId(null)
+    setDiscountValue("")
+    setDiscountReason("")
+  }
+
+  const handleSubmitAll = async () => {
+    if (pendingItems.length === 0) return
+    setIsSubmitting(true)
+
+    let successCount = 0
+    let failCount = 0
+
+    for (const item of pendingItems) {
+      const qty = parseFloat(item.quantity)
+      const selectedItemForQty = items.find((i) => i.id === item.itemId)
+      const isDecimalUnit =
+        selectedItemForQty &&
+        ["kg", "ft"].includes(selectedItemForQty.unit_of_measure)
+      const roundedQty =
+        item.isCustom || isDecimalUnit
+          ? Math.round(qty * 100) / 100
+          : Math.round(qty) || 1
+
+      const basePayload = {
+        appliance: applianceId,
+        quantity: roundedQty,
+        is_free: item.isFree,
+        discount_amount:
+          !item.isFree && item.discountValue
+            ? Math.round(parseFloat(item.discountValue || "0") * 100) / 100
+            : 0,
+        discount_percentage: 0,
+        discount_reason: item.isFree
+          ? undefined
+          : item.discountReason || undefined,
+      }
+
+      const payload = item.isCustom
+        ? {
+            ...basePayload,
+            item: null,
+            custom_description: item.customDescription,
+            custom_price:
+              Math.round(parseFloat(item.customPrice) * 100) / 100,
+          }
+        : { ...basePayload, item: item.itemId }
+
+      try {
+        await api.post("services/appliance-items/", payload)
+        successCount++
+      } catch {
+        failCount++
+      }
+    }
+
+    setIsSubmitting(false)
+    setPendingItems([])
+    setDialogOpen(false)
+
+    if (successCount > 0) {
+      toast.success(
+        `${successCount} part${successCount > 1 ? "s" : ""} added successfully`,
+      )
+    }
+    if (failCount > 0) {
+      toast.error(
+        `Failed to add ${failCount} part${failCount > 1 ? "s" : ""}`,
+      )
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    await queryClient.invalidateQueries({ queryKey: ["service"] })
+    await queryClient.invalidateQueries({ queryKey: ["service-appliances"] })
+    await queryClient.invalidateQueries({ queryKey: ["appliance-items"] })
+    if (onUpdate) await onUpdate()
   }
 
   const handleEditPart = (part: ApplianceItemUsed) => {
@@ -489,6 +628,7 @@ export default function AppliancePartsManager({
             setDiscountValue("")
             setDiscountReason("")
             setSelectedTemplateId(null)
+            setPendingItems([])
           }
         }}
       >
@@ -503,6 +643,57 @@ export default function AppliancePartsManager({
                 : "Select an item from inventory and specify the quantity used."}
             </DialogDescription>
           </DialogHeader>
+
+          {/* Pending Items List */}
+          {!editingPartId && pendingItems.length > 0 && (
+            <div className="rounded-lg border bg-muted/30 p-3 space-y-2">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Items to Add ({pendingItems.length})
+              </Label>
+              <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
+                {pendingItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between text-sm bg-background rounded px-2 py-1.5"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="truncate font-medium">
+                        {item.itemName}
+                      </span>
+                      <span className="text-muted-foreground shrink-0">
+                        &times; {item.quantity}
+                      </span>
+                      {item.isFree && (
+                        <Badge variant="success" className="text-xs shrink-0">
+                          FREE
+                        </Badge>
+                      )}
+                      {item.isCustom && (
+                        <Badge
+                          variant="secondary"
+                          className="text-xs shrink-0"
+                        >
+                          Custom
+                        </Badge>
+                      )}
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 shrink-0"
+                      onClick={() =>
+                        setPendingItems((prev) =>
+                          prev.filter((p) => p.id !== item.id),
+                        )
+                      }
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-4 py-4 px-1">
             {/* Custom / Inventory Toggle */}
@@ -826,25 +1017,50 @@ export default function AppliancePartsManager({
               onClick={() => {
                 setDialogOpen(false)
                 setEditingPartId(null)
+                setPendingItems([])
               }}
             >
-              Cancel
+              {editingPartId ? "Cancel" : "Done"}
             </Button>
-            <Button
-              onClick={handleSavePart}
-              disabled={
-                addItem.isPending ||
-                updateItem.isPending ||
-                (isCustom
-                  ? !customDescription.trim() || !customPrice || !quantity
-                  : !selectedItemId || !quantity)
-              }
-            >
-              {(addItem.isPending || updateItem.isPending) && (
-                <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-              )}
-              {editingPartId ? "Update Part" : "Add Part"}
-            </Button>
+            {editingPartId ? (
+              <Button
+                onClick={handleSavePart}
+                disabled={
+                  updateItem.isPending ||
+                  (isCustom
+                    ? !customDescription.trim() || !customPrice || !quantity
+                    : !selectedItemId || !quantity)
+                }
+              >
+                {updateItem.isPending && (
+                  <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                )}
+                Update Part
+              </Button>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={handleAddToList}
+                  disabled={
+                    isSubmitting ||
+                    (isCustom
+                      ? !customDescription.trim() || !customPrice || !quantity
+                      : !selectedItemId || !quantity)
+                  }
+                >
+                  Add to List
+                </Button>
+                {pendingItems.length > 0 && (
+                  <Button onClick={handleSubmitAll} disabled={isSubmitting}>
+                    {isSubmitting && (
+                      <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    )}
+                    Submit All ({pendingItems.length})
+                  </Button>
+                )}
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

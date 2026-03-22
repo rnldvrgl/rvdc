@@ -57,27 +57,27 @@ const ENTITY_CONFIG = {
   restockStall: {
     title: "Restock Stall",
     description: "Add quantity to stall stock.",
-    Form: () => <StockOperationDialog operation="restock" type="stall" onClose={() => {}} />,
+    Form: ({ onClose }: { onClose: () => void }) => <StockOperationDialog operation="restock" type="stall" onClose={onClose} />,
   },
   auditStall: {
     title: "Audit Stall Stock",
     description: "Reconcile and adjust stall stock quantities.",
-    Form: () => <StockOperationDialog operation="audit" type="stall" onClose={() => {}} />,
+    Form: ({ onClose }: { onClose: () => void }) => <StockOperationDialog operation="audit" type="stall" onClose={onClose} />,
   },
   pullOutStall: {
     title: "Pull Out from Stall",
     description: "Remove stock from stall location.",
-    Form: () => <StockOperationDialog operation="pullout" type="stall" onClose={() => {}} />,
+    Form: ({ onClose }: { onClose: () => void }) => <StockOperationDialog operation="pullout" type="stall" onClose={onClose} />,
   },
   addStockroom: {
     title: "Add to Stockroom",
     description: "Add quantity to stockroom inventory.",
-    Form: () => <StockOperationDialog operation="restock" type="stock_room" onClose={() => {}} />,
+    Form: ({ onClose }: { onClose: () => void }) => <StockOperationDialog operation="restock" type="stock_room" onClose={onClose} />,
   },
   auditStockroom: {
     title: "Audit Stockroom",
     description: "Reconcile and adjust stockroom quantities.",
-    Form: () => <StockOperationDialog operation="audit" type="stock_room" onClose={() => {}} />,
+    Form: ({ onClose }: { onClose: () => void }) => <StockOperationDialog operation="audit" type="stock_room" onClose={onClose} />,
   },
 } as const
 

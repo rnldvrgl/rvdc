@@ -65,6 +65,7 @@ export function useGetPermissions(
         ...commonPermissions,
         "manage_calendar_events",
         "view_employees",
+        "manage_stock",
         "manage_stockroom",
         "manage_categories",
         "manage_stalls",
