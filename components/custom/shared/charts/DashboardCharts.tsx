@@ -120,7 +120,7 @@ export default function DashboardCharts() {
         >
           <Card className="overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow duration-300 bg-card h-full">
             <CardHeader className="pb-4 border-b border-border">
-              <CardTitle className="text-base font-semibold flex items-center justify-between">
+              <CardTitle className="text-base font-semibold flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20">
                     <DollarSign className="size-4 text-primary" />

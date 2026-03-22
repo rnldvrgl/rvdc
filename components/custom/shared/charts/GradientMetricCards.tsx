@@ -193,7 +193,7 @@ function MetricCardItem({ card }: { card: MetricCard }) {
             )}
           </div>
 
-          <p className="text-2xl font-bold text-foreground tracking-tight">
+          <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tight break-all sm:break-normal">
             {card.value}
           </p>
           <p className="text-sm font-medium text-muted-foreground mt-1">
