@@ -12,6 +12,11 @@ export default function middleware(request: NextRequest) {
   // (refresh can be used to get a new access token client-side)
   const isAuthenticated = !!access || !!refresh
 
+  // Public pages - skip auth
+  if (pathname === "/privacy-policy") {
+    return NextResponse.next()
+  }
+
   if (!isAuthenticated && pathname !== "/") {
     return redirect("/")
   }
