@@ -18,13 +18,7 @@ const ROLE_COLORS: Record<string, string> = {
   clerk: "bg-emerald-500",
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Admin",
-  manager: "Manager",
-  clerk: "Clerk",
-}
-
-function UserInitials({
+function UserAvatar({
   name,
   role,
   isOnline,
@@ -51,9 +45,9 @@ function UserInitials({
   }[size]
 
   const dotSize = {
-    sm: "size-2",
-    md: "size-2.5",
-    lg: "size-3",
+    sm: "size-2.5",
+    md: "size-3",
+    lg: "size-3.5",
   }[size]
 
   return (
@@ -109,14 +103,14 @@ function ChatBubble({
   return (
     <motion.button
       onClick={onClick}
-      className="fixed bottom-6 right-6 z-50 size-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center"
+      className="fixed bottom-6 right-6 z-50 size-12 sm:size-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center"
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
     >
-      <MessageCircle className="size-6" />
+      <MessageCircle className="size-5 sm:size-6" />
       {totalUnread > 0 && (
         <motion.span
           initial={{ scale: 0 }}
@@ -181,7 +175,7 @@ function UserList({
                 onClick={() => onSelect(user.id)}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
               >
-                <UserInitials
+                <UserAvatar
                   name={user.name}
                   role={user.role}
                   isOnline={user.is_online}
@@ -189,9 +183,21 @@ function UserList({
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium truncate">
-                      {user.name}
-                    </span>
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-sm font-medium truncate">
+                        {user.name}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-[10px] shrink-0",
+                          user.is_online
+                            ? "text-green-500"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {user.is_online ? "Online" : "Offline"}
+                      </span>
+                    </div>
                     {user.unread_count > 0 && (
                       <Badge
                         variant="destructive"
@@ -201,20 +207,12 @@ function UserList({
                       </Badge>
                     )}
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] px-1.5 py-0"
-                    >
-                      {ROLE_LABELS[user.role] || user.role}
-                    </Badge>
-                    {user.last_message && (
-                      <span className="text-xs text-muted-foreground truncate">
-                        {user.last_message.body.slice(0, 25)}
-                        {user.last_message.body.length > 25 ? "..." : ""}
-                      </span>
-                    )}
-                  </div>
+                  {user.last_message && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user.last_message.body.slice(0, 30)}
+                      {user.last_message.body.length > 30 ? "..." : ""}
+                    </p>
+                  )}
                 </div>
               </button>
             ))
@@ -311,7 +309,7 @@ function MessageThread({
         >
           <ArrowLeft className="size-4" />
         </Button>
-        <UserInitials
+        <UserAvatar
           name={partnerName}
           role={partnerRole}
           isOnline={partnerOnline}
@@ -458,9 +456,8 @@ export default function FloatingChat() {
     markRead,
   } = useChat({
     onMessage: (msg) => {
-      // Play a subtle sound for incoming messages
       if (msg.from !== user_id) {
-        playMessageSound()
+        playReceiveSound()
       }
     },
   })
@@ -488,6 +485,7 @@ export default function FloatingChat() {
     (body: string) => {
       if (activeChat) {
         sendMessage(activeChat, body)
+        playSendSound()
       }
     },
     [activeChat, sendMessage],
@@ -536,7 +534,7 @@ export default function FloatingChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed bottom-24 right-6 z-50 w-80 h-[480px] rounded-2xl border border-border bg-card shadow-2xl overflow-hidden flex flex-col"
+            className="fixed bottom-20 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-80 h-[min(480px,calc(100dvh-6rem))] rounded-2xl border border-border bg-card shadow-2xl overflow-hidden flex flex-col"
           >
             {activeChat && activePartner ? (
               <MessageThread
@@ -566,10 +564,10 @@ export default function FloatingChat() {
 
       {/* Floating bubble */}
       {isOpen && minimized ? (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2">
+        <div className="fixed bottom-6 right-4 sm:right-6 z-50 flex items-center gap-2">
           <motion.button
             onClick={handleToggle}
-            className="size-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
+            className="size-12 sm:size-14 rounded-full bg-primary text-primary-foreground shadow-lg flex items-center justify-center"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -599,21 +597,51 @@ export default function FloatingChat() {
   )
 }
 
-// ── Sound ────────────────────────────────────────────────────────────
+// ── Sounds (Apple iMessage-inspired) ─────────────────────────────────
 
-function playMessageSound() {
+function playReceiveSound() {
   try {
     const ctx = new AudioContext()
+    const t = ctx.currentTime
+
+    // Three-note ascending chime (like iMessage receive)
+    const notes = [1046.5, 1318.5, 1568] // C6, E6, G6
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.type = "sine"
+      osc.frequency.value = freq
+      const start = t + i * 0.08
+      gain.gain.setValueAtTime(0, start)
+      gain.gain.linearRampToValueAtTime(0.06, start + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.15)
+      osc.start(start)
+      osc.stop(start + 0.15)
+    })
+  } catch {
+    // Audio not available
+  }
+}
+
+function playSendSound() {
+  try {
+    const ctx = new AudioContext()
+    const t = ctx.currentTime
+
+    // Quick ascending swoosh (like iMessage send)
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.connect(gain)
     gain.connect(ctx.destination)
-    osc.frequency.value = 600
     osc.type = "sine"
-    gain.gain.setValueAtTime(0.08, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.15)
+    osc.frequency.setValueAtTime(800, t)
+    osc.frequency.linearRampToValueAtTime(1200, t + 0.1)
+    gain.gain.setValueAtTime(0.05, t)
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12)
+    osc.start(t)
+    osc.stop(t + 0.12)
   } catch {
     // Audio not available
   }
