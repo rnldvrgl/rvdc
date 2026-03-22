@@ -19,7 +19,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useInView } from "react-intersection-observer"
 
 import NotificationSheet from "@/components/custom/shared/NotificationSheet"
@@ -35,6 +35,7 @@ import {
   useNotifications,
   useUnreadNotificationCount,
 } from "@/lib/queries/useNotifications"
+import { useNotificationWebSocket } from "@/lib/hooks/useNotificationWebSocket"
 
 /* ─── Type → visual config ─── */
 type NotifStyle = {
@@ -267,6 +268,46 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
     type: "expense_created" | "transfer_created"
     id: number
   } | null>(null)
+
+  const audioCtxRef = useRef<AudioContext | null>(null)
+
+  const playNotificationSound = useCallback(() => {
+    try {
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioContext()
+      }
+      const ctx = audioCtxRef.current
+      const now = ctx.currentTime
+
+      // Two-tone "ding" chime
+      const osc1 = ctx.createOscillator()
+      const osc2 = ctx.createOscillator()
+      const gain = ctx.createGain()
+
+      osc1.type = "sine"
+      osc1.frequency.setValueAtTime(830, now)
+      osc2.type = "sine"
+      osc2.frequency.setValueAtTime(1100, now + 0.12)
+
+      gain.gain.setValueAtTime(0.2, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
+
+      osc1.connect(gain)
+      osc2.connect(gain)
+      gain.connect(ctx.destination)
+
+      osc1.start(now)
+      osc1.stop(now + 0.12)
+      osc2.start(now + 0.12)
+      osc2.stop(now + 0.5)
+    } catch {
+      // Audio not available – silently ignore
+    }
+  }, [])
+
+  useNotificationWebSocket({
+    onNotification: playNotificationSound,
+  })
 
   const {
     items: notifications,
