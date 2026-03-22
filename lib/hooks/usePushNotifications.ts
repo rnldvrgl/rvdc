@@ -7,6 +7,9 @@ import { useCallback, useEffect, useRef } from "react"
  * Registers the service worker, requests Notification permission,
  * subscribes to Web Push, and sends the subscription to the backend.
  *
+ * Handles VAPID key rotation: if the server key changes, the old
+ * subscription is unsubscribed and a fresh one is created.
+ *
  * Call this hook once in the authenticated layout.
  */
 export function usePushNotifications() {
@@ -35,14 +38,28 @@ export function usePushNotifications() {
         return
       }
 
-      // 4. Subscribe to push (idempotent if already subscribed)
+      const newKeyBytes = urlBase64ToUint8Array(vapidPublicKey)
+
+      // 4. Check existing subscription — if the VAPID key changed, unsubscribe first
+      const existing = await registration.pushManager.getSubscription()
+      if (existing) {
+        const existingKey = existing.options?.applicationServerKey
+        if (existingKey && !keysMatch(existingKey, newKeyBytes)) {
+          console.log(
+            "[Push] VAPID key changed — unsubscribing old subscription",
+          )
+          await existing.unsubscribe()
+        }
+      }
+
+      // 5. Subscribe to push
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        applicationServerKey: newKeyBytes,
       })
       console.log("[Push] PushManager subscribed:", subscription.endpoint)
 
-      // 5. Send subscription to backend
+      // 6. Send subscription to backend
       const sub = subscription.toJSON()
       await api.post("/notifications/push/subscribe/", {
         endpoint: sub.endpoint,
@@ -59,6 +76,16 @@ export function usePushNotifications() {
   useEffect(() => {
     subscribe()
   }, [subscribe])
+}
+
+/** Compare two ArrayBuffer-like keys for equality. */
+function keysMatch(a: ArrayBuffer | ArrayBufferLike, b: Uint8Array): boolean {
+  const viewA = new Uint8Array(a)
+  if (viewA.length !== b.length) return false
+  for (let i = 0; i < viewA.length; i++) {
+    if (viewA[i] !== b[i]) return false
+  }
+  return true
 }
 
 /** Convert a base64url-encoded string to a Uint8Array (for applicationServerKey). */
