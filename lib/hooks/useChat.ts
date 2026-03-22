@@ -94,7 +94,10 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
       // Flush any pending history request (e.g., user opened a chat before WS was ready)
       if (pendingHistoryRef.current !== null) {
         ws.send(
-          JSON.stringify({ action: "history", with: pendingHistoryRef.current }),
+          JSON.stringify({
+            action: "history",
+            with: pendingHistoryRef.current,
+          }),
         )
         pendingHistoryRef.current = null
       }

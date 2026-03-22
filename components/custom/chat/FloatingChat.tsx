@@ -458,15 +458,15 @@ function MessageThread({
       </div>
 
       {/* Input */}
-      <div className="px-3 py-2 border-t border-border bg-card">
+      <div className="px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] border-t border-border bg-card">
         <div className="flex gap-2 items-end">
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message... (Shift+Enter for new line)"
-            className="flex-1 min-h-9 max-h-24 text-sm resize-none py-2"
+            placeholder="Type a message..."
+            className="flex-1 min-h-9 max-h-24 text-base sm:text-sm resize-none py-2"
             maxLength={2000}
             autoComplete="off"
             rows={1}
