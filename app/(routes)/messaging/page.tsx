@@ -1,5 +1,7 @@
 "use client"
 
+import PageHeader from "@/components/custom/shared/PageHeader"
+import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -14,20 +16,18 @@ import {
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
-import PageHeader from "@/components/custom/shared/PageHeader"
-import { Wrapper } from "@/components/custom/shared/Wrapper"
 import {
+  Client,
   Conversation,
   ConversationDetail,
   FBMessage,
-  Client,
 } from "@/lib/constants/types"
-import {
-  useConversations,
-  useConversationDetail,
-} from "@/lib/queries/useConversations"
-import { useMessagingMutations } from "@/lib/mutations/useMessagingMutations"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
+import { useMessagingMutations } from "@/lib/mutations/useMessagingMutations"
+import {
+  useConversationDetail,
+  useConversations,
+} from "@/lib/queries/useConversations"
 import { cn } from "@/lib/utils/helpers"
 import {
   Link2,
@@ -61,7 +61,10 @@ function LinkClientDialog({
   })
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => !o && onClose()}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Link to Client</DialogTitle>
@@ -92,12 +95,11 @@ function LinkClientDialog({
                 </span>
               </button>
             ))}
-            {search.length > 0 &&
-              clients?.results?.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No clients found.
-                </p>
-              )}
+            {search.length > 0 && clients?.results?.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No clients found.
+              </p>
+            )}
           </div>
         </div>
         {conversation?.client && (
@@ -141,7 +143,10 @@ function ConversationList({
     return (
       <div className="space-y-2 p-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-lg" />
+          <Skeleton
+            key={i}
+            className="h-16 w-full rounded-lg"
+          />
         ))}
       </div>
     )
@@ -299,10 +304,16 @@ function ChatPanel({
               Linked: {conversation!.client_name}
             </p>
           ) : (
-            <p className="text-xs text-muted-foreground">Not linked to client</p>
+            <p className="text-xs text-muted-foreground">
+              Not linked to client
+            </p>
           )}
         </div>
-        <Button variant="outline" size="sm" onClick={onLinkClient}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onLinkClient}
+        >
           <Link2 className="size-4 mr-1.5" />
           {conversation!.client ? "Change Client" : "Link Client"}
         </Button>
@@ -312,7 +323,10 @@ function ChatPanel({
       <ScrollArea className="flex-1 px-4 py-3">
         <div className="space-y-3">
           {conversation!.messages.map((msg: FBMessage) => (
-            <MessageBubble key={msg.id} message={msg} />
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+            />
           ))}
           <div ref={messagesEndRef} />
         </div>
@@ -330,7 +344,11 @@ function ChatPanel({
           className="flex-1"
           disabled={isSending}
         />
-        <Button type="submit" size="icon" disabled={isSending || !text.trim()}>
+        <Button
+          type="submit"
+          size="icon"
+          disabled={isSending || !text.trim()}
+        >
           <Send className="size-4" />
         </Button>
       </form>
@@ -346,15 +364,11 @@ function MessageBubble({ message }: { message: FBMessage }) {
   })
 
   return (
-    <div
-      className={cn("flex", isOutgoing ? "justify-end" : "justify-start")}
-    >
+    <div className={cn("flex", isOutgoing ? "justify-end" : "justify-start")}>
       <div
         className={cn(
           "max-w-[75%] rounded-xl px-3 py-2",
-          isOutgoing
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted",
+          isOutgoing ? "bg-primary text-primary-foreground" : "bg-muted",
         )}
       >
         {message.text && (
@@ -390,9 +404,7 @@ function MessageBubble({ message }: { message: FBMessage }) {
         <div
           className={cn(
             "text-[10px] mt-1",
-            isOutgoing
-              ? "text-primary-foreground/70"
-              : "text-muted-foreground",
+            isOutgoing ? "text-primary-foreground/70" : "text-muted-foreground",
           )}
         >
           {time}
@@ -413,15 +425,12 @@ export default function MessagingPage() {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false)
 
   const { data: conversations, isLoading, refetch } = useConversations(search)
-  const {
-    data: detail,
-    isLoading: detailLoading,
-  } = useConversationDetail(selectedId)
+  const { data: detail, isLoading: detailLoading } =
+    useConversationDetail(selectedId)
   const { sendMessage, linkClient } = useMessagingMutations()
 
-  const selectedConversation = conversations?.find(
-    (c) => c.id === selectedId,
-  ) ?? null
+  const selectedConversation =
+    conversations?.find((c) => c.id === selectedId) ?? null
 
   const handleSend = (text: string) => {
     if (!selectedId) return

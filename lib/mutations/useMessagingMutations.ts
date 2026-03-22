@@ -4,9 +4,7 @@ import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
 
 export function useMessagingMutations() {
-  const messagingInvalidations = [
-    { queryKey: ["conversations"] },
-  ]
+  const messagingInvalidations = [{ queryKey: ["conversations"] }]
 
   const sendMessage = useApiMutation<
     { conversationId: number; text: string },
