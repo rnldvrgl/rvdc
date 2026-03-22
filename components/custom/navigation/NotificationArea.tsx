@@ -1,5 +1,6 @@
 "use client"
 
+import { getAudioContext } from "@/lib/utils/audioContext"
 import clsx from "clsx"
 import {
   AlertTriangle,
@@ -19,7 +20,7 @@ import {
   XCircle,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useInView } from "react-intersection-observer"
 
 import NotificationSheet from "@/components/custom/shared/NotificationSheet"
@@ -30,12 +31,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { Notification } from "@/lib/constants/interface"
+import { useNotificationWebSocket } from "@/lib/hooks/useNotificationWebSocket"
 import { useNotificationMutations } from "@/lib/mutations/useNotificationMutations"
 import {
   useNotifications,
   useUnreadNotificationCount,
 } from "@/lib/queries/useNotifications"
-import { useNotificationWebSocket } from "@/lib/hooks/useNotificationWebSocket"
 
 /* ─── Type → visual config ─── */
 type NotifStyle = {
@@ -269,14 +270,10 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
     id: number
   } | null>(null)
 
-  const audioCtxRef = useRef<AudioContext | null>(null)
-
   const playNotificationSound = useCallback(() => {
     try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new AudioContext()
-      }
-      const ctx = audioCtxRef.current
+      const ctx = getAudioContext()
+      if (ctx.state !== "running") return
       const now = ctx.currentTime
 
       // Two-tone "ding" chime

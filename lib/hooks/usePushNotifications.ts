@@ -20,21 +20,27 @@ export function usePushNotifications() {
     try {
       // 1. Register service worker
       const registration = await navigator.serviceWorker.register("/sw.js")
+      console.log("[Push] Service worker registered")
 
       // 2. Request permission (no-op if already granted/denied)
       const permission = await Notification.requestPermission()
+      console.log("[Push] Permission:", permission)
       if (permission !== "granted") return
 
       // 3. Fetch VAPID public key from backend
       const { data } = await api.get("/notifications/push/vapid-key/")
       const vapidPublicKey: string = data.public_key
-      if (!vapidPublicKey) return
+      if (!vapidPublicKey) {
+        console.warn("[Push] No VAPID public key returned from backend")
+        return
+      }
 
       // 4. Subscribe to push (idempotent if already subscribed)
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
       })
+      console.log("[Push] PushManager subscribed:", subscription.endpoint)
 
       // 5. Send subscription to backend
       const sub = subscription.toJSON()
@@ -43,9 +49,10 @@ export function usePushNotifications() {
         keys: sub.keys,
       })
 
+      console.log("[Push] Subscription sent to backend ✓")
       subscribedRef.current = true
-    } catch {
-      // Silently fail — push is best-effort
+    } catch (err) {
+      console.error("[Push] Failed to set up push notifications:", err)
     }
   }, [])
 

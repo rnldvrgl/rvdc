@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { type ChatMessage, useChat } from "@/lib/hooks/useChat"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { getAudioContext } from "@/lib/utils/audioContext"
 import { cn } from "@/lib/utils/helpers"
 import { formatDistanceToNow } from "date-fns"
 import { AnimatePresence, motion } from "framer-motion"
@@ -660,7 +661,8 @@ export default function FloatingChat() {
 
 function playReceiveSound() {
   try {
-    const ctx = new AudioContext()
+    const ctx = getAudioContext()
+    if (ctx.state !== "running") return
     const t = ctx.currentTime
 
     // Three-note ascending chime (like iMessage receive)
@@ -686,7 +688,8 @@ function playReceiveSound() {
 
 function playSendSound() {
   try {
-    const ctx = new AudioContext()
+    const ctx = getAudioContext()
+    if (ctx.state !== "running") return
     const t = ctx.currentTime
 
     // Quick ascending swoosh (like iMessage send)
