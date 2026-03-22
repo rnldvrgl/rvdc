@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { type ChatMessage, useChat } from "@/lib/hooks/useChat"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { cn } from "@/lib/utils/helpers"
+import { formatDistanceToNow } from "date-fns"
 import { AnimatePresence, motion } from "framer-motion"
 import { ArrowLeft, MessageCircle, Send, X } from "lucide-react"
 import Image from "next/image"
@@ -91,6 +92,11 @@ function formatTime(ts: number) {
   })
 }
 
+function formatLastSeen(ts: number | null | undefined): string {
+  if (!ts) return "Offline"
+  return `last seen ${formatDistanceToNow(new Date(ts * 1000), { addSuffix: true })}`
+}
+
 // ── Chat Bubble (FAB) ────────────────────────────────────────────────
 
 function ChatBubble({
@@ -142,6 +148,7 @@ function UserList({
     is_online: boolean
     unread_count: number
     last_message: ChatMessage | null
+    last_seen: number | null
   }[]
   onSelect: (userId: number) => void
   onClose: () => void
@@ -198,7 +205,9 @@ function UserList({
                             : "text-muted-foreground",
                         )}
                       >
-                        {user.is_online ? "Online" : "Offline"}
+                        {user.is_online
+                          ? "Online"
+                          : formatLastSeen(user.last_seen)}
                       </span>
                     </div>
                     {user.unread_count > 0 && (
@@ -234,6 +243,7 @@ function MessageThread({
   partnerRole,
   partnerImage,
   partnerOnline,
+  partnerLastSeen,
   messages,
   currentUserId,
   typingFrom,
@@ -248,6 +258,7 @@ function MessageThread({
   partnerRole: string
   partnerImage: string
   partnerOnline: boolean
+  partnerLastSeen: number | null
   messages: ChatMessage[]
   currentUserId: number
   typingFrom: number | null
@@ -338,7 +349,7 @@ function MessageThread({
             ) : partnerOnline ? (
               "Online"
             ) : (
-              "Offline"
+              formatLastSeen(partnerLastSeen)
             )}
           </p>
         </div>
@@ -447,15 +458,15 @@ function MessageThread({
       </div>
 
       {/* Input */}
-      <div className="px-3 py-2 border-t border-border bg-card">
+      <div className="px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] border-t border-border bg-card">
         <div className="flex gap-2 items-end">
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message... (Shift+Enter for new line)"
-            className="flex-1 min-h-9 max-h-24 text-sm resize-none py-2"
+            placeholder="Type a message..."
+            className="flex-1 min-h-9 max-h-24 text-base sm:text-sm resize-none py-2"
             maxLength={2000}
             autoComplete="off"
             rows={1}
@@ -486,6 +497,7 @@ export default function FloatingChat() {
   const canChat = role === "admin" || role === "manager" || role === "clerk"
 
   const {
+    connected,
     chatUsers,
     messages,
     typingFrom,
@@ -501,6 +513,15 @@ export default function FloatingChat() {
       }
     },
   })
+
+  // When WS reconnects with an active chat, reload history
+  const prevConnected = useRef(false)
+  useEffect(() => {
+    if (connected && !prevConnected.current && activeChat) {
+      loadHistory(activeChat)
+    }
+    prevConnected.current = connected
+  }, [connected, activeChat, loadHistory])
 
   const totalUnread = useMemo(
     () => chatUsers.reduce((sum, u) => sum + u.unread_count, 0),
@@ -600,6 +621,7 @@ export default function FloatingChat() {
                 partnerRole={activePartner.role}
                 partnerImage={activePartner.profile_image}
                 partnerOnline={activePartner.is_online}
+                partnerLastSeen={activePartner.last_seen}
                 messages={messages[activeChat] || []}
                 currentUserId={user_id || 0}
                 typingFrom={typingFrom}
