@@ -6,6 +6,7 @@ import { Background } from "@/components/custom/shared/Background"
 import { ScrollToTop } from "@/components/custom/shared/ScrollToTop"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useDashboardWebSocket } from "@/lib/hooks/useDashboardWebSocket"
+import { usePushNotifications } from "@/lib/hooks/usePushNotifications"
 import { useSidebarCollapse } from "@/lib/hooks/useSidebarCollapse"
 import { cn } from "@/lib/utils/helpers"
 import React from "react"
@@ -19,6 +20,7 @@ export default function MainLayout({
   const { userProfile } = useCurrentUser()
 
   useDashboardWebSocket()
+  usePushNotifications()
 
   return (
     <div className="min-h-screen">
