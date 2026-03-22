@@ -106,6 +106,37 @@ export type Client = BaseEntity & {
 
 export type ClientPayload = Omit<Client, keyof BaseEntity>
 
+// Messaging (Facebook)
+export type Conversation = {
+  id: number
+  fb_user_id: string
+  fb_user_name: string
+  client: number | null
+  client_name: string | null
+  page: number
+  page_name: string
+  last_message_at: string | null
+  last_message_preview: string
+  unread_count: number
+  created_at: string
+}
+
+export type ConversationDetail = Conversation & {
+  messages: FBMessage[]
+}
+
+export type FBMessage = {
+  id: number
+  direction: "in" | "out"
+  text: string
+  fb_message_id: string | null
+  attachments: { type: string; url: string }[]
+  sent_by: number | null
+  sent_by_name: string | null
+  timestamp: string
+  created_at: string
+}
+
 // Quotation
 export type QuotationStatus = "draft" | "sent" | "accepted" | "declined"
 export type QuotationType = "standard" | "price_list"

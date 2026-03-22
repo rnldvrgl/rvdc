@@ -28,6 +28,7 @@ const breadcrumbRouteMap: Record<string, string> = {
   Inventory: "/inventory/items",
   Stocks: "/inventory/stocks/stockroom",
   Aircons: "/aircons/units",
+  Messaging: "/messaging",
   Settings: "/settings/profile",
 }
 

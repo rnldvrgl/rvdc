@@ -18,6 +18,7 @@ import {
   Layers,
   LayoutDashboard,
   LayoutList,
+  MessageCircle,
   Package,
   Plane,
   Settings,
@@ -204,6 +205,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Wrench,
     permission: "view_services",
   },
+  messaging: {
+    name: "Messaging",
+    href: "/messaging",
+    icon: MessageCircle,
+    permission: "view_messaging",
+  },
   quotation: {
     name: "Quotations",
     href: "/quotations",
@@ -339,6 +346,7 @@ export const orderedNavigation: NavigationEntry[] = [
   baseNavigation.aircons,
   // Customer & People Management
   baseNavigation.clients,
+  baseNavigation.messaging,
   baseNavigation.employees,
   // HR & Operations
   baseNavigation.payroll,

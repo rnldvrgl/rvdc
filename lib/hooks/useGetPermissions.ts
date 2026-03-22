@@ -76,6 +76,7 @@ export function useGetPermissions(
         "manage_government_benefits",
         "manage_tax_brackets",
         "manage_system_settings",
+        "view_messaging",
       ],
       manager: [
         ...commonAdminPermissions,
@@ -84,6 +85,7 @@ export function useGetPermissions(
         ...adminShortcuts,
         ...commonManagementPermissions,
         ...commonPermissions,
+        "view_messaging",
       ],
       clerk: [
         ...commonEmployeePermissions,
