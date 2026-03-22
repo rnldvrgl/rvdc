@@ -139,7 +139,9 @@ export function InventoryReorderAlerts({
                 <Warehouse className="size-3.5 text-destructive" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">Stockroom · Out of Stock</p>
+                <p className="text-sm font-medium truncate">
+                  Stockroom · Out of Stock
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {stockRoomOutOfStockItems
                     .map((i) => i.name)
@@ -169,7 +171,9 @@ export function InventoryReorderAlerts({
                 <Warehouse className="size-3.5 text-warning" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">Stockroom · Low Stock</p>
+                <p className="text-sm font-medium truncate">
+                  Stockroom · Low Stock
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {stockRoomLowStockItems
                     .map((i) => i.name)
@@ -199,7 +203,9 @@ export function InventoryReorderAlerts({
                 <Store className="size-3.5 text-destructive" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">Stall · Out of Stock</p>
+                <p className="text-sm font-medium truncate">
+                  Stall · Out of Stock
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {stallOutOfStockItems
                     .map((i) => i.name)
@@ -229,7 +235,9 @@ export function InventoryReorderAlerts({
                 <Store className="size-3.5 text-warning" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">Stall · Low Stock</p>
+                <p className="text-sm font-medium truncate">
+                  Stall · Low Stock
+                </p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {stallLowStockItems
                     .map((i) => i.name)
