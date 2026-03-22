@@ -52,11 +52,11 @@ export function RemindersAlerts() {
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+    <Card className="h-full min-w-0">
+      <CardHeader className="pb-3 px-4 sm:px-6">
+        <div className="flex items-center justify-between min-w-0 gap-2">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2 min-w-0">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
               <Bell className="size-4 text-primary" />
             </div>
             <span className="truncate">Reminders & Alerts</span>
@@ -72,7 +72,7 @@ export function RemindersAlerts() {
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 sm:px-6">
         {totalAlerts === 0 ? (
           <div className="flex items-center justify-center gap-3 py-4 text-center">
             <Bell className="size-5 text-muted-foreground/50" />
@@ -87,12 +87,12 @@ export function RemindersAlerts() {
                 href="/attendance/leaves"
                 className="group block"
               >
-                <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+                <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
                   <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-950/50 shrink-0">
                     <CalendarDays className="size-3.5 text-warning" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">
+                    <p className="text-sm font-medium truncate">
                       Pending Leave Approvals
                     </p>
                     <p
@@ -123,7 +123,7 @@ export function RemindersAlerts() {
                 href="/services"
                 className="group block"
               >
-                <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+                <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
                   <div className="p-1.5 rounded-md bg-red-100 dark:bg-red-950/50 shrink-0">
                     <TimerOff className="size-3.5 text-destructive" />
                   </div>
@@ -161,7 +161,7 @@ export function RemindersAlerts() {
                 href="/services"
                 className="group block"
               >
-                <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+                <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
                   <div className="p-1.5 rounded-md bg-orange-100 dark:bg-orange-950/50 shrink-0">
                     <CreditCard className="size-3.5 text-orange-600 dark:text-orange-400" />
                   </div>

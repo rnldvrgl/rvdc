@@ -91,16 +91,16 @@ export function InventoryReorderAlerts({
 
   if (total === 0) {
     return (
-      <Card className="h-full">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+      <Card className="h-full min-w-0">
+        <CardHeader className="pb-3 px-4 sm:px-6">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2 min-w-0">
+            <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
               <Package className="size-4 text-primary" />
             </div>
             <span className="truncate">Inventory Alerts</span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-4 sm:px-6">
           <div className="flex items-center justify-center gap-3 py-4 text-center">
             <Package className="size-5 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
@@ -113,10 +113,10 @@ export function InventoryReorderAlerts({
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+    <Card className="h-full min-w-0">
+      <CardHeader className="pb-3 px-4 sm:px-6">
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2 min-w-0">
+          <div className="p-1.5 sm:p-2 rounded-lg bg-primary/10 shrink-0">
             <Package className="size-4 text-primary" />
           </div>
           <span className="truncate">Inventory Alerts</span>
@@ -128,18 +128,18 @@ export function InventoryReorderAlerts({
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-2 px-4 sm:px-6">
         {srNoStockCount > 0 && (
           <Link
             href="/inventory/stocks/stockroom?status=no_stock"
             className="group block"
           >
-            <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+            <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
               <div className="p-1.5 rounded-md bg-red-100 dark:bg-red-950/50 shrink-0">
                 <Warehouse className="size-3.5 text-destructive" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">Stockroom · Out of Stock</p>
+                <p className="text-sm font-medium truncate">Stockroom · Out of Stock</p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {stockRoomOutOfStockItems
                     .map((i) => i.name)
@@ -164,12 +164,12 @@ export function InventoryReorderAlerts({
             href="/inventory/stocks/stockroom?status=low_stock"
             className="group block"
           >
-            <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+            <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
               <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-950/50 shrink-0">
                 <Warehouse className="size-3.5 text-warning" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">Stockroom · Low Stock</p>
+                <p className="text-sm font-medium truncate">Stockroom · Low Stock</p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {stockRoomLowStockItems
                     .map((i) => i.name)
@@ -194,12 +194,12 @@ export function InventoryReorderAlerts({
             href="/inventory/stocks/stall?status=no_stock"
             className="group block"
           >
-            <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+            <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
               <div className="p-1.5 rounded-md bg-red-100 dark:bg-red-950/50 shrink-0">
                 <Store className="size-3.5 text-destructive" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">Stall · Out of Stock</p>
+                <p className="text-sm font-medium truncate">Stall · Out of Stock</p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {stallOutOfStockItems
                     .map((i) => i.name)
@@ -224,12 +224,12 @@ export function InventoryReorderAlerts({
             href="/inventory/stocks/stall?status=low_stock"
             className="group block"
           >
-            <div className="flex items-center gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
+            <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg border hover:bg-muted/50 transition-all">
               <div className="p-1.5 rounded-md bg-amber-100 dark:bg-amber-950/50 shrink-0">
                 <Store className="size-3.5 text-warning" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">Stall · Low Stock</p>
+                <p className="text-sm font-medium truncate">Stall · Low Stock</p>
                 <p className="text-xs text-muted-foreground mt-0.5 truncate">
                   {stallLowStockItems
                     .map((i) => i.name)
