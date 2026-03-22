@@ -50,14 +50,14 @@ export function EmployeePerformanceStats() {
       {/* Top Service Types */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-950">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-950 shrink-0">
               <Wrench className="size-4 text-purple-600 dark:text-purple-400" />
             </div>
-            Top Service Types
+            <span className="truncate">Top Service Types</span>
             <Badge
               variant="secondary"
-              className="ml-auto text-xs"
+              className="ml-auto text-xs shrink-0"
             >
               Completed
             </Badge>
@@ -79,17 +79,17 @@ export function EmployeePerformanceStats() {
                   key={type.service_type}
                   className="space-y-1.5"
                 >
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-muted-foreground w-5">
+                  <div className="flex items-center justify-between text-sm gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">
                         #{index + 1}
                       </span>
-                      <span className="font-medium">
+                      <span className="font-medium truncate">
                         {getServiceTypeLabel(type.service_type)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                      <span className="text-xs text-muted-foreground hidden sm:inline">
                         {formatCurrency(type.revenue)}
                       </span>
                       <Badge
@@ -116,14 +116,14 @@ export function EmployeePerformanceStats() {
       {/* Top Technicians */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-950">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+            <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-950 shrink-0">
               <Trophy className="size-4 text-warning" />
             </div>
-            Top Technicians
+            <span className="truncate">Top Technicians</span>
             <Badge
               variant="secondary"
-              className="ml-auto text-xs"
+              className="ml-auto text-xs shrink-0"
             >
               By Assignments
             </Badge>
@@ -153,12 +153,14 @@ export function EmployeePerformanceStats() {
                     <p className="text-sm font-medium truncate">
                       {tech.employee_name}
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground flex-wrap">
                       <span>{tech.total_assignments} assigned</span>
                       <span>·</span>
-                      <span>{tech.completed} completed</span>
-                      <span>·</span>
-                      <span>{formatCurrency(tech.total_revenue)}</span>
+                      <span>{tech.completed} done</span>
+                      <span className="hidden sm:inline">·</span>
+                      <span className="hidden sm:inline">
+                        {formatCurrency(tech.total_revenue)}
+                      </span>
                     </div>
                   </div>
                   <div className="text-right">
@@ -189,14 +191,14 @@ export function EmployeePerformanceStats() {
       {/* Most Late */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950 shrink-0">
               <Timer className="size-4 text-destructive" />
             </div>
-            Most Late Arrivals
+            <span className="truncate">Most Late Arrivals</span>
             <Badge
               variant="outline"
-              className="ml-auto text-xs border-red-200 text-destructive dark:border-red-800"
+              className="ml-auto text-xs shrink-0 border-red-200 text-destructive dark:border-red-800"
             >
               Attendance
             </Badge>
@@ -247,14 +249,14 @@ export function EmployeePerformanceStats() {
       {/* Most Punctual */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950 shrink-0">
               <TrendingUp className="size-4 text-success" />
             </div>
-            Most Punctual
+            <span className="truncate">Most Punctual</span>
             <Badge
               variant="outline"
-              className="ml-auto text-xs border-green-200 text-success dark:border-green-800"
+              className="ml-auto text-xs shrink-0 border-green-200 text-success dark:border-green-800"
             >
               On-Time
             </Badge>
@@ -284,12 +286,14 @@ export function EmployeePerformanceStats() {
                     <p className="text-sm font-medium truncate">
                       {emp.employee_name}
                     </p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground flex-wrap">
                       <span>{emp.on_time_days} on-time</span>
                       <span>·</span>
-                      <span>{emp.total_days} total days</span>
-                      <span>·</span>
-                      <span>{emp.total_paid_hours.toFixed(1)}h paid</span>
+                      <span>{emp.total_days} total</span>
+                      <span className="hidden sm:inline">·</span>
+                      <span className="hidden sm:inline">
+                        {emp.total_paid_hours.toFixed(1)}h paid
+                      </span>
                     </div>
                   </div>
                   <Badge

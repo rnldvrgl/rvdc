@@ -37,8 +37,8 @@ const ChartCard = ({
     whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
   >
     <Card className="overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow duration-300 bg-card h-full">
-      <CardHeader className="pb-4 border-b border-border">
-        <CardTitle className="text-base font-semibold flex items-center gap-3">
+      <CardHeader className="pb-4 border-b border-border px-4 sm:px-6">
+        <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-3">
           {Icon && (
             <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20">
               <Icon className="size-4 text-primary" />
@@ -119,16 +119,16 @@ export default function DashboardCharts() {
           whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
         >
           <Card className="overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow duration-300 bg-card h-full">
-            <CardHeader className="pb-4 border-b border-border">
-              <CardTitle className="text-base font-semibold flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20">
+            <CardHeader className="pb-4 border-b border-border px-4 sm:px-6">
+              <CardTitle className="text-sm sm:text-base font-semibold flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20 shrink-0">
                     <DollarSign className="size-4 text-primary" />
                   </div>
-                  <div className="space-y-0.5">
+                  <div className="space-y-0.5 min-w-0">
                     <span className="text-foreground">Cash Flow Analysis</span>
                     <p className="text-xs font-normal text-muted-foreground">
-                      Compare income vs expenses over time
+                      Income vs expenses over time
                     </p>
                   </div>
                 </div>
@@ -159,7 +159,7 @@ export default function DashboardCharts() {
                 </Tabs>
               </CardTitle>
             </CardHeader>
-            <CardContent className="h-80 p-5">
+            <CardContent className="h-80 p-4 sm:p-5">
               <AnimatePresence mode="wait">
                 {cashFlowLoading ? (
                   <motion.div

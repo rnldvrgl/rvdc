@@ -169,20 +169,20 @@ export default function HeroStatsSection() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="rounded-lg bg-muted px-4 py-3">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4">
+                    <div className="rounded-lg bg-muted px-3 sm:px-4 py-3 min-w-0">
                       <p className="text-xs text-muted-foreground">
                         Net Income
                       </p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="text-sm sm:text-lg font-semibold text-foreground truncate">
                         {formatCurrency(summary?.net_income ?? 0)}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-muted px-4 py-3">
+                    <div className="rounded-lg bg-muted px-3 sm:px-4 py-3 min-w-0">
                       <p className="text-xs text-muted-foreground">
                         Total Sales
                       </p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="text-sm sm:text-lg font-semibold text-foreground truncate">
                         {formatCurrency(summary?.total_sales ?? 0)}
                       </p>
                     </div>
@@ -223,7 +223,7 @@ export default function HeroStatsSection() {
                 <DollarSign className="size-4 text-primary" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-foreground">
+                <h3 className="text-sm sm:text-base font-semibold text-foreground">
                   Sales Status
                 </h3>
                 <p className="text-xs text-muted-foreground">
