@@ -94,7 +94,7 @@ function formatTime(ts: number) {
 
 function formatLastSeen(ts: number | null | undefined): string {
   if (!ts) return "Offline"
-  return `last seen ${formatDistanceToNow(new Date(ts * 1000), { addSuffix: true })}`
+  return formatDistanceToNow(new Date(ts * 1000), { addSuffix: true })
 }
 
 // ── Chat Bubble (FAB) ────────────────────────────────────────────────
