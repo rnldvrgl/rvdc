@@ -346,7 +346,6 @@ export const orderedNavigation: NavigationEntry[] = [
   baseNavigation.aircons,
   // Customer & People Management
   baseNavigation.clients,
-  baseNavigation.messaging,
   baseNavigation.employees,
   // HR & Operations
   baseNavigation.payroll,
