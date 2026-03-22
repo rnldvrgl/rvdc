@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/custom/navigation/Sidebar"
 import { Background } from "@/components/custom/shared/Background"
 import { ScrollToTop } from "@/components/custom/shared/ScrollToTop"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useDashboardWebSocket } from "@/lib/hooks/useDashboardWebSocket"
 import { useSidebarCollapse } from "@/lib/hooks/useSidebarCollapse"
 import { cn } from "@/lib/utils/helpers"
 import React from "react"
@@ -15,6 +16,8 @@ export default function MainLayout({
 }) {
   const { collapsed } = useSidebarCollapse()
   const { userProfile } = useCurrentUser()
+
+  useDashboardWebSocket()
 
   return (
     <div className="min-h-screen">
