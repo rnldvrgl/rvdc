@@ -15,11 +15,11 @@ export function PendingItemsAlert() {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950 shrink-0">
               <CheckCircle className="size-4 text-success" />
             </div>
-            Items Review
+            <span className="truncate">Items Review</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -34,14 +34,14 @@ export function PendingItemsAlert() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-950">
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-950 shrink-0">
             <Package className="size-4 text-orange-600 dark:text-orange-400" />
           </div>
-          Items Pending Review
+          <span className="truncate">Items Pending Review</span>
           <Badge
             variant="destructive"
-            className="ml-auto text-xs"
+            className="ml-auto text-xs shrink-0"
           >
             {data.total_pending_items ?? data.total_unchecked_appliances}
           </Badge>

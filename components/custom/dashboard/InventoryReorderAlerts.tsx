@@ -93,11 +93,11 @@ export function InventoryReorderAlerts({
     return (
       <Card className="h-full">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
               <Package className="size-4 text-primary" />
             </div>
-            Inventory Alerts
+            <span className="truncate">Inventory Alerts</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -115,14 +115,14 @@ export function InventoryReorderAlerts({
   return (
     <Card className="h-full">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-primary/10">
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-primary/10 shrink-0">
             <Package className="size-4 text-primary" />
           </div>
-          Inventory Alerts
+          <span className="truncate">Inventory Alerts</span>
           <Badge
             variant="destructive"
-            className="ml-auto text-xs"
+            className="ml-auto text-xs shrink-0"
           >
             {total}
           </Badge>

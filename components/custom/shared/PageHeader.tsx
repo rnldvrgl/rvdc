@@ -100,18 +100,18 @@ const PageHeader = ({
       gap: "gap-4",
     },
     default: {
-      padding: "p-6 sm:p-8",
+      padding: "p-4 sm:p-6 md:p-8",
       titleSize: "text-2xl sm:text-3xl lg:text-4xl",
       iconSize: "size-7 sm:size-8 lg:size-9",
       iconPadding: "p-3 sm:p-3.5",
-      gap: "gap-6",
+      gap: "gap-4 sm:gap-6",
     },
     hero: {
-      padding: "p-8 sm:p-12 lg:p-16",
+      padding: "p-6 sm:p-8 md:p-12 lg:p-16",
       titleSize: "text-3xl sm:text-4xl lg:text-5xl xl:text-6xl",
       iconSize: "size-8 sm:size-10 lg:size-12",
       iconPadding: "p-4 sm:p-5",
-      gap: "gap-8",
+      gap: "gap-6 sm:gap-8",
     },
   }
 
@@ -255,7 +255,7 @@ const PageHeader = ({
             </div>
 
             {/* Actions and badges */}
-            <div className="flex flex-col xl:flex-row items-start xl:items-center gap-3 shrink-0">
+            <div className="flex flex-col xl:flex-row items-stretch sm:items-start xl:items-center gap-3 w-full md:w-auto">
               <div className="grid gap-2 w-full">
                 {onRefresh && (
                   <Button

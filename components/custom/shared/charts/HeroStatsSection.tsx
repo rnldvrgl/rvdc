@@ -87,7 +87,7 @@ export default function HeroStatsSection() {
       {/* Revenue Overview + Chart */}
       <div className="lg:col-span-2">
         <Card className="overflow-hidden border border-border shadow-md bg-card h-full relative">
-          <CardContent className="p-6 pl-7">
+          <CardContent className="p-4 sm:p-6 sm:pl-7">
             <AnimatePresence mode="wait">
               {summaryLoading ? (
                 <motion.div
@@ -109,12 +109,12 @@ export default function HeroStatsSection() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="space-y-1">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                    <div className="space-y-1 min-w-0">
                       <p className="text-sm font-medium text-muted-foreground">
                         Period Revenue
                       </p>
-                      <p className="text-4xl font-bold text-foreground tracking-tight">
+                      <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground tracking-tight break-all sm:break-normal">
                         {formatCurrency(summary?.total_revenue ?? 0)}
                       </p>
                       <div className="flex items-center gap-4 mt-2">
@@ -137,7 +137,7 @@ export default function HeroStatsSection() {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                       <Tabs
                         value={stallTab}
                         onValueChange={setStallTab}
@@ -169,20 +169,20 @@ export default function HeroStatsSection() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="rounded-lg bg-muted px-4 py-3">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4">
+                    <div className="rounded-lg bg-muted px-3 sm:px-4 py-3 min-w-0">
                       <p className="text-xs text-muted-foreground">
                         Net Income
                       </p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="text-sm sm:text-lg font-semibold text-foreground truncate">
                         {formatCurrency(summary?.net_income ?? 0)}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-muted px-4 py-3">
+                    <div className="rounded-lg bg-muted px-3 sm:px-4 py-3 min-w-0">
                       <p className="text-xs text-muted-foreground">
                         Total Sales
                       </p>
-                      <p className="text-lg font-semibold text-foreground">
+                      <p className="text-sm sm:text-lg font-semibold text-foreground truncate">
                         {formatCurrency(summary?.total_sales ?? 0)}
                       </p>
                     </div>
@@ -217,13 +217,13 @@ export default function HeroStatsSection() {
       {/* Sales Status Donut */}
       <div className="lg:col-span-1">
         <Card className="overflow-hidden border border-border shadow-md bg-card h-full">
-          <CardContent className="p-6 flex flex-col h-full">
+          <CardContent className="p-4 sm:p-6 flex flex-col h-full">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-2 rounded-lg bg-primary/10 dark:bg-primary/20">
                 <DollarSign className="size-4 text-primary" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-foreground">
+                <h3 className="text-sm sm:text-base font-semibold text-foreground">
                   Sales Status
                 </h3>
                 <p className="text-xs text-muted-foreground">

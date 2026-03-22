@@ -55,11 +55,11 @@ export function RemindersAlerts() {
     <Card className="h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10 shrink-0">
               <Bell className="size-4 text-primary" />
             </div>
-            Reminders & Alerts
+            <span className="truncate">Reminders & Alerts</span>
           </CardTitle>
           {totalAlerts > 0 && (
             <Badge

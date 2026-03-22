@@ -34,11 +34,11 @@ export function BirthdayReminders({ className }: { className?: string }) {
     return (
       <Card className={cn("h-full", className)}>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950 shrink-0">
               <Cake className="size-4 text-pink-600 dark:text-pink-400" />
             </div>
-            Upcoming Birthdays
+            <span className="truncate">Upcoming Birthdays</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -56,11 +56,11 @@ export function BirthdayReminders({ className }: { className?: string }) {
   return (
     <Card className={cn("h-full", className)}>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950">
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+          <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950 shrink-0">
             <Cake className="size-4 text-pink-600 dark:text-pink-400" />
           </div>
-          Upcoming Birthdays
+          <span className="truncate">Upcoming Birthdays</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">

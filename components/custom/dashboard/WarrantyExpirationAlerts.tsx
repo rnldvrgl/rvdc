@@ -101,13 +101,13 @@ export function WarrantyExpirationAlerts() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <ShieldAlert className="size-5" />
-          Warranty Alerts
+        <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+          <ShieldAlert className="size-5 shrink-0" />
+          <span className="truncate">Warranty Alerts</span>
           {totalAlerts > 0 && (
             <Badge
               variant="destructive"
-              className="ml-auto"
+              className="ml-auto shrink-0"
               suppressHydrationWarning
             >
               {totalAlerts}
