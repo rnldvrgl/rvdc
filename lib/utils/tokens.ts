@@ -73,3 +73,37 @@ export async function refreshAccessToken(): Promise<boolean> {
   }
   return false
 }
+
+/**
+ * Check if a JWT token is expired or about to expire (within 60s).
+ */
+function isTokenExpired(token: string): boolean {
+  try {
+    const parts = token.split(".")
+    if (parts.length !== 3) return true
+    const payload = JSON.parse(atob(parts[1]))
+    const exp = payload.exp
+    if (!exp) return true
+    // Consider expired if within 60 seconds of expiry
+    return Date.now() / 1000 > exp - 60
+  } catch {
+    return true
+  }
+}
+
+/**
+ * Get a valid (non-expired) access token, refreshing if necessary.
+ * Returns null if no valid token can be obtained.
+ */
+export async function getValidAccessToken(): Promise<string | null> {
+  const token = getToken("access")
+  if (!token) return null
+
+  if (!isTokenExpired(token)) return token
+
+  // Token is expired or about to expire — try refresh
+  const ok = await refreshAccessToken()
+  if (ok) return getToken("access")
+
+  return null
+}

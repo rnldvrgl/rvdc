@@ -1,6 +1,6 @@
 "use client"
 
-import { getToken, refreshAccessToken } from "@/lib/utils/tokens"
+import { getValidAccessToken, refreshAccessToken } from "@/lib/utils/tokens"
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useRef } from "react"
 
@@ -27,11 +27,11 @@ export function useNotificationWebSocket({ onNotification }: Options = {}) {
   const callbackRef = useRef(onNotification)
   callbackRef.current = onNotification
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
     const wsProtocol = baseUrl.startsWith("https") ? "wss" : "ws"
     const host = baseUrl.replace(/^https?:\/\//, "")
-    const token = getToken("access")
+    const token = await getValidAccessToken()
 
     if (!token) return
 
