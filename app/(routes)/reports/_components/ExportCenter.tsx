@@ -33,6 +33,7 @@ import {
   Loader2,
   PackageX,
   ShoppingCart,
+  Store,
   TrendingDown,
   TrendingUp,
   Wrench,
@@ -188,10 +189,31 @@ const CHEQUE_SHEETS = [
   },
 ] as const
 
+// ── Daily Sales Sheets ───────────────────────────────
+const DAILY_SALES_SHEETS = [
+  {
+    key: "main_stall",
+    label: "Main Stall",
+    description: "Daily item sales for the main stall",
+    icon: Store,
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
+  },
+  {
+    key: "sub_stall",
+    label: "Sub Stall",
+    description: "Daily item sales for the sub stall",
+    icon: Store,
+    color: "text-blue-500",
+    bgColor: "bg-blue-50 dark:bg-blue-950/20",
+  },
+] as const
+
 // ── Types ────────────────────────────────────────────
 type InventorySheetKey = (typeof INVENTORY_SHEETS)[number]["key"]
 type SalesSheetKey = (typeof SALES_SHEETS)[number]["key"]
 type ChequeSheetKey = (typeof CHEQUE_SHEETS)[number]["key"]
+type DailySalesSheetKey = (typeof DAILY_SALES_SHEETS)[number]["key"]
 
 interface ExportSectionProps<K extends string> {
   title: string
@@ -426,6 +448,16 @@ export function ExportCenter() {
   const [chequeStart, setChequeStart] = useState(formatDate(ninetyDaysAgo))
   const [chequeEnd, setChequeEnd] = useState(formatDate(today))
 
+  // Daily Sales
+  const [dailySalesSheets, setDailySalesSheets] = useState<
+    Set<DailySalesSheetKey>
+  >(new Set(DAILY_SALES_SHEETS.map((s) => s.key)))
+  const [dailySalesExporting, setDailySalesExporting] = useState(false)
+  const [dailySalesStart, setDailySalesStart] = useState(
+    formatDate(thirtyDaysAgo),
+  )
+  const [dailySalesEnd, setDailySalesEnd] = useState(formatDate(today))
+
   // ── Toggles ────────────────────────────────────────
   function toggle<K extends string>(
     set: Set<K>,
@@ -456,6 +488,7 @@ export function ExportCenter() {
     if (data.export_type === "inventory") setInvExporting(false)
     else if (data.export_type === "sales") setSalesExporting(false)
     else if (data.export_type === "cheques") setChequeExporting(false)
+    else if (data.export_type === "daily_sales") setDailySalesExporting(false)
     pendingExportRef.current = null
   }, [])
 
@@ -512,6 +545,17 @@ export function ExportCenter() {
       setChequeExporting,
       chequeStart,
       chequeEnd,
+    )
+  }
+
+  const exportDailySales = () => {
+    if (dailySalesSheets.size === 0) return
+    startExport(
+      "daily_sales",
+      Array.from(dailySalesSheets).join(","),
+      setDailySalesExporting,
+      dailySalesStart,
+      dailySalesEnd,
     )
   }
 
@@ -590,6 +634,28 @@ export function ExportCenter() {
         endDate={chequeEnd}
         onStartDate={setChequeStart}
         onEndDate={setChequeEnd}
+      />
+
+      {/* Daily Sales Export */}
+      <ExportSection
+        title="Daily Sales Report"
+        description="Separate files per stall with 1 tab per day (Qty, Item, Amount)"
+        icon={CalendarDays}
+        accentColor="bg-gradient-to-br from-orange-500 to-amber-600"
+        sheets={DAILY_SALES_SHEETS}
+        selectedSheets={dailySalesSheets}
+        onToggle={(k) => toggle(dailySalesSheets, setDailySalesSheets, k)}
+        onSelectAll={() =>
+          setDailySalesSheets(new Set(DAILY_SALES_SHEETS.map((s) => s.key)))
+        }
+        onDeselectAll={() => setDailySalesSheets(new Set())}
+        isExporting={dailySalesExporting}
+        onExport={exportDailySales}
+        dateRange
+        startDate={dailySalesStart}
+        endDate={dailySalesEnd}
+        onStartDate={setDailySalesStart}
+        onEndDate={setDailySalesEnd}
       />
     </div>
   )
