@@ -50,5 +50,16 @@ export function useItemMutations() {
     ],
   })
 
-  return { addItem, updateItem, deleteItem }
+  const bulkUpdate = useApiMutation<FormData, unknown>({
+    mutationFn: (formData) =>
+      api.post(`${url}bulk-update/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    usePromiseToast: true,
+    loadingMessage: "Processing bulk update...",
+    successMessage: "Bulk update started. You will be notified when it's done.",
+    invalidateQueries: sharedInvalidations,
+  })
+
+  return { addItem, updateItem, deleteItem, bulkUpdate }
 }

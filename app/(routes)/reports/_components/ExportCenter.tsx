@@ -22,6 +22,8 @@ import {
   ExportWSData,
   useNotificationWebSocket,
 } from "@/lib/hooks/useNotificationWebSocket"
+import { useExportMutations } from "@/lib/mutations/useExportMutations"
+import { useItemMutations } from "@/lib/mutations/useItemMutations"
 import api from "@/lib/utils/api"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
@@ -461,15 +463,24 @@ function ExportSection<K extends string>({
 }
 
 // -- Bulk Item Update --
-function BulkItemUpdate() {
+type BulkUpdateResult = {
+  updated: number
+  skipped: number
+  errors: { row: number; sku?: string; error: string }[]
+}
+
+function BulkItemUpdate({
+  result,
+  processing,
+  onUploadStarted,
+}: {
+  result: BulkUpdateResult | null
+  processing: boolean
+  onUploadStarted: () => void
+}) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [downloading, setDownloading] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [result, setResult] = useState<{
-    updated: number
-    skipped: number
-    errors: { row: number; sku?: string; error: string }[]
-  } | null>(null)
+  const { bulkUpdate } = useItemMutations()
 
   const downloadTemplate = async () => {
     setDownloading(true)
@@ -494,7 +505,7 @@ function BulkItemUpdate() {
     }
   }
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.name.endsWith(".xlsx")) {
@@ -502,35 +513,12 @@ function BulkItemUpdate() {
       return
     }
 
-    setUploading(true)
-    setResult(null)
     const formData = new FormData()
     formData.append("file", file)
-
-    try {
-      const res = await api.post("/inventory/items/bulk-update/", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
-      setResult(res.data)
-      if (res.data.updated > 0) {
-        toast.success(res.data.detail)
-      } else if (res.data.errors?.length > 0) {
-        toast.warning(res.data.detail)
-      } else {
-        toast.info("No changes detected.")
-      }
-    } catch (err: unknown) {
-      const detail =
-        err &&
-        typeof err === "object" &&
-        "response" in err &&
-        (err as { response?: { data?: { detail?: string } } }).response?.data
-          ?.detail
-      toast.error(detail || "Failed to upload file.")
-    } finally {
-      setUploading(false)
-      if (fileRef.current) fileRef.current.value = ""
-    }
+    bulkUpdate.mutateAsync(formData).then(() => {
+      onUploadStarted()
+    })
+    if (fileRef.current) fileRef.current.value = ""
   }
 
   return (
@@ -583,15 +571,19 @@ function BulkItemUpdate() {
             <Button
               size="sm"
               onClick={() => fileRef.current?.click()}
-              disabled={uploading}
+              disabled={bulkUpdate.isPending || processing}
               className="gap-1.5 text-xs w-full sm:w-auto"
             >
-              {uploading ? (
+              {bulkUpdate.isPending || processing ? (
                 <Loader2 className="size-3.5 animate-spin" />
               ) : (
                 <Upload className="size-3.5" />
               )}
-              {uploading ? "Uploading..." : "Upload Updated File"}
+              {bulkUpdate.isPending
+                ? "Uploading..."
+                : processing
+                  ? "Processing..."
+                  : "Upload Updated File"}
             </Button>
           </div>
         </div>
@@ -722,7 +714,29 @@ export function ExportCenter() {
   // -- WebSocket for export notifications --
   const pendingExportRef = useRef<string | null>(null)
 
+  // Bulk update
+  const [bulkUpdateResult, setBulkUpdateResult] =
+    useState<BulkUpdateResult | null>(null)
+  const [bulkProcessing, setBulkProcessing] = useState(false)
+
   const onExportReady = useCallback((data: ExportWSData) => {
+    if (data.export_type === "bulk_update") {
+      setBulkProcessing(false)
+      if (data.event === "export_ready" && data.result) {
+        setBulkUpdateResult(data.result)
+        if (data.result.updated > 0) {
+          toast.success(data.title, { description: data.message })
+        } else if (data.result.errors.length > 0) {
+          toast.warning(data.title, { description: data.message })
+        } else {
+          toast.info("No changes detected.")
+        }
+      } else if (data.event === "export_failed") {
+        toast.error(data.title, { description: data.message })
+      }
+      return
+    }
+
     if (data.event === "export_ready" && data.token && data.filename) {
       toast.success(data.title, { description: data.message })
       downloadFromToken(data.token, data.filename)
@@ -739,7 +753,9 @@ export function ExportCenter() {
 
   useNotificationWebSocket({ onExportReady })
 
-  const startExport = async (
+  const { startExport: exportMutation } = useExportMutations()
+
+  const startExport = (
     exportType: string,
     sheets: string,
     setExporting: (v: boolean) => void,
@@ -748,22 +764,17 @@ export function ExportCenter() {
   ) => {
     setExporting(true)
     pendingExportRef.current = exportType
-    try {
-      await api.post("/analytics/export/", {
+    exportMutation
+      .mutateAsync({
         export_type: exportType,
         sheets,
         ...(startDate && { start_date: toISODate(startDate) }),
         ...(endDate && { end_date: toISODate(endDate) }),
       })
-      toast.info("Export started", {
-        description:
-          "Your report is being generated. It will download automatically when ready.",
+      .catch(() => {
+        setExporting(false)
+        pendingExportRef.current = null
       })
-    } catch {
-      toast.error("Failed to start export.")
-      setExporting(false)
-      pendingExportRef.current = null
-    }
   }
 
   return (
@@ -900,7 +911,14 @@ export function ExportCenter() {
       />
 
       {/* Bulk Item Pricing Update */}
-      <BulkItemUpdate />
+      <BulkItemUpdate
+        result={bulkUpdateResult}
+        processing={bulkProcessing}
+        onUploadStarted={() => {
+          setBulkProcessing(true)
+          setBulkUpdateResult(null)
+        }}
+      />
     </div>
   )
 }

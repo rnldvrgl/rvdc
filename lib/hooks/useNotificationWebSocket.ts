@@ -36,6 +36,12 @@ export type ExportWSData = {
   message: string
   token?: string
   filename?: string
+  result?: {
+    updated: number
+    skipped: number
+    errors: { row: number; sku?: string; error: string }[]
+    detail: string
+  }
 }
 
 type WSData = NotificationWSData | MaintenanceWSData | ExportWSData
