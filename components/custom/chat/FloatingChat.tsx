@@ -4,9 +4,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import useChatStore from "@/lib/store/useChatStore"
 import { type ChatMessage, useChat } from "@/lib/hooks/useChat"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import useChatStore from "@/lib/store/useChatStore"
 import { getAudioContext } from "@/lib/utils/audioContext"
 import { cn } from "@/lib/utils/helpers"
 import { AnimatePresence, motion } from "framer-motion"
@@ -897,7 +897,11 @@ export default function FloatingChat() {
     if (match) {
       const senderId = parseInt(match[1], 10)
       useChatStore.getState().openChat(senderId)
-      window.history.replaceState(null, "", window.location.pathname + window.location.search)
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search,
+      )
     }
   }, [])
 

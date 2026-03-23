@@ -31,7 +31,8 @@ export default function MainLayout({
       }
     }
     navigator.serviceWorker?.addEventListener("message", handler)
-    return () => navigator.serviceWorker?.removeEventListener("message", handler)
+    return () =>
+      navigator.serviceWorker?.removeEventListener("message", handler)
   }, [])
 
   return (

@@ -3,6 +3,7 @@
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { BirthdayGreetingSettingsForm } from "@/components/forms/BirthdayGreetingSettingsForm"
+import { ServerMaintenanceCard } from "@/components/forms/ServerMaintenanceCard"
 import {
   Card,
   CardContent,
@@ -11,18 +12,20 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useSystemSettings } from "@/lib/queries/useSystemSettings"
 import { Cake } from "lucide-react"
 
 export default function SystemSettingsPage() {
   const { data: settings, isLoading } = useSystemSettings()
+  const { isAdmin } = useCurrentUser()
 
   return (
     <Wrapper>
       <PageHeader
-        title="Birthday Greeting Settings"
-        description="Manage birthday greeting modal behavior and message"
-        breadcrumbs={["Settings", "Birthday Greeting Settings"]}
+        title="System Settings"
+        description="Manage system-wide settings and server maintenance"
+        breadcrumbs={["Settings", "System Settings"]}
       />
 
       <div className="space-y-6">
@@ -56,6 +59,9 @@ export default function SystemSettingsPage() {
 
         {/* Future Settings Cards */}
         {/* Add more setting cards here as needed */}
+
+        {/* Server Maintenance - Admin Only */}
+        {isAdmin && <ServerMaintenanceCard />}
       </div>
     </Wrapper>
   )
