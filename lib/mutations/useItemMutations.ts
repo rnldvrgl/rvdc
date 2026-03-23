@@ -50,6 +50,16 @@ export function useItemMutations() {
     ],
   })
 
+  const bulkPreview = useApiMutation<FormData, unknown>({
+    mutationFn: (formData) =>
+      api.post(`${url}bulk-preview/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    usePromiseToast: true,
+    loadingMessage: "Analyzing file...",
+    successMessage: "Preview ready. Please review the changes below.",
+  })
+
   const bulkUpdate = useApiMutation<FormData, unknown>({
     mutationFn: (formData) =>
       api.post(`${url}bulk-update/`, formData, {
@@ -61,5 +71,5 @@ export function useItemMutations() {
     invalidateQueries: sharedInvalidations,
   })
 
-  return { addItem, updateItem, deleteItem, bulkUpdate }
+  return { addItem, updateItem, deleteItem, bulkPreview, bulkUpdate }
 }
