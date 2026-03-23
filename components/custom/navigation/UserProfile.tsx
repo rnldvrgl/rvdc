@@ -1,5 +1,6 @@
 "use client"
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { User } from "@/lib/constants/interface"
 import {
@@ -9,7 +10,6 @@ import {
   getDisplayImage,
 } from "@/lib/utils/helpers"
 import { MoreVertical } from "lucide-react"
-import { default as Image } from "next/image"
 import { DropdownUserProfile } from "./DropdownUserProfile"
 
 type Props = {
@@ -30,14 +30,10 @@ export const UserProfile = ({ user }: Props) => {
         )}
       >
         <span className="flex items-center gap-3">
-          <Image
-            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border"
-            aria-hidden="true"
-            src={`${displayImage}`}
-            width={100}
-            height={100}
-            alt="user"
-          />
+          <Avatar className="size-8 border" aria-hidden="true">
+            <AvatarImage src={displayImage} alt="user" />
+            <AvatarFallback className="text-xs">{user?.first_name?.[0]}{user?.last_name?.[0]}</AvatarFallback>
+          </Avatar>
           <span>
             {user ? concatString(user.first_name, user.last_name) : "Guest"}
           </span>

@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -29,7 +30,6 @@ import {
   Search,
   UserIcon,
 } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 
 export function Navbar({ user }: { user: User | null }) {
@@ -93,13 +93,10 @@ export function Navbar({ user }: { user: User | null }) {
             >
               {user ? (
                 <>
-                  <Image
-                    src={displayImage}
-                    alt={`${user.first_name} ${user.last_name}`}
-                    width={32}
-                    height={32}
-                    className="size-8 rounded-full object-cover ring-2 ring-primary/10"
-                  />
+                  <Avatar className="size-8 ring-2 ring-primary/10">
+                    <AvatarImage src={displayImage} alt={`${user.first_name} ${user.last_name}`} />
+                    <AvatarFallback className="text-xs">{user.first_name?.[0]}{user.last_name?.[0]}</AvatarFallback>
+                  </Avatar>
                   <div className="flex flex-col items-start min-w-0">
                     <span className="text-sm font-semibold text-foreground truncate leading-tight">
                       {user.first_name} {user.last_name}
@@ -128,13 +125,10 @@ export function Navbar({ user }: { user: User | null }) {
             {/* User header */}
             {user && (
               <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
-                <Image
-                  src={displayImage}
-                  alt={`${user.first_name} ${user.last_name}`}
-                  width={36}
-                  height={36}
-                  className="size-9 rounded-full object-cover ring-2 ring-primary/10"
-                />
+                <Avatar className="size-9 ring-2 ring-primary/10">
+                  <AvatarImage src={displayImage} alt={`${user.first_name} ${user.last_name}`} />
+                  <AvatarFallback className="text-xs">{user.first_name?.[0]}{user.last_name?.[0]}</AvatarFallback>
+                </Avatar>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate">
                     {user.first_name} {user.last_name}
