@@ -236,7 +236,7 @@ export function getBoolBadgeVariant({
 
 export const getHashedStallBadgeClass = (stallName: string) => {
   const colors = [
-    "border-transparent bg-green-500 text-white dark:bg-green-400 dark:text-white",
+    "border-transparent bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white",
     "border-transparent bg-yellow-400 text-black dark:bg-yellow-300 dark:text-black",
     "border-transparent bg-blue-500 text-white dark:bg-blue-400 dark:text-white",
     "border-transparent bg-pink-500 text-white dark:bg-pink-400 dark:text-white",
