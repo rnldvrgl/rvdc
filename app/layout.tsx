@@ -29,6 +29,9 @@ export const metadata = {
     statusBarStyle: "black-translucent" as const,
     title: "RVDC",
   },
+  icons: {
+    apple: "/rvdc_logo.png",
+  },
 }
 
 export const viewport = {
@@ -53,7 +56,6 @@ export default function RootLayout({
           name="facebook-domain-verification"
           content="6i8iw9vw884am0u3vkmd9vnjkv3w4a"
         />
-        <link rel="apple-touch-icon" href="/rvdc_logo.png" />
       </head>
       <body
         className={`${poppins.variable} ${roboto.variable} antialiased p-0 font-poppins`}
