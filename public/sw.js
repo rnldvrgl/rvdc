@@ -20,7 +20,13 @@ self.addEventListener("push", (event) => {
     payload = { title: "New notification", body: event.data.text() }
   }
 
-  const { title = "RVDC", body = "", url = "/", tag = "", sender_id = null } = payload
+  const {
+    title = "RVDC",
+    body = "",
+    url = "/",
+    tag = "",
+    sender_id = null,
+  } = payload
 
   event.waitUntil(
     self.registration.showNotification(title, {

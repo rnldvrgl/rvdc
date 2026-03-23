@@ -1,5 +1,6 @@
 "use client"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -9,20 +10,19 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
 import api from "@/lib/utils/api"
 import { useQuery } from "@tanstack/react-query"
-import { useState } from "react"
-import { toast } from "sonner"
 import {
+  AlertTriangle,
+  FileText,
   HardDrive,
   Loader2,
-  Trash2,
-  FileText,
-  Zap,
   Server,
-  AlertTriangle,
+  Trash2,
+  Zap,
 } from "lucide-react"
+import { useState } from "react"
+import { toast } from "sonner"
 
 interface DiskUsage {
   total_gb: number
@@ -80,7 +80,7 @@ export function ServerMaintenanceCard() {
         toast.success(`${label} completed successfully`)
       } else {
         toast.warning(
-          `${label} completed with issues: ${failed.map((f) => f.error || f.task).join(", ")}`
+          `${label} completed with issues: ${failed.map((f) => f.error || f.task).join(", ")}`,
         )
       }
 
@@ -181,7 +181,10 @@ export function ServerMaintenanceCard() {
                           <span className="text-muted-foreground">
                             {entry.size}
                           </span>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge
+                            variant="outline"
+                            className="text-xs"
+                          >
                             {entry.reclaimable} reclaimable
                           </Badge>
                         </div>
