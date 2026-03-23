@@ -13,6 +13,10 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import {
+  ExportWSData,
+  useNotificationWebSocket,
+} from "@/lib/hooks/useNotificationWebSocket"
 import api from "@/lib/utils/api"
 import {
   AlertTriangle,
@@ -33,7 +37,7 @@ import {
   TrendingUp,
   Wrench,
 } from "lucide-react"
-import { useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { toast } from "sonner"
 
 // ── Inventory Sheets ─────────────────────────────────
@@ -368,24 +372,23 @@ function ExportSection<K extends string>({
 }
 
 // ── Utility ──────────────────────────────────────────
-function downloadBlob(
-  response: { data: BlobPart; headers: { [key: string]: unknown } },
-  fallbackName: string,
-) {
-  const contentDisposition = response.headers["content-disposition"]
-  let filename = fallbackName
-  if (typeof contentDisposition === "string") {
-    const match = contentDisposition.match(/filename="?([^";\n]+)"?/)
-    if (match) filename = match[1]
-  }
-  const url = window.URL.createObjectURL(new Blob([response.data]))
-  const link = document.createElement("a")
-  link.href = url
-  link.setAttribute("download", filename)
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  window.URL.revokeObjectURL(url)
+function downloadFromToken(token: string, filename: string) {
+  api
+    .get(`/analytics/export/download/${token}/`, { responseType: "blob" })
+    .then((res) => {
+      const blob = new Blob([res.data])
+      const blobUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = blobUrl
+      link.setAttribute("download", filename)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(blobUrl)
+    })
+    .catch(() => {
+      toast.error("Failed to download export file.")
+    })
 }
 
 function formatDate(d: Date) {
@@ -437,64 +440,79 @@ export function ExportCenter() {
     })
   }
 
-  // ── Export handlers ────────────────────────────────
-  const exportInventory = async () => {
+  // ── Export handlers (background via POST + WebSocket) ──
+  // Track which export type is currently generating
+  const pendingExportRef = useRef<string | null>(null)
+
+  const onExportReady = useCallback((data: ExportWSData) => {
+    if (data.event === "export_ready" && data.token && data.filename) {
+      toast.success(data.title, { description: data.message })
+      downloadFromToken(data.token, data.filename)
+    } else if (data.event === "export_failed") {
+      toast.error(data.title, { description: data.message })
+    }
+
+    // Clear the loading state for the matching export type
+    if (data.export_type === "inventory") setInvExporting(false)
+    else if (data.export_type === "sales") setSalesExporting(false)
+    else if (data.export_type === "cheques") setChequeExporting(false)
+    pendingExportRef.current = null
+  }, [])
+
+  useNotificationWebSocket({ onExportReady })
+
+  const startExport = async (
+    exportType: string,
+    sheets: string,
+    setExporting: (v: boolean) => void,
+    startDate?: string,
+    endDate?: string,
+  ) => {
+    setExporting(true)
+    pendingExportRef.current = exportType
+    try {
+      await api.post("/analytics/export/", {
+        export_type: exportType,
+        sheets,
+        ...(startDate && { start_date: startDate }),
+        ...(endDate && { end_date: endDate }),
+      })
+      toast.info("Export started", {
+        description:
+          "Your report is being generated. It will download automatically when ready.",
+      })
+    } catch {
+      toast.error("Failed to start export.")
+      setExporting(false)
+      pendingExportRef.current = null
+    }
+  }
+
+  const exportInventory = () => {
     if (invSheets.size === 0) return
-    setInvExporting(true)
-    try {
-      const res = await api.get("/inventory/export-report/", {
-        params: { sheets: Array.from(invSheets).join(",") },
-        responseType: "blob",
-      })
-      downloadBlob(res, "inventory_report.xlsx")
-      toast.success("Inventory report downloaded!")
-    } catch {
-      toast.error("Failed to generate inventory report.")
-    } finally {
-      setInvExporting(false)
-    }
+    startExport("inventory", Array.from(invSheets).join(","), setInvExporting)
   }
 
-  const exportSales = async () => {
+  const exportSales = () => {
     if (salesSheets.size === 0) return
-    setSalesExporting(true)
-    try {
-      const res = await api.get("/sales/export-report/", {
-        params: {
-          sheets: Array.from(salesSheets).join(","),
-          start_date: salesStart,
-          end_date: salesEnd,
-        },
-        responseType: "blob",
-      })
-      downloadBlob(res, "sales_report.xlsx")
-      toast.success("Sales report downloaded!")
-    } catch {
-      toast.error("Failed to generate sales report.")
-    } finally {
-      setSalesExporting(false)
-    }
+    startExport(
+      "sales",
+      Array.from(salesSheets).join(","),
+      setSalesExporting,
+      salesStart,
+      salesEnd,
+    )
   }
 
-  const exportCheques = async () => {
+  const exportCheques = () => {
     if (chequeSheets.size === 0) return
-    setChequeExporting(true)
-    try {
-      const res = await api.get("/receivables/export-report/", {
-        params: {
-          sheets: Array.from(chequeSheets).join(","),
-          start_date: chequeStart,
-          end_date: chequeEnd,
-        },
-        responseType: "blob",
-      })
-      downloadBlob(res, "cheque_report.xlsx")
-      toast.success("Cheque report downloaded!")
-    } catch {
-      toast.error("Failed to generate cheque report.")
-    } finally {
-      setChequeExporting(false)
-    }
+    startExport(
+      "cheques",
+      Array.from(chequeSheets).join(","),
+      setChequeExporting,
+      chequeStart,
+      chequeEnd,
+    )
   }
 
   return (

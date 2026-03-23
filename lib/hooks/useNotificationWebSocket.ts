@@ -29,16 +29,27 @@ type MaintenanceWSData = {
   }>
 }
 
-type WSData = NotificationWSData | MaintenanceWSData
+export type ExportWSData = {
+  event: "export_ready" | "export_failed"
+  export_type: string
+  title: string
+  message: string
+  token?: string
+  filename?: string
+}
+
+type WSData = NotificationWSData | MaintenanceWSData | ExportWSData
 
 type Options = {
   onNotification?: (data: NotificationWSData) => void
   onMaintenanceResult?: (data: MaintenanceWSData) => void
+  onExportReady?: (data: ExportWSData) => void
 }
 
 export function useNotificationWebSocket({
   onNotification,
   onMaintenanceResult,
+  onExportReady,
 }: Options = {}) {
   const queryClient = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
@@ -48,6 +59,8 @@ export function useNotificationWebSocket({
   callbackRef.current = onNotification
   const maintenanceCallbackRef = useRef(onMaintenanceResult)
   maintenanceCallbackRef.current = onMaintenanceResult
+  const exportCallbackRef = useRef(onExportReady)
+  exportCallbackRef.current = onExportReady
 
   const connect = useCallback(async () => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
@@ -79,6 +92,8 @@ export function useNotificationWebSocket({
           // Maintenance results — refresh stats, call handler
           queryClient.invalidateQueries({ queryKey: ["server-maintenance"] })
           maintenanceCallbackRef.current?.(data)
+        } else if (data.event === "export_ready" || data.event === "export_failed") {
+          exportCallbackRef.current?.(data as ExportWSData)
         } else {
           // Regular notifications
           queryClient.invalidateQueries({ queryKey: ["notifications"] })
