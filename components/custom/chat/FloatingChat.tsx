@@ -20,6 +20,8 @@ const ROLE_COLORS: Record<string, string> = {
   clerk: "bg-emerald-500",
 }
 
+const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"]
+
 function UserAvatar({
   name,
   role,
@@ -221,10 +223,15 @@ function UserList({
                     )}
                   </div>
                   {user.last_message && (
-                    <p className="text-xs text-muted-foreground truncate">
-                      {user.last_message.body.slice(0, 30)}
-                      {user.last_message.body.length > 30 ? "..." : ""}
-                    </p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs text-muted-foreground truncate flex-1">
+                        {user.last_message.body.slice(0, 30)}
+                        {user.last_message.body.length > 30 ? "..." : ""}
+                      </p>
+                      <span className="text-[10px] text-muted-foreground/60 shrink-0">
+                        {formatDistanceToNow(new Date(user.last_message.ts * 1000), { addSuffix: false })}
+                      </span>
+                    </div>
                   )}
                 </div>
               </button>
@@ -266,10 +273,14 @@ function MessageThread({
   seenByPartner: boolean
   onSend: (body: string) => void
   onTyping: () => void
+  onReact: (msgId: string, emoji: string) => void
   onBack: () => void
   onClose: () => void
 }) {
   const [input, setInput] = useState("")
+  const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(
+    null,
+  )
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingThrottle = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -368,6 +379,7 @@ function MessageThread({
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-3 space-y-2"
+        onClick={() => reactionPickerFor && setReactionPickerFor(null)}
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
@@ -384,56 +396,145 @@ function MessageThread({
             (m) => m.from === currentUserId,
           )
           const showStatus = isMine && idx === lastMyMsgIdx
+          const hasReactions =
+            msg.reactions && Object.keys(msg.reactions).length > 0
+          const isPickerOpen = reactionPickerFor === msg.id
+
           return (
-            <motion.div
+            <div
               key={msg.id}
-              initial={{ opacity: 0, y: 8, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.15 }}
-              className={cn("flex", isMine ? "justify-end" : "justify-start")}
+              className={cn(
+                "group relative",
+                isMine ? "flex flex-col items-end" : "flex flex-col items-start",
+              )}
             >
-              <div
-                className={cn(
-                  "max-w-[80%] rounded-2xl px-3 py-2 text-sm",
-                  isMine
-                    ? "bg-primary text-primary-foreground rounded-br-md"
-                    : "bg-muted text-foreground rounded-bl-md",
-                )}
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.15 }}
+                className="relative max-w-[80%]"
               >
-                <p className="wrap-break-word whitespace-pre-wrap">
-                  {msg.body}
-                </p>
+                {/* Message bubble */}
                 <div
                   className={cn(
-                    "flex items-center gap-1 mt-0.5",
-                    isMine ? "justify-end" : "",
+                    "rounded-2xl px-3 py-2 text-sm",
+                    isMine
+                      ? "bg-primary text-primary-foreground rounded-br-md"
+                      : "bg-muted text-foreground rounded-bl-md",
                   )}
+                  onDoubleClick={() =>
+                    setReactionPickerFor(isPickerOpen ? null : msg.id)
+                  }
                 >
-                  <span
+                  <p className="wrap-break-word whitespace-pre-wrap">
+                    {msg.body}
+                  </p>
+                  <div
                     className={cn(
-                      "text-[10px]",
-                      isMine
-                        ? "text-primary-foreground/60"
-                        : "text-muted-foreground",
+                      "flex items-center gap-1 mt-0.5",
+                      isMine ? "justify-end" : "",
                     )}
                   >
-                    {formatTime(msg.ts)}
-                  </span>
-                  {showStatus && (
                     <span
                       className={cn(
                         "text-[10px]",
-                        seenByPartner
-                          ? "text-blue-300"
-                          : "text-primary-foreground/50",
+                        isMine
+                          ? "text-primary-foreground/60"
+                          : "text-muted-foreground",
                       )}
                     >
-                      {seenByPartner ? "· Seen" : "· Sent"}
+                      {formatTime(msg.ts)}
                     </span>
-                  )}
+                    {showStatus && (
+                      <span
+                        className={cn(
+                          "text-[10px]",
+                          seenByPartner
+                            ? "text-blue-300"
+                            : "text-primary-foreground/50",
+                        )}
+                      >
+                        {seenByPartner ? "· Seen" : "· Sent"}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+
+                {/* Smiley trigger — visible on hover */}
+                <button
+                  onClick={() =>
+                    setReactionPickerFor(isPickerOpen ? null : msg.id)
+                  }
+                  className={cn(
+                    "absolute top-1/2 -translate-y-1/2 size-6 rounded-full bg-muted/80 backdrop-blur text-muted-foreground flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted",
+                    isMine ? "-left-7" : "-right-7",
+                  )}
+                >
+                  😊
+                </button>
+
+                {/* Reaction picker */}
+                <AnimatePresence>
+                  {isPickerOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8, y: 4 }}
+                      transition={{ duration: 0.12 }}
+                      className={cn(
+                        "absolute z-10 flex gap-0.5 rounded-full bg-card border border-border shadow-lg px-1.5 py-1",
+                        isMine ? "right-0" : "left-0",
+                        "-top-9",
+                      )}
+                    >
+                      {REACTION_EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => {
+                            onReact(msg.id, emoji)
+                            setReactionPickerFor(null)
+                          }}
+                          className="size-7 rounded-full hover:bg-muted flex items-center justify-center text-base transition-transform hover:scale-125"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* Reaction badges */}
+              {hasReactions && (
+                <div
+                  className={cn(
+                    "flex gap-0.5 -mt-1.5 px-1",
+                    isMine ? "justify-end" : "justify-start",
+                  )}
+                >
+                  {Object.entries(msg.reactions!).map(([emoji, userIds]) => {
+                    const iReacted = userIds.includes(currentUserId)
+                    return (
+                      <button
+                        key={emoji}
+                        onClick={() => onReact(msg.id, emoji)}
+                        className={cn(
+                          "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs border transition-colors",
+                          iReacted
+                            ? "bg-primary/15 border-primary/30 text-primary"
+                            : "bg-muted/50 border-border text-muted-foreground hover:bg-muted",
+                        )}
+                      >
+                        <span>{emoji}</span>
+                        {userIds.length > 1 && (
+                          <span className="text-[10px]">{userIds.length}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           )
         })}
 
@@ -509,6 +610,7 @@ export default function FloatingChat() {
     loadHistory,
     sendTyping,
     markRead,
+    sendReaction,
     seenBy,
   } = useChat({
     onMessage: (msg) => {
@@ -561,6 +663,15 @@ export default function FloatingChat() {
       sendTyping(activeChat)
     }
   }, [activeChat, sendTyping])
+
+  const handleReact = useCallback(
+    (msgId: string, emoji: string) => {
+      if (activeChat) {
+        sendReaction(activeChat, msgId, emoji)
+      }
+    },
+    [activeChat, sendReaction],
+  )
 
   const handleBack = useCallback(() => {
     setActiveChat(null)
@@ -632,6 +743,7 @@ export default function FloatingChat() {
                 seenByPartner={seenBy.has(activeChat)}
                 onSend={handleSend}
                 onTyping={handleTyping}
+                onReact={handleReact}
                 onBack={handleBack}
                 onClose={handleClose}
               />

@@ -14,6 +14,7 @@ export type ChatMessage = {
   to: number
   body: string
   ts: number
+  reactions?: Record<string, number[]>
 }
 
 type ChatUser = {
@@ -35,6 +36,13 @@ type WSEvent =
   | { type: "read"; from: number }
   | { type: "history"; with: number; messages: ChatMessage[] }
   | { type: "presence"; online: number[] }
+  | {
+      type: "reaction"
+      msg_id: string
+      emoji: string
+      from: number
+      reactions: Record<string, number[]>
+    }
 
 type UseChatOptions = {
   onMessage?: (msg: ChatMessage) => void
@@ -122,18 +130,28 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
             if (existing.some((m) => m.id === msg.id)) return prev
             return { ...prev, [partnerId]: [...existing, msg] }
           })
-          // Update chat users unread if not the active chat
-          setChatUsers((prev) =>
-            prev.map((u) =>
-              u.id === msg.from
-                ? {
-                    ...u,
-                    last_message: msg,
-                    unread_count: u.unread_count + 1,
-                  }
-                : u,
-            ),
-          )
+          // Update chat users: last_message for both sender and receiver, unread for incoming
+          setChatUsers((prev) => {
+            const updated = prev.map((u) => {
+              if (u.id === msg.from) {
+                return {
+                  ...u,
+                  last_message: msg,
+                  unread_count: u.unread_count + 1,
+                }
+              }
+              if (u.id === msg.to) {
+                return { ...u, last_message: msg }
+              }
+              return u
+            })
+            // Re-sort by most recent message first
+            return updated.sort((a, b) => {
+              const tsA = a.last_message?.ts ?? 0
+              const tsB = b.last_message?.ts ?? 0
+              return tsB - tsA
+            })
+          })
           callbackRef.current?.(msg)
         } else if (data.type === "typing") {
           setTypingFrom(data.from)
@@ -144,6 +162,28 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
           setSeenBy((prev) => new Set(prev).add(data.from))
         } else if (data.type === "history") {
           setMessages((prev) => ({ ...prev, [data.with]: data.messages }))
+        } else if (data.type === "reaction") {
+          // Update reactions on the specific message
+          const msgId = data.msg_id
+          const newReactions = data.reactions
+          setMessages((prev) => {
+            const updated = { ...prev }
+            for (const [partnerId, msgs] of Object.entries(updated)) {
+              const idx = msgs.findIndex((m) => m.id === msgId)
+              if (idx !== -1) {
+                const copy = [...msgs]
+                copy[idx] = {
+                  ...copy[idx],
+                  reactions: Object.keys(newReactions).length
+                    ? newReactions
+                    : undefined,
+                }
+                updated[Number(partnerId)] = copy
+                break
+              }
+            }
+            return updated
+          })
         } else if (data.type === "presence") {
           setOnlineUsers(data.online)
           setChatUsers((prev) =>
@@ -225,6 +265,18 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
     )
   }, [])
 
+  // Send emoji reaction
+  const sendReaction = useCallback(
+    (to: number, msgId: string, emoji: string) => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.send(
+          JSON.stringify({ action: "react", to, msg_id: msgId, emoji }),
+        )
+      }
+    },
+    [],
+  )
+
   useEffect(() => {
     fetchUsers()
     connect()
@@ -246,6 +298,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
     loadHistory,
     sendTyping,
     markRead,
+    sendReaction,
     seenBy,
     fetchUsers,
   }
