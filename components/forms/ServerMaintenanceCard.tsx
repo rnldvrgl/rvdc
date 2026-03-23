@@ -128,7 +128,7 @@ export function ServerMaintenanceCard() {
             <Loader2 className="size-4 animate-spin" />
             Loading server stats...
           </div>
-        ) : data ? (
+        ) : data?.disk ? (
           <>
             {/* Disk Usage */}
             <div className="space-y-3">
