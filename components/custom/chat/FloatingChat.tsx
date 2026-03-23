@@ -366,9 +366,8 @@ function MessageThread({
     null,
   )
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
-  // Track which message has actions visible (for mobile long-press)
+  // Track which message has actions visible (for mobile tap)
   const [activeActions, setActiveActions] = useState<string | null>(null)
-  const longPressTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingThrottle = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -390,17 +389,6 @@ function MessageThread({
     if (reactionPickerFor) setReactionPickerFor(null)
     if (activeActions) setActiveActions(null)
   }, [reactionPickerFor, activeActions])
-
-  // Long-press handlers for mobile
-  const handleTouchStart = useCallback((msgId: string) => {
-    longPressTimer.current = setTimeout(() => {
-      setActiveActions((prev) => (prev === msgId ? null : msgId))
-    }, 400)
-  }, [])
-
-  const handleTouchEnd = useCallback(() => {
-    clearTimeout(longPressTimer.current)
-  }, [])
 
   const handleSend = () => {
     const body = input.trim()
@@ -538,9 +526,6 @@ function MessageThread({
                   ? "flex flex-col items-end"
                   : "flex flex-col items-start",
               )}
-              onTouchStart={() => handleTouchStart(msg.id)}
-              onTouchEnd={handleTouchEnd}
-              onTouchMove={handleTouchEnd}
             >
               <motion.div
                 initial={{ opacity: 0, y: 8, scale: 0.97 }}
@@ -605,6 +590,11 @@ function MessageThread({
                     msg.reply_to && "rounded-t-md",
                     hasReactions && "mb-3",
                   )}
+                  onClick={() =>
+                    setActiveActions((prev) =>
+                      prev === msg.id ? null : msg.id,
+                    )
+                  }
                   onDoubleClick={() =>
                     setReactionPickerFor(isPickerOpen ? null : msg.id)
                   }
@@ -668,11 +658,9 @@ function MessageThread({
                 {/* React + Reply triggers — hover on desktop, tap on mobile */}
                 <div
                   className={cn(
-                    "absolute top-1/2 -translate-y-1/2 flex items-center gap-0.5 transition-opacity",
+                    "absolute top-1/2 -translate-y-1/2 items-center gap-0.5 transition-opacity hidden sm:flex",
                     isMine ? "-left-16" : "-right-16",
-                    activeActions === msg.id
-                      ? "opacity-100"
-                      : "opacity-0 group-hover:opacity-100",
+                    "opacity-0 group-hover:opacity-100",
                   )}
                 >
                   <button
@@ -697,6 +685,46 @@ function MessageThread({
                   </button>
                 </div>
               </motion.div>
+
+              {/* Mobile action bar — shown on tap, below the bubble */}
+              <AnimatePresence>
+                {activeActions === msg.id && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.12 }}
+                    className={cn(
+                      "flex items-center gap-1 mt-1 sm:hidden select-none",
+                      isMine ? "justify-end" : "justify-start",
+                    )}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setReactionPickerFor(isPickerOpen ? null : msg.id)
+                        setActiveActions(null)
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-muted/80 text-muted-foreground text-xs"
+                    >
+                      <Smile className="size-3.5" />
+                      React
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setReplyingTo(msg)
+                        textareaRef.current?.focus()
+                        setActiveActions(null)
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-muted/80 text-muted-foreground text-xs"
+                    >
+                      <Reply className="size-3.5" />
+                      Reply
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )
         })}
@@ -895,6 +923,17 @@ export default function FloatingChat() {
       document.removeEventListener("mousedown", handler)
     }
   }, [isOpen, handleClose])
+
+  // Lock body scroll on mobile when chat is open
+  useEffect(() => {
+    if (!isOpen) return
+    const isMobile = window.matchMedia("(max-width: 639px)").matches
+    if (!isMobile) return
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [isOpen])
 
   // Mark messages as read when opening a chat
   useEffect(() => {

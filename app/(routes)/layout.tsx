@@ -33,7 +33,7 @@ export default function MainLayout({
       {/* Main Content Area */}
       <div
         className={cn(
-          "flex flex-col min-h-screen transition-all duration-300 mt-14 lg:mt-0",
+          "flex flex-col min-h-screen transition-all duration-300 mt-[calc(3.5rem+env(safe-area-inset-top))] lg:mt-0",
           collapsed ? "lg:ml-[108px]" : "lg:ml-72",
         )}
       >
