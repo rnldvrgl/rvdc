@@ -261,6 +261,7 @@ function MessageThread({
   seenByPartner,
   onSend,
   onTyping,
+  onReact,
   onBack,
   onClose,
 }: {
