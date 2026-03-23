@@ -229,7 +229,10 @@ function UserList({
                         {user.last_message.body.length > 30 ? "..." : ""}
                       </p>
                       <span className="text-[10px] text-muted-foreground/60 shrink-0">
-                        {formatDistanceToNow(new Date(user.last_message.ts * 1000), { addSuffix: false })}
+                        {formatDistanceToNow(
+                          new Date(user.last_message.ts * 1000),
+                          { addSuffix: false },
+                        )}
                       </span>
                     </div>
                   )}
@@ -405,7 +408,9 @@ function MessageThread({
               key={msg.id}
               className={cn(
                 "group relative",
-                isMine ? "flex flex-col items-end" : "flex flex-col items-start",
+                isMine
+                  ? "flex flex-col items-end"
+                  : "flex flex-col items-start",
               )}
             >
               <motion.div
