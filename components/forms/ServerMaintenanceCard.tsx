@@ -769,9 +769,7 @@ export function ServerMaintenanceCard() {
           ) : (
             <div className="flex flex-col items-center justify-center gap-2 py-12 text-muted-foreground">
               <Server className="size-8 opacity-40" />
-              <p className="text-sm font-medium">
-                Failed to load server stats
-              </p>
+              <p className="text-sm font-medium">Failed to load server stats</p>
               <Button
                 variant="outline"
                 size="sm"
