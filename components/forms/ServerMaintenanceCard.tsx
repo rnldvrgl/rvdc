@@ -221,9 +221,7 @@ export function ServerMaintenanceCard() {
           <Icon className="size-4" />
           {label}
         </div>
-        <span
-          className={`text-sm font-semibold ${getUsageColor(percent)}`}
-        >
+        <span className={`text-sm font-semibold ${getUsageColor(percent)}`}>
           {percent.toFixed(1)}%
         </span>
       </div>
@@ -297,7 +295,9 @@ export function ServerMaintenanceCard() {
                 (data.memory && data.memory.percent_used >= 85)) && (
                 <div className="flex items-center gap-2 text-sm text-yellow-600 dark:text-yellow-400 rounded-md border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950 p-3">
                   <AlertTriangle className="size-4 shrink-0" />
-                  {data.disk.percent_used >= 85 && data.memory && data.memory.percent_used >= 85
+                  {data.disk.percent_used >= 85 &&
+                  data.memory &&
+                  data.memory.percent_used >= 85
                     ? "Disk and memory usage are high. Consider running a cleanup or restarting services."
                     : data.disk.percent_used >= 85
                       ? "Disk usage is high. Consider running a cleanup."
@@ -325,7 +325,10 @@ export function ServerMaintenanceCard() {
                             <span className="text-muted-foreground">
                               {entry.size}
                             </span>
-                            <Badge variant="outline" className="text-xs">
+                            <Badge
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {entry.reclaimable} reclaimable
                             </Badge>
                           </div>
@@ -419,7 +422,10 @@ export function ServerMaintenanceCard() {
                       <h4 className="text-sm font-medium flex items-center gap-2">
                         <FolderOpen className="size-4" />
                         Media Storage
-                        <Badge variant="secondary" className="text-xs">
+                        <Badge
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           {data.media_total_mb > 1024
                             ? `${(data.media_total_mb / 1024).toFixed(1)} GB`
                             : `${data.media_total_mb.toFixed(0)} MB`}{" "}
@@ -530,9 +536,7 @@ export function ServerMaintenanceCard() {
       {/* Container Logs Dialog */}
       <Dialog
         open={logsDialog.open}
-        onOpenChange={(open) =>
-          setLogsDialog((prev) => ({ ...prev, open }))
-        }
+        onOpenChange={(open) => setLogsDialog((prev) => ({ ...prev, open }))}
       >
         <DialogContent className="max-w-2xl max-h-[80vh]">
           <DialogHeader>
