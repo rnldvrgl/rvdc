@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
+import useChatStore from "@/lib/store/useChatStore"
 import { type ChatMessage, useChat } from "@/lib/hooks/useChat"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { getAudioContext } from "@/lib/utils/audioContext"
@@ -843,6 +844,9 @@ export default function FloatingChat() {
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
 
+  // Listen for push notification open-chat requests
+  const { openWithUserId, clearOpenChat } = useChatStore()
+
   // Only available for admin, manager, clerk
   const canChat = role === "admin" || role === "manager" || role === "clerk"
 
@@ -874,6 +878,28 @@ export default function FloatingChat() {
     }
     prevConnected.current = connected
   }, [connected, activeChat, loadHistory])
+
+  // Open chat when triggered from push notification
+  useEffect(() => {
+    if (openWithUserId && canChat && connected) {
+      setIsOpen(true)
+      setActiveChat(openWithUserId)
+      loadHistory(openWithUserId)
+      markRead(openWithUserId)
+      clearOpenChat()
+    }
+  }, [openWithUserId, canChat, connected, loadHistory, markRead, clearOpenChat])
+
+  // Listen for hash param (when app opened from notification with no existing tab)
+  useEffect(() => {
+    const hash = window.location.hash
+    const match = hash.match(/^#chat=(\d+)$/)
+    if (match) {
+      const senderId = parseInt(match[1], 10)
+      useChatStore.getState().openChat(senderId)
+      window.history.replaceState(null, "", window.location.pathname + window.location.search)
+    }
+  }, [])
 
   const totalUnread = useMemo(
     () => chatUsers.reduce((sum, u) => sum + u.unread_count, 0),

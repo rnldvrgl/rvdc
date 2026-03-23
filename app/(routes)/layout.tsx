@@ -8,8 +8,9 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useDashboardWebSocket } from "@/lib/hooks/useDashboardWebSocket"
 import { usePushNotifications } from "@/lib/hooks/usePushNotifications"
 import { useSidebarCollapse } from "@/lib/hooks/useSidebarCollapse"
+import useChatStore from "@/lib/store/useChatStore"
 import { cn } from "@/lib/utils/helpers"
-import React from "react"
+import React, { useEffect } from "react"
 
 export default function MainLayout({
   children,
@@ -21,6 +22,17 @@ export default function MainLayout({
 
   useDashboardWebSocket()
   usePushNotifications()
+
+  // Listen for service worker messages (push notification chat clicks)
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.action === "open_chat" && event.data?.senderId) {
+        useChatStore.getState().openChat(event.data.senderId)
+      }
+    }
+    navigator.serviceWorker?.addEventListener("message", handler)
+    return () => navigator.serviceWorker?.removeEventListener("message", handler)
+  }, [])
 
   return (
     <div className="min-h-screen">
