@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
 import api from "@/lib/utils/api"
 import {
   AlertTriangle,
@@ -33,7 +32,8 @@ const REPORT_SHEETS = [
   {
     key: "no_stock",
     label: "No Stock Items",
-    description: "Items with zero available quantity that need immediate ordering",
+    description:
+      "Items with zero available quantity that need immediate ordering",
     icon: PackageX,
     color: "text-red-500",
     bgColor: "bg-red-50 dark:bg-red-950/20",
@@ -41,8 +41,7 @@ const REPORT_SHEETS = [
   {
     key: "low_stock",
     label: "Low Stock Items",
-    description:
-      "Items below their threshold with suggested order quantities",
+    description: "Items below their threshold with suggested order quantities",
     icon: AlertTriangle,
     color: "text-amber-500",
     bgColor: "bg-amber-50 dark:bg-amber-950/20",
@@ -76,7 +75,8 @@ const REPORT_SHEETS = [
   {
     key: "duplicates",
     label: "Potential Duplicates",
-    description: "Items with similar names that may be duplicates needing cleanup",
+    description:
+      "Items with similar names that may be duplicates needing cleanup",
     icon: Copy,
     color: "text-orange-500",
     bgColor: "bg-orange-50 dark:bg-orange-950/20",
@@ -84,8 +84,7 @@ const REPORT_SHEETS = [
   {
     key: "by_category",
     label: "Items by Category",
-    description:
-      "All items grouped by category with stock levels and status",
+    description: "All items grouped by category with stock levels and status",
     icon: Layers,
     color: "text-indigo-500",
     bgColor: "bg-indigo-50 dark:bg-indigo-950/20",
@@ -220,9 +219,7 @@ export default function InventoryReportsPage() {
               >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
-                    <div
-                      className={`rounded-lg p-2 ${sheet.bgColor}`}
-                    >
+                    <div className={`rounded-lg p-2 ${sheet.bgColor}`}>
                       <Icon className={`size-5 ${sheet.color}`} />
                     </div>
                     <Checkbox
