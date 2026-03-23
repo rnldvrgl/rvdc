@@ -261,7 +261,7 @@ export default function SidebarNav({
       </motion.aside>
 
       {/* Small screens - Mobile top bar */}
-      <div className="lg:hidden flex h-14 pt-[env(safe-area-inset-top)] items-center justify-between bg-sidebar border-b border-sidebar-border/50 px-4">
+      <div className="lg:hidden flex h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] items-center justify-between bg-sidebar border-b border-sidebar-border/50 px-4">
         <div className="flex items-center gap-3">
           <Image
             src={getDisplayImage(user?.profile_image)}

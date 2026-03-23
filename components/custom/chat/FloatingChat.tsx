@@ -36,14 +36,14 @@ const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"]
 
 function MessageStatus({ seen }: { seen: boolean }) {
   if (seen) {
-    return <CheckCheck className="size-3.5 text-blue-400" />
+    return <CheckCheck className="size-3.5 text-purple-200" />
   }
   return <Check className="size-3.5 text-primary-foreground/50" />
 }
 
 function MessageStatusMuted({ seen }: { seen: boolean }) {
   if (seen) {
-    return <CheckCheck className="size-3 text-blue-500" />
+    return <CheckCheck className="size-3 text-primary" />
   }
   return <Check className="size-3 text-muted-foreground/60" />
 }
@@ -366,8 +366,11 @@ function MessageThread({
     null,
   )
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
-  // Track which message has actions visible (for mobile tap)
-  const [activeActions, setActiveActions] = useState<string | null>(null)
+  // Track which message has actions visible (for mobile tap) and position
+  const [activeActions, setActiveActions] = useState<{
+    id: string
+    above: boolean
+  } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingThrottle = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -389,6 +392,26 @@ function MessageThread({
     if (reactionPickerFor) setReactionPickerFor(null)
     if (activeActions) setActiveActions(null)
   }, [reactionPickerFor, activeActions])
+
+  // Determine if action bar should show above or below
+  const handleBubbleTap = useCallback(
+    (msgId: string, el: HTMLElement) => {
+      if (activeActions?.id === msgId) {
+        setActiveActions(null)
+        return
+      }
+      const rect = el.getBoundingClientRect()
+      const container = scrollRef.current
+      if (container) {
+        const containerRect = container.getBoundingClientRect()
+        const spaceBelow = containerRect.bottom - rect.bottom
+        setActiveActions({ id: msgId, above: spaceBelow < 60 })
+      } else {
+        setActiveActions({ id: msgId, above: false })
+      }
+    },
+    [activeActions],
+  )
 
   const handleSend = () => {
     const body = input.trim()
@@ -486,6 +509,7 @@ function MessageThread({
           if (reactionPickerFor) setReactionPickerFor(null)
           if (activeActions) setActiveActions(null)
         }}
+        onTouchMove={(e) => e.stopPropagation()}
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
@@ -590,11 +614,7 @@ function MessageThread({
                     msg.reply_to && "rounded-t-md",
                     hasReactions && "mb-3",
                   )}
-                  onClick={() =>
-                    setActiveActions((prev) =>
-                      prev === msg.id ? null : msg.id,
-                    )
-                  }
+                  onClick={(e) => handleBubbleTap(msg.id, e.currentTarget)}
                   onDoubleClick={() =>
                     setReactionPickerFor(isPickerOpen ? null : msg.id)
                   }
@@ -686,16 +706,17 @@ function MessageThread({
                 </div>
               </motion.div>
 
-              {/* Mobile action bar — shown on tap, below the bubble */}
+              {/* Mobile action bar — shown on tap, above or below the bubble */}
               <AnimatePresence>
-                {activeActions === msg.id && (
+                {activeActions?.id === msg.id && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.12 }}
                     className={cn(
-                      "flex items-center gap-1 mt-1 sm:hidden select-none",
+                      "flex items-center gap-1 sm:hidden select-none",
+                      activeActions.above ? "order-first mb-1" : "mt-1",
                       isMine ? "justify-end" : "justify-start",
                     )}
                   >
@@ -924,14 +945,22 @@ export default function FloatingChat() {
     }
   }, [isOpen, handleClose])
 
-  // Lock body scroll on mobile when chat is open
+  // Lock body scroll on mobile when chat is open (iOS-safe)
   useEffect(() => {
     if (!isOpen) return
     const isMobile = window.matchMedia("(max-width: 639px)").matches
     if (!isMobile) return
+    const scrollY = window.scrollY
+    document.body.style.position = "fixed"
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.width = "100%"
     document.body.style.overflow = "hidden"
     return () => {
+      document.body.style.position = ""
+      document.body.style.top = ""
+      document.body.style.width = ""
       document.body.style.overflow = ""
+      window.scrollTo(0, scrollY)
     }
   }, [isOpen])
 
