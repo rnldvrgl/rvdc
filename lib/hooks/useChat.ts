@@ -15,6 +15,7 @@ export type ChatMessage = {
   body: string
   ts: number
   reactions?: Record<string, number[]>
+  reply_to?: { id: string; body: string; from_name: string }
 }
 
 type ChatUser = {
@@ -223,17 +224,32 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
   }, [])
 
   // Send a message
-  const sendMessage = useCallback((to: number, body: string) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ action: "send", to, body }))
-      // Clear seen state for this partner since we just sent a new message
-      setSeenBy((prev) => {
-        const next = new Set(prev)
-        next.delete(to)
-        return next
-      })
-    }
-  }, [])
+  const sendMessage = useCallback(
+    (
+      to: number,
+      body: string,
+      replyTo?: { id: string; body: string; from_name: string },
+    ) => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        const payload: Record<string, unknown> = {
+          action: "send",
+          to,
+          body,
+        }
+        if (replyTo) {
+          payload.reply_to = replyTo
+        }
+        wsRef.current.send(JSON.stringify(payload))
+        // Clear seen state for this partner since we just sent a new message
+        setSeenBy((prev) => {
+          const next = new Set(prev)
+          next.delete(to)
+          return next
+        })
+      }
+    },
+    [],
+  )
 
   // Request history for a user
   const loadHistory = useCallback((withUserId: number) => {
