@@ -1,9 +1,12 @@
 "use client"
 
+import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
+import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { SalesTransactionDetails } from "@/components/details/SalesTransactionDetails"
+import ServiceFormWizard from "@/components/forms/ServiceFormWizard"
 import ServiceDetail from "@/components/services/ServiceDetail"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,6 +17,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
@@ -29,7 +38,10 @@ import type {
   Service,
   ServicePayment,
 } from "@/lib/constants/interface"
+import { useArchive } from "@/lib/hooks/useArchive"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
+import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import { useClient } from "@/lib/queries/clients/useClients"
 import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useService, useServices } from "@/lib/queries/services/useServices"
@@ -43,14 +55,18 @@ import {
 } from "@/lib/utils/helpers/service"
 import { format } from "date-fns"
 import {
+  Archive,
   ArrowLeft,
   Ban,
   Calendar,
   CreditCard,
   DollarSign,
   MapPin,
+  MoreHorizontal,
   Phone,
+  Plus,
   Receipt,
+  RotateCcw,
   ShoppingCart,
   User,
   Wallet,
@@ -104,6 +120,8 @@ export default function ClientDetailPage() {
   const params = useParams()
   const router = useRouter()
   const clientId = params.id as string
+  const { role } = useCurrentUser()
+  const canManageServices = role === "admin" || role === "manager"
 
   const { data: client, isLoading: clientLoading } = useClient(clientId)
   const {
@@ -133,6 +151,24 @@ export default function ClientDetailPage() {
     openEntity: openSalesView,
     closeEntity: closeSalesView,
   } = useEntitySheet<SalesTransaction>()
+
+  // Service management state
+  const {
+    entityState: createServiceSheet,
+    openEntity: openCreateService,
+    closeEntity: closeCreateService,
+  } = useEntitySheet()
+  const [archiveTarget, setArchiveTarget] = useState<Service | null>(null)
+  const [isArchivedView, setIsArchivedView] = useState(false)
+  const { deleteService } = useServiceMutations()
+  const { archivedQuery, restoreItem } = useArchive<Service>(
+    "services/services/",
+    "services",
+    { filter: { client: clientId }, limit: 100 },
+    isArchivedView,
+  )
+
+  const archivedServices = archivedQuery.data?.results ?? []
 
   const services = servicesData?.results ?? []
   const salesTransactions = salesData?.results ?? []
@@ -449,14 +485,116 @@ export default function ClientDetailPage() {
         {/* Services Tab */}
         <TabsContent value="services">
           <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Service History</CardTitle>
-              <CardDescription>
-                All services requested by this client
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+              <div>
+                <CardTitle className="text-base">Service History</CardTitle>
+                <CardDescription>
+                  {isArchivedView
+                    ? "Archived services for this client"
+                    : "All services requested by this client"}
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <ArchiveToggle
+                  isArchived={isArchivedView}
+                  onToggle={setIsArchivedView}
+                  archivedCount={archivedQuery.data?.count}
+                />
+                {canManageServices && !isArchivedView && (
+                  <Button
+                    size="sm"
+                    onClick={() => openCreateService()}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Service
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="px-2 pb-2 pt-0">
-              {servicesLoading ? (
+              {isArchivedView ? (
+                archivedQuery.isLoading ? (
+                  <div className="space-y-3 p-4">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton
+                        key={i}
+                        className="h-10 w-full"
+                      />
+                    ))}
+                  </div>
+                ) : archivedServices.length === 0 ? (
+                  <div className="py-12 text-center text-muted-foreground">
+                    No archived services for this client.
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-20">ID</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead className="hidden sm:table-cell">
+                          Mode
+                        </TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="hidden md:table-cell">
+                          Date
+                        </TableHead>
+                        <TableHead className="text-right">Total</TableHead>
+                        <TableHead className="w-10" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {archivedServices.map((service: Service) => (
+                        <TableRow key={service.id}>
+                          <TableCell className="font-medium">
+                            #{String(service.id).padStart(4, "0")}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${getServiceTypeBadgeClass(service.service_type)}`}
+                            >
+                              {getServiceTypeLabel(service.service_type)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell">
+                            <Badge
+                              variant="outline"
+                              className="text-xs"
+                            >
+                              {getServiceModeLabel(service.service_mode)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={getBadgeVariant(service.status)}
+                              className="text-xs"
+                            >
+                              {getServiceStatusLabel(service.status)}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+                            {formatDate(service.created_at)}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatCurrency(service.total_revenue)}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              onClick={() => restoreItem.mutate(service.id)}
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )
+              ) : servicesLoading ? (
                 <div className="space-y-3 p-4">
                   {[1, 2, 3].map((i) => (
                     <Skeleton
@@ -490,6 +628,7 @@ export default function ClientDetailPage() {
                       </TableHead>
                       <TableHead className="text-right">Total</TableHead>
                       <TableHead className="text-right">Payment</TableHead>
+                      {canManageServices && <TableHead className="w-10" />}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -556,6 +695,42 @@ export default function ClientDetailPage() {
                               service.payment_status}
                           </Badge>
                         </TableCell>
+                        {canManageServices && (
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                asChild
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-8"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align="end"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <DropdownMenuItem
+                                  onClick={() => handleViewService(service)}
+                                >
+                                  <Wrench className="mr-2 h-4 w-4" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => setArchiveTarget(service)}
+                                >
+                                  <Archive className="mr-2 h-4 w-4" />
+                                  Archive
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -823,6 +998,44 @@ export default function ClientDetailPage() {
             />
           ) : null
         }
+      />
+
+      {/* Create Service Sheet */}
+      <EntitySheet
+        className="sm:min-w-2xl md:min-w-3xl xl:min-w-4xl"
+        open={createServiceSheet.open}
+        onClose={closeCreateService}
+        title="Create New Service"
+        description={`New service for ${client.full_name}`}
+        entity={null}
+        renderForm={({ onClose, forceClose }) => (
+          <ServiceFormWizard
+            onClose={onClose}
+            forceClose={forceClose}
+            defaultClientId={Number(clientId)}
+          />
+        )}
+        withCloseConfirmation
+      />
+
+      {/* Archive Confirm Dialog */}
+      <ConfirmDialog
+        open={!!archiveTarget}
+        onConfirm={() => {
+          if (archiveTarget) {
+            deleteService.mutate(archiveTarget.id, {
+              onSuccess: () => {
+                setArchiveTarget(null)
+                refetchServices()
+              },
+            })
+          }
+        }}
+        onCancel={() => setArchiveTarget(null)}
+        title="Archive service?"
+        description={`Service #${String(archiveTarget?.id ?? 0).padStart(4, "0")} will be archived. You can restore it later.`}
+        Icon={Archive}
+        confirmText="Archive"
       />
     </Wrapper>
   )

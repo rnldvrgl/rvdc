@@ -103,11 +103,14 @@ const steps = [
 interface ServiceFormWizardProps {
   onClose: () => void
   forceClose?: () => void
+  /** Pre-select a client (e.g. when creating from client detail page) */
+  defaultClientId?: number
 }
 
 export default function ServiceFormWizard({
   onClose,
   forceClose,
+  defaultClientId,
 }: ServiceFormWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const { addService } = useServiceMutations()
@@ -115,7 +118,7 @@ export default function ServiceFormWizard({
   const form = useForm<FormValues>({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
-      client: undefined,
+      client: defaultClientId ?? undefined,
       service_type: undefined,
       service_mode: "carry_in",
       description: "",
