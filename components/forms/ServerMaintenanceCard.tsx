@@ -186,7 +186,8 @@ export function ServerMaintenanceCard() {
   const [confirmAction, setConfirmAction] = useState<
     (typeof CLEANUP_ACTIONS)[number] | null
   >(null)
-  const [confirmCommand, setConfirmCommand] = useState<ManagementCommand | null>(null)
+  const [confirmCommand, setConfirmCommand] =
+    useState<ManagementCommand | null>(null)
   const [logsDialog, setLogsDialog] = useState<{
     open: boolean
     title: string
@@ -260,7 +261,12 @@ export function ServerMaintenanceCard() {
 
   const viewLogs = async (container: string) => {
     const label = CONTAINER_LABELS[container]?.label || container
-    setLogsDialog({ open: true, title: `${label} Logs`, logs: "", loading: true })
+    setLogsDialog({
+      open: true,
+      title: `${label} Logs`,
+      logs: "",
+      loading: true,
+    })
     try {
       const res = await api.post<LogsResponse>("/users/maintenance/", {
         action: "container_logs",
@@ -282,7 +288,12 @@ export function ServerMaintenanceCard() {
   }
 
   const viewCronLog = async (logFile: string, jobId: string) => {
-    setLogsDialog({ open: true, title: `${jobId} Log`, logs: "", loading: true })
+    setLogsDialog({
+      open: true,
+      title: `${jobId} Log`,
+      logs: "",
+      loading: true,
+    })
     try {
       const res = await api.post<LogsResponse>("/users/maintenance/", {
         action: "view_cron_log",
@@ -764,7 +775,9 @@ export function ServerMaintenanceCard() {
                               <div className="min-w-0 space-y-0.5">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className="text-sm font-medium">
-                                    {job.id.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                                    {job.id
+                                      .replace(/_/g, " ")
+                                      .replace(/\b\w/g, (c) => c.toUpperCase())}
                                   </span>
                                   <Badge
                                     variant={
@@ -814,7 +827,10 @@ export function ServerMaintenanceCard() {
                                   )}
                                   {job.log_size_kb > 0 && (
                                     <span>
-                                      Log: {job.log_size_kb > 1024 ? `${(job.log_size_kb / 1024).toFixed(1)} MB` : `${job.log_size_kb.toFixed(0)} KB`}
+                                      Log:{" "}
+                                      {job.log_size_kb > 1024
+                                        ? `${(job.log_size_kb / 1024).toFixed(1)} MB`
+                                        : `${job.log_size_kb.toFixed(0)} KB`}
                                     </span>
                                   )}
                                 </div>
@@ -843,9 +859,7 @@ export function ServerMaintenanceCard() {
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
                       <Clock className="size-6 opacity-40" />
-                      <p className="text-sm">
-                        No cron job data available
-                      </p>
+                      <p className="text-sm">No cron job data available</p>
                     </div>
                   )}
                 </div>
@@ -950,9 +964,7 @@ export function ServerMaintenanceCard() {
                   ) : (
                     <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
                       <Terminal className="size-6 opacity-40" />
-                      <p className="text-sm">
-                        No commands available
-                      </p>
+                      <p className="text-sm">No commands available</p>
                     </div>
                   )}
                 </div>
