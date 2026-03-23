@@ -10,7 +10,17 @@ import { getAudioContext } from "@/lib/utils/audioContext"
 import { cn } from "@/lib/utils/helpers"
 import { formatDistanceToNow } from "date-fns"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowLeft, MessageCircle, Reply, Send, Smile, X } from "lucide-react"
+import {
+  ArrowLeft,
+  Check,
+  CheckCheck,
+  Loader2,
+  MessageCircle,
+  Reply,
+  Send,
+  Smile,
+  X,
+} from "lucide-react"
 import Image from "next/image"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -21,6 +31,22 @@ const ROLE_COLORS: Record<string, string> = {
 }
 
 const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"]
+
+// ── Message status check icons (Messenger-style) ────────────────────
+
+function MessageStatus({ seen }: { seen: boolean }) {
+  if (seen) {
+    return <CheckCheck className="size-3.5 text-blue-400" />
+  }
+  return <Check className="size-3.5 text-primary-foreground/50" />
+}
+
+function MessageStatusMuted({ seen }: { seen: boolean }) {
+  if (seen) {
+    return <CheckCheck className="size-3 text-blue-500" />
+  }
+  return <Check className="size-3 text-muted-foreground/60" />
+}
 
 function UserAvatar({
   name,
@@ -88,11 +114,53 @@ function UserAvatar({
   )
 }
 
-function formatTime(ts: number) {
-  return new Date(ts * 1000).toLocaleTimeString([], {
-    hour: "2-digit",
+function formatChatTime(ts: number): string {
+  const date = new Date(ts * 1000)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+
+  // Less than 1 minute
+  if (diffMins < 1) return "Just now"
+  // Less than 1 hour
+  if (diffMins < 60) return `${diffMins}m ago`
+  // Less than 24 hours
+  if (diffHours < 24) return `${diffHours}h ago`
+
+  // Check if yesterday
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear()
+
+  const time = date.toLocaleTimeString([], {
+    hour: "numeric",
     minute: "2-digit",
   })
+
+  if (isYesterday) return `Yesterday ${time}`
+
+  // Same year — show month and day
+  if (date.getFullYear() === now.getFullYear()) {
+    return (
+      date.toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+      }) + ` ${time}`
+    )
+  }
+
+  // Different year
+  return (
+    date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }) + ` ${time}`
+  )
 }
 
 function formatLastSeen(ts: number | null | undefined): string {
@@ -140,6 +208,8 @@ function ChatBubble({
 
 function UserList({
   users,
+  currentUserId,
+  seenBy,
   onSelect,
   onClose,
 }: {
@@ -153,13 +223,15 @@ function UserList({
     last_message: ChatMessage | null
     last_seen: number | null
   }[]
+  currentUserId: number
+  seenBy: Set<number>
   onSelect: (userId: number) => void
   onClose: () => void
 }) {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/50">
+      <div className="flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:pt-3 border-b border-border bg-muted/50">
         <div className="flex items-center gap-2">
           <MessageCircle className="size-5 text-primary" />
           <h3 className="font-semibold text-sm">Chat</h3>
@@ -224,6 +296,9 @@ function UserList({
                   </div>
                   {user.last_message && (
                     <div className="flex items-center gap-1">
+                      {user.last_message.from === currentUserId && (
+                        <MessageStatusMuted seen={seenBy.has(user.id)} />
+                      )}
                       <p className="text-xs text-muted-foreground truncate flex-1">
                         {user.last_message.body.slice(0, 30)}
                         {user.last_message.body.length > 30 ? "..." : ""}
@@ -259,6 +334,7 @@ function MessageThread({
   currentUserId,
   typingFrom,
   seenByPartner,
+  loadingHistory,
   onSend,
   onTyping,
   onReact,
@@ -275,6 +351,7 @@ function MessageThread({
   currentUserId: number
   typingFrom: number | null
   seenByPartner: boolean
+  loadingHistory: boolean
   onSend: (
     body: string,
     replyTo?: { id: string; body: string; from_name: string },
@@ -289,6 +366,9 @@ function MessageThread({
     null,
   )
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
+  // Track which message has actions visible (for mobile long-press)
+  const [activeActions, setActiveActions] = useState<string | null>(null)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingThrottle = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -305,10 +385,22 @@ function MessageThread({
     textareaRef.current?.focus()
   }, [])
 
-  // Close reaction picker on scroll
+  // Close reaction picker and active actions on scroll
   const handleScroll = useCallback(() => {
     if (reactionPickerFor) setReactionPickerFor(null)
-  }, [reactionPickerFor])
+    if (activeActions) setActiveActions(null)
+  }, [reactionPickerFor, activeActions])
+
+  // Long-press handlers for mobile
+  const handleTouchStart = useCallback((msgId: string) => {
+    longPressTimer.current = setTimeout(() => {
+      setActiveActions((prev) => (prev === msgId ? null : msgId))
+    }, 400)
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    clearTimeout(longPressTimer.current)
+  }, [])
 
   const handleSend = () => {
     const body = input.trim()
@@ -359,7 +451,7 @@ function MessageThread({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border bg-muted/50">
+      <div className="flex items-center gap-2 px-3 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:pt-2.5 border-b border-border bg-muted/50">
         <Button
           variant="ghost"
           size="icon"
@@ -402,14 +494,28 @@ function MessageThread({
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-3 space-y-2"
         onScroll={handleScroll}
-        onClick={() => reactionPickerFor && setReactionPickerFor(null)}
+        onClick={() => {
+          if (reactionPickerFor) setReactionPickerFor(null)
+          if (activeActions) setActiveActions(null)
+        }}
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <MessageCircle className="size-10 text-muted-foreground/30 mb-2" />
-            <p className="text-xs text-muted-foreground">
-              No messages yet. Say hello!
-            </p>
+            {loadingHistory ? (
+              <>
+                <Loader2 className="size-8 text-muted-foreground/40 animate-spin mb-2" />
+                <p className="text-xs text-muted-foreground">
+                  Loading messages...
+                </p>
+              </>
+            ) : (
+              <>
+                <MessageCircle className="size-10 text-muted-foreground/30 mb-2" />
+                <p className="text-xs text-muted-foreground">
+                  No messages yet. Say hello!
+                </p>
+              </>
+            )}
           </div>
         )}
         {messages.map((msg, idx) => {
@@ -432,6 +538,9 @@ function MessageThread({
                   ? "flex flex-col items-end"
                   : "flex flex-col items-start",
               )}
+              onTouchStart={() => handleTouchStart(msg.id)}
+              onTouchEnd={handleTouchEnd}
+              onTouchMove={handleTouchEnd}
             >
               <motion.div
                 initial={{ opacity: 0, y: 8, scale: 0.97 }}
@@ -517,20 +626,9 @@ function MessageThread({
                           : "text-muted-foreground",
                       )}
                     >
-                      {formatTime(msg.ts)}
+                      {formatChatTime(msg.ts)}
                     </span>
-                    {showStatus && (
-                      <span
-                        className={cn(
-                          "text-[10px]",
-                          seenByPartner
-                            ? "text-blue-300"
-                            : "text-primary-foreground/50",
-                        )}
-                      >
-                        {seenByPartner ? "· Seen" : "· Sent"}
-                      </span>
-                    )}
+                    {showStatus && <MessageStatus seen={seenByPartner} />}
                   </div>
                 </div>
 
@@ -567,11 +665,14 @@ function MessageThread({
                   </div>
                 )}
 
-                {/* React + Reply triggers — visible on hover */}
+                {/* React + Reply triggers — hover on desktop, tap on mobile */}
                 <div
                   className={cn(
-                    "absolute top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
+                    "absolute top-1/2 -translate-y-1/2 flex items-center gap-0.5 transition-opacity",
                     isMine ? "-left-16" : "-right-16",
+                    activeActions === msg.id
+                      ? "opacity-100"
+                      : "opacity-0 group-hover:opacity-100",
                   )}
                 >
                   <button
@@ -587,6 +688,7 @@ function MessageThread({
                     onClick={() => {
                       setReplyingTo(msg)
                       textareaRef.current?.focus()
+                      setActiveActions(null)
                     }}
                     title="Reply"
                     className="size-7 rounded-full bg-muted/80 backdrop-blur text-muted-foreground flex items-center justify-center hover:bg-muted hover:text-foreground"
@@ -689,6 +791,7 @@ export default function FloatingChat() {
     chatUsers,
     messages,
     typingFrom,
+    loadingHistory,
     sendMessage,
     loadHistory,
     sendTyping,
@@ -827,6 +930,7 @@ export default function FloatingChat() {
                 currentUserId={user_id || 0}
                 typingFrom={typingFrom}
                 seenByPartner={seenBy.has(activeChat)}
+                loadingHistory={loadingHistory}
                 onSend={handleSend}
                 onTyping={handleTyping}
                 onReact={handleReact}
@@ -836,6 +940,8 @@ export default function FloatingChat() {
             ) : (
               <UserList
                 users={chatUsers}
+                currentUserId={user_id || 0}
+                seenBy={seenBy}
                 onSelect={handleSelectUser}
                 onClose={handleClose}
               />
