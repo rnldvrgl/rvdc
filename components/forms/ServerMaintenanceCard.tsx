@@ -1,5 +1,6 @@
 "use client"
 
+import { AdminPasswordDialog } from "@/components/custom/shared/AdminPasswordDialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -9,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { AdminPasswordDialog } from "@/components/custom/shared/AdminPasswordDialog"
 import {
   Dialog,
   DialogContent,
@@ -248,8 +248,8 @@ export function ServerMaintenanceCard() {
     } catch (err) {
       const message =
         err instanceof Error && "response" in err
-          ? (err as { response?: { data?: { error?: string } } }).response
-              ?.data?.error
+          ? (err as { response?: { data?: { error?: string } } }).response?.data
+              ?.error
           : undefined
       toast.error(message || `Failed to start ${label}. Check server logs.`)
       setRunningAction(null)
@@ -327,8 +327,8 @@ export function ServerMaintenanceCard() {
     } catch (err) {
       const message =
         err instanceof Error && "response" in err
-          ? (err as { response?: { data?: { error?: string } } }).response
-              ?.data?.error
+          ? (err as { response?: { data?: { error?: string } } }).response?.data
+              ?.error
           : undefined
       toast.error(
         message || `Failed to start ${command.label}. Check server logs.`,
@@ -1184,7 +1184,10 @@ export function ServerMaintenanceCard() {
         }}
         onVerified={(creds) => {
           if (!pendingAuthAction) return
-          if (pendingAuthAction.type === "cleanup" && pendingAuthAction.cleanup) {
+          if (
+            pendingAuthAction.type === "cleanup" &&
+            pendingAuthAction.cleanup
+          ) {
             runCleanup(
               pendingAuthAction.cleanup.id,
               pendingAuthAction.cleanup.label,
