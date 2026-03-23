@@ -76,6 +76,7 @@ export function useGetPermissions(
         "manage_government_benefits",
         "manage_tax_brackets",
         "manage_system_settings",
+        "manage_server_maintenance",
         "view_messaging",
       ],
       manager: [
