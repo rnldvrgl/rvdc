@@ -33,6 +33,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useNotificationWebSocket } from "@/lib/hooks/useNotificationWebSocket"
 import api from "@/lib/utils/api"
 import { useQuery } from "@tanstack/react-query"
 import {
@@ -56,7 +57,7 @@ import {
   Trash2,
   Zap,
 } from "lucide-react"
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { toast } from "sonner"
 
 interface DiskUsage {
@@ -105,12 +106,6 @@ interface CleanupResult {
   success: boolean
   output?: string
   error?: string
-}
-
-interface CleanupResponse {
-  success: boolean
-  action: string
-  results: CleanupResult[]
 }
 
 interface LogsResponse {
@@ -180,6 +175,39 @@ export function ServerMaintenanceCard() {
     refetchInterval: 60000,
   })
 
+  // Listen for maintenance results via WebSocket
+  const handleMaintenanceResult = useCallback(
+    (wsData: {
+      success: boolean
+      action: string
+      title: string
+      message: string
+      results: CleanupResult[]
+    }) => {
+      setRunningAction(null)
+
+      if (wsData.success) {
+        toast.success(wsData.title, {
+          description: wsData.message,
+          duration: 6000,
+        })
+      } else {
+        toast.error(wsData.title, {
+          description: wsData.message,
+          duration: 8000,
+        })
+      }
+
+      // Refresh stats after cleanup
+      refetch()
+    },
+    [refetch],
+  )
+
+  useNotificationWebSocket({
+    onMaintenanceResult: handleMaintenanceResult,
+  })
+
   const runCleanup = async (
     action: string,
     label: string,
@@ -187,31 +215,16 @@ export function ServerMaintenanceCard() {
   ) => {
     setRunningAction(action)
     try {
-      const res = await api.post<CleanupResponse>("/users/maintenance/", {
+      await api.post("/users/maintenance/", {
         action,
         ...extra,
       })
-      const { results } = res.data
-
-      const failed = results.filter((r) => !r.success)
-      if (failed.length === 0) {
-        toast.success(`${label} completed successfully`)
-      } else {
-        toast.warning(
-          `${label} completed with issues: ${failed.map((f) => f.error || f.task).join(", ")}`,
-        )
-      }
-
-      results.forEach((r) => {
-        if (r.success && r.output) {
-          toast.info(`${r.task}: ${r.output}`, { duration: 6000 })
-        }
+      // 202 Accepted — task is running in background
+      toast.info(`${label} started`, {
+        description: "You'll be notified when it completes.",
       })
-
-      refetch()
     } catch {
-      toast.error(`${label} failed. Check server logs.`)
-    } finally {
+      toast.error(`Failed to start ${label}. Check server logs.`)
       setRunningAction(null)
     }
   }

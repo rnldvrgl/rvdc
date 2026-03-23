@@ -15,17 +15,36 @@ type NotificationWSData = {
   unread_count: number
 }
 
-type Options = {
-  onNotification?: (data: NotificationWSData) => void
+type MaintenanceWSData = {
+  event: "maintenance_result"
+  success: boolean
+  action: string
+  title: string
+  message: string
+  results: Array<{
+    task: string
+    success: boolean
+    output?: string
+    error?: string
+  }>
 }
 
-export function useNotificationWebSocket({ onNotification }: Options = {}) {
+type WSData = NotificationWSData | MaintenanceWSData
+
+type Options = {
+  onNotification?: (data: NotificationWSData) => void
+  onMaintenanceResult?: (data: MaintenanceWSData) => void
+}
+
+export function useNotificationWebSocket({ onNotification, onMaintenanceResult }: Options = {}) {
   const queryClient = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const reconnectAttemptRef = useRef(0)
   const callbackRef = useRef(onNotification)
   callbackRef.current = onNotification
+  const maintenanceCallbackRef = useRef(onMaintenanceResult)
+  maintenanceCallbackRef.current = onMaintenanceResult
 
   const connect = useCallback(async () => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
@@ -51,15 +70,20 @@ export function useNotificationWebSocket({ onNotification }: Options = {}) {
 
     ws.onmessage = (event) => {
       try {
-        const data: NotificationWSData = JSON.parse(event.data)
+        const data: WSData = JSON.parse(event.data)
 
-        // Invalidate notification queries so UI updates instantly
-        queryClient.invalidateQueries({ queryKey: ["notifications"] })
-        queryClient.invalidateQueries({
-          queryKey: ["unread-notification-count"],
-        })
-
-        callbackRef.current?.(data)
+        if (data.event === "maintenance_result") {
+          // Maintenance results — refresh stats, call handler
+          queryClient.invalidateQueries({ queryKey: ["server-maintenance"] })
+          maintenanceCallbackRef.current?.(data)
+        } else {
+          // Regular notifications
+          queryClient.invalidateQueries({ queryKey: ["notifications"] })
+          queryClient.invalidateQueries({
+            queryKey: ["unread-notification-count"],
+          })
+          callbackRef.current?.(data as NotificationWSData)
+        }
       } catch {
         // Ignore malformed messages
       }
