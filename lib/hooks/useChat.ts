@@ -64,6 +64,8 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   // Track which partners have "seen" (read) our latest messages
   const [seenBy, setSeenBy] = useState<Set<number>>(new Set())
+  // Track loading state for history
+  const [loadingHistory, setLoadingHistory] = useState(false)
   // Queue history requests when WS isn't ready yet
   const pendingHistoryRef = useRef<number | null>(null)
 
@@ -108,6 +110,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
       ws.send(JSON.stringify({ action: "presence" }))
       // Flush any pending history request (e.g., user opened a chat before WS was ready)
       if (pendingHistoryRef.current !== null) {
+        setLoadingHistory(true)
         ws.send(
           JSON.stringify({
             action: "history",
@@ -163,6 +166,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
           setSeenBy((prev) => new Set(prev).add(data.from))
         } else if (data.type === "history") {
           setMessages((prev) => ({ ...prev, [data.with]: data.messages }))
+          setLoadingHistory(false)
         } else if (data.type === "reaction") {
           // Update reactions on the specific message
           const msgId = data.msg_id
@@ -253,6 +257,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
 
   // Request history for a user
   const loadHistory = useCallback((withUserId: number) => {
+    setLoadingHistory(true)
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(
         JSON.stringify({ action: "history", with: withUserId }),
@@ -310,6 +315,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
     messages,
     onlineUsers,
     typingFrom,
+    loadingHistory,
     sendMessage,
     loadHistory,
     sendTyping,
