@@ -317,10 +317,6 @@ export default function AppliancePartsManager({
       }
     }
 
-    setIsSubmitting(false)
-    setPendingItems([])
-    setDialogOpen(false)
-
     if (successCount > 0) {
       toast.success(
         `${successCount} part${successCount > 1 ? "s" : ""} added successfully`,
@@ -330,7 +326,6 @@ export default function AppliancePartsManager({
       toast.error(`Failed to add ${failCount} part${failCount > 1 ? "s" : ""}`)
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 150))
     await queryClient.invalidateQueries({ queryKey: ["service"] })
     await queryClient.invalidateQueries({ queryKey: ["services"] })
     await queryClient.invalidateQueries({ queryKey: ["service-appliances"] })
@@ -342,7 +337,12 @@ export default function AppliancePartsManager({
     })
     await queryClient.invalidateQueries({ queryKey: ["stocks"] })
     await queryClient.invalidateQueries({ queryKey: ["sales-transactions"] })
+    await queryClient.invalidateQueries({ queryKey: ["pending-items-stats"] })
     if (onUpdate) await onUpdate()
+
+    setIsSubmitting(false)
+    setPendingItems([])
+    setDialogOpen(false)
   }
 
   const handleEditPart = (part: ApplianceItemUsed) => {
