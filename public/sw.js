@@ -20,7 +20,7 @@ self.addEventListener("push", (event) => {
     payload = { title: "New notification", body: event.data.text() }
   }
 
-  const { title = "RVDC", body = "", url = "/", tag = "" } = payload
+  const { title = "RVDC", body = "", url = "/", tag = "", sender_id = null } = payload
 
   event.waitUntil(
     self.registration.showNotification(title, {
@@ -28,7 +28,7 @@ self.addEventListener("push", (event) => {
       icon: "/rvdc_logo.png",
       badge: "/rvdc_logo.png",
       tag: tag || undefined,
-      data: { url },
+      data: { url, sender_id },
       vibrate: [200, 100, 200],
     }),
   )
@@ -39,18 +39,28 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close()
 
   const url = event.notification.data?.url || "/"
+  const senderId = event.notification.data?.sender_id
 
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clients) => {
-        // Focus an existing tab if one is open
+        // Chat notification: focus existing tab and tell it to open the chat
+        if (senderId) {
+          for (const client of clients) {
+            client.postMessage({ action: "open_chat", senderId })
+            return client.focus()
+          }
+          // No tab open — open home and include sender_id as hash
+          return self.clients.openWindow(`/#chat=${senderId}`)
+        }
+
+        // Regular notification: navigate to the url
         for (const client of clients) {
           if (new URL(client.url).pathname === url && "focus" in client) {
             return client.focus()
           }
         }
-        // Otherwise open a new window
         return self.clients.openWindow(url)
       }),
   )
