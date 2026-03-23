@@ -14,10 +14,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useStalls } from "@/lib/queries/inventory/useStalls"
 
-import { FileSpreadsheet, Store } from "lucide-react"
+import { Download, FileSpreadsheet, Store } from "lucide-react"
 import { FormProvider, useForm, useFormContext } from "react-hook-form"
 
 import { ExpensesReport } from "./_components/ExpensesReport"
+import { ExportCenter } from "./_components/ExportCenter"
 import { SalesReport } from "./_components/SalesReport"
 import { ServicesReport } from "./_components/ServicesReport"
 import { SummaryReport } from "./_components/SummaryReport"
@@ -104,6 +105,10 @@ export default function ReportsPage() {
             {showServicesTab ? (
               <TabsTrigger value="services">Services</TabsTrigger>
             ) : null}
+            <TabsTrigger value="export" className="gap-1.5">
+              <Download className="size-3.5" />
+              Export
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="summary">
@@ -117,6 +122,9 @@ export default function ReportsPage() {
           </TabsContent>
           <TabsContent value="services">
             <ServicesReport />
+          </TabsContent>
+          <TabsContent value="export">
+            <ExportCenter />
           </TabsContent>
         </Tabs>
       </Wrapper>

@@ -42,6 +42,7 @@ import {
   Info,
   Loader2,
   MemoryStick,
+  MessageSquareX,
   Package,
   Play,
   RefreshCw,
@@ -176,7 +177,7 @@ const CLEANUP_ACTIONS = [
 export function ServerMaintenanceCard() {
   const [runningAction, setRunningAction] = useState<string | null>(null)
   const [pendingAuthAction, setPendingAuthAction] = useState<{
-    type: "cleanup" | "command" | "install_cron"
+    type: "cleanup" | "command" | "install_cron" | "delete_chats"
     cleanup?: (typeof CLEANUP_ACTIONS)[number]
     command?: ManagementCommand
   } | null>(null)
@@ -1154,6 +1155,27 @@ export function ServerMaintenanceCard() {
                         </p>
                       </div>
                     </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="h-auto py-3 px-4 justify-start gap-3"
+                      disabled={runningAction !== null}
+                      onClick={() =>
+                        setPendingAuthAction({ type: "delete_chats" })
+                      }
+                    >
+                      {runningAction === "delete_chats" ? (
+                        <Loader2 className="size-4 shrink-0 animate-spin" />
+                      ) : (
+                        <MessageSquareX className="size-4 shrink-0" />
+                      )}
+                      <div className="text-left">
+                        <p className="text-xs font-medium">Delete Chats</p>
+                        <p className="text-[10px] text-destructive-foreground/70 font-normal">
+                          Clear all chat messages
+                        </p>
+                      </div>
+                    </Button>
                   </div>
                 </div>
               </TabsContent>
@@ -1206,20 +1228,29 @@ export function ServerMaintenanceCard() {
               admin_username: creds.admin_username,
               admin_password: creds.admin_password,
             })
+          } else if (pendingAuthAction.type === "delete_chats") {
+            runCleanup("delete_chats", "Delete Chats", {
+              admin_username: creds.admin_username,
+              admin_password: creds.admin_password,
+            })
           }
           setPendingAuthAction(null)
         }}
         title={
           pendingAuthAction?.type === "install_cron"
             ? "Install Cron Jobs"
-            : "Admin Authorization Required"
+            : pendingAuthAction?.type === "delete_chats"
+              ? "Delete All Chats"
+              : "Admin Authorization Required"
         }
         description={
           pendingAuthAction?.type === "cleanup"
             ? `"${pendingAuthAction.cleanup?.label}" is an aggressive action that may temporarily affect running services. Enter admin credentials to proceed.`
             : pendingAuthAction?.type === "command"
               ? `"${pendingAuthAction.command?.label}" is a destructive command. Enter admin credentials to proceed.`
-              : "This will overwrite all cron scripts and update the host crontab entries. Enter admin credentials to proceed."
+              : pendingAuthAction?.type === "delete_chats"
+                ? "This will permanently delete all chat messages, unread counts, and presence data from Redis. Enter admin credentials to proceed."
+                : "This will overwrite all cron scripts and update the host crontab entries. Enter admin credentials to proceed."
         }
       />
 
