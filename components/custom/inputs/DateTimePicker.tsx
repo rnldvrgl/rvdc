@@ -141,15 +141,15 @@ export function DateTimePicker({
           disabled={disabled}
         >
           {value ? (
-            format(value, "MM/dd/yyyy hh:mm aa")
+            <span className="truncate text-xs sm:text-sm">{format(value, "MM/dd/yyyy hh:mm aa")}</span>
           ) : (
-            <span>{placeholder}</span>
+            <span className="truncate text-xs sm:text-sm">{placeholder}</span>
           )}
-          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+          <CalendarIcon className="ml-auto h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0"
+        className="w-[calc(100vw-2rem)] sm:w-auto max-w-[calc(100vw-2rem)] p-0 overflow-x-auto"
         align="start"
       >
         <div className="sm:flex">
