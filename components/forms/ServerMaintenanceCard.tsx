@@ -39,8 +39,10 @@ import { useQuery } from "@tanstack/react-query"
 import {
   AlertTriangle,
   Box,
+  Calendar,
   ChevronDown,
   ChevronUp,
+  Clock,
   Database,
   FileText,
   FolderOpen,
@@ -54,7 +56,9 @@ import {
   ScrollText,
   Server,
   Shield,
+  Terminal,
   Trash2,
+  Wrench,
   Zap,
 } from "lucide-react"
 import { useCallback, useState } from "react"
@@ -92,6 +96,27 @@ interface LargeFile {
   size_mb: number
 }
 
+interface CronJob {
+  id: string
+  schedule: string
+  description: string
+  log_file: string
+  category: string
+  last_status: "success" | "error" | "unknown" | "no_log"
+  log_size_kb: number
+  last_modified: string | null
+}
+
+interface ManagementCommand {
+  id: string
+  label: string
+  description: string
+  app: string
+  category: string
+  destructive: boolean
+  args?: string[]
+}
+
 interface MaintenanceData {
   disk: DiskUsage
   memory: MemoryUsage | null
@@ -99,6 +124,8 @@ interface MaintenanceData {
   containers: ContainerInfo[] | null
   large_media_files: LargeFile[]
   media_total_mb: number
+  cron_jobs: CronJob[]
+  management_commands: ManagementCommand[]
 }
 
 interface CleanupResult {
@@ -111,7 +138,8 @@ interface CleanupResult {
 interface LogsResponse {
   success: boolean
   action: string
-  container: string
+  container?: string
+  log_file?: string
   logs: string
   error?: string
 }
@@ -158,12 +186,13 @@ export function ServerMaintenanceCard() {
   const [confirmAction, setConfirmAction] = useState<
     (typeof CLEANUP_ACTIONS)[number] | null
   >(null)
+  const [confirmCommand, setConfirmCommand] = useState<ManagementCommand | null>(null)
   const [logsDialog, setLogsDialog] = useState<{
     open: boolean
-    container: string
+    title: string
     logs: string
     loading: boolean
-  }>({ open: false, container: "", logs: "", loading: false })
+  }>({ open: false, title: "", logs: "", loading: false })
   const [showMediaFiles, setShowMediaFiles] = useState(false)
 
   const { data, isLoading, refetch } = useQuery<MaintenanceData>({
@@ -230,7 +259,8 @@ export function ServerMaintenanceCard() {
   }
 
   const viewLogs = async (container: string) => {
-    setLogsDialog({ open: true, container, logs: "", loading: true })
+    const label = CONTAINER_LABELS[container]?.label || container
+    setLogsDialog({ open: true, title: `${label} Logs`, logs: "", loading: true })
     try {
       const res = await api.post<LogsResponse>("/users/maintenance/", {
         action: "container_logs",
@@ -248,6 +278,43 @@ export function ServerMaintenanceCard() {
         logs: "Failed to fetch logs",
         loading: false,
       }))
+    }
+  }
+
+  const viewCronLog = async (logFile: string, jobId: string) => {
+    setLogsDialog({ open: true, title: `${jobId} Log`, logs: "", loading: true })
+    try {
+      const res = await api.post<LogsResponse>("/users/maintenance/", {
+        action: "view_cron_log",
+        log_file: logFile,
+      })
+      setLogsDialog((prev) => ({
+        ...prev,
+        logs: res.data.logs || "No logs available",
+        loading: false,
+      }))
+    } catch {
+      setLogsDialog((prev) => ({
+        ...prev,
+        logs: "Failed to fetch log",
+        loading: false,
+      }))
+    }
+  }
+
+  const runCommand = async (command: ManagementCommand) => {
+    setRunningAction(`cmd_${command.id}`)
+    try {
+      await api.post("/users/maintenance/", {
+        action: "run_command",
+        command: command.id,
+      })
+      toast.info(`${command.label} started`, {
+        description: "You'll be notified when it completes.",
+      })
+    } catch {
+      toast.error(`Failed to start ${command.label}. Check server logs.`)
+      setRunningAction(null)
     }
   }
 
@@ -375,7 +442,7 @@ export function ServerMaintenanceCard() {
               defaultValue="overview"
               className="w-full"
             >
-              <TabsList className="w-full grid grid-cols-3 mb-6">
+              <TabsList className="w-full grid grid-cols-4 mb-6">
                 <TabsTrigger value="overview">
                   <HardDrive className="size-3.5 mr-1.5" />
                   Overview
@@ -383,6 +450,10 @@ export function ServerMaintenanceCard() {
                 <TabsTrigger value="containers">
                   <Server className="size-3.5 mr-1.5" />
                   Containers
+                </TabsTrigger>
+                <TabsTrigger value="scheduled">
+                  <Calendar className="size-3.5 mr-1.5" />
+                  Scheduled
                 </TabsTrigger>
                 <TabsTrigger value="actions">
                   <Zap className="size-3.5 mr-1.5" />
@@ -639,6 +710,254 @@ export function ServerMaintenanceCard() {
                 )}
               </TabsContent>
 
+              {/* ===== SCHEDULED JOBS TAB ===== */}
+              <TabsContent
+                value="scheduled"
+                className="space-y-6 mt-0"
+              >
+                {/* Cron Jobs Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="size-4 text-muted-foreground" />
+                    <h4 className="text-sm font-semibold">
+                      Scheduled Cron Jobs
+                    </h4>
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] font-medium"
+                    >
+                      {data.cron_jobs?.length || 0} jobs
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Automated tasks running on the server. All times are in
+                    Philippines Time (UTC+8).
+                  </p>
+                  {data.cron_jobs && data.cron_jobs.length > 0 ? (
+                    <div className="grid gap-2">
+                      {data.cron_jobs.map((job) => (
+                        <div
+                          key={job.id}
+                          className="rounded-lg border p-3 hover:bg-muted/30 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3 min-w-0">
+                              <div
+                                className={`rounded-lg p-2 mt-0.5 ${
+                                  job.last_status === "success"
+                                    ? "bg-emerald-500/10"
+                                    : job.last_status === "error"
+                                      ? "bg-red-500/10"
+                                      : "bg-muted"
+                                }`}
+                              >
+                                <Clock
+                                  className={`size-3.5 ${
+                                    job.last_status === "success"
+                                      ? "text-emerald-500"
+                                      : job.last_status === "error"
+                                        ? "text-red-500"
+                                        : "text-muted-foreground"
+                                  }`}
+                                />
+                              </div>
+                              <div className="min-w-0 space-y-0.5">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className="text-sm font-medium">
+                                    {job.id.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                                  </span>
+                                  <Badge
+                                    variant={
+                                      job.last_status === "success"
+                                        ? "default"
+                                        : job.last_status === "error"
+                                          ? "destructive"
+                                          : "secondary"
+                                    }
+                                    className="text-[10px] h-5"
+                                  >
+                                    {job.last_status === "success"
+                                      ? "OK"
+                                      : job.last_status === "error"
+                                        ? "Failed"
+                                        : job.last_status === "unknown"
+                                          ? "Unknown"
+                                          : "No logs"}
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className="text-[10px] h-5"
+                                  >
+                                    {job.category}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                  {job.description}
+                                </p>
+                                <div className="flex items-center gap-3 text-[10px] text-muted-foreground pt-0.5">
+                                  <span className="flex items-center gap-1">
+                                    <Calendar className="size-3" />
+                                    {job.schedule}
+                                  </span>
+                                  {job.last_modified && (
+                                    <span>
+                                      Last run:{" "}
+                                      {new Date(
+                                        job.last_modified,
+                                      ).toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </span>
+                                  )}
+                                  {job.log_size_kb > 0 && (
+                                    <span>
+                                      Log: {job.log_size_kb > 1024 ? `${(job.log_size_kb / 1024).toFixed(1)} MB` : `${job.log_size_kb.toFixed(0)} KB`}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-8 w-8 shrink-0"
+                                  onClick={() =>
+                                    viewCronLog(job.log_file, job.id)
+                                  }
+                                  disabled={job.last_status === "no_log"}
+                                >
+                                  <ScrollText className="size-3.5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>View log</TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+                      <Clock className="size-6 opacity-40" />
+                      <p className="text-sm">
+                        No cron job data available
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Management Commands Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="size-4 text-muted-foreground" />
+                    <h4 className="text-sm font-semibold">
+                      Management Commands
+                    </h4>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Run Django management commands manually. Commands run in the
+                    background and results are pushed via notification.
+                  </p>
+                  {data.management_commands &&
+                  data.management_commands.length > 0 ? (
+                    <div className="grid gap-2">
+                      {data.management_commands.map((cmd) => {
+                        const isRunning = runningAction === `cmd_${cmd.id}`
+                        return (
+                          <div
+                            key={cmd.id}
+                            className={`rounded-lg border p-3 transition-colors ${
+                              cmd.destructive
+                                ? "hover:border-red-300 dark:hover:border-red-800"
+                                : "hover:border-foreground/20"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-start gap-3 min-w-0">
+                                <div
+                                  className={`rounded-lg p-2 mt-0.5 ${
+                                    cmd.destructive
+                                      ? "bg-red-500/10"
+                                      : "bg-muted"
+                                  }`}
+                                >
+                                  <Wrench
+                                    className={`size-3.5 ${
+                                      cmd.destructive
+                                        ? "text-red-500"
+                                        : "text-muted-foreground"
+                                    }`}
+                                  />
+                                </div>
+                                <div className="min-w-0 space-y-0.5">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-medium">
+                                      {cmd.label}
+                                    </span>
+                                    {cmd.destructive && (
+                                      <Badge
+                                        variant="destructive"
+                                        className="text-[10px] h-5"
+                                      >
+                                        Destructive
+                                      </Badge>
+                                    )}
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px] h-5"
+                                    >
+                                      {cmd.app}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground leading-relaxed">
+                                    {cmd.description}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                variant={
+                                  cmd.destructive ? "destructive" : "outline"
+                                }
+                                size="sm"
+                                className="shrink-0 gap-1.5"
+                                disabled={runningAction !== null}
+                                onClick={() => {
+                                  if (cmd.destructive) {
+                                    setConfirmCommand(cmd)
+                                  } else {
+                                    runCommand(cmd)
+                                  }
+                                }}
+                              >
+                                {isRunning ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <Play className="size-3.5" />
+                                )}
+                                {isRunning ? "Running..." : "Run"}
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+                      <Terminal className="size-6 opacity-40" />
+                      <p className="text-sm">
+                        No commands available
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
               {/* ===== ACTIONS TAB ===== */}
               <TabsContent
                 value="actions"
@@ -797,7 +1116,7 @@ export function ServerMaintenanceCard() {
         </CardContent>
       </Card>
 
-      {/* Confirmation Dialog */}
+      {/* Confirmation Dialog - Cleanup Actions */}
       <AlertDialog
         open={!!confirmAction}
         onOpenChange={(open: boolean) => !open && setConfirmAction(null)}
@@ -832,6 +1151,41 @@ export function ServerMaintenanceCard() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Confirmation Dialog - Destructive Commands */}
+      <AlertDialog
+        open={!!confirmCommand}
+        onOpenChange={(open: boolean) => !open && setConfirmCommand(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="size-5 text-red-500" />
+              Confirm {confirmCommand?.label}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmCommand?.description}
+              {"\n\n"}This is a destructive command. Are you sure you want to
+              proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (confirmCommand) {
+                  runCommand(confirmCommand)
+                  setConfirmCommand(null)
+                }
+              }}
+            >
+              <Play className="size-3.5 mr-1.5" />
+              Run Command
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Container Logs Dialog */}
       <Dialog
         open={logsDialog.open}
@@ -841,9 +1195,7 @@ export function ServerMaintenanceCard() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ScrollText className="size-4" />
-              {CONTAINER_LABELS[logsDialog.container]?.label ||
-                logsDialog.container}{" "}
-              Logs
+              {logsDialog.title}
             </DialogTitle>
           </DialogHeader>
           {logsDialog.loading ? (

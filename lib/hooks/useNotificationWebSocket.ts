@@ -36,7 +36,10 @@ type Options = {
   onMaintenanceResult?: (data: MaintenanceWSData) => void
 }
 
-export function useNotificationWebSocket({ onNotification, onMaintenanceResult }: Options = {}) {
+export function useNotificationWebSocket({
+  onNotification,
+  onMaintenanceResult,
+}: Options = {}) {
   const queryClient = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
