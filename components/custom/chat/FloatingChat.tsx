@@ -10,7 +10,7 @@ import { getAudioContext } from "@/lib/utils/audioContext"
 import { cn } from "@/lib/utils/helpers"
 import { formatDistanceToNow } from "date-fns"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowLeft, MessageCircle, Send, X } from "lucide-react"
+import { ArrowLeft, MessageCircle, Send, Smile, X } from "lucide-react"
 import Image from "next/image"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -420,6 +420,68 @@ function MessageThread({
                 transition={{ duration: 0.15 }}
                 className="relative max-w-[80%]"
               >
+                {/* Reaction picker — above the bubble */}
+                <AnimatePresence>
+                  {isPickerOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8, y: 4 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8, y: 4 }}
+                      transition={{ duration: 0.12 }}
+                      className={cn(
+                        "absolute z-10 flex gap-1 rounded-full bg-card border border-border shadow-lg px-2 py-1.5 -top-11",
+                        isMine ? "right-0" : "left-0",
+                      )}
+                    >
+                      {REACTION_EMOJIS.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => {
+                            onReact(msg.id, emoji)
+                            setReactionPickerFor(null)
+                          }}
+                          className="size-8 rounded-full hover:bg-muted flex items-center justify-center text-lg transition-transform hover:scale-125"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Reaction badges — overlapping bottom of bubble */}
+                {hasReactions && (
+                  <div
+                    className={cn(
+                      "absolute -bottom-2.5 z-[1] flex gap-0.5",
+                      isMine ? "right-2" : "left-2",
+                    )}
+                  >
+                    {Object.entries(msg.reactions!).map(([emoji, userIds]) => {
+                      const iReacted = userIds.includes(currentUserId)
+                      return (
+                        <button
+                          key={emoji}
+                          onClick={() => onReact(msg.id, emoji)}
+                          className={cn(
+                            "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs border shadow-sm transition-colors",
+                            iReacted
+                              ? "bg-primary/15 border-primary/30 text-primary"
+                              : "bg-card border-border text-muted-foreground hover:bg-muted",
+                          )}
+                        >
+                          <span>{emoji}</span>
+                          {userIds.length > 1 && (
+                            <span className="text-[10px]">
+                              {userIds.length}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
                 {/* Message bubble */}
                 <div
                   className={cn(
@@ -427,6 +489,7 @@ function MessageThread({
                     isMine
                       ? "bg-primary text-primary-foreground rounded-br-md"
                       : "bg-muted text-foreground rounded-bl-md",
+                    hasReactions && "mb-3",
                   )}
                   onDoubleClick={() =>
                     setReactionPickerFor(isPickerOpen ? null : msg.id)
@@ -466,80 +529,20 @@ function MessageThread({
                   </div>
                 </div>
 
-                {/* Smiley trigger — visible on hover */}
+                {/* React trigger — visible on hover */}
                 <button
                   onClick={() =>
                     setReactionPickerFor(isPickerOpen ? null : msg.id)
                   }
+                  title="React"
                   className={cn(
-                    "absolute top-1/2 -translate-y-1/2 size-6 rounded-full bg-muted/80 backdrop-blur text-muted-foreground flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted",
-                    isMine ? "-left-7" : "-right-7",
+                    "absolute top-1/2 -translate-y-1/2 size-7 rounded-full bg-muted/80 backdrop-blur text-muted-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted hover:text-foreground",
+                    isMine ? "-left-8" : "-right-8",
                   )}
                 >
-                  😊
+                  <Smile className="size-4" />
                 </button>
-
-                {/* Reaction picker */}
-                <AnimatePresence>
-                  {isPickerOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8, y: 4 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.8, y: 4 }}
-                      transition={{ duration: 0.12 }}
-                      className={cn(
-                        "absolute z-10 flex gap-0.5 rounded-full bg-card border border-border shadow-lg px-1.5 py-1",
-                        isMine ? "right-0" : "left-0",
-                        "-top-9",
-                      )}
-                    >
-                      {REACTION_EMOJIS.map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => {
-                            onReact(msg.id, emoji)
-                            setReactionPickerFor(null)
-                          }}
-                          className="size-7 rounded-full hover:bg-muted flex items-center justify-center text-base transition-transform hover:scale-125"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </motion.div>
-
-              {/* Reaction badges */}
-              {hasReactions && (
-                <div
-                  className={cn(
-                    "flex gap-0.5 -mt-1.5 px-1",
-                    isMine ? "justify-end" : "justify-start",
-                  )}
-                >
-                  {Object.entries(msg.reactions!).map(([emoji, userIds]) => {
-                    const iReacted = userIds.includes(currentUserId)
-                    return (
-                      <button
-                        key={emoji}
-                        onClick={() => onReact(msg.id, emoji)}
-                        className={cn(
-                          "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs border transition-colors",
-                          iReacted
-                            ? "bg-primary/15 border-primary/30 text-primary"
-                            : "bg-muted/50 border-border text-muted-foreground hover:bg-muted",
-                        )}
-                      >
-                        <span>{emoji}</span>
-                        {userIds.length > 1 && (
-                          <span className="text-[10px]">{userIds.length}</span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
             </div>
           )
         })}
