@@ -420,35 +420,6 @@ function MessageThread({
                 transition={{ duration: 0.15 }}
                 className="relative max-w-[80%]"
               >
-                {/* Reaction picker — above the bubble */}
-                <AnimatePresence>
-                  {isPickerOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8, y: 4 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.8, y: 4 }}
-                      transition={{ duration: 0.12 }}
-                      className={cn(
-                        "absolute z-10 flex gap-1 rounded-full bg-card border border-border shadow-lg px-2 py-1.5 -top-11",
-                        isMine ? "right-0" : "left-0",
-                      )}
-                    >
-                      {REACTION_EMOJIS.map((emoji) => (
-                        <button
-                          key={emoji}
-                          onClick={() => {
-                            onReact(msg.id, emoji)
-                            setReactionPickerFor(null)
-                          }}
-                          className="size-8 rounded-full hover:bg-muted flex items-center justify-center text-lg transition-transform hover:scale-125"
-                        >
-                          {emoji}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
                 {/* Reaction badges — overlapping bottom of bubble */}
                 {hasReactions && (
                   <div
@@ -543,6 +514,35 @@ function MessageThread({
                   <Smile className="size-4" />
                 </button>
               </motion.div>
+
+              {/* Reaction picker — below the bubble, in normal flow so it doesn't clip */}
+              <AnimatePresence>
+                {isPickerOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    transition={{ duration: 0.12 }}
+                    className={cn(
+                      "flex gap-1 rounded-full bg-card border border-border shadow-lg px-2 py-1.5 mt-1",
+                      isMine ? "self-end" : "self-start",
+                    )}
+                  >
+                    {REACTION_EMOJIS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => {
+                          onReact(msg.id, emoji)
+                          setReactionPickerFor(null)
+                        }}
+                        className="size-8 rounded-full hover:bg-muted flex items-center justify-center text-lg transition-transform hover:scale-125"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )
         })}
