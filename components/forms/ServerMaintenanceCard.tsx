@@ -1,15 +1,5 @@
 "use client"
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { AdminPasswordDialog } from "@/components/custom/shared/AdminPasswordDialog"
 import {
   Dialog,
   DialogContent,
@@ -44,6 +35,7 @@ import {
   ChevronUp,
   Clock,
   Database,
+  Download,
   FileText,
   FolderOpen,
   HardDrive,
@@ -183,11 +175,11 @@ const CLEANUP_ACTIONS = [
 
 export function ServerMaintenanceCard() {
   const [runningAction, setRunningAction] = useState<string | null>(null)
-  const [confirmAction, setConfirmAction] = useState<
-    (typeof CLEANUP_ACTIONS)[number] | null
-  >(null)
-  const [confirmCommand, setConfirmCommand] =
-    useState<ManagementCommand | null>(null)
+  const [pendingAuthAction, setPendingAuthAction] = useState<{
+    type: "cleanup" | "command" | "install_cron"
+    cleanup?: (typeof CLEANUP_ACTIONS)[number]
+    command?: ManagementCommand
+  } | null>(null)
   const [logsDialog, setLogsDialog] = useState<{
     open: boolean
     title: string
@@ -253,8 +245,13 @@ export function ServerMaintenanceCard() {
       toast.info(`${label} started`, {
         description: "You'll be notified when it completes.",
       })
-    } catch {
-      toast.error(`Failed to start ${label}. Check server logs.`)
+    } catch (err) {
+      const message =
+        err instanceof Error && "response" in err
+          ? (err as { response?: { data?: { error?: string } } }).response
+              ?.data?.error
+          : undefined
+      toast.error(message || `Failed to start ${label}. Check server logs.`)
       setRunningAction(null)
     }
   }
@@ -313,18 +310,29 @@ export function ServerMaintenanceCard() {
     }
   }
 
-  const runCommand = async (command: ManagementCommand) => {
+  const runCommand = async (
+    command: ManagementCommand,
+    credentials?: { admin_username: string; admin_password: string },
+  ) => {
     setRunningAction(`cmd_${command.id}`)
     try {
       await api.post("/users/maintenance/", {
         action: "run_command",
         command: command.id,
+        ...credentials,
       })
       toast.info(`${command.label} started`, {
         description: "You'll be notified when it completes.",
       })
-    } catch {
-      toast.error(`Failed to start ${command.label}. Check server logs.`)
+    } catch (err) {
+      const message =
+        err instanceof Error && "response" in err
+          ? (err as { response?: { data?: { error?: string } } }).response
+              ?.data?.error
+          : undefined
+      toast.error(
+        message || `Failed to start ${command.label}. Check server logs.`,
+      )
       setRunningAction(null)
     }
   }
@@ -726,6 +734,40 @@ export function ServerMaintenanceCard() {
                 value="scheduled"
                 className="space-y-6 mt-0"
               >
+                {/* Install Cron Jobs Banner */}
+                <div className="flex items-center justify-between rounded-xl border bg-muted/30 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-lg bg-blue-500/10 p-2">
+                      <Download className="size-4 text-blue-500" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-semibold">Install Cron Jobs</p>
+                      <p className="text-xs text-muted-foreground">
+                        Deploy or update all scheduled task scripts and crontab
+                        entries on the host server.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 gap-1.5"
+                    disabled={runningAction !== null}
+                    onClick={() =>
+                      setPendingAuthAction({ type: "install_cron" })
+                    }
+                  >
+                    {runningAction === "install_cron_jobs" ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Play className="size-3.5" />
+                    )}
+                    {runningAction === "install_cron_jobs"
+                      ? "Installing..."
+                      : "Install"}
+                  </Button>
+                </div>
+
                 {/* Cron Jobs Section */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
@@ -943,7 +985,10 @@ export function ServerMaintenanceCard() {
                                 disabled={runningAction !== null}
                                 onClick={() => {
                                   if (cmd.destructive) {
-                                    setConfirmCommand(cmd)
+                                    setPendingAuthAction({
+                                      type: "command",
+                                      command: cmd,
+                                    })
                                   } else {
                                     runCommand(cmd)
                                   }
@@ -1040,7 +1085,10 @@ export function ServerMaintenanceCard() {
                             disabled={runningAction !== null}
                             onClick={() => {
                               if (action.destructive) {
-                                setConfirmAction(action)
+                                setPendingAuthAction({
+                                  type: "cleanup",
+                                  cleanup: action,
+                                })
                               } else {
                                 runCleanup(action.id, action.label)
                               }
@@ -1128,75 +1176,49 @@ export function ServerMaintenanceCard() {
         </CardContent>
       </Card>
 
-      {/* Confirmation Dialog - Cleanup Actions */}
-      <AlertDialog
-        open={!!confirmAction}
-        onOpenChange={(open: boolean) => !open && setConfirmAction(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="size-5 text-yellow-500" />
-              Confirm {confirmAction?.label}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmAction?.description}
-              {"\n\n"}This action may temporarily affect running services. Are
-              you sure you want to proceed?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                if (confirmAction) {
-                  runCleanup(confirmAction.id, confirmAction.label)
-                  setConfirmAction(null)
-                }
-              }}
-            >
-              <Zap className="size-3.5 mr-1.5" />
-              Run Cleanup
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Confirmation Dialog - Destructive Commands */}
-      <AlertDialog
-        open={!!confirmCommand}
-        onOpenChange={(open: boolean) => !open && setConfirmCommand(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="size-5 text-red-500" />
-              Confirm {confirmCommand?.label}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmCommand?.description}
-              {"\n\n"}This is a destructive command. Are you sure you want to
-              proceed?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                if (confirmCommand) {
-                  runCommand(confirmCommand)
-                  setConfirmCommand(null)
-                }
-              }}
-            >
-              <Play className="size-3.5 mr-1.5" />
-              Run Command
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Admin Authorization Dialog for Destructive Actions */}
+      <AdminPasswordDialog
+        open={!!pendingAuthAction}
+        onOpenChange={(open) => {
+          if (!open) setPendingAuthAction(null)
+        }}
+        onVerified={(creds) => {
+          if (!pendingAuthAction) return
+          if (pendingAuthAction.type === "cleanup" && pendingAuthAction.cleanup) {
+            runCleanup(
+              pendingAuthAction.cleanup.id,
+              pendingAuthAction.cleanup.label,
+              {
+                admin_username: creds.admin_username,
+                admin_password: creds.admin_password,
+              },
+            )
+          } else if (
+            pendingAuthAction.type === "command" &&
+            pendingAuthAction.command
+          ) {
+            runCommand(pendingAuthAction.command, creds)
+          } else if (pendingAuthAction.type === "install_cron") {
+            runCleanup("install_cron_jobs", "Install Cron Jobs", {
+              admin_username: creds.admin_username,
+              admin_password: creds.admin_password,
+            })
+          }
+          setPendingAuthAction(null)
+        }}
+        title={
+          pendingAuthAction?.type === "install_cron"
+            ? "Install Cron Jobs"
+            : "Admin Authorization Required"
+        }
+        description={
+          pendingAuthAction?.type === "cleanup"
+            ? `"${pendingAuthAction.cleanup?.label}" is an aggressive action that may temporarily affect running services. Enter admin credentials to proceed.`
+            : pendingAuthAction?.type === "command"
+              ? `"${pendingAuthAction.command?.label}" is a destructive command. Enter admin credentials to proceed.`
+              : "This will overwrite all cron scripts and update the host crontab entries. Enter admin credentials to proceed."
+        }
+      />
 
       {/* Container Logs Dialog */}
       <Dialog
