@@ -25,6 +25,18 @@ export function usePushNotifications() {
       const registration = await navigator.serviceWorker.register("/sw.js")
       console.log("[Push] Service worker registered")
 
+      // Wait for the service worker to be active (important for first install)
+      if (!registration.active) {
+        await new Promise<void>((resolve) => {
+          const sw = registration.installing || registration.waiting
+          if (!sw) { resolve(); return }
+          sw.addEventListener("statechange", () => {
+            if (sw.state === "activated") resolve()
+          })
+        })
+        console.log("[Push] Service worker activated")
+      }
+
       // 2. Request permission (no-op if already granted/denied)
       const permission = await Notification.requestPermission()
       console.log("[Push] Permission:", permission)

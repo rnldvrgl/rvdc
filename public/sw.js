@@ -1,6 +1,15 @@
 // Service Worker for Web Push Notifications
 // This file MUST live in /public so the browser can register it at the root scope.
 
+// Activate immediately so push events are handled right away
+self.addEventListener("install", (event) => {
+  self.skipWaiting()
+})
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim())
+})
+
 self.addEventListener("push", (event) => {
   if (!event.data) return
 
