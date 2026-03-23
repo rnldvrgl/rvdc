@@ -322,10 +322,6 @@ export default function ServicePartsManager({
       }
     }
 
-    setIsSubmitting(false)
-    setPendingItems([])
-    setDialogOpen(false)
-
     if (successCount > 0) {
       toast.success(
         `${successCount} part${successCount > 1 ? "s" : ""} added successfully`,
@@ -335,7 +331,6 @@ export default function ServicePartsManager({
       toast.error(`Failed to add ${failCount} part${failCount > 1 ? "s" : ""}`)
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 150))
     await queryClient.invalidateQueries({ queryKey: ["service"] })
     await queryClient.invalidateQueries({ queryKey: ["services"] })
     await queryClient.invalidateQueries({
@@ -343,7 +338,12 @@ export default function ServicePartsManager({
     })
     await queryClient.invalidateQueries({ queryKey: ["stocks"] })
     await queryClient.invalidateQueries({ queryKey: ["sales-transactions"] })
+    await queryClient.invalidateQueries({ queryKey: ["pending-items-stats"] })
     if (onUpdate) await onUpdate()
+
+    setIsSubmitting(false)
+    setPendingItems([])
+    setDialogOpen(false)
   }
 
   const handleEditPart = (part: ServiceItemUsed) => {
@@ -637,7 +637,7 @@ export default function ServicePartsManager({
           }
         }}
       >
-        <DialogContent className="max-w-sm! md:max-w-md!">
+        <DialogContent className="max-w-md! md:max-w-lg!">
           <DialogHeader>
             <DialogTitle>
               {editingPartId ? "Edit Part" : "Add Service-Level Part"}
@@ -656,50 +656,94 @@ export default function ServicePartsManager({
                 Items to Add ({pendingItems.length})
               </Label>
               <div className="space-y-1.5 max-h-[140px] overflow-y-auto">
-                {pendingItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between text-sm bg-background rounded px-2 py-1.5"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="truncate font-medium">
-                        {item.itemName}
-                      </span>
-                      <span className="text-muted-foreground shrink-0">
-                        &times; {item.quantity}
-                      </span>
-                      {item.isFree && (
-                        <Badge
-                          variant="success"
-                          className="text-xs shrink-0"
-                        >
-                          FREE
-                        </Badge>
-                      )}
-                      {item.isCustom && (
-                        <Badge
-                          variant="secondary"
-                          className="text-xs shrink-0"
-                        >
-                          Custom
-                        </Badge>
-                      )}
-                    </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 shrink-0"
-                      onClick={() =>
-                        setPendingItems((prev) =>
-                          prev.filter((p) => p.id !== item.id),
-                        )
-                      }
+                {pendingItems.map((item) => {
+                  const unitPrice = item.isCustom
+                    ? parseFloat(item.customPrice || "0")
+                    : Number(
+                        items.find((i) => i.id === item.itemId)?.retail_price ||
+                          0,
+                      )
+                  const qty = parseFloat(item.quantity || "0")
+                  const discount = item.isFree
+                    ? unitPrice * qty
+                    : parseFloat(item.discountValue || "0")
+                  const lineTotal = item.isFree ? 0 : unitPrice * qty - discount
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between text-sm bg-background rounded px-2 py-1.5"
                     >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="truncate font-medium">
+                          {item.itemName}
+                        </span>
+                        <span className="text-muted-foreground shrink-0">
+                          &times; {item.quantity}
+                        </span>
+                        {item.isFree && (
+                          <Badge
+                            variant="success"
+                            className="text-xs shrink-0"
+                          >
+                            FREE
+                          </Badge>
+                        )}
+                        {item.isCustom && (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs shrink-0"
+                          >
+                            Custom
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <span className="text-xs font-medium">
+                          {formatCurrency(lineTotal)}
+                        </span>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6"
+                          onClick={() =>
+                            setPendingItems((prev) =>
+                              prev.filter((p) => p.id !== item.id),
+                            )
+                          }
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
+              {pendingItems.length > 1 && (
+                <div className="flex items-center justify-between text-xs pt-1.5 border-t">
+                  <span className="text-muted-foreground font-medium">
+                    Total
+                  </span>
+                  <span className="font-semibold">
+                    {formatCurrency(
+                      pendingItems.reduce((sum, item) => {
+                        const unitPrice = item.isCustom
+                          ? parseFloat(item.customPrice || "0")
+                          : Number(
+                              items.find((i) => i.id === item.itemId)
+                                ?.retail_price || 0,
+                            )
+                        const qty = parseFloat(item.quantity || "0")
+                        const discount = item.isFree
+                          ? unitPrice * qty
+                          : parseFloat(item.discountValue || "0")
+                        return (
+                          sum + (item.isFree ? 0 : unitPrice * qty - discount)
+                        )
+                      }, 0),
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
