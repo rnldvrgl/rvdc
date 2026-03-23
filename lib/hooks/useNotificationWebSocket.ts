@@ -92,7 +92,10 @@ export function useNotificationWebSocket({
           // Maintenance results — refresh stats, call handler
           queryClient.invalidateQueries({ queryKey: ["server-maintenance"] })
           maintenanceCallbackRef.current?.(data)
-        } else if (data.event === "export_ready" || data.event === "export_failed") {
+        } else if (
+          data.event === "export_ready" ||
+          data.event === "export_failed"
+        ) {
           exportCallbackRef.current?.(data as ExportWSData)
         } else {
           // Regular notifications
