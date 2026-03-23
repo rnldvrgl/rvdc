@@ -105,7 +105,10 @@ export default function ReportsPage() {
             {showServicesTab ? (
               <TabsTrigger value="services">Services</TabsTrigger>
             ) : null}
-            <TabsTrigger value="export" className="gap-1.5">
+            <TabsTrigger
+              value="export"
+              className="gap-1.5"
+            >
               <Download className="size-3.5" />
               Export
             </TabsTrigger>

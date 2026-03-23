@@ -248,7 +248,10 @@ function ExportSection<K extends string>({
               </CardDescription>
             </div>
           </div>
-          <Badge variant="secondary" className="text-xs font-normal">
+          <Badge
+            variant="secondary"
+            className="text-xs font-normal"
+          >
             {selectedSheets.size}/{sheets.length} sheets
           </Badge>
         </div>
@@ -365,10 +368,13 @@ function ExportSection<K extends string>({
 }
 
 // ── Utility ──────────────────────────────────────────
-function downloadBlob(response: { data: BlobPart; headers: Record<string, string> }, fallbackName: string) {
+function downloadBlob(
+  response: { data: BlobPart; headers: { [key: string]: unknown } },
+  fallbackName: string,
+) {
   const contentDisposition = response.headers["content-disposition"]
   let filename = fallbackName
-  if (contentDisposition) {
+  if (typeof contentDisposition === "string") {
     const match = contentDisposition.match(/filename="?([^";\n]+)"?/)
     if (match) filename = match[1]
   }
