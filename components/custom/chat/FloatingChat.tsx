@@ -10,7 +10,7 @@ import { getAudioContext } from "@/lib/utils/audioContext"
 import { cn } from "@/lib/utils/helpers"
 import { formatDistanceToNow } from "date-fns"
 import { AnimatePresence, motion } from "framer-motion"
-import { ArrowLeft, MessageCircle, Send, Smile, X } from "lucide-react"
+import { ArrowLeft, MessageCircle, Reply, Send, Smile, X } from "lucide-react"
 import Image from "next/image"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
@@ -275,7 +275,10 @@ function MessageThread({
   currentUserId: number
   typingFrom: number | null
   seenByPartner: boolean
-  onSend: (body: string) => void
+  onSend: (
+    body: string,
+    replyTo?: { id: string; body: string; from_name: string },
+  ) => void
   onTyping: () => void
   onReact: (msgId: string, emoji: string) => void
   onBack: () => void
@@ -285,6 +288,7 @@ function MessageThread({
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(
     null,
   )
+  const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const typingThrottle = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -301,10 +305,24 @@ function MessageThread({
     textareaRef.current?.focus()
   }, [])
 
+  // Close reaction picker on scroll
+  const handleScroll = useCallback(() => {
+    if (reactionPickerFor) setReactionPickerFor(null)
+  }, [reactionPickerFor])
+
   const handleSend = () => {
     const body = input.trim()
     if (!body) return
-    onSend(body)
+    if (replyingTo) {
+      onSend(body, {
+        id: replyingTo.id,
+        body: replyingTo.body,
+        from_name: replyingTo.from_name,
+      })
+      setReplyingTo(null)
+    } else {
+      onSend(body)
+    }
     setInput("")
     // Reset textarea height
     if (textareaRef.current) {
@@ -383,6 +401,7 @@ function MessageThread({
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto p-3 space-y-2"
+        onScroll={handleScroll}
         onClick={() => reactionPickerFor && setReactionPickerFor(null)}
       >
         {messages.length === 0 && (
@@ -420,36 +439,50 @@ function MessageThread({
                 transition={{ duration: 0.15 }}
                 className="relative max-w-[80%]"
               >
-                {/* Reaction badges — overlapping bottom of bubble */}
-                {hasReactions && (
-                  <div
-                    className={cn(
-                      "absolute -bottom-2.5 z-[1] flex gap-0.5",
-                      isMine ? "right-2" : "left-2",
-                    )}
-                  >
-                    {Object.entries(msg.reactions!).map(([emoji, userIds]) => {
-                      const iReacted = userIds.includes(currentUserId)
-                      return (
+                {/* Reaction picker — absolutely positioned above bubble */}
+                <AnimatePresence>
+                  {isPickerOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.12 }}
+                      className={cn(
+                        "absolute bottom-full mb-1 z-50 flex gap-1 rounded-full bg-card border border-border shadow-lg px-2 py-1.5",
+                        isMine ? "right-0" : "left-0",
+                      )}
+                    >
+                      {REACTION_EMOJIS.map((emoji) => (
                         <button
                           key={emoji}
-                          onClick={() => onReact(msg.id, emoji)}
-                          className={cn(
-                            "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs border shadow-sm transition-colors",
-                            iReacted
-                              ? "bg-primary/15 border-primary/30 text-primary"
-                              : "bg-card border-border text-muted-foreground hover:bg-muted",
-                          )}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onReact(msg.id, emoji)
+                            setReactionPickerFor(null)
+                          }}
+                          className="size-8 rounded-full hover:bg-muted flex items-center justify-center text-lg transition-transform hover:scale-125"
                         >
-                          <span>{emoji}</span>
-                          {userIds.length > 1 && (
-                            <span className="text-[10px]">
-                              {userIds.length}
-                            </span>
-                          )}
+                          {emoji}
                         </button>
-                      )
-                    })}
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Reply-to quote */}
+                {msg.reply_to && (
+                  <div
+                    className={cn(
+                      "text-[11px] px-3 py-1.5 rounded-t-xl border-l-2 mb-0.5",
+                      isMine
+                        ? "bg-primary/10 border-primary/40 text-primary-foreground/70"
+                        : "bg-muted/80 border-muted-foreground/30 text-muted-foreground",
+                    )}
+                  >
+                    <p className="font-medium text-[10px]">
+                      {msg.reply_to.from_name}
+                    </p>
+                    <p className="truncate">{msg.reply_to.body}</p>
                   </div>
                 )}
 
@@ -460,6 +493,7 @@ function MessageThread({
                     isMine
                       ? "bg-primary text-primary-foreground rounded-br-md"
                       : "bg-muted text-foreground rounded-bl-md",
+                    msg.reply_to && "rounded-t-md",
                     hasReactions && "mb-3",
                   )}
                   onDoubleClick={() =>
@@ -500,49 +534,67 @@ function MessageThread({
                   </div>
                 </div>
 
-                {/* React trigger — visible on hover */}
-                <button
-                  onClick={() =>
-                    setReactionPickerFor(isPickerOpen ? null : msg.id)
-                  }
-                  title="React"
-                  className={cn(
-                    "absolute top-1/2 -translate-y-1/2 size-7 rounded-full bg-muted/80 backdrop-blur text-muted-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted hover:text-foreground",
-                    isMine ? "-left-8" : "-right-8",
-                  )}
-                >
-                  <Smile className="size-4" />
-                </button>
-              </motion.div>
-
-              {/* Reaction picker — below the bubble, in normal flow so it doesn't clip */}
-              <AnimatePresence>
-                {isPickerOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.12 }}
+                {/* Reaction badges — overlapping bottom of bubble (Messenger style) */}
+                {hasReactions && (
+                  <div
                     className={cn(
-                      "flex gap-1 rounded-full bg-card border border-border shadow-lg px-2 py-1.5 mt-1",
-                      isMine ? "self-end" : "self-start",
+                      "absolute -bottom-2 z-1 flex gap-0.5",
+                      isMine ? "right-2" : "left-2",
                     )}
                   >
-                    {REACTION_EMOJIS.map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => {
-                          onReact(msg.id, emoji)
-                          setReactionPickerFor(null)
-                        }}
-                        className="size-8 rounded-full hover:bg-muted flex items-center justify-center text-lg transition-transform hover:scale-125"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </motion.div>
+                    {Object.entries(msg.reactions!).map(([emoji, userIds]) => {
+                      const iReacted = userIds.includes(currentUserId)
+                      return (
+                        <button
+                          key={emoji}
+                          onClick={() => onReact(msg.id, emoji)}
+                          className={cn(
+                            "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs border shadow-sm transition-colors",
+                            iReacted
+                              ? "bg-primary/15 border-primary/30 text-primary"
+                              : "bg-card border-border text-muted-foreground hover:bg-muted",
+                          )}
+                        >
+                          <span>{emoji}</span>
+                          {userIds.length > 1 && (
+                            <span className="text-[10px]">
+                              {userIds.length}
+                            </span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
                 )}
-              </AnimatePresence>
+
+                {/* React + Reply triggers — visible on hover */}
+                <div
+                  className={cn(
+                    "absolute top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
+                    isMine ? "-left-16" : "-right-16",
+                  )}
+                >
+                  <button
+                    onClick={() =>
+                      setReactionPickerFor(isPickerOpen ? null : msg.id)
+                    }
+                    title="React"
+                    className="size-7 rounded-full bg-muted/80 backdrop-blur text-muted-foreground flex items-center justify-center hover:bg-muted hover:text-foreground"
+                  >
+                    <Smile className="size-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setReplyingTo(msg)
+                      textareaRef.current?.focus()
+                    }}
+                    title="Reply"
+                    className="size-7 rounded-full bg-muted/80 backdrop-blur text-muted-foreground flex items-center justify-center hover:bg-muted hover:text-foreground"
+                  >
+                    <Reply className="size-4" />
+                  </button>
+                </div>
+              </motion.div>
             </div>
           )
         })}
@@ -567,6 +619,28 @@ function MessageThread({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Reply-to bar */}
+      {replyingTo && (
+        <div className="px-3 py-2 border-t border-border bg-muted/50 flex items-center gap-2">
+          <div className="flex-1 min-w-0 border-l-2 border-primary pl-2">
+            <p className="text-[11px] font-medium text-primary truncate">
+              {replyingTo.from_name}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {replyingTo.body}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6 shrink-0"
+            onClick={() => setReplyingTo(null)}
+          >
+            <X className="size-3" />
+          </Button>
+        </div>
+      )}
 
       {/* Input */}
       <div className="px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] border-t border-border bg-card">
@@ -658,9 +732,12 @@ export default function FloatingChat() {
   )
 
   const handleSend = useCallback(
-    (body: string) => {
+    (
+      body: string,
+      replyTo?: { id: string; body: string; from_name: string },
+    ) => {
       if (activeChat) {
-        sendMessage(activeChat, body)
+        sendMessage(activeChat, body, replyTo)
         playSendSound()
       }
     },
