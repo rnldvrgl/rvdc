@@ -141,7 +141,9 @@ export function DateTimePicker({
           disabled={disabled}
         >
           {value ? (
-            <span className="truncate text-xs sm:text-sm">{format(value, "MM/dd/yyyy hh:mm aa")}</span>
+            <span className="truncate text-xs sm:text-sm">
+              {format(value, "MM/dd/yyyy hh:mm aa")}
+            </span>
           ) : (
             <span className="truncate text-xs sm:text-sm">{placeholder}</span>
           )}
