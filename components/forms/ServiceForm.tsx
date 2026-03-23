@@ -1,11 +1,13 @@
 "use client"
 
+import { CardSelect } from "@/components/custom/inputs/CardSelect"
 import {
   ClientComboBox,
   useClients,
 } from "@/components/custom/inputs/ClientComboBox"
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
+import { TechnicianCardSelect } from "@/components/custom/inputs/TechnicianCardSelect"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
@@ -17,7 +19,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { MultiSelect } from "@/components/ui/multi-select"
 import { Textarea } from "@/components/ui/textarea"
 import {
   AssignmentType,
@@ -30,24 +31,35 @@ import {
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import { useTechnicianChoices } from "@/lib/queries/useChoices"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Info, Save } from "lucide-react"
+import {
+  ArrowDownUp,
+  Home,
+  Info,
+  Save,
+  Search,
+  Settings,
+  Sparkles,
+  Truck,
+  Wrench,
+  Zap,
+} from "lucide-react"
 import { useEffect } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import * as z from "zod"
 
 const serviceTypeOptions = [
-  { label: "Repair", value: "repair" },
-  { label: "Dismantle", value: "dismantle" },
-  { label: "Inspection", value: "inspection" },
-  { label: "Cleaning", value: "cleaning" },
-  { label: "Motor Rewind", value: "motor_rewind" },
-  { label: "Installation", value: "installation" },
+  { label: "Repair", value: "repair", icon: Wrench },
+  { label: "Dismantle", value: "dismantle", icon: Settings },
+  { label: "Inspection", value: "inspection", icon: Search },
+  { label: "Cleaning", value: "cleaning", icon: Sparkles },
+  { label: "Motor Rewind", value: "motor_rewind", icon: Zap },
+  { label: "Installation", value: "installation", icon: ArrowDownUp },
 ]
 
 const serviceModeOptions = [
-  { label: "Carry-In", value: "carry_in" },
-  { label: "Home Service", value: "home_service" },
-  { label: "Pull-Out", value: "pull_out" },
+  { label: "Carry-In", value: "carry_in", icon: Wrench },
+  { label: "Home Service", value: "home_service", icon: Home },
+  { label: "Pull-Out", value: "pull_out", icon: Truck },
 ]
 
 const serviceStatusOptions = [
@@ -340,45 +352,42 @@ export default function ServiceForm({
           )}
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Service Type */}
-          <FormField
-            name="service_type"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel required>Service Type</FormLabel>
-                <ComboBox
-                  options={serviceTypeOptions}
-                  value={field.value ?? null}
-                  onChange={field.onChange}
-                  placeholder="Select type"
-                  disabled={isSubmitting}
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        {/* Service Type */}
+        <FormField
+          name="service_type"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel required>Service Type</FormLabel>
+              <CardSelect
+                options={serviceTypeOptions}
+                value={field.value ?? null}
+                onChange={field.onChange}
+                disabled={isSubmitting}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-          {/* Service Mode */}
-          <FormField
-            name="service_mode"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel required>Service Mode</FormLabel>
-                <ComboBox
-                  options={availableServiceModes}
-                  value={field.value ?? null}
-                  onChange={field.onChange}
-                  placeholder="Select mode"
-                  disabled={isSubmitting}
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        {/* Service Mode */}
+        <FormField
+          name="service_mode"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel required>Service Mode</FormLabel>
+              <CardSelect
+                options={availableServiceModes}
+                value={field.value ?? null}
+                onChange={field.onChange}
+                disabled={isSubmitting}
+                columns={2}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         {/* Status - Show only when editing */}
         {initialData && (
@@ -408,20 +417,14 @@ export default function ServiceForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Assign Technicians</FormLabel>
-              <MultiSelect
-                options={technicians.map((tech) => ({
-                  value: tech.id.toString(),
-                  label: tech.full_name,
-                }))}
+              <TechnicianCardSelect
+                technicians={technicians}
                 selected={
-                  field.value
-                    ?.filter((id) => id !== undefined && id !== null)
-                    .map((id) => id.toString()) ?? []
+                  field.value?.filter(
+                    (id) => id !== undefined && id !== null,
+                  ) ?? []
                 }
-                onChange={(values: string[]) => {
-                  field.onChange(values.map((v: string) => Number(v)))
-                }}
-                placeholder="Select technicians"
+                onChange={field.onChange}
                 disabled={isSubmitting}
               />
               <FormMessage />
