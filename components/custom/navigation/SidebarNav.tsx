@@ -261,7 +261,7 @@ export default function SidebarNav({
       </motion.aside>
 
       {/* Small screens - Mobile top bar */}
-      <div className="lg:hidden flex h-14 items-center justify-between bg-sidebar border-b border-sidebar-border/50 px-4">
+      <div className="lg:hidden flex h-14 pt-[env(safe-area-inset-top)] items-center justify-between bg-sidebar border-b border-sidebar-border/50 px-4">
         <div className="flex items-center gap-3">
           <Image
             src={getDisplayImage(user?.profile_image)}
@@ -312,7 +312,7 @@ export default function SidebarNav({
             className="lg:hidden fixed inset-0 z-50 bg-sidebar flex flex-col"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-sidebar-border/50 shrink-0">
+            <div className="flex items-center justify-between p-4 pt-[max(1rem,env(safe-area-inset-top))] border-b border-sidebar-border/50 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="flex items-center justify-center size-9 rounded-lg overflow-hidden">
                   <Image
