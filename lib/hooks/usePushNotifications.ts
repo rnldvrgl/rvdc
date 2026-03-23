@@ -29,7 +29,10 @@ export function usePushNotifications() {
       if (!registration.active) {
         await new Promise<void>((resolve) => {
           const sw = registration.installing || registration.waiting
-          if (!sw) { resolve(); return }
+          if (!sw) {
+            resolve()
+            return
+          }
           sw.addEventListener("statechange", () => {
             if (sw.state === "activated") resolve()
           })
