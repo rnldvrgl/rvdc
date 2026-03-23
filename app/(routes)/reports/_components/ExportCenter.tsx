@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
 import {
   Card,
   CardContent,
@@ -10,19 +11,26 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import {
   ExportWSData,
   useNotificationWebSocket,
 } from "@/lib/hooks/useNotificationWebSocket"
 import api from "@/lib/utils/api"
+import { cn } from "@/lib/utils/helpers"
+import { format } from "date-fns"
 import {
   AlertTriangle,
   Banknote,
   BarChart3,
   CalendarDays,
+  CalendarIcon,
   CheckCircle2,
   Copy,
   CreditCard,
@@ -36,12 +44,13 @@ import {
   Store,
   TrendingDown,
   TrendingUp,
+  Upload,
   Wrench,
 } from "lucide-react"
 import { useCallback, useRef, useState } from "react"
 import { toast } from "sonner"
 
-// ── Inventory Sheets ─────────────────────────────────
+// -- Inventory Sheets --
 const INVENTORY_SHEETS = [
   {
     key: "no_stock",
@@ -101,7 +110,7 @@ const INVENTORY_SHEETS = [
   },
 ] as const
 
-// ── Sales Sheets ─────────────────────────────────────
+// -- Sales Sheets --
 const SALES_SHEETS = [
   {
     key: "all_transactions",
@@ -153,7 +162,27 @@ const SALES_SHEETS = [
   },
 ] as const
 
-// ── Cheque Sheets ────────────────────────────────────
+// -- Daily Sales Sheets --
+const DAILY_SALES_SHEETS = [
+  {
+    key: "main_stall",
+    label: "Daily Sales - Main Stall",
+    description: "1 tab per day (Qty, Item, Amount) for main stall",
+    icon: Store,
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
+  },
+  {
+    key: "sub_stall",
+    label: "Daily Sales - Sub Stall",
+    description: "1 tab per day (Qty, Item, Amount) for sub stall",
+    icon: Store,
+    color: "text-blue-500",
+    bgColor: "bg-blue-50 dark:bg-blue-950/20",
+  },
+] as const
+
+// -- Cheque Sheets --
 const CHEQUE_SHEETS = [
   {
     key: "all_cheques",
@@ -189,32 +218,71 @@ const CHEQUE_SHEETS = [
   },
 ] as const
 
-// ── Daily Sales Sheets ───────────────────────────────
-const DAILY_SALES_SHEETS = [
-  {
-    key: "main_stall",
-    label: "Main Stall",
-    description: "Daily item sales for the main stall",
-    icon: Store,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
-  },
-  {
-    key: "sub_stall",
-    label: "Sub Stall",
-    description: "Daily item sales for the sub stall",
-    icon: Store,
-    color: "text-blue-500",
-    bgColor: "bg-blue-50 dark:bg-blue-950/20",
-  },
-] as const
-
-// ── Types ────────────────────────────────────────────
+// -- Types --
 type InventorySheetKey = (typeof INVENTORY_SHEETS)[number]["key"]
 type SalesSheetKey = (typeof SALES_SHEETS)[number]["key"]
-type ChequeSheetKey = (typeof CHEQUE_SHEETS)[number]["key"]
 type DailySalesSheetKey = (typeof DAILY_SALES_SHEETS)[number]["key"]
+type ChequeSheetKey = (typeof CHEQUE_SHEETS)[number]["key"]
 
+// -- Date Picker Field --
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: Date
+  onChange: (d: Date) => void
+}) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="space-y-1.5 flex-1 min-w-0">
+      <Label className="text-[10px] sm:text-xs text-muted-foreground">
+        {label}
+      </Label>
+      <Popover
+        open={open}
+        onOpenChange={setOpen}
+      >
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-full h-8 justify-start text-left text-[11px] sm:text-xs font-normal",
+              !value && "text-muted-foreground",
+            )}
+          >
+            <CalendarIcon className="mr-1.5 size-3 sm:size-3.5 shrink-0 opacity-50" />
+            <span className="truncate">
+              {value ? format(value, "MMM dd, yyyy") : "Pick a date"}
+            </span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent
+          className="w-auto p-0"
+          align="start"
+          sideOffset={4}
+        >
+          <Calendar
+            mode="single"
+            selected={value}
+            onSelect={(d) => {
+              if (d) {
+                d.setHours(12, 0, 0, 0)
+                onChange(d)
+              }
+              setOpen(false)
+            }}
+            weekStartsOn={1}
+            className="rounded-lg border"
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
+}
+
+// -- Export Section --
 interface ExportSectionProps<K extends string> {
   title: string
   description: string
@@ -235,10 +303,10 @@ interface ExportSectionProps<K extends string> {
   isExporting: boolean
   onExport: () => void
   dateRange?: boolean
-  startDate?: string
-  endDate?: string
-  onStartDate?: (v: string) => void
-  onEndDate?: (v: string) => void
+  startDate?: Date
+  endDate?: Date
+  onStartDate?: (d: Date) => void
+  onEndDate?: (d: Date) => void
 }
 
 function ExportSection<K extends string>({
@@ -261,55 +329,49 @@ function ExportSection<K extends string>({
 }: ExportSectionProps<K>) {
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="pb-4">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`rounded-xl p-2.5 ${accentColor}`}>
-              <SectionIcon className="size-5 text-white" />
+      <CardHeader className="pb-3 sm:pb-4 px-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div
+              className={`shrink-0 rounded-lg sm:rounded-xl p-1.5 sm:p-2.5 ${accentColor}`}
+            >
+              <SectionIcon className="size-3.5 sm:size-5 text-white" />
             </div>
-            <div>
-              <CardTitle className="text-base">{title}</CardTitle>
-              <CardDescription className="text-xs mt-0.5">
+            <div className="min-w-0">
+              <CardTitle className="text-sm sm:text-base truncate">
+                {title}
+              </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs mt-0.5">
                 {description}
               </CardDescription>
             </div>
           </div>
           <Badge
             variant="secondary"
-            className="text-xs font-normal"
+            className="text-[10px] sm:text-xs font-normal self-start shrink-0"
           >
             {selectedSheets.size}/{sheets.length} sheets
           </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Date Range (for Sales & Cheques) */}
-        {dateRange && (
-          <div className="flex items-end gap-3 pb-2">
-            <div className="space-y-1.5 flex-1">
-              <Label className="text-xs text-muted-foreground">From</Label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => onStartDate?.(e.target.value)}
-                className="h-8 text-xs"
-              />
-            </div>
-            <div className="space-y-1.5 flex-1">
-              <Label className="text-xs text-muted-foreground">To</Label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => onEndDate?.(e.target.value)}
-                className="h-8 text-xs"
-              />
-            </div>
+      <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6">
+        {dateRange && startDate && endDate && onStartDate && onEndDate && (
+          <div className="flex flex-col xs:flex-row items-stretch xs:items-end gap-2 sm:gap-3 pb-1 sm:pb-2">
+            <DateField
+              label="From"
+              value={startDate}
+              onChange={onStartDate}
+            />
+            <DateField
+              label="To"
+              value={endDate}
+              onChange={onEndDate}
+            />
           </div>
         )}
 
-        {/* Sheet Grid */}
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-1.5 sm:gap-2.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {sheets.map((sheet) => {
             const Icon = sheet.icon
             const isSelected = selectedSheets.has(sheet.key)
@@ -318,32 +380,37 @@ function ExportSection<K extends string>({
                 key={sheet.key}
                 type="button"
                 onClick={() => onToggle(sheet.key)}
-                className={`group relative flex items-start gap-3 rounded-lg border p-3 text-left transition-all hover:shadow-sm ${
+                className={cn(
+                  "group relative flex items-start gap-2 sm:gap-3 rounded-lg border p-2 sm:p-3 text-left transition-all hover:shadow-sm",
                   isSelected
                     ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                    : "border-border hover:border-muted-foreground/30 opacity-60"
-                }`}
+                    : "border-border hover:border-muted-foreground/30 opacity-60",
+                )}
               >
                 <div
-                  className={`mt-0.5 shrink-0 rounded-md p-1.5 transition-colors ${
-                    isSelected ? sheet.bgColor : "bg-muted"
-                  }`}
+                  className={cn(
+                    "mt-0.5 shrink-0 rounded-md p-1 sm:p-1.5 transition-colors",
+                    isSelected ? sheet.bgColor : "bg-muted",
+                  )}
                 >
                   <Icon
-                    className={`size-3.5 ${isSelected ? sheet.color : "text-muted-foreground"}`}
+                    className={cn(
+                      "size-3 sm:size-3.5",
+                      isSelected ? sheet.color : "text-muted-foreground",
+                    )}
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium leading-tight">
+                  <p className="text-[11px] sm:text-xs font-medium leading-tight">
                     {sheet.label}
                   </p>
-                  <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
+                  <p className="mt-0.5 text-[9px] sm:text-[10px] leading-snug text-muted-foreground line-clamp-2">
                     {sheet.description}
                   </p>
                 </div>
                 <Checkbox
                   checked={isSelected}
-                  className="mt-0.5 shrink-0"
+                  className="mt-0.5 shrink-0 size-3.5 sm:size-4"
                   onCheckedChange={() => onToggle(sheet.key)}
                 />
               </button>
@@ -351,14 +418,14 @@ function ExportSection<K extends string>({
           })}
         </div>
 
-        {/* Actions */}
         <Separator />
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-xs"
+              className="h-6 sm:h-7 text-[10px] sm:text-xs px-1.5 sm:px-3"
               onClick={onSelectAll}
               disabled={selectedSheets.size === sheets.length}
             >
@@ -367,7 +434,7 @@ function ExportSection<K extends string>({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 text-xs"
+              className="h-6 sm:h-7 text-[10px] sm:text-xs px-1.5 sm:px-3"
               onClick={onDeselectAll}
               disabled={selectedSheets.size === 0}
             >
@@ -378,12 +445,12 @@ function ExportSection<K extends string>({
             size="sm"
             onClick={onExport}
             disabled={isExporting || selectedSheets.size === 0}
-            className="gap-1.5"
+            className="gap-1 sm:gap-1.5 text-[10px] sm:text-xs h-7 sm:h-8"
           >
             {isExporting ? (
-              <Loader2 className="size-3.5 animate-spin" />
+              <Loader2 className="size-3 sm:size-3.5 animate-spin" />
             ) : (
-              <Download className="size-3.5" />
+              <Download className="size-3 sm:size-3.5" />
             )}
             {isExporting ? "Generating..." : "Export .xlsx"}
           </Button>
@@ -393,7 +460,190 @@ function ExportSection<K extends string>({
   )
 }
 
-// ── Utility ──────────────────────────────────────────
+// -- Bulk Item Update --
+function BulkItemUpdate() {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [downloading, setDownloading] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [result, setResult] = useState<{
+    updated: number
+    skipped: number
+    errors: { row: number; sku?: string; error: string }[]
+  } | null>(null)
+
+  const downloadTemplate = async () => {
+    setDownloading(true)
+    try {
+      const res = await api.get("/inventory/items/bulk-template/", {
+        responseType: "blob",
+      })
+      const blob = new Blob([res.data])
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.setAttribute("download", "item_pricing_template.xlsx")
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(url)
+      toast.success("Template downloaded.")
+    } catch {
+      toast.error("Failed to download template.")
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.name.endsWith(".xlsx")) {
+      toast.error("Only .xlsx files are supported.")
+      return
+    }
+
+    setUploading(true)
+    setResult(null)
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const res = await api.post("/inventory/items/bulk-update/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      setResult(res.data)
+      if (res.data.updated > 0) {
+        toast.success(res.data.detail)
+      } else if (res.data.errors?.length > 0) {
+        toast.warning(res.data.detail)
+      } else {
+        toast.info("No changes detected.")
+      }
+    } catch (err: unknown) {
+      const detail =
+        err &&
+        typeof err === "object" &&
+        "response" in err &&
+        (err as { response?: { data?: { detail?: string } } }).response?.data
+          ?.detail
+      toast.error(detail || "Failed to upload file.")
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ""
+    }
+  }
+
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3 sm:pb-4 px-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="shrink-0 rounded-lg sm:rounded-xl p-1.5 sm:p-2.5 bg-linear-to-br from-cyan-500 to-blue-600">
+              <Upload className="size-3.5 sm:size-5 text-white" />
+            </div>
+            <div className="min-w-0">
+              <CardTitle className="text-sm sm:text-base">
+                Bulk Item Pricing Update
+              </CardTitle>
+              <CardDescription className="text-[10px] sm:text-xs mt-0.5">
+                Download an XLSX template, edit prices, and re-upload to update
+                items in bulk.
+              </CardDescription>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={downloadTemplate}
+            disabled={downloading}
+            className="gap-1.5 text-xs"
+          >
+            {downloading ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Download className="size-3.5" />
+            )}
+            Download Template
+          </Button>
+          <div className="relative">
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".xlsx"
+              onChange={handleUpload}
+              className="sr-only"
+              id="bulk-upload-input"
+              aria-label="Upload XLSX file for bulk item update"
+            />
+            <Button
+              size="sm"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="gap-1.5 text-xs w-full sm:w-auto"
+            >
+              {uploading ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Upload className="size-3.5" />
+              )}
+              {uploading ? "Uploading..." : "Upload Updated File"}
+            </Button>
+          </div>
+        </div>
+
+        {result && (
+          <>
+            <Separator />
+            <div className="space-y-2 text-xs">
+              <div className="flex flex-wrap gap-2">
+                <Badge
+                  variant="default"
+                  className="text-[10px] sm:text-xs"
+                >
+                  {result.updated} updated
+                </Badge>
+                <Badge
+                  variant="secondary"
+                  className="text-[10px] sm:text-xs"
+                >
+                  {result.skipped} unchanged
+                </Badge>
+                {result.errors.length > 0 && (
+                  <Badge
+                    variant="destructive"
+                    className="text-[10px] sm:text-xs"
+                  >
+                    {result.errors.length} errors
+                  </Badge>
+                )}
+              </div>
+              {result.errors.length > 0 && (
+                <div className="max-h-32 overflow-y-auto rounded border p-2 space-y-1 bg-muted/50">
+                  {result.errors.map((err, i) => (
+                    <p
+                      key={i}
+                      className="text-destructive text-[10px]"
+                    >
+                      Row {err.row}
+                      {err.sku ? ` (${err.sku})` : ""}: {err.error}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// -- Utility --
 function downloadFromToken(token: string, filename: string) {
   api
     .get(`/analytics/export/download/${token}/`, { responseType: "blob" })
@@ -413,12 +663,11 @@ function downloadFromToken(token: string, filename: string) {
     })
 }
 
-function formatDate(d: Date) {
+function toISODate(d: Date) {
   return d.toISOString().split("T")[0]
 }
 
-// ── Export Center ────────────────────────────────────
-
+// -- Export Center --
 export function ExportCenter() {
   const today = new Date()
   const thirtyDaysAgo = new Date()
@@ -437,28 +686,26 @@ export function ExportCenter() {
     new Set(SALES_SHEETS.map((s) => s.key)),
   )
   const [salesExporting, setSalesExporting] = useState(false)
-  const [salesStart, setSalesStart] = useState(formatDate(thirtyDaysAgo))
-  const [salesEnd, setSalesEnd] = useState(formatDate(today))
-
-  // Cheques
-  const [chequeSheets, setChequeSheets] = useState<Set<ChequeSheetKey>>(
-    new Set(CHEQUE_SHEETS.map((s) => s.key)),
-  )
-  const [chequeExporting, setChequeExporting] = useState(false)
-  const [chequeStart, setChequeStart] = useState(formatDate(ninetyDaysAgo))
-  const [chequeEnd, setChequeEnd] = useState(formatDate(today))
+  const [salesStart, setSalesStart] = useState<Date>(thirtyDaysAgo)
+  const [salesEnd, setSalesEnd] = useState<Date>(today)
 
   // Daily Sales
   const [dailySalesSheets, setDailySalesSheets] = useState<
     Set<DailySalesSheetKey>
   >(new Set(DAILY_SALES_SHEETS.map((s) => s.key)))
   const [dailySalesExporting, setDailySalesExporting] = useState(false)
-  const [dailySalesStart, setDailySalesStart] = useState(
-    formatDate(thirtyDaysAgo),
-  )
-  const [dailySalesEnd, setDailySalesEnd] = useState(formatDate(today))
+  const [dailySalesStart, setDailySalesStart] = useState<Date>(thirtyDaysAgo)
+  const [dailySalesEnd, setDailySalesEnd] = useState<Date>(today)
 
-  // ── Toggles ────────────────────────────────────────
+  // Cheques
+  const [chequeSheets, setChequeSheets] = useState<Set<ChequeSheetKey>>(
+    new Set(CHEQUE_SHEETS.map((s) => s.key)),
+  )
+  const [chequeExporting, setChequeExporting] = useState(false)
+  const [chequeStart, setChequeStart] = useState<Date>(ninetyDaysAgo)
+  const [chequeEnd, setChequeEnd] = useState<Date>(today)
+
+  // -- Toggles --
   function toggle<K extends string>(
     set: Set<K>,
     setter: React.Dispatch<React.SetStateAction<Set<K>>>,
@@ -472,8 +719,7 @@ export function ExportCenter() {
     })
   }
 
-  // ── Export handlers (background via POST + WebSocket) ──
-  // Track which export type is currently generating
+  // -- WebSocket for export notifications --
   const pendingExportRef = useRef<string | null>(null)
 
   const onExportReady = useCallback((data: ExportWSData) => {
@@ -484,7 +730,6 @@ export function ExportCenter() {
       toast.error(data.title, { description: data.message })
     }
 
-    // Clear the loading state for the matching export type
     if (data.export_type === "inventory") setInvExporting(false)
     else if (data.export_type === "sales") setSalesExporting(false)
     else if (data.export_type === "cheques") setChequeExporting(false)
@@ -498,8 +743,8 @@ export function ExportCenter() {
     exportType: string,
     sheets: string,
     setExporting: (v: boolean) => void,
-    startDate?: string,
-    endDate?: string,
+    startDate?: Date,
+    endDate?: Date,
   ) => {
     setExporting(true)
     pendingExportRef.current = exportType
@@ -507,8 +752,8 @@ export function ExportCenter() {
       await api.post("/analytics/export/", {
         export_type: exportType,
         sheets,
-        ...(startDate && { start_date: startDate }),
-        ...(endDate && { end_date: endDate }),
+        ...(startDate && { start_date: toISODate(startDate) }),
+        ...(endDate && { end_date: toISODate(endDate) }),
       })
       toast.info("Export started", {
         description:
@@ -521,56 +766,18 @@ export function ExportCenter() {
     }
   }
 
-  const exportInventory = () => {
-    if (invSheets.size === 0) return
-    startExport("inventory", Array.from(invSheets).join(","), setInvExporting)
-  }
-
-  const exportSales = () => {
-    if (salesSheets.size === 0) return
-    startExport(
-      "sales",
-      Array.from(salesSheets).join(","),
-      setSalesExporting,
-      salesStart,
-      salesEnd,
-    )
-  }
-
-  const exportCheques = () => {
-    if (chequeSheets.size === 0) return
-    startExport(
-      "cheques",
-      Array.from(chequeSheets).join(","),
-      setChequeExporting,
-      chequeStart,
-      chequeEnd,
-    )
-  }
-
-  const exportDailySales = () => {
-    if (dailySalesSheets.size === 0) return
-    startExport(
-      "daily_sales",
-      Array.from(dailySalesSheets).join(","),
-      setDailySalesExporting,
-      dailySalesStart,
-      dailySalesEnd,
-    )
-  }
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 p-2.5">
-          <FileSpreadsheet className="size-5 text-white" />
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="shrink-0 rounded-lg sm:rounded-xl bg-linear-to-br from-blue-500 to-indigo-600 p-1.5 sm:p-2.5">
+          <FileSpreadsheet className="size-4 sm:size-5 text-white" />
         </div>
-        <div>
-          <h2 className="text-lg font-semibold">Export Center</h2>
-          <p className="text-xs text-muted-foreground">
-            Generate multi-sheet Excel reports for inventory, sales, and cheque
-            collections.
+        <div className="min-w-0">
+          <h2 className="text-sm sm:text-lg font-semibold">Export Center</h2>
+          <p className="text-[10px] sm:text-xs text-muted-foreground">
+            Generate multi-sheet Excel reports for inventory, sales, and
+            cheques.
           </p>
         </div>
       </div>
@@ -580,7 +787,7 @@ export function ExportCenter() {
         title="Inventory Report"
         description="Stock levels, purchasing insights, and inventory cleanup"
         icon={PackageX}
-        accentColor="bg-gradient-to-br from-red-500 to-orange-500"
+        accentColor="bg-linear-to-br from-red-500 to-orange-500"
         sheets={INVENTORY_SHEETS}
         selectedSheets={invSheets}
         onToggle={(k) => toggle(invSheets, setInvSheets, k)}
@@ -589,7 +796,14 @@ export function ExportCenter() {
         }
         onDeselectAll={() => setInvSheets(new Set())}
         isExporting={invExporting}
-        onExport={exportInventory}
+        onExport={() => {
+          if (invSheets.size === 0) return
+          startExport(
+            "inventory",
+            Array.from(invSheets).join(","),
+            setInvExporting,
+          )
+        }}
       />
 
       {/* Sales Export */}
@@ -597,7 +811,7 @@ export function ExportCenter() {
         title="Sales Report"
         description="Daily, monthly, quarterly breakdowns with payment analysis"
         icon={ShoppingCart}
-        accentColor="bg-gradient-to-br from-emerald-500 to-teal-600"
+        accentColor="bg-linear-to-br from-emerald-500 to-teal-600"
         sheets={SALES_SHEETS}
         selectedSheets={salesSheets}
         onToggle={(k) => toggle(salesSheets, setSalesSheets, k)}
@@ -606,7 +820,16 @@ export function ExportCenter() {
         }
         onDeselectAll={() => setSalesSheets(new Set())}
         isExporting={salesExporting}
-        onExport={exportSales}
+        onExport={() => {
+          if (salesSheets.size === 0) return
+          startExport(
+            "sales",
+            Array.from(salesSheets).join(","),
+            setSalesExporting,
+            salesStart,
+            salesEnd,
+          )
+        }}
         dateRange
         startDate={salesStart}
         endDate={salesEnd}
@@ -614,34 +837,12 @@ export function ExportCenter() {
         onEndDate={setSalesEnd}
       />
 
-      {/* Cheque Collections Export */}
+      {/* Daily Sales Per Stall */}
       <ExportSection
-        title="Cheque Collections Report"
-        description="Cheque tracking by status, bank, and collection date"
-        icon={Banknote}
-        accentColor="bg-gradient-to-br from-violet-500 to-purple-600"
-        sheets={CHEQUE_SHEETS}
-        selectedSheets={chequeSheets}
-        onToggle={(k) => toggle(chequeSheets, setChequeSheets, k)}
-        onSelectAll={() =>
-          setChequeSheets(new Set(CHEQUE_SHEETS.map((s) => s.key)))
-        }
-        onDeselectAll={() => setChequeSheets(new Set())}
-        isExporting={chequeExporting}
-        onExport={exportCheques}
-        dateRange
-        startDate={chequeStart}
-        endDate={chequeEnd}
-        onStartDate={setChequeStart}
-        onEndDate={setChequeEnd}
-      />
-
-      {/* Daily Sales Export */}
-      <ExportSection
-        title="Daily Sales Report"
-        description="Separate files per stall with 1 tab per day (Qty, Item, Amount)"
-        icon={CalendarDays}
-        accentColor="bg-gradient-to-br from-orange-500 to-amber-600"
+        title="Daily Sales Per Stall"
+        description="Separate file per stall with 1 tab per day (Qty, Item, Amount)"
+        icon={Store}
+        accentColor="bg-linear-to-br from-orange-500 to-amber-600"
         sheets={DAILY_SALES_SHEETS}
         selectedSheets={dailySalesSheets}
         onToggle={(k) => toggle(dailySalesSheets, setDailySalesSheets, k)}
@@ -650,13 +851,56 @@ export function ExportCenter() {
         }
         onDeselectAll={() => setDailySalesSheets(new Set())}
         isExporting={dailySalesExporting}
-        onExport={exportDailySales}
+        onExport={() => {
+          if (dailySalesSheets.size === 0) return
+          startExport(
+            "daily_sales",
+            Array.from(dailySalesSheets).join(","),
+            setDailySalesExporting,
+            dailySalesStart,
+            dailySalesEnd,
+          )
+        }}
         dateRange
         startDate={dailySalesStart}
         endDate={dailySalesEnd}
         onStartDate={setDailySalesStart}
         onEndDate={setDailySalesEnd}
       />
+
+      {/* Cheque Collections Export */}
+      <ExportSection
+        title="Cheque Collections Report"
+        description="Cheque tracking by status, bank, and collection date"
+        icon={Banknote}
+        accentColor="bg-linear-to-br from-violet-500 to-purple-600"
+        sheets={CHEQUE_SHEETS}
+        selectedSheets={chequeSheets}
+        onToggle={(k) => toggle(chequeSheets, setChequeSheets, k)}
+        onSelectAll={() =>
+          setChequeSheets(new Set(CHEQUE_SHEETS.map((s) => s.key)))
+        }
+        onDeselectAll={() => setChequeSheets(new Set())}
+        isExporting={chequeExporting}
+        onExport={() => {
+          if (chequeSheets.size === 0) return
+          startExport(
+            "cheques",
+            Array.from(chequeSheets).join(","),
+            setChequeExporting,
+            chequeStart,
+            chequeEnd,
+          )
+        }}
+        dateRange
+        startDate={chequeStart}
+        endDate={chequeEnd}
+        onStartDate={setChequeStart}
+        onEndDate={setChequeEnd}
+      />
+
+      {/* Bulk Item Pricing Update */}
+      <BulkItemUpdate />
     </div>
   )
 }

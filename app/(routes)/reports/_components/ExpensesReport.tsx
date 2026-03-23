@@ -1,7 +1,6 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
@@ -11,12 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Expense } from "@/lib/constants/interface"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import { useExpenses } from "@/lib/queries/useExpenses"
-import { ExportColumn, exportToCSV } from "@/lib/utils/export"
 import { formatDate } from "@/lib/utils/helpers/date"
-import { Download } from "lucide-react"
 import { useMemo } from "react"
 
 function peso(v: string | number) {
@@ -28,7 +24,7 @@ function peso(v: string | number) {
 
 function displayDate(d: string | Date | null | undefined) {
   if (!d) return "—"
-  return formatDate(typeof d === "string" ? new Date(d) : d, "MMM dd, yyyy")
+  return formatDate(typeof d === "string" ? new Date(d) : d, "MMMM dd, yyyy")
 }
 
 export function ExpensesReport() {
@@ -65,45 +61,33 @@ export function ExpensesReport() {
     return { totalExpenses, paidExpenses, categories }
   }, [expenses])
 
-  const handleExport = () => {
-    const cols: ExportColumn<Expense>[] = [
-      { header: "ID", accessor: (r) => r.id },
-      {
-        header: "Date",
-        accessor: (r) => displayDate(r.expense_date),
-      },
-      { header: "Category", accessor: (r) => r.category_data?.name ?? "" },
-      { header: "Description", accessor: (r) => r.description ?? "" },
-      { header: "Vendor", accessor: (r) => r.vendor ?? "" },
-      { header: "Total", accessor: (r) => Number(r.total_price ?? 0) },
-      { header: "Paid", accessor: (r) => Number(r.paid_amount ?? 0) },
-      { header: "Method", accessor: (r) => r.payment_method ?? "" },
-      { header: "Status", accessor: (r) => r.payment_status ?? "" },
-    ]
-    exportToCSV(expenses, cols, `expenses-report-${start_date}-${end_date}`)
-  }
-
   return (
     <div className="space-y-6">
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Total Expenses</p>
-            <p className="text-2xl font-bold text-rose-600">
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Total Expenses
+            </p>
+            <p className="text-lg sm:text-2xl font-bold text-rose-600">
               {peso(totalExpenses)}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Total Paid</p>
-            <p className="text-2xl font-bold">{peso(paidExpenses)}</p>
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Total Paid
+            </p>
+            <p className="text-lg sm:text-2xl font-bold">
+              {peso(paidExpenses)}
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Entries</p>
-            <p className="text-2xl font-bold">{expenses.length}</p>
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs sm:text-sm text-muted-foreground">Entries</p>
+            <p className="text-lg sm:text-2xl font-bold">{expenses.length}</p>
           </CardContent>
         </Card>
       </div>
@@ -139,19 +123,10 @@ export function ExpensesReport() {
 
         {/* Expense table */}
         <Card className="xl:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardHeader className="pb-3">
             <CardTitle className="text-base">
               Expense Records ({expenses.length})
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              disabled={!expenses.length}
-            >
-              <Download className="size-4 mr-1.5" />
-              Export CSV
-            </Button>
           </CardHeader>
           <CardContent>
             {isLoading ? (

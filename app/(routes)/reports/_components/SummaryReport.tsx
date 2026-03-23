@@ -1,7 +1,6 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
@@ -18,12 +17,10 @@ import {
   useTopClients,
   useTopSellingItems,
 } from "@/lib/queries/analytics/useGetAnalytics"
-import { ExportColumn, exportToCSV } from "@/lib/utils/export"
 import { formatDate } from "@/lib/utils/helpers/date"
 import {
   CreditCard,
   DollarSign,
-  Download,
   Package,
   ShoppingCart,
   TrendingDown,
@@ -41,7 +38,7 @@ function peso(v: string | number) {
 
 function displayDate(d: string | Date | null | undefined) {
   if (!d) return "—"
-  return formatDate(typeof d === "string" ? new Date(d) : d, "MMM dd, yyyy")
+  return formatDate(typeof d === "string" ? new Date(d) : d, "MMMM dd, yyyy")
 }
 
 export function SummaryReport() {
@@ -149,32 +146,20 @@ export function SummaryReport() {
     },
   ]
 
-  const handleExportSummary = () => {
-    if (!cashFlow?.length) return
-    const cols: ExportColumn<(typeof cashFlow)[0]>[] = [
-      { header: "Date", accessor: (r) => displayDate(r.date) },
-      { header: "Income", accessor: (r) => r.income },
-      { header: "Expense", accessor: (r) => r.expense },
-      {
-        header: "Net",
-        accessor: (r) => Number(r.income) - Number(r.expense),
-      },
-    ]
-    exportToCSV(cashFlow, cols, `cash-flow-report-${start_date}-${end_date}`)
-  }
-
   return (
     <div className="space-y-6">
       {/* KPI grid */}
-      <div className="grid md:grid-cols-2 2xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 2xl:grid-cols-4 gap-2 sm:gap-4">
         {kpis.map((kpi) => (
           <Card key={kpi.label}>
-            <CardContent className="p-5">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <kpi.icon className={`size-4 ${kpi.color}`} />
-                {kpi.label}
+            <CardContent className="p-3 sm:p-5">
+              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-sm text-muted-foreground mb-0.5 sm:mb-1">
+                <kpi.icon className={`size-3 sm:size-4 ${kpi.color}`} />
+                <span className="truncate">{kpi.label}</span>
               </div>
-              <p className="text-xl font-bold">{kpi.value}</p>
+              <p className="text-sm sm:text-xl font-bold truncate">
+                {kpi.value}
+              </p>
             </CardContent>
           </Card>
         ))}
@@ -184,28 +169,8 @@ export function SummaryReport() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top selling items */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardHeader className="pb-3">
             <CardTitle className="text-base">Top Selling Items</CardTitle>
-            {topItems && topItems.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const cols: ExportColumn<(typeof topItems)[0]>[] = [
-                    { header: "Item", accessor: (r) => r.item },
-                    { header: "Quantity", accessor: (r) => r.quantity },
-                  ]
-                  exportToCSV(
-                    topItems,
-                    cols,
-                    `top-items-${start_date}-${end_date}`,
-                  )
-                }}
-              >
-                <Download className="size-4 mr-1.5" />
-                CSV
-              </Button>
-            )}
           </CardHeader>
           <CardContent>
             {topItems?.length ? (
@@ -237,28 +202,8 @@ export function SummaryReport() {
 
         {/* Top clients */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardHeader className="pb-3">
             <CardTitle className="text-base">Top Clients</CardTitle>
-            {topClients && topClients.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const cols: ExportColumn<(typeof topClients)[0]>[] = [
-                    { header: "Client", accessor: (r) => r.client },
-                    { header: "Total Spent", accessor: (r) => r.total_spent },
-                  ]
-                  exportToCSV(
-                    topClients,
-                    cols,
-                    `top-clients-${start_date}-${end_date}`,
-                  )
-                }}
-              >
-                <Download className="size-4 mr-1.5" />
-                CSV
-              </Button>
-            )}
           </CardHeader>
           <CardContent>
             {topClients?.length ? (
@@ -293,17 +238,8 @@ export function SummaryReport() {
 
       {/* Cash flow export */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardHeader className="pb-3">
           <CardTitle className="text-base">Cash Flow Summary</CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportSummary}
-            disabled={!cashFlow?.length}
-          >
-            <Download className="size-4 mr-1.5" />
-            Export Cash Flow
-          </Button>
         </CardHeader>
         <CardContent>
           {cashFlow?.length ? (

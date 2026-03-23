@@ -1,7 +1,6 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
@@ -11,11 +10,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Service } from "@/lib/constants/interface"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import { useServices } from "@/lib/queries/services/useServices"
-import { ExportColumn, exportToCSV } from "@/lib/utils/export"
-import { Download } from "lucide-react"
+
 import { useMemo } from "react"
 
 function peso(v: string | number) {
@@ -82,74 +79,59 @@ export function ServicesReport() {
     }
   }, [services])
 
-  const handleExport = () => {
-    const cols: ExportColumn<Service>[] = [
-      { header: "ID", accessor: (r) => r.id },
-      { header: "Client", accessor: (r) => r.client?.full_name ?? "" },
-      { header: "Type", accessor: (r) => r.service_type ?? "" },
-      { header: "Mode", accessor: (r) => r.service_mode ?? "" },
-      { header: "Status", accessor: (r) => r.status ?? "" },
-      {
-        header: "Main Stall",
-        accessor: (r) => Number(r.main_stall_revenue ?? 0),
-      },
-      {
-        header: "Sub Stall",
-        accessor: (r) => Number(r.sub_stall_revenue ?? 0),
-      },
-      { header: "Revenue", accessor: (r) => Number(r.total_revenue ?? 0) },
-      { header: "Cost", accessor: (r) => Number(r.total_cost ?? 0) },
-      { header: "Paid", accessor: (r) => Number(r.total_paid ?? 0) },
-      { header: "Balance Due", accessor: (r) => Number(r.balance_due ?? 0) },
-      {
-        header: "Payment Status",
-        accessor: (r) => r.payment_status ?? "",
-      },
-    ]
-    exportToCSV(services, cols, `services-report-${start_date}-${end_date}`)
-  }
-
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Total Services</p>
-            <p className="text-2xl font-bold">{services.length}</p>
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Total Services
+            </p>
+            <p className="text-lg sm:text-2xl font-bold">{services.length}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Revenue</p>
-            <p className="text-2xl font-bold text-success">
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs sm:text-sm text-muted-foreground">Revenue</p>
+            <p className="text-lg sm:text-2xl font-bold text-success">
               {peso(totalRevenue)}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Main Stall</p>
-            <p className="text-xl font-bold">{peso(totalMainRevenue)}</p>
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Main Stall
+            </p>
+            <p className="text-base sm:text-xl font-bold">
+              {peso(totalMainRevenue)}
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Sub Stall</p>
-            <p className="text-xl font-bold">{peso(totalSubRevenue)}</p>
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Sub Stall
+            </p>
+            <p className="text-base sm:text-xl font-bold">
+              {peso(totalSubRevenue)}
+            </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Costs</p>
-            <p className="text-2xl font-bold text-rose-600">
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs sm:text-sm text-muted-foreground">Costs</p>
+            <p className="text-lg sm:text-2xl font-bold text-rose-600">
               {peso(totalCost)}
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-5">
-            <p className="text-sm text-muted-foreground">Collected</p>
-            <p className="text-2xl font-bold">{peso(totalPaid)}</p>
+          <CardContent className="p-3 sm:p-5">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Collected
+            </p>
+            <p className="text-lg sm:text-2xl font-bold">{peso(totalPaid)}</p>
           </CardContent>
         </Card>
       </div>
@@ -173,19 +155,10 @@ export function ServicesReport() {
 
       {/* Table */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardHeader className="pb-3">
           <CardTitle className="text-base">
             Service Records ({services.length})
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExport}
-            disabled={!services.length}
-          >
-            <Download className="size-4 mr-1.5" />
-            Export CSV
-          </Button>
         </CardHeader>
         <CardContent>
           {isLoading ? (

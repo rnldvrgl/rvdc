@@ -34,7 +34,7 @@ function StallFilter({ stalls }: { stalls: { id: number; name: string }[] }) {
         form.setValue("stall", v === "all" ? undefined : Number(v))
       }
     >
-      <SelectTrigger className="w-[180px]">
+      <SelectTrigger className="w-full sm:w-[180px]">
         <Store className="size-4 mr-2 text-muted-foreground" />
         <SelectValue placeholder="All Stalls" />
       </SelectTrigger>
@@ -87,9 +87,9 @@ export default function ReportsPage() {
           description="View financial reports, performance analytics, and export data to CSV."
           breadcrumbs={["Dashboard", "Reports"]}
           actionButton={
-            <div className="flex flex-col xl:flex-row items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
               <StallFilter stalls={stalls} />
-              <DateRangePicker classNames="mx-auto" />
+              <DateRangePicker classNames="w-full sm:w-auto" />
             </div>
           }
         />
@@ -98,21 +98,43 @@ export default function ReportsPage() {
           defaultValue="summary"
           className="space-y-6"
         >
-          <TabsList className="w-full md:w-auto">
-            <TabsTrigger value="summary">Summary</TabsTrigger>
-            <TabsTrigger value="sales">Sales</TabsTrigger>
-            <TabsTrigger value="expenses">Expenses</TabsTrigger>
-            {showServicesTab ? (
-              <TabsTrigger value="services">Services</TabsTrigger>
-            ) : null}
-            <TabsTrigger
-              value="export"
-              className="gap-1.5"
-            >
-              <Download className="size-3.5" />
-              Export
-            </TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto -mx-1 px-1">
+            <TabsList className="w-full sm:w-auto min-w-max">
+              <TabsTrigger
+                value="summary"
+                className="text-xs sm:text-sm"
+              >
+                Summary
+              </TabsTrigger>
+              <TabsTrigger
+                value="sales"
+                className="text-xs sm:text-sm"
+              >
+                Sales
+              </TabsTrigger>
+              <TabsTrigger
+                value="expenses"
+                className="text-xs sm:text-sm"
+              >
+                Expenses
+              </TabsTrigger>
+              {showServicesTab ? (
+                <TabsTrigger
+                  value="services"
+                  className="text-xs sm:text-sm"
+                >
+                  Services
+                </TabsTrigger>
+              ) : null}
+              <TabsTrigger
+                value="export"
+                className="gap-1 sm:gap-1.5 text-xs sm:text-sm"
+              >
+                <Download className="size-3 sm:size-3.5" />
+                Export
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="summary">
             <SummaryReport />
