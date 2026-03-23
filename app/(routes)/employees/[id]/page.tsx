@@ -191,9 +191,13 @@ const EmployeePage = () => {
         <Card className="shadow-md">
           <CardHeader className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
             <Avatar className="size-20 sm:size-24 border-2 border-primary shrink-0 text-2xl sm:text-3xl">
-              <AvatarImage src={employee.profile_image} alt={`${employee.first_name} ${employee.last_name}`} />
+              <AvatarImage
+                src={employee.profile_image}
+                alt={`${employee.first_name} ${employee.last_name}`}
+              />
               <AvatarFallback className="bg-primary/20 text-primary font-bold">
-                {employee.first_name?.[0]}{employee.last_name?.[0]}
+                {employee.first_name?.[0]}
+                {employee.last_name?.[0]}
               </AvatarFallback>
             </Avatar>
             <div className="space-y-2 text-center sm:text-left flex-1">

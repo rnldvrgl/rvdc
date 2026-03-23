@@ -30,9 +30,18 @@ export const UserProfile = ({ user }: Props) => {
         )}
       >
         <span className="flex items-center gap-3">
-          <Avatar className="size-8 border" aria-hidden="true">
-            <AvatarImage src={displayImage} alt="user" />
-            <AvatarFallback className="text-xs">{user?.first_name?.[0]}{user?.last_name?.[0]}</AvatarFallback>
+          <Avatar
+            className="size-8 border"
+            aria-hidden="true"
+          >
+            <AvatarImage
+              src={displayImage}
+              alt="user"
+            />
+            <AvatarFallback className="text-xs">
+              {user?.first_name?.[0]}
+              {user?.last_name?.[0]}
+            </AvatarFallback>
           </Avatar>
           <span>
             {user ? concatString(user.first_name, user.last_name) : "Guest"}

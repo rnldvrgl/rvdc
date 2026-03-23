@@ -2,6 +2,7 @@
 
 import NotificationArea from "@/components/custom/navigation/NotificationArea"
 import DropdownModeToggle from "@/components/custom/theme/DropdownModeToggle"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -94,8 +94,14 @@ export function Navbar({ user }: { user: User | null }) {
               {user ? (
                 <>
                   <Avatar className="size-8 ring-2 ring-primary/10">
-                    <AvatarImage src={displayImage} alt={`${user.first_name} ${user.last_name}`} />
-                    <AvatarFallback className="text-xs">{user.first_name?.[0]}{user.last_name?.[0]}</AvatarFallback>
+                    <AvatarImage
+                      src={displayImage}
+                      alt={`${user.first_name} ${user.last_name}`}
+                    />
+                    <AvatarFallback className="text-xs">
+                      {user.first_name?.[0]}
+                      {user.last_name?.[0]}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-start min-w-0">
                     <span className="text-sm font-semibold text-foreground truncate leading-tight">
@@ -126,8 +132,14 @@ export function Navbar({ user }: { user: User | null }) {
             {user && (
               <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
                 <Avatar className="size-9 ring-2 ring-primary/10">
-                  <AvatarImage src={displayImage} alt={`${user.first_name} ${user.last_name}`} />
-                  <AvatarFallback className="text-xs">{user.first_name?.[0]}{user.last_name?.[0]}</AvatarFallback>
+                  <AvatarImage
+                    src={displayImage}
+                    alt={`${user.first_name} ${user.last_name}`}
+                  />
+                  <AvatarFallback className="text-xs">
+                    {user.first_name?.[0]}
+                    {user.last_name?.[0]}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold truncate">

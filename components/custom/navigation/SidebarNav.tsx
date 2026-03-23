@@ -265,8 +265,14 @@ export default function SidebarNav({
       <div className="lg:hidden flex h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] items-center justify-between bg-sidebar border-b border-sidebar-border/50 px-4">
         <div className="flex items-center gap-3">
           <Avatar className="size-8 ring-2 ring-primary/10">
-            <AvatarImage src={getDisplayImage(user?.profile_image)} alt={user ? `${user.first_name} ${user.last_name}` : "User"} />
-            <AvatarFallback className="text-xs">{user?.first_name?.[0]}{user?.last_name?.[0]}</AvatarFallback>
+            <AvatarImage
+              src={getDisplayImage(user?.profile_image)}
+              alt={user ? `${user.first_name} ${user.last_name}` : "User"}
+            />
+            <AvatarFallback className="text-xs">
+              {user?.first_name?.[0]}
+              {user?.last_name?.[0]}
+            </AvatarFallback>
           </Avatar>
           <AnimatePresence>
             {user ? (

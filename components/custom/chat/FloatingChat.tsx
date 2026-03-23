@@ -1,10 +1,10 @@
 "use client"
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { type ChatMessage, useChat } from "@/lib/hooks/useChat"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import useChatStore from "@/lib/store/useChatStore"
@@ -83,7 +83,10 @@ function UserAvatar({
   return (
     <div className="relative shrink-0">
       <Avatar className={cn(sizeClass)}>
-        <AvatarImage src={image} alt={name} />
+        <AvatarImage
+          src={image}
+          alt={name}
+        />
         <AvatarFallback
           className={cn(
             "font-semibold text-white",
