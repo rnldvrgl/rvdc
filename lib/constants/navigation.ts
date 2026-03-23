@@ -2,6 +2,7 @@ import { NavigationEntry } from "@/lib/constants/types"
 import {
   AlertTriangle,
   Banknote,
+  BarChart3,
   Boxes,
   Cake,
   CalendarClock,
@@ -287,6 +288,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         href: "/inventory/custom-items",
         icon: LayoutList,
         permission: "view_items",
+      },
+      {
+        name: "Reports",
+        href: "/inventory/reports",
+        icon: BarChart3,
+        permission: "manage_stockroom",
       },
     ],
   },
