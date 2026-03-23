@@ -8,7 +8,6 @@ import { type ChatMessage, useChat } from "@/lib/hooks/useChat"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { getAudioContext } from "@/lib/utils/audioContext"
 import { cn } from "@/lib/utils/helpers"
-import { formatDistanceToNow } from "date-fns"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   ArrowLeft,
@@ -163,9 +162,25 @@ function formatChatTime(ts: number): string {
   )
 }
 
+function formatCompactTime(ts: number): string {
+  const diffMs = Date.now() - ts * 1000
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  if (diffMins < 1) return "now"
+  if (diffMins < 60) return `${diffMins}m`
+  if (diffHours < 24) return `${diffHours}h`
+  if (diffDays < 7) return `${diffDays}d`
+  return new Date(ts * 1000).toLocaleDateString([], {
+    month: "short",
+    day: "numeric",
+  })
+}
+
 function formatLastSeen(ts: number | null | undefined): string {
   if (!ts) return "Offline"
-  return formatDistanceToNow(new Date(ts * 1000), { addSuffix: true })
+  const compact = formatCompactTime(ts)
+  return compact === "now" ? "Just now" : `${compact} ago`
 }
 
 // ── Chat Bubble (FAB) ────────────────────────────────────────────────
@@ -295,19 +310,15 @@ function UserList({
                     )}
                   </div>
                   {user.last_message && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 min-w-0">
                       {user.last_message.from === currentUserId && (
                         <MessageStatusMuted seen={seenBy.has(user.id)} />
                       )}
-                      <p className="text-xs text-muted-foreground truncate flex-1">
-                        {user.last_message.body.slice(0, 30)}
-                        {user.last_message.body.length > 30 ? "..." : ""}
+                      <p className="text-xs text-muted-foreground truncate min-w-0 flex-1">
+                        {user.last_message.body}
                       </p>
-                      <span className="text-[10px] text-muted-foreground/60 shrink-0">
-                        {formatDistanceToNow(
-                          new Date(user.last_message.ts * 1000),
-                          { addSuffix: false },
-                        )}
+                      <span className="text-[10px] text-muted-foreground/60 shrink-0 ml-auto">
+                        {formatCompactTime(user.last_message.ts)}
                       </span>
                     </div>
                   )}

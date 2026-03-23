@@ -53,6 +53,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const reconnectAttemptRef = useRef(0)
+  const heartbeatRef = useRef<ReturnType<typeof setInterval>>(undefined)
   const callbackRef = useRef(onMessage)
   callbackRef.current = onMessage
 
@@ -108,6 +109,13 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
       reconnectAttemptRef.current = 0
       // Request presence on connect
       ws.send(JSON.stringify({ action: "presence" }))
+      // Start heartbeat (every 30s) to keep presence alive
+      clearInterval(heartbeatRef.current)
+      heartbeatRef.current = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ action: "ping" }))
+        }
+      }, 30_000)
       // Flush any pending history request (e.g., user opened a chat before WS was ready)
       if (pendingHistoryRef.current !== null) {
         setLoadingHistory(true)
@@ -205,6 +213,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
 
     ws.onclose = (event) => {
       setConnected(false)
+      clearInterval(heartbeatRef.current)
       if (event.code === 4001) {
         refreshAccessToken().then((ok) => {
           if (ok) {
@@ -303,6 +312,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
     connect()
     return () => {
       clearTimeout(reconnectTimer.current)
+      clearInterval(heartbeatRef.current)
       if (wsRef.current) {
         wsRef.current.close()
       }
