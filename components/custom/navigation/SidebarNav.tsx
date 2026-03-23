@@ -3,6 +3,7 @@
 import NavList from "@/components/custom/navigation/NavList"
 import NotificationArea from "@/components/custom/navigation/NotificationArea"
 import { DeveloperCredit } from "@/components/custom/shared/DeveloperCredit"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -263,13 +264,16 @@ export default function SidebarNav({
       {/* Small screens - Mobile top bar */}
       <div className="lg:hidden flex h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] items-center justify-between bg-sidebar border-b border-sidebar-border/50 px-4">
         <div className="flex items-center gap-3">
-          <Image
-            src={getDisplayImage(user?.profile_image)}
-            alt={user ? `${user.first_name} ${user.last_name}` : "User"}
-            width={32}
-            height={32}
-            className="size-8 rounded-full object-cover ring-2 ring-primary/10"
-          />
+          <Avatar className="size-8 ring-2 ring-primary/10">
+            <AvatarImage
+              src={getDisplayImage(user?.profile_image)}
+              alt={user ? `${user.first_name} ${user.last_name}` : "User"}
+            />
+            <AvatarFallback className="text-xs">
+              {user?.first_name?.[0]}
+              {user?.last_name?.[0]}
+            </AvatarFallback>
+          </Avatar>
           <AnimatePresence>
             {user ? (
               <motion.span

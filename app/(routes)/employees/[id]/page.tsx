@@ -10,6 +10,7 @@ import { AddManualDeductionForm } from "@/components/forms/AddManualDeductionFor
 import { CashAdvanceForm } from "@/components/forms/CashAdvanceForm"
 import { EmployeeBenefitOverrideForm } from "@/components/forms/EmployeeBenefitOverrideForm"
 import EmployeeForm from "@/components/forms/EmployeeForm"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -52,7 +53,6 @@ import {
   User,
   Wallet,
 } from "lucide-react"
-import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
 import { useState } from "react"
 import { getCashAdvanceColumns } from "./cashAdvanceColumns"
@@ -190,22 +190,16 @@ const EmployeePage = () => {
         {/* PROFILE HEADER */}
         <Card className="shadow-md">
           <CardHeader className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-            {employee.profile_image ? (
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-2 border-primary shrink-0">
-                <Image
-                  src={employee.profile_image}
-                  alt={`${employee.first_name} ${employee.last_name}`}
-                  width={96}
-                  height={96}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-            ) : (
-              <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-primary/20 text-primary flex items-center justify-center text-2xl sm:text-3xl font-bold shrink-0">
+            <Avatar className="size-20 sm:size-24 border-2 border-primary shrink-0 text-2xl sm:text-3xl">
+              <AvatarImage
+                src={employee.profile_image}
+                alt={`${employee.first_name} ${employee.last_name}`}
+              />
+              <AvatarFallback className="bg-primary/20 text-primary font-bold">
                 {employee.first_name?.[0]}
                 {employee.last_name?.[0]}
-              </div>
-            )}
+              </AvatarFallback>
+            </Avatar>
             <div className="space-y-2 text-center sm:text-left flex-1">
               <h1 className="text-xl sm:text-2xl font-bold wrap-break-word">
                 {employee.first_name} {employee.last_name}

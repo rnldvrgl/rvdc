@@ -1,5 +1,6 @@
 "use client"
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -21,7 +22,6 @@ import {
   Smile,
   X,
 } from "lucide-react"
-import Image from "next/image"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 const ROLE_COLORS: Record<string, string> = {
@@ -82,25 +82,20 @@ function UserAvatar({
 
   return (
     <div className="relative shrink-0">
-      {image ? (
-        <Image
+      <Avatar className={cn(sizeClass)}>
+        <AvatarImage
           src={image}
           alt={name}
-          width={size === "lg" ? 48 : size === "md" ? 40 : 32}
-          height={size === "lg" ? 48 : size === "md" ? 40 : 32}
-          className={cn(sizeClass, "rounded-full object-cover")}
         />
-      ) : (
-        <div
+        <AvatarFallback
           className={cn(
-            sizeClass,
-            "rounded-full flex items-center justify-center font-semibold text-white",
+            "font-semibold text-white",
             ROLE_COLORS[role] || "bg-gray-500",
           )}
         >
           {initials}
-        </div>
-      )}
+        </AvatarFallback>
+      </Avatar>
       {isOnline !== undefined && (
         <span
           className={cn(
