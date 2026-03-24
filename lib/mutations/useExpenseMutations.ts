@@ -16,7 +16,10 @@ export function useExpenseMutations() {
   const analyticsKeys = [["summary"], ["expenses_over_time"], ["cash_flow"]]
 
   const addExpense = useApiMutation({
-    mutationFn: (data: ExpensePayload) => api.post(url, data),
+    mutationFn: (data: ExpensePayload) =>
+      api.post(url, data, {
+        headers: { "Idempotency-Key": crypto.randomUUID() },
+      }),
     successMessage: "Expense created successfully.",
     invalidateQueries: [
       { queryKey: ["expenses"] },

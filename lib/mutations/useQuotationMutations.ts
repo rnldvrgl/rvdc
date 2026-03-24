@@ -10,7 +10,10 @@ export function useQuotationMutations() {
   const url = "quotations/"
 
   const addQuotation = useApiMutation({
-    mutationFn: (data: QuotationPayload) => api.post(url, data),
+    mutationFn: (data: QuotationPayload) =>
+      api.post(url, data, {
+        headers: { "Idempotency-Key": crypto.randomUUID() },
+      }),
     successMessage: "Quotation created successfully.",
     invalidateQueries: [{ queryKey: ["quotations"] }],
   })

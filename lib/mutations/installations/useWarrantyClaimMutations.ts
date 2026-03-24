@@ -15,7 +15,10 @@ export function useWarrantyClaimMutations() {
   const url = "installations/warranty-claims/"
 
   const addWarrantyClaim = useApiMutation({
-    mutationFn: (data: WarrantyClaimCreatePayload) => api.post(url, data),
+    mutationFn: (data: WarrantyClaimCreatePayload) =>
+      api.post(url, data, {
+        headers: { "Idempotency-Key": crypto.randomUUID() },
+      }),
     successMessage: "Warranty claim created successfully.",
     invalidateQueries: [
       { queryKey: ["warranty-claims"] },

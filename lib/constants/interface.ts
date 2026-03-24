@@ -448,7 +448,7 @@ export interface SalesTransaction {
   voided_at?: string | null
   void_reason?: string | null
 
-  transaction_type?: "sale" | "replacement" | "pull_out"
+  transaction_type?: "sale" | "replacement" | "pull_out" | "service"
   note?: string | null
 
   is_deleted: boolean

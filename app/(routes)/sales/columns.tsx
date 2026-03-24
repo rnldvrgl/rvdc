@@ -70,7 +70,11 @@ export function getSalesTransactionColumns({
             variant="secondary"
             className="text-[10px]"
           >
-            {type === "replacement" ? "Replacement" : "Sale"}
+            {type === "replacement"
+              ? "Replacement"
+              : type === "service"
+                ? "Service"
+                : "Sale"}
           </Badge>
         )
       },
