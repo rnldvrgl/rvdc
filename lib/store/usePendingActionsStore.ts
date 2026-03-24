@@ -5,6 +5,9 @@ export type PendingActionType =
   | "maintenance"
   | "bulk_update"
   | "client_bulk_update"
+  | "holiday_bulk_update"
+  | "aircon_model_bulk_update"
+  | "employee_bulk_update"
 
 export interface PendingAction {
   id: string

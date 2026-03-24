@@ -23,23 +23,30 @@ import {
 } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   ExportWSData,
   useNotificationWebSocket,
 } from "@/lib/hooks/useNotificationWebSocket"
+import { useAirconModelMutations } from "@/lib/mutations/installations/useAirconModelMutations"
+import { useHolidayMutations } from "@/lib/mutations/payroll/holidays/useHolidayMutations"
 import { useClientMutations } from "@/lib/mutations/useClientMutations"
+import { useEmployeeMutations } from "@/lib/mutations/useEmployeeMutations"
 import { useItemMutations } from "@/lib/mutations/useItemMutations"
-import usePendingActionsStore from "@/lib/store/usePendingActionsStore"
+import usePendingActionsStore, {
+  type PendingActionType,
+} from "@/lib/store/usePendingActionsStore"
 import api from "@/lib/utils/api"
 import {
   AlertTriangle,
   ArrowRight,
+  CalendarDays,
   CheckCircle2,
   Download,
   Loader2,
   Package,
+  Snowflake,
   Upload,
+  UserCog,
   Users,
 } from "lucide-react"
 import { useCallback, useRef, useState } from "react"
@@ -79,6 +86,7 @@ function BulkUpdateSection({
   updateMutation,
   accentFrom,
   accentTo,
+  icon: Icon,
 }: {
   title: string
   description: string
@@ -97,6 +105,7 @@ function BulkUpdateSection({
   }
   accentFrom: string
   accentTo: string
+  icon?: React.ElementType
 }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [downloading, setDownloading] = useState(false)
@@ -185,7 +194,11 @@ function BulkUpdateSection({
               <div
                 className={`shrink-0 rounded-lg sm:rounded-xl p-1.5 sm:p-2.5 bg-linear-to-br ${accentFrom} ${accentTo}`}
               >
-                <Upload className="size-3.5 sm:size-5 text-white" />
+                {Icon ? (
+                  <Icon className="size-3.5 sm:size-5 text-white" />
+                ) : (
+                  <Upload className="size-3.5 sm:size-5 text-white" />
+                )}
               </div>
               <div className="min-w-0">
                 <CardTitle className="text-sm sm:text-base">{title}</CardTitle>
@@ -417,70 +430,169 @@ function BulkUpdateSection({
   )
 }
 
+// -- Category config --
+type CategoryConfig = {
+  key: string
+  exportType: string
+  pendingType: PendingActionType
+  pendingLabel: string
+  title: string
+  description: string
+  templateEndpoint: string
+  templateFilename: string
+  accentFrom: string
+  accentTo: string
+}
+
+const CATEGORIES: CategoryConfig[] = [
+  {
+    key: "items",
+    exportType: "bulk_update",
+    pendingType: "bulk_update",
+    pendingLabel: "Bulk Item Update",
+    title: "Items",
+    description:
+      "Update item names and pricing columns (cost, retail, wholesale, technician).",
+    templateEndpoint: "/inventory/items/bulk-template/",
+    templateFilename: "item_pricing_template.xlsx",
+    accentFrom: "from-cyan-500",
+    accentTo: "to-blue-600",
+  },
+  {
+    key: "clients",
+    exportType: "client_bulk_update",
+    pendingType: "client_bulk_update",
+    pendingLabel: "Bulk Client Update",
+    title: "Clients",
+    description:
+      "Update client contact info, province, city, barangay, and address.",
+    templateEndpoint: "/clients/bulk-template/",
+    templateFilename: "client_update_template.xlsx",
+    accentFrom: "from-emerald-500",
+    accentTo: "to-teal-600",
+  },
+  {
+    key: "holidays",
+    exportType: "holiday_bulk_update",
+    pendingType: "holiday_bulk_update",
+    pendingLabel: "Bulk Holiday Update",
+    title: "Holidays",
+    description:
+      "Update holiday dates, names, and types (regular / special non-working).",
+    templateEndpoint: "/payroll/holidays/bulk-template/",
+    templateFilename: "holiday_template.xlsx",
+    accentFrom: "from-amber-500",
+    accentTo: "to-orange-600",
+  },
+  {
+    key: "aircon_models",
+    exportType: "aircon_model_bulk_update",
+    pendingType: "aircon_model_bulk_update",
+    pendingLabel: "Bulk Aircon Model Update",
+    title: "Aircon Models",
+    description: "Update aircon model pricing, warranty months, and details.",
+    templateEndpoint: "/installations/aircon-models/bulk-template/",
+    templateFilename: "aircon_model_template.xlsx",
+    accentFrom: "from-sky-500",
+    accentTo: "to-indigo-600",
+  },
+  {
+    key: "employees",
+    exportType: "employee_bulk_update",
+    pendingType: "employee_bulk_update",
+    pendingLabel: "Bulk Employee Update",
+    title: "Employees",
+    description:
+      "Update employee names, roles, contact info, salary, and government IDs.",
+    templateEndpoint: "/users/employees/bulk-template/",
+    templateFilename: "employee_template.xlsx",
+    accentFrom: "from-violet-500",
+    accentTo: "to-purple-600",
+  },
+]
+
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  items: Package,
+  clients: Users,
+  holidays: CalendarDays,
+  aircon_models: Snowflake,
+  employees: UserCog,
+}
+
 // -- Main Page --
 export default function BulkUpdatePage() {
   const addPendingAction = usePendingActionsStore((s) => s.addAction)
   const removePendingAction = usePendingActionsStore((s) => s.removeAction)
 
-  // Items
+  // Mutations
   const { bulkPreview: itemBulkPreview, bulkUpdate: itemBulkUpdate } =
     useItemMutations()
-  const [itemResult, setItemResult] = useState<BulkUpdateResult | null>(null)
-  const [itemProcessing, setItemProcessing] = useState(false)
-  const itemActionIdRef = useRef<string | null>(null)
-
-  // Clients
   const { bulkPreview: clientBulkPreview, bulkUpdate: clientBulkUpdate } =
     useClientMutations()
-  const [clientResult, setClientResult] = useState<BulkUpdateResult | null>(
-    null,
-  )
-  const [clientProcessing, setClientProcessing] = useState(false)
-  const clientActionIdRef = useRef<string | null>(null)
+  const { bulkPreview: holidayBulkPreview, bulkUpdate: holidayBulkUpdate } =
+    useHolidayMutations()
+  const {
+    bulkPreview: airconModelBulkPreview,
+    bulkUpdate: airconModelBulkUpdate,
+  } = useAirconModelMutations()
+  const { bulkPreview: employeeBulkPreview, bulkUpdate: employeeBulkUpdate } =
+    useEmployeeMutations()
 
-  // WebSocket handler for bulk update notifications
+  const mutations: Record<
+    string,
+    {
+      preview: {
+        mutateAsync: (d: FormData) => Promise<unknown>
+        isPending: boolean
+      }
+      update: {
+        mutateAsync: (d: FormData) => Promise<unknown>
+        isPending: boolean
+      }
+    }
+  > = {
+    items: { preview: itemBulkPreview, update: itemBulkUpdate },
+    clients: { preview: clientBulkPreview, update: clientBulkUpdate },
+    holidays: { preview: holidayBulkPreview, update: holidayBulkUpdate },
+    aircon_models: {
+      preview: airconModelBulkPreview,
+      update: airconModelBulkUpdate,
+    },
+    employees: { preview: employeeBulkPreview, update: employeeBulkUpdate },
+  }
+
+  // Per-category state
+  const [results, setResults] = useState<
+    Record<string, BulkUpdateResult | null>
+  >({})
+  const [processing, setProcessing] = useState<Record<string, boolean>>({})
+  const actionIdRefs = useRef<Record<string, string | null>>({})
+
+  // WebSocket handler
   const onExportReady = useCallback(
     (data: ExportWSData) => {
-      if (data.export_type === "bulk_update") {
-        setItemProcessing(false)
-        if (itemActionIdRef.current) {
-          removePendingAction(itemActionIdRef.current)
-          itemActionIdRef.current = null
-        }
-        if (data.event === "export_ready" && data.result) {
-          setItemResult(data.result)
-          if (data.result.updated > 0) {
-            toast.success(data.title, { description: data.message })
-          } else if (data.result.errors.length > 0) {
-            toast.warning(data.title, { description: data.message })
-          } else {
-            toast.info("No changes detected.")
-          }
-        } else if (data.event === "export_failed") {
-          toast.error(data.title, { description: data.message })
-        }
-        return
+      const category = CATEGORIES.find((c) => c.exportType === data.export_type)
+      if (!category) return
+
+      setProcessing((prev) => ({ ...prev, [category.key]: false }))
+      const actionId = actionIdRefs.current[category.key]
+      if (actionId) {
+        removePendingAction(actionId)
+        actionIdRefs.current[category.key] = null
       }
 
-      if (data.export_type === "client_bulk_update") {
-        setClientProcessing(false)
-        if (clientActionIdRef.current) {
-          removePendingAction(clientActionIdRef.current)
-          clientActionIdRef.current = null
+      if (data.event === "export_ready" && data.result) {
+        const result = data.result as BulkUpdateResult
+        setResults((prev) => ({ ...prev, [category.key]: result }))
+        if (result.updated > 0) {
+          toast.success(data.title, { description: data.message })
+        } else if (result.errors.length > 0) {
+          toast.warning(data.title, { description: data.message })
+        } else {
+          toast.info("No changes detected.")
         }
-        if (data.event === "export_ready" && data.result) {
-          setClientResult(data.result)
-          if (data.result.updated > 0) {
-            toast.success(data.title, { description: data.message })
-          } else if (data.result.errors.length > 0) {
-            toast.warning(data.title, { description: data.message })
-          } else {
-            toast.info("No changes detected.")
-          }
-        } else if (data.event === "export_failed") {
-          toast.error(data.title, { description: data.message })
-        }
-        return
+      } else if (data.event === "export_failed") {
+        toast.error(data.title, { description: data.message })
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -498,73 +610,32 @@ export default function BulkUpdatePage() {
         isAdminOnly
       />
 
-      <Tabs
-        defaultValue="items"
-        className="space-y-4"
-      >
-        <TabsList>
-          <TabsTrigger
-            value="items"
-            className="gap-1.5"
-          >
-            <Package className="size-3.5" />
-            Items
-          </TabsTrigger>
-          <TabsTrigger
-            value="clients"
-            className="gap-1.5"
-          >
-            <Users className="size-3.5" />
-            Clients
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="items">
+      <div className="space-y-4">
+        {CATEGORIES.map((cat) => (
           <BulkUpdateSection
-            title="Bulk Item Pricing Update"
-            description="Download an XLSX template, edit prices, and re-upload to update items in bulk."
-            templateEndpoint="/inventory/items/bulk-template/"
-            templateFilename="item_pricing_template.xlsx"
-            result={itemResult}
-            processing={itemProcessing}
+            key={cat.key}
+            title={cat.title}
+            description={cat.description}
+            templateEndpoint={cat.templateEndpoint}
+            templateFilename={cat.templateFilename}
+            result={results[cat.key] ?? null}
+            processing={processing[cat.key] ?? false}
             onUploadStarted={() => {
-              setItemProcessing(true)
-              setItemResult(null)
-              itemActionIdRef.current = addPendingAction(
-                "bulk_update",
-                "Bulk Price Update",
+              setProcessing((prev) => ({ ...prev, [cat.key]: true }))
+              setResults((prev) => ({ ...prev, [cat.key]: null }))
+              actionIdRefs.current[cat.key] = addPendingAction(
+                cat.pendingType,
+                cat.pendingLabel,
               )
             }}
-            previewMutation={itemBulkPreview}
-            updateMutation={itemBulkUpdate}
-            accentFrom="from-cyan-500"
-            accentTo="to-blue-600"
+            previewMutation={mutations[cat.key].preview}
+            updateMutation={mutations[cat.key].update}
+            accentFrom={cat.accentFrom}
+            accentTo={cat.accentTo}
+            icon={CATEGORY_ICONS[cat.key]}
           />
-        </TabsContent>
-
-        <TabsContent value="clients">
-          <BulkUpdateSection
-            title="Bulk Client Update"
-            description="Download an XLSX template, edit client details, and re-upload to update clients in bulk."
-            templateEndpoint="/clients/bulk-template/"
-            templateFilename="client_update_template.xlsx"
-            result={clientResult}
-            processing={clientProcessing}
-            onUploadStarted={() => {
-              setClientProcessing(true)
-              setClientResult(null)
-              clientActionIdRef.current = addPendingAction(
-                "client_bulk_update",
-                "Bulk Client Update",
-              )
-            }}
-            previewMutation={clientBulkPreview}
-            updateMutation={clientBulkUpdate}
-            accentFrom="from-emerald-500"
-            accentTo="to-teal-600"
-          />
-        </TabsContent>
-      </Tabs>
+        ))}
+      </div>
     </Wrapper>
   )
 }

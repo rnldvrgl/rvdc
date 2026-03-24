@@ -44,5 +44,31 @@ export function useEmployeeMutations() {
     },
   })
 
-  return { addEmployee, updateEmployee, deleteEmployee }
+  const bulkPreview = useApiMutation<FormData, unknown>({
+    mutationFn: (formData) =>
+      api.post("/users/employees/bulk-preview/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    usePromiseToast: true,
+    loadingMessage: "Analyzing file...",
+  })
+
+  const bulkUpdate = useApiMutation<FormData, unknown>({
+    mutationFn: (formData) =>
+      api.post("/users/employees/bulk-update/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    usePromiseToast: true,
+    loadingMessage: "Processing bulk update...",
+    successMessage: "Bulk update started. You will be notified when it's done.",
+    invalidateQueries: sharedInvalidations,
+  })
+
+  return {
+    addEmployee,
+    updateEmployee,
+    deleteEmployee,
+    bulkPreview,
+    bulkUpdate,
+  }
 }
