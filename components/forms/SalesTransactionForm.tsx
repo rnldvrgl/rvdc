@@ -124,7 +124,9 @@ export default function SalesTransactionForm({
       client_id: initialData?.client?.id,
       note: initialData?.note ?? "",
       manual_receipt_number: initialData?.manual_receipt_number ?? "",
-      transaction_date: initialData?.transaction_date ?? "",
+      transaction_date:
+        initialData?.transaction_date ??
+        (initialData?.created_at ? initialData.created_at.slice(0, 10) : ""),
       order_discount: Number(initialData?.order_discount || 0),
       payments:
         initialData?.payments?.map((i) => ({
@@ -789,7 +791,7 @@ export default function SalesTransactionForm({
               type="submit"
               className="w-full"
               disabled={
-                !form.formState.isDirty ||
+                (!initialData && !form.formState.isDirty) ||
                 form.formState.isSubmitting ||
                 !form.formState.isValid
               }
