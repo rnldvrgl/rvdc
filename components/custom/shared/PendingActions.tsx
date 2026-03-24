@@ -35,9 +35,7 @@ function ActionItem({ action }: { action: PendingAction }) {
       className="flex items-center gap-2 px-3 py-2 text-sm"
     >
       <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
-      <span className="truncate flex-1 text-foreground/90">
-        {action.label}
-      </span>
+      <span className="truncate flex-1 text-foreground/90">{action.label}</span>
       <span className="text-xs text-muted-foreground tabular-nums shrink-0">
         {elapsed}
       </span>
@@ -68,8 +66,7 @@ export function PendingActions() {
       >
         <Loader2 className="size-4 animate-spin text-primary" />
         <span className="text-sm font-medium flex-1 text-left">
-          {actions.length} pending{" "}
-          {actions.length === 1 ? "action" : "actions"}
+          {actions.length} pending {actions.length === 1 ? "action" : "actions"}
         </span>
         <ChevronDown
           className={cn(
@@ -91,7 +88,10 @@ export function PendingActions() {
             <div className="divide-y divide-border max-h-48 overflow-y-auto">
               <AnimatePresence mode="popLayout">
                 {actions.map((action) => (
-                  <ActionItem key={action.id} action={action} />
+                  <ActionItem
+                    key={action.id}
+                    action={action}
+                  />
                 ))}
               </AnimatePresence>
             </div>
