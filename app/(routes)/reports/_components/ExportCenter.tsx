@@ -236,36 +236,22 @@ const CHEQUE_SHEETS = [
 // -- BIR 2307 Sheets --
 const BIR_2307_SHEETS = [
   {
-    key: "daily_summary",
-    label: "Daily Summary",
-    description: "Receipt # and amounts grouped by day",
-    icon: CalendarDays,
+    key: "main_stall",
+    label: "BIR 2307 - Main Stall",
+    description:
+      "Services with receipt numbers (daily/monthly/quarterly/yearly)",
+    icon: Store,
     color: "text-emerald-500",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
   },
   {
-    key: "monthly_summary",
-    label: "Monthly Summary",
-    description: "Receipt # and amounts grouped by month",
-    icon: BarChart3,
+    key: "sub_stall",
+    label: "BIR 2307 - Sub Stall",
+    description:
+      "Direct sales with receipt numbers (daily/monthly/quarterly/yearly)",
+    icon: Store,
     color: "text-blue-500",
     bgColor: "bg-blue-50 dark:bg-blue-950/20",
-  },
-  {
-    key: "quarterly_summary",
-    label: "Quarterly Summary",
-    description: "Receipt # and amounts grouped by quarter",
-    icon: TrendingUp,
-    color: "text-violet-500",
-    bgColor: "bg-violet-50 dark:bg-violet-950/20",
-  },
-  {
-    key: "yearly_summary",
-    label: "Yearly Summary",
-    description: "Receipt # and amounts grouped by year",
-    icon: Landmark,
-    color: "text-cyan-500",
-    bgColor: "bg-cyan-50 dark:bg-cyan-950/20",
   },
 ] as const
 
@@ -1184,7 +1170,7 @@ export function ExportCenter() {
       {/* BIR 2307 Sales Report */}
       <ExportSection
         title="BIR 2307 Sales Report"
-        description="Receipted service and sub stall sales for BIR 2307 filing"
+        description="Separate files per stall — missing receipt #s highlighted orange"
         icon={FileSpreadsheet}
         accentColor="bg-linear-to-br from-rose-500 to-pink-600"
         sheets={BIR_2307_SHEETS}
