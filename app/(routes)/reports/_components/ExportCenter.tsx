@@ -233,11 +233,48 @@ const CHEQUE_SHEETS = [
   },
 ] as const
 
+// -- BIR 2307 Sheets --
+const BIR_2307_SHEETS = [
+  {
+    key: "daily_summary",
+    label: "Daily Summary",
+    description: "Receipt # and amounts grouped by day",
+    icon: CalendarDays,
+    color: "text-emerald-500",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
+  },
+  {
+    key: "monthly_summary",
+    label: "Monthly Summary",
+    description: "Receipt # and amounts grouped by month",
+    icon: BarChart3,
+    color: "text-blue-500",
+    bgColor: "bg-blue-50 dark:bg-blue-950/20",
+  },
+  {
+    key: "quarterly_summary",
+    label: "Quarterly Summary",
+    description: "Receipt # and amounts grouped by quarter",
+    icon: TrendingUp,
+    color: "text-violet-500",
+    bgColor: "bg-violet-50 dark:bg-violet-950/20",
+  },
+  {
+    key: "yearly_summary",
+    label: "Yearly Summary",
+    description: "Receipt # and amounts grouped by year",
+    icon: Landmark,
+    color: "text-cyan-500",
+    bgColor: "bg-cyan-50 dark:bg-cyan-950/20",
+  },
+] as const
+
 // -- Types --
 type InventorySheetKey = (typeof INVENTORY_SHEETS)[number]["key"]
 type SalesSheetKey = (typeof SALES_SHEETS)[number]["key"]
 type DailySalesSheetKey = (typeof DAILY_SALES_SHEETS)[number]["key"]
 type ChequeSheetKey = (typeof CHEQUE_SHEETS)[number]["key"]
+type Bir2307SheetKey = (typeof BIR_2307_SHEETS)[number]["key"]
 
 // -- Date Picker Field --
 function DateField({
@@ -891,6 +928,14 @@ export function ExportCenter() {
   const [chequeStart, setChequeStart] = useState<Date>(ninetyDaysAgo)
   const [chequeEnd, setChequeEnd] = useState<Date>(today)
 
+  // BIR 2307
+  const [bir2307Sheets, setBir2307Sheets] = useState<Set<Bir2307SheetKey>>(
+    new Set(BIR_2307_SHEETS.map((s) => s.key)),
+  )
+  const [bir2307Exporting, setBir2307Exporting] = useState(false)
+  const [bir2307Start, setBir2307Start] = useState<Date>(thirtyDaysAgo)
+  const [bir2307End, setBir2307End] = useState<Date>(today)
+
   // -- Toggles --
   function toggle<K extends string>(
     set: Set<K>,
@@ -952,6 +997,7 @@ export function ExportCenter() {
     else if (data.export_type === "sales") setSalesExporting(false)
     else if (data.export_type === "cheques") setChequeExporting(false)
     else if (data.export_type === "daily_sales") setDailySalesExporting(false)
+    else if (data.export_type === "bir_2307") setBir2307Exporting(false)
 
     if (pendingActionIdRef.current) {
       removePendingAction(pendingActionIdRef.current)
@@ -970,6 +1016,7 @@ export function ExportCenter() {
     sales: "Sales Report",
     cheques: "Cheques Report",
     daily_sales: "Daily Sales Report",
+    bir_2307: "BIR 2307 Sales Report",
   }
 
   const startExport = (
@@ -1132,6 +1179,37 @@ export function ExportCenter() {
         endDate={chequeEnd}
         onStartDate={setChequeStart}
         onEndDate={setChequeEnd}
+      />
+
+      {/* BIR 2307 Sales Report */}
+      <ExportSection
+        title="BIR 2307 Sales Report"
+        description="Receipted service and sub stall sales for BIR 2307 filing"
+        icon={FileSpreadsheet}
+        accentColor="bg-linear-to-br from-rose-500 to-pink-600"
+        sheets={BIR_2307_SHEETS}
+        selectedSheets={bir2307Sheets}
+        onToggle={(k) => toggle(bir2307Sheets, setBir2307Sheets, k)}
+        onSelectAll={() =>
+          setBir2307Sheets(new Set(BIR_2307_SHEETS.map((s) => s.key)))
+        }
+        onDeselectAll={() => setBir2307Sheets(new Set())}
+        isExporting={bir2307Exporting}
+        onExport={() => {
+          if (bir2307Sheets.size === 0) return
+          startExport(
+            "bir_2307",
+            Array.from(bir2307Sheets).join(","),
+            setBir2307Exporting,
+            bir2307Start,
+            bir2307End,
+          )
+        }}
+        dateRange
+        startDate={bir2307Start}
+        endDate={bir2307End}
+        onStartDate={setBir2307Start}
+        onEndDate={setBir2307End}
       />
 
       {/* Bulk Item Pricing Update */}

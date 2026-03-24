@@ -133,6 +133,10 @@ export default function ServiceDetail({
   const [applianceView, setApplianceView] = useState<"list" | "kanban">("list")
   const [receiptPrintDialogOpen, setReceiptPrintDialogOpen] = useState(false)
   const [receiptMode, setReceiptMode] = useState<ServiceReceiptMode>("combined")
+  const [editingReceiptNumber, setEditingReceiptNumber] = useState(false)
+  const [receiptNumberInput, setReceiptNumberInput] = useState(
+    service.manual_receipt_number || "",
+  )
   const {
     completeService,
     recordPayment,
@@ -1155,6 +1159,79 @@ export default function ServiceDetail({
                   </>
                 )
               })()}
+              <Separator />
+              {/* BIR 2307 Receipt Number */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Receipt # (2307)
+                </p>
+                {editingReceiptNumber ? (
+                  <form
+                    className="flex items-center gap-1.5"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      updateService.mutate(
+                        {
+                          id: service.id,
+                          data: {
+                            manual_receipt_number: receiptNumberInput || null,
+                          },
+                        },
+                        {
+                          onSuccess: () => {
+                            setEditingReceiptNumber(false)
+                            onRefresh?.()
+                            toast.success("Receipt number updated.")
+                          },
+                        },
+                      )
+                    }}
+                  >
+                    <Input
+                      value={receiptNumberInput}
+                      onChange={(e) => setReceiptNumberInput(e.target.value)}
+                      placeholder="e.g. 0001"
+                      className="h-7 w-28 text-xs"
+                      autoFocus
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      disabled={updateService.isPending}
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6"
+                      onClick={() => {
+                        setEditingReceiptNumber(false)
+                        setReceiptNumberInput(
+                          service.manual_receipt_number || "",
+                        )
+                      }}
+                    >
+                      <XIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-sm font-medium hover:underline cursor-pointer"
+                    onClick={() => setEditingReceiptNumber(true)}
+                  >
+                    {service.manual_receipt_number || (
+                      <span className="text-muted-foreground italic">
+                        Not set
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

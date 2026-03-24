@@ -1174,6 +1174,8 @@ export interface Service {
   service_items_checked_by?: number | null
   service_items_checked_by_name?: string | null
   service_items_checked_at?: string | null
+  // BIR 2307 receipt
+  manual_receipt_number?: string | null
 }
 
 export interface ServicePayload {
@@ -1202,6 +1204,8 @@ export interface ServicePayload {
   complementary_reason?: string
   // Service-level parts review
   service_parts_needed_notes?: string
+  // BIR 2307 receipt
+  manual_receipt_number?: string | null
   technician_assignments?: TechnicianAssignmentPayload[]
 }
 
