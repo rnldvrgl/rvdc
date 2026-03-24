@@ -171,14 +171,14 @@ export function ClockInOut({
       return true
     }
 
-    // Half day morning (on leave AM) - disable after cutoff
+    // Half day morning (on leave AM) - disable before cutoff (morning)
     if (approvedLeave.shift_period === "AM") {
-      return getCurrentHour() >= halfDayCutoff
+      return getCurrentHour() < halfDayCutoff
     }
 
-    // Half day afternoon (on leave PM) - disable before cutoff
+    // Half day afternoon (on leave PM) - disable after cutoff (afternoon)
     if (approvedLeave.shift_period === "PM") {
-      return getCurrentHour() < halfDayCutoff
+      return getCurrentHour() >= halfDayCutoff
     }
 
     return false
