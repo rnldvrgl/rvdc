@@ -119,11 +119,11 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
     const payload = {
       ...data,
       full_name: data.full_name.toUpperCase(),
-      province: provinceName,
-      city: cityName,
-      barangay: barangayName,
+      province: provinceName.toUpperCase(),
+      city: cityName.toUpperCase(),
+      barangay: barangayName.toUpperCase(),
       contact_number: normalizeContactNumber(data.contact_number),
-      address: data.address?.trim() || null,
+      address: data.address?.trim().toUpperCase() || null,
     }
 
     if (client?.id) {
