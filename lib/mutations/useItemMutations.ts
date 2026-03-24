@@ -57,7 +57,6 @@ export function useItemMutations() {
       }),
     usePromiseToast: true,
     loadingMessage: "Analyzing file...",
-    successMessage: "Preview ready. Please review the changes below.",
   })
 
   const bulkUpdate = useApiMutation<FormData, unknown>({

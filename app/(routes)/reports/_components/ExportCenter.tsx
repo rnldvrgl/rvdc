@@ -551,9 +551,14 @@ function BulkItemUpdate({
       const res = await bulkPreview.mutateAsync(formData)
       const data = (res as { data: BulkPreviewData }).data
       if (data.changes.length === 0 && data.errors.length === 0) {
-        toast.info("No changes detected in the uploaded file.")
+        toast.info(
+          data.skipped > 0
+            ? `All ${data.skipped} items are unchanged. No updates needed.`
+            : "No changes detected in the uploaded file.",
+        )
         return
       }
+      toast.success("Preview ready. Please review the changes below.")
       setPreview(data)
       // Re-create FormData with same file for the actual update
       const updateForm = new FormData()
