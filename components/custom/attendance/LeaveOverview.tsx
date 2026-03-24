@@ -16,6 +16,13 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Table,
   TableBody,
   TableCell,
@@ -24,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { LeaveRequest } from "@/lib/constants/types"
+import { LeaveRequest, ShiftPeriod } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useLeaveRequestMutations } from "@/lib/mutations/useAttendanceMutations"
@@ -39,6 +46,7 @@ import {
   Clock,
   FileText,
   Loader2,
+  Pencil,
   Plane,
   XCircle,
 } from "lucide-react"
@@ -141,6 +149,10 @@ export function LeaveOverview() {
   const [rejectReason, setRejectReason] = useState("")
   const [leaveToReject, setLeaveToReject] = useState<number | null>(null)
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
+  const [adminStatusFilter, setAdminStatusFilter] = useState<string>("PENDING")
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [leaveToEdit, setLeaveToEdit] = useState<LeaveRequest | null>(null)
+  const [editShiftPeriod, setEditShiftPeriod] = useState<ShiftPeriod>("FULL")
 
   const toggleSelectItem = (id: number) => {
     const newSelected = new Set(selectedItems)
@@ -176,9 +188,26 @@ export function LeaveOverview() {
 
   const hasApprovalRights = canApprove(role || "")
 
-  // Admin
+  // Admin - pending (for quick actions) + filtered list
   const { data: pendingLeaves, isLoading: pendingLoading } =
-    usePendingLeaveApprovals({ filter }, hasApprovalRights)
+    usePendingLeaveApprovals(
+      { filter },
+      hasApprovalRights && adminStatusFilter === "PENDING",
+    )
+
+  const { data: adminLeavesData, isLoading: adminLeavesLoading } =
+    useLeaveRequests(
+      {
+        filter: {
+          ...filter,
+          status:
+            adminStatusFilter !== "PENDING" ? adminStatusFilter : undefined,
+        },
+        page,
+        limit,
+      },
+      hasApprovalRights && adminStatusFilter !== "PENDING",
+    )
 
   // Employee
   const { data: myLeavesData, isLoading: myLeavesLoading } = useLeaveRequests(
@@ -194,7 +223,8 @@ export function LeaveOverview() {
     enabled: !hasApprovalRights,
   })
   // Mutations
-  const { approveLeave, rejectLeave, cancelLeave } = useLeaveRequestMutations()
+  const { approveLeave, rejectLeave, cancelLeave, updateLeaveRequest } =
+    useLeaveRequestMutations()
 
   const handleApprove = async (leaveId: number) => {
     setSelectedLeaveId(leaveId)
@@ -249,44 +279,168 @@ export function LeaveOverview() {
   const isLoading =
     approveLeave.isPending || rejectLeave.isPending || cancelLeave.isPending
 
+  const handleEditClick = (leave: LeaveRequest) => {
+    setLeaveToEdit(leave)
+    setEditShiftPeriod(leave.shift_period)
+    setEditDialogOpen(true)
+  }
+
+  const handleEditConfirm = async () => {
+    if (!leaveToEdit) return
+    const isHalfDay = editShiftPeriod !== "FULL"
+    await updateLeaveRequest.mutateAsync({
+      id: leaveToEdit.id,
+      data: {
+        is_half_day: isHalfDay,
+        shift_period: editShiftPeriod,
+      },
+    })
+    setEditDialogOpen(false)
+    setLeaveToEdit(null)
+  }
+
+  // Shared Edit & Reject dialogs
+  const editDialog = (
+    <Dialog
+      open={editDialogOpen}
+      onOpenChange={setEditDialogOpen}
+    >
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Edit Leave Duration</DialogTitle>
+          <DialogDescription>
+            {leaveToEdit && (
+              <>
+                {leaveToEdit.employee_name} &mdash;{" "}
+                {formatLeaveDate(leaveToEdit)}
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label>Duration</Label>
+            <Select
+              value={editShiftPeriod}
+              onValueChange={(v) => setEditShiftPeriod(v as ShiftPeriod)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="FULL">Full Day</SelectItem>
+                <SelectItem value="AM">
+                  Half Day &mdash; Morning (on leave AM)
+                </SelectItem>
+                <SelectItem value="PM">
+                  Half Day &mdash; Afternoon (on leave PM)
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setEditDialogOpen(false)}
+            disabled={updateLeaveRequest.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleEditConfirm}
+            disabled={updateLeaveRequest.isPending}
+          >
+            {updateLeaveRequest.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+
+  const rejectDialog = (
+    <Dialog
+      open={rejectDialogOpen}
+      onOpenChange={setRejectDialogOpen}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Reject Leave Request</DialogTitle>
+          <DialogDescription>
+            Please provide a reason for rejecting this leave request.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="reject-reason">Rejection Reason</Label>
+            <Textarea
+              id="reject-reason"
+              placeholder="Enter reason for rejection..."
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={4}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setRejectDialogOpen(false)}
+            disabled={rejectLeave.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleRejectConfirm}
+            disabled={rejectLeave.isPending}
+          >
+            {rejectLeave.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Rejecting...
+              </>
+            ) : (
+              "Reject Leave"
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+
   // Admin View
   if (hasApprovalRights) {
-    if (pendingLoading) {
+    const showingPending = adminStatusFilter === "PENDING"
+    const adminLeaves = showingPending
+      ? pendingLeaves || []
+      : adminLeavesData?.results || []
+    const adminLoading = showingPending ? pendingLoading : adminLeavesLoading
+    const adminTotalCount = showingPending
+      ? pendingLeaves?.length || 0
+      : adminLeavesData?.count || 0
+    const adminHasNext = !showingPending && !!adminLeavesData?.next
+    const adminHasPrev = !showingPending && !!adminLeavesData?.previous
+
+    if (adminLoading) {
       return (
         <Card>
           <CardHeader className="border-b">
             <CardTitle className="flex items-center gap-2">
               <Plane className="h-5 w-5" />
-              Pending Leave Approvals
+              Leave Requests
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex justify-center py-6">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-      )
-    }
-
-    if (!pendingLeaves || pendingLeaves.length === 0) {
-      return (
-        <Card>
-          <CardHeader className="border-b">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
-                  <Plane className="h-4 w-4 text-slate-600 dark:text-slate-400" />
-                </div>
-                <CardTitle className="text-base md:text-lg font-semibold">
-                  Pending Leave Approvals
-                </CardTitle>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-6 text-muted-foreground">
-              No pending leave requests to review.
             </div>
           </CardContent>
         </Card>
@@ -303,17 +457,36 @@ export function LeaveOverview() {
                   <Plane className="h-3.5 md:h-4 w-3.5 md:w-4 text-slate-600 dark:text-slate-400" />
                 </div>
                 <CardTitle className="text-sm md:text-base lg:text-lg font-semibold">
-                  Pending Leave Approvals
+                  Leave Requests
                 </CardTitle>
               </div>
-              <Badge
-                variant="secondary"
-                className="text-xs"
-              >
-                {pendingLeaves.length} pending
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Select
+                  value={adminStatusFilter}
+                  onValueChange={(v) => {
+                    setAdminStatusFilter(v)
+                    setSelectedItems(new Set())
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[140px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">Pending</SelectItem>
+                    <SelectItem value="APPROVED">Approved</SelectItem>
+                    <SelectItem value="REJECTED">Rejected</SelectItem>
+                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Badge
+                  variant="secondary"
+                  className="text-xs"
+                >
+                  {adminTotalCount} {adminStatusFilter.toLowerCase()}
+                </Badge>
+              </div>
             </div>
-            {selectedItems.size > 0 && (
+            {showingPending && selectedItems.size > 0 && (
               <div className="flex items-center gap-1.5 md:gap-2 flex-wrap">
                 <span className="text-xs md:text-sm text-muted-foreground">
                   {selectedItems.size} selected
@@ -351,135 +524,135 @@ export function LeaveOverview() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
-            <div className="rounded-md border min-w-[700px]">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-10">
-                      <Checkbox
-                        checked={
-                          selectedItems.size === pendingLeaves?.length &&
-                          pendingLeaves?.length > 0
-                        }
-                        onCheckedChange={toggleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Employee</TableHead>
-                    <TableHead>Leave Type</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Reason</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingLeaves?.map((leave: LeaveRequest) => (
-                    <TableRow key={leave.id}>
-                      <TableCell>
-                        <Checkbox
-                          checked={selectedItems.has(leave.id)}
-                          onCheckedChange={() => toggleSelectItem(leave.id)}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {leave.employee_name || "Unknown"}
-                      </TableCell>
-                      <TableCell>
-                        {getLeaveTypeBadge(leave.leave_type)}
-                      </TableCell>
-                      <TableCell>{formatLeaveDate(leave)}</TableCell>
-                      <TableCell>{formatLeaveDuration(leave)}</TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {leave.reason || "—"}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                            disabled={isLoading || selectedLeaveId === leave.id}
-                            onClick={() => handleApprove(leave.id)}
-                          >
-                            {selectedLeaveId === leave.id &&
-                            approveLeave.isPending ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <>
-                                <CheckCircle className="h-4 w-4 mr-1" />
-                                Approve
-                              </>
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                            disabled={isLoading}
-                            onClick={() => handleRejectClick(leave.id)}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          {adminLeaves.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              No {adminStatusFilter.toLowerCase()} leave requests.
             </div>
-          </div>
-
-          {/* Reject Dialog */}
-          <Dialog
-            open={rejectDialogOpen}
-            onOpenChange={setRejectDialogOpen}
-          >
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Reject Leave Request</DialogTitle>
-                <DialogDescription>
-                  Please provide a reason for rejecting this leave request.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reject-reason">Rejection Reason</Label>
-                  <Textarea
-                    id="reject-reason"
-                    placeholder="Enter reason for rejection..."
-                    value={rejectReason}
-                    onChange={(e) => setRejectReason(e.target.value)}
-                    rows={4}
-                  />
+          ) : (
+            <>
+              <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+                <div className="rounded-md border min-w-[700px]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        {showingPending && (
+                          <TableHead className="w-10">
+                            <Checkbox
+                              checked={
+                                selectedItems.size === adminLeaves.length &&
+                                adminLeaves.length > 0
+                              }
+                              onCheckedChange={toggleSelectAll}
+                            />
+                          </TableHead>
+                        )}
+                        <TableHead>Employee</TableHead>
+                        <TableHead>Leave Type</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Duration</TableHead>
+                        {!showingPending && <TableHead>Status</TableHead>}
+                        <TableHead>Reason</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {adminLeaves.map((leave: LeaveRequest) => (
+                        <TableRow key={leave.id}>
+                          {showingPending && (
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedItems.has(leave.id)}
+                                onCheckedChange={() =>
+                                  toggleSelectItem(leave.id)
+                                }
+                              />
+                            </TableCell>
+                          )}
+                          <TableCell className="font-medium">
+                            {leave.employee_name || "Unknown"}
+                          </TableCell>
+                          <TableCell>
+                            {getLeaveTypeBadge(leave.leave_type)}
+                          </TableCell>
+                          <TableCell>{formatLeaveDate(leave)}</TableCell>
+                          <TableCell>{formatLeaveDuration(leave)}</TableCell>
+                          {!showingPending && (
+                            <TableCell>
+                              {getLeaveStatusBadge(leave.status)}
+                            </TableCell>
+                          )}
+                          <TableCell className="max-w-xs truncate">
+                            {leave.reason || "—"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex justify-end gap-1">
+                              {showingPending && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                    disabled={
+                                      isLoading || selectedLeaveId === leave.id
+                                    }
+                                    onClick={() => handleApprove(leave.id)}
+                                  >
+                                    {selectedLeaveId === leave.id &&
+                                    approveLeave.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <>
+                                        <CheckCircle className="h-4 w-4 mr-1" />
+                                        Approve
+                                      </>
+                                    )}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    disabled={isLoading}
+                                    onClick={() => handleRejectClick(leave.id)}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-1" />
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                              {(leave.status === "APPROVED" ||
+                                leave.status === "PENDING") && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleEditClick(leave)}
+                                >
+                                  <Pencil className="h-4 w-4 mr-1" />
+                                  Edit
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setRejectDialogOpen(false)}
-                  disabled={rejectLeave.isPending}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleRejectConfirm}
-                  disabled={rejectLeave.isPending}
-                >
-                  {rejectLeave.isPending ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Rejecting...
-                    </>
-                  ) : (
-                    "Reject Leave"
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+
+              {!showingPending && adminTotalCount > 0 && (
+                <div className="mt-4">
+                  <DataTablePagination
+                    hasNextPage={adminHasNext}
+                    hasPrevPage={adminHasPrev}
+                    count={adminTotalCount}
+                  />
+                </div>
+              )}
+            </>
+          )}
+
+          {rejectDialog}
+          {editDialog}
         </CardContent>
       </Card>
     )
