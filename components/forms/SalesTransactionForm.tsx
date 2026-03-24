@@ -283,6 +283,9 @@ export default function SalesTransactionForm({
         cheque_collection: p.cheque_collection ?? null,
       })) ?? [],
     )
+
+    // Re-validate so superRefine errors (client_id, payments) are cleared
+    setTimeout(() => form.trigger(), 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, allItemsData, stalls, subStall])
 
