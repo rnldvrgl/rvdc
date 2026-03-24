@@ -1,5 +1,6 @@
 "use client"
 
+import usePendingActionsStore from "@/lib/store/usePendingActionsStore"
 import { getValidAccessToken, refreshAccessToken } from "@/lib/utils/tokens"
 import { useQueryClient } from "@tanstack/react-query"
 import { useCallback, useEffect, useRef } from "react"
@@ -87,6 +88,11 @@ export function useNotificationWebSocket({
     wsRef.current = ws
 
     ws.onopen = () => {
+      // If reconnecting after a disconnect, clear maintenance pending actions
+      // (server being accessible again means restart/cleanup is done)
+      if (reconnectAttemptRef.current > 0) {
+        usePendingActionsStore.getState().clearByType("maintenance")
+      }
       reconnectAttemptRef.current = 0
     }
 
@@ -97,6 +103,9 @@ export function useNotificationWebSocket({
         if (data.event === "maintenance_result") {
           // Maintenance results — refresh stats, call handler
           queryClient.invalidateQueries({ queryKey: ["server-maintenance"] })
+          // Always clear maintenance pending actions globally so they don't
+          // get stuck when the consuming component is unmounted
+          usePendingActionsStore.getState().clearByType("maintenance")
           maintenanceCallbackRef.current?.(data)
         } else if (
           data.event === "export_ready" ||

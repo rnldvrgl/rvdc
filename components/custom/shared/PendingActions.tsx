@@ -64,9 +64,11 @@ export function PendingActions() {
         onClick={() => setCollapsed((c) => !c)}
         className="flex w-full items-center gap-2 px-3 py-2 bg-primary/5 hover:bg-primary/10 transition-colors"
       >
-        <Loader2 className="size-4 animate-spin text-primary" />
+        <span className="flex size-5 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+          {actions.length}
+        </span>
         <span className="text-sm font-medium flex-1 text-left">
-          {actions.length} pending {actions.length === 1 ? "action" : "actions"}
+          Pending {actions.length === 1 ? "action" : "actions"}
         </span>
         <ChevronDown
           className={cn(
