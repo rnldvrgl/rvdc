@@ -1,6 +1,7 @@
 "use client"
 
 import { ClientComboBox } from "@/components/custom/inputs/ClientComboBox"
+import DatePicker from "@/components/custom/inputs/DatePicker"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntityDialog from "@/components/custom/shared/EntityDialog"
 import ItemQuantitySelector from "@/components/custom/shared/ItemQuantitySelector"
@@ -40,6 +41,7 @@ import { formatCurrency } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   CreditCard,
+  Loader2,
   Package,
   Printer,
   Receipt,
@@ -49,7 +51,7 @@ import {
   ShoppingCart,
   Trash2,
 } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import * as z from "zod"
 
@@ -147,7 +149,7 @@ export default function SalesTransactionForm({
     mode: "onChange",
   })
 
-  const { data: stalls } = useStallChoices({})
+  const { data: stalls, isLoading: stallsLoading } = useStallChoices({})
 
   // Always use the sub stall for sales
   const subStall = useMemo(
@@ -157,7 +159,7 @@ export default function SalesTransactionForm({
 
   const [createdTransaction, setCreatedTransaction] =
     useState<SalesTransaction | null>(null)
-  const { data: allItemsData } = useItemChoices()
+  const { data: allItemsData, isLoading: itemsLoading } = useItemChoices()
   const { data: customItemTemplates = [] } = useCustomItemTemplateChoices()
   const allItems: Item[] = allItemsData ?? []
 
@@ -238,11 +240,18 @@ export default function SalesTransactionForm({
   const totalPayments = watchedPayments.reduce((acc, p) => acc + p.amount, 0)
   const changeDue = totalPayments - grandTotal
 
+  const hasInitializedRef = useRef(false)
+
   useEffect(() => {
     if (!initialData) return
 
     // Ensure choices are loaded before setting
     if (!allItemsData || !stalls) return
+
+    // Only initialize once — skip if already done (prevents React Query
+    // background refetches from resetting user edits)
+    if (hasInitializedRef.current) return
+    hasInitializedRef.current = true
 
     // Stall setup — always use sub stall
     if (subStall) {
@@ -366,6 +375,14 @@ export default function SalesTransactionForm({
         final_price_per_unit: Number(i.final_price_per_unit) ?? 0,
       })) ?? [],
   })
+
+  if (initialData && (itemsLoading || stallsLoading)) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
 
   return (
     <>
@@ -541,17 +558,21 @@ export default function SalesTransactionForm({
                   control={form.control}
                   name="transaction_date"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Transaction Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          disabled={isDisabled}
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                    <DatePicker
+                      field={{
+                        value: field.value
+                          ? new Date(field.value + "T12:00:00")
+                          : undefined,
+                        onChange: (date) =>
+                          field.onChange(
+                            date
+                              ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+                              : "",
+                          ),
+                      }}
+                      label="Transaction Date"
+                      disabled={isDisabled}
+                    />
                   )}
                 />
               )}
