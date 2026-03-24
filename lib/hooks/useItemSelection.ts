@@ -28,7 +28,8 @@ export function useItemSelection<
     setItems((prevItems) =>
       prevItems.map((i) => ({
         ...i,
-        item: i.item ?? allItems[0],
+        item:
+          i.item ?? ("description" in i && i.description ? null : allItems[0]),
       })),
     )
   }, [allItems])
