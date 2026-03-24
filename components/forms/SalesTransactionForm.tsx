@@ -427,7 +427,14 @@ export default function SalesTransactionForm({
 
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(handleSubmit)}
+          onSubmit={
+            initialData
+              ? (e) => {
+                  e.preventDefault()
+                  handleSubmit(form.getValues())
+                }
+              : form.handleSubmit(handleSubmit)
+          }
           className="space-y-5"
         >
           {/* Transaction Info */}
