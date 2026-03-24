@@ -78,6 +78,7 @@ export function useGetPermissions(
         "manage_system_settings",
         "manage_server_maintenance",
         "view_messaging",
+        "manage_bulk_update",
       ],
       manager: [
         ...commonAdminPermissions,
