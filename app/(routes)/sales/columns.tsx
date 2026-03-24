@@ -152,10 +152,6 @@ export function getSalesTransactionColumns({
       id: "action",
       header: "Action",
       cell: ({ row }) => {
-        const isServiceTransaction = row.original.items?.some(
-          (item) => item.item === null,
-        )
-
         if (mode === "archived" && onRestore) {
           return (
             <DataTableActions
@@ -224,7 +220,8 @@ export function getSalesTransactionColumns({
                 icon: Eye,
                 onClick: () => onView?.(row.original),
               },
-              ...(!isServiceTransaction && role === "admin"
+              ...(row.original.transaction_type !== "service" &&
+              role === "admin"
                 ? [
                     {
                       label: "Edit",
