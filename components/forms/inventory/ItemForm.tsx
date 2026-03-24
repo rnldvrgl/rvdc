@@ -6,26 +6,26 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select"
 import {
-  Item,
-  ItemPayload,
-  ItemPriceHistory,
-  ProductCategory,
+    Item,
+    ItemPayload,
+    ItemPriceHistory,
+    ProductCategory,
 } from "@/lib/constants/interface"
 import { useItemMutations } from "@/lib/mutations/useItemMutations"
 import { useCheckDuplicateItems } from "@/lib/queries/inventory/useCheckDuplicateItems"
@@ -158,6 +158,7 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
   const categories = categoriesData ?? []
 
   const { addItem, updateItem } = useItemMutations()
+  const isSubmitting = addItem.isPending || updateItem.isPending
 
   // Debounced duplicate checking
   const watchedName = form.watch("name")
@@ -440,7 +441,12 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
           </div>
 
           <div className="pt-4 flex justify-end">
-            <Button type="submit">{item ? "Update Item" : "Add Item"}</Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Saving..." : item ? "Update Item" : "Add Item"}
+            </Button>
           </div>
         </form>
       </Form>

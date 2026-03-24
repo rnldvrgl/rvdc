@@ -177,6 +177,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
   } = usePsgcForm<EmployeeFormData>({ form, defaultValues: formData })
 
   const { addEmployee, updateEmployee } = useEmployeeMutations()
+  const isSubmitting = addEmployee.isPending || updateEmployee.isPending
 
   const handleSubmit: SubmitHandler<EmployeeFormData> = (data) => {
     const payload = {
@@ -802,8 +803,13 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
               type="submit"
               size="lg"
               className="min-w-32"
+              disabled={isSubmitting}
             >
-              {employee ? "Update Employee" : "Create Employee"}
+              {isSubmitting
+                ? "Saving..."
+                : employee
+                  ? "Update Employee"
+                  : "Create Employee"}
             </Button>
           </div>
         </form>

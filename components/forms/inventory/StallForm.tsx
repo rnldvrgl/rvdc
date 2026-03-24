@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -8,11 +8,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Stall, StallPayload } from '@/lib/constants/interface'
-import { useStallMutations } from '@/lib/mutations/useStallMutations'
-import { SubmitHandler, useForm } from 'react-hook-form'
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Stall, StallPayload } from "@/lib/constants/interface"
+import { useStallMutations } from "@/lib/mutations/useStallMutations"
+import { SubmitHandler, useForm } from "react-hook-form"
 
 interface FormValues {
   name: string
@@ -27,12 +27,13 @@ interface StallFormProps {
 export default function StallForm({ stall, onClose }: StallFormProps) {
   const form = useForm<FormValues>({
     defaultValues: {
-      name: stall?.name ?? '',
-      location: stall?.location ?? '',
+      name: stall?.name ?? "",
+      location: stall?.location ?? "",
     },
   })
 
   const { addStall, updateStall } = useStallMutations()
+  const isSubmitting = addStall.isPending || updateStall.isPending
 
   const handleSubmit: SubmitHandler<FormValues> = (data) => {
     const payload: StallPayload = {
@@ -60,7 +61,7 @@ export default function StallForm({ stall, onClose }: StallFormProps) {
           <FormField
             control={form.control}
             name="name"
-            rules={{ required: 'Name is required' }}
+            rules={{ required: "Name is required" }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel required>Name</FormLabel>
@@ -78,7 +79,7 @@ export default function StallForm({ stall, onClose }: StallFormProps) {
           <FormField
             control={form.control}
             name="location"
-            rules={{ required: 'Location is required' }}
+            rules={{ required: "Location is required" }}
             render={({ field }) => (
               <FormItem>
                 <FormLabel required>Location</FormLabel>
@@ -95,7 +96,12 @@ export default function StallForm({ stall, onClose }: StallFormProps) {
         </div>
 
         <div className="pt-4 flex justify-end">
-          <Button type="submit">{stall ? 'Update Stall' : 'Add Stall'}</Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Saving..." : stall ? "Update Stall" : "Add Stall"}
+          </Button>
         </div>
       </form>
     </Form>

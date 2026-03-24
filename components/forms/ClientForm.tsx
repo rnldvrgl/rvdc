@@ -101,6 +101,7 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
   } = usePsgcForm<FormValues>({ form, defaultValues: client })
 
   const { addClient, updateClient } = useClientMutations()
+  const isSubmitting = addClient.isPending || updateClient.isPending
 
   const normalizeContactNumber = (
     contact: string | undefined,
@@ -272,7 +273,12 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
         </div>
 
         <div className="pt-4 flex justify-end">
-          <Button type="submit">Save Client</Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Saving..." : "Save Client"}
+          </Button>
         </div>
       </form>
     </Form>

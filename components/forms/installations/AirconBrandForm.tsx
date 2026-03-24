@@ -1,6 +1,6 @@
-'use client'
+"use client"
 
-import { Button } from '@/components/ui/button'
+import { Button } from "@/components/ui/button"
 import {
   Form,
   FormControl,
@@ -8,11 +8,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { AirconBrands } from '@/lib/constants/interface'
-import { useAirconBrandMutations } from '@/lib/mutations/installations/useAirconBrandMutations'
-import { SubmitHandler, useForm } from 'react-hook-form'
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { AirconBrands } from "@/lib/constants/interface"
+import { useAirconBrandMutations } from "@/lib/mutations/installations/useAirconBrandMutations"
+import { SubmitHandler, useForm } from "react-hook-form"
 
 interface FormValues {
   name: string
@@ -29,11 +29,12 @@ export default function AirconBrandForm({
 }: AirconBrandFormProps) {
   const form = useForm<FormValues>({
     defaultValues: {
-      name: brand?.name ?? '',
+      name: brand?.name ?? "",
     },
   })
 
   const { addBrand, updateBrand } = useAirconBrandMutations()
+  const isSubmitting = addBrand.isPending || updateBrand.isPending
 
   const handleSubmit: SubmitHandler<FormValues> = (data) => {
     if (brand?.id) {
@@ -52,7 +53,7 @@ export default function AirconBrandForm({
         <FormField
           control={form.control}
           name="name"
-          rules={{ required: 'Brand name is required' }}
+          rules={{ required: "Brand name is required" }}
           render={({ field }) => (
             <FormItem>
               <FormLabel required>Brand Name</FormLabel>
@@ -68,7 +69,12 @@ export default function AirconBrandForm({
         />
 
         <div className="pt-4 flex justify-end">
-          <Button type="submit">{brand ? 'Update Brand' : 'Save Brand'}</Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Saving..." : brand ? "Update Brand" : "Save Brand"}
+          </Button>
         </div>
       </form>
     </Form>

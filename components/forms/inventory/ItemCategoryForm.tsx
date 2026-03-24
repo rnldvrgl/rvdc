@@ -37,6 +37,7 @@ export default function ItemCategoryForm({
   })
 
   const { addCategory, updateCategory } = useItemCategoryMutations()
+  const isSubmitting = addCategory.isPending || updateCategory.isPending
 
   const handleSubmit: SubmitHandler<FormValues> = (data) => {
     const payload: ProductCategoryPayload = {
@@ -80,8 +81,15 @@ export default function ItemCategoryForm({
         </div>
 
         <div className="pt-4 flex justify-end">
-          <Button type="submit">
-            {category ? "Update Category" : "Add Category"}
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting
+              ? "Saving..."
+              : category
+                ? "Update Category"
+                : "Add Category"}
           </Button>
         </div>
       </form>

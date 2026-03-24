@@ -26,7 +26,10 @@ export function useSalesTransactionMutations() {
   ]
 
   const addTransaction = useApiMutation({
-    mutationFn: (data: SalesTransactionPayload) => api.post(url, data),
+    mutationFn: (data: SalesTransactionPayload) =>
+      api.post(url, data, {
+        headers: { "Idempotency-Key": crypto.randomUUID() },
+      }),
     successMessage: "Sales transaction created successfully.",
     invalidateQueries: commonInvalidations,
   })
