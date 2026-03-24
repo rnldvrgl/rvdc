@@ -43,5 +43,28 @@ export function useClientMutations() {
     ],
   })
 
-  return { addClient, updateClient, deleteClient }
+  const bulkPreview = useApiMutation<FormData, unknown>({
+    mutationFn: (formData) =>
+      api.post(`${url}bulk-preview/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    usePromiseToast: true,
+    loadingMessage: "Analyzing file...",
+  })
+
+  const bulkUpdate = useApiMutation<FormData, unknown>({
+    mutationFn: (formData) =>
+      api.post(`${url}bulk-update/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    usePromiseToast: true,
+    loadingMessage: "Processing bulk update...",
+    successMessage: "Bulk update started. You will be notified when it's done.",
+    invalidateQueries: [
+      { queryKey: ["clients"] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
+  })
+
+  return { addClient, updateClient, deleteClient, bulkPreview, bulkUpdate }
 }

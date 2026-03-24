@@ -127,12 +127,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: "manage_payroll_settings",
       },
       {
-        name: "Holidays",
-        href: "/payroll/holidays",
-        icon: FileText,
-        permission: "manage_holidays",
-      },
-      {
         name: "Deductions",
         href: "/payroll/deductions",
         icon: Banknote,
@@ -301,6 +295,18 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     name: "Settings",
     icon: Settings,
     children: [
+      {
+        name: "Holidays",
+        href: "/settings/holidays",
+        icon: CalendarDays,
+        permission: "manage_holidays",
+      },
+      {
+        name: "Bulk Update",
+        href: "/settings/bulk-update",
+        icon: Layers,
+        permission: "manage_bulk_update",
+      },
       {
         name: "Appliance Types",
         href: "/settings/appliance-types",

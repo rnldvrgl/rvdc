@@ -1,6 +1,10 @@
 import { create } from "zustand"
 
-export type PendingActionType = "export" | "maintenance" | "bulk_update"
+export type PendingActionType =
+  | "export"
+  | "maintenance"
+  | "bulk_update"
+  | "client_bulk_update"
 
 export interface PendingAction {
   id: string

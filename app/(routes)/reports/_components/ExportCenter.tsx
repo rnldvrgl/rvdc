@@ -1,15 +1,5 @@
 "use client"
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
@@ -27,21 +17,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { ScrollArea } from "@/components/ui/scroll-area"
+
 import { Separator } from "@/components/ui/separator"
 import {
   ExportWSData,
   useNotificationWebSocket,
 } from "@/lib/hooks/useNotificationWebSocket"
 import { useExportMutations } from "@/lib/mutations/useExportMutations"
-import { useItemMutations } from "@/lib/mutations/useItemMutations"
 import usePendingActionsStore from "@/lib/store/usePendingActionsStore"
 import api from "@/lib/utils/api"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
 import {
   AlertTriangle,
-  ArrowRight,
   Banknote,
   BarChart3,
   CalendarDays,
@@ -59,7 +47,6 @@ import {
   Store,
   TrendingDown,
   TrendingUp,
-  Upload,
   Wrench,
 } from "lucide-react"
 import { useCallback, useRef, useState } from "react"
@@ -498,358 +485,6 @@ function ExportSection<K extends string>({
   )
 }
 
-// -- Bulk Item Update --
-type BulkUpdateResult = {
-  updated: number
-  skipped: number
-  errors: { row: number; sku?: string; error: string }[]
-}
-
-type BulkPreviewChange = {
-  row: number
-  sku: string
-  name: string
-  changes: { field: string; old: string; new: string }[]
-}
-
-type BulkPreviewData = {
-  changes: BulkPreviewChange[]
-  skipped: number
-  errors: { row: number; sku?: string; error: string }[]
-  summary: string
-}
-
-function BulkItemUpdate({
-  result,
-  processing,
-  onUploadStarted,
-}: {
-  result: BulkUpdateResult | null
-  processing: boolean
-  onUploadStarted: () => void
-}) {
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [downloading, setDownloading] = useState(false)
-  const [preview, setPreview] = useState<BulkPreviewData | null>(null)
-  const [pendingFile, setPendingFile] = useState<FormData | null>(null)
-  const { bulkPreview, bulkUpdate } = useItemMutations()
-
-  const downloadTemplate = async () => {
-    setDownloading(true)
-    try {
-      const res = await api.get("/inventory/items/bulk-template/", {
-        responseType: "blob",
-      })
-      const blob = new Blob([res.data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      })
-      const blobUrl = window.URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = blobUrl
-      link.setAttribute("download", "item_pricing_template.xlsx")
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000)
-      toast.success("Template downloaded.")
-    } catch {
-      toast.error("Failed to download template.")
-    } finally {
-      setDownloading(false)
-    }
-  }
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    if (!file.name.endsWith(".xlsx")) {
-      toast.error("Only .xlsx files are supported.")
-      return
-    }
-
-    const formData = new FormData()
-    formData.append("file", file)
-
-    try {
-      const res = await bulkPreview.mutateAsync(formData)
-      const data = (res as { data: BulkPreviewData }).data
-      if (data.changes.length === 0 && data.errors.length === 0) {
-        toast.info(
-          data.skipped > 0
-            ? `All ${data.skipped} items are unchanged. No updates needed.`
-            : "No changes detected in the uploaded file.",
-        )
-        return
-      }
-      toast.success("Preview ready. Please review the changes below.")
-      setPreview(data)
-      // Re-create FormData with same file for the actual update
-      const updateForm = new FormData()
-      updateForm.append("file", file)
-      setPendingFile(updateForm)
-    } catch {
-      // Error handled by mutation toast
-    } finally {
-      if (fileRef.current) fileRef.current.value = ""
-    }
-  }
-
-  const handleConfirm = () => {
-    if (!pendingFile) return
-    bulkUpdate.mutateAsync(pendingFile).then(() => {
-      onUploadStarted()
-    })
-    setPreview(null)
-    setPendingFile(null)
-  }
-
-  const handleCancel = () => {
-    setPreview(null)
-    setPendingFile(null)
-  }
-
-  return (
-    <>
-      <Card className="overflow-hidden">
-        <CardHeader className="pb-3 sm:pb-4 px-3 sm:px-6">
-          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="shrink-0 rounded-lg sm:rounded-xl p-1.5 sm:p-2.5 bg-linear-to-br from-cyan-500 to-blue-600">
-                <Upload className="size-3.5 sm:size-5 text-white" />
-              </div>
-              <div className="min-w-0">
-                <CardTitle className="text-sm sm:text-base">
-                  Bulk Item Pricing Update
-                </CardTitle>
-                <CardDescription className="text-[10px] sm:text-xs mt-0.5">
-                  Download an XLSX template, edit prices, and re-upload to
-                  update items in bulk.
-                </CardDescription>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent className="space-y-3 sm:space-y-4 px-3 sm:px-6">
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={downloadTemplate}
-              disabled={downloading}
-              className="gap-1.5 text-xs"
-            >
-              {downloading ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Download className="size-3.5" />
-              )}
-              Download Template
-            </Button>
-            <div className="relative">
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".xlsx"
-                onChange={handleUpload}
-                className="sr-only"
-                id="bulk-upload-input"
-                aria-label="Upload XLSX file for bulk item update"
-              />
-              <Button
-                size="sm"
-                onClick={() => fileRef.current?.click()}
-                disabled={
-                  bulkPreview.isPending || bulkUpdate.isPending || processing
-                }
-                className="gap-1.5 text-xs w-full sm:w-auto"
-              >
-                {bulkPreview.isPending || bulkUpdate.isPending || processing ? (
-                  <Loader2 className="size-3.5 animate-spin" />
-                ) : (
-                  <Upload className="size-3.5" />
-                )}
-                {bulkPreview.isPending
-                  ? "Analyzing..."
-                  : bulkUpdate.isPending
-                    ? "Uploading..."
-                    : processing
-                      ? "Processing..."
-                      : "Upload Updated File"}
-              </Button>
-            </div>
-          </div>
-
-          {result && (
-            <>
-              <Separator />
-              <div className="space-y-2 text-xs">
-                <div className="flex flex-wrap gap-2">
-                  <Badge
-                    variant="default"
-                    className="text-[10px] sm:text-xs"
-                  >
-                    {result.updated} updated
-                  </Badge>
-                  <Badge
-                    variant="secondary"
-                    className="text-[10px] sm:text-xs"
-                  >
-                    {result.skipped} unchanged
-                  </Badge>
-                  {result.errors.length > 0 && (
-                    <Badge
-                      variant="destructive"
-                      className="text-[10px] sm:text-xs"
-                    >
-                      {result.errors.length} errors
-                    </Badge>
-                  )}
-                </div>
-                {result.errors.length > 0 && (
-                  <div className="max-h-32 overflow-y-auto rounded border p-2 space-y-1 bg-muted/50">
-                    {result.errors.map((err, i) => (
-                      <p
-                        key={i}
-                        className="text-destructive text-[10px]"
-                      >
-                        Row {err.row}
-                        {err.sku ? ` (${err.sku})` : ""}: {err.error}
-                      </p>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Preview Confirmation Dialog */}
-      <AlertDialog
-        open={!!preview}
-        onOpenChange={(o) => !o && handleCancel()}
-      >
-        <AlertDialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-sm sm:text-base">
-              <AlertTriangle className="size-4 text-amber-500" />
-              Review Changes Before Applying
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs sm:text-sm">
-              {preview?.summary}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <ScrollArea className="flex-1 -mx-6 px-6">
-            <div className="space-y-3 py-2">
-              {/* Changes */}
-              {preview?.changes && preview.changes.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Items to update ({preview.changes.length})
-                  </p>
-                  {preview.changes.map((item, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg border p-2.5 sm:p-3 space-y-1.5"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] font-mono"
-                        >
-                          {item.sku}
-                        </Badge>
-                        <span className="text-xs font-medium truncate">
-                          {item.name}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        {item.changes.map((change, j) => (
-                          <div
-                            key={j}
-                            className="flex items-center gap-1.5 text-[10px] sm:text-xs"
-                          >
-                            <span className="text-muted-foreground min-w-[90px] sm:min-w-[110px]">
-                              {change.field}:
-                            </span>
-                            <span className="text-red-500 line-through">
-                              {change.old}
-                            </span>
-                            <ArrowRight className="size-3 text-muted-foreground shrink-0" />
-                            <span className="text-green-600 font-medium">
-                              {change.new}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Errors */}
-              {preview?.errors && preview.errors.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-destructive">
-                    Errors ({preview.errors.length})
-                  </p>
-                  <div className="rounded border p-2 space-y-1 bg-destructive/5">
-                    {preview.errors.map((err, i) => (
-                      <p
-                        key={i}
-                        className="text-destructive text-[10px]"
-                      >
-                        Row {err.row}
-                        {err.sku ? ` (${err.sku})` : ""}: {err.error}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Skipped */}
-              {preview && preview.skipped > 0 && (
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  {preview.skipped} items unchanged (will be skipped)
-                </p>
-              )}
-            </div>
-          </ScrollArea>
-
-          <AlertDialogFooter className="gap-2 sm:gap-0">
-            <AlertDialogCancel
-              className="text-xs"
-              disabled={bulkUpdate.isPending}
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirm}
-              disabled={
-                bulkUpdate.isPending ||
-                !preview?.changes ||
-                preview.changes.length === 0
-              }
-              className="text-xs gap-1.5"
-            >
-              {bulkUpdate.isPending ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <CheckCircle2 className="size-3.5" />
-              )}
-              {bulkUpdate.isPending
-                ? "Applying..."
-                : `Apply ${preview?.changes?.length ?? 0} Changes`}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
-  )
-}
-
 // -- Utility --
 function downloadFromToken(token: string, filename: string) {
   api
@@ -944,34 +579,7 @@ export function ExportCenter() {
   const addPendingAction = usePendingActionsStore((s) => s.addAction)
   const removePendingAction = usePendingActionsStore((s) => s.removeAction)
 
-  // Bulk update
-  const [bulkUpdateResult, setBulkUpdateResult] =
-    useState<BulkUpdateResult | null>(null)
-  const [bulkProcessing, setBulkProcessing] = useState(false)
-  const bulkActionIdRef = useRef<string | null>(null)
-
   const onExportReady = useCallback((data: ExportWSData) => {
-    if (data.export_type === "bulk_update") {
-      setBulkProcessing(false)
-      if (bulkActionIdRef.current) {
-        removePendingAction(bulkActionIdRef.current)
-        bulkActionIdRef.current = null
-      }
-      if (data.event === "export_ready" && data.result) {
-        setBulkUpdateResult(data.result)
-        if (data.result.updated > 0) {
-          toast.success(data.title, { description: data.message })
-        } else if (data.result.errors.length > 0) {
-          toast.warning(data.title, { description: data.message })
-        } else {
-          toast.info("No changes detected.")
-        }
-      } else if (data.event === "export_failed") {
-        toast.error(data.title, { description: data.message })
-      }
-      return
-    }
-
     if (data.event === "export_ready" && data.token && data.filename) {
       toast.success(data.title, { description: data.message })
       downloadFromToken(data.token, data.filename)
@@ -1196,20 +804,6 @@ export function ExportCenter() {
         endDate={bir2307End}
         onStartDate={setBir2307Start}
         onEndDate={setBir2307End}
-      />
-
-      {/* Bulk Item Pricing Update */}
-      <BulkItemUpdate
-        result={bulkUpdateResult}
-        processing={bulkProcessing}
-        onUploadStarted={() => {
-          setBulkProcessing(true)
-          setBulkUpdateResult(null)
-          bulkActionIdRef.current = addPendingAction(
-            "bulk_update",
-            "Bulk Price Update",
-          )
-        }}
       />
     </div>
   )
