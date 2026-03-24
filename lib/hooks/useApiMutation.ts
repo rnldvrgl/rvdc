@@ -58,66 +58,67 @@ export function useApiMutation<TVariables, TData>({
   // Enhanced mutate function with toast.promise support
   const mutateWithPromise = async (variables: TVariables) => {
     if (usePromiseToast) {
-      return toast.promise(
-        mutationFn(variables).then((data) => {
-          // Handle query invalidation
-          invalidateQueries.forEach(({ queryKey }) => {
-            queryClient.invalidateQueries({ queryKey })
-          })
+      const promise = mutationFn(variables).then((data) => {
+        // Handle query invalidation
+        invalidateQueries.forEach(({ queryKey }) => {
+          queryClient.invalidateQueries({ queryKey })
+        })
 
-          // Call onSuccess callback
-          onSuccess?.(data, variables)
+        // Call onSuccess callback
+        onSuccess?.(data, variables)
 
-          return data
-        }),
-        {
-          loading: loadingMessage,
-          success: successMessage,
-          error: (err) => {
-            // Call onError callback
-            onError?.(err)
+        return data
+      })
 
-            // Return custom error message or extract from DRF response
-            if (errorMessage) {
-              return errorMessage
-            }
+      toast.promise(promise, {
+        loading: loadingMessage,
+        success: successMessage,
+        error: (err) => {
+          // Call onError callback
+          onError?.(err)
 
-            // Try to extract DRF error message
-            if (err && typeof err === "object" && "response" in err) {
-              const errorResponse = err as ErrorResponse
-              if (errorResponse.response?.data) {
-                const data = errorResponse.response.data
+          // Return custom error message or extract from DRF response
+          if (errorMessage) {
+            return errorMessage
+          }
 
-                // Handle non_field_errors
-                if (
-                  data.non_field_errors &&
-                  Array.isArray(data.non_field_errors)
-                ) {
-                  return data.non_field_errors.join(", ")
+          // Try to extract DRF error message
+          if (err && typeof err === "object" && "response" in err) {
+            const errorResponse = err as ErrorResponse
+            if (errorResponse.response?.data) {
+              const data = errorResponse.response.data
+
+              // Handle non_field_errors
+              if (
+                data.non_field_errors &&
+                Array.isArray(data.non_field_errors)
+              ) {
+                return data.non_field_errors.join(", ")
+              }
+
+              // Handle detail field
+              if (data.detail) {
+                return data.detail
+              }
+
+              // Handle first field error
+              const firstKey = Object.keys(data)[0]
+              if (firstKey && data[firstKey]) {
+                const value = data[firstKey]
+                if (Array.isArray(value)) {
+                  return `${firstKey}: ${value.join(", ")}`
                 }
-
-                // Handle detail field
-                if (data.detail) {
-                  return data.detail
-                }
-
-                // Handle first field error
-                const firstKey = Object.keys(data)[0]
-                if (firstKey && data[firstKey]) {
-                  const value = data[firstKey]
-                  if (Array.isArray(value)) {
-                    return `${firstKey}: ${value.join(", ")}`
-                  }
-                  return `${firstKey}: ${value}`
-                }
+                return `${firstKey}: ${value}`
               }
             }
+          }
 
-            // Fallback error message
-            return "An error occurred. Please try again."
-          },
+          // Fallback error message
+          return "An error occurred. Please try again."
         },
-      )
+      })
+
+      return promise
     } else {
       // Standard mutation without promise toast
       return mutation.mutateAsync(variables)
