@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { Expense, GetColumnsProps } from "@/lib/constants/interface"
 import {
   formatCurrency,
+  getBadgeVariant,
   getHashedStallBadgeClass,
   safeCell,
 } from "@/lib/utils/helpers"
@@ -123,21 +124,13 @@ export function getExpenseColumns({
       header: "Payment Status",
       cell: ({ getValue }) => {
         const status = getValue() as string
-        const variants: Record<
-          string,
-          "default" | "secondary" | "destructive"
-        > = {
-          paid: "default",
-          partial: "secondary",
-          unpaid: "destructive",
-        }
         const labels: Record<string, string> = {
           paid: "Paid",
           partial: "Partial",
           unpaid: "Unpaid",
         }
         return (
-          <Badge variant={variants[status] || "secondary"}>
+          <Badge variant={getBadgeVariant(status)}>
             {labels[status] || status}
           </Badge>
         )
@@ -151,21 +144,13 @@ export function getExpenseColumns({
         if (!expense.is_reimbursable) {
           return <span className="text-muted-foreground text-sm">—</span>
         }
-        const variants: Record<
-          string,
-          "default" | "secondary" | "destructive" | "outline"
-        > = {
-          pending: "destructive",
-          partial: "secondary",
-          reimbursed: "default",
-        }
         const labels: Record<string, string> = {
           pending: "Pending",
           partial: "Partial",
           reimbursed: "Reimbursed",
         }
         return (
-          <Badge variant={variants[expense.reimbursement_status] || "outline"}>
+          <Badge variant={getBadgeVariant(expense.reimbursement_status)}>
             {labels[expense.reimbursement_status] ||
               expense.reimbursement_status}
           </Badge>

@@ -1,7 +1,7 @@
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
 import { Badge } from "@/components/ui/badge"
 import { HalfDaySchedule } from "@/lib/queries/useHalfDaySchedules"
-import { safeCell } from "@/lib/utils/helpers"
+import { getBadgeVariant, safeCell } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { Archive, Edit2, RotateCcw, Trash2 } from "lucide-react"
@@ -38,7 +38,7 @@ export function getHalfDayScheduleColumns({
       cell: ({ row }) => {
         const type = row.original.schedule_type
         return (
-          <Badge variant={type === "shop_closed" ? "destructive" : "secondary"}>
+          <Badge variant={getBadgeVariant(type)}>
             {type === "shop_closed" ? "Shop Closed" : "Half Day"}
           </Badge>
         )

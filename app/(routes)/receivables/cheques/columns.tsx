@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { ChequeCollection, GetColumnsProps } from "@/lib/constants/interface"
 import {
   formatCurrency,
+  getBadgeVariant,
   getHashedStallBadgeClass,
   safeCell,
 } from "@/lib/utils/helpers"
@@ -75,13 +76,7 @@ export function getChequeCollectionColumns({
       header: withTooltipHeader("Status", "Current status"),
       cell: ({ getValue }) => {
         const value = getValue() as string
-        let variant: "success" | "warning" | "destructive" | "default" =
-          "default"
-        if (value === "deposited" || value === "encashed") variant = "success"
-        else if (value === "pending") variant = "warning"
-        else if (["bounced", "returned", "cancelled"].includes(value))
-          variant = "destructive"
-        return <Badge variant={variant}>{value}</Badge>
+        return <Badge variant={getBadgeVariant(value)}>{value}</Badge>
       },
     },
     {

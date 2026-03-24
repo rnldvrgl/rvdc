@@ -221,6 +221,27 @@ export function getBadgeVariant(
     replacement: "warning",
     sale: "default",
     service: "secondary",
+    // Quotation statuses
+    draft: "secondary",
+    sent: "default",
+    accepted: "success",
+    declined: "destructive",
+    // Stock request statuses
+    approved: "default",
+    // Cheque statuses
+    deposited: "success",
+    encashed: "success",
+    bounced: "destructive",
+    returned: "outline",
+    // Schedule types
+    shop_closed: "destructive",
+    half_day: "secondary",
+    // Calculation methods
+    fixed: "default",
+    percentage: "secondary",
+    progressive_tax: "outline",
+    // Reimbursement
+    reimbursed: "success",
   }
 
   return variants[source] ?? "outline"

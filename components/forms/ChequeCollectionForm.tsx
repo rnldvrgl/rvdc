@@ -31,6 +31,7 @@ import { ChequeCollectionSchema } from "@/lib/constants/schema"
 import { ChequeCollectionPayload } from "@/lib/constants/types"
 import { useChequeCollectionMutations } from "@/lib/mutations/useChequeCollectionMutations"
 import { useBanksChoices, useUsersChoices } from "@/lib/queries/useChoices"
+import { getBadgeVariant } from "@/lib/utils/helpers"
 import { formatBackDate } from "@/lib/utils/helpers/date"
 import {
   Banknote,
@@ -51,18 +52,6 @@ const STATUS_OPTIONS = [
   { value: "bounced", label: "Bounced" },
   { value: "cancelled", label: "Cancelled" },
 ] as const
-
-const STATUS_VARIANT: Record<
-  string,
-  "default" | "success" | "destructive" | "secondary" | "outline"
-> = {
-  pending: "secondary",
-  deposited: "default",
-  encashed: "success",
-  returned: "outline",
-  bounced: "destructive",
-  cancelled: "destructive",
-}
 
 // ── Section wrapper ────────────────────────────────────
 
@@ -245,7 +234,7 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
                     </FormControl>
                     {field.value && (
                       <Badge
-                        variant={STATUS_VARIANT[field.value] ?? "secondary"}
+                        variant={getBadgeVariant(field.value)}
                         className="px-2.5 py-1"
                       >
                         {field.value}

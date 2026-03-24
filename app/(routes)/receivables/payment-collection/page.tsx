@@ -20,6 +20,7 @@ import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useServices } from "@/lib/queries/services/useServices"
 import { useChequeCollections } from "@/lib/queries/useChequeCollections"
 import { useRemittancesRecords } from "@/lib/queries/useRemittancesRecords"
+import { getBadgeVariant } from "@/lib/utils/helpers"
 import {
   AlertTriangle,
   Banknote,
@@ -41,14 +42,9 @@ function peso(value: string | number | undefined | null): string {
 }
 
 function statusBadge(status: string) {
-  const variants: Record<string, "destructive" | "secondary" | "outline"> = {
-    unpaid: "destructive",
-    partial: "secondary",
-    pending: "outline",
-  }
   return (
     <Badge
-      variant={variants[status] ?? "outline"}
+      variant={getBadgeVariant(status)}
       className="capitalize text-xs"
     >
       {status}

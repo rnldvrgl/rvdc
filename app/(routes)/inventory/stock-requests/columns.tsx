@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { StockRequest } from "@/lib/constants/interface"
+import { getBadgeVariant } from "@/lib/utils/helpers"
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import { Check, MoreHorizontal, X } from "lucide-react"
@@ -19,16 +20,6 @@ interface GetStockRequestColumnsProps {
   onApprove?: (request: StockRequest) => void
   onDecline?: (request: StockRequest) => void
   isAdmin?: boolean
-}
-
-const statusVariantMap: Record<
-  string,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  pending: "secondary",
-  approved: "default",
-  declined: "destructive",
-  cancelled: "outline",
 }
 
 export function getStockRequestColumns({
@@ -87,7 +78,7 @@ export function getStockRequestColumns({
       cell: ({ row }) => {
         const status = row.original.status
         return (
-          <Badge variant={statusVariantMap[status] ?? "outline"}>
+          <Badge variant={getBadgeVariant(status)}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
           </Badge>
         )

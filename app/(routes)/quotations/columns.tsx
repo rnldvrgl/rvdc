@@ -3,21 +3,11 @@ import { Badge } from "@/components/ui/badge"
 import type { GetColumnsProps } from "@/lib/constants/interface"
 import type { Quotation } from "@/lib/constants/types"
 import { formatCurrency } from "@/lib/utils/currency"
-import { safeCell } from "@/lib/utils/helpers"
+import { getBadgeVariant, safeCell } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { ColumnDef } from "@tanstack/react-table"
 import { differenceInDays } from "date-fns"
 import { Archive, Clock, Edit, Eye, RotateCcw, Trash2 } from "lucide-react"
-
-const statusVariant: Record<
-  string,
-  "default" | "secondary" | "destructive" | "success"
-> = {
-  draft: "secondary",
-  sent: "default",
-  accepted: "success",
-  declined: "destructive",
-}
 
 const statusLabel: Record<string, string> = {
   draft: "Draft",
@@ -79,11 +69,7 @@ export function getQuotationColumns({
       header: "Status",
       cell: ({ getValue }) => {
         const s = getValue() as string
-        return (
-          <Badge variant={statusVariant[s] || "secondary"}>
-            {statusLabel[s] || s}
-          </Badge>
-        )
+        return <Badge variant={getBadgeVariant(s)}>{statusLabel[s] || s}</Badge>
       },
     },
     {
