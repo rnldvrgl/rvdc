@@ -67,7 +67,9 @@ export function getSalesTransactionColumns({
         const type = getValue() as string
         return (
           <Badge
-            variant="secondary"
+            variant={getBadgeVariant(
+              type === "replacement" ? "replacement" : type,
+            )}
             className="text-[10px]"
           >
             {type === "replacement"

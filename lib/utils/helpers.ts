@@ -218,6 +218,9 @@ export function getBadgeVariant(
     repaired: "success",
     tested: "success",
     ready: "success",
+    replacement: "warning",
+    sale: "default",
+    service: "secondary",
   }
 
   return variants[source] ?? "outline"
