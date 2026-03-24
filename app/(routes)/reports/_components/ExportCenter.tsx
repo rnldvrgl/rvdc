@@ -35,6 +35,7 @@ import {
 } from "@/lib/hooks/useNotificationWebSocket"
 import { useExportMutations } from "@/lib/mutations/useExportMutations"
 import { useItemMutations } from "@/lib/mutations/useItemMutations"
+import usePendingActionsStore from "@/lib/store/usePendingActionsStore"
 import api from "@/lib/utils/api"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
@@ -901,15 +902,25 @@ export function ExportCenter() {
 
   // -- WebSocket for export notifications --
   const pendingExportRef = useRef<string | null>(null)
+  const pendingActionIdRef = useRef<string | null>(null)
+
+  // Pending actions store
+  const addPendingAction = usePendingActionsStore((s) => s.addAction)
+  const removePendingAction = usePendingActionsStore((s) => s.removeAction)
 
   // Bulk update
   const [bulkUpdateResult, setBulkUpdateResult] =
     useState<BulkUpdateResult | null>(null)
   const [bulkProcessing, setBulkProcessing] = useState(false)
+  const bulkActionIdRef = useRef<string | null>(null)
 
   const onExportReady = useCallback((data: ExportWSData) => {
     if (data.export_type === "bulk_update") {
       setBulkProcessing(false)
+      if (bulkActionIdRef.current) {
+        removePendingAction(bulkActionIdRef.current)
+        bulkActionIdRef.current = null
+      }
       if (data.event === "export_ready" && data.result) {
         setBulkUpdateResult(data.result)
         if (data.result.updated > 0) {
@@ -936,12 +947,25 @@ export function ExportCenter() {
     else if (data.export_type === "sales") setSalesExporting(false)
     else if (data.export_type === "cheques") setChequeExporting(false)
     else if (data.export_type === "daily_sales") setDailySalesExporting(false)
+
+    if (pendingActionIdRef.current) {
+      removePendingAction(pendingActionIdRef.current)
+      pendingActionIdRef.current = null
+    }
     pendingExportRef.current = null
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useNotificationWebSocket({ onExportReady })
 
   const { startExport: exportMutation } = useExportMutations()
+
+  const EXPORT_LABELS: Record<string, string> = {
+    inventory: "Inventory Report",
+    sales: "Sales Report",
+    cheques: "Cheques Report",
+    daily_sales: "Daily Sales Report",
+  }
 
   const startExport = (
     exportType: string,
@@ -952,6 +976,11 @@ export function ExportCenter() {
   ) => {
     setExporting(true)
     pendingExportRef.current = exportType
+    const actionId = addPendingAction(
+      "export",
+      EXPORT_LABELS[exportType] || exportType,
+    )
+    pendingActionIdRef.current = actionId
     exportMutation
       .mutateAsync({
         export_type: exportType,
@@ -962,6 +991,8 @@ export function ExportCenter() {
       .catch(() => {
         setExporting(false)
         pendingExportRef.current = null
+        removePendingAction(actionId)
+        pendingActionIdRef.current = null
       })
   }
 
@@ -1105,6 +1136,10 @@ export function ExportCenter() {
         onUploadStarted={() => {
           setBulkProcessing(true)
           setBulkUpdateResult(null)
+          bulkActionIdRef.current = addPendingAction(
+            "bulk_update",
+            "Bulk Price Update",
+          )
         }}
       />
     </div>

@@ -25,6 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { useNotificationWebSocket } from "@/lib/hooks/useNotificationWebSocket"
+import usePendingActionsStore from "@/lib/store/usePendingActionsStore"
 import api from "@/lib/utils/api"
 import { useQuery } from "@tanstack/react-query"
 import {
@@ -54,7 +55,7 @@ import {
   Wrench,
   Zap,
 } from "lucide-react"
-import { useCallback, useState } from "react"
+import { useCallback, useRef, useState } from "react"
 import { toast } from "sonner"
 
 interface DiskUsage {
@@ -176,6 +177,9 @@ const CLEANUP_ACTIONS = [
 
 export function ServerMaintenanceCard() {
   const [runningAction, setRunningAction] = useState<string | null>(null)
+  const maintenanceActionIdRef = useRef<string | null>(null)
+  const addPendingAction = usePendingActionsStore((s) => s.addAction)
+  const removePendingAction = usePendingActionsStore((s) => s.removeAction)
   const [pendingAuthAction, setPendingAuthAction] = useState<{
     type: "cleanup" | "command" | "install_cron" | "delete_chats"
     cleanup?: (typeof CLEANUP_ACTIONS)[number]
@@ -208,6 +212,10 @@ export function ServerMaintenanceCard() {
       results: CleanupResult[]
     }) => {
       setRunningAction(null)
+      if (maintenanceActionIdRef.current) {
+        removePendingAction(maintenanceActionIdRef.current)
+        maintenanceActionIdRef.current = null
+      }
 
       if (wsData.success) {
         toast.success(wsData.title, {
@@ -237,6 +245,8 @@ export function ServerMaintenanceCard() {
     extra?: Record<string, string>,
   ) => {
     setRunningAction(action)
+    const actionId = addPendingAction("maintenance", label)
+    maintenanceActionIdRef.current = actionId
     try {
       await api.post("/users/maintenance/", {
         action,
@@ -254,6 +264,8 @@ export function ServerMaintenanceCard() {
           : undefined
       toast.error(message || `Failed to start ${label}. Check server logs.`)
       setRunningAction(null)
+      removePendingAction(actionId)
+      maintenanceActionIdRef.current = null
     }
   }
 

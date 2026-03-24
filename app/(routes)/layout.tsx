@@ -3,6 +3,7 @@ import FloatingChat from "@/components/custom/chat/FloatingChat"
 import { Navbar } from "@/components/custom/navigation/Navbar"
 import { Sidebar } from "@/components/custom/navigation/Sidebar"
 import { Background } from "@/components/custom/shared/Background"
+import { PendingActions } from "@/components/custom/shared/PendingActions"
 import { ScrollToTop } from "@/components/custom/shared/ScrollToTop"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useDashboardWebSocket } from "@/lib/hooks/useDashboardWebSocket"
@@ -57,6 +58,7 @@ export default function MainLayout({
 
       <ScrollToTop />
       <FloatingChat />
+      <PendingActions />
     </div>
   )
 }
