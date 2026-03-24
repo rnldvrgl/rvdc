@@ -616,6 +616,7 @@ export default function SalesTransactionForm({
                         Number(i.item?.retail_price) ??
                         0),
                   })),
+                  { shouldDirty: true, shouldValidate: true },
                 )
                 setItems(updatedItems)
               }}
