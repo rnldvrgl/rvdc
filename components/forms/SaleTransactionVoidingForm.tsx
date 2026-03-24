@@ -79,7 +79,7 @@ const SaleTransactionVoidingForm = ({
           }`}
         />
         <Detail
-          label="Receipt #"
+          label="Official Receipt #"
           value={
             entity?.manual_receipt_number ||
             entity?.system_receipt_number ||

@@ -767,7 +767,7 @@ export default function ClientDetailPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-24">Receipt #</TableHead>
+                      <TableHead className="w-28">Official Receipt #</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead>Items</TableHead>
                       <TableHead className="hidden md:table-cell">

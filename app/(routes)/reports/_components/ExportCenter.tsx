@@ -239,7 +239,7 @@ const BIR_2307_SHEETS = [
     key: "main_stall",
     label: "BIR 2307 - Main Stall",
     description:
-      "Services with receipt numbers (daily/monthly/quarterly/yearly)",
+      "Services with official receipt numbers (daily/monthly/quarterly/yearly)",
     icon: Store,
     color: "text-emerald-500",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
@@ -248,7 +248,7 @@ const BIR_2307_SHEETS = [
     key: "sub_stall",
     label: "BIR 2307 - Sub Stall",
     description:
-      "Direct sales with receipt numbers (daily/monthly/quarterly/yearly)",
+      "Direct sales with official receipt numbers (daily/monthly/quarterly/yearly)",
     icon: Store,
     color: "text-blue-500",
     bgColor: "bg-blue-50 dark:bg-blue-950/20",
@@ -1170,7 +1170,7 @@ export function ExportCenter() {
       {/* BIR 2307 Sales Report */}
       <ExportSection
         title="BIR 2307 Sales Report"
-        description="Separate files per stall — missing receipt #s highlighted orange"
+        description="Separate files per stall — missing OR #s highlighted orange"
         icon={FileSpreadsheet}
         accentColor="bg-linear-to-br from-rose-500 to-pink-600"
         sheets={BIR_2307_SHEETS}

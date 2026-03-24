@@ -68,6 +68,7 @@ import {
   List,
   MapPin,
   Package,
+  PenLine,
   Phone,
   Printer,
   RotateCcw,
@@ -1160,10 +1161,10 @@ export default function ServiceDetail({
                 )
               })()}
               <Separator />
-              {/* BIR 2307 Receipt Number */}
-              <div className="flex items-center justify-between">
+              {/* Official Receipt Number */}
+              <div className="space-y-1.5">
                 <p className="text-sm font-medium text-muted-foreground">
-                  Receipt # (2307)
+                  Official Receipt #
                 </p>
                 {editingReceiptNumber ? (
                   <form
@@ -1181,7 +1182,7 @@ export default function ServiceDetail({
                           onSuccess: () => {
                             setEditingReceiptNumber(false)
                             onRefresh?.()
-                            toast.success("Receipt number updated.")
+                            toast.success("Official receipt number updated.")
                           },
                         },
                       )
@@ -1191,14 +1192,14 @@ export default function ServiceDetail({
                       value={receiptNumberInput}
                       onChange={(e) => setReceiptNumberInput(e.target.value)}
                       placeholder="e.g. 0001"
-                      className="h-7 w-28 text-xs"
+                      className="h-8 w-full text-sm"
                       autoFocus
                     />
                     <Button
                       type="submit"
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6"
+                      className="h-7 w-7 shrink-0"
                       disabled={updateService.isPending}
                     >
                       <CheckCircle className="h-3.5 w-3.5 text-green-600" />
@@ -1207,7 +1208,7 @@ export default function ServiceDetail({
                       type="button"
                       size="icon"
                       variant="ghost"
-                      className="h-6 w-6"
+                      className="h-7 w-7 shrink-0"
                       onClick={() => {
                         setEditingReceiptNumber(false)
                         setReceiptNumberInput(
@@ -1221,12 +1222,17 @@ export default function ServiceDetail({
                 ) : (
                   <button
                     type="button"
-                    className="text-sm font-medium hover:underline cursor-pointer"
+                    className="flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer group"
                     onClick={() => setEditingReceiptNumber(true)}
                   >
-                    {service.manual_receipt_number || (
-                      <span className="text-muted-foreground italic">
-                        Not set
+                    <PenLine className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
+                    {service.manual_receipt_number ? (
+                      <span className="font-medium">
+                        {service.manual_receipt_number}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        Click to set receipt number
                       </span>
                     )}
                   </button>

@@ -506,7 +506,7 @@ export default function SalesTransactionForm({
                 name="manual_receipt_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Receipt #</FormLabel>
+                    <FormLabel>Official Receipt #</FormLabel>
                     <FormControl>
                       <Input
                         disabled={isDisabled}
