@@ -791,9 +791,9 @@ export default function SalesTransactionForm({
               type="submit"
               className="w-full"
               disabled={
-                (!initialData && !form.formState.isDirty) ||
                 form.formState.isSubmitting ||
-                !form.formState.isValid
+                (!initialData &&
+                  (!form.formState.isDirty || !form.formState.isValid))
               }
             >
               <Save className="mr-2 size-4" />
