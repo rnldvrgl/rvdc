@@ -130,14 +130,16 @@ const formatLeaveDate = (leave: LeaveRequest) => {
 
 const formatLeaveDuration = (leave: LeaveRequest) => {
   const days = parseFloat(leave.days_count || "1")
-  if (days === 0.5) {
-    return `Half Day (${leave.shift_period === "AM" ? "Morning" : "Afternoon"})`
+  if (leave.is_half_day || days === 0.5) {
+    const period =
+      leave.shift_period === "AM"
+        ? "Morning"
+        : leave.shift_period === "PM"
+          ? "Afternoon"
+          : leave.shift_period_display || "Afternoon"
+    return `Half Day (${period})`
   }
-  if (days === 1) {
-    return leave.shift_period === "FULL"
-      ? "Full Day"
-      : `Half Day (${leave.shift_period === "AM" ? "Morning" : "Afternoon"})`
-  }
+  if (days === 1) return "Full Day"
   return `${days} Day(s)`
 }
 
@@ -281,7 +283,13 @@ export function LeaveOverview() {
 
   const handleEditClick = (leave: LeaveRequest) => {
     setLeaveToEdit(leave)
-    setEditShiftPeriod(leave.shift_period)
+    // Derive correct shift period: if is_half_day but shift_period is still FULL,
+    // that's a data inconsistency — default to PM
+    const period =
+      leave.is_half_day && leave.shift_period === "FULL"
+        ? "PM"
+        : leave.shift_period
+    setEditShiftPeriod(period)
     setEditDialogOpen(true)
   }
 
