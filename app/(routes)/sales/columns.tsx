@@ -224,7 +224,7 @@ export function getSalesTransactionColumns({
                 icon: Eye,
                 onClick: () => onView?.(row.original),
               },
-              ...(!isServiceTransaction
+              ...(!isServiceTransaction && role === "admin"
                 ? [
                     {
                       label: "Edit",

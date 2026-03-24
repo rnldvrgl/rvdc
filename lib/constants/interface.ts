@@ -454,6 +454,7 @@ export interface SalesTransaction {
   is_deleted: boolean
   deleted_at?: string | null
 
+  transaction_date?: string | null
   created_at: string
   updated_at: string
 
@@ -473,6 +474,7 @@ export interface SalesTransactionPayload {
   stall: number | null | undefined
   client: number | null
   manual_receipt_number: string | null
+  transaction_date?: string | null
   transaction_type?: string
   note?: string | null
   order_discount?: number

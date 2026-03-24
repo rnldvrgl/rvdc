@@ -29,6 +29,7 @@ import {
 } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheetDialog } from "@/lib/hooks/useEntityDialog"
 import { useItemSelection } from "@/lib/hooks/useItemSelection"
 import { usePrint } from "@/lib/hooks/usePrint"
@@ -67,6 +68,7 @@ export default function SalesTransactionForm({
     client_id: z.number().nullable().optional(),
     note: z.string().optional(),
     manual_receipt_number: z.string().optional(),
+    transaction_date: z.string().optional(),
     order_discount: z.number().min(0).optional(),
     payments: z.array(
       z.object({
@@ -122,6 +124,7 @@ export default function SalesTransactionForm({
       client_id: initialData?.client?.id,
       note: initialData?.note ?? "",
       manual_receipt_number: initialData?.manual_receipt_number ?? "",
+      transaction_date: initialData?.transaction_date ?? "",
       order_discount: Number(initialData?.order_discount || 0),
       payments:
         initialData?.payments?.map((i) => ({
@@ -192,6 +195,7 @@ export default function SalesTransactionForm({
   }, [stockData])
 
   const { addTransaction, updateTransaction } = useSalesTransactionMutations()
+  const { isAdmin } = useCurrentUser()
   const isVoided = initialData?.voided
   const isDisabled = form.formState.isSubmitting || isVoided
 
@@ -293,6 +297,7 @@ export default function SalesTransactionForm({
       client: data.client_id ?? null,
       note: data.note || null,
       manual_receipt_number: data.manual_receipt_number ?? null,
+      transaction_date: data.transaction_date || null,
       order_discount: discount,
       items: data.items.map((i) => ({
         item: i.item_id,
@@ -518,6 +523,26 @@ export default function SalesTransactionForm({
                   </FormItem>
                 )}
               />
+
+              {isAdmin && (
+                <FormField
+                  control={form.control}
+                  name="transaction_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Transaction Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          disabled={isDisabled}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               {isFreeTransaction && (
                 <FormField
