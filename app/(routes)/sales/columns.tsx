@@ -70,9 +70,14 @@ export function getSalesTransactionColumns({
         const bookLabel = tx.receipt_book ? ` [Book ${tx.receipt_book}]` : ""
         return (
           <span className="text-xs">
-            {safeCell(receiptNum)
-              ? `${docLabel} ${receiptNum}${bookLabel}`
-              : "—"}
+            {receiptNum ? (
+              <>
+                {docLabel} # {receiptNum}
+                {bookLabel}{" "}
+              </>
+            ) : (
+              "—"
+            )}
           </span>
         )
       },
