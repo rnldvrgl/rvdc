@@ -8,6 +8,10 @@ type ExportPayload = {
   sheets: string
   start_date?: string
   end_date?: string
+  ewt_rate?: number
+  tax_rate?: number
+  pre_system_amount?: number
+  pre_system_receipts?: string
 }
 
 export function useExportMutations() {

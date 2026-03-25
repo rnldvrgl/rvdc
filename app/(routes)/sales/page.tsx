@@ -38,7 +38,7 @@ const emptyData = {
 }
 
 export default function SalesTransactionsPage() {
-  const { role } = useCurrentUser()
+  const { role, assigned_stall } = useCurrentUser()
   const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
   const { page, limit, search, ordering, filter } = searchParams
   const [activeTab, setActiveTab] = useState<TabValue>("active")
@@ -196,7 +196,8 @@ export default function SalesTransactionsPage() {
         description="Track sales transactions, manage customer orders, and monitor revenue performance across all stalls."
         breadcrumbs={["Dashboard", "Sales", "Transactions"]}
         actionButton={
-          activeTab === "active" ? (
+          activeTab === "active" &&
+          !(role === "manager" && assigned_stall?.stall_type === "main") ? (
             <Button onClick={() => openCreate()}>
               <Plus className="size-4 mr-2" />
               New Sale

@@ -138,6 +138,10 @@ export default function ServiceDetail({
   const [receiptNumberInput, setReceiptNumberInput] = useState(
     service.manual_receipt_number || "",
   )
+  const [editingReceiptBook, setEditingReceiptBook] = useState(false)
+  const [receiptBookInput, setReceiptBookInput] = useState(
+    service.receipt_book || "",
+  )
   const {
     completeService,
     recordPayment,
@@ -1233,6 +1237,81 @@ export default function ServiceDetail({
                     ) : (
                       <span className="text-muted-foreground">
                         Click to set receipt number
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+              {/* Receipt Book # */}
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Receipt Book #
+                </p>
+                {editingReceiptBook ? (
+                  <form
+                    className="flex items-center gap-1.5"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      updateService.mutate(
+                        {
+                          id: service.id,
+                          data: {
+                            receipt_book: receiptBookInput || null,
+                          },
+                        },
+                        {
+                          onSuccess: () => {
+                            setEditingReceiptBook(false)
+                            onRefresh?.()
+                            toast.success("Receipt book number updated.")
+                          },
+                        },
+                      )
+                    }}
+                  >
+                    <Input
+                      value={receiptBookInput}
+                      onChange={(e) => setReceiptBookInput(e.target.value)}
+                      placeholder="e.g. 1"
+                      className="h-8 w-full text-sm"
+                      autoFocus
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0"
+                      disabled={updateService.isPending}
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => {
+                        setEditingReceiptBook(false)
+                        setReceiptBookInput(service.receipt_book || "")
+                      }}
+                    >
+                      <XIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer group"
+                    onClick={() => setEditingReceiptBook(true)}
+                  >
+                    <PenLine className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
+                    {service.receipt_book ? (
+                      <span className="font-medium">
+                        {service.receipt_book}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        Click to set receipt book #
                       </span>
                     )}
                   </button>

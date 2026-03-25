@@ -439,8 +439,11 @@ export interface SalesTransaction {
   stall: Stall
   client?: Client
 
+  receipt_book?: string | null
   manual_receipt_number?: string | null
   system_receipt_number: string // UUID
+  document_type: "or" | "si"
+  with_2307: boolean
 
   payment_status: PaymentStatus
 
@@ -473,7 +476,9 @@ export interface SalesTransaction {
 export interface SalesTransactionPayload {
   stall: number | null | undefined
   client: number | null
+  receipt_book?: string | null
   manual_receipt_number: string | null
+  with_2307?: boolean
   transaction_date?: string | null
   transaction_type?: string
   note?: string | null
@@ -1177,7 +1182,9 @@ export interface Service {
   service_items_checked_by_name?: string | null
   service_items_checked_at?: string | null
   // BIR 2307 receipt
+  receipt_book?: string | null
   manual_receipt_number?: string | null
+  with_2307?: boolean
 }
 
 export interface ServicePayload {
@@ -1207,7 +1214,9 @@ export interface ServicePayload {
   // Service-level parts review
   service_parts_needed_notes?: string
   // BIR 2307 receipt
+  receipt_book?: string | null
   manual_receipt_number?: string | null
+  with_2307?: boolean
   technician_assignments?: TechnicianAssignmentPayload[]
 }
 
