@@ -41,3 +41,13 @@ export function useVoidedSalesTransactions(
     enabled: props.enabled,
   })
 }
+
+export function useDailySalesSummary() {
+  return useApiQuery<{ count: number; total: number }>({
+    queryKey: ["sales-daily-summary"],
+    url: `${salesTransactionsUrl}daily-summary/`,
+    options: {
+      refetchInterval: 30_000, // refresh every 30s
+    },
+  })
+}

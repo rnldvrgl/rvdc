@@ -28,8 +28,20 @@ export function ComboBox({
   searchPlaceholder = "Search...",
   className,
   disabled,
-}: ComboBoxProps) {
+  autoOpen,
+}: ComboBoxProps & { autoOpen?: boolean }) {
   const [open, setOpen] = React.useState(false)
+
+  // Auto-open the popover once on mount when autoOpen is true
+  const autoOpenedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (autoOpen && !autoOpenedRef.current && !disabled) {
+      autoOpenedRef.current = true
+      // Small delay to let the DOM settle
+      const timer = setTimeout(() => setOpen(true), 50)
+      return () => clearTimeout(timer)
+    }
+  }, [autoOpen, disabled])
   const [triggerWidth, setTriggerWidth] = React.useState<number>()
   const triggerRef = React.useRef<HTMLButtonElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)

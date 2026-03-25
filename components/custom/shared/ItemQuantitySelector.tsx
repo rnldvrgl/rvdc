@@ -11,8 +11,29 @@ import {
 } from "@/components/ui/tooltip"
 import { CustomItemTemplate, Item, ItemEntry } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/helpers"
-import { AlertTriangle, Info, Minus, Pencil, Plus, X } from "lucide-react"
-import { useState } from "react"
+import { AlertTriangle, Info, Minus, Pencil, Plus, Star, X } from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
+
+const RECENT_ITEMS_KEY = "rvdc_recent_sale_items"
+const MAX_RECENT_ITEMS = 8
+
+function getRecentItemIds(): number[] {
+  try {
+    const stored = localStorage.getItem(RECENT_ITEMS_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+function addRecentItemId(id: number) {
+  const recent = getRecentItemIds().filter((i) => i !== id)
+  recent.unshift(id)
+  localStorage.setItem(
+    RECENT_ITEMS_KEY,
+    JSON.stringify(recent.slice(0, MAX_RECENT_ITEMS)),
+  )
+}
 
 export default function ItemQuantitySelector({
   items,
@@ -48,6 +69,7 @@ export default function ItemQuantitySelector({
           }
         : {}),
     }
+    setNewlyAddedIdx(items.length)
     onChange([...items, newItem])
   }
 
@@ -94,6 +116,9 @@ export default function ItemQuantitySelector({
   }
 
   const handleUpdateItem = (idx: number, newItem: Item) => {
+    if (idx === newlyAddedIdx) setNewlyAddedIdx(null)
+    addRecentItemId(newItem.id)
+    setRecentIds(getRecentItemIds())
     onChange(
       items.map((itm, i) =>
         i === idx
@@ -121,6 +146,38 @@ export default function ItemQuantitySelector({
   const [selectedTemplateByRow, setSelectedTemplateByRow] = useState<
     Record<number, string>
   >({})
+
+  // Track previously-added item index so we can auto-open its ComboBox
+  const [newlyAddedIdx, setNewlyAddedIdx] = useState<number | null>(null)
+
+  // Recent items for quick-add grid
+  const [recentIds, setRecentIds] = useState<number[]>([])
+  useEffect(() => {
+    setRecentIds(getRecentItemIds())
+  }, [])
+
+  const recentItems = recentIds
+    .map((id) => allItems.find((item) => item.id === id))
+    .filter((item): item is Item => !!item)
+
+  const handleQuickAdd = useCallback(
+    (item: Item) => {
+      const newItem: ItemEntry = {
+        item,
+        quantity: 1,
+        ...(allowPriceChange
+          ? {
+              final_price_per_unit: Number(item.retail_price),
+              print_price_per_unit: Number(item.retail_price),
+            }
+          : {}),
+      }
+      addRecentItemId(item.id)
+      setRecentIds(getRecentItemIds())
+      onChange([...items, newItem])
+    },
+    [items, onChange, allowPriceChange],
+  )
 
   const allowsDecimal = (item: Item | null) =>
     !!item && ["kg", "ft"].includes(item.unit_of_measure)
@@ -268,6 +325,7 @@ export default function ItemQuantitySelector({
                           }
                         })}
                         placeholder="Select item"
+                        autoOpen={idx === newlyAddedIdx}
                       />
                     )}
                   </div>
@@ -575,6 +633,39 @@ export default function ItemQuantitySelector({
       ) : (
         <div className="py-6 text-center text-sm text-muted-foreground border border-dashed rounded-lg">
           No items added yet
+        </div>
+      )}
+
+      {/* Recent items quick-add */}
+      {recentItems.length > 0 && !disabled && (
+        <div className="space-y-1.5">
+          <span className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+            <Star className="size-3" />
+            Recent
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {recentItems.map((item) => {
+              const stock = stockMap?.get(item.id)
+              const isUntracked = untrackedItemIds?.has(item.id) ?? false
+              return (
+                <Button
+                  key={item.id}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs px-2.5"
+                  onClick={() => handleQuickAdd(item)}
+                >
+                  {item.name}
+                  {!isUntracked && stock !== undefined && (
+                    <span className="ml-1 text-muted-foreground">
+                      ({stock})
+                    </span>
+                  )}
+                </Button>
+              )
+            })}
+          </div>
         </div>
       )}
 

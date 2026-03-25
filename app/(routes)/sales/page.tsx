@@ -10,6 +10,11 @@ import { SalesTransactionDetails } from "@/components/details/SalesTransactionDe
 import SalesTransactionForm from "@/components/forms/SalesTransactionForm"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SalesTransaction } from "@/lib/constants/interface"
 import { useArchive } from "@/lib/hooks/useArchive"
@@ -19,14 +24,31 @@ import { usePrint } from "@/lib/hooks/usePrint"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
 import {
+  useDailySalesSummary,
   useSalesTransaction,
   useSalesTransactionFilters,
   useSalesTransactions,
   useVoidedSalesTransactions,
 } from "@/lib/queries/sales/useSalesTransactions"
-import { Archive, Ban, List, Plus, ShoppingCart } from "lucide-react"
+import {
+  getHeldSales,
+  removeHeldSale,
+  resumeHeldSale,
+  type HeldSale,
+} from "@/lib/utils/heldSales"
+import { formatCurrency } from "@/lib/utils/helpers"
+import {
+  Archive,
+  Ban,
+  List,
+  Pause,
+  Play,
+  Plus,
+  ShoppingCart,
+  X,
+} from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 type TabValue = "active" | "voided" | "archived"
 
@@ -76,6 +98,8 @@ export default function SalesTransactionsPage() {
     enabled: activeTab === "voided",
   })
 
+  const { data: dailySummary } = useDailySalesSummary()
+
   // Sheets
   const {
     entityState: viewSheet,
@@ -96,6 +120,23 @@ export default function SalesTransactionsPage() {
   const { printRef, handlePrint, printData } = usePrint<SalesTransaction>({
     documentTitle: "Receipt",
   })
+
+  // Counter to force fresh form remount on "Print & New Sale"
+  const [createKey, setCreateKey] = useState(0)
+  // Client ID to persist across "Print & New Sale"
+  const [nextClientId, setNextClientId] = useState<number | null>(null)
+  // Held sales system
+  const [heldSales, setHeldSales] = useState<HeldSale[]>([])
+  const [resumingSale, setResumingSale] = useState<HeldSale | null>(null)
+
+  const refreshHeldSales = useCallback(() => {
+    setHeldSales(getHeldSales())
+  }, [])
+
+  // Load held sales on mount
+  useEffect(() => {
+    refreshHeldSales()
+  }, [refreshHeldSales])
 
   // Track if we've already opened the view to avoid re-opening
   const hasOpenedView = useRef(false)
@@ -198,26 +239,142 @@ export default function SalesTransactionsPage() {
         actionButton={
           activeTab === "active" &&
           !(role === "manager" && assigned_stall?.stall_type === "main") ? (
-            <Button onClick={() => openCreate()}>
-              <Plus className="size-4 mr-2" />
-              New Sale
-            </Button>
+            <div className="flex items-center gap-2">
+              {heldSales.length > 0 && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Pause className="size-3.5 mr-1.5" />
+                      Held
+                      <Badge className="ml-1.5 h-5 min-w-5 rounded-full px-1.5 text-[10px]">
+                        {heldSales.length}
+                      </Badge>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-72 p-2"
+                    align="end"
+                  >
+                    <div className="space-y-1">
+                      {heldSales.map((hs) => (
+                        <div
+                          key={hs.id}
+                          className="flex items-center justify-between rounded-md border px-2.5 py-1.5 text-sm"
+                        >
+                          <button
+                            className="flex-1 text-left hover:underline"
+                            onClick={() => {
+                              const sale = resumeHeldSale(hs.id)
+                              if (sale) {
+                                setResumingSale(sale)
+                                refreshHeldSales()
+                                setCreateKey((k) => k + 1)
+                                setTimeout(() => openCreate(), 50)
+                              }
+                            }}
+                          >
+                            <div className="font-medium truncate">
+                              {hs.label}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {new Date(hs.heldAt).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
+                          </button>
+                          <div className="flex items-center gap-1 ml-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-6"
+                              onClick={() => {
+                                const sale = resumeHeldSale(hs.id)
+                                if (sale) {
+                                  setResumingSale(sale)
+                                  refreshHeldSales()
+                                  setCreateKey((k) => k + 1)
+                                  setTimeout(() => openCreate(), 50)
+                                }
+                              }}
+                            >
+                              <Play className="size-3" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-6 text-destructive hover:text-destructive"
+                              onClick={() => {
+                                removeHeldSale(hs.id)
+                                refreshHeldSales()
+                              }}
+                            >
+                              <X className="size-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+              <Button onClick={() => openCreate()}>
+                <Plus className="size-4 mr-2" />
+                New Sale
+              </Button>
+            </div>
           ) : undefined
         }
         onRefresh={currentRefetch}
       />
 
+      {/* Daily Summary */}
+      {dailySummary && activeTab === "active" && (
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-4 py-2 text-sm">
+          <span className="font-medium">Today</span>
+          <span className="text-muted-foreground">
+            {dailySummary.count} sale{dailySummary.count !== 1 ? "s" : ""}
+          </span>
+          <span className="font-semibold text-primary">
+            {formatCurrency(dailySummary.total)}
+          </span>
+        </div>
+      )}
+
       {/* Create Transaction Sheet */}
       {activeTab === "active" && (
         <EntitySheet<SalesTransaction>
+          key={createKey}
           className="sm:min-w-lg md:min-w-xl lg:min-w-2xl"
           open={createSheet.open}
-          onClose={closeCreate}
-          title="New Sale"
-          description="Record a new sales transaction."
+          onClose={() => {
+            closeCreate()
+            setResumingSale(null)
+          }}
+          title={resumingSale ? "Resume Sale" : "New Sale"}
+          description={
+            resumingSale
+              ? `Resuming held sale: ${resumingSale.label}`
+              : "Record a new sales transaction."
+          }
           withCloseConfirmation
           renderForm={({ forceClose }) => (
-            <SalesTransactionForm onClose={forceClose} />
+            <SalesTransactionForm
+              onClose={forceClose}
+              defaultClientId={nextClientId}
+              heldSale={resumingSale}
+              onHeld={refreshHeldSales}
+              onNewSale={(opts) => {
+                setNextClientId(opts?.clientId ?? null)
+                setResumingSale(null)
+                closeCreate()
+                setCreateKey((k) => k + 1)
+                setTimeout(() => openCreate(), 100)
+              }}
+            />
           )}
         />
       )}

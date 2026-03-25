@@ -2,12 +2,19 @@
 
 import { ClientComboBox } from "@/components/custom/inputs/ClientComboBox"
 import DatePicker from "@/components/custom/inputs/DatePicker"
-import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntityDialog from "@/components/custom/shared/EntityDialog"
 import ItemQuantitySelector from "@/components/custom/shared/ItemQuantitySelector"
 import PaymentMethodSelector from "@/components/custom/shared/PaymentMethodSelector"
 import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTransactionPrintContent"
 import SaleTransactionVoidingForm from "@/components/forms/SaleTransactionVoidingForm"
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -21,8 +28,18 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
   Item,
   ItemEntry,
@@ -38,12 +55,23 @@ import { usePrint } from "@/lib/hooks/usePrint"
 import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
 import { useCustomItemTemplateChoices } from "@/lib/queries/inventory/useCustomItemTemplates"
 import { useItemChoices, useStallChoices } from "@/lib/queries/useChoices"
+import { holdSale } from "@/lib/utils/heldSales"
 import { formatCurrency } from "@/lib/utils/helpers"
+import {
+  getSaleTemplates,
+  removeSaleTemplate,
+  saveSaleTemplate,
+  type SaleTemplate,
+} from "@/lib/utils/saleTemplates"
+import { playSuccessSound } from "@/lib/utils/sounds"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
+  Bookmark,
   CreditCard,
   Loader2,
   Package,
+  Pause,
+  Plus,
   Printer,
   Receipt,
   RefreshCw,
@@ -51,19 +79,30 @@ import {
   Save,
   ShoppingCart,
   Trash2,
+  X,
 } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useFieldArray, useForm } from "react-hook-form"
 import * as z from "zod"
 
+import type { HeldSale } from "@/lib/utils/heldSales"
+
 interface SalesTransactionFormProps {
   initialData?: SalesTransaction
   onClose: () => void
+  onNewSale?: (opts?: { clientId?: number | null }) => void
+  defaultClientId?: number | null
+  heldSale?: HeldSale | null
+  onHeld?: () => void
 }
 
 export default function SalesTransactionForm({
   initialData,
   onClose,
+  onNewSale,
+  defaultClientId,
+  heldSale,
+  onHeld,
 }: SalesTransactionFormProps) {
   const baseSchema = z.object({
     transaction_type: z.enum(["sale", "replacement"]),
@@ -122,27 +161,42 @@ export default function SalesTransactionForm({
     resolver,
     defaultValues: {
       transaction_type:
-        initialData?.transaction_type === "replacement"
+        heldSale?.transactionType ??
+        (initialData?.transaction_type === "replacement"
           ? "replacement"
-          : "sale",
+          : "sale"),
       stall: initialData?.stall?.id ?? null,
-      client_id: initialData?.client?.id,
-      note: initialData?.note ?? "",
-      manual_receipt_number: initialData?.manual_receipt_number ?? "",
-      receipt_book: initialData?.receipt_book ?? "",
-      with_2307: initialData?.with_2307 ?? false,
+      client_id:
+        initialData?.client?.id ??
+        heldSale?.clientId ??
+        defaultClientId ??
+        undefined,
+      note: initialData?.note ?? heldSale?.note ?? "",
+      manual_receipt_number:
+        initialData?.manual_receipt_number ??
+        heldSale?.manualReceiptNumber ??
+        "",
+      receipt_book: initialData?.receipt_book ?? heldSale?.receiptBook ?? "",
+      with_2307: initialData?.with_2307 ?? heldSale?.with2307 ?? false,
       transaction_date:
         initialData?.transaction_date ??
         (initialData?.created_at
           ? initialData.created_at.slice(0, 10)
-          : new Date().toISOString().slice(0, 10)),
-      order_discount: Number(initialData?.order_discount || 0),
-      payments:
-        initialData?.payments?.map((i) => ({
-          payment_type: i.payment_type,
-          amount: Number(i.amount) ?? 0,
-          cheque_collection: i.cheque_collection ?? null,
-        })) ?? [],
+          : (() => {
+              const d = new Date()
+              return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+            })()),
+      order_discount: Number(
+        initialData?.order_discount || heldSale?.orderDiscount || 0,
+      ),
+      payments: initialData?.payments?.map((i) => ({
+        payment_type: i.payment_type,
+        amount: Number(i.amount) ?? 0,
+        cheque_collection: i.cheque_collection ?? null,
+      })) ??
+        heldSale?.payments ??
+          // Default to a single Cash payment row for new sales
+          [{ payment_type: "cash", amount: 0, cheque_collection: null }],
       items:
         initialData?.items?.map((i) => ({
           item_id: i.item?.id ?? null,
@@ -151,7 +205,9 @@ export default function SalesTransactionForm({
           final_price_per_unit:
             Number(i.final_price_per_unit) ?? Number(i.item?.retail_price) ?? 0,
           print_price_per_unit: Number(i.item?.retail_price) ?? 0,
-        })) ?? [],
+        })) ??
+        heldSale?.items ??
+        [],
     },
     mode: "onChange",
   })
@@ -172,6 +228,15 @@ export default function SalesTransactionForm({
 
   const [createdTransaction, setCreatedTransaction] =
     useState<SalesTransaction | null>(null)
+  const [keepClient, setKeepClient] = useState(true)
+  const [templates, setTemplates] = useState<SaleTemplate[]>([])
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false)
+  const [templateName, setTemplateName] = useState("")
+
+  // Load templates on mount
+  useEffect(() => {
+    setTemplates(getSaleTemplates())
+  }, [])
   const { data: allItemsData, isLoading: itemsLoading } = useItemChoices()
   const { data: customItemTemplates = [] } = useCustomItemTemplateChoices()
   const allItems: Item[] = allItemsData ?? []
@@ -186,6 +251,8 @@ export default function SalesTransactionForm({
   })
 
   // Build item_id -> available_quantity map
+  // When editing, add back the quantities from the original sale since those
+  // are already committed to this transaction and shouldn't count as "used"
   const stockMap = useMemo(() => {
     const map = new Map<number, number>()
     if (stockData?.results) {
@@ -195,8 +262,18 @@ export default function SalesTransactionForm({
         }
       }
     }
+    if (initialData?.items) {
+      for (const item of initialData.items) {
+        if (item.item) {
+          const current = map.get(item.item.id)
+          if (current !== undefined) {
+            map.set(item.item.id, current + (item.quantity ?? 0))
+          }
+        }
+      }
+    }
     return map
-  }, [stockData])
+  }, [stockData, initialData])
 
   // Build set of untracked item IDs
   const untrackedItemIds = useMemo(() => {
@@ -354,6 +431,7 @@ export default function SalesTransactionForm({
     } else {
       addTransaction.mutate(payload, {
         onSuccess: (data: { data: SalesTransaction }) => {
+          playSuccessSound()
           const formItems = form.getValues().items
 
           const printPrices = formItems.map((i) => i.print_price_per_unit)
@@ -390,6 +468,38 @@ export default function SalesTransactionForm({
         final_price_per_unit: Number(i.final_price_per_unit) ?? 0,
       })) ?? [],
   })
+
+  // Initialize items from held sale once allItems are loaded
+  const heldInitRef = useRef(false)
+  useEffect(() => {
+    if (!heldSale || heldInitRef.current || allItems.length === 0) return
+    heldInitRef.current = true
+    setItems(
+      heldSale.items.map((i) => ({
+        item: allItems.find((a) => a.id === i.item_id) ?? null,
+        quantity: i.quantity,
+        description: i.item_id === null ? i.description : undefined,
+        final_price_per_unit: i.final_price_per_unit,
+        print_price_per_unit: i.print_price_per_unit,
+      })),
+    )
+    // Mark form dirty so submit button enables
+    setTimeout(() => form.trigger(), 0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heldSale, allItems])
+
+  // Ctrl+Enter keyboard shortcut for submit
+  const formRef = useRef<HTMLFormElement>(null)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "Enter") {
+        e.preventDefault()
+        formRef.current?.requestSubmit()
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [])
 
   if (initialData && (itemsLoading || stallsLoading)) {
     return (
@@ -459,6 +569,7 @@ export default function SalesTransactionForm({
 
       <Form {...form}>
         <form
+          ref={formRef}
           onSubmit={
             initialData
               ? (e) => {
@@ -544,6 +655,7 @@ export default function SalesTransactionForm({
                       disabled={isDisabled}
                       value={field.value ? Number(field.value) : null}
                       onChange={(val) => field.onChange(val ?? null)}
+                      allowCreate={!initialData}
                     />
                     <FormMessage />
                   </FormItem>
@@ -670,14 +782,170 @@ export default function SalesTransactionForm({
                 <Package className="size-3" />
                 Items
               </Label>
-              {watchedItems.length > 0 && (
-                <Badge
-                  variant="secondary"
-                  className="text-[10px] h-5 px-1.5"
-                >
-                  {watchedItems.length}
-                </Badge>
-              )}
+              <div className="flex items-center gap-1.5">
+                {watchedItems.length > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] h-5 px-1.5"
+                  >
+                    {watchedItems.length}
+                  </Badge>
+                )}
+                {!initialData && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-[10px]"
+                      >
+                        <Bookmark className="size-3 mr-1" />
+                        Templates
+                        {templates.length > 0 && (
+                          <Badge
+                            variant="secondary"
+                            className="ml-1 h-4 min-w-4 rounded-full px-1 text-[9px]"
+                          >
+                            {templates.length}
+                          </Badge>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-64 p-2"
+                      align="end"
+                    >
+                      <div className="space-y-2">
+                        {/* Save current items as template */}
+                        {watchedItems.length > 0 && (
+                          <div>
+                            {showSaveTemplate ? (
+                              <div className="flex gap-1">
+                                <Input
+                                  value={templateName}
+                                  onChange={(e) =>
+                                    setTemplateName(e.target.value)
+                                  }
+                                  placeholder="Template name"
+                                  className="h-7 text-xs"
+                                  autoFocus
+                                  onKeyDown={(e) => {
+                                    if (
+                                      e.key === "Enter" &&
+                                      templateName.trim()
+                                    ) {
+                                      e.preventDefault()
+                                      saveSaleTemplate(
+                                        templateName.trim(),
+                                        form.getValues("items"),
+                                      )
+                                      setTemplates(getSaleTemplates())
+                                      setTemplateName("")
+                                      setShowSaveTemplate(false)
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="h-7 px-2 text-xs"
+                                  disabled={!templateName.trim()}
+                                  onClick={() => {
+                                    saveSaleTemplate(
+                                      templateName.trim(),
+                                      form.getValues("items"),
+                                    )
+                                    setTemplates(getSaleTemplates())
+                                    setTemplateName("")
+                                    setShowSaveTemplate(false)
+                                  }}
+                                >
+                                  Save
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="w-full h-7 text-xs"
+                                onClick={() => setShowSaveTemplate(true)}
+                              >
+                                <Save className="size-3 mr-1" />
+                                Save current items as template
+                              </Button>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Template list */}
+                        {templates.length > 0 ? (
+                          <div className="space-y-1 max-h-48 overflow-y-auto">
+                            {templates.map((t) => (
+                              <div
+                                key={t.id}
+                                className="flex items-center justify-between rounded-md border px-2 py-1.5 text-xs"
+                              >
+                                <button
+                                  type="button"
+                                  className="flex-1 text-left hover:underline font-medium"
+                                  onClick={() => {
+                                    // Load template items into form
+                                    form.setValue("items", t.items, {
+                                      shouldDirty: true,
+                                      shouldValidate: true,
+                                    })
+                                    setItems(
+                                      t.items.map((i) => ({
+                                        item:
+                                          allItems.find(
+                                            (a) => a.id === i.item_id,
+                                          ) ?? null,
+                                        quantity: i.quantity,
+                                        description:
+                                          i.item_id === null
+                                            ? i.description
+                                            : undefined,
+                                        final_price_per_unit:
+                                          i.final_price_per_unit,
+                                        print_price_per_unit:
+                                          i.print_price_per_unit,
+                                      })),
+                                    )
+                                  }}
+                                >
+                                  {t.name}
+                                  <span className="text-muted-foreground ml-1">
+                                    ({t.items.length} item
+                                    {t.items.length !== 1 ? "s" : ""})
+                                  </span>
+                                </button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="size-5 text-destructive hover:text-destructive"
+                                  onClick={() => {
+                                    removeSaleTemplate(t.id)
+                                    setTemplates(getSaleTemplates())
+                                  }}
+                                >
+                                  <X className="size-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-[10px] text-muted-foreground text-center py-2">
+                            No templates saved yet
+                          </p>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              </div>
             </div>
             <ItemQuantitySelector
               disabled={isDisabled}
@@ -876,45 +1144,141 @@ export default function SalesTransactionForm({
 
           {/* Submit */}
           {!isVoided && (
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={
-                form.formState.isSubmitting ||
-                (!initialData &&
-                  (!form.formState.isDirty || !form.formState.isValid))
-              }
-            >
-              <Save className="mr-2 size-4" />
-              {form.formState.isSubmitting
-                ? initialData
-                  ? "Updating..."
-                  : "Creating..."
-                : initialData
-                  ? "Update Transaction"
-                  : transactionType === "replacement"
-                    ? "Create Replacement"
-                    : "Create Transaction"}
-            </Button>
+            <div className="space-y-1">
+              <div className="grid gap-2">
+                {!initialData && onHeld && watchedItems.length > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="warning"
+                        className="shrink-0"
+                        onClick={() => {
+                          const values = form.getValues()
+                          holdSale({
+                            label: `${watchedItems.length} item${watchedItems.length !== 1 ? "s" : ""} · ${formatCurrency(grandTotal)}`,
+                            clientId: values.client_id ?? null,
+                            clientName: "",
+                            items: values.items,
+                            payments: values.payments.map((p) => ({
+                              payment_type: p.payment_type,
+                              amount: p.amount,
+                              cheque_collection: p.cheque_collection ?? null,
+                            })),
+                            transactionType: values.transaction_type,
+                            orderDiscount: values.order_discount || 0,
+                            note: values.note || "",
+                            manualReceiptNumber:
+                              values.manual_receipt_number || "",
+                            receiptBook: values.receipt_book || "",
+                            with2307: values.with_2307 || false,
+                          })
+                          onHeld()
+                          onClose()
+                        }}
+                      >
+                        <Pause className="mr-1.5 size-3.5" />
+                        Hold
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Save this sale as a draft to resume later
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={
+                    form.formState.isSubmitting ||
+                    (!initialData &&
+                      (!form.formState.isDirty || !form.formState.isValid))
+                  }
+                >
+                  <Save className="mr-2 size-4" />
+                  {form.formState.isSubmitting
+                    ? initialData
+                      ? "Updating..."
+                      : "Creating..."
+                    : initialData
+                      ? "Update Transaction"
+                      : transactionType === "replacement"
+                        ? "Create Replacement"
+                        : "Create Transaction"}
+                </Button>
+              </div>
+              <p className="text-[10px] text-muted-foreground text-center">
+                Ctrl + Enter
+              </p>
+            </div>
           )}
         </form>
       </Form>
-      <ConfirmDialog
+      <AlertDialog
         open={showPrintDialog}
-        onConfirm={() => {
-          confirmPrint()
-          onClose()
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            cancelPrint()
+            onClose()
+          }
         }}
-        onCancel={() => {
-          cancelPrint()
-          onClose()
-        }}
-        title="Print Receipt?"
-        description="Transaction created successfully. Would you like to print the receipt now?"
-        Icon={Printer}
-        confirmText="Print"
-        cancelText="No, thanks"
-      />
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Transaction Created</AlertDialogTitle>
+            <AlertDialogDescription>
+              Transaction created successfully. What would you like to do next?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {onNewSale && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={keepClient}
+                onCheckedChange={(v) => setKeepClient(!!v)}
+              />
+              <span className="text-sm">Same client for next sale</span>
+            </label>
+          )}
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={() => {
+                cancelPrint()
+                onClose()
+              }}
+            >
+              <X className="mr-1.5 size-3.5" />
+              Close
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => {
+                confirmPrint()
+                onClose()
+              }}
+            >
+              <Printer className="mr-1.5 size-3.5" />
+              Print & Close
+            </Button>
+            {onNewSale && (
+              <Button
+                variant="default"
+                className="bg-emerald-600 hover:bg-emerald-700"
+                onClick={() => {
+                  confirmPrint()
+                  const clientId = keepClient
+                    ? form.getValues("client_id")
+                    : undefined
+                  onNewSale({ clientId: clientId ?? null })
+                }}
+              >
+                <Plus className="mr-1.5 size-3.5" />
+                Print & New Sale
+              </Button>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <EntityDialog<SalesTransaction>
         open={voidingState.open}
