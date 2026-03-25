@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   Popover,
@@ -332,6 +333,7 @@ interface ExportSectionProps<K extends string> {
   endDate?: Date
   onStartDate?: (d: Date) => void
   onEndDate?: (d: Date) => void
+  children?: React.ReactNode
 }
 
 function ExportSection<K extends string>({
@@ -351,6 +353,7 @@ function ExportSection<K extends string>({
   endDate,
   onStartDate,
   onEndDate,
+  children,
 }: ExportSectionProps<K>) {
   return (
     <Card className="overflow-hidden">
@@ -395,6 +398,8 @@ function ExportSection<K extends string>({
             />
           </div>
         )}
+
+        {children}
 
         <div className="grid gap-1.5 sm:gap-2.5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {sheets.map((sheet) => {
@@ -556,6 +561,10 @@ export function ExportCenter() {
   const [bir2307Exporting, setBir2307Exporting] = useState(false)
   const [bir2307Start, setBir2307Start] = useState<Date>(thirtyDaysAgo)
   const [bir2307End, setBir2307End] = useState<Date>(today)
+  const [bir2307EwtRate, setBir2307EwtRate] = useState<number>(2)
+  const [bir2307TaxRate, setBir2307TaxRate] = useState<number>(3)
+  const [bir2307PreAmount, setBir2307PreAmount] = useState<string>("")
+  const [bir2307PreReceipts, setBir2307PreReceipts] = useState<string>("")
 
   // -- Toggles --
   function toggle<K extends string>(
@@ -619,6 +628,7 @@ export function ExportCenter() {
     setExporting: (v: boolean) => void,
     startDate?: Date,
     endDate?: Date,
+    extraData?: Record<string, number | string>,
   ) => {
     setExporting(true)
     pendingExportRef.current = exportType
@@ -633,6 +643,7 @@ export function ExportCenter() {
         sheets,
         ...(startDate && { start_date: toISODate(startDate) }),
         ...(endDate && { end_date: toISODate(endDate) }),
+        ...extraData,
       })
       .catch(() => {
         setExporting(false)
@@ -797,6 +808,16 @@ export function ExportCenter() {
             setBir2307Exporting,
             bir2307Start,
             bir2307End,
+            {
+              ewt_rate: bir2307EwtRate,
+              tax_rate: bir2307TaxRate,
+              ...(bir2307PreAmount.trim() && {
+                pre_system_amount: Number(bir2307PreAmount),
+              }),
+              ...(bir2307PreReceipts.trim() && {
+                pre_system_receipts: bir2307PreReceipts.trim(),
+              }),
+            },
           )
         }}
         dateRange
@@ -804,7 +825,66 @@ export function ExportCenter() {
         endDate={bir2307End}
         onStartDate={setBir2307Start}
         onEndDate={setBir2307End}
-      />
+      >
+        <div className="flex flex-col xs:flex-row items-stretch xs:items-end gap-2 sm:gap-3 pt-1">
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <Label className="text-[10px] sm:text-xs text-muted-foreground">
+              EWT Rate % (Main Stall)
+            </Label>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step={0.5}
+              value={bir2307EwtRate}
+              onChange={(e) => setBir2307EwtRate(Number(e.target.value))}
+              className="h-8 text-[11px] sm:text-xs"
+            />
+          </div>
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <Label className="text-[10px] sm:text-xs text-muted-foreground">
+              Tax Rate % (Sub Stall)
+            </Label>
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step={0.5}
+              value={bir2307TaxRate}
+              onChange={(e) => setBir2307TaxRate(Number(e.target.value))}
+              className="h-8 text-[11px] sm:text-xs"
+            />
+          </div>
+        </div>
+        <div className="flex flex-col xs:flex-row items-stretch xs:items-end gap-2 sm:gap-3 pt-1">
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <Label className="text-[10px] sm:text-xs text-muted-foreground">
+              Pre-System Sales Amount (₱)
+            </Label>
+            <Input
+              type="number"
+              min={0}
+              step={0.01}
+              placeholder="e.g. 150000"
+              value={bir2307PreAmount}
+              onChange={(e) => setBir2307PreAmount(e.target.value)}
+              className="h-8 text-[11px] sm:text-xs"
+            />
+          </div>
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <Label className="text-[10px] sm:text-xs text-muted-foreground">
+              Pre-System Receipt Range
+            </Label>
+            <Input
+              type="text"
+              placeholder="e.g. 0001-0045"
+              value={bir2307PreReceipts}
+              onChange={(e) => setBir2307PreReceipts(e.target.value)}
+              className="h-8 text-[11px] sm:text-xs"
+            />
+          </div>
+        </div>
+      </ExportSection>
     </div>
   )
 }
