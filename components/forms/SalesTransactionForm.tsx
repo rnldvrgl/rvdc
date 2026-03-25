@@ -10,6 +10,7 @@ import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTr
 import SaleTransactionVoidingForm from "@/components/forms/SaleTransactionVoidingForm"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
@@ -70,6 +71,7 @@ export default function SalesTransactionForm({
     client_id: z.number().nullable().optional(),
     note: z.string().optional(),
     manual_receipt_number: z.string().optional(),
+    with_2307: z.boolean().optional(),
     transaction_date: z.string().optional(),
     order_discount: z.number().min(0).optional(),
     payments: z.array(
@@ -126,6 +128,7 @@ export default function SalesTransactionForm({
       client_id: initialData?.client?.id,
       note: initialData?.note ?? "",
       manual_receipt_number: initialData?.manual_receipt_number ?? "",
+      with_2307: initialData?.with_2307 ?? false,
       transaction_date:
         initialData?.transaction_date ??
         (initialData?.created_at ? initialData.created_at.slice(0, 10) : ""),
@@ -156,6 +159,12 @@ export default function SalesTransactionForm({
     () => stalls?.find((s) => s.stall_type === "sub") ?? null,
     [stalls],
   )
+
+  // Determine if current transaction uses Main Stall (OR) — affects 2307 visibility
+  const isMainStall = useMemo(() => {
+    if (initialData?.stall?.stall_type === "main") return true
+    return false
+  }, [initialData])
 
   const [createdTransaction, setCreatedTransaction] =
     useState<SalesTransaction | null>(null)
@@ -311,6 +320,7 @@ export default function SalesTransactionForm({
       client: data.client_id ?? null,
       note: data.note || null,
       manual_receipt_number: data.manual_receipt_number ?? null,
+      with_2307: data.with_2307 ?? false,
       transaction_date: data.transaction_date || null,
       order_discount: discount,
       items: data.items.map((i) => ({
@@ -540,7 +550,9 @@ export default function SalesTransactionForm({
                 name="manual_receipt_number"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Official Receipt #</FormLabel>
+                    <FormLabel>
+                      {isMainStall ? "Official Receipt # (OR)" : "Sales Invoice # (SI)"}
+                    </FormLabel>
                     <FormControl>
                       <Input
                         disabled={isDisabled}
@@ -552,6 +564,27 @@ export default function SalesTransactionForm({
                   </FormItem>
                 )}
               />
+
+              {isMainStall && (
+                <FormField
+                  control={form.control}
+                  name="with_2307"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          disabled={isDisabled}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        With BIR Form 2307
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+              )}
 
               {isAdmin && (
                 <FormField

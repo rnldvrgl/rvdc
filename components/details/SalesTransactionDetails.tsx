@@ -196,12 +196,21 @@ export function SalesTransactionDetails({
               icon={<Calendar className="size-4" />}
             />
             <Detail
-              label="Official Receipt #"
+              label={
+                entity.document_type === "or"
+                  ? "Official Receipt # (OR)"
+                  : "Sales Invoice # (SI)"
+              }
               value={
                 entity.manual_receipt_number ||
                 entity.system_receipt_number ||
                 "N/A"
               }
+              icon={<Hash className="size-4" />}
+            />
+            <Detail
+              label="Record ID"
+              value={`#${entity.id}`}
               icon={<Hash className="size-4" />}
             />
             <Detail
