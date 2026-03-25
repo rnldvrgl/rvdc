@@ -66,14 +66,13 @@ export function getSalesTransactionColumns({
       cell: ({ row }) => {
         const tx = row.original
         const docLabel = tx.document_type === "or" ? "OR" : "SI"
-        const receiptNum = tx.manual_receipt_number || tx.system_receipt_number
-        if (!receiptNum) return <span className="text-muted-foreground">—</span>
+        const receiptNum = tx.manual_receipt_number
         const bookLabel = tx.receipt_book ? ` [Book ${tx.receipt_book}]` : ""
         return (
           <span className="text-xs">
-            {docLabel} # {receiptNum}
-            {bookLabel}{" "}
-            <span className="text-muted-foreground">(Record #{tx.id})</span>
+            {safeCell(receiptNum)
+              ? `${docLabel} ${receiptNum}${bookLabel}`
+              : "—"}
           </span>
         )
       },
