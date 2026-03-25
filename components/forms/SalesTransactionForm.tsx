@@ -71,6 +71,7 @@ export default function SalesTransactionForm({
     client_id: z.number().nullable().optional(),
     note: z.string().optional(),
     manual_receipt_number: z.string().optional(),
+    receipt_book: z.string().optional(),
     with_2307: z.boolean().optional(),
     transaction_date: z.string().optional(),
     order_discount: z.number().min(0).optional(),
@@ -128,10 +129,13 @@ export default function SalesTransactionForm({
       client_id: initialData?.client?.id,
       note: initialData?.note ?? "",
       manual_receipt_number: initialData?.manual_receipt_number ?? "",
+      receipt_book: initialData?.receipt_book ?? "",
       with_2307: initialData?.with_2307 ?? false,
       transaction_date:
         initialData?.transaction_date ??
-        (initialData?.created_at ? initialData.created_at.slice(0, 10) : ""),
+        (initialData?.created_at
+          ? initialData.created_at.slice(0, 10)
+          : new Date().toISOString().slice(0, 10)),
       order_discount: Number(initialData?.order_discount || 0),
       payments:
         initialData?.payments?.map((i) => ({
@@ -320,6 +324,7 @@ export default function SalesTransactionForm({
       client: data.client_id ?? null,
       note: data.note || null,
       manual_receipt_number: data.manual_receipt_number ?? null,
+      receipt_book: data.receipt_book || null,
       with_2307: data.with_2307 ?? false,
       transaction_date: data.transaction_date || null,
       order_discount: discount,
@@ -560,6 +565,24 @@ export default function SalesTransactionForm({
                         disabled={isDisabled}
                         {...field}
                         placeholder="e.g. 001245"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="receipt_book"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Receipt Book #</FormLabel>
+                    <FormControl>
+                      <Input
+                        disabled={isDisabled}
+                        {...field}
+                        placeholder="e.g. 1"
                       />
                     </FormControl>
                     <FormMessage />

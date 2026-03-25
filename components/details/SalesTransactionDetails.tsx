@@ -208,6 +208,13 @@ export function SalesTransactionDetails({
               }
               icon={<Hash className="size-4" />}
             />
+            {entity.receipt_book && (
+              <Detail
+                label="Receipt Book #"
+                value={entity.receipt_book}
+                icon={<Hash className="size-4" />}
+              />
+            )}
             <Detail
               label="Record ID"
               value={`#${entity.id}`}
