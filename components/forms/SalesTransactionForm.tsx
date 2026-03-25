@@ -551,7 +551,9 @@ export default function SalesTransactionForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      {isMainStall ? "Official Receipt # (OR)" : "Sales Invoice # (SI)"}
+                      {isMainStall
+                        ? "Official Receipt # (OR)"
+                        : "Sales Invoice # (SI)"}
                     </FormLabel>
                     <FormControl>
                       <Input
