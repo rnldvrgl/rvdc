@@ -3,15 +3,15 @@ import {
   FilterResponse,
   LabeledOption,
   SortOption,
-} from '@/lib/constants/interface'
-import { useApiQuery } from '@/lib/hooks/useApiQuery'
+} from "@/lib/constants/interface"
+import { useApiQuery } from "@/lib/hooks/useApiQuery"
 
 function toFilterDefinitions(
   filters: Record<string, LabeledOption[]>,
 ): FilterDefinition[] {
   return Object.entries(filters).map(([key, options]) => ({
     key,
-    label: key.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+    label: key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
     options,
   }))
 }
