@@ -52,6 +52,7 @@ import {
   Shield,
   Terminal,
   Trash2,
+  Upload,
   Wrench,
   Zap,
 } from "lucide-react"
@@ -187,10 +188,17 @@ export function ServerMaintenanceCard() {
   const addPendingAction = usePendingActionsStore((s) => s.addAction)
   const removePendingAction = usePendingActionsStore((s) => s.removeAction)
   const [pendingAuthAction, setPendingAuthAction] = useState<{
-    type: "cleanup" | "command" | "install_cron" | "delete_chats"
+    type:
+      | "cleanup"
+      | "command"
+      | "install_cron"
+      | "delete_chats"
+      | "restore_backup"
     cleanup?: (typeof CLEANUP_ACTIONS)[number]
     command?: ManagementCommand
+    restoreFile?: File
   } | null>(null)
+  const restoreFileRef = useRef<HTMLInputElement>(null)
   const [logsDialog, setLogsDialog] = useState<{
     open: boolean
     title: string
@@ -258,6 +266,12 @@ export function ServerMaintenanceCard() {
       // Refresh backup list after a backup action
       if (wsData.action === "db_backup") {
         loadBackups()
+      }
+
+      // After restore, refresh backup list and reload page to reflect new DB state
+      if (wsData.action === "restore_backup" && wsData.success) {
+        loadBackups()
+        setTimeout(() => window.location.reload(), 2000)
       }
     },
     [refetch, loadBackups, removePendingAction],
@@ -404,7 +418,7 @@ export function ServerMaintenanceCard() {
     try {
       const res = await api.get(
         `/users/maintenance/backups/${encodeURIComponent(filename)}/`,
-        { responseType: "blob" },
+        { responseType: "blob", timeout: 300000 },
       )
       const url = window.URL.createObjectURL(res.data)
       const link = document.createElement("a")
@@ -414,6 +428,7 @@ export function ServerMaintenanceCard() {
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
+      toast.success(`Downloaded ${filename}`)
     } catch {
       toast.error("Failed to download backup")
     }
@@ -432,6 +447,39 @@ export function ServerMaintenanceCard() {
       toast.error("Failed to delete backup")
     } finally {
       setDeletingBackup(null)
+    }
+  }
+
+  const restoreBackup = async (
+    file: File,
+    credentials: { admin_username: string; admin_password: string },
+  ) => {
+    setRunningAction("restore_backup")
+    const actionId = addPendingAction("maintenance", "Database Restore")
+    maintenanceActionIdRef.current = actionId
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("admin_username", credentials.admin_username)
+      formData.append("admin_password", credentials.admin_password)
+      await api.post("/users/maintenance/restore/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 300000,
+      })
+      toast.info("Database restore started", {
+        description:
+          "You'll be notified when it completes. This may take a few minutes.",
+      })
+    } catch (err) {
+      const message =
+        err instanceof Error && "response" in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data
+              ?.error
+          : undefined
+      toast.error(message || "Failed to start restore.")
+      setRunningAction(null)
+      removePendingAction(actionId)
+      maintenanceActionIdRef.current = null
     }
   }
 
@@ -1311,6 +1359,39 @@ export function ServerMaintenanceCard() {
                       />
                       Refresh
                     </Button>
+                    <input
+                      type="file"
+                      ref={restoreFileRef}
+                      accept=".sql,.gz"
+                      className="hidden"
+                      title="Select backup file to restore"
+                      aria-label="Select backup file to restore"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setPendingAuthAction({
+                            type: "restore_backup",
+                            restoreFile: file,
+                          })
+                        }
+                        e.target.value = ""
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => restoreFileRef.current?.click()}
+                      disabled={runningAction !== null}
+                    >
+                      {runningAction === "restore_backup" ? (
+                        <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Upload className="size-3.5 mr-1.5" />
+                      )}
+                      {runningAction === "restore_backup"
+                        ? "Restoring..."
+                        : "Upload & Restore"}
+                    </Button>
                     <Button
                       size="sm"
                       onClick={createBackup}
@@ -1456,6 +1537,11 @@ export function ServerMaintenanceCard() {
               admin_username: creds.admin_username,
               admin_password: creds.admin_password,
             })
+          } else if (
+            pendingAuthAction.type === "restore_backup" &&
+            pendingAuthAction.restoreFile
+          ) {
+            restoreBackup(pendingAuthAction.restoreFile, creds)
           }
           setPendingAuthAction(null)
         }}
@@ -1464,7 +1550,9 @@ export function ServerMaintenanceCard() {
             ? "Install Cron Jobs"
             : pendingAuthAction?.type === "delete_chats"
               ? "Delete All Chats"
-              : "Admin Authorization Required"
+              : pendingAuthAction?.type === "restore_backup"
+                ? "Restore Database from Backup"
+                : "Admin Authorization Required"
         }
         description={
           pendingAuthAction?.type === "cleanup"
@@ -1473,7 +1561,9 @@ export function ServerMaintenanceCard() {
               ? `"${pendingAuthAction.command?.label}" is a destructive command. Enter admin credentials to proceed.`
               : pendingAuthAction?.type === "delete_chats"
                 ? "This will permanently delete all chat messages, unread counts, and presence data from Redis. Enter admin credentials to proceed."
-                : "This will overwrite all cron scripts and update the host crontab entries. Enter admin credentials to proceed."
+                : pendingAuthAction?.type === "restore_backup"
+                  ? `This will REPLACE the entire database with "${pendingAuthAction.restoreFile?.name}". All current data will be lost. Enter admin credentials to proceed.`
+                  : "This will overwrite all cron scripts and update the host crontab entries. Enter admin credentials to proceed."
         }
       />
 
