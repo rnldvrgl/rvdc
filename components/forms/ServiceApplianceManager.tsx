@@ -250,7 +250,7 @@ export default function ServiceApplianceManager({
     if (!availableModels?.results) return []
     return availableModels.results.map((m) => ({
       value: m.id.toString(),
-      label: `${m.brand?.name || ""} ${m.name}${m.aircon_type ? ` (${m.aircon_type})` : ""}`,
+      label: `${m.brand?.name || ""} ${m.name}${m.horsepower ? ` ${m.horsepower}HP` : ""}${m.aircon_type ? ` (${m.aircon_type})` : ""}`,
     }))
   }, [availableModels?.results])
 
