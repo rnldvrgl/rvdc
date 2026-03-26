@@ -351,9 +351,9 @@ export function ServerMaintenanceCard() {
   }
 
   const getUsageColor = (percent: number) => {
-    if (percent >= 90) return "text-red-500"
+    if (percent >= 90) return "text-destructive"
     if (percent >= 75) return "text-yellow-500"
-    return "text-emerald-500"
+    return "text-success"
   }
 
   const getBarColor = (percent: number) => {
@@ -402,7 +402,7 @@ export function ServerMaintenanceCard() {
             className={`rounded-lg p-2 ${percent >= 90 ? "bg-red-500/15" : percent >= 75 ? "bg-yellow-500/15" : "bg-emerald-500/15"}`}
           >
             <Icon
-              className={`size-4 ${percent >= 90 ? "text-red-500" : percent >= 75 ? "text-yellow-500" : "text-emerald-500"}`}
+              className={`size-4 ${percent >= 90 ? "text-destructive" : percent >= 75 ? "text-yellow-500" : "text-success"}`}
             />
           </div>
           <span className="text-sm font-semibold">{label}</span>
@@ -820,9 +820,9 @@ export function ServerMaintenanceCard() {
                                 <Clock
                                   className={`size-3.5 ${
                                     job.last_status === "success"
-                                      ? "text-emerald-500"
+                                      ? "text-success"
                                       : job.last_status === "error"
-                                        ? "text-red-500"
+                                        ? "text-destructive"
                                         : "text-muted-foreground"
                                   }`}
                                 />
@@ -959,7 +959,7 @@ export function ServerMaintenanceCard() {
                                   <Wrench
                                     className={`size-3.5 ${
                                       cmd.destructive
-                                        ? "text-red-500"
+                                        ? "text-destructive"
                                         : "text-muted-foreground"
                                     }`}
                                   />
@@ -1067,7 +1067,7 @@ export function ServerMaintenanceCard() {
                               <Icon
                                 className={`size-4 ${
                                   action.destructive
-                                    ? "text-red-500"
+                                    ? "text-destructive"
                                     : "text-muted-foreground"
                                 }`}
                               />

@@ -100,7 +100,7 @@ function PriceHistoryTimeline({ history }: { history: ModelPriceHistory[] }) {
                       className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm ${
                         isUp
                           ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
-                          : "bg-emerald-100 text-success dark:bg-emerald-900/30 dark:text-emerald-300"
+                          : "bg-emerald-100 text-success dark:bg-emerald-900/30"
                       }`}
                     >
                       {isUp ? (
@@ -268,10 +268,10 @@ export default function AirconModelForm({
                 parseFloat(promoPrice) > 0 &&
                 parseFloat(promoPrice) < parseFloat(retailPrice) && (
                   <div className="flex items-center justify-between rounded-lg border-2 border-emerald-300 bg-emerald-50 px-4 py-3 dark:border-emerald-700 dark:bg-emerald-900/20">
-                    <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                    <span className="text-sm font-semibold text-success">
                       Savings
                     </span>
-                    <span className="text-lg font-bold text-success dark:text-emerald-300">
+                    <span className="text-lg font-bold text-success">
                       {formatCurrency(
                         (
                           parseFloat(retailPrice) - parseFloat(promoPrice)
@@ -548,7 +548,7 @@ export default function AirconModelForm({
                 parseFloat(promoPrice) < parseFloat(retailPrice) && (
                   <div className="flex items-center justify-between rounded-lg border-2 border-emerald-300 bg-emerald-50 px-4 py-3 dark:border-emerald-700 dark:bg-emerald-900/20">
                     <div>
-                      <span className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                      <span className="text-sm font-semibold text-success">
                         Selling Price
                       </span>
                       <p className="text-xs text-success">
@@ -560,7 +560,7 @@ export default function AirconModelForm({
                         )}
                       </p>
                     </div>
-                    <span className="text-lg font-bold text-success dark:text-emerald-300">
+                    <span className="text-lg font-bold text-success">
                       {formatCurrency(parseFloat(promoPrice).toFixed(2))}
                     </span>
                   </div>

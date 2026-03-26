@@ -185,7 +185,7 @@ export default function WarrantyClaimsTab() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                          <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-0.5 text-xs font-medium text-success ring-1 ring-inset ring-green-600/20">
                             Under Warranty
                           </span>
                           {unit.warranty_days_left !== undefined &&

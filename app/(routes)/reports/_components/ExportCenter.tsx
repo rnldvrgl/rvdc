@@ -60,7 +60,7 @@ const INVENTORY_SHEETS = [
     label: "No Stock Items",
     description: "Items with zero available quantity",
     icon: PackageX,
-    color: "text-red-500",
+    color: "text-destructive",
     bgColor: "bg-red-50 dark:bg-red-950/20",
   },
   {
@@ -76,7 +76,7 @@ const INVENTORY_SHEETS = [
     label: "Most Bought Items",
     description: "Top 50 items by quantity consumed",
     icon: ShoppingCart,
-    color: "text-emerald-500",
+    color: "text-success",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
   },
   {
@@ -120,7 +120,7 @@ const SALES_SHEETS = [
     label: "All Transactions",
     description: "Complete list of sales with details",
     icon: ShoppingCart,
-    color: "text-emerald-500",
+    color: "text-success",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
   },
   {
@@ -172,7 +172,7 @@ const DAILY_SALES_SHEETS = [
     label: "Daily Sales - Main Stall",
     description: "1 tab per day (Qty, Item, Amount) for main stall",
     icon: Store,
-    color: "text-emerald-500",
+    color: "text-success",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
   },
   {
@@ -192,7 +192,7 @@ const CHEQUE_SHEETS = [
     label: "All Cheques",
     description: "Complete cheque collection records",
     icon: Banknote,
-    color: "text-emerald-500",
+    color: "text-success",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
   },
   {
@@ -229,7 +229,7 @@ const BIR_2307_SHEETS = [
     description:
       "Services with official receipt numbers (daily/monthly/quarterly/yearly)",
     icon: Store,
-    color: "text-emerald-500",
+    color: "text-success",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
   },
   {

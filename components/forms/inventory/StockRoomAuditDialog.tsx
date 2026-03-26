@@ -120,7 +120,7 @@ export default function StockRoomAuditDialog({
         ) : reconciled ? (
           <div className="space-y-4 py-4">
             <div className="flex flex-col items-center gap-2 text-center">
-              <CheckCircle2 className="size-12 text-green-500" />
+              <CheckCircle2 className="size-12 text-success" />
               <p className="text-lg font-semibold">Stock Reconciled</p>
               <p className="text-sm text-muted-foreground">
                 System quantity has been updated to match the physical count.

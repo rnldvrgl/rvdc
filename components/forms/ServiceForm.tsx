@@ -91,7 +91,6 @@ const serviceSchema = z.object({
     .enum(["pending", "in_progress", "completed", "cancelled"])
     .optional(),
   related_transaction: z.number().nullable().optional(),
-  description: z.string().optional(),
   override_address: z.string().optional(),
   override_contact_person: z.string().optional(),
   override_contact_number: z.string().optional(),
@@ -99,8 +98,6 @@ const serviceSchema = z.object({
   pickup_date: z.date().nullable().optional(),
   delivery_date: z.date().nullable().optional(),
   received_at: z.date().nullable().optional(),
-  remarks: z.string().optional(),
-  notes: z.string().optional(),
   technicians: z.array(z.number()).optional(),
 })
 
@@ -127,7 +124,6 @@ export default function ServiceForm({
       service_mode: (initialData?.service_mode as ServiceMode) ?? "carry_in",
       status: (initialData?.status as ServiceStatus) ?? "pending",
       related_transaction: initialData?.related_transaction ?? null,
-      description: initialData?.description ?? "",
       override_address: initialData?.override_address ?? "",
       override_contact_person: initialData?.override_contact_person ?? "",
       override_contact_number: initialData?.override_contact_number ?? "",
@@ -155,8 +151,6 @@ export default function ServiceForm({
       received_at: initialData?.received_at
         ? new Date(initialData.received_at)
         : null,
-      remarks: initialData?.remarks ?? "",
-      notes: initialData?.notes ?? "",
       technicians:
         initialData?.technician_assignments
           ?.map((ta) => ta.technician)
@@ -262,7 +256,6 @@ export default function ServiceForm({
       service_mode: data.service_mode,
       status: data.status,
       related_transaction: data.related_transaction ?? undefined,
-      description: data.description,
       override_address: data.override_address,
       override_contact_person: data.override_contact_person,
       override_contact_number: data.override_contact_number,
@@ -278,8 +271,6 @@ export default function ServiceForm({
       appointment_datetime: data.appointment_datetime
         ? formatDateForBackend(data.appointment_datetime)
         : undefined,
-      remarks: data.remarks,
-      notes: data.notes,
       technician_assignments: data.technicians?.map((techId) => ({
         technician: techId,
         assignment_type: getAssignmentType(),
@@ -427,26 +418,6 @@ export default function ServiceForm({
                 onChange={field.onChange}
                 disabled={isSubmitting}
               />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Description */}
-        <FormField
-          name="description"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="Describe the service or issue"
-                  disabled={isSubmitting}
-                  rows={3}
-                />
-              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -667,46 +638,6 @@ export default function ServiceForm({
             </div>
           </div>
         )}
-
-        {/* Remarks */}
-        <FormField
-          name="remarks"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Remarks</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="Additional remarks"
-                  disabled={isSubmitting}
-                  rows={2}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Notes */}
-        <FormField
-          name="notes"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Internal Notes</FormLabel>
-              <FormControl>
-                <Textarea
-                  {...field}
-                  placeholder="Internal notes (not visible to client)"
-                  disabled={isSubmitting}
-                  rows={2}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         <Button
           type="submit"

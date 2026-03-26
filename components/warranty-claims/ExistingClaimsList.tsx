@@ -91,7 +91,7 @@ export default function ExistingClaimsList() {
     completed: {
       label: "Completed",
       bg: "bg-green-50",
-      text: "text-green-700",
+      text: "text-success",
       ring: "ring-green-600/20",
     },
     cancelled: {
@@ -244,7 +244,7 @@ export default function ExistingClaimsList() {
 
                       {claim.rejection_reason && (
                         <div className="rounded-md border border-red-200 p-3 bg-red-50/30">
-                          <p className="text-xs font-semibold text-red-700 uppercase tracking-wider mb-1">
+                          <p className="text-xs font-semibold text-destructive uppercase tracking-wider mb-1">
                             Rejection Reason
                           </p>
                           <p className="text-sm whitespace-pre-wrap">

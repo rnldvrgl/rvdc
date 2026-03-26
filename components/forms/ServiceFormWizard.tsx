@@ -81,7 +81,6 @@ const serviceSchema = z.object({
   service_mode: z.enum(["carry_in", "home_service", "pull_out"], {
     required_error: "Service mode is required",
   }),
-  description: z.string().optional(),
   override_address: z.string().optional(),
   override_contact_person: z.string().optional(),
   override_contact_number: z.string().optional(),
@@ -89,8 +88,6 @@ const serviceSchema = z.object({
   pickup_date: z.date().nullable().optional(),
   delivery_date: z.date().nullable().optional(),
   received_at: z.date().nullable().optional(),
-  remarks: z.string().optional(),
-  notes: z.string().optional(),
   technicians: z.array(z.number()).optional(),
 })
 
@@ -101,7 +98,7 @@ type FormValues = z.infer<typeof serviceSchema>
 const steps = [
   { id: 0, title: "Client & Type", icon: User },
   { id: 1, title: "Schedule", icon: Calendar },
-  { id: 2, title: "Team & Notes", icon: Users },
+  { id: 2, title: "Team", icon: Users },
   { id: 3, title: "Review", icon: ClipboardList },
 ]
 
@@ -128,7 +125,6 @@ export default function ServiceFormWizard({
       client: defaultClientId ?? undefined,
       service_type: undefined,
       service_mode: "carry_in",
-      description: "",
       override_address: "",
       override_contact_person: "",
       override_contact_number: "",
@@ -136,8 +132,6 @@ export default function ServiceFormWizard({
       pickup_date: null,
       delivery_date: null,
       received_at: null,
-      remarks: "",
-      notes: "",
       technicians: [],
     },
     mode: "onChange",
@@ -262,7 +256,6 @@ export default function ServiceFormWizard({
       client: data.client,
       service_type: data.service_type,
       service_mode: data.service_mode,
-      description: data.description,
       override_address: data.override_address,
       override_contact_person: data.override_contact_person,
       override_contact_number: data.override_contact_number,
@@ -278,8 +271,6 @@ export default function ServiceFormWizard({
       appointment_datetime: data.appointment_datetime
         ? formatDateForBackend(data.appointment_datetime)
         : undefined,
-      remarks: data.remarks,
-      notes: data.notes,
       technician_assignments: data.technicians?.map((techId) => ({
         technician: techId,
         assignment_type: getAssignmentType(),
@@ -433,25 +424,6 @@ export default function ServiceFormWizard({
                     disabled={isSubmitting}
                     columns={2}
                   />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              name="description"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Describe the service or issue"
-                      disabled={isSubmitting}
-                      rows={3}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -687,7 +659,7 @@ export default function ServiceFormWizard({
           </div>
         )}
 
-        {/* ── Step 2: Technicians & Notes ─────────────────────────────── */}
+        {/* ── Step 2: Technicians ────────────────────────────────── */}
         {currentStep === 2 && (
           <div className="space-y-4">
             <FormField
@@ -706,44 +678,6 @@ export default function ServiceFormWizard({
                     onChange={field.onChange}
                     disabled={isSubmitting}
                   />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              name="remarks"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Remarks</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Additional remarks"
-                      disabled={isSubmitting}
-                      rows={2}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              name="notes"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Internal Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Internal notes (not visible to client)"
-                      disabled={isSubmitting}
-                      rows={2}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -772,14 +706,6 @@ export default function ServiceFormWizard({
                     <span className="text-muted-foreground">Mode</span>
                     <p className="font-medium">{modeLabel ?? "—"}</p>
                   </div>
-                  {form.getValues("description") && (
-                    <div className="col-span-2">
-                      <span className="text-muted-foreground">Description</span>
-                      <p className="font-medium">
-                        {form.getValues("description")}
-                      </p>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -859,35 +785,6 @@ export default function ServiceFormWizard({
                         {name}
                       </Badge>
                     ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Notes */}
-            {(form.getValues("remarks") || form.getValues("notes")) && (
-              <Card>
-                <CardContent className="p-4 space-y-3">
-                  <h4 className="text-sm font-semibold flex items-center gap-2">
-                    <ClipboardList className="size-4" /> Notes
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    {form.getValues("remarks") && (
-                      <div>
-                        <span className="text-muted-foreground">Remarks</span>
-                        <p className="font-medium">
-                          {form.getValues("remarks")}
-                        </p>
-                      </div>
-                    )}
-                    {form.getValues("notes") && (
-                      <div>
-                        <span className="text-muted-foreground">
-                          Internal Notes
-                        </span>
-                        <p className="font-medium">{form.getValues("notes")}</p>
-                      </div>
-                    )}
                   </div>
                 </CardContent>
               </Card>

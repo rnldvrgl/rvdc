@@ -175,13 +175,13 @@ export function AttendanceApproval() {
               {attendance.paid_hours || "—"}
               {attendance.late_penalty_amount &&
                 parseFloat(attendance.late_penalty_amount) > 0 && (
-                  <div className="text-xs text-red-600 mt-1">
+                  <div className="text-xs text-destructive mt-1">
                     -₱{attendance.late_penalty_amount}
                   </div>
                 )}
               {attendance.uniform_penalty_amount &&
                 parseFloat(attendance.uniform_penalty_amount) > 0 && (
-                  <div className="text-xs text-red-600 mt-1">
+                  <div className="text-xs text-destructive mt-1">
                     Uniform: -₱{attendance.uniform_penalty_amount}
                   </div>
                 )}
@@ -232,7 +232,7 @@ export function AttendanceApproval() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-100"
+                      className="h-8 w-8 text-success hover:text-success hover:bg-green-100"
                       disabled={isBusy}
                       onClick={() => handleApprove(attendance.id)}
                     >
@@ -251,7 +251,7 @@ export function AttendanceApproval() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-100"
+                      className="h-8 w-8 text-destructive hover:text-destructive hover:bg-red-100"
                       disabled={isBusy}
                       onClick={() => handleReject(attendance.id)}
                     >

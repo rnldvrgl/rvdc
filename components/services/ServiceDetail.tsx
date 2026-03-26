@@ -13,6 +13,7 @@ import ApplianceKanbanBoard from "@/components/services/ApplianceKanbanBoard"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Calendar as CalendarWidget } from "@/components/ui/calendar"
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,11 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   Select,
   SelectContent,
@@ -57,12 +63,15 @@ import {
   getServiceTypeBadgeClass,
   getServiceTypeLabel,
 } from "@/lib/utils/helpers/service"
+import { format } from "date-fns"
 import {
   AlertTriangle,
   Calendar,
+  CalendarIcon,
   CheckCircle,
   Clock,
   Edit,
+  Hash,
   Info,
   Kanban,
   List,
@@ -108,7 +117,7 @@ export default function ServiceDetail({
   onEdit,
   onRefresh,
 }: ServiceDetailProps) {
-  const { canManage, role } = useCurrentUser()
+  const { canManage, role, isAdmin } = useCurrentUser()
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState("")
@@ -142,10 +151,7 @@ export default function ServiceDetail({
   const [receiptBookInput, setReceiptBookInput] = useState(
     service.receipt_book || "",
   )
-  const [editingTransactionDate, setEditingTransactionDate] = useState(false)
-  const [transactionDateInput, setTransactionDateInput] = useState(
-    service.transaction_date || "",
-  )
+  const [transactionDateOpen, setTransactionDateOpen] = useState(false)
   const {
     completeService,
     recordPayment,
@@ -692,108 +698,198 @@ export default function ServiceDetail({
         {/* Overview Tab */}
         <TabsContent
           value="overview"
-          className="space-y-1"
+          className="space-y-2"
         >
-          {/* Client & Service Info — compact horizontal sections */}
+          {/* Service Info Grid */}
           <div className="rounded-lg border bg-card">
-            {/* Client row */}
-            <div className="px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5" />
-                Client
-              </p>
-              <div className="space-y-1">
-                <p className="text-sm font-semibold">
-                  {service.client?.full_name || "N/A"}
+            <div className="px-4 py-3 space-y-3">
+              {/* Header: ID + Status badges */}
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold flex items-center gap-1.5">
+                  <Hash className="h-3.5 w-3.5 text-muted-foreground" />
+                  SVC-{service.id}
                 </p>
-                {service.client?.contact_number && (
-                  <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <Phone className="h-3.5 w-3.5 shrink-0" />
-                    {service.client.contact_number}
-                  </p>
-                )}
-                {service.client?.address && (
-                  <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                    {service.client.address}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Service info row */}
-            <div className="px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                <Wrench className="h-3.5 w-3.5" />
-                Service Details
-              </p>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge
-                  variant={getBadgeVariant(service.status)}
-                  className="text-xs"
-                >
-                  {getServiceStatusLabel(service.status)}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className={`text-xs ${getServiceTypeBadgeClass(service.service_type)}`}
-                >
-                  {getServiceTypeLabel(service.service_type)}
-                </Badge>
-                <Badge
-                  variant="secondary"
-                  className="text-xs"
-                >
-                  {getServiceModeLabel(service.service_mode)}
-                </Badge>
-                {service.stall && (
+                <div className="flex flex-wrap items-center gap-1.5">
                   <Badge
-                    variant="outline"
-                    className="text-xs"
+                    variant={getBadgeVariant(service.status)}
+                    className="text-[11px]"
                   >
-                    {typeof service.stall === "object" &&
-                    "name" in service.stall
-                      ? (service.stall as { name: string }).name
-                      : `Stall #${service.stall}`}
+                    {getServiceStatusLabel(service.status)}
                   </Badge>
-                )}
+                  <Badge
+                    variant={getBadgeVariant(service.payment_status)}
+                    className="text-[11px]"
+                  >
+                    {paymentStatusLabels[service.payment_status] ||
+                      service.payment_status}
+                  </Badge>
+                </div>
               </div>
-              {/* Conditional date details */}
-              {(service.service_mode === "pull_out" ||
-                service.service_mode === "home_service") && (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
-                  {service.service_mode === "pull_out" &&
-                    service.pickup_date && (
-                      <span className="flex items-center gap-1">
-                        <Truck className="h-3 w-3" />
-                        Pickup:{" "}
-                        {formatDate(new Date(service.pickup_date), "PPp")}
-                      </span>
+
+              <Separator />
+
+              {/* Details grid */}
+              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                {/* Client */}
+                <div className="col-span-2 sm:col-span-1">
+                  <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    Client
+                  </p>
+                  <p className="font-medium">
+                    {service.client?.full_name || "N/A"}
+                  </p>
+                  {service.client?.contact_number && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                      <Phone className="h-3 w-3 shrink-0" />
+                      {service.client.contact_number}
+                    </p>
+                  )}
+                </div>
+
+                {/* Type & Mode */}
+                <div className="col-span-2 sm:col-span-1">
+                  <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1">
+                    <Wrench className="h-3 w-3" />
+                    Service
+                  </p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge
+                      variant="outline"
+                      className={`text-[11px] ${getServiceTypeBadgeClass(service.service_type)}`}
+                    >
+                      {getServiceTypeLabel(service.service_type)}
+                    </Badge>
+                    <Badge
+                      variant="secondary"
+                      className="text-[11px]"
+                    >
+                      {getServiceModeLabel(service.service_mode)}
+                    </Badge>
+                    {service.stall && (
+                      <Badge
+                        variant="outline"
+                        className="text-[11px]"
+                      >
+                        {typeof service.stall === "object" &&
+                        "name" in service.stall
+                          ? (service.stall as { name: string }).name
+                          : `Stall #${service.stall}`}
+                      </Badge>
                     )}
-                  {service.service_mode === "pull_out" &&
-                    service.delivery_date && (
-                      <span className="flex items-center gap-1">
+                  </div>
+                </div>
+
+                {/* Technicians — inline in overview */}
+                {service.technician_assignments &&
+                  service.technician_assignments.length > 0 && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1">
+                        <User className="h-3 w-3" />
+                        Technicians
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {service.technician_assignments.map(
+                          (assignment, index) => (
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="text-[11px]"
+                            >
+                              {assignment.technician_name ||
+                                `Tech #${assignment.technician}`}
+                            </Badge>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                {/* Address (non carry-in) */}
+                {!isCarryIn &&
+                  (service.override_address || service.client?.address) && (
+                    <div className="col-span-2">
+                      <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        Address
+                      </p>
+                      <p className="text-sm">
+                        {service.override_address || service.client?.address}
+                      </p>
+                    </div>
+                  )}
+
+                {/* Schedule dates */}
+                {service.service_mode === "pull_out" && service.pickup_date && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1">
+                      <Truck className="h-3 w-3" />
+                      Pickup
+                    </p>
+                    <p className="text-sm">
+                      {formatDate(new Date(service.pickup_date), "PPp")}
+                    </p>
+                  </div>
+                )}
+                {service.service_mode === "pull_out" &&
+                  service.delivery_date && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1">
                         <Truck className="h-3 w-3" />
-                        Delivery:{" "}
+                        Delivery
+                      </p>
+                      <p className="text-sm">
                         {formatDate(new Date(service.delivery_date), "PPp")}
-                      </span>
-                    )}
-                  {service.service_mode === "home_service" &&
-                    schedules.length > 0 &&
-                    schedules[0].scheduled_date && (
-                      <span className="flex items-center gap-1">
+                      </p>
+                    </div>
+                  )}
+                {service.service_mode === "home_service" &&
+                  schedules.length > 0 &&
+                  schedules[0].scheduled_date && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        Scheduled:{" "}
+                        Scheduled
+                      </p>
+                      <p className="text-sm">
                         {formatDate(
                           new Date(schedules[0].scheduled_date),
                           "PPp",
                         )}
-                      </span>
-                    )}
+                      </p>
+                    </div>
+                  )}
+
+                {/* Created date */}
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Created
+                  </p>
+                  <p className="text-sm">
+                    {formatDate(new Date(service.created_at), "PP")}
+                  </p>
                 </div>
-              )}
+
+                {/* Service override contact */}
+                {!isCarryIn && service.override_contact_person && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      Contact Person
+                    </p>
+                    <p className="text-sm">
+                      {service.override_contact_person}
+                      {service.override_contact_number && (
+                        <span className="text-muted-foreground">
+                          {" "}
+                          · {service.override_contact_number}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -919,7 +1015,7 @@ export default function ServiceDetail({
                                   </span>
                                   <Badge
                                     variant="outline"
-                                    className="text-green-600 border-green-600 text-xs px-1.5 py-0"
+                                    className="text-success border-green-600 text-xs px-1.5 py-0"
                                   >
                                     ₱{appliance.labor_discount_amount} off
                                   </Badge>
@@ -946,8 +1042,14 @@ export default function ServiceDetail({
                           appliance.items_used.length > 0 && (
                             <>
                               <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">
-                                  Parts ({appliance.items_used.length} items)
+                                <span className="text-muted-foreground flex items-center gap-1.5">
+                                  Parts
+                                  <Badge
+                                    variant="secondary"
+                                    className="h-4 min-w-4 px-1 text-[10px] rounded-full"
+                                  >
+                                    {appliance.items_used.length}
+                                  </Badge>
                                 </span>
                                 <div className="flex flex-col items-end gap-0.5">
                                   {hasPartsDiscount && (
@@ -957,7 +1059,7 @@ export default function ServiceDetail({
                                       </span>
                                       <Badge
                                         variant="outline"
-                                        className="text-green-600 border-green-600 text-xs px-1.5 py-0"
+                                        className="text-success border-green-600 text-xs px-1.5 py-0"
                                       >
                                         {formatCurrency(
                                           partsOriginalCost - partsCost,
@@ -996,7 +1098,7 @@ export default function ServiceDetail({
                                           partHasDiscount && (
                                             <Badge
                                               variant="outline"
-                                              className="text-green-600 border-green-600 text-xs px-1 py-0"
+                                              className="text-success border-green-600 text-xs px-1 py-0"
                                             >
                                               ₱{part.discount_amount} off
                                             </Badge>
@@ -1111,11 +1213,11 @@ export default function ServiceDetail({
                       <div className="flex items-center gap-2">
                         <Badge
                           variant="outline"
-                          className="text-green-600 border-green-600"
+                          className="text-success border-green-600"
                         >
                           ₱{service.service_discount_amount} off
                         </Badge>
-                        <p className="text-green-600 font-medium">
+                        <p className="text-success font-medium">
                           -
                           {formatCurrency(
                             parseFloat(service.service_discount_amount || "0"),
@@ -1162,7 +1264,7 @@ export default function ServiceDetail({
               {service.total_paid && (
                 <div className="flex items-center justify-between text-sm">
                   <p className="text-muted-foreground">Paid</p>
-                  <p className="font-medium text-green-600">
+                  <p className="font-medium text-success">
                     {formatCurrency(
                       parseFloat(service.total_paid || "0") -
                         parseFloat(service.total_refunded || "0"),
@@ -1178,7 +1280,7 @@ export default function ServiceDetail({
                     <div className="flex items-center justify-between text-sm">
                       <p className="text-muted-foreground">Balance Due</p>
                       <p
-                        className={`font-medium ${balanceDue < 0 ? "text-orange-600" : "text-red-600"}`}
+                        className={`font-medium ${balanceDue < 0 ? "text-orange-600" : "text-destructive"}`}
                       >
                         {formatCurrency(balanceDue)}
                       </p>
@@ -1229,7 +1331,7 @@ export default function ServiceDetail({
                       className="h-7 w-7 shrink-0"
                       disabled={updateService.isPending}
                     >
-                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                      <CheckCircle className="h-3.5 w-3.5 text-success" />
                     </Button>
                     <Button
                       type="button"
@@ -1306,7 +1408,7 @@ export default function ServiceDetail({
                       className="h-7 w-7 shrink-0"
                       disabled={updateService.isPending}
                     >
-                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                      <CheckCircle className="h-3.5 w-3.5 text-success" />
                     </Button>
                     <Button
                       type="button"
@@ -1340,185 +1442,120 @@ export default function ServiceDetail({
                   </button>
                 )}
               </div>
-              {/* Transaction Date (for backdating) */}
-              <div className="space-y-1.5">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Transaction Date
-                </p>
-                {editingTransactionDate ? (
-                  <form
-                    className="flex items-center gap-1.5"
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      updateService.mutate(
-                        {
-                          id: service.id,
-                          data: {
-                            transaction_date: transactionDateInput || null,
-                          },
-                        },
-                        {
-                          onSuccess: () => {
-                            setEditingTransactionDate(false)
-                            onRefresh?.()
-                            toast.success("Transaction date updated.")
-                          },
-                        },
-                      )
-                    }}
+              {/* Transaction Date (for backdating) — admin only */}
+              {isAdmin && (
+                <div className="space-y-1.5">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Transaction Date
+                  </p>
+                  <Popover
+                    open={transactionDateOpen}
+                    onOpenChange={setTransactionDateOpen}
                   >
-                    <Input
-                      type="date"
-                      value={transactionDateInput}
-                      onChange={(e) => setTransactionDateInput(e.target.value)}
-                      className="h-8 w-full text-sm"
-                      autoFocus
-                    />
-                    <Button
-                      type="submit"
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 shrink-0"
-                      disabled={updateService.isPending}
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer group"
+                      >
+                        <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
+                        {service.transaction_date ? (
+                          <span className="font-medium">
+                            {format(
+                              new Date(service.transaction_date + "T12:00:00"),
+                              "PPP",
+                            )}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            Set transaction date (for backdating)
+                          </span>
+                        )}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-0"
+                      align="start"
                     >
-                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 shrink-0"
-                      onClick={() => {
-                        setEditingTransactionDate(false)
-                        setTransactionDateInput(service.transaction_date || "")
-                      }}
-                    >
-                      <XIcon className="h-3.5 w-3.5" />
-                    </Button>
-                  </form>
-                ) : (
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer group"
-                    onClick={() => setEditingTransactionDate(true)}
-                  >
-                    <PenLine className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
-                    {service.transaction_date ? (
-                      <span className="font-medium">
-                        {service.transaction_date}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        Click to set (for backdating payments)
-                      </span>
-                    )}
-                  </button>
-                )}
-              </div>
+                      <CalendarWidget
+                        mode="single"
+                        selected={
+                          service.transaction_date
+                            ? new Date(service.transaction_date + "T12:00:00")
+                            : undefined
+                        }
+                        onSelect={(date) => {
+                          if (date) {
+                            const yyyy = date.getFullYear()
+                            const mm = String(date.getMonth() + 1).padStart(
+                              2,
+                              "0",
+                            )
+                            const dd = String(date.getDate()).padStart(2, "0")
+                            const dateStr = `${yyyy}-${mm}-${dd}`
+                            updateService.mutate(
+                              {
+                                id: service.id,
+                                data: { transaction_date: dateStr },
+                              },
+                              {
+                                onSuccess: () => {
+                                  setTransactionDateOpen(false)
+                                  onRefresh?.()
+                                  toast.success("Transaction date updated.")
+                                },
+                              },
+                            )
+                          } else {
+                            updateService.mutate(
+                              {
+                                id: service.id,
+                                data: { transaction_date: null },
+                              },
+                              {
+                                onSuccess: () => {
+                                  setTransactionDateOpen(false)
+                                  onRefresh?.()
+                                  toast.success("Transaction date cleared.")
+                                },
+                              },
+                            )
+                          }
+                        }}
+                        className="rounded-lg border"
+                        weekStartsOn={1}
+                      />
+                      {service.transaction_date && (
+                        <div className="border-t p-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full text-xs text-muted-foreground"
+                            onClick={() => {
+                              updateService.mutate(
+                                {
+                                  id: service.id,
+                                  data: { transaction_date: null },
+                                },
+                                {
+                                  onSuccess: () => {
+                                    setTransactionDateOpen(false)
+                                    onRefresh?.()
+                                    toast.success("Transaction date cleared.")
+                                  },
+                                },
+                              )
+                            }}
+                          >
+                            Clear date
+                          </Button>
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Description & Notes */}
-          {(service.description || service.remarks || service.notes) && (
-            <div className="rounded-lg border bg-card px-4 py-3">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">
-                Additional Information
-              </p>
-              <div className="space-y-2">
-                {service.description && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Description
-                    </p>
-                    <p className="text-sm mt-0.5">{service.description}</p>
-                  </div>
-                )}
-                {service.remarks && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Remarks
-                    </p>
-                    <p className="text-sm mt-0.5">{service.remarks}</p>
-                  </div>
-                )}
-                {service.notes && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Internal Notes
-                    </p>
-                    <p className="text-sm mt-0.5">{service.notes}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Technicians */}
-          {service.technician_assignments &&
-            service.technician_assignments.length > 0 && (
-              <div className="rounded-lg border bg-card px-4 py-3">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5" />
-                  Assigned Technicians
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {service.technician_assignments.map((assignment, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 rounded-md border bg-muted/30 px-2.5 py-1.5"
-                    >
-                      <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10">
-                        <User className="h-3 w-3 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium leading-none">
-                          {assignment.technician_name ||
-                            `Technician #${assignment.technician}`}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {assignment.assignment_type
-                            .replace("_", " ")
-                            .replace(/\b\w/g, (l) => l.toUpperCase())}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          {/* Service Location Details - Only show if NOT carry-in */}
-          {!isCarryIn &&
-            (service.override_address ||
-              service.override_contact_person ||
-              service.override_contact_number) && (
-              <div className="rounded-lg border bg-card px-4 py-3">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5" />
-                  Service Location
-                </p>
-                <div className="space-y-1">
-                  {service.override_contact_person && (
-                    <p className="flex items-center gap-1.5 text-sm font-semibold">
-                      <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      {service.override_contact_person}
-                    </p>
-                  )}
-                  {service.override_contact_number && (
-                    <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                      <Phone className="h-3.5 w-3.5 shrink-0" />
-                      {service.override_contact_number}
-                    </p>
-                  )}
-                  {service.override_address && (
-                    <p className="flex items-start gap-1.5 text-sm text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                      {service.override_address}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
         </TabsContent>
 
         {/* Appliances/Units Tab */}
@@ -1674,7 +1711,7 @@ export default function ServiceDetail({
                     />
                     <div>
                       <p className="text-xs text-muted-foreground">Paid</p>
-                      <p className="text-sm font-semibold text-green-600">
+                      <p className="text-sm font-semibold text-success">
                         {formatCurrency(netPaid)}
                       </p>
                     </div>
@@ -1682,7 +1719,7 @@ export default function ServiceDetail({
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">Balance Due</p>
                     <p
-                      className={`text-base font-bold ${balanceDue < 0 ? "text-orange-600" : balanceDue === 0 ? "text-green-600" : "text-red-600"}`}
+                      className={`text-base font-bold ${balanceDue < 0 ? "text-orange-600" : balanceDue === 0 ? "text-success" : "text-destructive"}`}
                     >
                       {formatCurrency(balanceDue)}
                     </p>
@@ -1854,16 +1891,16 @@ export default function ServiceDetail({
                           }`}
                         >
                           {isRefund ? (
-                            <RotateCcw className="h-3.5 w-3.5 text-red-600" />
+                            <RotateCcw className="h-3.5 w-3.5 text-destructive" />
                           ) : (
-                            <Wallet className="h-3.5 w-3.5 text-green-600" />
+                            <Wallet className="h-3.5 w-3.5 text-success" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span
                               className={`text-sm font-semibold ${
-                                isRefund ? "text-red-600" : ""
+                                isRefund ? "text-destructive" : ""
                               }`}
                             >
                               {isRefund ? "-" : "+"}
@@ -1872,7 +1909,9 @@ export default function ServiceDetail({
                             <Badge
                               variant="outline"
                               className={`text-[10px] h-4 px-1.5 capitalize ${
-                                isRefund ? "border-red-300 text-red-600" : ""
+                                isRefund
+                                  ? "border-red-300 text-destructive"
+                                  : ""
                               }`}
                             >
                               {tx.method}
@@ -1959,7 +1998,7 @@ export default function ServiceDetail({
                     <span className="text-sm font-medium">
                       Discount Applied:
                     </span>
-                    <span className="text-sm font-medium text-green-600">
+                    <span className="text-sm font-medium text-success">
                       -{formatCurrency(calculateDiscount())}
                     </span>
                   </div>
@@ -1967,15 +2006,15 @@ export default function ServiceDetail({
 
                 <Button
                   onClick={handleApplyDiscount}
-                  disabled={updateService.isPending}
+                  disabled={
+                    updateService.isPending ||
+                    !discountValue ||
+                    parseFloat(discountValue) <= 0
+                  }
                   className="w-full"
                   size="sm"
                 >
-                  {updateService.isPending
-                    ? "Applying..."
-                    : !discountValue || parseFloat(discountValue) <= 0
-                      ? "Remove Discount"
-                      : "Apply Discount"}
+                  {updateService.isPending ? "Applying..." : "Apply Discount"}
                 </Button>
               </div>
             )}
@@ -1994,16 +2033,51 @@ export default function ServiceDetail({
                       Active
                     </Badge>
                   </p>
-                  <p className="text-sm font-bold text-green-600">
-                    -
-                    {formatCurrency(
-                      parseFloat(service.service_discount_amount.toString()),
-                    )}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-success">
+                      -
+                      {formatCurrency(
+                        parseFloat(service.service_discount_amount.toString()),
+                      )}
+                    </p>
+                    {service.status !== "completed" &&
+                      service.status !== "cancelled" &&
+                      canManage && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            updateService.mutate(
+                              {
+                                id: service.id,
+                                data: {
+                                  service_discount_amount: 0,
+                                  service_discount_percentage: 0,
+                                  discount_reason: "",
+                                },
+                              },
+                              {
+                                onSuccess: () => {
+                                  setDiscountValue("")
+                                  setDiscountReason("")
+                                  toast.success("Discount removed")
+                                },
+                                onSettled: () => {
+                                  onRefresh?.()
+                                },
+                              },
+                            )
+                          }}
+                          disabled={updateService.isPending}
+                        >
+                          <XIcon className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>
-                    ₱
                     {formatCurrency(
                       parseFloat(service.service_discount_amount.toString()),
                     )}{" "}
@@ -2016,6 +2090,24 @@ export default function ServiceDetail({
                     </>
                   )}
                 </div>
+                {(service.discount_applied_by_name ||
+                  service.discount_applied_at) && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {service.discount_applied_by_name && (
+                      <span>{service.discount_applied_by_name}</span>
+                    )}
+                    {service.discount_applied_by_name &&
+                      service.discount_applied_at && <span> · </span>}
+                    {service.discount_applied_at && (
+                      <span>
+                        {format(
+                          new Date(service.discount_applied_at),
+                          "MMMM d, yyyy h:mma",
+                        )}
+                      </span>
+                    )}
+                  </p>
+                )}
               </div>
             )}
 
@@ -2133,7 +2225,7 @@ export default function ServiceDetail({
             {service.received_at && (
               <div className="flex gap-3 pb-3">
                 <div className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-950 z-10">
-                  <CheckCircle className="h-2.5 w-2.5 text-green-500" />
+                  <CheckCircle className="h-2.5 w-2.5 text-success" />
                 </div>
                 <div className="pt-px">
                   <p className="text-sm font-semibold leading-none">
@@ -2173,10 +2265,10 @@ export default function ServiceDetail({
             {service.service_mode === "pull_out" && service.delivery_date && (
               <div className="flex gap-3 pb-3">
                 <div className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-2 border-green-500 bg-green-50 dark:bg-green-950 z-10">
-                  <Truck className="h-2.5 w-2.5 text-green-500" />
+                  <Truck className="h-2.5 w-2.5 text-success" />
                 </div>
                 <div className="pt-px">
-                  <p className="text-sm font-semibold leading-none text-green-700 dark:text-green-300">
+                  <p className="text-sm font-semibold leading-none text-success">
                     Scheduled Delivery
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -2250,7 +2342,7 @@ export default function ServiceDetail({
                   <CheckCircle className="h-2.5 w-2.5 text-white" />
                 </div>
                 <div className="pt-px">
-                  <p className="text-sm font-semibold leading-none text-green-600">
+                  <p className="text-sm font-semibold leading-none text-success">
                     Service Completed
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -2456,7 +2548,7 @@ export default function ServiceDetail({
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Paid</span>
-                <span className="font-medium text-green-600">
+                <span className="font-medium text-success">
                   {formatCurrency(
                     parseFloat(service.total_paid || "0") -
                       parseFloat(service.total_refunded || "0"),
@@ -2469,8 +2561,8 @@ export default function ServiceDetail({
                 <span
                   className={`${
                     parseFloat(service.balance_due || "0") <= 0
-                      ? "text-green-600"
-                      : "text-red-600"
+                      ? "text-success"
+                      : "text-destructive"
                   }`}
                 >
                   {formatCurrency(parseFloat(service.balance_due || "0"))}
@@ -2990,7 +3082,7 @@ function ServicePartsReview({
                 {service.service_items_checked ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-success shrink-0" />
                     </TooltipTrigger>
                     <TooltipContent>
                       Service-level parts have been reviewed and confirmed by

@@ -1164,6 +1164,8 @@ export interface Service {
   service_discount_amount?: string
   service_discount_percentage?: string
   discount_reason?: string
+  discount_applied_by_name?: string
+  discount_applied_at?: string
   // Complementary service fields
   is_complementary?: boolean
   complementary_reason?: string
@@ -1199,7 +1201,6 @@ export interface ServicePayload {
   service_mode: ServiceMode
   related_transaction?: number | null
   related_sub_transaction?: number | null
-  description?: string
   override_address?: string
   override_contact_person?: string
   override_contact_number?: string
@@ -1208,8 +1209,6 @@ export interface ServicePayload {
   delivery_date?: string
   received_at?: string
   status?: ServiceStatus
-  remarks?: string
-  notes?: string
   cancellation_reason?: string
   service_discount_amount?: number
   service_discount_percentage?: number

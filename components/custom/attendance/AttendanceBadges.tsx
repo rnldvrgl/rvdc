@@ -32,12 +32,12 @@ export function AttendanceStatusBadge({
     APPROVED: {
       icon: CheckCircle,
       className:
-        "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+        "bg-green-100 text-success dark:bg-green-900",
       label: "Approved",
     },
     REJECTED: {
       icon: XCircle,
-      className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+      className: "bg-red-100 text-destructive dark:bg-red-900",
       label: "Rejected",
     },
     NONE: {
@@ -96,7 +96,7 @@ export function AttendanceTypeBadge({
     },
     ABSENT: {
       icon: XCircle,
-      className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+      className: "bg-red-100 text-destructive dark:bg-red-900",
       label: "Absent",
     },
     LEAVE: {
@@ -119,7 +119,7 @@ export function AttendanceTypeBadge({
     },
     INVALID: {
       icon: AlertCircle,
-      className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+      className: "bg-red-100 text-destructive dark:bg-red-900",
       label: "Invalid",
     },
   }
@@ -222,7 +222,7 @@ export function AwolBadge({
   return (
     <Badge
       className={cn(
-        "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border-red-300 dark:border-red-700 font-semibold",
+        "bg-red-100 text-destructive dark:bg-red-900 border-red-300 dark:border-red-700 font-semibold",
         className,
       )}
       variant="outline"

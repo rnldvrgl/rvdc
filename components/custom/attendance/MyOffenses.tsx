@@ -261,10 +261,10 @@ export default function MyOffenses() {
               </div>
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-red-900 dark:text-red-100">
+              <h3 className="font-semibold text-destructive">
                 Action Required
               </h3>
-              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+              <p className="text-sm text-destructive mt-1">
                 You`&apos;`ve reached the limit for one or more offense types (3
                 per type). Please contact admin immediately.
               </p>

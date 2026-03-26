@@ -105,11 +105,11 @@ const statusColors: Record<string, string> = {
   received: "text-slate-500",
   diagnosed: "text-blue-500",
   in_repair: "text-amber-500",
-  completed: "text-emerald-500",
+  completed: "text-success",
   ready_for_pickup: "text-violet-500",
-  delivered: "text-green-500",
+  delivered: "text-success",
   reserved: "text-orange-500",
-  installed: "text-emerald-500",
+  installed: "text-success",
 }
 
 // --- Droppable Column ---

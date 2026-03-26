@@ -96,7 +96,7 @@ export function CashAdvanceForm({ employee, onSuccess }: CashAdvanceFormProps) {
             <span className="text-sm text-muted-foreground">
               Current Balance:
             </span>
-            <span className="font-semibold text-green-600">
+            <span className="font-semibold text-success">
               ₱{availableBalance.toLocaleString()}
             </span>
           </div>
@@ -120,13 +120,13 @@ export function CashAdvanceForm({ employee, onSuccess }: CashAdvanceFormProps) {
                 <SelectContent>
                   <SelectItem value="credit">
                     <span className="flex items-center gap-2">
-                      <ArrowUpCircle className="h-4 w-4 text-green-600" />
+                      <ArrowUpCircle className="h-4 w-4 text-success" />
                       Credit (+) — Add to balance
                     </span>
                   </SelectItem>
                   <SelectItem value="debit">
                     <span className="flex items-center gap-2">
-                      <ArrowDownCircle className="h-4 w-4 text-red-600" />
+                      <ArrowDownCircle className="h-4 w-4 text-destructive" />
                       Debit (-) — Deduct from balance
                     </span>
                   </SelectItem>

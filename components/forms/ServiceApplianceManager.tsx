@@ -466,9 +466,12 @@ export default function ServiceApplianceManager({
           <Package className="h-4 w-4 text-muted-foreground" />
           {isInstallation ? "Units" : "Appliances"}
           {appliances.length > 0 && (
-            <span className="text-xs font-normal text-muted-foreground">
-              ({appliances.length})
-            </span>
+            <Badge
+              variant="secondary"
+              className="h-5 min-w-5 px-1.5 text-[10px] rounded-full"
+            >
+              {appliances.length}
+            </Badge>
           )}
         </CardTitle>
         {!disabled && !isEditing && (
@@ -1528,7 +1531,7 @@ function ApplianceCard({
               {appliance.items_checked ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <CheckCircle className="h-4 w-4 text-green-600 shrink-0" />
+                    <CheckCircle className="h-4 w-4 text-success shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent>
                     Parts have been reviewed and confirmed by clerk
@@ -1638,7 +1641,7 @@ function ApplianceCard({
                 </span>
                 {appliance.labor_discount_amount &&
                   parseFloat(appliance.labor_discount_amount) > 0 && (
-                    <span className="text-xs text-green-600">
+                    <span className="text-xs text-success">
                       ₱{appliance.labor_discount_amount} off
                     </span>
                   )}
@@ -1898,7 +1901,7 @@ function UnitPriceInline({
           </span>
           {hasOverride && (
             <span
-              className={`text-xs ${currentPrice < defaultPrice ? "text-green-600" : "text-orange-600"}`}
+              className={`text-xs ${currentPrice < defaultPrice ? "text-success" : "text-orange-600"}`}
             >
               {currentPrice < defaultPrice
                 ? `${formatCurrency(defaultPrice - currentPrice)} off`
@@ -2040,7 +2043,7 @@ function PartsSummary({
                   x{part.quantity}
                 </span>
                 {hasDiscount && (
-                  <span className="text-green-600 shrink-0">
+                  <span className="text-success shrink-0">
                     {part.discount_percentage &&
                     parseFloat(part.discount_percentage) > 0
                       ? `${part.discount_percentage}% off`

@@ -287,7 +287,7 @@ function UserList({
                         className={cn(
                           "text-[10px] shrink-0",
                           user.is_online
-                            ? "text-green-500"
+                            ? "text-success"
                             : "text-muted-foreground",
                         )}
                       >

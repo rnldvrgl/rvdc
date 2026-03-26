@@ -291,7 +291,7 @@ export function getServiceColumns({
               {freeCleaning && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Sparkles className="h-3 w-3 text-emerald-500 shrink-0" />
+                    <Sparkles className="h-3 w-3 text-success shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent>Free cleaning available</TooltipContent>
                 </Tooltip>
@@ -414,7 +414,7 @@ export function getServiceColumns({
           primary.icon === "calendar" ? (
             <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
           ) : primary.icon === "truck-green" ? (
-            <Truck className="h-3 w-3 text-emerald-500 shrink-0" />
+            <Truck className="h-3 w-3 text-success shrink-0" />
           ) : primary.icon === "truck-blue" ? (
             <Truck className="h-3 w-3 text-blue-500 shrink-0" />
           ) : (

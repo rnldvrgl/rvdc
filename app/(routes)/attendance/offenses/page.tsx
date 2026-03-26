@@ -167,7 +167,7 @@ export default function OffensesPage() {
 
             <Card className="border-red-200 dark:border-red-800 bg-linear-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-semibold text-red-900 dark:text-red-200">
+                <CardTitle className="text-sm font-semibold text-destructive">
                   Critical Attention
                 </CardTitle>
                 <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
@@ -175,13 +175,13 @@ export default function OffensesPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-red-900 dark:text-red-100">
+                <div className="text-3xl font-bold text-destructive">
                   {
                     statistics.filter((s: OffenseStatistics) => s.is_at_limit)
                       .length
                   }
                 </div>
-                <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                <p className="text-xs text-destructive mt-1">
                   Employees need immediate action
                 </p>
               </CardContent>

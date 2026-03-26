@@ -533,7 +533,7 @@ export default function ServicePartsManager({
                             <span className="line-through text-xs text-muted-foreground">
                               {formatCurrency(part.item_price || 0)}
                             </span>
-                            <span className="text-green-600">
+                            <span className="text-success">
                               {formatCurrency(
                                 part.discounted_price || part.item_price || 0,
                               )}
@@ -549,7 +549,7 @@ export default function ServicePartsManager({
                           {!part.is_free &&
                             part.discount_amount &&
                             parseFloat(part.discount_amount) > 0 && (
-                              <span className="text-xs text-green-600">
+                              <span className="text-xs text-success">
                                 ₱{part.discount_amount} off
                               </span>
                             )}
@@ -845,11 +845,11 @@ export default function ServicePartsManager({
                         className={cn(
                           "font-semibold",
                           selectedItemStock.status === "no_stock" &&
-                            "text-red-600",
+                            "text-destructive",
                           selectedItemStock.status === "low_stock" &&
                             "text-amber-600",
                           selectedItemStock.status === "high_stock" &&
-                            "text-green-600",
+                            "text-success",
                         )}
                       >
                         {selectedItemStock.available_quantity}{" "}
@@ -863,7 +863,7 @@ export default function ServicePartsManager({
                       </div>
                     )}
                     {selectedItemStock.status === "no_stock" && (
-                      <p className="text-xs text-red-600 font-medium">
+                      <p className="text-xs text-destructive font-medium">
                         No stock available
                       </p>
                     )}
@@ -1032,8 +1032,8 @@ export default function ServicePartsManager({
                 {discountValue && parseFloat(discountValue) > 0 && (
                   <>
                     <div className="flex items-center justify-between border-t pt-2">
-                      <span className="text-green-600">Discount</span>
-                      <span className="text-sm text-green-600">
+                      <span className="text-success">Discount</span>
+                      <span className="text-sm text-success">
                         -₱{discountValue}
                       </span>
                     </div>

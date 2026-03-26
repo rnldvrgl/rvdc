@@ -62,7 +62,7 @@ export const getWorkRequestColumns = ({
                 ? "destructive"
                 : "secondary"
           }
-          className={status === "approved" ? "bg-green-100 text-green-800" : ""}
+          className={status === "approved" ? "bg-green-100 text-success" : ""}
         >
           {status === "approved" ? (
             <>
@@ -121,14 +121,14 @@ export const getWorkRequestColumns = ({
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onApprove?.(request.id)}
-              className="text-green-600"
+              className="text-success"
             >
               <Check className="mr-2 h-4 w-4" />
               Approve
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDecline?.(request.id)}
-              className="text-red-600"
+              className="text-destructive"
             >
               <X className="mr-2 h-4 w-4" />
               Decline

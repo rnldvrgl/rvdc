@@ -238,7 +238,7 @@ export function WeeklyPayrollSlip({
       </div>
 
       {/* Net Pay Summary */}
-      <div className="rounded-xl bg-linear-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 p-5 text-white shadow-md print:bg-white print:border-2 print:border-green-600 print:text-green-600">
+      <div className="rounded-xl bg-linear-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 p-5 text-white shadow-md print:bg-white print:border-2 print:border-green-600 print:text-success">
         <div className="text-center space-y-1">
           <p className="text-sm font-medium opacity-90 print:opacity-100">
             Net Pay

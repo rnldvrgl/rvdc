@@ -35,7 +35,7 @@ const REPORT_SHEETS = [
     description:
       "Items with zero available quantity that need immediate ordering",
     icon: PackageX,
-    color: "text-red-500",
+    color: "text-destructive",
     bgColor: "bg-red-50 dark:bg-red-950/20",
   },
   {
@@ -51,7 +51,7 @@ const REPORT_SHEETS = [
     label: "Most Bought Items",
     description: "Top 50 items by quantity consumed from sales and services",
     icon: ShoppingCart,
-    color: "text-emerald-500",
+    color: "text-success",
     bgColor: "bg-emerald-50 dark:bg-emerald-950/20",
   },
   {

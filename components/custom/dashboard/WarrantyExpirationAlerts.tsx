@@ -128,11 +128,11 @@ export function WarrantyExpirationAlerts() {
             {renderGroup(
               expired,
               `${expired.length} Expired Warrant${expired.length !== 1 ? "ies" : "y"}`,
-              <ShieldX className="size-4 text-red-600 mt-0.5 shrink-0" />,
+              <ShieldX className="size-4 text-destructive mt-0.5 shrink-0" />,
               "border-red-200",
               "bg-red-50/50 dark:bg-red-900/10",
-              "text-red-900 dark:text-red-100",
-              "text-red-700 dark:text-red-300",
+              "text-destructive",
+              "text-destructive",
             )}
             {renderGroup(
               critical,

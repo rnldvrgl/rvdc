@@ -45,13 +45,13 @@ export const getLeaveStatusVariant = (
 export const getAttendanceTypeColor = (type: AttendanceType): string => {
   switch (type) {
     case "FULL_DAY":
-      return "text-green-600 bg-green-50"
+      return "text-success bg-green-50"
     case "HALF_DAY":
       return "text-yellow-600 bg-yellow-50"
     case "PARTIAL":
       return "text-blue-600 bg-blue-50"
     case "ABSENT":
-      return "text-red-600 bg-red-50"
+      return "text-destructive bg-red-50"
     case "LEAVE":
       return "text-purple-600 bg-purple-50"
     default:
@@ -63,7 +63,7 @@ export const getAttendanceTypeColor = (type: AttendanceType): string => {
 export const getLeaveTypeColor = (type: LeaveType): string => {
   switch (type) {
     case "SICK":
-      return "text-red-600 bg-red-50"
+      return "text-destructive bg-red-50"
     case "EMERGENCY":
       return "text-orange-600 bg-orange-50"
     default:
@@ -255,10 +255,10 @@ export const getLeaveBalanceStatus = (
   const remainingNum = parseFloat(remaining)
 
   if (remainingNum >= 3) {
-    return { status: "good", color: "text-green-600" }
+    return { status: "good", color: "text-success" }
   } else if (remainingNum >= 1) {
     return { status: "warning", color: "text-yellow-600" }
   } else {
-    return { status: "critical", color: "text-red-600" }
+    return { status: "critical", color: "text-destructive" }
   }
 }

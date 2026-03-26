@@ -130,7 +130,7 @@ export default function AirconModelsPage() {
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     {entity.is_inverter && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-emerald-400/30">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-success ring-1 ring-emerald-400/30">
                         <Zap className="size-3" /> Inverter
                       </span>
                     )}
@@ -221,10 +221,10 @@ export default function AirconModelsPage() {
                       <p className="text-[11px] font-medium uppercase tracking-wider text-success">
                         Promo Price
                       </p>
-                      <p className="mt-1 text-lg font-bold text-success dark:text-emerald-300">
+                      <p className="mt-1 text-lg font-bold text-success">
                         {formatCurrency(entity.promo_price)}
                       </p>
-                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-success dark:bg-emerald-800/40 dark:text-emerald-300">
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-success dark:bg-emerald-800/40">
                         Save{" "}
                         {formatCurrency(
                           (
@@ -360,7 +360,7 @@ export default function AirconModelsPage() {
                                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm ${
                                       isUp
                                         ? "bg-rose-100 text-rose-700 ring-1 ring-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:ring-rose-800"
-                                        : "bg-emerald-100 text-success ring-1 ring-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-800"
+                                        : "bg-emerald-100 text-success ring-1 ring-emerald-200 dark:bg-emerald-900/40 dark:ring-emerald-800"
                                     }`}
                                   >
                                     {isUp ? (

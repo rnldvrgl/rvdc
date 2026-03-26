@@ -32,7 +32,7 @@ const getOffenseTypeBadge = (offenseType: string) => {
   > = {
     AWOL: {
       color:
-        "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border-red-300",
+        "bg-red-100 text-destructive dark:bg-red-900 border-red-300",
       icon: UserX,
       label: "AWOL",
     },
@@ -88,7 +88,7 @@ const getSeverityBadge = (severity: string) => {
     },
     TERMINATION: {
       color:
-        "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border-red-300",
+        "bg-red-100 text-destructive dark:bg-red-900 border-red-300",
       icon: UserX,
       label: "Termination",
     },

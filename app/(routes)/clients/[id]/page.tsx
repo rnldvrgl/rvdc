@@ -426,7 +426,7 @@ export default function ClientDetailPage() {
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-green-500/10">
-              <DollarSign className="h-4 w-4 text-green-500" />
+              <DollarSign className="h-4 w-4 text-success" />
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Paid</p>
@@ -439,7 +439,7 @@ export default function ClientDetailPage() {
         <Card>
           <CardContent className="flex items-center gap-3 p-4">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-red-500/10">
-              <Wallet className="h-4 w-4 text-red-500" />
+              <Wallet className="h-4 w-4 text-destructive" />
             </div>
             <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Balance</p>

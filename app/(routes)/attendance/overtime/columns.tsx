@@ -86,7 +86,7 @@ export const getOvertimeRequestsColumns = ({
       return (
         <Badge
           variant={approved ? "default" : "secondary"}
-          className={approved ? "bg-green-100 text-green-800" : ""}
+          className={approved ? "bg-green-100 text-success" : ""}
         >
           {approved ? (
             <>
@@ -136,7 +136,7 @@ export const getOvertimeRequestsColumns = ({
               <>
                 <DropdownMenuItem
                   onClick={() => onApprove?.(overtimeRequest.id)}
-                  className="text-green-600"
+                  className="text-success"
                 >
                   <Check className="mr-2 h-4 w-4" />
                   Approve
@@ -153,7 +153,7 @@ export const getOvertimeRequestsColumns = ({
             )}
             <DropdownMenuItem
               onClick={() => onDelete?.(overtimeRequest.id)}
-              className="text-red-600"
+              className="text-destructive"
             >
               Delete
             </DropdownMenuItem>

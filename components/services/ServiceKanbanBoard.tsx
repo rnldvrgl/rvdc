@@ -297,7 +297,7 @@ function ServiceCard({
               {hasFreeCleaning && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Sparkles className="h-3 w-3 text-emerald-500 shrink-0" />
+                    <Sparkles className="h-3 w-3 text-success shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent>Free cleaning available</TooltipContent>
                 </Tooltip>

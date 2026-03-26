@@ -744,10 +744,10 @@ export function CommandPalette({
                 {stockItems.map((stock) => {
                   const statusColor =
                     stock.status === "no_stock"
-                      ? "text-red-600 dark:text-red-400"
+                      ? "text-destructive"
                       : stock.status === "low_stock"
                         ? "text-amber-600 dark:text-amber-400"
-                        : "text-emerald-600 dark:text-emerald-400"
+                        : "text-success"
                   const statusLabel =
                     stock.status === "no_stock"
                       ? "No Stock"
@@ -756,10 +756,10 @@ export function CommandPalette({
                         : "In Stock"
                   const stockRoomStatusColor =
                     stock.stock_room_status === "no_stock"
-                      ? "text-red-600 dark:text-red-400"
+                      ? "text-destructive"
                       : stock.stock_room_status === "low_stock"
                         ? "text-amber-600 dark:text-amber-400"
-                        : "text-emerald-600 dark:text-emerald-400"
+                        : "text-success"
                   const stockRoomStatusLabel =
                     stock.stock_room_status === "no_stock"
                       ? "No Stock"

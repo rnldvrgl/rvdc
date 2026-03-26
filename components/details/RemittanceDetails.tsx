@@ -517,12 +517,12 @@ function PaymentRow({
     <div className="flex items-center justify-between text-sm py-1">
       <div className="flex items-center gap-2">
         <span className="text-base leading-none">{icon}</span>
-        <span className={destructive ? "text-red-600" : ""}>{label}</span>
+        <span className={destructive ? "text-destructive" : ""}>{label}</span>
       </div>
       <span
         className={cn(
           "tabular-nums font-medium",
-          destructive && amount > 0 && "text-red-600",
+          destructive && amount > 0 && "text-destructive",
         )}
       >
         {destructive && amount > 0

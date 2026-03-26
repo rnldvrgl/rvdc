@@ -77,7 +77,7 @@ export function getExpenseColumns({
           {row.original.is_reimbursement && (
             <Badge
               variant="outline"
-              className="border-green-500 text-green-600 shrink-0"
+              className="border-green-500 text-success shrink-0"
             >
               Reimbursement
             </Badge>
