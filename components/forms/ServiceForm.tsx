@@ -45,7 +45,7 @@ import {
   Wrench,
   Zap,
 } from "lucide-react"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import * as z from "zod"
 
@@ -161,7 +161,25 @@ export default function ServiceForm({
   })
 
   const { clients } = useClients()
-  const { data: technicians = [] } = useTechnicianChoices()
+  const { data: activeTechnicians = [] } = useTechnicianChoices()
+
+  // Merge active technicians with any inactive ones already assigned to this service
+  const technicians = useMemo(() => {
+    const activeIds = new Set(activeTechnicians.map((t) => t.id))
+    const inactiveTechs: typeof activeTechnicians = []
+    if (initialData?.technician_assignments) {
+      for (const ta of initialData.technician_assignments) {
+        if (ta.technician && !activeIds.has(ta.technician)) {
+          inactiveTechs.push({
+            id: ta.technician,
+            full_name: ta.technician_name || `Technician #${ta.technician}`,
+            inactive: true,
+          } as (typeof activeTechnicians)[number] & { inactive: boolean })
+        }
+      }
+    }
+    return [...activeTechnicians, ...inactiveTechs]
+  }, [activeTechnicians, initialData?.technician_assignments])
 
   const selectedMode = useWatch({
     control: form.control,
