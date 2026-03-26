@@ -835,11 +835,7 @@ export type ServiceType =
   | "motor_rewind"
   | "installation"
 export type ServiceMode = "carry_in" | "home_service" | "pull_out"
-export type ServiceStatus =
-  | "pending"
-  | "in_progress"
-  | "completed"
-  | "cancelled"
+export type ServiceStatus = "in_progress" | "completed" | "cancelled"
 export type ApplianceStatus = "pending" | "completed" | "cancelled"
 export type AssignmentType = "repair" | "pickup" | "delivery" | "inspect"
 

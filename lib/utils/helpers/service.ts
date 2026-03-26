@@ -37,7 +37,6 @@ export const serviceModeLabels: Record<string, string> = {
 
 // --- Service Status Labels ---
 export const serviceStatusLabels: Record<string, string> = {
-  pending: "Pending",
   in_progress: "In Progress",
   completed: "Completed",
   cancelled: "Cancelled",

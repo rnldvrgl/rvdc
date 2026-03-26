@@ -144,7 +144,7 @@ export default function ServiceFormWizard({
       reinstall_override_contact_number: "",
       pickup_date: null,
       delivery_date: null,
-      received_at: null,
+      received_at: new Date(),
       technicians: [],
     },
     mode: "onChange",
@@ -302,9 +302,10 @@ export default function ServiceFormWizard({
       delivery_date: data.delivery_date
         ? formatDateForBackend(data.delivery_date)
         : undefined,
-      received_at: data.received_at
-        ? formatDateForBackend(data.received_at)
-        : undefined,
+      received_at:
+        data.service_mode === "carry_in" && data.received_at
+          ? formatDateForBackend(data.received_at)
+          : undefined,
       appointment_datetime: data.appointment_datetime
         ? formatDateForBackend(data.appointment_datetime)
         : undefined,
@@ -488,7 +489,7 @@ export default function ServiceFormWizard({
         {/* ── Step 1: Schedule & Location ─────────────────────────────── */}
         {currentStep === 1 && (
           <div className="space-y-4">
-            {/* Carry-In */}
+            {/* Carry-In: Received At */}
             {selectedMode === "carry_in" && (
               <div className="space-y-4">
                 <FormField
@@ -496,7 +497,7 @@ export default function ServiceFormWizard({
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Received At (Optional)</FormLabel>
+                      <FormLabel>Received At</FormLabel>
                       <FormControl>
                         <DateTimePicker
                           value={field.value ?? undefined}

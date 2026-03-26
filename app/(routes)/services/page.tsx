@@ -325,7 +325,7 @@ export default function ServicesPage() {
         confirmText="Complete"
       />
 
-      {/* Status Change Confirmation Dialog (for pending → in_progress) */}
+      {/* Status Change Confirmation Dialog */}
       <ConfirmDialog
         open={state.statusChangeDialog.isOpen}
         onCancel={state.statusChangeDialog.close}

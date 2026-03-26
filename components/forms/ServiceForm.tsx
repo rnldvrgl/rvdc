@@ -5,7 +5,6 @@ import {
   ClientComboBox,
   useClients,
 } from "@/components/custom/inputs/ClientComboBox"
-import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { TechnicianCardSelect } from "@/components/custom/inputs/TechnicianCardSelect"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -33,8 +32,11 @@ import { useTechnicianChoices } from "@/lib/queries/useChoices"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   ArrowDownUp,
+  Ban,
+  CheckCircle2,
   Home,
   Info,
+  Loader2,
   Save,
   Search,
   Settings,
@@ -63,10 +65,9 @@ const serviceModeOptions = [
 ]
 
 const serviceStatusOptions = [
-  { label: "Pending", value: "pending" },
-  { label: "In Progress", value: "in_progress" },
-  { label: "Completed", value: "completed" },
-  { label: "Cancelled", value: "cancelled" },
+  { label: "In Progress", value: "in_progress", icon: Loader2 },
+  { label: "Completed", value: "completed", icon: CheckCircle2 },
+  { label: "Cancelled", value: "cancelled", icon: Ban },
 ]
 
 const serviceSchema = z.object({
@@ -87,9 +88,7 @@ const serviceSchema = z.object({
   service_mode: z.enum(["carry_in", "home_service", "pull_out"], {
     required_error: "Service mode is required",
   }),
-  status: z
-    .enum(["pending", "in_progress", "completed", "cancelled"])
-    .optional(),
+  status: z.enum(["in_progress", "completed", "cancelled"]).optional(),
   related_transaction: z.number().nullable().optional(),
   override_address: z.string().optional(),
   override_contact_person: z.string().optional(),
@@ -122,7 +121,7 @@ export default function ServiceForm({
       client: initialData?.client?.id ?? undefined,
       service_type: (initialData?.service_type as ServiceType) ?? undefined,
       service_mode: (initialData?.service_mode as ServiceMode) ?? "carry_in",
-      status: (initialData?.status as ServiceStatus) ?? "pending",
+      status: (initialData?.status as ServiceStatus) ?? "in_progress",
       related_transaction: initialData?.related_transaction ?? null,
       override_address: initialData?.override_address ?? "",
       override_contact_person: initialData?.override_contact_person ?? "",
@@ -150,7 +149,9 @@ export default function ServiceForm({
         : null,
       received_at: initialData?.received_at
         ? new Date(initialData.received_at)
-        : null,
+        : initialData
+          ? null
+          : new Date(),
       technicians:
         initialData?.technician_assignments
           ?.map((ta) => ta.technician)
@@ -183,14 +184,7 @@ export default function ServiceForm({
       ? serviceModeOptions.filter((mode) => mode.value === "carry_in")
       : serviceModeOptions
 
-  // Filter status options based on service type
-  // For installation services, only show: Pending, Completed, Cancelled
-  const availableStatusOptions =
-    selectedServiceType === "installation"
-      ? serviceStatusOptions.filter((status) =>
-          ["pending", "completed", "cancelled"].includes(status.value),
-        )
-      : serviceStatusOptions
+  const availableStatusOptions = serviceStatusOptions
 
   // Set default installation mode for installation service type
   useEffect(() => {
@@ -265,9 +259,10 @@ export default function ServiceForm({
       delivery_date: data.delivery_date
         ? formatDateForBackend(data.delivery_date)
         : undefined,
-      received_at: data.received_at
-        ? formatDateForBackend(data.received_at)
-        : undefined,
+      received_at:
+        data.service_mode === "carry_in" && data.received_at
+          ? formatDateForBackend(data.received_at)
+          : undefined,
       appointment_datetime: data.appointment_datetime
         ? formatDateForBackend(data.appointment_datetime)
         : undefined,
@@ -388,12 +383,12 @@ export default function ServiceForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status</FormLabel>
-                <ComboBox
+                <CardSelect
                   options={availableStatusOptions}
                   value={field.value ?? null}
                   onChange={field.onChange}
-                  placeholder="Select status"
                   disabled={isSubmitting}
+                  columns={3}
                 />
                 <FormMessage />
               </FormItem>
@@ -432,7 +427,7 @@ export default function ServiceForm({
               control={form.control}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Received At (Optional)</FormLabel>
+                  <FormLabel>Received At</FormLabel>
                   <FormControl>
                     <DateTimePicker
                       value={field.value ?? undefined}

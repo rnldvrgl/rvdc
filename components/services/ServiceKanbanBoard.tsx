@@ -44,7 +44,6 @@ import {
   AlertCircle,
   ArrowRight,
   CheckCircle,
-  Clock,
   Eye,
   Loader2,
   Shield,
@@ -72,15 +71,13 @@ type KanbanColumn = {
 
 // --- Allowed transitions ---
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  pending: ["in_progress", "cancelled"],
   in_progress: ["completed", "cancelled"],
   completed: [],
   cancelled: [],
 }
 
-// Cleaning services have a simpler flow: can go directly from pending/in_progress to completed
+// Cleaning services have same flow now
 const CLEANING_TRANSITIONS: Record<string, string[]> = {
-  pending: ["in_progress", "completed", "cancelled"],
   in_progress: ["completed", "cancelled"],
   completed: [],
   cancelled: [],
@@ -106,7 +103,6 @@ function isTransitionAllowed(
 
 // --- Kanban columns config ---
 const COLUMNS: KanbanColumn[] = [
-  { id: "pending", label: "Pending", icon: <Clock className="h-4 w-4" /> },
   {
     id: "in_progress",
     label: "In Progress",
@@ -422,7 +418,7 @@ function ServiceCard({
 // --- Status Progress Bar ---
 
 function StatusProgressBar({ status }: { status: string }) {
-  const steps = ["pending", "in_progress", "completed"]
+  const steps = ["in_progress", "completed"]
   const currentIndex = steps.indexOf(status)
 
   return (
@@ -497,7 +493,6 @@ export default function ServiceKanbanBoard({
 
   const groupedServices = useMemo(() => {
     const groups: Record<string, Service[]> = {
-      pending: [],
       in_progress: [],
       completed: [],
       cancelled: [],

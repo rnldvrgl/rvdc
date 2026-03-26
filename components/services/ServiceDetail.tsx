@@ -188,8 +188,7 @@ export default function ServiceDetail({
   const { data: chequeChoices = [], rawData: chequeRawData = [] } =
     useChequeChoices(service.client?.id)
 
-  const canComplete =
-    service.status === "pending" || service.status === "in_progress"
+  const canComplete = service.status === "in_progress"
   const isCompleted = service.status === "completed"
   const isCarryIn = service.service_mode === "carry_in"
 
