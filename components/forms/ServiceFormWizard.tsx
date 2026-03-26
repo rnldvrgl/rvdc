@@ -66,7 +66,7 @@ const serviceModeOptions = [
 ]
 
 const serviceSchema = z.object({
-  client: z.number({ required_error: "Client is required" }),
+  client: z.number().nullable().optional(),
   service_type: z.enum(
     [
       "repair",
@@ -189,11 +189,15 @@ export default function ServiceFormWizard({
   const canAdvance = async (step: number): Promise<boolean> => {
     switch (step) {
       case 0: {
-        const valid = await form.trigger([
-          "client",
-          "service_type",
-          "service_mode",
-        ])
+        const clientVal = form.getValues("client")
+        if (!clientVal) {
+          form.setError("client", {
+            type: "manual",
+            message: "Client is required",
+          })
+          return false
+        }
+        const valid = await form.trigger(["service_type", "service_mode"])
         return valid
       }
       case 1: {
@@ -253,7 +257,7 @@ export default function ServiceFormWizard({
     }
 
     const payload: ServicePayload = {
-      client: data.client,
+      client: data.client!,
       service_type: data.service_type,
       service_mode: data.service_mode,
       override_address: data.override_address,

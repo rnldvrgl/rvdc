@@ -172,7 +172,9 @@ export function ClientComboBox({
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Full Name *</Label>
+              <Label>
+                Full Name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
@@ -190,7 +192,7 @@ export function ClientComboBox({
               />
             </div>
             <div>
-              <Label>Province *</Label>
+              <Label>Province</Label>
               <ComboBox
                 options={sortedProvinces.map((p) => ({
                   value: p.code,
@@ -207,7 +209,7 @@ export function ClientComboBox({
               />
             </div>
             <div>
-              <Label>City / Municipality *</Label>
+              <Label>City / Municipality</Label>
               <ComboBox
                 options={sortedCities.map((c) => ({
                   value: c.code,
@@ -247,12 +249,7 @@ export function ClientComboBox({
             </div>
             <Button
               className="w-full"
-              disabled={
-                !newName.trim() ||
-                !selectedProvince ||
-                !selectedCity ||
-                addClient.isPending
-              }
+              disabled={!newName.trim() || addClient.isPending}
               onClick={handleQuickCreate}
             >
               {addClient.isPending ? "Creating..." : "Create Client"}
@@ -557,7 +554,9 @@ export function ClientCardSelect({
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label>Full Name *</Label>
+              <Label>
+                Full Name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
@@ -575,7 +574,7 @@ export function ClientCardSelect({
               />
             </div>
             <div>
-              <Label>Province *</Label>
+              <Label>Province</Label>
               <ComboBox
                 options={sortedProvinces.map((p) => ({
                   value: p.code,
@@ -592,7 +591,7 @@ export function ClientCardSelect({
               />
             </div>
             <div>
-              <Label>City / Municipality *</Label>
+              <Label>City / Municipality</Label>
               <ComboBox
                 options={sortedCities.map((c) => ({
                   value: c.code,
@@ -632,12 +631,7 @@ export function ClientCardSelect({
             </div>
             <Button
               className="w-full"
-              disabled={
-                !newName.trim() ||
-                !selectedProvince ||
-                !selectedCity ||
-                addClient.isPending
-              }
+              disabled={!newName.trim() || addClient.isPending}
               onClick={handleQuickCreate}
             >
               {addClient.isPending ? "Creating..." : "Create Client"}
