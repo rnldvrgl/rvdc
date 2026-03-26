@@ -7,11 +7,11 @@ import { Minus, X } from "lucide-react"
 
 const CATEGORY_COLOR_MAP: Record<string, string> = {
   late_penalty:
-    "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 border-red-300 dark:border-red-600",
+    "bg-red-100 text-destructive dark:bg-red-900/40 border-red-300 dark:border-red-600",
   government:
     "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border-orange-300 dark:border-orange-600",
   manual:
-    "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 border-green-300 dark:border-green-600",
+    "bg-green-100 text-success dark:bg-green-900/40 border-green-300 dark:border-green-600",
   deduction:
     "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border-purple-300 dark:border-purple-600",
   other:

@@ -68,7 +68,7 @@ const getLeaveStatusBadge = (status: string) => {
       return (
         <Badge
           variant="outline"
-          className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+          className="bg-green-100 text-success dark:bg-green-900"
         >
           <CheckCircle className="mr-1 h-3 w-3" />
           Approved
@@ -88,7 +88,7 @@ const getLeaveStatusBadge = (status: string) => {
       return (
         <Badge
           variant="outline"
-          className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+          className="bg-red-100 text-destructive dark:bg-red-900"
         >
           <XCircle className="mr-1 h-3 w-3" />
           Rejected
@@ -502,7 +502,7 @@ export function LeaveOverview() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-green-600 hover:text-green-700 hover:bg-green-50 h-8 text-xs md:text-sm"
+                  className="text-success hover:text-success hover:bg-green-50 h-8 text-xs md:text-sm"
                   onClick={handleBulkApprove}
                   disabled={isLoading}
                 >
@@ -512,7 +512,7 @@ export function LeaveOverview() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 text-xs md:text-sm"
+                  className="text-destructive hover:text-destructive hover:bg-red-50 h-8 text-xs md:text-sm"
                   onClick={handleBulkReject}
                   disabled={isLoading}
                 >
@@ -599,7 +599,7 @@ export function LeaveOverview() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                    className="text-success hover:text-success hover:bg-green-50"
                                     disabled={
                                       isLoading || selectedLeaveId === leave.id
                                     }
@@ -618,7 +618,7 @@ export function LeaveOverview() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    className="text-destructive hover:text-destructive hover:bg-red-50"
                                     disabled={isLoading}
                                     onClick={() => handleRejectClick(leave.id)}
                                   >
@@ -791,7 +791,7 @@ export function LeaveOverview() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                className="text-destructive hover:text-destructive hover:bg-red-50"
                                 disabled={
                                   isLoading && selectedLeaveId === leave.id
                                 }

@@ -178,7 +178,7 @@ export default function PayrollPage() {
 
             <Card className="border-red-200 dark:border-red-800 bg-linear-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-semibold text-red-900 dark:text-red-200">
+                <CardTitle className="text-sm font-semibold text-destructive">
                   Total Deductions
                 </CardTitle>
                 <div className="h-10 w-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
@@ -186,10 +186,10 @@ export default function PayrollPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-red-900 dark:text-red-100">
+                <div className="text-3xl font-bold text-destructive">
                   ₱{totalDeductions.toLocaleString()}
                 </div>
-                <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                <p className="text-xs text-destructive mt-1">
                   All deductions combined
                 </p>
               </CardContent>
@@ -197,7 +197,7 @@ export default function PayrollPage() {
 
             <Card className="border-green-200 dark:border-green-800 bg-linear-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-semibold text-green-900 dark:text-green-200">
+                <CardTitle className="text-sm font-semibold text-success">
                   Total Net Pay
                 </CardTitle>
                 <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -205,10 +205,10 @@ export default function PayrollPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-green-900 dark:text-green-100">
+                <div className="text-3xl font-bold text-success">
                   ₱{totalNetPay.toLocaleString()}
                 </div>
-                <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                <p className="text-xs text-success mt-1">
                   Final payout to employees
                 </p>
               </CardContent>

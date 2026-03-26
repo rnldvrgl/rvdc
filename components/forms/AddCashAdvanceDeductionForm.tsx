@@ -131,7 +131,7 @@ export function AddCashAdvanceDeductionForm({
                 Available Cash Ban Balance:
               </span>
               <span
-                className={`font-semibold ${cashBanBalance > 0 ? "text-green-600" : "text-red-600"}`}
+                className={`font-semibold ${cashBanBalance > 0 ? "text-success" : "text-destructive"}`}
               >
                 ₱ {cashBanBalance.toLocaleString()}
               </span>

@@ -80,7 +80,7 @@ const getSeverityIcon = (severity: string) => {
     case "SUSPENSION":
       return <Ban className="h-4 w-4 text-orange-600" />
     case "TERMINATION":
-      return <UserX className="h-4 w-4 text-red-600" />
+      return <UserX className="h-4 w-4 text-destructive" />
     default:
       return <Shield className="h-4 w-4" />
   }
@@ -192,10 +192,10 @@ export default function OffenseForm({
           <Alert className="border-emerald-200 bg-linear-to-r from-emerald-50 to-emerald-100 dark:from-emerald-950/20 dark:to-emerald-900/20 dark:border-emerald-800">
             <Info className="h-4 w-4 text-success" />
             <AlertDescription className="text-sm">
-              <div className="font-semibold text-emerald-900 dark:text-emerald-200 mb-1">
+              <div className="font-semibold text-success mb-1">
                 Automatic Severity Assignment
               </div>
-              <div className="text-emerald-700 dark:text-emerald-300 text-xs space-y-1">
+              <div className="text-success text-xs space-y-1">
                 <div>• 1st offense → Warning</div>
                 <div>• 2nd offense → Suspension (requires days & date)</div>
                 <div>• 3rd offense → Termination</div>
@@ -257,7 +257,7 @@ export default function OffenseForm({
                   <SelectContent>
                     <SelectItem value="AWOL">
                       <div className="flex items-center gap-2">
-                        <UserX className="h-4 w-4 text-red-500" />
+                        <UserX className="h-4 w-4 text-destructive" />
                         <span className="font-medium">
                           Absent Without Leave
                         </span>

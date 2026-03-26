@@ -286,7 +286,7 @@ const EmployeePage = () => {
                 value={`₱${Number(employee.cash_ban_balance || 0).toLocaleString()}`}
                 className={
                   Number(employee.cash_ban_balance || 0) > 0
-                    ? "text-green-600"
+                    ? "text-success"
                     : "text-muted-foreground"
                 }
               />
@@ -327,7 +327,7 @@ const EmployeePage = () => {
                   <span
                     className={
                       Number(employee.cash_ban_balance || 0) > 0
-                        ? "text-green-600 font-semibold"
+                        ? "text-success font-semibold"
                         : "text-muted-foreground font-semibold"
                     }
                   >

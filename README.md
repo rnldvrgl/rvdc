@@ -34,4 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
 # rvdc
+
+## Backlog
+
+- Receipt filtering UX presets:
+  - Add one-click presets in Services and Sales list pages (e.g., Main Stall + With Receipt + OR, Sub Stall + With Receipt + SI).
+
+- Dismantle + Reinstall unified workflow:
+  - Add a guided flow so users can create dismantle and reinstall as linked operations under one process.
+  - Include options for `same address` vs `override reinstall address`.
+  - Keep revenue/parts tracking clear while reducing duplicate data entry.

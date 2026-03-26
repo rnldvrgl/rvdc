@@ -36,9 +36,9 @@ export function SalesSummary() {
           <div className="p-3 rounded-lg border bg-green-50/50 dark:bg-green-900/10">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-muted-foreground">Total Sales</span>
-              <TrendingUp className="size-4 text-green-600" />
+              <TrendingUp className="size-4 text-success" />
             </div>
-            <p className="text-2xl font-bold text-green-600">
+            <p className="text-2xl font-bold text-success">
               ₱{totalSales.toLocaleString()}
             </p>
           </div>
@@ -92,7 +92,7 @@ export function SalesSummary() {
               </div>
               <div className="flex items-center justify-between text-xs md:text-sm">
                 <span className="text-muted-foreground">Out of Stock</span>
-                <span className="font-medium text-red-600">
+                <span className="font-medium text-destructive">
                   {summary.no_stock_items || 0}
                 </span>
               </div>

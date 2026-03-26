@@ -15,7 +15,7 @@ const STATUS_CONFIG: Record<
   },
   approved: {
     color:
-      "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-300 dark:border-green-600",
+      "bg-green-100 text-success dark:bg-green-900 border-green-300 dark:border-green-600",
     icon: CheckCircle,
     label: "Approved",
   },

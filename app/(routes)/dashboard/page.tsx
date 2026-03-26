@@ -149,9 +149,13 @@ const DashboardPage = () => {
                 <HeroStatsSection />
               </SectionReveal>
 
-              {/* Colorful Gradient Metric Cards */}
+              {/* Colorful Gradient Metric Cards + Sub Stall Settlement */}
               <SectionReveal delay={0.15}>
-                <GradientMetricCards />
+                <GradientMetricCards>
+                  <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
+                    <SubStallSettlement />
+                  </WidgetErrorBoundary>
+                </GradientMetricCards>
               </SectionReveal>
 
               {/* Charts: Cash Flow, Top Items, Top Clients */}

@@ -78,7 +78,7 @@ export const getCashAdvanceColumns = ({
         const isCredit = type === "credit"
         return (
           <span
-            className={`font-semibold ${isCredit ? "text-green-600" : "text-red-600"}`}
+            className={`font-semibold ${isCredit ? "text-success" : "text-destructive"}`}
           >
             {isCredit ? "+" : "-"}₱{amount.toLocaleString()}
           </span>

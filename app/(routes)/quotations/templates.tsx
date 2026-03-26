@@ -454,7 +454,7 @@ function TemplateCard({
 }) {
   const accentBorder =
     accent === "blue" ? "border-l-blue-500" : "border-l-emerald-500"
-  const checkColor = accent === "blue" ? "text-blue-500" : "text-emerald-500"
+  const checkColor = accent === "blue" ? "text-blue-500" : "text-success"
 
   return (
     <div
@@ -494,7 +494,7 @@ function TemplateCard({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-red-50"
                 onClick={() => onDelete(t.id)}
               >
                 <Trash2 className="h-3.5 w-3.5" />

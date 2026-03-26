@@ -87,7 +87,7 @@ export function getAirconUnitsColumns({
           },
           Sold: {
             bg: "bg-green-50",
-            text: "text-green-700",
+            text: "text-success",
             ring: "ring-green-600/20",
           },
           Reserved: {

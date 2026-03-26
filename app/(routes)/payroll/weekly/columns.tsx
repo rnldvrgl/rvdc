@@ -44,7 +44,7 @@ const getStatusBadge = (status: string) => {
     },
     paid: {
       color:
-        "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 border-green-300 dark:border-green-600",
+        "bg-green-100 text-success dark:bg-green-900 border-green-300 dark:border-green-600",
       label: "Paid",
       icon: <Banknote className="h-3 w-3 mr-1" />,
     },
@@ -152,7 +152,7 @@ export function getPayrollColumns({
       header: "Deductions",
       cell: ({ getValue }) => {
         const amount = Number(getValue() || 0)
-        return <span className="text-red-600">-₱{amount.toLocaleString()}</span>
+        return <span className="text-destructive">-₱{amount.toLocaleString()}</span>
       },
     },
     {
@@ -161,7 +161,7 @@ export function getPayrollColumns({
       cell: ({ getValue }) => {
         const amount = Number(getValue() || 0)
         return (
-          <div className="font-bold text-green-600">
+          <div className="font-bold text-success">
             ₱{amount.toLocaleString()}
           </div>
         )

@@ -21,7 +21,7 @@ export const serviceTypeColors: Record<string, string> = {
   inspection:
     "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-sky-400 dark:border-sky-800",
   cleaning:
-    "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800",
+    "bg-emerald-100 text-success border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-800",
   motor_rewind:
     "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800",
   installation:
@@ -37,7 +37,6 @@ export const serviceModeLabels: Record<string, string> = {
 
 // --- Service Status Labels ---
 export const serviceStatusLabels: Record<string, string> = {
-  pending: "Pending",
   in_progress: "In Progress",
   completed: "Completed",
   cancelled: "Cancelled",

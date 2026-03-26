@@ -58,7 +58,7 @@ export function AirconUnitDetails({
     completed: {
       label: "Completed",
       bg: "bg-green-50",
-      text: "text-green-700",
+      text: "text-success",
       ring: "ring-green-600/20",
     },
     cancelled: {
@@ -101,7 +101,7 @@ export function AirconUnitDetails({
                 },
                 Sold: {
                   bg: "bg-green-50",
-                  text: "text-green-700",
+                  text: "text-success",
                   ring: "ring-green-600/20",
                 },
                 Reserved: {
@@ -150,7 +150,7 @@ export function AirconUnitDetails({
                       },
                     )}
                   </span>
-                  <span className="text-sm font-medium text-green-600">
+                  <span className="text-sm font-medium text-success">
                     Promo
                   </span>
                 </>
@@ -248,7 +248,7 @@ export function AirconUnitDetails({
                   },
                   Sold: {
                     bg: "bg-green-50",
-                    text: "text-green-700",
+                    text: "text-success",
                     ring: "ring-green-600/20",
                   },
                   Reserved: {
@@ -395,7 +395,7 @@ export function AirconUnitDetails({
               <label className="text-sm font-medium text-muted-foreground">
                 Status
               </label>
-              <p className="text-base font-medium text-green-600">Sold</p>
+              <p className="text-base font-medium text-success">Sold</p>
             </div>
           </div>
         </div>
@@ -524,7 +524,7 @@ export function AirconUnitDetails({
                 <label className="text-sm font-medium text-muted-foreground">
                   Selling Price (Model Default)
                 </label>
-                <p className="text-base font-semibold text-green-600">
+                <p className="text-base font-semibold text-success">
                   ₱
                   {parseFloat(unit.model.selling_price).toLocaleString(
                     "en-US",
@@ -561,9 +561,9 @@ export function AirconUnitDetails({
                   <span
                     className={`ml-auto inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
                       unit.parts_warranty_status === "Active"
-                        ? "bg-green-50 text-green-700 ring-green-600/20"
+                        ? "bg-green-50 text-success ring-green-600/20"
                         : unit.parts_warranty_status === "Expired"
-                          ? "bg-red-50 text-red-700 ring-red-600/20"
+                          ? "bg-red-50 text-destructive ring-red-600/20"
                           : "bg-gray-50 text-gray-600 ring-gray-500/10"
                     }`}
                   >
@@ -610,9 +610,9 @@ export function AirconUnitDetails({
                   <span
                     className={`ml-auto inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
                       unit.labor_warranty_status === "Active"
-                        ? "bg-green-50 text-green-700 ring-green-600/20"
+                        ? "bg-green-50 text-success ring-green-600/20"
                         : unit.labor_warranty_status === "Expired"
-                          ? "bg-red-50 text-red-700 ring-red-600/20"
+                          ? "bg-red-50 text-destructive ring-red-600/20"
                           : "bg-gray-50 text-gray-600 ring-gray-500/10"
                     }`}
                   >
@@ -678,7 +678,7 @@ export function AirconUnitDetails({
                 <span
                   className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${
                     unit.free_cleaning_status === "available"
-                      ? "bg-green-50 text-green-700 ring-green-600/20"
+                      ? "bg-green-50 text-success ring-green-600/20"
                       : unit.free_cleaning_status === "pending"
                         ? "bg-blue-50 text-blue-700 ring-blue-600/20"
                         : unit.free_cleaning_status === "redeemed"

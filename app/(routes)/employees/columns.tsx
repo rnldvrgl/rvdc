@@ -62,7 +62,7 @@ export function getEmployeeColumns({
       cell: ({ getValue }) => {
         const balance = getValue<number>()
         return (
-          <span className="font-medium text-green-600">
+          <span className="font-medium text-success">
             ₱{balance.toLocaleString()}
           </span>
         )

@@ -356,11 +356,11 @@ function BulkUpdateSection({
                             <span className="text-muted-foreground min-w-[90px] sm:min-w-[110px]">
                               {change.field}:
                             </span>
-                            <span className="text-red-500 line-through">
+                            <span className="text-destructive line-through">
                               {change.old}
                             </span>
                             <ArrowRight className="size-3 text-muted-foreground shrink-0" />
-                            <span className="text-green-600 font-medium">
+                            <span className="text-success font-medium">
                               {change.new}
                             </span>
                           </div>

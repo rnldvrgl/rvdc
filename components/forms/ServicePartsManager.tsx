@@ -44,7 +44,7 @@ import { useItemChoices } from "@/lib/queries/useChoices"
 import api from "@/lib/utils/api"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
 import { useQueryClient } from "@tanstack/react-query"
-import { Edit, HardHat, Info, Plus, Trash2, X } from "lucide-react"
+import { Edit, HardHat, Info, Loader2, Plus, Trash2, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -100,10 +100,12 @@ export default function ServicePartsManager({
 
   const items: Item[] = itemsData ?? []
   const selectedItem = items.find((i) => i.id === selectedItemId)
+  const isMutatingPart = addItem.isPending || updateItem.isPending
+  const isDialogBusy = isSubmitting || isMutatingPart
 
   const itemOptions = items.map((item) => ({
     value: item.id,
-    label: `${item.name} — ${item.sku} • ${formatCurrency(item.retail_price)}`,
+    label: item.sku ? `${item.name} — ${item.sku}` : item.name,
   }))
 
   const templates: CustomItemTemplate[] = templateData ?? []
@@ -533,7 +535,7 @@ export default function ServicePartsManager({
                             <span className="line-through text-xs text-muted-foreground">
                               {formatCurrency(part.item_price || 0)}
                             </span>
-                            <span className="text-green-600">
+                            <span className="text-success">
                               {formatCurrency(
                                 part.discounted_price || part.item_price || 0,
                               )}
@@ -549,7 +551,7 @@ export default function ServicePartsManager({
                           {!part.is_free &&
                             part.discount_amount &&
                             parseFloat(part.discount_amount) > 0 && (
-                              <span className="text-xs text-green-600">
+                              <span className="text-xs text-success">
                                 ₱{part.discount_amount} off
                               </span>
                             )}
@@ -621,6 +623,7 @@ export default function ServicePartsManager({
       <Dialog
         open={dialogOpen}
         onOpenChange={(open) => {
+          if (!open && isDialogBusy) return
           setDialogOpen(open)
           if (!open) {
             setEditingPartId(null)
@@ -637,7 +640,33 @@ export default function ServicePartsManager({
           }
         }}
       >
-        <DialogContent className="max-w-md! md:max-w-lg!">
+        <DialogContent
+          className="max-w-md! overflow-hidden md:max-w-lg!"
+          showCloseButton={!isDialogBusy}
+          onEscapeKeyDown={(event) => {
+            if (isDialogBusy) event.preventDefault()
+          }}
+          onPointerDownOutside={(event) => {
+            if (isDialogBusy) event.preventDefault()
+          }}
+        >
+          {isDialogBusy && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-xl bg-background/85 backdrop-blur-sm">
+              <Loader2 className="size-6 animate-spin text-primary" />
+              <div className="space-y-0.5 text-center">
+                <p className="text-sm font-medium">
+                  {isSubmitting
+                    ? `Adding ${pendingItems.length} part${pendingItems.length > 1 ? "s" : ""}...`
+                    : editingPartId
+                      ? "Updating part..."
+                      : "Adding part..."}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Please wait until the request completes.
+                </p>
+              </div>
+            </div>
+          )}
           <DialogHeader>
             <DialogTitle>
               {editingPartId ? "Edit Part" : "Add Service-Level Part"}
@@ -673,8 +702,11 @@ export default function ServicePartsManager({
                       key={item.id}
                       className="flex items-center justify-between text-sm bg-background rounded px-2 py-1.5"
                     >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span className="truncate font-medium">
+                      <div className="flex min-w-0 flex-1 items-center gap-2">
+                        <span
+                          className="truncate font-medium"
+                          title={item.itemName}
+                        >
                           {item.itemName}
                         </span>
                         <span className="text-muted-foreground shrink-0">
@@ -705,6 +737,7 @@ export default function ServicePartsManager({
                           size="icon"
                           variant="ghost"
                           className="h-6 w-6"
+                          disabled={isDialogBusy}
                           onClick={() =>
                             setPendingItems((prev) =>
                               prev.filter((p) => p.id !== item.id),
@@ -747,12 +780,13 @@ export default function ServicePartsManager({
             </div>
           )}
 
-          <div className="space-y-4 py-4">
+          <div className="max-h-[70vh] space-y-4 overflow-y-auto py-4 pr-1">
             {/* Custom Item Toggle */}
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="service_parts_is_custom"
                 checked={isCustom}
+                disabled={isDialogBusy}
                 onCheckedChange={(checked) => {
                   setIsCustom(checked === true)
                   if (checked === true) {
@@ -780,6 +814,7 @@ export default function ServicePartsManager({
                     value={customDescription}
                     onChange={(e) => setCustomDescription(e.target.value)}
                     placeholder="e.g., Copper tubing 1/4 inch"
+                    disabled={isDialogBusy}
                   />
                 </div>
                 <div className="space-y-2">
@@ -791,6 +826,7 @@ export default function ServicePartsManager({
                     value={customPrice}
                     onChange={(e) => setCustomPrice(e.target.value)}
                     placeholder="0.00"
+                    disabled={isDialogBusy}
                   />
                 </div>
                 {templates.length > 0 && (
@@ -814,6 +850,7 @@ export default function ServicePartsManager({
                       }}
                       placeholder="Select a template..."
                       searchPlaceholder="Search templates..."
+                      disabled={isDialogBusy}
                     />
                   </div>
                 )}
@@ -830,9 +867,36 @@ export default function ServicePartsManager({
                     }
                     placeholder="Select item..."
                     searchPlaceholder="Search items..."
-                    disabled={itemsLoading}
+                    disabled={itemsLoading || isDialogBusy}
                   />
                 </div>
+
+                {selectedItem && (
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-1">
+                        <p
+                          className="truncate text-sm font-medium"
+                          title={selectedItem.name}
+                        >
+                          {selectedItem.name}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                          {selectedItem.sku && <span>{selectedItem.sku}</span>}
+                          <span>{selectedItem.unit_of_measure}</span>
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-[11px] text-muted-foreground">
+                          Unit Price
+                        </p>
+                        <p className="text-sm font-semibold">
+                          {formatCurrency(selectedItem.retail_price)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Stock availability info */}
                 {selectedItem && selectedItemStock && (
@@ -845,11 +909,11 @@ export default function ServicePartsManager({
                         className={cn(
                           "font-semibold",
                           selectedItemStock.status === "no_stock" &&
-                            "text-red-600",
+                            "text-destructive",
                           selectedItemStock.status === "low_stock" &&
                             "text-amber-600",
                           selectedItemStock.status === "high_stock" &&
-                            "text-green-600",
+                            "text-success",
                         )}
                       >
                         {selectedItemStock.available_quantity}{" "}
@@ -863,7 +927,7 @@ export default function ServicePartsManager({
                       </div>
                     )}
                     {selectedItemStock.status === "no_stock" && (
-                      <p className="text-xs text-red-600 font-medium">
+                      <p className="text-xs text-destructive font-medium">
                         No stock available
                       </p>
                     )}
@@ -923,6 +987,7 @@ export default function ServicePartsManager({
                 }
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
+                disabled={isDialogBusy}
                 onBlur={() => {
                   if (
                     !selectedItem ||
@@ -955,6 +1020,7 @@ export default function ServicePartsManager({
               <Checkbox
                 id="service_parts_is_free"
                 checked={isFree}
+                disabled={isDialogBusy}
                 onCheckedChange={(checked) => {
                   setIsFree(checked === true)
                   if (checked === true) {
@@ -994,6 +1060,7 @@ export default function ServicePartsManager({
                           value={discountValue}
                           onChange={(e) => setDiscountValue(e.target.value)}
                           placeholder="0"
+                          disabled={isDialogBusy || isFree}
                         />
                       </TooltipTrigger>
                       <TooltipContent>
@@ -1008,6 +1075,7 @@ export default function ServicePartsManager({
                       placeholder="Optional"
                       value={discountReason}
                       onChange={(e) => setDiscountReason(e.target.value)}
+                      disabled={isDialogBusy || isFree}
                     />
                   </div>
                 </div>
@@ -1032,8 +1100,8 @@ export default function ServicePartsManager({
                 {discountValue && parseFloat(discountValue) > 0 && (
                   <>
                     <div className="flex items-center justify-between border-t pt-2">
-                      <span className="text-green-600">Discount</span>
-                      <span className="text-sm text-green-600">
+                      <span className="text-success">Discount</span>
+                      <span className="text-sm text-success">
                         -₱{discountValue}
                       </span>
                     </div>
@@ -1064,6 +1132,7 @@ export default function ServicePartsManager({
           <DialogFooter>
             <Button
               variant="outline"
+              disabled={isDialogBusy}
               onClick={() => {
                 setDialogOpen(false)
                 setEditingPartId(null)
@@ -1076,16 +1145,16 @@ export default function ServicePartsManager({
               <Button
                 onClick={handleSavePart}
                 disabled={
-                  updateItem.isPending ||
+                  isDialogBusy ||
                   (isCustom
                     ? !customDescription.trim() || !customPrice || !quantity
                     : !selectedItemId || !quantity)
                 }
               >
-                {updateItem.isPending && (
-                  <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                {isMutatingPart && (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
                 )}
-                Update Part
+                {isMutatingPart ? "Updating..." : "Update Part"}
               </Button>
             ) : (
               <>
@@ -1093,23 +1162,25 @@ export default function ServicePartsManager({
                   variant="secondary"
                   onClick={handleAddToList}
                   disabled={
-                    isSubmitting ||
+                    isDialogBusy ||
                     (isCustom
                       ? !customDescription.trim() || !customPrice || !quantity
                       : !selectedItemId || !quantity)
                   }
                 >
-                  Add to List
+                  {pendingItems.length > 0 ? "Add Another" : "Add to List"}
                 </Button>
                 {pendingItems.length > 0 && (
                   <Button
                     onClick={handleSubmitAll}
-                    disabled={isSubmitting}
+                    disabled={isDialogBusy}
                   >
                     {isSubmitting && (
-                      <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      <Loader2 className="mr-2 size-4 animate-spin" />
                     )}
-                    Submit All ({pendingItems.length})
+                    {isSubmitting
+                      ? `Adding ${pendingItems.length}...`
+                      : `Add ${pendingItems.length} to Service`}
                   </Button>
                 )}
               </>

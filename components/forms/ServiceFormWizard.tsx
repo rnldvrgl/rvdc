@@ -2,7 +2,7 @@
 
 import { CardSelect } from "@/components/custom/inputs/CardSelect"
 import {
-  ClientComboBox,
+  ClientCardSelect,
   useClients,
 } from "@/components/custom/inputs/ClientComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
@@ -10,6 +10,7 @@ import { TechnicianCardSelect } from "@/components/custom/inputs/TechnicianCardS
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
@@ -66,7 +67,7 @@ const serviceModeOptions = [
 ]
 
 const serviceSchema = z.object({
-  client: z.number({ required_error: "Client is required" }),
+  client: z.number().nullable().optional(),
   service_type: z.enum(
     [
       "repair",
@@ -81,16 +82,19 @@ const serviceSchema = z.object({
   service_mode: z.enum(["carry_in", "home_service", "pull_out"], {
     required_error: "Service mode is required",
   }),
-  description: z.string().optional(),
   override_address: z.string().optional(),
   override_contact_person: z.string().optional(),
   override_contact_number: z.string().optional(),
   appointment_datetime: z.date().nullable().optional(),
+  reinstall_appointment_datetime: z.date().nullable().optional(),
+  create_reinstall: z.boolean().optional(),
+  reinstall_same_address: z.boolean().optional(),
+  reinstall_override_address: z.string().optional(),
+  reinstall_override_contact_person: z.string().optional(),
+  reinstall_override_contact_number: z.string().optional(),
   pickup_date: z.date().nullable().optional(),
   delivery_date: z.date().nullable().optional(),
   received_at: z.date().nullable().optional(),
-  remarks: z.string().optional(),
-  notes: z.string().optional(),
   technicians: z.array(z.number()).optional(),
 })
 
@@ -101,7 +105,7 @@ type FormValues = z.infer<typeof serviceSchema>
 const steps = [
   { id: 0, title: "Client & Type", icon: User },
   { id: 1, title: "Schedule", icon: Calendar },
-  { id: 2, title: "Team & Notes", icon: Users },
+  { id: 2, title: "Team", icon: Users },
   { id: 3, title: "Review", icon: ClipboardList },
 ]
 
@@ -128,16 +132,19 @@ export default function ServiceFormWizard({
       client: defaultClientId ?? undefined,
       service_type: undefined,
       service_mode: "carry_in",
-      description: "",
       override_address: "",
       override_contact_person: "",
       override_contact_number: "",
       appointment_datetime: null,
+      reinstall_appointment_datetime: null,
+      create_reinstall: false,
+      reinstall_same_address: true,
+      reinstall_override_address: "",
+      reinstall_override_contact_person: "",
+      reinstall_override_contact_number: "",
       pickup_date: null,
       delivery_date: null,
-      received_at: null,
-      remarks: "",
-      notes: "",
+      received_at: new Date(),
       technicians: [],
     },
     mode: "onChange",
@@ -152,17 +159,29 @@ export default function ServiceFormWizard({
     name: "service_type",
   })
   const selectedClient = useWatch({ control: form.control, name: "client" })
+  const createReinstall = useWatch({
+    control: form.control,
+    name: "create_reinstall",
+  })
+  const reinstallSameAddress = useWatch({
+    control: form.control,
+    name: "reinstall_same_address",
+  })
 
   // Filter modes based on type
   const availableServiceModes =
     selectedServiceType === "motor_rewind"
       ? serviceModeOptions.filter((m) => m.value === "carry_in")
-      : serviceModeOptions
+      : selectedServiceType === "installation" ||
+          selectedServiceType === "dismantle"
+        ? serviceModeOptions.filter((m) => m.value === "home_service")
+        : serviceModeOptions
 
-  // Auto-set mode for installation / motor_rewind
+  // Auto-set mode for installation / dismantle / motor_rewind
   useEffect(() => {
     if (
-      selectedServiceType === "installation" &&
+      (selectedServiceType === "installation" ||
+        selectedServiceType === "dismantle") &&
       selectedMode !== "home_service"
     ) {
       form.setValue("service_mode", "home_service")
@@ -195,31 +214,37 @@ export default function ServiceFormWizard({
   const canAdvance = async (step: number): Promise<boolean> => {
     switch (step) {
       case 0: {
-        const valid = await form.trigger([
-          "client",
-          "service_type",
-          "service_mode",
-        ])
+        const clientVal = form.getValues("client")
+        if (!clientVal) {
+          form.setError("client", {
+            type: "manual",
+            message: "Client is required",
+          })
+          return false
+        }
+        const valid = await form.trigger(["service_type", "service_mode"])
         return valid
       }
       case 1: {
         const mode = form.getValues("service_mode")
-        if (mode === "home_service") {
-          const appt = form.getValues("appointment_datetime")
-          if (!appt) {
-            form.setError("appointment_datetime", {
-              type: "manual",
-              message: "Appointment date & time is required for home service",
-            })
-            return false
-          }
-        }
         if (mode === "pull_out") {
           const pickup = form.getValues("pickup_date")
           if (!pickup) {
             form.setError("pickup_date", {
               type: "manual",
               message: "Pickup date is required for pull-out service",
+            })
+            return false
+          }
+        }
+
+        if (form.getValues("create_reinstall")) {
+          const sameAddress = form.getValues("reinstall_same_address") !== false
+          if (!sameAddress && !form.getValues("reinstall_override_address")) {
+            form.setError("reinstall_override_address", {
+              type: "manual",
+              message:
+                "Reinstall address is required when using a different location",
             })
             return false
           }
@@ -259,10 +284,9 @@ export default function ServiceFormWizard({
     }
 
     const payload: ServicePayload = {
-      client: data.client,
+      client: data.client!,
       service_type: data.service_type,
       service_mode: data.service_mode,
-      description: data.description,
       override_address: data.override_address,
       override_contact_person: data.override_contact_person,
       override_contact_number: data.override_contact_number,
@@ -272,14 +296,31 @@ export default function ServiceFormWizard({
       delivery_date: data.delivery_date
         ? formatDateForBackend(data.delivery_date)
         : undefined,
-      received_at: data.received_at
-        ? formatDateForBackend(data.received_at)
-        : undefined,
+      received_at:
+        data.service_mode === "carry_in" && data.received_at
+          ? formatDateForBackend(data.received_at)
+          : undefined,
       appointment_datetime: data.appointment_datetime
         ? formatDateForBackend(data.appointment_datetime)
         : undefined,
-      remarks: data.remarks,
-      notes: data.notes,
+      reinstall_appointment_datetime: data.reinstall_appointment_datetime
+        ? formatDateForBackend(data.reinstall_appointment_datetime)
+        : undefined,
+      create_reinstall:
+        data.service_type === "dismantle" ? !!data.create_reinstall : false,
+      reinstall_same_address: data.reinstall_same_address !== false,
+      reinstall_override_address:
+        data.reinstall_same_address === false
+          ? data.reinstall_override_address || undefined
+          : undefined,
+      reinstall_override_contact_person:
+        data.reinstall_same_address === false
+          ? data.reinstall_override_contact_person || undefined
+          : undefined,
+      reinstall_override_contact_number:
+        data.reinstall_same_address === false
+          ? data.reinstall_override_contact_number || undefined
+          : undefined,
       technician_assignments: data.technicians?.map((techId) => ({
         technician: techId,
         assignment_type: getAssignmentType(),
@@ -392,10 +433,9 @@ export default function ServiceFormWizard({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel required>Client</FormLabel>
-                  <ClientComboBox
+                  <ClientCardSelect
                     value={field.value ?? null}
                     onChange={field.onChange}
-                    placeholder="Search and select a client"
                     disabled={isSubmitting}
                   />
                   <FormMessage />
@@ -431,27 +471,8 @@ export default function ServiceFormWizard({
                     value={field.value ?? null}
                     onChange={field.onChange}
                     disabled={isSubmitting}
-                    columns={2}
+                    columns={3}
                   />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              name="description"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Describe the service or issue"
-                      disabled={isSubmitting}
-                      rows={3}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -462,19 +483,15 @@ export default function ServiceFormWizard({
         {/* ── Step 1: Schedule & Location ─────────────────────────────── */}
         {currentStep === 1 && (
           <div className="space-y-4">
-            {/* Carry-In */}
+            {/* Carry-In: Received At */}
             {selectedMode === "carry_in" && (
-              <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="font-medium text-sm flex items-center gap-2">
-                  <Wrench className="size-4" />
-                  Carry-In Details
-                </h3>
+              <div className="space-y-4">
                 <FormField
                   name="received_at"
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Received At (Optional)</FormLabel>
+                      <FormLabel>Received At</FormLabel>
                       <FormControl>
                         <DateTimePicker
                           value={field.value ?? undefined}
@@ -493,17 +510,18 @@ export default function ServiceFormWizard({
 
             {/* Home Service */}
             {selectedMode === "home_service" && (
-              <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="font-medium text-sm flex items-center gap-2">
-                  <Calendar className="size-4" />
-                  Home Service Details
-                </h3>
+              <div className="space-y-4">
                 <FormField
                   name="appointment_datetime"
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel required>Appointment Date & Time</FormLabel>
+                      <FormLabel>
+                        Appointment Date & Time{" "}
+                        <span className="text-xs text-muted-foreground font-normal">
+                          (optional — can be set later)
+                        </span>
+                      </FormLabel>
                       <FormControl>
                         <DateTimePicker
                           value={field.value ?? undefined}
@@ -576,11 +594,7 @@ export default function ServiceFormWizard({
 
             {/* Pull-Out */}
             {selectedMode === "pull_out" && (
-              <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="font-medium text-sm flex items-center gap-2">
-                  <Calendar className="size-4" />
-                  Pull-Out Details
-                </h3>
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     name="pickup_date"
@@ -684,10 +698,171 @@ export default function ServiceFormWizard({
                 the next step.
               </p>
             )}
+
+            {selectedServiceType === "dismantle" && (
+              <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+                <FormField
+                  name="create_reinstall"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value === true}
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked === true)
+                          }
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-sm font-medium">
+                          Auto-create linked reinstall service
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          Creates an installation service linked to this
+                          dismantle service.
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {createReinstall && (
+                  <>
+                    <FormField
+                      name="reinstall_same_address"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Reinstall Address Setup</FormLabel>
+                          <CardSelect
+                            options={[
+                              {
+                                label: "Same Address",
+                                value: "same",
+                                icon: Home,
+                              },
+                              {
+                                label: "Different Address",
+                                value: "override",
+                                icon: ArrowDownUp,
+                              },
+                            ]}
+                            value={field.value === false ? "override" : "same"}
+                            onChange={(value) => {
+                              const isSame = value !== "override"
+                              field.onChange(isSame)
+                              if (isSame) {
+                                form.setValue("reinstall_override_address", "")
+                                form.setValue(
+                                  "reinstall_override_contact_person",
+                                  "",
+                                )
+                                form.setValue(
+                                  "reinstall_override_contact_number",
+                                  "",
+                                )
+                              }
+                            }}
+                            disabled={isSubmitting}
+                            columns={2}
+                          />
+                        </FormItem>
+                      )}
+                    />
+
+                    {reinstallSameAddress === false && (
+                      <>
+                        <FormField
+                          name="reinstall_override_address"
+                          control={form.control}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel required>Reinstall Address</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  {...field}
+                                  value={field.value || ""}
+                                  placeholder="Enter reinstall address"
+                                  disabled={isSubmitting}
+                                  rows={2}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField
+                            name="reinstall_override_contact_person"
+                            control={form.control}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Reinstall Contact Person</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    value={field.value || ""}
+                                    placeholder="Same as dismantle if empty"
+                                    disabled={isSubmitting}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            name="reinstall_override_contact_number"
+                            control={form.control}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Reinstall Contact Number</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    value={field.value || ""}
+                                    placeholder="Same as dismantle if empty"
+                                    disabled={isSubmitting}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <FormField
+                      name="reinstall_appointment_datetime"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Reinstall Appointment (Optional)
+                          </FormLabel>
+                          <FormControl>
+                            <DateTimePicker
+                              value={field.value ?? undefined}
+                              onChange={field.onChange}
+                              disabled={isSubmitting}
+                              placeholder="Set preferred reinstall date/time"
+                              disablePastDates={true}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── Step 2: Technicians & Notes ─────────────────────────────── */}
+        {/* ── Step 2: Technicians ────────────────────────────────── */}
         {currentStep === 2 && (
           <div className="space-y-4">
             <FormField
@@ -706,44 +881,6 @@ export default function ServiceFormWizard({
                     onChange={field.onChange}
                     disabled={isSubmitting}
                   />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              name="remarks"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Remarks</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Additional remarks"
-                      disabled={isSubmitting}
-                      rows={2}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              name="notes"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Internal Notes</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Internal notes (not visible to client)"
-                      disabled={isSubmitting}
-                      rows={2}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -772,11 +909,11 @@ export default function ServiceFormWizard({
                     <span className="text-muted-foreground">Mode</span>
                     <p className="font-medium">{modeLabel ?? "—"}</p>
                   </div>
-                  {form.getValues("description") && (
+                  {selectedServiceType === "dismantle" && createReinstall && (
                     <div className="col-span-2">
-                      <span className="text-muted-foreground">Description</span>
+                      <span className="text-muted-foreground">Linked Flow</span>
                       <p className="font-medium">
-                        {form.getValues("description")}
+                        Dismantle + Auto-created Reinstall
                       </p>
                     </div>
                   )}
@@ -859,35 +996,6 @@ export default function ServiceFormWizard({
                         {name}
                       </Badge>
                     ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Notes */}
-            {(form.getValues("remarks") || form.getValues("notes")) && (
-              <Card>
-                <CardContent className="p-4 space-y-3">
-                  <h4 className="text-sm font-semibold flex items-center gap-2">
-                    <ClipboardList className="size-4" /> Notes
-                  </h4>
-                  <div className="space-y-2 text-sm">
-                    {form.getValues("remarks") && (
-                      <div>
-                        <span className="text-muted-foreground">Remarks</span>
-                        <p className="font-medium">
-                          {form.getValues("remarks")}
-                        </p>
-                      </div>
-                    )}
-                    {form.getValues("notes") && (
-                      <div>
-                        <span className="text-muted-foreground">
-                          Internal Notes
-                        </span>
-                        <p className="font-medium">{form.getValues("notes")}</p>
-                      </div>
-                    )}
                   </div>
                 </CardContent>
               </Card>

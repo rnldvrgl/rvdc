@@ -551,7 +551,7 @@ export function ClockInOut({
                     <PhilippinePeso className="h-4 w-4 text-destructive shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-destructive">Late Penalty</p>
-                      <p className="text-sm font-medium text-red-900 dark:text-red-200">
+                      <p className="text-sm font-medium text-destructive">
                         {parseFloat(
                           currentStatus.attendance.late_penalty_amount,
                         ).toFixed(0)}

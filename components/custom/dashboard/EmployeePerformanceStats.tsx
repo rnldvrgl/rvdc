@@ -223,7 +223,7 @@ export function EmployeePerformanceStats() {
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-950/50">
-                    <Clock className="size-4 text-red-500" />
+                    <Clock className="size-4 text-destructive" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">

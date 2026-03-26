@@ -511,7 +511,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                     <span
                       className={cn(
                         "text-muted-foreground shrink-0",
-                        key === "expenses" && "text-red-600",
+                        key === "expenses" && "text-destructive",
                       )}
                     >
                       {key === "expenses" ? "− " : ""}
@@ -591,7 +591,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                 {Number(preview.total_expenses) > 0 && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">− Expenses</span>
-                    <span className="font-medium tabular-nums text-red-600">
+                    <span className="font-medium tabular-nums text-destructive">
                       {formatCurrency(preview.total_expenses)}
                     </span>
                   </div>
@@ -646,7 +646,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
             <p
               className={cn(
                 "text-lg font-bold tabular-nums",
-                liveTotals.cod > 0 ? "text-amber-600" : "text-green-600",
+                liveTotals.cod > 0 ? "text-amber-600" : "text-success",
               )}
             >
               {formatCurrency(liveTotals.cod)}

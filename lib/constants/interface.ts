@@ -835,11 +835,7 @@ export type ServiceType =
   | "motor_rewind"
   | "installation"
 export type ServiceMode = "carry_in" | "home_service" | "pull_out"
-export type ServiceStatus =
-  | "pending"
-  | "in_progress"
-  | "completed"
-  | "cancelled"
+export type ServiceStatus = "in_progress" | "completed" | "cancelled"
 export type ApplianceStatus = "pending" | "completed" | "cancelled"
 export type AssignmentType = "repair" | "pickup" | "delivery" | "inspect"
 
@@ -881,11 +877,16 @@ export interface ServiceAppliance {
   items_used?: ApplianceItemUsed[]
   technician_assignments?: TechnicianAssignment[]
   total_parts_cost?: string
+  total_service_fee?: string | null
+  auto_adjust_labor?: boolean
   parts_needed_notes?: string
   items_checked?: boolean
   items_checked_by?: number | null
   items_checked_by_name?: string | null
   items_checked_at?: string | null
+  unit_type?: "brand_new" | "second_hand" | "pre_order" | ""
+  aircon_model?: number | null
+  aircon_model_name?: string | null
 }
 
 export interface ServiceAppliancePayload {
@@ -905,14 +906,17 @@ export interface ServiceAppliancePayload {
   labor_discount_percentage?: number
   labor_discount_reason?: string
   unit_price?: number | null
+  total_service_fee?: number | null
+  auto_adjust_labor?: boolean
   labor_warranty_months?: number
   unit_warranty_months?: number
   warranty_notes?: string
   parts_needed_notes?: string
   // Aircon installation data (optional, only for installation services)
   aircon_installation_data?: {
-    unit_type: "brand_new" | "second_hand"
+    unit_type: "brand_new" | "second_hand" | "pre_order"
     unit_id?: number
+    model_id?: number
     unit_price?: number | null
   }
 }
@@ -1125,6 +1129,8 @@ export interface Service {
   stall?: Stall | null
   service_type: ServiceType
   service_mode: ServiceMode
+  service_leg?: "single" | "dismantle" | "reinstall"
+  linked_parent_service?: number | null
   related_transaction?: number | null
   related_sub_transaction?: number | null
   description?: string
@@ -1160,6 +1166,8 @@ export interface Service {
   service_discount_amount?: string
   service_discount_percentage?: string
   discount_reason?: string
+  discount_applied_by_name?: string
+  discount_applied_at?: string
   // Complementary service fields
   is_complementary?: boolean
   complementary_reason?: string
@@ -1181,29 +1189,54 @@ export interface Service {
   service_items_checked_by?: number | null
   service_items_checked_by_name?: string | null
   service_items_checked_at?: string | null
-  // BIR 2307 receipt
+  // BIR receipts (multiple per service)
+  receipts?: ServiceReceipt[]
+  // Backdating
+  transaction_date?: string | null
+}
+
+export interface ServiceReceipt {
+  id: number
+  service: number
+  receipt_number?: string | null
   receipt_book?: string | null
-  manual_receipt_number?: string | null
+  document_type: "or" | "si"
+  with_2307: boolean
+  amount?: string | null
+  created_at: string
+}
+
+export interface ServiceReceiptPayload {
+  service: number
+  receipt_number?: string | null
+  receipt_book?: string | null
+  document_type: "or" | "si"
   with_2307?: boolean
+  amount?: string | null
 }
 
 export interface ServicePayload {
   client: number
   service_type: ServiceType
   service_mode: ServiceMode
+  service_leg?: "single" | "dismantle" | "reinstall"
+  linked_parent_service?: number | null
   related_transaction?: number | null
   related_sub_transaction?: number | null
-  description?: string
   override_address?: string
   override_contact_person?: string
   override_contact_number?: string
   appointment_datetime?: string
+  reinstall_appointment_datetime?: string
+  create_reinstall?: boolean
+  reinstall_same_address?: boolean
+  reinstall_override_address?: string | null
+  reinstall_override_contact_person?: string | null
+  reinstall_override_contact_number?: string | null
   pickup_date?: string
   delivery_date?: string
   received_at?: string
   status?: ServiceStatus
-  remarks?: string
-  notes?: string
   cancellation_reason?: string
   service_discount_amount?: number
   service_discount_percentage?: number
@@ -1213,10 +1246,8 @@ export interface ServicePayload {
   complementary_reason?: string
   // Service-level parts review
   service_parts_needed_notes?: string
-  // BIR 2307 receipt
-  receipt_book?: string | null
-  manual_receipt_number?: string | null
-  with_2307?: boolean
+  // Backdating
+  transaction_date?: string | null
   technician_assignments?: TechnicianAssignmentPayload[]
 }
 

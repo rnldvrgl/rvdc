@@ -48,7 +48,7 @@ const statusConfig: Record<
   completed: {
     label: "Completed",
     bg: "bg-green-50",
-    text: "text-green-700",
+    text: "text-success",
   },
   cancelled: {
     label: "Cancelled",
@@ -59,7 +59,7 @@ const statusConfig: Record<
 
 const claimTypeConfig: Record<string, { label: string; color: string }> = {
   repair: { label: "Repair", color: "text-orange-600" },
-  replacement: { label: "Replacement", color: "text-red-600" },
+  replacement: { label: "Replacement", color: "text-destructive" },
   parts: { label: "Parts", color: "text-blue-600" },
   inspection: { label: "Inspection", color: "text-cyan-600" },
 }
@@ -161,7 +161,7 @@ export function getWarrantyClaimColumns({
         if (days === undefined || days === null) return "—"
         return (
           <span
-            className={`text-sm font-medium ${days > 30 ? "text-green-600" : days > 0 ? "text-yellow-600" : "text-red-600"}`}
+            className={`text-sm font-medium ${days > 30 ? "text-success" : days > 0 ? "text-yellow-600" : "text-destructive"}`}
           >
             {days} days
           </span>
@@ -200,13 +200,13 @@ export function getWarrantyClaimColumns({
               <DropdownMenuSeparator />
               {onApprove && claim.is_pending && (
                 <DropdownMenuItem onClick={() => onApprove(claim)}>
-                  <CheckCircle className="size-4 mr-2 text-green-600" />
+                  <CheckCircle className="size-4 mr-2 text-success" />
                   Approve
                 </DropdownMenuItem>
               )}
               {onReject && claim.is_pending && (
                 <DropdownMenuItem onClick={() => onReject(claim)}>
-                  <XCircle className="size-4 mr-2 text-red-600" />
+                  <XCircle className="size-4 mr-2 text-destructive" />
                   Reject
                 </DropdownMenuItem>
               )}

@@ -60,6 +60,9 @@ export function useDRFToastError() {
         if (!err.response) {
           message =
             err.message || "Network error. Please check your connection."
+        } else if (err.response.status >= 500) {
+          message =
+            "Something went wrong on our end. Please try again later or contact your administrator."
         } else {
           message = extractDRFErrorMessages(err.response.data)
         }

@@ -82,6 +82,15 @@ export function useApiMutation<TVariables, TData>({
             return errorMessage
           }
 
+          // Handle server errors (500+)
+          if (err && typeof err === "object" && "response" in err) {
+            const status = (err as { response: { status: number } }).response
+              ?.status
+            if (status && status >= 500) {
+              return "Something went wrong on our end. Please try again later or contact your administrator."
+            }
+          }
+
           // Try to extract DRF error message
           if (err && typeof err === "object" && "response" in err) {
             const errorResponse = err as ErrorResponse

@@ -103,7 +103,7 @@ export function getQuotationColumns({
                 <span
                   className={`inline-flex items-center gap-1 text-xs font-medium tabular-nums ${
                     daysLeft <= 3
-                      ? "text-red-600"
+                      ? "text-destructive"
                       : daysLeft <= 7
                         ? "text-amber-600"
                         : "text-muted-foreground"

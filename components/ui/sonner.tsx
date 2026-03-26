@@ -19,14 +19,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       icons={{
         success: (
-          <CircleCheckIcon className="size-4 text-green-500 dark:text-green-400" />
+          <CircleCheckIcon className="size-4 text-success" />
         ),
         info: <InfoIcon className="size-4 text-blue-500 dark:text-blue-400" />,
         warning: (
           <TriangleAlertIcon className="size-4 text-yellow-500 dark:text-yellow-400" />
         ),
         error: (
-          <OctagonXIcon className="size-4 text-red-500 dark:text-red-400 " />
+          <OctagonXIcon className="size-4 text-destructive " />
         ),
         loading: <Loader2Icon className="size-4 animate-spin" />,
       }}

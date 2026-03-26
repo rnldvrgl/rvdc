@@ -157,7 +157,7 @@ export function LoginForm() {
           {/* Security Footer */}
           <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-center gap-2">
-              <Shield className="w-4 h-4 text-green-600" />
+              <Shield className="w-4 h-4 text-success" />
               <span className="text-xs text-muted-foreground">
                 Your connection is secure and encrypted
               </span>

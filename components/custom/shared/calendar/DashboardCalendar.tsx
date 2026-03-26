@@ -809,7 +809,7 @@ const EventDetailModal = ({
               </div>
               <div>
                 <h3 className="font-semibold">Shop Closed</h3>
-                <Badge className="bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200">
+                <Badge className="bg-red-100 text-destructive dark:bg-red-900/50">
                   All Day
                 </Badge>
               </div>

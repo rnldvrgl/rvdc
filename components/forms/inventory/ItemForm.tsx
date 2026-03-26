@@ -94,7 +94,7 @@ function PriceHistoryTimeline({ history }: { history: ItemPriceHistory[] }) {
                       className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm ${
                         isUp
                           ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
-                          : "bg-emerald-100 text-success dark:bg-emerald-900/30 dark:text-emerald-300"
+                          : "bg-emerald-100 text-success dark:bg-emerald-900/30"
                       }`}
                     >
                       {isUp ? (
@@ -245,7 +245,7 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
                         variant="outline"
                         className={
                           d.match_type === "exact_same_category"
-                            ? "border-red-400 text-red-700 dark:border-red-500 dark:text-red-300"
+                            ? "border-red-400 text-destructive dark:border-red-500"
                             : d.match_type === "exact"
                               ? "border-orange-400 text-orange-700 dark:border-orange-500 dark:text-orange-300"
                               : "border-amber-400 text-amber-700 dark:border-amber-500 dark:text-amber-300"

@@ -263,7 +263,7 @@ export function LeaveRequestForm() {
                       <span
                         className={
                           isInsufficientBalance
-                            ? "text-red-500 font-medium"
+                            ? "text-destructive font-medium"
                             : "font-medium"
                         }
                       >
@@ -310,7 +310,7 @@ export function LeaveRequestForm() {
               <div className="rounded-lg border p-3 bg-muted/50">
                 <p className="text-sm font-medium">Total: {totalDays} day(s)</p>
                 {isInsufficientBalance && (
-                  <p className="text-xs text-red-500 flex items-center gap-1 mt-1">
+                  <p className="text-xs text-destructive flex items-center gap-1 mt-1">
                     <AlertCircle className="h-3 w-3" />
                     Insufficient leave balance
                   </p>

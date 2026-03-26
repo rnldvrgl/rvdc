@@ -11,8 +11,8 @@ export const GRADIENT_CARD_CONFIGS = [
     borderColor: "border-emerald-200 dark:border-emerald-800",
     iconBgColor: "bg-emerald-100 dark:bg-emerald-900/30",
     iconColor: "text-success",
-    titleColor: "text-emerald-700 dark:text-emerald-300",
-    valueColor: "text-emerald-900 dark:text-emerald-100",
+    titleColor: "text-success",
+    valueColor: "text-success",
     subtitleColor: "text-success/70",
   },
   {

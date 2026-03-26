@@ -249,10 +249,10 @@ export function AddAdditionalEarningForm({
 
             {weekStart && weekEnd && (
               <div className="text-sm bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-md p-3">
-                <p className="font-medium text-green-900 dark:text-green-100 mb-1">
+                <p className="font-medium text-success mb-1">
                   Earning Period
                 </p>
-                <p className="text-green-800 dark:text-green-200">
+                <p className="text-success">
                   This earning will be applied to the current payroll period:{" "}
                   <span className="font-semibold">
                     {format(new Date(weekStart), "MMM dd")} -{" "}

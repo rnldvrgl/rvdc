@@ -412,7 +412,7 @@ const QuotationPrintContent = React.forwardRef<
             </span>
           </div>
           {Number(q.discount_amount) > 0 && (
-            <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[12px] text-red-600 bg-white">
+            <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[12px] text-destructive bg-white">
               <span></span>
               <span className="text-right">Discount</span>
               <span className="text-right">

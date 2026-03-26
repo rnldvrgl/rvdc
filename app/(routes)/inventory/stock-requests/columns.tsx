@@ -112,14 +112,14 @@ export function getStockRequestColumns({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => onApprove?.(request)}
-                className="text-green-600"
+                className="text-success"
               >
                 <Check className="mr-2 h-4 w-4" />
                 Approve
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => onDecline?.(request)}
-                className="text-red-600"
+                className="text-destructive"
               >
                 <X className="mr-2 h-4 w-4" />
                 Decline

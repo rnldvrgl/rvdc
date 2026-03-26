@@ -8,6 +8,7 @@ export interface TechnicianOption {
   id: number
   full_name: string
   profile_image?: string | null
+  inactive?: boolean
 }
 
 interface TechnicianCardSelectProps {
@@ -63,7 +64,9 @@ export function TechnicianCardSelect({
               "relative flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               isSelected
-                ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/20"
+                ? tech.inactive
+                  ? "border-amber-500 bg-amber-500/10 text-amber-700 dark:text-amber-400 ring-1 ring-amber-500/20"
+                  : "border-primary bg-primary/10 text-primary ring-1 ring-primary/20"
                 : "border-border/50 bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground",
               disabled && "pointer-events-none opacity-50",
             )}
@@ -85,6 +88,11 @@ export function TechnicianCardSelect({
             <span className="text-xs font-medium leading-tight line-clamp-2">
               {tech.full_name}
             </span>
+            {tech.inactive && (
+              <span className="text-[10px] text-amber-600 dark:text-amber-400">
+                (inactive)
+              </span>
+            )}
           </button>
         )
       })}

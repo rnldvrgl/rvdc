@@ -55,7 +55,7 @@ const typeStyles: Record<string, NotifStyle> = {
   stock_out: {
     icon: AlertTriangle,
     bg: "bg-red-100 dark:bg-red-900/40",
-    text: "text-red-600 dark:text-red-400",
+    text: "text-destructive",
   },
   stock_reorder: {
     icon: Package,
@@ -75,12 +75,12 @@ const typeStyles: Record<string, NotifStyle> = {
   stock_request_approved: {
     icon: CheckCircle2,
     bg: "bg-green-100 dark:bg-green-900/40",
-    text: "text-green-600 dark:text-green-400",
+    text: "text-success",
   },
   stock_request_declined: {
     icon: XCircle,
     bg: "bg-red-100 dark:bg-red-900/40",
-    text: "text-red-600 dark:text-red-400",
+    text: "text-destructive",
   },
   stock_added_by_admin: {
     icon: CheckCircle2,
@@ -112,7 +112,7 @@ const typeStyles: Record<string, NotifStyle> = {
   service_completed: {
     icon: CheckCircle2,
     bg: "bg-green-100 dark:bg-green-900/40",
-    text: "text-green-600 dark:text-green-400",
+    text: "text-success",
   },
   service_cancelled: {
     icon: XCircle,
@@ -138,12 +138,12 @@ const typeStyles: Record<string, NotifStyle> = {
   payment_received: {
     icon: Receipt,
     bg: "bg-emerald-100 dark:bg-emerald-900/40",
-    text: "text-emerald-600 dark:text-emerald-400",
+    text: "text-success",
   },
   payment_overdue: {
     icon: AlertTriangle,
     bg: "bg-red-100 dark:bg-red-900/40",
-    text: "text-red-600 dark:text-red-400",
+    text: "text-destructive",
   },
   // Warranty
   warranty_claim_created: {
@@ -154,12 +154,12 @@ const typeStyles: Record<string, NotifStyle> = {
   warranty_claim_approved: {
     icon: CheckCircle2,
     bg: "bg-green-100 dark:bg-green-900/40",
-    text: "text-green-600 dark:text-green-400",
+    text: "text-success",
   },
   warranty_claim_rejected: {
     icon: XCircle,
     bg: "bg-red-100 dark:bg-red-900/40",
-    text: "text-red-600 dark:text-red-400",
+    text: "text-destructive",
   },
   warranty_expiring: {
     icon: AlertTriangle,
@@ -170,17 +170,17 @@ const typeStyles: Record<string, NotifStyle> = {
   attendance_approved: {
     icon: CheckCircle2,
     bg: "bg-green-100 dark:bg-green-900/40",
-    text: "text-green-600 dark:text-green-400",
+    text: "text-success",
   },
   leave_request_approved: {
     icon: CheckCircle2,
     bg: "bg-green-100 dark:bg-green-900/40",
-    text: "text-green-600 dark:text-green-400",
+    text: "text-success",
   },
   work_request_approved: {
     icon: UserCheck,
     bg: "bg-green-100 dark:bg-green-900/40",
-    text: "text-green-600 dark:text-green-400",
+    text: "text-success",
   },
   overtime_approved: {
     icon: Clock,
@@ -191,28 +191,28 @@ const typeStyles: Record<string, NotifStyle> = {
   attendance_rejected: {
     icon: XCircle,
     bg: "bg-red-100 dark:bg-red-900/40",
-    text: "text-red-600 dark:text-red-400",
+    text: "text-destructive",
   },
   leave_request_rejected: {
     icon: XCircle,
     bg: "bg-red-100 dark:bg-red-900/40",
-    text: "text-red-600 dark:text-red-400",
+    text: "text-destructive",
   },
   work_request_declined: {
     icon: XCircle,
     bg: "bg-red-100 dark:bg-red-900/40",
-    text: "text-red-600 dark:text-red-400",
+    text: "text-destructive",
   },
   overtime_rejected: {
     icon: XCircle,
     bg: "bg-red-100 dark:bg-red-900/40",
-    text: "text-red-600 dark:text-red-400",
+    text: "text-destructive",
   },
   // Payroll
   payroll_available: {
     icon: DollarSign,
     bg: "bg-emerald-100 dark:bg-emerald-900/40",
-    text: "text-emerald-600 dark:text-emerald-400",
+    text: "text-success",
   },
   // System
   system_alert: {

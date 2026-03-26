@@ -194,13 +194,6 @@ export const statusConfig: Record<
     dotColor: string
   }
 > = {
-  pending: {
-    label: "Pending",
-    color: "text-warning",
-    bgColor: "bg-amber-50 dark:bg-amber-950/30",
-    borderColor: "border-amber-200 dark:border-amber-800",
-    dotColor: "bg-amber-500",
-  },
   in_progress: {
     label: "In Progress",
     color: "text-blue-700 dark:text-blue-400",
@@ -291,7 +284,7 @@ export function getServiceColumns({
               {freeCleaning && (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Sparkles className="h-3 w-3 text-emerald-500 shrink-0" />
+                    <Sparkles className="h-3 w-3 text-success shrink-0" />
                   </TooltipTrigger>
                   <TooltipContent>Free cleaning available</TooltipContent>
                 </Tooltip>
@@ -329,13 +322,6 @@ export function getServiceColumns({
         }
 
         const transitions: { label: string; status: string }[] = []
-        if (value === "pending") {
-          transitions.push({ label: "Start Progress", status: "in_progress" })
-          // Cleaning services can go directly to completed
-          if (service.service_type === "cleaning") {
-            transitions.push({ label: "Complete", status: "completed" })
-          }
-        }
         if (value === "in_progress") {
           transitions.push({ label: "Complete", status: "completed" })
         }
@@ -414,7 +400,7 @@ export function getServiceColumns({
           primary.icon === "calendar" ? (
             <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
           ) : primary.icon === "truck-green" ? (
-            <Truck className="h-3 w-3 text-emerald-500 shrink-0" />
+            <Truck className="h-3 w-3 text-success shrink-0" />
           ) : primary.icon === "truck-blue" ? (
             <Truck className="h-3 w-3 text-blue-500 shrink-0" />
           ) : (
@@ -506,8 +492,7 @@ export function getServiceColumns({
       header: "",
       cell: ({ row }) => {
         const service = row.original
-        const canComplete =
-          service.status === "in_progress" || service.status === "pending"
+        const canComplete = service.status === "in_progress"
 
         if (onRestore) {
           return (
