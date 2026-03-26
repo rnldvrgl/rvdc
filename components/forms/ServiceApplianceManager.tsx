@@ -27,7 +27,7 @@ import {
 } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
-import { useAirconUnits } from "@/lib/queries/useAircons"
+import { useAirconModels, useAirconUnits } from "@/lib/queries/useAircons"
 import {
   useApplianceTypeChoices,
   useTechnicianChoices,
@@ -100,8 +100,9 @@ const applianceFormSchema = z.object({
   warranty_notes: z.string(),
   parts_needed_notes: z.string(),
   assigned_technicians: z.array(z.number()),
-  unit_type: z.enum(["brand_new", "second_hand"]).optional(),
+  unit_type: z.enum(["brand_new", "second_hand", "pre_order"]).optional(),
   unit_id: z.number().optional(),
+  model_id: z.number().optional(),
 })
 
 type ApplianceFormValues = z.infer<typeof applianceFormSchema>
@@ -150,6 +151,8 @@ export default function ServiceApplianceManager({
     limit: 100,
   })
 
+  const { data: availableModels } = useAirconModels({ limit: 100 })
+
   const { addAppliance, updateAppliance, deleteAppliance, toggleItemsChecked } =
     useServiceApplianceMutations()
 
@@ -163,6 +166,7 @@ export default function ServiceApplianceManager({
   const { watch, setValue, reset, handleSubmit } = form
   const unitType = watch("unit_type")
   const unitId = watch("unit_id")
+  const modelId = watch("model_id")
   const laborIsFree = watch("labor_is_free")
   const laborFee = watch("labor_fee")
   const laborDiscountAmount = watch("labor_discount_amount")
@@ -240,6 +244,21 @@ export default function ServiceApplianceManager({
     )
   }, [unitId, availableUnits?.results, installationUnits])
 
+  // ─── Model options for pre-order ───────────────────────────────────────────
+
+  const modelOptions = useMemo(() => {
+    if (!availableModels?.results) return []
+    return availableModels.results.map((m) => ({
+      value: m.id.toString(),
+      label: `${m.brand?.name || ""} ${m.name}${m.aircon_type ? ` (${m.aircon_type})` : ""}`,
+    }))
+  }, [availableModels?.results])
+
+  const selectedModel = useMemo(() => {
+    if (!modelId || !availableModels?.results) return null
+    return availableModels.results.find((m) => m.id === modelId) ?? null
+  }, [modelId, availableModels?.results])
+
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
   const invalidateServiceQueries = async () => {
@@ -278,19 +297,25 @@ export default function ServiceApplianceManager({
   }
 
   const handleEdit = (appliance: ServiceAppliance) => {
-    let editUnitType: "brand_new" | "second_hand" | undefined
+    let editUnitType: "brand_new" | "second_hand" | "pre_order" | undefined
     let editUnitId: number | undefined
+    let editModelId: number | undefined
 
-    if (isInstallation && appliance.serial_number) {
-      const matchingUnit = installationUnits.find(
-        (unit) => unit.serial_number === appliance.serial_number,
-      )
-      if (matchingUnit) {
-        editUnitId = matchingUnit.id
-        // If unit exists in inventory, it's brand_new (even with custom price override)
-        editUnitType = "brand_new"
+    if (isInstallation) {
+      if (appliance.unit_type === "pre_order") {
+        editUnitType = "pre_order"
+        editModelId = appliance.aircon_model ?? undefined
+      } else if (appliance.serial_number) {
+        const matchingUnit = installationUnits.find(
+          (unit) => unit.serial_number === appliance.serial_number,
+        )
+        if (matchingUnit) {
+          editUnitId = matchingUnit.id
+          editUnitType = "brand_new"
+        } else {
+          editUnitType = "second_hand"
+        }
       } else {
-        // No matching inventory unit — it's a second-hand entry
         editUnitType = "second_hand"
       }
     }
@@ -325,6 +350,7 @@ export default function ServiceApplianceManager({
         : undefined,
       unit_type: editUnitType,
       unit_id: editUnitId,
+      model_id: editModelId,
       assigned_technicians:
         serviceTechnicians && serviceTechnicians.length > 0
           ? serviceTechnicians
@@ -399,13 +425,14 @@ export default function ServiceApplianceManager({
       payload.aircon_installation_data = {
         unit_type: data.unit_type,
         unit_id: data.unit_type === "brand_new" ? data.unit_id : undefined,
+        model_id: data.unit_type === "pre_order" ? data.model_id : undefined,
         unit_price:
           data.unit_price !== undefined && data.unit_price !== null
             ? Math.round(data.unit_price * 100) / 100
             : null,
       }
 
-      if (data.unit_type === "second_hand") {
+      if (data.unit_type === "second_hand" || data.unit_type === "pre_order") {
         payload.model = ""
         payload.serial_number = ""
       }
@@ -612,14 +639,17 @@ export default function ServiceApplianceManager({
                 {/* Unit Type Selector */}
                 <RadioGroup
                   value={unitType || "brand_new"}
-                  onValueChange={(v: "brand_new" | "second_hand") => {
+                  onValueChange={(
+                    v: "brand_new" | "second_hand" | "pre_order",
+                  ) => {
                     setField("unit_type", v)
                     setField("unit_id", undefined)
+                    setField("model_id", undefined)
                     setField("brand", "")
                     setField("model", "")
                     setField("serial_number", "")
                   }}
-                  className="grid grid-cols-2 gap-3"
+                  className="grid grid-cols-3 gap-3"
                 >
                   <label
                     htmlFor="brand_new"
@@ -650,6 +680,22 @@ export default function ServiceApplianceManager({
                       <div className="text-sm font-medium">Second Hand</div>
                       <div className="text-xs text-muted-foreground">
                         Enter brand and optional price
+                      </div>
+                    </div>
+                  </label>
+                  <label
+                    htmlFor="pre_order"
+                    className={`relative flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${unitType === "pre_order" ? "border-amber-500 bg-amber-500/5 ring-1 ring-amber-500/20" : "hover:bg-muted/50"}`}
+                  >
+                    <RadioGroupItem
+                      value="pre_order"
+                      id="pre_order"
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="text-sm font-medium">Pre-Order</div>
+                      <div className="text-xs text-muted-foreground">
+                        Unit not in stock yet
                       </div>
                     </div>
                   </label>
@@ -816,6 +862,130 @@ export default function ServiceApplianceManager({
                         }
                         placeholder="₱0.00 — leave blank for labor-only"
                       />
+                    </div>
+                  </div>
+                )}
+
+                {/* Pre-Order — Model Selector */}
+                {unitType === "pre_order" && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">
+                      Select Aircon Model
+                    </Label>
+                    <ComboBox
+                      value={modelId?.toString() || null}
+                      onChange={(value) => {
+                        const id = value ? Number(value) : undefined
+                        const mdl = availableModels?.results.find(
+                          (m) => m.id === id,
+                        )
+                        setField("model_id", id)
+                        setField("brand", mdl?.brand?.name || "")
+                        setField("model", mdl?.name || "")
+                        setField("unit_price", undefined)
+                      }}
+                      options={modelOptions}
+                      placeholder="Select model to pre-order"
+                      searchPlaceholder="Search models..."
+                    />
+                  </div>
+                )}
+
+                {/* Pre-Order — Selected model details */}
+                {unitType === "pre_order" && selectedModel && (
+                  <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-4 space-y-3">
+                    <h4 className="text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                      Pre-Order Model
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Brand</p>
+                        <p className="font-medium">
+                          {selectedModel.brand?.name || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Model</p>
+                        <p className="font-medium">
+                          {selectedModel.name || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Type</p>
+                        <p className="font-medium">
+                          {selectedModel.aircon_type || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">HP</p>
+                        <p className="font-medium">
+                          {selectedModel.horsepower || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div className="flex items-end justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-2 mb-1">
+                          {selectedModel.has_discount ? (
+                            <>
+                              <span className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                                ₱
+                                {parseFloat(
+                                  selectedModel.selling_price || "0",
+                                ).toLocaleString("en-PH", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                              <span className="text-sm line-through text-muted-foreground">
+                                ₱
+                                {parseFloat(
+                                  selectedModel.retail_price || "0",
+                                ).toLocaleString("en-PH", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                              {selectedModel.retail_price
+                                ? `₱${parseFloat(selectedModel.retail_price).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                : "N/A"}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedModel.has_discount
+                            ? "Selling price"
+                            : "Retail price"}
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <Label className="text-xs font-medium">
+                          Price Override
+                          <span className="text-muted-foreground ml-1">
+                            (optional)
+                          </span>
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={unitPrice ?? ""}
+                          onChange={(e) =>
+                            setField(
+                              "unit_price",
+                              e.target.value
+                                ? parseFloat(e.target.value)
+                                : undefined,
+                            )
+                          }
+                          placeholder={`₱${parseFloat(selectedModel.selling_price || selectedModel.retail_price || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1354,6 +1524,14 @@ function ApplianceCard({
             >
               {getStatusLabel(appliance.status)}
             </Badge>
+            {appliance.unit_type === "pre_order" && (
+              <Badge
+                variant="outline"
+                className="text-xs font-medium border-amber-500 text-amber-600 dark:text-amber-400"
+              >
+                Pre-Order
+              </Badge>
+            )}
           </div>
 
           {(appliance.brand || appliance.model) && (

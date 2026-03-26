@@ -884,6 +884,9 @@ export interface ServiceAppliance {
   items_checked_by?: number | null
   items_checked_by_name?: string | null
   items_checked_at?: string | null
+  unit_type?: "brand_new" | "second_hand" | "pre_order" | ""
+  aircon_model?: number | null
+  aircon_model_name?: string | null
 }
 
 export interface ServiceAppliancePayload {
@@ -911,8 +914,9 @@ export interface ServiceAppliancePayload {
   parts_needed_notes?: string
   // Aircon installation data (optional, only for installation services)
   aircon_installation_data?: {
-    unit_type: "brand_new" | "second_hand"
+    unit_type: "brand_new" | "second_hand" | "pre_order"
     unit_id?: number
+    model_id?: number
     unit_price?: number | null
   }
 }
