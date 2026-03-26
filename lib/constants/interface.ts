@@ -1129,6 +1129,8 @@ export interface Service {
   stall?: Stall | null
   service_type: ServiceType
   service_mode: ServiceMode
+  service_leg?: "single" | "dismantle" | "reinstall"
+  linked_parent_service?: number | null
   related_transaction?: number | null
   related_sub_transaction?: number | null
   description?: string
@@ -1217,12 +1219,20 @@ export interface ServicePayload {
   client: number
   service_type: ServiceType
   service_mode: ServiceMode
+  service_leg?: "single" | "dismantle" | "reinstall"
+  linked_parent_service?: number | null
   related_transaction?: number | null
   related_sub_transaction?: number | null
   override_address?: string
   override_contact_person?: string
   override_contact_number?: string
   appointment_datetime?: string
+  reinstall_appointment_datetime?: string
+  create_reinstall?: boolean
+  reinstall_same_address?: boolean
+  reinstall_override_address?: string | null
+  reinstall_override_contact_person?: string | null
+  reinstall_override_contact_number?: string | null
   pickup_date?: string
   delivery_date?: string
   received_at?: string

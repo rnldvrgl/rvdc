@@ -10,6 +10,7 @@ import { TechnicianCardSelect } from "@/components/custom/inputs/TechnicianCardS
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
   FormControl,
@@ -85,6 +86,12 @@ const serviceSchema = z.object({
   override_contact_person: z.string().optional(),
   override_contact_number: z.string().optional(),
   appointment_datetime: z.date().nullable().optional(),
+  reinstall_appointment_datetime: z.date().nullable().optional(),
+  create_reinstall: z.boolean().optional(),
+  reinstall_same_address: z.boolean().optional(),
+  reinstall_override_address: z.string().optional(),
+  reinstall_override_contact_person: z.string().optional(),
+  reinstall_override_contact_number: z.string().optional(),
   pickup_date: z.date().nullable().optional(),
   delivery_date: z.date().nullable().optional(),
   received_at: z.date().nullable().optional(),
@@ -129,6 +136,12 @@ export default function ServiceFormWizard({
       override_contact_person: "",
       override_contact_number: "",
       appointment_datetime: null,
+      reinstall_appointment_datetime: null,
+      create_reinstall: false,
+      reinstall_same_address: true,
+      reinstall_override_address: "",
+      reinstall_override_contact_person: "",
+      reinstall_override_contact_number: "",
       pickup_date: null,
       delivery_date: null,
       received_at: null,
@@ -146,6 +159,14 @@ export default function ServiceFormWizard({
     name: "service_type",
   })
   const selectedClient = useWatch({ control: form.control, name: "client" })
+  const createReinstall = useWatch({
+    control: form.control,
+    name: "create_reinstall",
+  })
+  const reinstallSameAddress = useWatch({
+    control: form.control,
+    name: "reinstall_same_address",
+  })
 
   // Filter modes based on type
   const availableServiceModes =
@@ -222,6 +243,18 @@ export default function ServiceFormWizard({
             return false
           }
         }
+
+        if (form.getValues("create_reinstall")) {
+          const sameAddress = form.getValues("reinstall_same_address") !== false
+          if (!sameAddress && !form.getValues("reinstall_override_address")) {
+            form.setError("reinstall_override_address", {
+              type: "manual",
+              message:
+                "Reinstall address is required when using a different location",
+            })
+            return false
+          }
+        }
         return true
       }
       case 2:
@@ -275,6 +308,24 @@ export default function ServiceFormWizard({
       appointment_datetime: data.appointment_datetime
         ? formatDateForBackend(data.appointment_datetime)
         : undefined,
+      reinstall_appointment_datetime: data.reinstall_appointment_datetime
+        ? formatDateForBackend(data.reinstall_appointment_datetime)
+        : undefined,
+      create_reinstall:
+        data.service_type === "dismantle" ? !!data.create_reinstall : false,
+      reinstall_same_address: data.reinstall_same_address !== false,
+      reinstall_override_address:
+        data.reinstall_same_address === false
+          ? data.reinstall_override_address || undefined
+          : undefined,
+      reinstall_override_contact_person:
+        data.reinstall_same_address === false
+          ? data.reinstall_override_contact_person || undefined
+          : undefined,
+      reinstall_override_contact_number:
+        data.reinstall_same_address === false
+          ? data.reinstall_override_contact_number || undefined
+          : undefined,
       technician_assignments: data.technicians?.map((techId) => ({
         technician: techId,
         assignment_type: getAssignmentType(),
@@ -647,6 +698,167 @@ export default function ServiceFormWizard({
                 the next step.
               </p>
             )}
+
+            {selectedServiceType === "dismantle" && (
+              <div className="space-y-4 rounded-lg border bg-muted/20 p-4">
+                <FormField
+                  name="create_reinstall"
+                  control={form.control}
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center gap-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value === true}
+                          onCheckedChange={(checked) =>
+                            field.onChange(checked === true)
+                          }
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <div className="space-y-0.5">
+                        <FormLabel className="text-sm font-medium">
+                          Auto-create linked reinstall service
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          Creates an installation service linked to this
+                          dismantle service.
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {createReinstall && (
+                  <>
+                    <FormField
+                      name="reinstall_same_address"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Reinstall Address Setup</FormLabel>
+                          <CardSelect
+                            options={[
+                              {
+                                label: "Same Address",
+                                value: "same",
+                                icon: Home,
+                              },
+                              {
+                                label: "Different Address",
+                                value: "override",
+                                icon: ArrowDownUp,
+                              },
+                            ]}
+                            value={field.value === false ? "override" : "same"}
+                            onChange={(value) => {
+                              const isSame = value !== "override"
+                              field.onChange(isSame)
+                              if (isSame) {
+                                form.setValue("reinstall_override_address", "")
+                                form.setValue(
+                                  "reinstall_override_contact_person",
+                                  "",
+                                )
+                                form.setValue(
+                                  "reinstall_override_contact_number",
+                                  "",
+                                )
+                              }
+                            }}
+                            disabled={isSubmitting}
+                            columns={2}
+                          />
+                        </FormItem>
+                      )}
+                    />
+
+                    {reinstallSameAddress === false && (
+                      <>
+                        <FormField
+                          name="reinstall_override_address"
+                          control={form.control}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel required>Reinstall Address</FormLabel>
+                              <FormControl>
+                                <Textarea
+                                  {...field}
+                                  value={field.value || ""}
+                                  placeholder="Enter reinstall address"
+                                  disabled={isSubmitting}
+                                  rows={2}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField
+                            name="reinstall_override_contact_person"
+                            control={form.control}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Reinstall Contact Person</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    value={field.value || ""}
+                                    placeholder="Optional"
+                                    disabled={isSubmitting}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            name="reinstall_override_contact_number"
+                            control={form.control}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Reinstall Contact Number</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    {...field}
+                                    value={field.value || ""}
+                                    placeholder="Optional"
+                                    disabled={isSubmitting}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    <FormField
+                      name="reinstall_appointment_datetime"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Reinstall Appointment (Optional)
+                          </FormLabel>
+                          <FormControl>
+                            <DateTimePicker
+                              value={field.value ?? undefined}
+                              onChange={field.onChange}
+                              disabled={isSubmitting}
+                              placeholder="Set preferred reinstall date/time"
+                              disablePastDates={true}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -697,6 +909,14 @@ export default function ServiceFormWizard({
                     <span className="text-muted-foreground">Mode</span>
                     <p className="font-medium">{modeLabel ?? "—"}</p>
                   </div>
+                  {selectedServiceType === "dismantle" && createReinstall && (
+                    <div className="col-span-2">
+                      <span className="text-muted-foreground">Linked Flow</span>
+                      <p className="font-medium">
+                        Dismantle + Auto-created Reinstall
+                      </p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
