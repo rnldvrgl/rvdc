@@ -227,16 +227,6 @@ export default function ServiceFormWizard({
       }
       case 1: {
         const mode = form.getValues("service_mode")
-        if (mode === "home_service") {
-          const appt = form.getValues("appointment_datetime")
-          if (!appt) {
-            form.setError("appointment_datetime", {
-              type: "manual",
-              message: "Appointment date & time is required for home service",
-            })
-            return false
-          }
-        }
         if (mode === "pull_out") {
           const pickup = form.getValues("pickup_date")
           if (!pickup) {
@@ -526,7 +516,12 @@ export default function ServiceFormWizard({
                   control={form.control}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel required>Appointment Date & Time</FormLabel>
+                      <FormLabel>
+                        Appointment Date & Time{" "}
+                        <span className="text-xs text-muted-foreground font-normal">
+                          (optional — can be set later)
+                        </span>
+                      </FormLabel>
                       <FormControl>
                         <DateTimePicker
                           value={field.value ?? undefined}

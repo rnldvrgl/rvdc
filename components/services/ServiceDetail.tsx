@@ -66,6 +66,7 @@ import {
   getServiceTypeBadgeClass,
   getServiceTypeLabel,
 } from "@/lib/utils/helpers/service"
+import { useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import {
   AlertTriangle,
@@ -122,6 +123,7 @@ export default function ServiceDetail({
   onEdit,
   onRefresh,
 }: ServiceDetailProps) {
+  const queryClient = useQueryClient()
   const { canManage, role, isAdmin } = useCurrentUser()
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
@@ -145,6 +147,8 @@ export default function ServiceDetail({
   const [scheduleDeliveryDialogOpen, setScheduleDeliveryDialogOpen] =
     useState(false)
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>()
+  const [appointmentDate, setAppointmentDate] = useState<Date | undefined>()
+  const [isSettingAppointment, setIsSettingAppointment] = useState(false)
   const [applianceView, setApplianceView] = useState<"list" | "kanban">("list")
   const [receiptPrintDialogOpen, setReceiptPrintDialogOpen] = useState(false)
   const [receiptMode, setReceiptMode] = useState<ServiceReceiptMode>("combined")
@@ -350,6 +354,43 @@ export default function ServiceDetail({
                   ?.message
               : undefined
           toast.error(errorMessage || "Failed to schedule delivery")
+        },
+      },
+    )
+  }
+
+  const handleSetAppointment = async () => {
+    if (!appointmentDate) {
+      toast.error("Please select an appointment date and time")
+      return
+    }
+
+    const formatDateForBackend = (date: Date): string => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, "0")
+      const day = String(date.getDate()).padStart(2, "0")
+      const hours = String(date.getHours()).padStart(2, "0")
+      const minutes = String(date.getMinutes()).padStart(2, "0")
+      const seconds = String(date.getSeconds()).padStart(2, "0")
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+    }
+
+    updateService.mutate(
+      {
+        id: service.id,
+        data: {
+          appointment_datetime: formatDateForBackend(appointmentDate),
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Appointment scheduled successfully")
+          setIsSettingAppointment(false)
+          setAppointmentDate(undefined)
+          queryClient.invalidateQueries({
+            queryKey: ["schedules", "service", service.id],
+          })
+          if (onRefresh) onRefresh()
         },
       },
     )
@@ -2617,11 +2658,71 @@ export default function ServiceDetail({
             )}
           </div>
 
+          {/* Set Appointment — home_service with no schedules */}
+          {service.service_mode === "home_service" &&
+            !schedulesLoading &&
+            schedules.length === 0 &&
+            !isCompleted && (
+              <div className="rounded-lg border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 p-4 space-y-3">
+                <div className="text-center space-y-1">
+                  <Calendar className="mx-auto h-5 w-5 text-amber-500" />
+                  <p className="text-sm font-medium">
+                    No appointment scheduled
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Set an appointment date when ready
+                  </p>
+                </div>
+                {isSettingAppointment ? (
+                  <div className="space-y-2">
+                    <DateTimePicker
+                      value={appointmentDate}
+                      onChange={setAppointmentDate}
+                      placeholder="Select appointment date and time"
+                      disablePastDates={true}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={handleSetAppointment}
+                        disabled={!appointmentDate || updateService.isPending}
+                      >
+                        <Calendar className="mr-1.5 h-3.5 w-3.5" />
+                        Confirm Appointment
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setIsSettingAppointment(false)
+                          setAppointmentDate(undefined)
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    className="w-full border-dashed"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsSettingAppointment(true)}
+                  >
+                    <Calendar className="mr-1.5 h-3.5 w-3.5" />
+                    Set Appointment
+                  </Button>
+                )}
+              </div>
+            )}
+
           {/* Empty State */}
           {!service.pickup_date &&
             !service.delivery_date &&
             !service.received_at &&
             !isCompleted &&
+            service.service_mode !== "home_service" &&
             (schedulesLoading || schedules.length === 0) && (
               <div className="py-6 text-center rounded-lg border border-dashed">
                 <Calendar className="mx-auto mb-1.5 h-6 w-6 text-muted-foreground/50" />
