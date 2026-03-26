@@ -142,6 +142,10 @@ export default function ServiceDetail({
   const [receiptBookInput, setReceiptBookInput] = useState(
     service.receipt_book || "",
   )
+  const [editingTransactionDate, setEditingTransactionDate] = useState(false)
+  const [transactionDateInput, setTransactionDateInput] = useState(
+    service.transaction_date || "",
+  )
   const {
     completeService,
     recordPayment,
@@ -890,6 +894,14 @@ export default function ServiceDetail({
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">
                             Labor Fee
+                            {appliance.auto_adjust_labor && (
+                              <span
+                                className="text-xs ml-1 text-blue-500"
+                                title="Auto-adjusted: labor = total fee − parts"
+                              >
+                                (auto)
+                              </span>
+                            )}
                           </span>
                           {appliance.labor_is_free ? (
                             <Badge
@@ -919,6 +931,17 @@ export default function ServiceDetail({
                             </div>
                           )}
                         </div>
+                        {appliance.auto_adjust_labor &&
+                          appliance.total_service_fee && (
+                            <div className="flex justify-between items-center text-xs text-blue-600">
+                              <span>Total Quoted Fee</span>
+                              <span>
+                                {formatCurrency(
+                                  parseFloat(appliance.total_service_fee),
+                                )}
+                              </span>
+                            </div>
+                          )}
                         {appliance.items_used &&
                           appliance.items_used.length > 0 && (
                             <>
@@ -1312,6 +1335,81 @@ export default function ServiceDetail({
                     ) : (
                       <span className="text-muted-foreground">
                         Click to set receipt book #
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+              {/* Transaction Date (for backdating) */}
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Transaction Date
+                </p>
+                {editingTransactionDate ? (
+                  <form
+                    className="flex items-center gap-1.5"
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      updateService.mutate(
+                        {
+                          id: service.id,
+                          data: {
+                            transaction_date: transactionDateInput || null,
+                          },
+                        },
+                        {
+                          onSuccess: () => {
+                            setEditingTransactionDate(false)
+                            onRefresh?.()
+                            toast.success("Transaction date updated.")
+                          },
+                        },
+                      )
+                    }}
+                  >
+                    <Input
+                      type="date"
+                      value={transactionDateInput}
+                      onChange={(e) => setTransactionDateInput(e.target.value)}
+                      className="h-8 w-full text-sm"
+                      autoFocus
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0"
+                      disabled={updateService.isPending}
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 text-green-600" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => {
+                        setEditingTransactionDate(false)
+                        setTransactionDateInput(service.transaction_date || "")
+                      }}
+                    >
+                      <XIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer group"
+                    onClick={() => setEditingTransactionDate(true)}
+                  >
+                    <PenLine className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
+                    {service.transaction_date ? (
+                      <span className="font-medium">
+                        {service.transaction_date}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        Click to set (for backdating payments)
                       </span>
                     )}
                   </button>

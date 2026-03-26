@@ -881,6 +881,8 @@ export interface ServiceAppliance {
   items_used?: ApplianceItemUsed[]
   technician_assignments?: TechnicianAssignment[]
   total_parts_cost?: string
+  total_service_fee?: string | null
+  auto_adjust_labor?: boolean
   parts_needed_notes?: string
   items_checked?: boolean
   items_checked_by?: number | null
@@ -905,6 +907,8 @@ export interface ServiceAppliancePayload {
   labor_discount_percentage?: number
   labor_discount_reason?: string
   unit_price?: number | null
+  total_service_fee?: number | null
+  auto_adjust_labor?: boolean
   labor_warranty_months?: number
   unit_warranty_months?: number
   warranty_notes?: string
@@ -1185,6 +1189,8 @@ export interface Service {
   receipt_book?: string | null
   manual_receipt_number?: string | null
   with_2307?: boolean
+  // Backdating
+  transaction_date?: string | null
 }
 
 export interface ServicePayload {
@@ -1217,6 +1223,8 @@ export interface ServicePayload {
   receipt_book?: string | null
   manual_receipt_number?: string | null
   with_2307?: boolean
+  // Backdating
+  transaction_date?: string | null
   technician_assignments?: TechnicianAssignmentPayload[]
 }
 

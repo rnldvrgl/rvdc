@@ -93,6 +93,8 @@ const applianceFormSchema = z.object({
   labor_discount_amount: z.coerce.number().min(0).optional(),
   labor_discount_reason: z.string().optional(),
   unit_price: z.coerce.number().min(0).nullable().optional(),
+  total_service_fee: z.coerce.number().min(0).nullable().optional(),
+  auto_adjust_labor: z.boolean(),
   labor_warranty_months: z.coerce.number().min(0),
   unit_warranty_months: z.coerce.number().min(0),
   warranty_notes: z.string(),
@@ -115,6 +117,8 @@ const DEFAULT_VALUES: ApplianceFormValues = {
   labor_fee: 0,
   labor_is_free: false,
   labor_original_amount: 0,
+  total_service_fee: null,
+  auto_adjust_labor: false,
   labor_warranty_months: 0,
   unit_warranty_months: 0,
   warranty_notes: "",
@@ -162,6 +166,8 @@ export default function ServiceApplianceManager({
   const laborIsFree = watch("labor_is_free")
   const laborFee = watch("labor_fee")
   const laborDiscountAmount = watch("labor_discount_amount")
+  const autoAdjustLabor = watch("auto_adjust_labor")
+  const totalServiceFee = watch("total_service_fee")
   const brand = watch("brand")
   const model = watch("model")
   const serialNumber = watch("serial_number")
@@ -306,6 +312,10 @@ export default function ServiceApplianceManager({
         ? parseFloat(appliance.labor_discount_amount)
         : undefined,
       labor_discount_reason: appliance.labor_discount_reason || undefined,
+      total_service_fee: appliance.total_service_fee
+        ? parseFloat(appliance.total_service_fee)
+        : null,
+      auto_adjust_labor: appliance.auto_adjust_labor || false,
       labor_warranty_months: appliance.labor_warranty_months || 0,
       unit_warranty_months: appliance.unit_warranty_months || 0,
       warranty_notes: appliance.warranty_notes || "",
@@ -366,6 +376,11 @@ export default function ServiceApplianceManager({
       labor_discount_reason: hasDiscount
         ? data.labor_discount_reason || ""
         : "",
+      total_service_fee:
+        data.total_service_fee !== undefined && data.total_service_fee !== null
+          ? Math.round(data.total_service_fee * 100) / 100
+          : null,
+      auto_adjust_labor: data.auto_adjust_labor || false,
       labor_warranty_months: data.labor_warranty_months || 0,
       unit_warranty_months: data.unit_warranty_months || 0,
       warranty_notes: data.warranty_notes || "",
@@ -862,7 +877,13 @@ export default function ServiceApplianceManager({
                   onChange={(e) =>
                     setField("labor_fee", parseFloat(e.target.value) || 0)
                   }
+                  disabled={autoAdjustLabor}
                 />
+                {autoAdjustLabor && (
+                  <p className="text-xs text-muted-foreground">
+                    Auto-computed: Total Fee − Parts Cost
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center space-x-2 pt-6">
@@ -880,6 +901,55 @@ export default function ServiceApplianceManager({
                 >
                   {isInstallation ? "Installation" : "Labor"} is Free
                 </Label>
+              </div>
+
+              {/* ── Auto-adjust Labor ────────────────────────────────────── */}
+              <div className="col-span-2 space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="auto_adjust_labor"
+                    checked={autoAdjustLabor || false}
+                    onCheckedChange={(checked) => {
+                      const enabled = checked === true
+                      setField("auto_adjust_labor", enabled)
+                      if (enabled && !totalServiceFee) {
+                        // Default total_service_fee to current labor_fee when enabling
+                        setField("total_service_fee", laborFee || 0)
+                      }
+                    }}
+                    className="cursor-pointer"
+                  />
+                  <Label
+                    htmlFor="auto_adjust_labor"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Auto-adjust labor fee (total includes parts)
+                  </Label>
+                </div>
+                {autoAdjustLabor && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Total Service Fee (₱)
+                    </Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={totalServiceFee ?? 0}
+                      onChange={(e) =>
+                        setField(
+                          "total_service_fee",
+                          parseFloat(e.target.value) || 0,
+                        )
+                      }
+                      placeholder="Total quoted to client (labor + parts)"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Labor fee will auto-adjust as parts are added/removed so
+                      that Labor + Parts = Total Service Fee.
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* ── Labor Discount ───────────────────────────────────────── */}
