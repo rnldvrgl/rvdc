@@ -1187,13 +1187,30 @@ export interface Service {
   service_items_checked_by?: number | null
   service_items_checked_by_name?: string | null
   service_items_checked_at?: string | null
-  // BIR 2307 receipt
-  receipt_book?: string | null
-  document_type?: "or" | "si"
-  manual_receipt_number?: string | null
-  with_2307?: boolean
+  // BIR receipts (multiple per service)
+  receipts?: ServiceReceipt[]
   // Backdating
   transaction_date?: string | null
+}
+
+export interface ServiceReceipt {
+  id: number
+  service: number
+  receipt_number?: string | null
+  receipt_book?: string | null
+  document_type: "or" | "si"
+  with_2307: boolean
+  amount?: string | null
+  created_at: string
+}
+
+export interface ServiceReceiptPayload {
+  service: number
+  receipt_number?: string | null
+  receipt_book?: string | null
+  document_type: "or" | "si"
+  with_2307?: boolean
+  amount?: string | null
 }
 
 export interface ServicePayload {
@@ -1219,11 +1236,6 @@ export interface ServicePayload {
   complementary_reason?: string
   // Service-level parts review
   service_parts_needed_notes?: string
-  // BIR 2307 receipt
-  receipt_book?: string | null
-  document_type?: "or" | "si"
-  manual_receipt_number?: string | null
-  with_2307?: boolean
   // Backdating
   transaction_date?: string | null
   technician_assignments?: TechnicianAssignmentPayload[]

@@ -45,11 +45,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Service } from "@/lib/constants/interface"
+import { Service, ServiceReceipt } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { usePrint } from "@/lib/hooks/usePrint"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
+import { useServiceReceiptMutations } from "@/lib/mutations/services/useServiceReceiptMutations"
 import { useServiceItems } from "@/lib/queries/services/useServiceItems"
 import { useChequeChoices } from "@/lib/queries/useChoices"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
@@ -81,8 +82,10 @@ import {
   Package,
   PenLine,
   Phone,
+  Plus,
   Printer,
   RotateCcw,
+  Trash2,
   Truck,
   User,
   Wallet,
@@ -145,15 +148,16 @@ export default function ServiceDetail({
   const [applianceView, setApplianceView] = useState<"list" | "kanban">("list")
   const [receiptPrintDialogOpen, setReceiptPrintDialogOpen] = useState(false)
   const [receiptMode, setReceiptMode] = useState<ServiceReceiptMode>("combined")
-  const [editingReceiptNumber, setEditingReceiptNumber] = useState(false)
-  const [receiptNumberInput, setReceiptNumberInput] = useState(
-    service.manual_receipt_number || "",
-  )
-  const [editingReceiptBook, setEditingReceiptBook] = useState(false)
-  const [receiptBookInput, setReceiptBookInput] = useState(
-    service.receipt_book || "",
-  )
-  const serviceDocumentType = service.document_type || "or"
+  const [showAddReceiptForm, setShowAddReceiptForm] = useState(false)
+  const [editingReceiptId, setEditingReceiptId] = useState<number | null>(null)
+  const emptyReceiptDraft = {
+    document_type: "or" as "or" | "si",
+    receipt_number: "",
+    receipt_book: "",
+    with_2307: false,
+    amount: "",
+  }
+  const [receiptDraft, setReceiptDraft] = useState(emptyReceiptDraft)
   const [transactionDateOpen, setTransactionDateOpen] = useState(false)
   const {
     completeService,
@@ -165,6 +169,8 @@ export default function ServiceDetail({
     toggleServiceItemsChecked,
   } = useServiceMutations()
   const { updateAppliance } = useServiceApplianceMutations()
+  const { addReceipt, updateReceipt, deleteReceipt } =
+    useServiceReceiptMutations()
 
   // Receipt printing
   const {
@@ -1293,279 +1299,409 @@ export default function ServiceDetail({
                 )
               })()}
               <Separator />
-              <div className="space-y-4 rounded-2xl border bg-muted/20 p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold">Receipt Details</p>
-                    <p className="text-xs text-muted-foreground">
-                      Choose which business this receipt belongs to, then record
-                      the receipt number and book number.
-                    </p>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className="shrink-0"
-                  >
-                    {serviceDocumentType === "or" ? "Main Stall" : "Sub Stall"}
-                  </Badge>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Receipt Type
-                  </p>
-                  <CardSelect
-                    options={[
-                      {
-                        label: "Official Receipt",
-                        value: "or",
-                        icon: Wallet,
-                      },
-                      {
-                        label: "Sales Invoice",
-                        value: "si",
-                        icon: Package,
-                      },
-                    ]}
-                    value={serviceDocumentType}
-                    onChange={(value) => {
-                      const documentType = value as "or" | "si"
-                      updateService.mutate(
-                        {
-                          id: service.id,
-                          data: {
-                            document_type: documentType,
-                            with_2307:
-                              documentType === "or"
-                                ? (service.with_2307 ?? false)
-                                : false,
-                          },
-                        },
-                        {
-                          onSuccess: () => {
-                            onRefresh?.()
-                            toast.success("Receipt type updated.")
-                          },
-                        },
-                      )
-                    }}
-                    disabled={updateService.isPending}
-                    columns={2}
-                  />
-                </div>
-
-                {serviceDocumentType === "or" && (
-                  <div className="flex items-start gap-3 rounded-xl border bg-background/80 px-3 py-3">
-                    <Checkbox
-                      id={`service-2307-${service.id}`}
-                      checked={service.with_2307 ?? false}
-                      disabled={updateService.isPending}
-                      onCheckedChange={(checked) => {
-                        updateService.mutate(
-                          {
-                            id: service.id,
-                            data: { with_2307: checked === true },
-                          },
-                          {
-                            onSuccess: () => {
-                              onRefresh?.()
-                              toast.success("2307 setting updated.")
-                            },
-                          },
-                        )
+              {/* Receipts — one per payment/partial payment */}
+              <div className="space-y-3 rounded-2xl border bg-muted/20 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">Receipts</p>
+                  {!showAddReceiptForm && editingReceiptId === null && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 text-xs"
+                      onClick={() => {
+                        setReceiptDraft(emptyReceiptDraft)
+                        setShowAddReceiptForm(true)
                       }}
-                    />
-                    <div className="space-y-0.5">
-                      <Label
-                        htmlFor={`service-2307-${service.id}`}
-                        className="cursor-pointer text-sm font-medium"
-                      >
-                        With BIR Form 2307
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        Enable this only when the OR has an attached 2307.
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add Receipt
+                    </Button>
+                  )}
+                </div>
+
+                {/* Existing receipt cards */}
+                {(service.receipts ?? []).length === 0 &&
+                  !showAddReceiptForm && (
+                    <p className="text-center text-xs text-muted-foreground py-3">
+                      No receipts recorded yet.
+                    </p>
+                  )}
+
+                {(service.receipts ?? []).map((receipt: ServiceReceipt) =>
+                  editingReceiptId === receipt.id ? (
+                    /* ── Inline edit form ── */
+                    <div
+                      key={receipt.id}
+                      className="space-y-3 rounded-xl border bg-background/80 p-3"
+                    >
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                        Edit Receipt
                       </p>
+                      <CardSelect
+                        columns={2}
+                        options={[
+                          {
+                            label: "Official Receipt",
+                            value: "or",
+                            icon: Wallet,
+                          },
+                          {
+                            label: "Sales Invoice",
+                            value: "si",
+                            icon: Package,
+                          },
+                        ]}
+                        value={receiptDraft.document_type}
+                        onChange={(v) =>
+                          setReceiptDraft((d) => ({
+                            ...d,
+                            document_type: v as "or" | "si",
+                            with_2307: v === "si" ? false : d.with_2307,
+                          }))
+                        }
+                        disabled={updateReceipt.isPending}
+                      />
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs">
+                            {receiptDraft.document_type === "or"
+                              ? "OR Number"
+                              : "SI Number"}
+                          </Label>
+                          <Input
+                            value={receiptDraft.receipt_number}
+                            onChange={(e) =>
+                              setReceiptDraft((d) => ({
+                                ...d,
+                                receipt_number: e.target.value,
+                              }))
+                            }
+                            placeholder={
+                              receiptDraft.document_type === "or"
+                                ? "e.g. OR-0001"
+                                : "e.g. SI-0001"
+                            }
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Book #</Label>
+                          <Input
+                            value={receiptDraft.receipt_book}
+                            onChange={(e) =>
+                              setReceiptDraft((d) => ({
+                                ...d,
+                                receipt_book: e.target.value,
+                              }))
+                            }
+                            placeholder="e.g. 1"
+                            className="h-8 text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Amount (optional)</Label>
+                        <Input
+                          type="number"
+                          value={receiptDraft.amount}
+                          onChange={(e) =>
+                            setReceiptDraft((d) => ({
+                              ...d,
+                              amount: e.target.value,
+                            }))
+                          }
+                          placeholder="Leave blank to use total revenue"
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      {receiptDraft.document_type === "or" && (
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id={`edit-2307-${receipt.id}`}
+                            checked={receiptDraft.with_2307}
+                            onCheckedChange={(v) =>
+                              setReceiptDraft((d) => ({
+                                ...d,
+                                with_2307: v === true,
+                              }))
+                            }
+                            disabled={updateReceipt.isPending}
+                          />
+                          <Label
+                            htmlFor={`edit-2307-${receipt.id}`}
+                            className="cursor-pointer text-sm"
+                          >
+                            With BIR Form 2307
+                          </Label>
+                        </div>
+                      )}
+                      <div className="flex justify-end gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setEditingReceiptId(null)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          disabled={updateReceipt.isPending}
+                          onClick={() => {
+                            updateReceipt.mutate(
+                              {
+                                id: receipt.id,
+                                data: {
+                                  service: service.id,
+                                  document_type: receiptDraft.document_type,
+                                  receipt_number:
+                                    receiptDraft.receipt_number || null,
+                                  receipt_book:
+                                    receiptDraft.receipt_book || null,
+                                  with_2307: receiptDraft.with_2307,
+                                  amount: receiptDraft.amount || null,
+                                },
+                              },
+                              {
+                                onSuccess: () => {
+                                  setEditingReceiptId(null)
+                                  onRefresh?.()
+                                },
+                              },
+                            )
+                          }}
+                        >
+                          <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                          Save
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    /* ── Receipt display card ── */
+                    <div
+                      key={receipt.id}
+                      className="flex items-start justify-between gap-2 rounded-xl border bg-background/80 px-3 py-2.5"
+                    >
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge
+                            variant={
+                              receipt.document_type === "or"
+                                ? "default"
+                                : "secondary"
+                            }
+                            className="text-xs shrink-0"
+                          >
+                            {receipt.document_type === "or"
+                              ? "Official Receipt"
+                              : "Sales Invoice"}
+                          </Badge>
+                          {receipt.with_2307 && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs border-blue-500 text-blue-600 shrink-0"
+                            >
+                              2307
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm font-medium">
+                          {receipt.receipt_number || (
+                            <span className="text-muted-foreground italic">
+                              No receipt #
+                            </span>
+                          )}
+                        </p>
+                        {receipt.receipt_book && (
+                          <p className="text-xs text-muted-foreground">
+                            Book #{receipt.receipt_book}
+                          </p>
+                        )}
+                        {receipt.amount && (
+                          <p className="text-xs text-muted-foreground">
+                            {formatCurrency(parseFloat(receipt.amount))}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7"
+                          onClick={() => {
+                            setReceiptDraft({
+                              document_type: receipt.document_type,
+                              receipt_number: receipt.receipt_number ?? "",
+                              receipt_book: receipt.receipt_book ?? "",
+                              with_2307: receipt.with_2307,
+                              amount: receipt.amount ?? "",
+                            })
+                            setEditingReceiptId(receipt.id)
+                            setShowAddReceiptForm(false)
+                          }}
+                        >
+                          <PenLine className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          disabled={deleteReceipt.isPending}
+                          onClick={() =>
+                            deleteReceipt.mutate(
+                              { id: receipt.id, serviceId: service.id },
+                              { onSuccess: () => onRefresh?.() },
+                            )
+                          }
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ),
                 )}
 
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="space-y-2 rounded-xl border bg-background/80 p-3">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      <Hash className="size-3.5" />
-                      {serviceDocumentType === "or"
-                        ? "Official Receipt #"
-                        : "Sales Invoice #"}
-                    </div>
-                    {editingReceiptNumber ? (
-                      <form
-                        className="space-y-2"
-                        onSubmit={(e) => {
-                          e.preventDefault()
-                          updateService.mutate(
-                            {
-                              id: service.id,
-                              data: {
-                                manual_receipt_number:
-                                  receiptNumberInput || null,
-                              },
-                            },
-                            {
-                              onSuccess: () => {
-                                setEditingReceiptNumber(false)
-                                onRefresh?.()
-                                toast.success("Receipt number updated.")
-                              },
-                            },
-                          )
-                        }}
-                      >
+                {/* Add receipt inline form */}
+                {showAddReceiptForm && (
+                  <div className="space-y-3 rounded-xl border bg-background/80 p-3">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      New Receipt
+                    </p>
+                    <CardSelect
+                      columns={2}
+                      options={[
+                        {
+                          label: "Official Receipt",
+                          value: "or",
+                          icon: Wallet,
+                        },
+                        { label: "Sales Invoice", value: "si", icon: Package },
+                      ]}
+                      value={receiptDraft.document_type}
+                      onChange={(v) =>
+                        setReceiptDraft((d) => ({
+                          ...d,
+                          document_type: v as "or" | "si",
+                          with_2307: v === "si" ? false : d.with_2307,
+                        }))
+                      }
+                      disabled={addReceipt.isPending}
+                    />
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">
+                          {receiptDraft.document_type === "or"
+                            ? "OR Number"
+                            : "SI Number"}
+                        </Label>
                         <Input
-                          value={receiptNumberInput}
+                          value={receiptDraft.receipt_number}
                           onChange={(e) =>
-                            setReceiptNumberInput(e.target.value)
+                            setReceiptDraft((d) => ({
+                              ...d,
+                              receipt_number: e.target.value,
+                            }))
                           }
                           placeholder={
-                            serviceDocumentType === "or"
+                            receiptDraft.document_type === "or"
                               ? "e.g. OR-0001"
                               : "e.g. SI-0001"
                           }
-                          className="h-9"
+                          className="h-8 text-sm"
                           autoFocus
                         />
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingReceiptNumber(false)
-                              setReceiptNumberInput(
-                                service.manual_receipt_number || "",
-                              )
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            type="submit"
-                            size="sm"
-                            disabled={updateService.isPending}
-                          >
-                            <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
-                            Save
-                          </Button>
-                        </div>
-                      </form>
-                    ) : (
-                      <button
-                        type="button"
-                        className="group flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-left text-sm transition-colors hover:border-primary/50 hover:bg-muted/50"
-                        onClick={() => setEditingReceiptNumber(true)}
-                      >
-                        <PenLine className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
-                        <div className="min-w-0">
-                          {service.manual_receipt_number ? (
-                            <p className="font-medium">
-                              {service.manual_receipt_number}
-                            </p>
-                          ) : (
-                            <p className="text-muted-foreground">
-                              {serviceDocumentType === "or"
-                                ? "Add OR number"
-                                : "Add SI number"}
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            Printed receipt reference used for filing.
-                          </p>
-                        </div>
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="space-y-2 rounded-xl border bg-background/80 p-3">
-                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      <Wallet className="size-3.5" />
-                      Receipt Book #
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Book #</Label>
+                        <Input
+                          value={receiptDraft.receipt_book}
+                          onChange={(e) =>
+                            setReceiptDraft((d) => ({
+                              ...d,
+                              receipt_book: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. 1"
+                          className="h-8 text-sm"
+                        />
+                      </div>
                     </div>
-                    {editingReceiptBook ? (
-                      <form
-                        className="space-y-2"
-                        onSubmit={(e) => {
-                          e.preventDefault()
-                          updateService.mutate(
+                    <div className="space-y-1">
+                      <Label className="text-xs">Amount (optional)</Label>
+                      <Input
+                        type="number"
+                        value={receiptDraft.amount}
+                        onChange={(e) =>
+                          setReceiptDraft((d) => ({
+                            ...d,
+                            amount: e.target.value,
+                          }))
+                        }
+                        placeholder="Leave blank to use total revenue"
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    {receiptDraft.document_type === "or" && (
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="new-receipt-2307"
+                          checked={receiptDraft.with_2307}
+                          onCheckedChange={(v) =>
+                            setReceiptDraft((d) => ({
+                              ...d,
+                              with_2307: v === true,
+                            }))
+                          }
+                          disabled={addReceipt.isPending}
+                        />
+                        <Label
+                          htmlFor="new-receipt-2307"
+                          className="cursor-pointer text-sm"
+                        >
+                          With BIR Form 2307
+                        </Label>
+                      </div>
+                    )}
+                    <div className="flex justify-end gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowAddReceiptForm(false)
+                          setReceiptDraft(emptyReceiptDraft)
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={addReceipt.isPending}
+                        onClick={() => {
+                          addReceipt.mutate(
                             {
-                              id: service.id,
-                              data: {
-                                receipt_book: receiptBookInput || null,
-                              },
+                              service: service.id,
+                              document_type: receiptDraft.document_type,
+                              receipt_number:
+                                receiptDraft.receipt_number || null,
+                              receipt_book: receiptDraft.receipt_book || null,
+                              with_2307: receiptDraft.with_2307,
+                              amount: receiptDraft.amount || null,
                             },
                             {
                               onSuccess: () => {
-                                setEditingReceiptBook(false)
+                                setShowAddReceiptForm(false)
+                                setReceiptDraft(emptyReceiptDraft)
                                 onRefresh?.()
-                                toast.success("Receipt book number updated.")
                               },
                             },
                           )
                         }}
                       >
-                        <Input
-                          value={receiptBookInput}
-                          onChange={(e) => setReceiptBookInput(e.target.value)}
-                          placeholder="e.g. 1"
-                          className="h-9"
-                          autoFocus
-                        />
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingReceiptBook(false)
-                              setReceiptBookInput(service.receipt_book || "")
-                            }}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            type="submit"
-                            size="sm"
-                            disabled={updateService.isPending}
-                          >
-                            <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
-                            Save
-                          </Button>
-                        </div>
-                      </form>
-                    ) : (
-                      <button
-                        type="button"
-                        className="group flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-left text-sm transition-colors hover:border-primary/50 hover:bg-muted/50"
-                        onClick={() => setEditingReceiptBook(true)}
-                      >
-                        <PenLine className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
-                        <div className="min-w-0">
-                          {service.receipt_book ? (
-                            <p className="font-medium">
-                              {service.receipt_book}
-                            </p>
-                          ) : (
-                            <p className="text-muted-foreground">
-                              Add receipt book #
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground">
-                            Useful when the same receipt number exists in more
-                            than one book.
-                          </p>
-                        </div>
-                      </button>
-                    )}
+                        <Plus className="mr-1.5 h-3.5 w-3.5" />
+                        Add
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
               {isAdmin && (
                 <div className="space-y-1.5">
