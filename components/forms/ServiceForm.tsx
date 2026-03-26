@@ -182,14 +182,18 @@ export default function ServiceForm({
   const availableServiceModes =
     selectedServiceType === "motor_rewind"
       ? serviceModeOptions.filter((mode) => mode.value === "carry_in")
-      : serviceModeOptions
+      : selectedServiceType === "installation" ||
+          selectedServiceType === "dismantle"
+        ? serviceModeOptions.filter((mode) => mode.value === "home_service")
+        : serviceModeOptions
 
   const availableStatusOptions = serviceStatusOptions
 
-  // Set default installation mode for installation service type
+  // Set default mode for installation / dismantle
   useEffect(() => {
     if (
-      selectedServiceType === "installation" &&
+      (selectedServiceType === "installation" ||
+        selectedServiceType === "dismantle") &&
       selectedMode !== "home_service"
     ) {
       form.setValue("service_mode", "home_service")

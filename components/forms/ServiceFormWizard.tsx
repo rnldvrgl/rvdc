@@ -172,12 +172,16 @@ export default function ServiceFormWizard({
   const availableServiceModes =
     selectedServiceType === "motor_rewind"
       ? serviceModeOptions.filter((m) => m.value === "carry_in")
-      : serviceModeOptions
+      : selectedServiceType === "installation" ||
+          selectedServiceType === "dismantle"
+        ? serviceModeOptions.filter((m) => m.value === "home_service")
+        : serviceModeOptions
 
-  // Auto-set mode for installation / motor_rewind
+  // Auto-set mode for installation / dismantle / motor_rewind
   useEffect(() => {
     if (
-      selectedServiceType === "installation" &&
+      (selectedServiceType === "installation" ||
+        selectedServiceType === "dismantle") &&
       selectedMode !== "home_service"
     ) {
       form.setValue("service_mode", "home_service")
@@ -805,7 +809,7 @@ export default function ServiceFormWizard({
                                   <Input
                                     {...field}
                                     value={field.value || ""}
-                                    placeholder="Optional"
+                                    placeholder="Same as dismantle if empty"
                                     disabled={isSubmitting}
                                   />
                                 </FormControl>
@@ -823,7 +827,7 @@ export default function ServiceFormWizard({
                                   <Input
                                     {...field}
                                     value={field.value || ""}
-                                    placeholder="Optional"
+                                    placeholder="Same as dismantle if empty"
                                     disabled={isSubmitting}
                                   />
                                 </FormControl>
