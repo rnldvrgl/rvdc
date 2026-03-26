@@ -127,7 +127,14 @@ export function useServicePageState(refetch: () => void) {
     cancelService.mutate(
       { id: cancelDialog.target.id, reason: cancelReason },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          const refundDue = (response as { data?: { refund_due?: number } })
+            ?.data?.refund_due
+          if (refundDue && refundDue > 0) {
+            toast.info(
+              `₱${refundDue.toLocaleString("en-PH", { minimumFractionDigits: 2 })} refund may be due to the client.`,
+            )
+          }
           cancelDialog.close()
           setCancelReason("")
           refetch()

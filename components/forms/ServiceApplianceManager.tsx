@@ -493,287 +493,273 @@ export default function ServiceApplianceManager({
 
       <CardContent>
         {isEditing ? (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Form Title */}
-            <div className="flex items-center gap-2 pb-1">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
-                {isAdding ? (
-                  <Plus className="h-3.5 w-3.5 text-primary" />
-                ) : (
-                  <Edit className="h-3.5 w-3.5 text-primary" />
-                )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10">
+                  {isAdding ? (
+                    <Plus className="h-3.5 w-3.5 text-primary" />
+                  ) : (
+                    <Edit className="h-3.5 w-3.5 text-primary" />
+                  )}
+                </div>
+                <h4 className="text-sm font-semibold">
+                  {isAdding
+                    ? isInstallation
+                      ? "Add Unit"
+                      : "Add Appliance"
+                    : isInstallation
+                      ? "Edit Unit"
+                      : "Edit Appliance"}
+                </h4>
               </div>
-              <h4 className="text-sm font-semibold">
-                {isAdding
-                  ? isInstallation
-                    ? "Add Unit"
-                    : "Add Appliance"
-                  : isInstallation
-                    ? "Edit Unit"
-                    : "Edit Appliance"}
-              </h4>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={resetForm}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleSubmit(
+                    onSubmit as Parameters<typeof handleSubmit>[0],
+                  )}
+                  variant="success"
+                >
+                  <Save className="mr-1.5 h-3.5 w-3.5" />
+                  {isAdding ? "Add" : "Save Changes"}
+                </Button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Appliance Type (non-installation only) */}
-              {!isInstallation && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Appliance Type</Label>
-                  <ComboBox
-                    options={[{ value: "none", label: "N/A" }].concat(
-                      applianceTypes.map((t) => ({
-                        value: t.id.toString(),
-                        label: t.name,
-                      })),
-                    )}
-                    value={applianceType ? applianceType.toString() : "none"}
-                    onChange={(v) =>
+            {/* ── Section 1: Assignment ──────────────────────────────── */}
+            <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Users className="h-3.5 w-3.5" />
+                <span className="text-xs font-medium uppercase tracking-wide">
+                  Assignment
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {!isInstallation && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">
+                      Appliance Type
+                    </Label>
+                    <ComboBox
+                      options={[{ value: "none", label: "N/A" }].concat(
+                        applianceTypes.map((t) => ({
+                          value: t.id.toString(),
+                          label: t.name,
+                        })),
+                      )}
+                      value={applianceType ? applianceType.toString() : "none"}
+                      onChange={(v) =>
+                        setField(
+                          "appliance_type",
+                          v === "none" ? null : Number(v),
+                        )
+                      }
+                      placeholder="Select type"
+                      searchPlaceholder="Search appliance types..."
+                    />
+                  </div>
+                )}
+                <div
+                  className={`space-y-2 ${isInstallation ? "col-span-2" : ""}`}
+                >
+                  <Label className="text-sm font-medium">
+                    Assigned Technicians
+                  </Label>
+                  <MultiSelect
+                    options={users.map((tech) => ({
+                      value: tech.id.toString(),
+                      label: tech.full_name,
+                    }))}
+                    selected={
+                      assignedTechnicians
+                        ?.filter((id) => id !== undefined && id !== null)
+                        .map((id) => id.toString()) ?? []
+                    }
+                    onChange={(values: string[]) =>
                       setField(
-                        "appliance_type",
-                        v === "none" ? null : Number(v),
+                        "assigned_technicians",
+                        values.map((v) => Number(v)),
                       )
                     }
-                    placeholder="Select type"
-                    searchPlaceholder="Search appliance types..."
+                    placeholder="Select technicians (optional)"
+                    disabled={usersLoading}
                   />
                 </div>
-              )}
+              </div>
+            </div>
 
-              {/* Assigned Technicians */}
-              <div className="space-y-2 col-span-2">
-                <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-                  <Users className="h-3.5 w-3.5" />
+            {/* ── Section 2: Unit Details (Installation) ─────────────── */}
+            {isInstallation && (
+              <div className="rounded-lg border bg-muted/20 p-4 space-y-4">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Package className="h-3.5 w-3.5" />
                   <span className="text-xs font-medium uppercase tracking-wide">
-                    Assignment
+                    Unit Details
                   </span>
                 </div>
-                <Label className="text-sm font-medium">
-                  Assigned Technicians
-                </Label>
-                <MultiSelect
-                  options={users.map((tech) => ({
-                    value: tech.id.toString(),
-                    label: tech.full_name,
-                  }))}
-                  selected={
-                    assignedTechnicians
-                      ?.filter((id) => id !== undefined && id !== null)
-                      .map((id) => id.toString()) ?? []
-                  }
-                  onChange={(values: string[]) =>
-                    setField(
-                      "assigned_technicians",
-                      values.map((v) => Number(v)),
-                    )
-                  }
-                  placeholder="Select technicians (optional)"
-                  disabled={usersLoading}
-                />
-              </div>
 
-              {/* ── Installation Fields ──────────────────────────────────── */}
-              {isInstallation && (
-                <>
-                  {/* Unit Type Selector */}
-                  <div className="space-y-3 col-span-2">
-                    <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-                      <Package className="h-3.5 w-3.5" />
-                      <span className="text-xs font-medium uppercase tracking-wide">
-                        Unit Details
-                      </span>
+                {/* Unit Type Selector */}
+                <RadioGroup
+                  value={unitType || "brand_new"}
+                  onValueChange={(v: "brand_new" | "second_hand") => {
+                    setField("unit_type", v)
+                    setField("unit_id", undefined)
+                    setField("brand", "")
+                    setField("model", "")
+                    setField("serial_number", "")
+                  }}
+                  className="grid grid-cols-2 gap-3"
+                >
+                  <label
+                    htmlFor="brand_new"
+                    className={`relative flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${unitType === "brand_new" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
+                  >
+                    <RadioGroupItem
+                      value="brand_new"
+                      id="brand_new"
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="text-sm font-medium">Brand New</div>
+                      <div className="text-xs text-muted-foreground">
+                        Select from inventory
+                      </div>
                     </div>
-                    <Label className="text-sm font-medium">Unit Type</Label>
-                    <RadioGroup
-                      value={unitType || "brand_new"}
-                      onValueChange={(v: "brand_new" | "second_hand") => {
-                        setField("unit_type", v)
-                        setField("unit_id", undefined)
-                        setField("brand", "")
-                        setField("model", "")
-                        setField("serial_number", "")
+                  </label>
+                  <label
+                    htmlFor="second_hand"
+                    className={`relative flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${unitType === "second_hand" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
+                  >
+                    <RadioGroupItem
+                      value="second_hand"
+                      id="second_hand"
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="text-sm font-medium">Second Hand</div>
+                      <div className="text-xs text-muted-foreground">
+                        Enter brand and optional price
+                      </div>
+                    </div>
+                  </label>
+                </RadioGroup>
+
+                {/* Brand New — Unit Selector */}
+                {unitType === "brand_new" && (
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium">
+                      Select Aircon Unit
+                    </Label>
+                    <ComboBox
+                      value={unitId?.toString() || null}
+                      onChange={(value) => {
+                        const id = value ? Number(value) : undefined
+                        const unit =
+                          availableUnits?.results.find((u) => u.id === id) ??
+                          installationUnits.find((u) => u.id === id)
+                        setField("unit_id", id)
+                        setField("unit_type", "brand_new")
+                        setField("brand", unit?.model?.brand?.name || "")
+                        setField("model", unit?.model?.name || "")
+                        setField("serial_number", unit?.serial_number || "")
+                        setField("unit_price", undefined)
                       }}
-                      className="grid grid-cols-1 sm:grid-cols-2 gap-3"
-                    >
-                      <label
-                        htmlFor="brand_new"
-                        className={`relative flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${unitType === "brand_new" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
-                      >
-                        <RadioGroupItem
-                          value="brand_new"
-                          id="brand_new"
-                          className="mt-0.5"
-                        />
-                        <div>
-                          <div className="text-sm font-medium">Brand New</div>
-                          <div className="text-xs text-muted-foreground">
-                            Select from inventory
-                          </div>
-                        </div>
-                      </label>
-                      <label
-                        htmlFor="second_hand"
-                        className={`relative flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${unitType === "second_hand" ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50"}`}
-                      >
-                        <RadioGroupItem
-                          value="second_hand"
-                          id="second_hand"
-                          className="mt-0.5"
-                        />
-                        <div>
-                          <div className="text-sm font-medium">Second Hand</div>
-                          <div className="text-xs text-muted-foreground">
-                            Enter brand and optional price
-                          </div>
-                        </div>
-                      </label>
-                    </RadioGroup>
+                      options={unitOptions}
+                      placeholder="Select unit from inventory"
+                      searchPlaceholder="Search units..."
+                    />
                   </div>
+                )}
 
-                  {/* Brand New — Unit Selector */}
-                  {unitType === "brand_new" && (
-                    <div className="space-y-3 col-span-2">
-                      <Label className="text-sm font-medium">
-                        Select Aircon Unit
-                      </Label>
-                      <ComboBox
-                        value={unitId?.toString() || null}
-                        onChange={(value) => {
-                          const id = value ? Number(value) : undefined
-                          const unit =
-                            availableUnits?.results.find((u) => u.id === id) ??
-                            installationUnits.find((u) => u.id === id)
-                          setField("unit_id", id)
-                          setField("unit_type", "brand_new")
-                          setField("brand", unit?.model?.brand?.name || "")
-                          setField("model", unit?.model?.name || "")
-                          setField("serial_number", unit?.serial_number || "")
-                          // Reset unit_price so it defaults to model selling price
-                          setField("unit_price", undefined)
-                        }}
-                        options={unitOptions}
-                        placeholder="Select unit from inventory"
-                        searchPlaceholder="Search units..."
-                      />
-                    </div>
-                  )}
-
-                  {/* Brand New — Selected unit details */}
-                  {unitType === "brand_new" && selectedUnit && (
-                    <div className="col-span-2 rounded-lg border bg-muted/30 p-4 space-y-3">
-                      <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Selected Unit
-                      </h4>
-                      <div className="grid grid-cols-2 sm:gap-x-4 gap-y-2 text-sm">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Brand</p>
-                          <p className="font-medium">
-                            {selectedUnit.model?.brand?.name || "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Model</p>
-                          <p className="font-medium">
-                            {selectedUnit.model?.name || "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Serial Number
-                          </p>
-                          <p className="font-medium">
-                            {selectedUnit.serial_number || "N/A"}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Type</p>
-                          <p className="font-medium">
-                            {selectedUnit.model?.aircon_type || "N/A"}
-                          </p>
-                        </div>
+                {/* Brand New — Selected unit details */}
+                {unitType === "brand_new" && selectedUnit && (
+                  <div className="rounded-lg border bg-background p-4 space-y-3">
+                    <h4 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Selected Unit
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Brand</p>
+                        <p className="font-medium">
+                          {selectedUnit.model?.brand?.name || "N/A"}
+                        </p>
                       </div>
-                      <Separator />
-                      <div className="flex items-end justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-baseline gap-2 mb-1">
-                            {selectedUnit.model?.has_discount ? (
-                              <>
-                                <span className="text-lg font-bold text-primary">
-                                  ₱
-                                  {parseFloat(
-                                    selectedUnit.model.selling_price || "0",
-                                  ).toLocaleString("en-PH", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
-                                </span>
-                                <span className="text-sm line-through text-muted-foreground">
-                                  ₱
-                                  {parseFloat(
-                                    selectedUnit.model.retail_price || "0",
-                                  ).toLocaleString("en-PH", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
-                                </span>
-                              </>
-                            ) : (
+                      <div>
+                        <p className="text-xs text-muted-foreground">Model</p>
+                        <p className="font-medium">
+                          {selectedUnit.model?.name || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          Serial Number
+                        </p>
+                        <p className="font-medium">
+                          {selectedUnit.serial_number || "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Type</p>
+                        <p className="font-medium">
+                          {selectedUnit.model?.aircon_type || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div className="flex items-end justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-2 mb-1">
+                          {selectedUnit.model?.has_discount ? (
+                            <>
                               <span className="text-lg font-bold text-primary">
-                                {selectedUnit.model?.retail_price
-                                  ? `₱${parseFloat(selectedUnit.model.retail_price).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                  : "N/A"}
+                                ₱
+                                {parseFloat(
+                                  selectedUnit.model.selling_price || "0",
+                                ).toLocaleString("en-PH", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
                               </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {selectedUnit.model?.has_discount
-                              ? "Selling price"
-                              : "Retail price"}
-                          </p>
-                        </div>
-                        <div className="flex-1">
-                          <Label className="text-xs font-medium">
-                            Price Override
-                            <span className="text-muted-foreground ml-1">
-                              (optional)
+                              <span className="text-sm line-through text-muted-foreground">
+                                ₱
+                                {parseFloat(
+                                  selectedUnit.model.retail_price || "0",
+                                ).toLocaleString("en-PH", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-lg font-bold text-primary">
+                              {selectedUnit.model?.retail_price
+                                ? `₱${parseFloat(selectedUnit.model.retail_price).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                : "N/A"}
                             </span>
-                          </Label>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={unitPrice ?? ""}
-                            onChange={(e) =>
-                              setField(
-                                "unit_price",
-                                e.target.value
-                                  ? parseFloat(e.target.value)
-                                  : undefined,
-                              )
-                            }
-                            placeholder={`₱${parseFloat(selectedUnit.model?.selling_price || selectedUnit.model?.retail_price || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                            className="mt-1"
-                          />
+                          )}
                         </div>
+                        <p className="text-xs text-muted-foreground">
+                          {selectedUnit.model?.has_discount
+                            ? "Selling price"
+                            : "Retail price"}
+                        </p>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Second Hand — Manual Entry */}
-                  {unitType === "second_hand" && (
-                    <>
-                      <div className="space-y-2 col-span-2">
-                        <Label className="text-sm font-medium">Brand</Label>
-                        <Input
-                          value={brand || ""}
-                          onChange={(e) => setField("brand", e.target.value)}
-                          placeholder="e.g., Samsung, LG, Carrier"
-                        />
-                      </div>
-                      <div className="space-y-2 col-span-2">
-                        <Label className="text-sm font-medium">
-                          Unit Price{" "}
-                          <span className="text-muted-foreground text-xs">
-                            (optional — leave empty if labor only)
+                      <div className="flex-1">
+                        <Label className="text-xs font-medium">
+                          Price Override
+                          <span className="text-muted-foreground ml-1">
+                            (optional)
                           </span>
                         </Label>
                         <Input
@@ -789,25 +775,63 @@ export default function ServiceApplianceManager({
                                 : undefined,
                             )
                           }
-                          placeholder="₱0.00 — leave blank for labor-only"
+                          placeholder={`₱${parseFloat(selectedUnit.model?.selling_price || selectedUnit.model?.retail_price || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                          className="mt-1"
                         />
                       </div>
-                    </>
-                  )}
-
-                  <Separator className="col-span-2" />
-                </>
-              )}
-
-              {/* ── Non-installation brand/model/serial ──────────────────── */}
-              {!isInstallation && (
-                <>
-                  <div className="col-span-2 flex items-center gap-1.5 text-muted-foreground">
-                    <Wrench className="h-3.5 w-3.5" />
-                    <span className="text-xs font-medium uppercase tracking-wide">
-                      Unit Information
-                    </span>
+                    </div>
                   </div>
+                )}
+
+                {/* Second Hand — Manual Entry */}
+                {unitType === "second_hand" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Brand</Label>
+                      <Input
+                        value={brand || ""}
+                        onChange={(e) => setField("brand", e.target.value)}
+                        placeholder="e.g., Samsung, LG, Carrier"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">
+                        Unit Price{" "}
+                        <span className="text-muted-foreground text-xs">
+                          (optional)
+                        </span>
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={unitPrice ?? ""}
+                        onChange={(e) =>
+                          setField(
+                            "unit_price",
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined,
+                          )
+                        }
+                        placeholder="₱0.00 — leave blank for labor-only"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Section 2b: Unit Information (Non-installation) ────── */}
+            {!isInstallation && (
+              <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Wrench className="h-3.5 w-3.5" />
+                  <span className="text-xs font-medium uppercase tracking-wide">
+                    Unit Information
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Brand</Label>
                     <Input
@@ -839,57 +863,61 @@ export default function ServiceApplianceManager({
                       placeholder="Serial number of appliance"
                     />
                   </div>
-                </>
-              )}
+                </div>
+              </div>
+            )}
 
-              {/* ── Labor & Pricing Section ──────────────────────────────── */}
-              <div className="col-span-2 flex items-center gap-1.5 text-muted-foreground pt-1">
+            {/* ── Section 3: Labor & Pricing ─────────────────────────── */}
+            <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <CircleDollarSign className="h-3.5 w-3.5" />
                 <span className="text-xs font-medium uppercase tracking-wide">
                   Labor & Pricing
                 </span>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  {isInstallation ? "Installation Fee (₱)" : "Labor Fee (₱)"}
-                </Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={laborFee || 0}
-                  onChange={(e) =>
-                    setField("labor_fee", parseFloat(e.target.value) || 0)
-                  }
-                  disabled={autoAdjustLabor}
-                />
-                {autoAdjustLabor && (
-                  <p className="text-xs text-muted-foreground">
-                    Auto-computed: Total Fee − Parts Cost
-                  </p>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    {isInstallation ? "Installation Fee (₱)" : "Labor Fee (₱)"}
+                  </Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={laborFee || 0}
+                    onChange={(e) =>
+                      setField("labor_fee", parseFloat(e.target.value) || 0)
+                    }
+                    disabled={autoAdjustLabor}
+                  />
+                  {autoAdjustLabor && (
+                    <p className="text-xs text-muted-foreground">
+                      Auto-computed: Total Fee − Parts Cost
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-2 pt-6">
+                  <Checkbox
+                    id="labor_is_free"
+                    checked={laborIsFree || false}
+                    onCheckedChange={(checked) =>
+                      setField("labor_is_free", checked === true)
+                    }
+                    className="cursor-pointer"
+                  />
+                  <Label
+                    htmlFor="labor_is_free"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    {isInstallation ? "Installation" : "Labor"} is Free
+                  </Label>
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2 pt-6">
-                <Checkbox
-                  id="labor_is_free"
-                  checked={laborIsFree || false}
-                  onCheckedChange={(checked) =>
-                    setField("labor_is_free", checked === true)
-                  }
-                  className="cursor-pointer"
-                />
-                <Label
-                  htmlFor="labor_is_free"
-                  className="text-sm font-medium cursor-pointer"
-                >
-                  {isInstallation ? "Installation" : "Labor"} is Free
-                </Label>
-              </div>
-
-              {/* ── Auto-adjust Labor ────────────────────────────────────── */}
-              <div className="col-span-2 space-y-3">
+              {/* Auto-adjust Labor */}
+              <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="auto_adjust_labor"
@@ -898,7 +926,6 @@ export default function ServiceApplianceManager({
                       const enabled = checked === true
                       setField("auto_adjust_labor", enabled)
                       if (enabled && !totalServiceFee) {
-                        // Default total_service_fee to current labor_fee when enabling
                         setField("total_service_fee", laborFee || 0)
                       }
                     }}
@@ -937,8 +964,8 @@ export default function ServiceApplianceManager({
                 )}
               </div>
 
-              {/* ── Labor Discount ───────────────────────────────────────── */}
-              <div className="space-y-3 col-span-2">
+              {/* Labor Discount */}
+              <div className="space-y-3">
                 <Button
                   type="button"
                   variant="ghost"
@@ -955,7 +982,7 @@ export default function ServiceApplianceManager({
                 </Button>
 
                 {showLaborDiscount && (
-                  <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/30 p-3">
+                  <div className="grid grid-cols-2 gap-3 rounded-lg border bg-background p-3">
                     <div className="space-y-2">
                       <Label className="text-xs font-medium">Amount (₱)</Label>
                       <Tooltip>
@@ -992,9 +1019,9 @@ export default function ServiceApplianceManager({
               </div>
             </div>
 
-            {/* Issue / Diagnosis (non-installation only) */}
+            {/* ── Section 4: Service Details (non-installation only) ──── */}
             {!isInstallation && (
-              <>
+              <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Wrench className="h-3.5 w-3.5" />
                   <span className="text-xs font-medium uppercase tracking-wide">
@@ -1038,19 +1065,19 @@ export default function ServiceApplianceManager({
                     className="resize-none border-orange-200 focus-visible:ring-orange-300"
                   />
                 </div>
-              </>
+              </div>
             )}
 
-            {/* Warranty (non-installation only) */}
+            {/* ── Section 5: Warranty (non-installation only) ────────── */}
             {!isInstallation && (
-              <div className="space-y-3">
+              <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Shield className="h-3.5 w-3.5" />
                   <span className="text-xs font-medium uppercase tracking-wide">
                     Warranty
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">
                       Labor Warranty (months)
@@ -1104,29 +1131,6 @@ export default function ServiceApplianceManager({
                 </div>
               </div>
             )}
-
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={resetForm}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleSubmit(
-                  onSubmit as Parameters<typeof handleSubmit>[0],
-                )}
-                variant="success"
-              >
-                <Save className="mr-1.5 h-3.5 w-3.5" />
-                {isAdding ? "Add" : "Save Changes"}
-              </Button>
-            </div>
           </div>
         ) : appliances.length > 0 ? (
           <div className="space-y-3">

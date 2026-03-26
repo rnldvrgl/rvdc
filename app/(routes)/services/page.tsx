@@ -77,7 +77,7 @@ export default function ServicesPage() {
 
   const { filters: filterDefs, orderingOptions } = useServiceFilters()
 
-  const { archivedQuery, restoreItem } = useArchive<Service>(
+  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Service>(
     "services/services/",
     "services",
     searchParams,
@@ -126,12 +126,17 @@ export default function ServicesPage() {
     if (service?.id) restoreItem.mutate(service.id)
   }
 
+  const handleHardDelete = (service: Service) => {
+    if (service?.id) hardDeleteItem.mutate(service.id)
+  }
+
   const columns = isArchived
     ? getServiceColumns({
         role,
         onEdit: () => {},
         onDelete: () => {},
         onRestore: handleRestore,
+        onHardDelete: handleHardDelete,
       })
     : getServiceColumns({
         role,
@@ -356,6 +361,24 @@ export default function ServicesPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
+            {state.cancelDialog.target &&
+              parseFloat(state.cancelDialog.target.total_paid || "0") > 0 && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-700 dark:bg-amber-950">
+                  <p className="font-medium text-amber-800 dark:text-amber-200">
+                    This service has ₱
+                    {parseFloat(
+                      state.cancelDialog.target.total_paid || "0",
+                    ).toLocaleString("en-PH", {
+                      minimumFractionDigits: 2,
+                    })}{" "}
+                    in recorded payments.
+                  </p>
+                  <p className="text-amber-700 dark:text-amber-300 mt-1">
+                    Cancelling will void related transactions. A refund may need
+                    to be issued separately.
+                  </p>
+                </div>
+              )}
             <div className="space-y-2">
               <Label htmlFor="cancel-reason">Cancellation Reason</Label>
               <Textarea
