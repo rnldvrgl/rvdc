@@ -138,6 +138,12 @@ interface LogsResponse {
   error?: string
 }
 
+interface BackupFile {
+  filename: string
+  size_mb: number
+  created_at: string
+}
+
 const CONTAINER_LABELS: Record<string, { label: string; icon: typeof Server }> =
   {
     "rvdc_backend-api-1": { label: "API Server", icon: Server },
@@ -192,6 +198,9 @@ export function ServerMaintenanceCard() {
     loading: boolean
   }>({ open: false, title: "", logs: "", loading: false })
   const [showMediaFiles, setShowMediaFiles] = useState(false)
+  const [backups, setBackups] = useState<BackupFile[]>([])
+  const [backupsLoading, setBackupsLoading] = useState(false)
+  const [deletingBackup, setDeletingBackup] = useState<string | null>(null)
 
   const { data, isLoading, refetch } = useQuery<MaintenanceData>({
     queryKey: ["server-maintenance"],
@@ -201,6 +210,20 @@ export function ServerMaintenanceCard() {
     },
     refetchInterval: 60000,
   })
+
+  const loadBackups = useCallback(async () => {
+    setBackupsLoading(true)
+    try {
+      const res = await api.post("/users/maintenance/", {
+        action: "list_backups",
+      })
+      setBackups(res.data.backups || [])
+    } catch {
+      toast.error("Failed to load backups")
+    } finally {
+      setBackupsLoading(false)
+    }
+  }, [])
 
   // Listen for maintenance results via WebSocket
   const handleMaintenanceResult = useCallback(
@@ -231,8 +254,13 @@ export function ServerMaintenanceCard() {
 
       // Refresh stats after cleanup
       refetch()
+
+      // Refresh backup list after a backup action
+      if (wsData.action === "db_backup") {
+        loadBackups()
+      }
     },
-    [refetch],
+    [refetch, loadBackups, removePendingAction],
   )
 
   useNotificationWebSocket({
@@ -347,6 +375,63 @@ export function ServerMaintenanceCard() {
         message || `Failed to start ${command.label}. Check server logs.`,
       )
       setRunningAction(null)
+    }
+  }
+
+  const createBackup = async () => {
+    setRunningAction("db_backup")
+    const actionId = addPendingAction("maintenance", "Database Backup")
+    maintenanceActionIdRef.current = actionId
+    try {
+      await api.post("/users/maintenance/", { action: "db_backup" })
+      toast.info("Database backup started", {
+        description: "You'll be notified when it completes.",
+      })
+    } catch (err) {
+      const message =
+        err instanceof Error && "response" in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data
+              ?.error
+          : undefined
+      toast.error(message || "Failed to start backup.")
+      setRunningAction(null)
+      removePendingAction(actionId)
+      maintenanceActionIdRef.current = null
+    }
+  }
+
+  const downloadBackup = async (filename: string) => {
+    try {
+      const res = await api.get(
+        `/users/maintenance/backups/${encodeURIComponent(filename)}/`,
+        { responseType: "blob" },
+      )
+      const url = window.URL.createObjectURL(res.data)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch {
+      toast.error("Failed to download backup")
+    }
+  }
+
+  const deleteBackup = async (filename: string) => {
+    setDeletingBackup(filename)
+    try {
+      await api.post("/users/maintenance/", {
+        action: "delete_backup",
+        filename,
+      })
+      setBackups((prev) => prev.filter((b) => b.filename !== filename))
+      toast.success(`Deleted ${filename}`)
+    } catch {
+      toast.error("Failed to delete backup")
+    } finally {
+      setDeletingBackup(null)
     }
   }
 
@@ -474,7 +559,7 @@ export function ServerMaintenanceCard() {
               defaultValue="overview"
               className="w-full"
             >
-              <TabsList className="w-full grid grid-cols-4 mb-6">
+              <TabsList className="w-full grid grid-cols-5 mb-6">
                 <TabsTrigger value="overview">
                   <HardDrive className="size-3.5 mr-1.5" />
                   Overview
@@ -493,6 +578,15 @@ export function ServerMaintenanceCard() {
                   {hasHighUsage && (
                     <span className="ml-1.5 size-2 rounded-full bg-yellow-500 animate-pulse" />
                   )}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="backups"
+                  onClick={() => {
+                    if (backups.length === 0 && !backupsLoading) loadBackups()
+                  }}
+                >
+                  <Database className="size-3.5 mr-1.5" />
+                  Backups
                 </TabsTrigger>
               </TabsList>
 
@@ -1190,6 +1284,123 @@ export function ServerMaintenanceCard() {
                     </Button>
                   </div>
                 </div>
+              </TabsContent>
+
+              {/* ===== BACKUPS TAB ===== */}
+              <TabsContent
+                value="backups"
+                className="space-y-4 mt-0"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-start gap-2 rounded-lg border bg-muted/30 p-3 flex-1 mr-3">
+                    <Info className="size-4 text-muted-foreground shrink-0 mt-0.5" />
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Create and manage PostgreSQL database backups. Backups are
+                      compressed and stored on the server.
+                    </p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={loadBackups}
+                      disabled={backupsLoading}
+                    >
+                      <RefreshCw
+                        className={`size-3.5 mr-1.5 ${backupsLoading ? "animate-spin" : ""}`}
+                      />
+                      Refresh
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={createBackup}
+                      disabled={runningAction !== null}
+                    >
+                      {runningAction === "db_backup" ? (
+                        <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Database className="size-3.5 mr-1.5" />
+                      )}
+                      {runningAction === "db_backup"
+                        ? "Backing up..."
+                        : "Create Backup"}
+                    </Button>
+                  </div>
+                </div>
+
+                {backupsLoading && backups.length === 0 ? (
+                  <div className="flex items-center justify-center py-8 gap-2 text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin" />
+                    <span className="text-sm">Loading backups...</span>
+                  </div>
+                ) : backups.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground">
+                    <Database className="size-8 opacity-40" />
+                    <p className="text-sm font-medium">No backups found</p>
+                    <p className="text-xs">
+                      Create your first backup to get started.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {backups.map((backup) => (
+                      <div
+                        key={backup.filename}
+                        className="group flex items-center justify-between rounded-xl border p-4 hover:border-foreground/20 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="rounded-lg bg-muted p-2">
+                            <Database className="size-4 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {backup.filename}
+                            </p>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                              <span>{backup.size_mb} MB</span>
+                              <span>
+                                {new Date(backup.created_at).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => downloadBackup(backup.filename)}
+                              >
+                                <Download className="size-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Download</TooltipContent>
+                          </Tooltip>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 hover:border-red-300 hover:text-red-500"
+                                disabled={deletingBackup === backup.filename}
+                                onClick={() => deleteBackup(backup.filename)}
+                              >
+                                {deletingBackup === backup.filename ? (
+                                  <Loader2 className="size-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="size-3.5" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           ) : (
