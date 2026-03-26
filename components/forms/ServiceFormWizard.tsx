@@ -2,7 +2,7 @@
 
 import { CardSelect } from "@/components/custom/inputs/CardSelect"
 import {
-  ClientComboBox,
+  ClientCardSelect,
   useClients,
 } from "@/components/custom/inputs/ClientComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
@@ -383,10 +383,9 @@ export default function ServiceFormWizard({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel required>Client</FormLabel>
-                  <ClientComboBox
+                  <ClientCardSelect
                     value={field.value ?? null}
                     onChange={field.onChange}
-                    placeholder="Search and select a client"
                     disabled={isSubmitting}
                   />
                   <FormMessage />
@@ -436,11 +435,7 @@ export default function ServiceFormWizard({
           <div className="space-y-4">
             {/* Carry-In */}
             {selectedMode === "carry_in" && (
-              <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="font-medium text-sm flex items-center gap-2">
-                  <Wrench className="size-4" />
-                  Carry-In Details
-                </h3>
+              <div className="space-y-4">
                 <FormField
                   name="received_at"
                   control={form.control}
@@ -465,11 +460,7 @@ export default function ServiceFormWizard({
 
             {/* Home Service */}
             {selectedMode === "home_service" && (
-              <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="font-medium text-sm flex items-center gap-2">
-                  <Calendar className="size-4" />
-                  Home Service Details
-                </h3>
+              <div className="space-y-4">
                 <FormField
                   name="appointment_datetime"
                   control={form.control}
@@ -548,11 +539,7 @@ export default function ServiceFormWizard({
 
             {/* Pull-Out */}
             {selectedMode === "pull_out" && (
-              <div className="space-y-4 rounded-lg border p-4">
-                <h3 className="font-medium text-sm flex items-center gap-2">
-                  <Calendar className="size-4" />
-                  Pull-Out Details
-                </h3>
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     name="pickup_date"

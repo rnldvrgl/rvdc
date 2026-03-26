@@ -16,7 +16,7 @@ import {
   UserPlus,
 } from "lucide-react"
 import Link from "next/link"
-import { useMemo } from "react"
+import { type ReactNode, useMemo } from "react"
 import { FadeUpItem, StaggerGrid } from "./MotionWrappers"
 
 interface MetricCard {
@@ -131,7 +131,11 @@ function buildMetricCards(
   ]
 }
 
-export default function GradientMetricCards() {
+export default function GradientMetricCards({
+  children,
+}: {
+  children?: ReactNode
+}) {
   const { start_date, end_date, stall } = useDateParamsFromForm()
   const { data, isLoading } = useGetSummary({ start_date, end_date, stall })
 
@@ -162,6 +166,7 @@ export default function GradientMetricCards() {
           <MetricCardItem card={card} />
         </FadeUpItem>
       ))}
+      {children && <FadeUpItem>{children}</FadeUpItem>}
     </StaggerGrid>
   )
 }
