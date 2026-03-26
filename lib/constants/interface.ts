@@ -1189,6 +1189,7 @@ export interface Service {
   service_items_checked_at?: string | null
   // BIR 2307 receipt
   receipt_book?: string | null
+  document_type?: "or" | "si"
   manual_receipt_number?: string | null
   with_2307?: boolean
   // Backdating
@@ -1220,6 +1221,7 @@ export interface ServicePayload {
   service_parts_needed_notes?: string
   // BIR 2307 receipt
   receipt_book?: string | null
+  document_type?: "or" | "si"
   manual_receipt_number?: string | null
   with_2307?: boolean
   // Backdating

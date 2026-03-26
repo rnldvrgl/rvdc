@@ -44,7 +44,7 @@ import { useItemChoices } from "@/lib/queries/useChoices"
 import api from "@/lib/utils/api"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
 import { useQueryClient } from "@tanstack/react-query"
-import { Edit, Info, Package, Plus, Trash2, X } from "lucide-react"
+import { Edit, Info, Loader2, Package, Plus, Trash2, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -102,11 +102,13 @@ export default function AppliancePartsManager({
   const items: Item[] = itemsData ?? []
   const templates: CustomItemTemplate[] = templateData ?? []
   const selectedItem = items.find((i) => i.id === selectedItemId)
+  const isMutatingPart = addItem.isPending || updateItem.isPending
+  const isDialogBusy = isSubmitting || isMutatingPart
 
   // Transform items to ComboBox options
   const itemOptions = items.map((item) => ({
     value: item.id,
-    label: `${item.name} — ${item.sku} • ${formatCurrency(item.retail_price)}`,
+    label: item.sku ? `${item.name} — ${item.sku}` : item.name,
   }))
 
   const templateOptions = templates.map((t) => ({
@@ -625,6 +627,7 @@ export default function AppliancePartsManager({
       <Dialog
         open={dialogOpen}
         onOpenChange={(open) => {
+          if (!open && isDialogBusy) return
           setDialogOpen(open)
           if (!open) {
             // Reset form when closing
@@ -642,7 +645,33 @@ export default function AppliancePartsManager({
           }
         }}
       >
-        <DialogContent className="max-w-sm md:max-w-md">
+        <DialogContent
+          className="max-w-sm overflow-hidden md:max-w-md"
+          showCloseButton={!isDialogBusy}
+          onEscapeKeyDown={(event) => {
+            if (isDialogBusy) event.preventDefault()
+          }}
+          onPointerDownOutside={(event) => {
+            if (isDialogBusy) event.preventDefault()
+          }}
+        >
+          {isDialogBusy && (
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 rounded-xl bg-background/85 backdrop-blur-sm">
+              <Loader2 className="size-6 animate-spin text-primary" />
+              <div className="space-y-0.5 text-center">
+                <p className="text-sm font-medium">
+                  {isSubmitting
+                    ? `Adding ${pendingItems.length} part${pendingItems.length > 1 ? "s" : ""}...`
+                    : editingPartId
+                      ? "Updating part..."
+                      : "Adding part..."}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Please wait until the request completes.
+                </p>
+              </div>
+            </div>
+          )}
           <DialogHeader>
             <DialogTitle>
               {editingPartId ? "Edit Part" : "Add Part"}
@@ -666,8 +695,11 @@ export default function AppliancePartsManager({
                     key={item.id}
                     className="flex items-center justify-between text-sm bg-background rounded px-2 py-1.5"
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="truncate font-medium">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
+                      <span
+                        className="truncate font-medium"
+                        title={item.itemName}
+                      >
                         {item.itemName}
                       </span>
                       <span className="text-muted-foreground shrink-0">
@@ -694,6 +726,7 @@ export default function AppliancePartsManager({
                       size="icon"
                       variant="ghost"
                       className="h-6 w-6 shrink-0"
+                      disabled={isDialogBusy}
                       onClick={() =>
                         setPendingItems((prev) =>
                           prev.filter((p) => p.id !== item.id),
@@ -708,12 +741,13 @@ export default function AppliancePartsManager({
             </div>
           )}
 
-          <div className="space-y-4 py-4 px-1">
+          <div className="max-h-[70vh] space-y-4 overflow-y-auto py-4 px-1 pr-2">
             {/* Custom / Inventory Toggle */}
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="parts_is_custom"
                 checked={isCustom}
+                disabled={isDialogBusy}
                 onCheckedChange={(checked) => {
                   setIsCustom(checked === true)
                   if (checked) {
@@ -741,6 +775,7 @@ export default function AppliancePartsManager({
                     value={customDescription}
                     onChange={(e) => setCustomDescription(e.target.value)}
                     placeholder="e.g., Drain hose, mounting bracket..."
+                    disabled={isDialogBusy}
                   />
                 </div>
                 <div className="space-y-2">
@@ -752,6 +787,7 @@ export default function AppliancePartsManager({
                     value={customPrice}
                     onChange={(e) => setCustomPrice(e.target.value)}
                     placeholder="0.00"
+                    disabled={isDialogBusy}
                   />
                 </div>
                 {templates.length > 0 && (
@@ -775,6 +811,7 @@ export default function AppliancePartsManager({
                       }}
                       placeholder="Select a template..."
                       searchPlaceholder="Search templates..."
+                      disabled={isDialogBusy}
                     />
                   </div>
                 )}
@@ -791,9 +828,36 @@ export default function AppliancePartsManager({
                     }
                     placeholder="Select item..."
                     searchPlaceholder="Search items..."
-                    disabled={itemsLoading}
+                    disabled={itemsLoading || isDialogBusy}
                   />
                 </div>
+
+                {selectedItem && (
+                  <div className="rounded-lg border bg-muted/20 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-1">
+                        <p
+                          className="truncate text-sm font-medium"
+                          title={selectedItem.name}
+                        >
+                          {selectedItem.name}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                          {selectedItem.sku && <span>{selectedItem.sku}</span>}
+                          <span>{selectedItem.unit_of_measure}</span>
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-[11px] text-muted-foreground">
+                          Unit Price
+                        </p>
+                        <p className="text-sm font-semibold">
+                          {formatCurrency(selectedItem.retail_price)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Stock availability info for selected item */}
                 {selectedItem && selectedItemStock && (
@@ -884,6 +948,7 @@ export default function AppliancePartsManager({
                 }
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
+                disabled={isDialogBusy}
                 onBlur={() => {
                   if (
                     !selectedItem ||
@@ -916,6 +981,7 @@ export default function AppliancePartsManager({
               <Checkbox
                 id="parts_is_free"
                 checked={isFree}
+                disabled={isDialogBusy}
                 onCheckedChange={(checked) => {
                   setIsFree(checked === true)
                   // Clear discounts when marking as free
@@ -956,6 +1022,7 @@ export default function AppliancePartsManager({
                           value={discountValue}
                           onChange={(e) => setDiscountValue(e.target.value)}
                           placeholder="0"
+                          disabled={isDialogBusy || isFree}
                         />
                       </TooltipTrigger>
                       <TooltipContent>
@@ -970,6 +1037,7 @@ export default function AppliancePartsManager({
                       placeholder="Optional"
                       value={discountReason}
                       onChange={(e) => setDiscountReason(e.target.value)}
+                      disabled={isDialogBusy || isFree}
                     />
                   </div>
                 </div>
@@ -1027,6 +1095,7 @@ export default function AppliancePartsManager({
           <DialogFooter>
             <Button
               variant="outline"
+              disabled={isDialogBusy}
               onClick={() => {
                 setDialogOpen(false)
                 setEditingPartId(null)
@@ -1039,16 +1108,16 @@ export default function AppliancePartsManager({
               <Button
                 onClick={handleSavePart}
                 disabled={
-                  updateItem.isPending ||
+                  isDialogBusy ||
                   (isCustom
                     ? !customDescription.trim() || !customPrice || !quantity
                     : !selectedItemId || !quantity)
                 }
               >
-                {updateItem.isPending && (
-                  <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                {isMutatingPart && (
+                  <Loader2 className="mr-2 size-4 animate-spin" />
                 )}
-                Update Part
+                {isMutatingPart ? "Updating..." : "Update Part"}
               </Button>
             ) : (
               <>
@@ -1056,23 +1125,25 @@ export default function AppliancePartsManager({
                   variant="secondary"
                   onClick={handleAddToList}
                   disabled={
-                    isSubmitting ||
+                    isDialogBusy ||
                     (isCustom
                       ? !customDescription.trim() || !customPrice || !quantity
                       : !selectedItemId || !quantity)
                   }
                 >
-                  Add to List
+                  {pendingItems.length > 0 ? "Add Another" : "Add to List"}
                 </Button>
                 {pendingItems.length > 0 && (
                   <Button
                     onClick={handleSubmitAll}
-                    disabled={isSubmitting}
+                    disabled={isDialogBusy}
                   >
                     {isSubmitting && (
-                      <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      <Loader2 className="mr-2 size-4 animate-spin" />
                     )}
-                    Submit All ({pendingItems.length})
+                    {isSubmitting
+                      ? `Adding ${pendingItems.length}...`
+                      : `Add ${pendingItems.length} to Appliance`}
                   </Button>
                 )}
               </>

@@ -82,6 +82,7 @@ export function ComboBox({
           role="combobox"
           aria-expanded={open}
           className={cn("justify-between w-full overflow-hidden", className)}
+          title={typeof selectedLabel === "string" ? selectedLabel : undefined}
         >
           <span className="truncate">{selectedLabel}</span>
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -108,6 +109,7 @@ export function ComboBox({
                     onChange(option.value === value ? null : option.value)
                     setOpen(false)
                   }}
+                  className="min-w-0"
                 >
                   <CheckIcon
                     className={cn(
@@ -115,7 +117,12 @@ export function ComboBox({
                       value === option.value ? "opacity-100" : "opacity-0",
                     )}
                   />
-                  {option.label}
+                  <span
+                    className="block min-w-0 flex-1 truncate"
+                    title={option.label}
+                  >
+                    {option.label}
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>

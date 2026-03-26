@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar as CalendarWidget } from "@/components/ui/calendar"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -151,6 +152,7 @@ export default function ServiceDetail({
   const [receiptBookInput, setReceiptBookInput] = useState(
     service.receipt_book || "",
   )
+  const serviceDocumentType = service.document_type || "or"
   const [transactionDateOpen, setTransactionDateOpen] = useState(false)
   const {
     completeService,
@@ -1290,10 +1292,79 @@ export default function ServiceDetail({
                 )
               })()}
               <Separator />
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Receipt Type
+                </p>
+                <Select
+                  value={serviceDocumentType}
+                  onValueChange={(value) => {
+                    const documentType = value as "or" | "si"
+                    updateService.mutate(
+                      {
+                        id: service.id,
+                        data: {
+                          document_type: documentType,
+                          with_2307:
+                            documentType === "or"
+                              ? (service.with_2307 ?? false)
+                              : false,
+                        },
+                      },
+                      {
+                        onSuccess: () => {
+                          onRefresh?.()
+                          toast.success("Receipt type updated.")
+                        },
+                      },
+                    )
+                  }}
+                  disabled={updateService.isPending}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="Select receipt type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="or">Official Receipt (OR)</SelectItem>
+                    <SelectItem value="si">Sales Invoice (SI)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {serviceDocumentType === "or" && (
+                <div className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2">
+                  <Checkbox
+                    id={`service-2307-${service.id}`}
+                    checked={service.with_2307 ?? false}
+                    disabled={updateService.isPending}
+                    onCheckedChange={(checked) => {
+                      updateService.mutate(
+                        {
+                          id: service.id,
+                          data: { with_2307: checked === true },
+                        },
+                        {
+                          onSuccess: () => {
+                            onRefresh?.()
+                            toast.success("2307 setting updated.")
+                          },
+                        },
+                      )
+                    }}
+                  />
+                  <Label
+                    htmlFor={`service-2307-${service.id}`}
+                    className="cursor-pointer text-sm font-normal"
+                  >
+                    This OR has BIR Form 2307
+                  </Label>
+                </div>
+              )}
               {/* Official Receipt Number */}
               <div className="space-y-1.5">
                 <p className="text-sm font-medium text-muted-foreground">
-                  Official Receipt #
+                  {serviceDocumentType === "or"
+                    ? "Official Receipt #"
+                    : "Sales Invoice #"}
                 </p>
                 {editingReceiptNumber ? (
                   <form
@@ -1311,7 +1382,7 @@ export default function ServiceDetail({
                           onSuccess: () => {
                             setEditingReceiptNumber(false)
                             onRefresh?.()
-                            toast.success("Official receipt number updated.")
+                            toast.success("Receipt number updated.")
                           },
                         },
                       )
@@ -1320,7 +1391,11 @@ export default function ServiceDetail({
                     <Input
                       value={receiptNumberInput}
                       onChange={(e) => setReceiptNumberInput(e.target.value)}
-                      placeholder="e.g. 0001"
+                      placeholder={
+                        serviceDocumentType === "or"
+                          ? "e.g. OR-0001"
+                          : "e.g. SI-0001"
+                      }
                       className="h-8 w-full text-sm"
                       autoFocus
                     />
@@ -1361,7 +1436,9 @@ export default function ServiceDetail({
                       </span>
                     ) : (
                       <span className="text-muted-foreground">
-                        Click to set receipt number
+                        {serviceDocumentType === "or"
+                          ? "Click to set OR number"
+                          : "Click to set SI number"}
                       </span>
                     )}
                   </button>
