@@ -13,6 +13,8 @@ import { Label } from "@/components/ui/label"
 import { Client } from "@/lib/constants/types"
 import { useClientMutations } from "@/lib/mutations/useClientMutations"
 import { useClientChoices } from "@/lib/queries/useChoices"
+import { useBarangays, useCities, useProvinces } from "@/lib/queries/usePsgc"
+import { getNameByCode, prepareOptions } from "@/lib/utils/helpers"
 import { Plus } from "lucide-react"
 import { useCallback, useMemo, useState } from "react"
 
@@ -46,7 +48,30 @@ export function ClientComboBox({
   const [showCreate, setShowCreate] = useState(false)
   const [newName, setNewName] = useState("")
   const [newContact, setNewContact] = useState("")
+  const [newAddress, setNewAddress] = useState("")
+  const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
+  const [selectedCity, setSelectedCity] = useState<string | null>(null)
+  const [selectedBarangay, setSelectedBarangay] = useState<string | null>(null)
   const { addClient } = useClientMutations()
+
+  const { data: provinces = [] } = useProvinces()
+  const { data: cities = [], isLoading: loadingCities } =
+    useCities(selectedProvince)
+  const { data: barangays = [], isLoading: loadingBarangays } =
+    useBarangays(selectedCity)
+
+  const sortedProvinces = useMemo(
+    () => prepareOptions(provinces) as { code: string; name: string }[],
+    [provinces],
+  )
+  const sortedCities = useMemo(
+    () => prepareOptions(cities) as { code: string; name: string }[],
+    [cities],
+  )
+  const sortedBarangays = useMemo(
+    () => prepareOptions(barangays) as { code: string; name: string }[],
+    [barangays],
+  )
 
   const options = useMemo(() => {
     if (isLoading)
@@ -59,26 +84,52 @@ export function ClientComboBox({
     )
   }, [clients, isLoading, nameOnly])
 
+  const resetCreateForm = useCallback(() => {
+    setNewName("")
+    setNewContact("")
+    setNewAddress("")
+    setSelectedProvince(null)
+    setSelectedCity(null)
+    setSelectedBarangay(null)
+  }, [])
+
   const handleQuickCreate = useCallback(() => {
     if (!newName.trim()) return
     const payload = {
       full_name: newName.trim().toUpperCase(),
       contact_number: newContact.trim() || null,
-      province: "",
-      city: "",
-      barangay: null,
-      address: null,
+      province: getNameByCode(
+        sortedProvinces,
+        selectedProvince ?? "",
+      ).toUpperCase(),
+      city: getNameByCode(sortedCities, selectedCity ?? "").toUpperCase(),
+      barangay:
+        getNameByCode(sortedBarangays, selectedBarangay ?? "").toUpperCase() ||
+        null,
+      address: newAddress.trim().toUpperCase() || null,
       is_blocklisted: false,
     }
     addClient.mutate(payload, {
       onSuccess: (res: { data: Client }) => {
         onChange(res.data.id)
         setShowCreate(false)
-        setNewName("")
-        setNewContact("")
+        resetCreateForm()
       },
     })
-  }, [newName, newContact, addClient, onChange])
+  }, [
+    newName,
+    newContact,
+    newAddress,
+    selectedProvince,
+    selectedCity,
+    selectedBarangay,
+    sortedProvinces,
+    sortedCities,
+    sortedBarangays,
+    addClient,
+    onChange,
+    resetCreateForm,
+  ])
 
   return (
     <>
@@ -110,7 +161,10 @@ export function ClientComboBox({
 
       <Dialog
         open={showCreate}
-        onOpenChange={setShowCreate}
+        onOpenChange={(open) => {
+          setShowCreate(open)
+          if (!open) resetCreateForm()
+        }}
       >
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
@@ -124,12 +178,6 @@ export function ClientComboBox({
                 onChange={(e) => setNewName(e.target.value)}
                 placeholder="Juan Dela Cruz"
                 autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    handleQuickCreate()
-                  }
-                }}
               />
             </div>
             <div>
@@ -139,17 +187,72 @@ export function ClientComboBox({
                 onChange={(e) => setNewContact(e.target.value)}
                 placeholder="09XX XXX XXXX"
                 maxLength={13}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    handleQuickCreate()
-                  }
+              />
+            </div>
+            <div>
+              <Label>Province *</Label>
+              <ComboBox
+                options={sortedProvinces.map((p) => ({
+                  value: p.code,
+                  label: p.name,
+                }))}
+                value={selectedProvince}
+                onChange={(val) => {
+                  setSelectedProvince(val?.toString() ?? null)
+                  setSelectedCity(null)
+                  setSelectedBarangay(null)
                 }}
+                placeholder="Select province"
+                searchPlaceholder="Search province..."
+              />
+            </div>
+            <div>
+              <Label>City / Municipality *</Label>
+              <ComboBox
+                options={sortedCities.map((c) => ({
+                  value: c.code,
+                  label: c.name,
+                }))}
+                value={selectedCity}
+                onChange={(val) => {
+                  setSelectedCity(val?.toString() ?? null)
+                  setSelectedBarangay(null)
+                }}
+                placeholder="Select city"
+                searchPlaceholder="Search city..."
+                disabled={!selectedProvince || loadingCities}
+              />
+            </div>
+            <div>
+              <Label>Barangay</Label>
+              <ComboBox
+                options={sortedBarangays.map((b) => ({
+                  value: b.code,
+                  label: b.name,
+                }))}
+                value={selectedBarangay}
+                onChange={(val) => setSelectedBarangay(val?.toString() ?? null)}
+                placeholder="Select barangay"
+                searchPlaceholder="Search barangay..."
+                disabled={!selectedCity || loadingBarangays}
+              />
+            </div>
+            <div>
+              <Label>Address</Label>
+              <Input
+                value={newAddress}
+                onChange={(e) => setNewAddress(e.target.value)}
+                placeholder="Street, Subdivision, etc."
               />
             </div>
             <Button
               className="w-full"
-              disabled={!newName.trim() || addClient.isPending}
+              disabled={
+                !newName.trim() ||
+                !selectedProvince ||
+                !selectedCity ||
+                addClient.isPending
+              }
               onClick={handleQuickCreate}
             >
               {addClient.isPending ? "Creating..." : "Create Client"}

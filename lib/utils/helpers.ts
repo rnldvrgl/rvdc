@@ -76,7 +76,8 @@ export function getCodeByName<T extends { code: string; name: string }>(
   list: T[],
   name: string,
 ): string {
-  return list.find((item) => item.name === name)?.code || ""
+  const lower = name.toLowerCase()
+  return list.find((item) => item.name.toLowerCase() === lower)?.code || ""
 }
 
 export function prepareOptions<T extends { code?: string; name: string }>(
