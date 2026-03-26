@@ -422,7 +422,7 @@ export default function ServiceFormWizard({
                     value={field.value ?? null}
                     onChange={field.onChange}
                     disabled={isSubmitting}
-                    columns={2}
+                    columns={3}
                   />
                   <FormMessage />
                 </FormItem>
