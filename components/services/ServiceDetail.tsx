@@ -1,5 +1,6 @@
 "use client"
 
+import { CardSelect } from "@/components/custom/inputs/CardSelect"
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
@@ -1292,234 +1293,280 @@ export default function ServiceDetail({
                 )
               })()}
               <Separator />
-              <div className="space-y-1.5">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Receipt Type
-                </p>
-                <Select
-                  value={serviceDocumentType}
-                  onValueChange={(value) => {
-                    const documentType = value as "or" | "si"
-                    updateService.mutate(
-                      {
-                        id: service.id,
-                        data: {
-                          document_type: documentType,
-                          with_2307:
-                            documentType === "or"
-                              ? (service.with_2307 ?? false)
-                              : false,
-                        },
-                      },
-                      {
-                        onSuccess: () => {
-                          onRefresh?.()
-                          toast.success("Receipt type updated.")
-                        },
-                      },
-                    )
-                  }}
-                  disabled={updateService.isPending}
-                >
-                  <SelectTrigger className="h-9">
-                    <SelectValue placeholder="Select receipt type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="or">Official Receipt (OR)</SelectItem>
-                    <SelectItem value="si">Sales Invoice (SI)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {serviceDocumentType === "or" && (
-                <div className="flex items-center gap-2 rounded-lg border border-dashed px-3 py-2">
-                  <Checkbox
-                    id={`service-2307-${service.id}`}
-                    checked={service.with_2307 ?? false}
-                    disabled={updateService.isPending}
-                    onCheckedChange={(checked) => {
-                      updateService.mutate(
-                        {
-                          id: service.id,
-                          data: { with_2307: checked === true },
-                        },
-                        {
-                          onSuccess: () => {
-                            onRefresh?.()
-                            toast.success("2307 setting updated.")
-                          },
-                        },
-                      )
-                    }}
-                  />
-                  <Label
-                    htmlFor={`service-2307-${service.id}`}
-                    className="cursor-pointer text-sm font-normal"
+              <div className="space-y-4 rounded-2xl border bg-muted/20 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold">Receipt Details</p>
+                    <p className="text-xs text-muted-foreground">
+                      Choose which business this receipt belongs to, then record
+                      the receipt number and book number.
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="shrink-0"
                   >
-                    This OR has BIR Form 2307
-                  </Label>
+                    {serviceDocumentType === "or" ? "Main Stall" : "Sub Stall"}
+                  </Badge>
                 </div>
-              )}
-              {/* Official Receipt Number */}
-              <div className="space-y-1.5">
-                <p className="text-sm font-medium text-muted-foreground">
-                  {serviceDocumentType === "or"
-                    ? "Official Receipt #"
-                    : "Sales Invoice #"}
-                </p>
-                {editingReceiptNumber ? (
-                  <form
-                    className="flex items-center gap-1.5"
-                    onSubmit={(e) => {
-                      e.preventDefault()
+
+                <div className="space-y-2">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Receipt Type
+                  </p>
+                  <CardSelect
+                    options={[
+                      {
+                        label: "Official Receipt",
+                        value: "or",
+                        icon: Wallet,
+                      },
+                      {
+                        label: "Sales Invoice",
+                        value: "si",
+                        icon: Package,
+                      },
+                    ]}
+                    value={serviceDocumentType}
+                    onChange={(value) => {
+                      const documentType = value as "or" | "si"
                       updateService.mutate(
                         {
                           id: service.id,
                           data: {
-                            manual_receipt_number: receiptNumberInput || null,
+                            document_type: documentType,
+                            with_2307:
+                              documentType === "or"
+                                ? (service.with_2307 ?? false)
+                                : false,
                           },
                         },
                         {
                           onSuccess: () => {
-                            setEditingReceiptNumber(false)
                             onRefresh?.()
-                            toast.success("Receipt number updated.")
+                            toast.success("Receipt type updated.")
                           },
                         },
                       )
                     }}
-                  >
-                    <Input
-                      value={receiptNumberInput}
-                      onChange={(e) => setReceiptNumberInput(e.target.value)}
-                      placeholder={
-                        serviceDocumentType === "or"
-                          ? "e.g. OR-0001"
-                          : "e.g. SI-0001"
-                      }
-                      className="h-8 w-full text-sm"
-                      autoFocus
-                    />
-                    <Button
-                      type="submit"
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 shrink-0"
+                    disabled={updateService.isPending}
+                    columns={2}
+                  />
+                </div>
+
+                {serviceDocumentType === "or" && (
+                  <div className="flex items-start gap-3 rounded-xl border bg-background/80 px-3 py-3">
+                    <Checkbox
+                      id={`service-2307-${service.id}`}
+                      checked={service.with_2307 ?? false}
                       disabled={updateService.isPending}
-                    >
-                      <CheckCircle className="h-3.5 w-3.5 text-success" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 shrink-0"
-                      onClick={() => {
-                        setEditingReceiptNumber(false)
-                        setReceiptNumberInput(
-                          service.manual_receipt_number || "",
+                      onCheckedChange={(checked) => {
+                        updateService.mutate(
+                          {
+                            id: service.id,
+                            data: { with_2307: checked === true },
+                          },
+                          {
+                            onSuccess: () => {
+                              onRefresh?.()
+                              toast.success("2307 setting updated.")
+                            },
+                          },
                         )
                       }}
-                    >
-                      <XIcon className="h-3.5 w-3.5" />
-                    </Button>
-                  </form>
-                ) : (
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer group"
-                    onClick={() => setEditingReceiptNumber(true)}
-                  >
-                    <PenLine className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
-                    {service.manual_receipt_number ? (
-                      <span className="font-medium">
-                        {service.manual_receipt_number}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        {serviceDocumentType === "or"
-                          ? "Click to set OR number"
-                          : "Click to set SI number"}
-                      </span>
-                    )}
-                  </button>
-                )}
-              </div>
-              {/* Receipt Book # */}
-              <div className="space-y-1.5">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Receipt Book #
-                </p>
-                {editingReceiptBook ? (
-                  <form
-                    className="flex items-center gap-1.5"
-                    onSubmit={(e) => {
-                      e.preventDefault()
-                      updateService.mutate(
-                        {
-                          id: service.id,
-                          data: {
-                            receipt_book: receiptBookInput || null,
-                          },
-                        },
-                        {
-                          onSuccess: () => {
-                            setEditingReceiptBook(false)
-                            onRefresh?.()
-                            toast.success("Receipt book number updated.")
-                          },
-                        },
-                      )
-                    }}
-                  >
-                    <Input
-                      value={receiptBookInput}
-                      onChange={(e) => setReceiptBookInput(e.target.value)}
-                      placeholder="e.g. 1"
-                      className="h-8 w-full text-sm"
-                      autoFocus
                     />
-                    <Button
-                      type="submit"
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 shrink-0"
-                      disabled={updateService.isPending}
-                    >
-                      <CheckCircle className="h-3.5 w-3.5 text-success" />
-                    </Button>
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="h-7 w-7 shrink-0"
-                      onClick={() => {
-                        setEditingReceiptBook(false)
-                        setReceiptBookInput(service.receipt_book || "")
-                      }}
-                    >
-                      <XIcon className="h-3.5 w-3.5" />
-                    </Button>
-                  </form>
-                ) : (
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer group"
-                    onClick={() => setEditingReceiptBook(true)}
-                  >
-                    <PenLine className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
-                    {service.receipt_book ? (
-                      <span className="font-medium">
-                        {service.receipt_book}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        Click to set receipt book #
-                      </span>
-                    )}
-                  </button>
+                    <div className="space-y-0.5">
+                      <Label
+                        htmlFor={`service-2307-${service.id}`}
+                        className="cursor-pointer text-sm font-medium"
+                      >
+                        With BIR Form 2307
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Enable this only when the OR has an attached 2307.
+                      </p>
+                    </div>
+                  </div>
                 )}
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-2 rounded-xl border bg-background/80 p-3">
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <Hash className="size-3.5" />
+                      {serviceDocumentType === "or"
+                        ? "Official Receipt #"
+                        : "Sales Invoice #"}
+                    </div>
+                    {editingReceiptNumber ? (
+                      <form
+                        className="space-y-2"
+                        onSubmit={(e) => {
+                          e.preventDefault()
+                          updateService.mutate(
+                            {
+                              id: service.id,
+                              data: {
+                                manual_receipt_number:
+                                  receiptNumberInput || null,
+                              },
+                            },
+                            {
+                              onSuccess: () => {
+                                setEditingReceiptNumber(false)
+                                onRefresh?.()
+                                toast.success("Receipt number updated.")
+                              },
+                            },
+                          )
+                        }}
+                      >
+                        <Input
+                          value={receiptNumberInput}
+                          onChange={(e) =>
+                            setReceiptNumberInput(e.target.value)
+                          }
+                          placeholder={
+                            serviceDocumentType === "or"
+                              ? "e.g. OR-0001"
+                              : "e.g. SI-0001"
+                          }
+                          className="h-9"
+                          autoFocus
+                        />
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingReceiptNumber(false)
+                              setReceiptNumberInput(
+                                service.manual_receipt_number || "",
+                              )
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            size="sm"
+                            disabled={updateService.isPending}
+                          >
+                            <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                            Save
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <button
+                        type="button"
+                        className="group flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-left text-sm transition-colors hover:border-primary/50 hover:bg-muted/50"
+                        onClick={() => setEditingReceiptNumber(true)}
+                      >
+                        <PenLine className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
+                        <div className="min-w-0">
+                          {service.manual_receipt_number ? (
+                            <p className="font-medium">
+                              {service.manual_receipt_number}
+                            </p>
+                          ) : (
+                            <p className="text-muted-foreground">
+                              {serviceDocumentType === "or"
+                                ? "Add OR number"
+                                : "Add SI number"}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            Printed receipt reference used for filing.
+                          </p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 rounded-xl border bg-background/80 p-3">
+                    <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <Wallet className="size-3.5" />
+                      Receipt Book #
+                    </div>
+                    {editingReceiptBook ? (
+                      <form
+                        className="space-y-2"
+                        onSubmit={(e) => {
+                          e.preventDefault()
+                          updateService.mutate(
+                            {
+                              id: service.id,
+                              data: {
+                                receipt_book: receiptBookInput || null,
+                              },
+                            },
+                            {
+                              onSuccess: () => {
+                                setEditingReceiptBook(false)
+                                onRefresh?.()
+                                toast.success("Receipt book number updated.")
+                              },
+                            },
+                          )
+                        }}
+                      >
+                        <Input
+                          value={receiptBookInput}
+                          onChange={(e) => setReceiptBookInput(e.target.value)}
+                          placeholder="e.g. 1"
+                          className="h-9"
+                          autoFocus
+                        />
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setEditingReceiptBook(false)
+                              setReceiptBookInput(service.receipt_book || "")
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            type="submit"
+                            size="sm"
+                            disabled={updateService.isPending}
+                          >
+                            <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                            Save
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <button
+                        type="button"
+                        className="group flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2.5 text-left text-sm transition-colors hover:border-primary/50 hover:bg-muted/50"
+                        onClick={() => setEditingReceiptBook(true)}
+                      >
+                        <PenLine className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover:text-primary" />
+                        <div className="min-w-0">
+                          {service.receipt_book ? (
+                            <p className="font-medium">
+                              {service.receipt_book}
+                            </p>
+                          ) : (
+                            <p className="text-muted-foreground">
+                              Add receipt book #
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            Useful when the same receipt number exists in more
+                            than one book.
+                          </p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
-              {/* Transaction Date (for backdating) — admin only */}
               {isAdmin && (
                 <div className="space-y-1.5">
                   <p className="text-sm font-medium text-muted-foreground">
