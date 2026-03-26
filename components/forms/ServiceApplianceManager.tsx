@@ -432,7 +432,7 @@ export default function ServiceApplianceManager({
             : null,
       }
 
-      if (data.unit_type === "second_hand" || data.unit_type === "pre_order") {
+      if (data.unit_type === "second_hand") {
         payload.model = ""
         payload.serial_number = ""
       }
@@ -1514,6 +1514,7 @@ function ApplianceCard({
           <div className="flex items-center gap-2 flex-wrap">
             <h4 className="text-sm font-semibold">
               {appliance.appliance_type?.name ||
+                appliance.aircon_model_name ||
                 (appliance.brand && appliance.model
                   ? `${appliance.brand} ${appliance.model}`
                   : "Unknown Appliance")}
