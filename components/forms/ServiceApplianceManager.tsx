@@ -404,6 +404,11 @@ export default function ServiceApplianceManager({
             ? Math.round(data.unit_price * 100) / 100
             : null,
       }
+
+      if (data.unit_type === "second_hand") {
+        payload.model = ""
+        payload.serial_number = ""
+      }
     }
 
     try {
@@ -617,7 +622,7 @@ export default function ServiceApplianceManager({
                         <div>
                           <div className="text-sm font-medium">Second Hand</div>
                           <div className="text-xs text-muted-foreground">
-                            Enter details manually
+                            Enter brand and optional price
                           </div>
                         </div>
                       </label>
@@ -762,29 +767,6 @@ export default function ServiceApplianceManager({
                           value={brand || ""}
                           onChange={(e) => setField("brand", e.target.value)}
                           placeholder="e.g., Samsung, LG, Carrier"
-                        />
-                      </div>
-                      <div className="space-y-2 col-span-2">
-                        <Label className="text-sm font-medium">Model</Label>
-                        <Input
-                          value={model || ""}
-                          onChange={(e) => setField("model", e.target.value)}
-                          placeholder="Model number"
-                        />
-                      </div>
-                      <div className="space-y-2 col-span-2">
-                        <Label className="text-sm font-medium">
-                          Serial Number{" "}
-                          <span className="text-muted-foreground text-xs">
-                            (optional)
-                          </span>
-                        </Label>
-                        <Input
-                          value={serialNumber || ""}
-                          onChange={(e) =>
-                            setField("serial_number", e.target.value)
-                          }
-                          placeholder="Serial number of unit"
                         />
                       </div>
                       <div className="space-y-2 col-span-2">
