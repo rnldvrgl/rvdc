@@ -7,33 +7,33 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
-  CustomItemTemplate,
-  Item,
-  ServiceItemUsed,
-  Stock,
+    CustomItemTemplate,
+    Item,
+    ServiceItemUsed,
+    Stock,
 } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
@@ -70,7 +70,6 @@ export default function ServicePartsManager({
   const [discountReason, setDiscountReason] = useState("")
   const [isFree, setIsFree] = useState(false)
   const [isCustom, setIsCustom] = useState(false)
-  const [customDescription, setCustomDescription] = useState("")
   const [customPrice, setCustomPrice] = useState("")
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null,
@@ -82,7 +81,6 @@ export default function ServicePartsManager({
       itemId: number | null
       itemName: string
       quantity: string
-      customDescription: string
       customPrice: string
       isFree: boolean
       discountValue: string
@@ -124,8 +122,8 @@ export default function ServicePartsManager({
 
   const handleSavePart = async () => {
     if (isCustom) {
-      if (!customDescription.trim() || !customPrice || !quantity) {
-        toast.error("Please fill in description, price, and quantity")
+      if (!customPrice || !quantity) {
+        toast.error("Please fill in price and quantity")
         return
       }
     } else {
@@ -151,7 +149,6 @@ export default function ServicePartsManager({
       ? {
           service: serviceId,
           item: null as null,
-          custom_description: customDescription.trim(),
           custom_price: Math.round(parseFloat(customPrice) * 100) / 100,
           quantity: roundedQty,
           is_free: isFree,
@@ -182,7 +179,6 @@ export default function ServicePartsManager({
       setQuantity("1")
       setIsFree(false)
       setIsCustom(false)
-      setCustomDescription("")
       setCustomPrice("")
       setSelectedTemplateId(null)
       setDiscountValue("")
@@ -217,8 +213,8 @@ export default function ServicePartsManager({
 
   const handleAddToList = () => {
     if (isCustom) {
-      if (!customDescription.trim() || !customPrice || !quantity) {
-        toast.error("Please fill in description, price, and quantity")
+      if (!customPrice || !quantity) {
+        toast.error("Please fill in price and quantity")
         return
       }
     } else {
@@ -235,7 +231,7 @@ export default function ServicePartsManager({
     }
 
     const itemName = isCustom
-      ? customDescription.trim()
+      ? "Custom Item"
       : items.find((i) => i.id === selectedItemId)?.name || "Unknown"
 
     setPendingItems((prev) => [
@@ -246,7 +242,6 @@ export default function ServicePartsManager({
         itemId: isCustom ? null : selectedItemId,
         itemName,
         quantity,
-        customDescription: customDescription.trim(),
         customPrice,
         isFree,
         discountValue,
@@ -259,7 +254,6 @@ export default function ServicePartsManager({
     setQuantity("1")
     setIsFree(false)
     setIsCustom(false)
-    setCustomDescription("")
     setCustomPrice("")
     setSelectedTemplateId(null)
     setDiscountValue("")
@@ -288,7 +282,6 @@ export default function ServicePartsManager({
         ? {
             service: serviceId,
             item: null as null,
-            custom_description: item.customDescription,
             custom_price: Math.round(parseFloat(item.customPrice) * 100) / 100,
             quantity: roundedQty,
             is_free: item.isFree,
@@ -351,14 +344,12 @@ export default function ServicePartsManager({
   const handleEditPart = (part: ServiceItemUsed) => {
     setEditingPartId(part.id)
 
-    if (!part.item && !!part.custom_description) {
+    if (!part.item && !!part.custom_price) {
       setIsCustom(true)
-      setCustomDescription(part.custom_description || "")
       setCustomPrice(part.custom_price || "")
       setSelectedItemId(null)
     } else {
       setIsCustom(false)
-      setCustomDescription("")
       setCustomPrice("")
       setSelectedItemId(part.item)
     }
@@ -631,7 +622,6 @@ export default function ServicePartsManager({
             setQuantity("1")
             setIsFree(false)
             setIsCustom(false)
-            setCustomDescription("")
             setCustomPrice("")
             setDiscountValue("")
             setDiscountReason("")
@@ -792,7 +782,6 @@ export default function ServicePartsManager({
                   if (checked === true) {
                     setSelectedItemId(null)
                   } else {
-                    setCustomDescription("")
                     setCustomPrice("")
                   }
                 }}
@@ -808,15 +797,6 @@ export default function ServicePartsManager({
 
             {isCustom ? (
               <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Input
-                    value={customDescription}
-                    onChange={(e) => setCustomDescription(e.target.value)}
-                    placeholder="e.g., Copper tubing 1/4 inch"
-                    disabled={isDialogBusy}
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label>Unit Price (₱)</Label>
                   <Input
@@ -843,8 +823,7 @@ export default function ServicePartsManager({
                         if (id) {
                           const tpl = templates.find((t) => t.id === id)
                           if (tpl) {
-                            setCustomDescription(tpl.name)
-                            setCustomPrice(tpl.default_price)
+                          setCustomPrice(tpl.default_price)
                           }
                         }
                       }}
@@ -1147,7 +1126,7 @@ export default function ServicePartsManager({
                 disabled={
                   isDialogBusy ||
                   (isCustom
-                    ? !customDescription.trim() || !customPrice || !quantity
+                    ? !customPrice || !quantity
                     : !selectedItemId || !quantity)
                 }
               >
@@ -1164,7 +1143,7 @@ export default function ServicePartsManager({
                   disabled={
                     isDialogBusy ||
                     (isCustom
-                      ? !customDescription.trim() || !customPrice || !quantity
+                      ? !customPrice || !quantity
                       : !selectedItemId || !quantity)
                   }
                 >
