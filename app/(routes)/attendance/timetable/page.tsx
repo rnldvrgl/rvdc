@@ -62,7 +62,8 @@ const AttendancePage = () => {
       {
         title: "Leave Days",
         value: String(stats.leaveCount),
-        description: "Approved leave days visible in your attendance month view.",
+        description:
+          "Approved leave days visible in your attendance month view.",
       },
     ],
     [stats.leaveCount, stats.pendingCount, stats.totalHours],
@@ -104,9 +105,15 @@ const AttendancePage = () => {
                 className="border-border/60"
               >
                 <CardContent className="p-5">
-                  <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
-                  <div className="mt-2 text-3xl font-semibold">{card.value}</div>
-                  <p className="mt-2 text-sm text-muted-foreground">{card.description}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {card.title}
+                  </p>
+                  <div className="mt-2 text-3xl font-semibold">
+                    {card.value}
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {card.description}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -147,7 +154,8 @@ const AttendancePage = () => {
                   Monthly Calendar
                 </CardTitle>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  View your attendance pattern for the month, including late, leave, and absent days.
+                  View your attendance pattern for the month, including late,
+                  leave, and absent days.
                 </p>
               </div>
               <Button

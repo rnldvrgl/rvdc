@@ -15,8 +15,8 @@ import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import { useNavigation } from "@/lib/hooks/useNavigation"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
-import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { useDailyAttendances } from "@/lib/queries/useAttendance"
+import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { convertAttendanceForCalendar } from "@/lib/utils/attendance"
 import { formatDateToYMD } from "@/lib/utils/helpers"
 import {
@@ -28,6 +28,7 @@ import {
   X,
 } from "lucide-react"
 import { useMemo, useState } from "react"
+import { toast } from "sonner"
 
 type AttendanceDraftSeed = {
   date?: Date
@@ -38,9 +39,13 @@ export default function AttendanceRecordsPage() {
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const { push } = useNavigation()
-  const { data: employees = [] } = useEmployeeChoices({ includeInPayroll: true })
+  const { data: employees = [] } = useEmployeeChoices({
+    includeInPayroll: true,
+  })
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [attendanceToDelete, setAttendanceToDelete] = useState<number | null>(null)
+  const [attendanceToDelete, setAttendanceToDelete] = useState<number | null>(
+    null,
+  )
   const [draftSeed, setDraftSeed] = useState<AttendanceDraftSeed>({})
   const [addOpen, setAddOpen] = useState(false)
 
@@ -71,7 +76,11 @@ export default function AttendanceRecordsPage() {
   } = useEntitySheet<DailyAttendance>()
 
   const employeeOptions = useMemo(
-    () => employees.map((employee) => ({ label: employee.full_name, value: String(employee.id) })),
+    () =>
+      employees.map((employee) => ({
+        label: employee.full_name,
+        value: String(employee.id),
+      })),
     [employees],
   )
 
@@ -201,6 +210,27 @@ export default function AttendanceRecordsPage() {
       rejectAttendance.mutate({ attendance_ids: [attendance.id] }),
   })
 
+  const handleBulkApprove = async (rows: DailyAttendance[]) => {
+    if (rows.length === 0) return
+    await approveAttendance.mutateAsync({
+      attendance_ids: rows.map((row) => row.id),
+    })
+  }
+
+  const handleBulkReject = async (rows: DailyAttendance[]) => {
+    if (rows.length === 0) return
+    await rejectAttendance.mutateAsync({
+      attendance_ids: rows.map((row) => row.id),
+    })
+  }
+
+  const handleBulkArchive = async (rows: DailyAttendance[]) => {
+    if (rows.length === 0) return
+
+    await Promise.all(rows.map((row) => deleteAttendance.mutateAsync(row.id)))
+    toast.success(`${rows.length} attendance record(s) archived.`)
+  }
+
   return (
     <Wrapper>
       <div className="space-y-4 md:space-y-6">
@@ -211,7 +241,18 @@ export default function AttendanceRecordsPage() {
           onRefresh={refetch}
           isAdminOnly
           actionButton={
-            <Button onClick={() => openCreateSheet()}>
+            <Button
+              onClick={() =>
+                openCreateSheet({
+                  date: selectedDate
+                    ? new Date(String(selectedDate))
+                    : undefined,
+                  employeeId: filter?.employee_id
+                    ? Number.parseInt(String(filter.employee_id), 10)
+                    : undefined,
+                })
+              }
+            >
               <Plus className="mr-2 size-4" />
               Add Attendance
             </Button>
@@ -225,7 +266,9 @@ export default function AttendanceRecordsPage() {
                 Visible Records
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-3xl font-semibold">{stats.total}</CardContent>
+            <CardContent className="text-3xl font-semibold">
+              {stats.total}
+            </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
@@ -267,7 +310,8 @@ export default function AttendanceRecordsPage() {
             <div>
               <CardTitle className="text-lg">Calendar</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Click a day to focus the table. Empty dates open the add-attendance sheet immediately.
+                Click a day to focus the table. Empty dates open the
+                add-attendance sheet immediately.
               </p>
             </div>
 
@@ -297,6 +341,7 @@ export default function AttendanceRecordsPage() {
 
         <DataTable
           enableVirtualization
+          enableRowSelection
           title="Daily Attendance Records"
           description="Full manual CRUD for attendance records with approval actions built in."
           columns={columns}
@@ -312,6 +357,26 @@ export default function AttendanceRecordsPage() {
           filters={filters}
           orderingOptions={orderingOptions}
           onRefresh={refetch}
+          bulkActions={[
+            {
+              label: "Approve Selected",
+              icon: CheckCircle2,
+              variant: "outline",
+              onClick: handleBulkApprove,
+            },
+            {
+              label: "Reject Selected",
+              icon: X,
+              variant: "destructive",
+              onClick: handleBulkReject,
+            },
+            {
+              label: "Archive Selected",
+              icon: ClipboardList,
+              variant: "destructive",
+              onClick: handleBulkArchive,
+            },
+          ]}
           emptyTitle="No attendance records found"
           emptyDescription="Adjust filters or click a date on the calendar to add the first record for that day."
         />

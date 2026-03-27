@@ -5,7 +5,9 @@ import {
   AwolBadge,
 } from "@/components/custom/attendance/AttendanceBadges"
 import { UniformPenaltyCheckboxes } from "@/components/custom/attendance/UniformPenaltyCheckboxes"
+import EntitySheet from "@/components/custom/shared/EntitySheet"
 import { DataTable } from "@/components/custom/table/DataTable"
+import AttendanceForm from "@/components/forms/AttendanceForm"
 import { Button } from "@/components/ui/button"
 import {
   Drawer,
@@ -24,6 +26,7 @@ import {
 } from "@/components/ui/tooltip"
 import { DailyAttendance } from "@/lib/constants/types"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
 import { usePendingAttendanceApprovals } from "@/lib/queries/useAttendance"
@@ -39,6 +42,7 @@ import {
   CheckCircle,
   Clock,
   Loader2,
+  Pencil,
   ShirtIcon,
   XCircle,
 } from "lucide-react"
@@ -52,6 +56,11 @@ export function AttendanceApproval() {
   >(null)
   const [drawerAttendance, setDrawerAttendance] =
     useState<DailyAttendance | null>(null)
+  const {
+    entityState: { open: editOpen, entity },
+    openEntity: openEdit,
+    closeEntity: closeEdit,
+  } = useEntitySheet<DailyAttendance>()
 
   // Check if user can approve
   const hasApprovalRights = canApprove(role || "")
@@ -220,6 +229,19 @@ export function AttendanceApproval() {
                       size="icon"
                       variant="ghost"
                       className="h-8 w-8"
+                      onClick={() => openEdit(attendance)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Edit</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
                       onClick={() => setDrawerAttendance(attendance)}
                     >
                       <ShirtIcon className="h-4 w-4" />
@@ -349,6 +371,23 @@ export function AttendanceApproval() {
           </DrawerFooter>
         </DrawerContent>
       </Drawer>
+
+      <EntitySheet<DailyAttendance>
+        open={editOpen}
+        onClose={closeEdit}
+        entity={entity}
+        title="Edit Attendance"
+        description="Adjust clock details, notes, and penalties from pending approvals."
+        withCloseConfirmation
+        renderForm={({ forceClose, entity: attendance }) => (
+          <AttendanceForm
+            attendance={attendance}
+            onClose={closeEdit}
+            forceClose={forceClose}
+          />
+        )}
+        className="min-w-xl"
+      />
     </>
   )
 }

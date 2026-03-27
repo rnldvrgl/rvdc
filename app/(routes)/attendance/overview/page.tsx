@@ -41,7 +41,10 @@ const AttendanceOverviewPage = () => {
   const [selectedEmployee, setSelectedEmployee] =
     useState<SelectedEmployeeType>(undefined)
 
-  const employeeChoices = employeeChoicesData || []
+  const employeeChoices = useMemo(
+    () => employeeChoicesData ?? [],
+    [employeeChoicesData],
+  )
 
   // Get current month date range for filtering
   const now = new Date()
@@ -108,7 +111,8 @@ const AttendanceOverviewPage = () => {
     () => [
       {
         title: "Manual Records",
-        description: "Add, edit, archive, or approve attendance records without Django admin.",
+        description:
+          "Add, edit, archive, or approve attendance records without Django admin.",
         href: {
           pathname: "/attendance/records",
           query: {
@@ -119,13 +123,15 @@ const AttendanceOverviewPage = () => {
       },
       {
         title: "Leaves",
-        description: "Review leave requests and balances alongside attendance exceptions.",
+        description:
+          "Review leave requests and balances alongside attendance exceptions.",
         href: { pathname: "/attendance/leaves", query: {} },
         icon: Plane,
       },
       {
         title: "Team Focus",
-        description: "Use employee filtering to inspect one person’s month before opening their records.",
+        description:
+          "Use employee filtering to inspect one person’s month before opening their records.",
         href: { pathname: "/attendance/overview", query: {} },
         icon: UserRoundSearch,
       },
@@ -190,7 +196,8 @@ const AttendanceOverviewPage = () => {
                     Monthly Attendance Calendar
                   </CardTitle>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Click any day to jump straight into the admin records workspace for that date.
+                    Click any day to jump straight into the admin records
+                    workspace for that date.
                   </p>
                 </div>
               </div>
@@ -235,7 +242,9 @@ const AttendanceOverviewPage = () => {
                         <Icon className="h-4 w-4 text-primary" />
                         {link.title}
                       </div>
-                      <p className="text-sm text-muted-foreground">{link.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {link.description}
+                      </p>
                     </div>
                     <Button
                       asChild

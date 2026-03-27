@@ -9,13 +9,7 @@ import {
 } from "@/lib/utils/attendance"
 import { safeCell } from "@/lib/utils/helpers"
 import { ColumnDef, Row } from "@tanstack/react-table"
-import {
-  Archive,
-  CheckCircle2,
-  Clock3,
-  Edit,
-  XCircle,
-} from "lucide-react"
+import { Archive, CheckCircle2, Clock3, Edit, XCircle } from "lucide-react"
 
 interface GetAttendanceColumnsProps {
   onEdit: (attendance: DailyAttendance) => void
@@ -42,7 +36,9 @@ export function getAttendanceColumns({
       header: "Employee",
       cell: ({ row }: { row: Row<DailyAttendance> }) => (
         <div className="flex flex-col">
-          <span className="font-medium">{safeCell(row.original.employee_name)}</span>
+          <span className="font-medium">
+            {safeCell(row.original.employee_name)}
+          </span>
           <span className="text-xs text-muted-foreground">
             {safeCell(row.original.notes || "No notes")}
           </span>
@@ -53,7 +49,9 @@ export function getAttendanceColumns({
       accessorKey: "date",
       header: "Date",
       cell: ({ row }: { row: Row<DailyAttendance> }) => (
-        <div className="font-medium">{formatAttendanceDate(row.original.date)}</div>
+        <div className="font-medium">
+          {formatAttendanceDate(row.original.date)}
+        </div>
       ),
     },
     {
@@ -99,7 +97,9 @@ export function getAttendanceColumns({
       accessorKey: "late_penalty_amount",
       header: "Late Penalty",
       cell: ({ row }: { row: Row<DailyAttendance> }) => (
-        <span className="text-sm">{formatMoney(row.original.late_penalty_amount)}</span>
+        <span className="text-sm">
+          {formatMoney(row.original.late_penalty_amount)}
+        </span>
       ),
     },
     {
