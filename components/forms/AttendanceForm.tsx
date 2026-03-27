@@ -1,7 +1,7 @@
 "use client"
 
-import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import DatePicker from "@/components/custom/inputs/DatePicker"
+import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -71,7 +71,8 @@ const attendanceFormSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["clock_in"],
-        message: "Clock-in is required unless the record is marked absent, leave, or shop closed.",
+        message:
+          "Clock-in is required unless the record is marked absent, leave, or shop closed.",
       })
     }
 
@@ -95,7 +96,8 @@ const attendanceFormSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["attendance_type"],
-        message: "Absent, leave, and shop-closed records cannot include clock times.",
+        message:
+          "Absent, leave, and shop-closed records cannot include clock times.",
       })
     }
   })
@@ -108,6 +110,17 @@ interface AttendanceFormProps {
   initialEmployeeId?: number
   onClose: () => void
   forceClose?: () => void
+}
+
+type AttendanceFormStatus = "PENDING" | "APPROVED" | "REJECTED"
+
+const normalizeFormStatus = (
+  status?: AttendanceStatus | null,
+): AttendanceFormStatus => {
+  if (status === "APPROVED" || status === "REJECTED") {
+    return status
+  }
+  return "PENDING"
 }
 
 const buildDefaultValues = ({
@@ -127,11 +140,11 @@ const buildDefaultValues = ({
 
   return {
     employee: attendance?.employee ?? initialEmployeeId ?? 0,
-    date: attendance ? new Date(attendance.date) : initialDate ?? new Date(),
+    date: attendance ? new Date(attendance.date) : (initialDate ?? new Date()),
     clock_in: attendance?.clock_in ? new Date(attendance.clock_in) : null,
     clock_out: attendance?.clock_out ? new Date(attendance.clock_out) : null,
     attendance_type: attendanceType,
-    status: (attendance?.status ?? "PENDING") as AttendanceStatus,
+    status: normalizeFormStatus(attendance?.status),
     missing_uniform_shirt: attendance?.missing_uniform_shirt ?? false,
     missing_uniform_pants: attendance?.missing_uniform_pants ?? false,
     missing_uniform_shoes: attendance?.missing_uniform_shoes ?? false,
@@ -237,7 +250,9 @@ export default function AttendanceForm({
         <Alert className="border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-100">
           <Sparkles className="h-4 w-4" />
           <AlertDescription className="text-sm">
-            Records with clock times are auto-calculated by the backend for late penalties, paid hours, and attendance type. Use a manual type only for absence, leave, or shop-closed entries.
+            Records with clock times are auto-calculated by the backend for late
+            penalties, paid hours, and attendance type. Use a manual type only
+            for absence, leave, or shop-closed entries.
           </AlertDescription>
         </Alert>
 
@@ -249,7 +264,9 @@ export default function AttendanceForm({
               <FormItem>
                 <FormLabel required>Employee</FormLabel>
                 <Select
-                  onValueChange={(value) => field.onChange(Number.parseInt(value, 10))}
+                  onValueChange={(value) =>
+                    field.onChange(Number.parseInt(value, 10))
+                  }
                   value={field.value ? String(field.value) : ""}
                   disabled={!!attendance}
                 >
@@ -334,7 +351,8 @@ export default function AttendanceForm({
                   />
                 </FormControl>
                 <FormDescription>
-                  Optional for incomplete records. The admin can save a clock-in first and finish the record later.
+                  Optional for incomplete records. The admin can save a clock-in
+                  first and finish the record later.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -359,7 +377,9 @@ export default function AttendanceForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="AUTO">Auto-calculate from times</SelectItem>
+                    <SelectItem value="AUTO">
+                      Auto-calculate from times
+                    </SelectItem>
                     <SelectItem value="ABSENT">Absent</SelectItem>
                     <SelectItem value="LEAVE">Leave</SelectItem>
                     <SelectItem value="SHOP_CLOSED">Shop Closed</SelectItem>
@@ -371,7 +391,8 @@ export default function AttendanceForm({
                   </SelectContent>
                 </Select>
                 <FormDescription>
-                  Use manual values only when you intentionally want a non-clocked record.
+                  Use manual values only when you intentionally want a
+                  non-clocked record.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -420,11 +441,15 @@ export default function AttendanceForm({
                   <FormControl>
                     <Checkbox
                       checked={field.value}
-                      onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                      onCheckedChange={(checked) =>
+                        field.onChange(Boolean(checked))
+                      }
                     />
                   </FormControl>
                   <div>
-                    <FormLabel className="cursor-pointer">Missing shirt</FormLabel>
+                    <FormLabel className="cursor-pointer">
+                      Missing shirt
+                    </FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -438,11 +463,15 @@ export default function AttendanceForm({
                   <FormControl>
                     <Checkbox
                       checked={field.value}
-                      onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                      onCheckedChange={(checked) =>
+                        field.onChange(Boolean(checked))
+                      }
                     />
                   </FormControl>
                   <div>
-                    <FormLabel className="cursor-pointer">Missing pants</FormLabel>
+                    <FormLabel className="cursor-pointer">
+                      Missing pants
+                    </FormLabel>
                   </div>
                 </FormItem>
               )}
@@ -456,11 +485,15 @@ export default function AttendanceForm({
                   <FormControl>
                     <Checkbox
                       checked={field.value}
-                      onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                      onCheckedChange={(checked) =>
+                        field.onChange(Boolean(checked))
+                      }
                     />
                   </FormControl>
                   <div>
-                    <FormLabel className="cursor-pointer">Missing shoes</FormLabel>
+                    <FormLabel className="cursor-pointer">
+                      Missing shoes
+                    </FormLabel>
                   </div>
                 </FormItem>
               )}
