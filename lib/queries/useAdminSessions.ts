@@ -1,5 +1,4 @@
-import api from "@/lib/utils/api"
-import { useQuery } from "@tanstack/react-query"
+import { useApiQuery } from "@/lib/hooks/useApiQuery"
 
 export interface AdminSession {
   id: number
@@ -28,26 +27,13 @@ interface UseAdminSessionsOptions {
 }
 
 export function useAdminSessions(options?: UseAdminSessionsOptions) {
-  return useQuery({
+  const params: Record<string, unknown> = {}
+  if (options?.userId) params.user_id = options.userId
+  if (options?.includeRevoked) params.include_revoked = "true"
+
+  return useApiQuery<AdminSession[]>({
     queryKey: ["admin-sessions", options?.userId, options?.includeRevoked],
-    queryFn: async (): Promise<AdminSession[]> => {
-      const params = new URLSearchParams()
-      if (options?.userId) {
-        params.append("user_id", String(options.userId))
-      }
-      if (options?.includeRevoked) {
-        params.append("include_revoked", "true")
-      }
-
-      const queryString = params.toString()
-      const url = queryString
-        ? `/auth/admin/sessions/?${queryString}`
-        : "/auth/admin/sessions/"
-
-      const response = await api.get<AdminSession[]>(url)
-      return response.data
-    },
-    staleTime: 1000 * 60, // 1 minute
-    gcTime: 1000 * 60 * 5, // 5 minutes
+    url: "/auth/admin/sessions/",
+    params,
   })
 }
