@@ -417,7 +417,9 @@ export function DataTable<TData, TValue>({
     const presetStart = preset?.range.from
       ? formatBackDate(preset.range.from)
       : undefined
-    const presetEnd = preset?.range.to ? formatBackDate(preset.range.to) : undefined
+    const presetEnd = preset?.range.to
+      ? formatBackDate(preset.range.to)
+      : undefined
 
     const matchesPresetStart = filter?.start_date === presetStart
     const matchesPresetEnd = filter?.end_date === presetEnd
