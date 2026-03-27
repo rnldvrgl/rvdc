@@ -540,6 +540,19 @@ export type ClockOutPayload = {
   notes?: string
 }
 
+export type AttendancePayload = {
+  employee: number
+  date: string
+  clock_in?: string | null
+  clock_out?: string | null
+  attendance_type?: AttendanceType
+  status?: Exclude<AttendanceStatus, "NONE">
+  missing_uniform_shirt?: boolean
+  missing_uniform_pants?: boolean
+  missing_uniform_shoes?: boolean
+  notes?: string
+}
+
 export type ApproveAttendancePayload = {
   attendance_ids: number[]
 }

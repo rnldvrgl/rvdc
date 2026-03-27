@@ -151,6 +151,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: "manage_attendance_admin",
       },
       {
+        name: "Records",
+        href: "/attendance/records",
+        icon: ClipboardList,
+        permission: "manage_attendance_admin",
+      },
+      {
         name: "Timetable",
         href: "/attendance/timetable",
         icon: CalendarDays,

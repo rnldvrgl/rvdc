@@ -1,6 +1,7 @@
 "use client"
 
 import {
+  AttendancePayload,
   ApproveAttendancePayload,
   ApproveLeavePayload,
   ClockInPayload,
@@ -45,6 +46,12 @@ export function useAttendanceMutations() {
     { queryKey: ["pending-attendance-approvals"] },
     { queryKey: ["current-attendance-status"] },
   ]
+
+  const createAttendance = useApiMutation({
+    mutationFn: (data: AttendancePayload) => api.post(attendanceUrl, data),
+    successMessage: "Attendance created successfully.",
+    invalidateQueries: sharedInvalidations,
+  })
 
   const clockIn = useApiMutation({
     mutationFn: (data: ClockInPayload) =>
@@ -104,8 +111,13 @@ export function useAttendanceMutations() {
   })
 
   const updateAttendance = useApiMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<ClockInPayload> }) =>
-      api.patch(`${attendanceUrl}${id}/`, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number
+      data: Partial<AttendancePayload>
+    }) => api.patch(`${attendanceUrl}${id}/`, data),
     successMessage: "Attendance updated successfully.",
     invalidateQueries: sharedInvalidations,
     onSuccess: (_, { id }) => {
@@ -174,6 +186,7 @@ export function useAttendanceMutations() {
   })
 
   return {
+    createAttendance,
     clockIn,
     clockOut,
     approveAttendance,
