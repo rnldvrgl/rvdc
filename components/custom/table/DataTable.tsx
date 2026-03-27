@@ -29,12 +29,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { DATE_RANGE_PRESETS } from "@/lib/constants/general"
 import { FilterDefinition, SortOption } from "@/lib/constants/interface"
 import { DateRangePresetLabel, PaginatedResult } from "@/lib/constants/types"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useNavigation } from "@/lib/hooks/useNavigation"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { cn } from "@/lib/utils/helpers"
+import { formatBackDate } from "@/lib/utils/helpers/date"
 import {
   ArrowUpDown,
   Database,
@@ -403,11 +405,32 @@ export function DataTable<TData, TValue>({
     URL.revokeObjectURL(url)
   }, [data.results, exportFileName, table])
 
-  const hasActiveFilters = React.useMemo(() => {
-    return Boolean(
-      search || ordering || (filter && Object.keys(filter).length > 0),
+  const activeFilterKeys = React.useMemo(() => {
+    const keys = Object.keys(filter ?? {})
+    if (keys.length === 0) return []
+
+    if (!defaultRangePreset) return keys
+
+    const preset = DATE_RANGE_PRESETS.find(
+      (item) => item.label === defaultRangePreset,
     )
-  }, [search, filter, ordering])
+    const presetStart = preset?.range.from
+      ? formatBackDate(preset.range.from)
+      : undefined
+    const presetEnd = preset?.range.to ? formatBackDate(preset.range.to) : undefined
+
+    const matchesPresetStart = filter?.start_date === presetStart
+    const matchesPresetEnd = filter?.end_date === presetEnd
+    const hasDefaultPresetRange = matchesPresetStart && matchesPresetEnd
+
+    if (!hasDefaultPresetRange) return keys
+
+    return keys.filter((key) => key !== "start_date" && key !== "end_date")
+  }, [filter, defaultRangePreset])
+
+  const hasActiveFilters = React.useMemo(() => {
+    return Boolean(search || ordering || activeFilterKeys.length > 0)
+  }, [search, ordering, activeFilterKeys])
 
   const clearFilters = () => {
     setLocalSearch("")
@@ -546,15 +569,15 @@ export function DataTable<TData, TValue>({
               </span>
             </Badge>
           )}
-          {filter && Object.keys(filter).length > 0 && (
+          {activeFilterKeys.length > 0 && (
             <Badge
               variant="default"
               className="gap-1.5 h-7 bg-purple-500 hover:bg-purple-600"
             >
               <Filter className="size-3" />
               <span className="text-xs">
-                {Object.keys(filter).length} filter
-                {Object.keys(filter).length !== 1 ? "s" : ""}
+                {activeFilterKeys.length} filter
+                {activeFilterKeys.length !== 1 ? "s" : ""}
               </span>
             </Badge>
           )}

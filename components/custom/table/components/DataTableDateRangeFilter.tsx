@@ -9,6 +9,13 @@ import { formatBackDate } from "@/lib/utils/helpers/date"
 import { useCallback, useEffect, useMemo, useRef } from "react"
 import { DateRange } from "react-day-picker"
 
+const parseLocalDate = (value?: string): Date | undefined => {
+  if (!value) return undefined
+  const [year, month, day] = value.split("-").map(Number)
+  if (!year || !month || !day) return undefined
+  return new Date(year, month - 1, day)
+}
+
 export function DataTableDateRangeFilter({
   defaultRangePreset,
   className,
@@ -27,6 +34,20 @@ export function DataTableDateRangeFilter({
     () => (defaultRangePreset ? computedDefaultRange : undefined),
     [computedDefaultRange, defaultRangePreset],
   )
+
+  const currentRange = useMemo(() => {
+    const from = parseLocalDate(filter?.start_date)
+    const to = parseLocalDate(filter?.end_date)
+
+    if (from || to) {
+      return {
+        from,
+        to,
+      }
+    }
+
+    return defaultRange
+  }, [filter?.start_date, filter?.end_date, defaultRange])
 
   const hasInitialized = useRef(false)
 
@@ -66,6 +87,7 @@ export function DataTableDateRangeFilter({
 
   return (
     <DataTableDateRangePicker
+      value={currentRange}
       defaultValue={defaultRange}
       onChange={handleChange}
       className={className}

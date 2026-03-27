@@ -11,38 +11,62 @@ import { DATE_RANGE_PRESETS } from "@/lib/constants/general"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { DateRange } from "react-day-picker"
 
+const EMPTY_DATE_RANGE: DateRange = { from: undefined, to: undefined }
+
 interface DataTableDateRangePickerProps {
+  value?: DateRange
   defaultValue?: DateRange
   onChange?: (range: DateRange) => void
   className?: string
 }
 
 export const DataTableDateRangePicker = ({
-  defaultValue = { from: undefined, to: undefined },
+  value,
+  defaultValue = EMPTY_DATE_RANGE,
   onChange,
   className,
 }: DataTableDateRangePickerProps) => {
   const [open, setOpen] = useState(false)
-  const [date, setDate] = useState<DateRange>(defaultValue)
+  const [internalDate, setInternalDate] = useState<DateRange>(
+    value ?? defaultValue,
+  )
+
+  useEffect(() => {
+    setInternalDate((prev) => {
+      const next = value ?? defaultValue
+      const prevFromTime = prev.from?.getTime()
+      const prevToTime = prev.to?.getTime()
+      const nextFromTime = next.from?.getTime()
+      const nextToTime = next.to?.getTime()
+
+      if (prevFromTime === nextFromTime && prevToTime === nextToTime) {
+        return prev
+      }
+
+      return next
+    })
+  }, [value, defaultValue])
+
+  const date = value ?? internalDate
 
   const handleSelect = (range: DateRange | undefined) => {
     if (!range?.from) return
-    setDate(range)
+    setInternalDate(range)
     onChange?.(range)
   }
 
   const handlePreset = (range: DateRange) => {
-    setDate(range)
+    setInternalDate(range)
     onChange?.(range)
     setOpen(false)
   }
 
   const handleClear = () => {
     const emptyRange = { from: undefined, to: undefined }
-    setDate(emptyRange)
+    setInternalDate(emptyRange)
     onChange?.(emptyRange)
     setOpen(false)
   }
