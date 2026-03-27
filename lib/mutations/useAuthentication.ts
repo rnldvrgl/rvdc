@@ -4,6 +4,7 @@ import { LoginFormValues } from "@/lib/constants/types"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import useUserProfileStore from "@/lib/store/useUserProfileStore"
 import api from "@/lib/utils/api"
+import { getOrCreateDeviceId } from "@/lib/utils/device"
 import { removeToken, setToken } from "@/lib/utils/tokens"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -15,7 +16,11 @@ export function useAuthentications() {
 
     return useApiMutation({
       mutationFn: async (values: LoginFormValues) => {
-        const response = await api.post("/auth/login/", values)
+        const deviceId = getOrCreateDeviceId()
+        const response = await api.post("/auth/login/", {
+          ...values,
+          device_id: deviceId,
+        })
         return response.data
       },
       onSuccess: async (data) => {
