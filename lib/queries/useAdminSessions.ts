@@ -41,8 +41,8 @@ export function useAdminSessions(options?: UseAdminSessionsOptions) {
 
       const queryString = params.toString()
       const url = queryString
-        ? `/api/auth/admin/sessions/?${queryString}`
-        : "/api/auth/admin/sessions/"
+        ? `/auth/admin/sessions/?${queryString}`
+        : "/auth/admin/sessions/"
 
       const response = await api.get<AdminSession[]>(url)
       return response.data
