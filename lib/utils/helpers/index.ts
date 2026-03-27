@@ -10,6 +10,7 @@ export {
   formatBackDate,
   formatDate,
   formatDateFull,
+  formatDateTimeFull,
   formatDateYMD,
   formatElapsed,
   formatTime,

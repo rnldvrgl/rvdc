@@ -6,6 +6,7 @@ import useUserProfileStore from "@/lib/store/useUserProfileStore"
 import api from "@/lib/utils/api"
 import { getOrCreateDeviceId } from "@/lib/utils/device"
 import { removeToken, setToken } from "@/lib/utils/tokens"
+import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -65,6 +66,7 @@ export function useAuthentications() {
 
   const useLogout = () => {
     const router = useRouter()
+    const queryClient = useQueryClient()
     const clearUserProfile = useUserProfileStore(
       (state) => state.clearUserProfile,
     )
@@ -97,6 +99,11 @@ export function useAuthentications() {
 
         // Clear client-side user state
         clearUserProfile()
+
+        // Invalidate all session-related queries so they refetch with latest data
+        queryClient.invalidateQueries({ queryKey: ["admin-sessions"] })
+        queryClient.invalidateQueries({ queryKey: ["user-sessions"] })
+        queryClient.invalidateQueries({ queryKey: ["sessions"] })
 
         toast.warning("You have been logged out.")
 

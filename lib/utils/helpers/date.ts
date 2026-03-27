@@ -128,6 +128,25 @@ export function formatElapsed(startedAt: Date | number): string {
 }
 
 /**
+ * Format date and time as full readable format (e.g., "March 26, 2026 3:24 pm")
+ * Used in session/audit logs and detailed timestamps
+ * @param dateOrString - The date to format
+ */
+export function formatDateTimeFull(dateOrString: Date | string | null): string {
+  if (!dateOrString) return "-"
+  try {
+    const date =
+      typeof dateOrString === "string" ? new Date(dateOrString) : dateOrString
+    if (isNaN(date.getTime())) return "-"
+    const formatted = formatDate(date, "LLLL d, yyyy h:mm a")
+    // Convert "AM"/"PM" to lowercase "am"/"pm"
+    return formatted.replace(/\s(AM|PM)$/, (match) => match.toLowerCase())
+  } catch {
+    return "-"
+  }
+}
+
+/**
  * Create a formatted date range for queries
  * @param daysAgo - Number of days to go back from today
  */

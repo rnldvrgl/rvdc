@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table"
 import { useAdminSessionMutations } from "@/lib/mutations/useAdminSessionMutations"
 import { AdminSession, useAdminSessions } from "@/lib/queries/useAdminSessions"
-import { formatDate } from "@/lib/utils/helpers/date"
+import { formatDateTimeFull } from "@/lib/utils/helpers/date"
 import { Trash2 } from "lucide-react"
 import { useState } from "react"
 
@@ -102,11 +102,11 @@ export function AdminSessionsTable() {
                   {session.ip_address || "-"}
                 </TableCell>
                 <TableCell className="text-sm">
-                  {formatDate(new Date(session.last_seen_at))}
+                  {formatDateTimeFull(new Date(session.last_seen_at))}
                 </TableCell>
                 <TableCell className="text-sm">
                   {session.expires_at
-                    ? formatDate(new Date(session.expires_at))
+                    ? formatDateTimeFull(new Date(session.expires_at))
                     : "N/A"}
                 </TableCell>
                 <TableCell>
