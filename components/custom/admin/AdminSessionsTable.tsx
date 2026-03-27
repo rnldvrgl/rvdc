@@ -1,14 +1,5 @@
 "use client"
 
-import { useState } from "react"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,19 +8,28 @@ import {
   AlertDialogDescription,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAdminSessions, AdminSession } from "@/lib/queries/useAdminSessions"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { useAdminSessionMutations } from "@/lib/mutations/useAdminSessionMutations"
+import { AdminSession, useAdminSessions } from "@/lib/queries/useAdminSessions"
 import { formatDate } from "@/lib/utils/helpers/date"
-import { Trash2, RefreshCw } from "lucide-react"
+import { Trash2 } from "lucide-react"
+import { useState } from "react"
 
 export function AdminSessionsTable() {
-  const { data: sessions, isLoading, refetch } = useAdminSessions()
+  const { data: sessions, isLoading } = useAdminSessions()
   const { revokeSession } = useAdminSessionMutations()
   const [sessionToRevoke, setSessionToRevoke] = useState<AdminSession | null>(
-    null
+    null,
   )
 
   const handleRevokeClick = (session: AdminSession) => {
@@ -98,7 +98,9 @@ export function AdminSessionsTable() {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell className="text-sm">{session.ip_address || "-"}</TableCell>
+                <TableCell className="text-sm">
+                  {session.ip_address || "-"}
+                </TableCell>
                 <TableCell className="text-sm">
                   {formatDate(new Date(session.last_seen_at))}
                 </TableCell>
@@ -132,15 +134,19 @@ export function AdminSessionsTable() {
       </div>
 
       {/* Confirm Revoke Dialog */}
-      <AlertDialog open={!!sessionToRevoke} onOpenChange={(open) => {
-        if (!open) setSessionToRevoke(null)
-      }}>
+      <AlertDialog
+        open={!!sessionToRevoke}
+        onOpenChange={(open) => {
+          if (!open) setSessionToRevoke(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogTitle>Revoke Session</AlertDialogTitle>
           <AlertDialogDescription>
             Are you sure you want to revoke this session for{" "}
             <strong>
-              {sessionToRevoke?.user.first_name} {sessionToRevoke?.user.last_name}
+              {sessionToRevoke?.user.first_name}{" "}
+              {sessionToRevoke?.user.last_name}
             </strong>{" "}
             on <strong>{sessionToRevoke?.device_label}</strong>?
             <br />

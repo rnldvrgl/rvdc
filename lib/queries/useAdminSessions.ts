@@ -1,5 +1,5 @@
+import api from "@/lib/utils/api"
 import { useQuery } from "@tanstack/react-query"
-import { api } from "@/lib/utils/api"
 
 export interface AdminSession {
   id: number

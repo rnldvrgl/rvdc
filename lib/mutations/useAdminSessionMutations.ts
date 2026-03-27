@@ -1,16 +1,18 @@
 "use client"
 
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
+import api from "@/lib/utils/api"
 import { useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import api from "@/lib/utils/api"
 
 export function useAdminSessionMutations() {
   const queryClient = useQueryClient()
 
   const revokeSession = useApiMutation({
     mutationFn: async (sessionId: number) => {
-      const response = await api.post(`/auth/admin/sessions/${sessionId}/revoke/`)
+      const response = await api.post(
+        `/auth/admin/sessions/${sessionId}/revoke/`,
+      )
       return response.data
     },
     onSuccess: () => {

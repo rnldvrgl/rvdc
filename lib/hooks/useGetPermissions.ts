@@ -79,6 +79,7 @@ export function useGetPermissions(
         "manage_server_maintenance",
         "view_messaging",
         "manage_bulk_update",
+        "manage_user_sessions",
       ],
       manager: [
         ...commonAdminPermissions,

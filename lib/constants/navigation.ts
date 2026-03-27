@@ -361,7 +361,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         href: "/settings/sessions",
         icon: Lock,
         permission: "manage_user_sessions",
-        adminOnly: true,
       },
     ],
   },

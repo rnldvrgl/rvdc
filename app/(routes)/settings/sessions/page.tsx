@@ -1,19 +1,19 @@
 "use client"
 
-import { Settings, Lock } from "lucide-react"
+import { AdminSessionsTable } from "@/components/custom/admin/AdminSessionsTable"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
-import { AdminSessionsTable } from "@/components/custom/admin/AdminSessionsTable"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
 import { useQueryClient } from "@tanstack/react-query"
+import { Lock } from "lucide-react"
+import { useState } from "react"
 
 export default function AdminSessionsPage() {
   const queryClient = useQueryClient()
