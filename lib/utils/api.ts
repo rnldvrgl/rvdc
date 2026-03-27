@@ -1,5 +1,5 @@
-import { deleteCookie } from "@/lib/utils/cookies"
-import { getToken, removeToken, setToken } from "@/lib/utils/tokens"
+import { getToken, refreshTokens, removeToken } from "@/lib/utils/tokens"
+import { getOrCreateDeviceId } from "@/lib/utils/device"
 import axios from "axios"
 import qs from "qs"
 import { toast } from "sonner"
@@ -18,23 +18,71 @@ const api = axios.create({
 
 // Mutex for token refresh — prevents concurrent refresh attempts
 let isRefreshing = false
-let refreshSubscribers: ((token: string) => void)[] = []
+let refreshSubscribers: Array<{
+  resolve: (token: string) => void
+  reject: (error: unknown) => void
+}> = []
+let isHandlingSessionExpiry = false
 
 function onRefreshed(token: string) {
-  refreshSubscribers.forEach((cb) => cb(token))
+  refreshSubscribers.forEach(({ resolve }) => resolve(token))
   refreshSubscribers = []
 }
 
-function addRefreshSubscriber(cb: (token: string) => void) {
-  refreshSubscribers.push(cb)
+function onRefreshFailed(error: unknown) {
+  refreshSubscribers.forEach(({ reject }) => reject(error))
+  refreshSubscribers = []
+}
+
+function addRefreshSubscriber(
+  resolve: (token: string) => void,
+  reject: (error: unknown) => void,
+) {
+  refreshSubscribers.push({ resolve, reject })
+}
+
+async function clearAuthState() {
+  removeToken("access")
+  removeToken("refresh")
+  removeToken("remember")
+
+  try {
+    await fetch("/api/delete-cookie", {
+      method: "POST",
+      credentials: "include",
+      keepalive: true,
+    })
+  } catch {
+    // Best-effort cleanup
+  }
+}
+
+async function handleSessionExpired() {
+  if (isHandlingSessionExpiry) {
+    return new Promise<never>(() => {})
+  }
+
+  isHandlingSessionExpiry = true
+  await clearAuthState()
+
+  toast.error("Your session has expired. Please login again.", {
+    id: "session-expired",
+  })
+  window.location.replace("/")
+
+  return new Promise<never>(() => {})
 }
 
 // Request Interceptor — Attach token
 api.interceptors.request.use(
   async (config) => {
     const access_token = await getToken("access")
+    const deviceId = getOrCreateDeviceId()
     if (access_token) {
       config.headers["Authorization"] = `Bearer ${access_token}`
+    }
+    if (deviceId) {
+      config.headers["X-Device-ID"] = deviceId
     }
     return config
   },
@@ -66,37 +114,28 @@ api.interceptors.response.use(
       if (tokenNotValid) {
         const refresh = getToken("refresh")
         if (!refresh) {
-          // No refresh token — force logout
-          removeToken("access")
-          removeToken("refresh")
-          removeToken("remember")
-          deleteCookie()
-          window.location.href = "/"
-          return new Promise(() => {})
+          // No refresh token — force a single global logout flow.
+          return handleSessionExpired()
         }
 
         // If already refreshing, queue this request
         if (isRefreshing) {
-          return new Promise((resolve) => {
-            addRefreshSubscriber((newToken: string) => {
-              originalRequest.headers["Authorization"] = `Bearer ${newToken}`
-              resolve(api(originalRequest))
-            })
+          return new Promise<string>((resolve, reject) => {
+            addRefreshSubscriber(resolve, reject)
+          }).then((newToken) => {
+            originalRequest.headers["Authorization"] = `Bearer ${newToken}`
+            return api(originalRequest)
           })
         }
 
         isRefreshing = true
 
         try {
-          const res = await axios.post(`${baseURL}/auth/token/refresh/`, {
-            refresh,
-          })
-          const { access: newAccess, refresh: newRefresh } = res.data
+          const refreshed = await refreshTokens()
+          const newAccess = refreshed?.access
+          const latestRefresh = refreshed?.refresh || getToken("refresh")
 
-          if (newAccess && newRefresh) {
-            setToken("access", newAccess)
-            setToken("refresh", newRefresh)
-
+          if (newAccess) {
             // Update cookies via API route
             try {
               await fetch("/api/set-cookie", {
@@ -104,7 +143,7 @@ api.interceptors.response.use(
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   access: newAccess,
-                  refresh: newRefresh,
+                  refresh: latestRefresh || undefined,
                   role: getToken("role") || undefined,
                 }),
                 credentials: "include",
@@ -113,28 +152,22 @@ api.interceptors.response.use(
               // Cookie update is best-effort
             }
 
-            isRefreshing = false
             onRefreshed(newAccess)
 
             originalRequest.headers["Authorization"] = `Bearer ${newAccess}`
             return api(originalRequest)
           }
+
+          onRefreshFailed(new Error("Failed to refresh access token"))
         } catch {
+          onRefreshFailed(error)
+        } finally {
           isRefreshing = false
-          refreshSubscribers = []
         }
       }
 
       // Refresh failed or not applicable — clean logout
-      removeToken("access")
-      removeToken("refresh")
-      removeToken("remember")
-      deleteCookie()
-
-      window.location.href = "/"
-      toast.error("Your session has expired. Please login again.")
-
-      return new Promise(() => {})
+      return handleSessionExpired()
     }
 
     return Promise.reject(error)

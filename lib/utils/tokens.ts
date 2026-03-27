@@ -1,3 +1,5 @@
+import { getOrCreateDeviceId } from "@/lib/utils/device"
+
 export const getToken = (key: string) => {
   if (typeof window === "undefined") return null
 
@@ -44,34 +46,64 @@ export const removeAllTokens = () => {
   }
 }
 
-/**
- * Attempt to refresh the access token using the stored refresh token.
- * Returns true if a new access token was obtained.
- */
-export async function refreshAccessToken(): Promise<boolean> {
-  if (typeof window === "undefined") return false
+type RefreshResult = {
+  access: string
+  refresh?: string
+}
 
+let refreshPromise: Promise<RefreshResult | null> | null = null
+
+async function performTokenRefresh(): Promise<RefreshResult | null> {
   try {
     const refresh = getToken("refresh")
-    if (!refresh) return false
+    if (!refresh) return null
+    const deviceId = getOrCreateDeviceId()
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
     const res = await fetch(`${baseUrl}/api/auth/token/refresh/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh }),
+      body: JSON.stringify({ refresh, device_id: deviceId }),
     })
 
-    if (res.ok) {
-      const data = await res.json()
-      setToken("access", data.access)
-      if (data.refresh) setToken("refresh", data.refresh)
-      return true
+    if (!res.ok) return null
+
+    const data = await res.json()
+    if (!data?.access) return null
+
+    setToken("access", data.access)
+    if (data.refresh) {
+      setToken("refresh", data.refresh)
+    }
+
+    return {
+      access: data.access,
+      refresh: data.refresh,
     }
   } catch {
-    // refresh failed
+    return null
   }
-  return false
+}
+
+export async function refreshTokens(): Promise<RefreshResult | null> {
+  if (typeof window === "undefined") return null
+
+  if (!refreshPromise) {
+    refreshPromise = performTokenRefresh().finally(() => {
+      refreshPromise = null
+    })
+  }
+
+  return refreshPromise
+}
+
+/**
+ * Attempt to refresh the access token using the stored refresh token.
+ * Returns true if a new access token was obtained.
+ */
+export async function refreshAccessToken(): Promise<boolean> {
+  const refreshed = await refreshTokens()
+  return Boolean(refreshed?.access)
 }
 
 /**
