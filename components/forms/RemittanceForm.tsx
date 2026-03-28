@@ -2,13 +2,13 @@
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
-  ArrowRightLeft,
-  Banknote,
-  Info,
-  Minus,
-  Pencil,
-  Plus,
-  Wallet,
+    ArrowRightLeft,
+    Banknote,
+    Info,
+    Minus,
+    Pencil,
+    Plus,
+    Wallet,
 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
@@ -24,12 +24,12 @@ import { AdminPasswordDialog } from "@/components/custom/shared/AdminPasswordDia
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -184,6 +184,29 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
     }
     return { declared, remitted, cod: declared - remitted }
   }, [watchedBreakdown])
+
+  // Match table logic live in-form: Declared VS Expected (Over/Short/Balanced)
+  const expectedToRemitLive = useMemo(() => {
+    if (adjustSales && preview) {
+      const adjustedExpected =
+        (parseFloat(salesOverrides.cash) || 0) +
+        (parseFloat(String(preview.cod_from_previous)) || 0) -
+        (parseFloat(salesOverrides.expenses) || 0)
+      return Math.max(0, adjustedExpected)
+    }
+
+    if (preview) {
+      return parseFloat(String(preview.expected_remittance)) || 0
+    }
+
+    const editExpected =
+      (initialData as unknown as { expected_remittance?: string | number })
+        ?.expected_remittance ?? 0
+    return parseFloat(String(editExpected)) || 0
+  }, [adjustSales, preview, salesOverrides, initialData])
+
+  const showLiveBalanceStatus = expectedToRemitLive > 0
+  const liveBalance = liveTotals.declared - expectedToRemitLive
 
   const getCountField = (denom: number): keyof RemittanceRecordPayload =>
     `cash_breakdown.count_${denom}` as keyof RemittanceRecordPayload
@@ -653,6 +676,23 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
             </p>
           </div>
         </div>
+
+        {showLiveBalanceStatus && (
+          <div className="rounded-lg border bg-card p-3 flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">
+              Declared VS Expected
+            </span>
+            {liveBalance > 0 ? (
+              <Badge variant="warning">Over {formatCurrency(liveBalance)}</Badge>
+            ) : liveBalance < 0 ? (
+              <Badge variant="destructive">
+                Short {formatCurrency(Math.abs(liveBalance))}
+              </Badge>
+            ) : (
+              <Badge variant="success">Balanced</Badge>
+            )}
+          </div>
+        )}
 
         {/* Remit All Toggle */}
         <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-4 py-3">
