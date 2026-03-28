@@ -3,6 +3,7 @@ import React from "react"
 
 interface JobOrderTemplatePrintContentProps {
   jobOrderNumbers: number[]
+  showPreviewMargins?: boolean
 }
 
 function formatJobOrderNumber(num: number): string {
@@ -43,9 +44,9 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 
 function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
   return (
-    <div className="flex flex-col h-[8in] text-gray-900 font-sans text-[9.5pt] leading-snug">
+    <div className="flex flex-col h-[7.5in] text-gray-900 font-sans text-[9.5pt] leading-snug overflow-hidden">
       {/* ═══ Header ═══ */}
-      <div className="flex items-start justify-between pb-2.5 mb-3 border-b-2 border-gray-800">
+      <div className="flex items-start justify-between pb-2 mb-2 border-b-2 border-gray-800">
         <div className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -88,17 +89,16 @@ function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
       <Field label="Date Received:" />
 
       {/* ═══ Customer ═══ */}
-      <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2">
+      <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
         <SectionTitle>Customer Information</SectionTitle>
         <Field label="Name:" className="col-span-2" />
         <Field label="Address:" className="col-span-2" />
         <Field className="col-span-2" />
         <Field label="Contact Number:" className="col-span-2" />
-        <div />
       </div>
 
       {/* ═══ Unit ═══ */}
-      <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2">
+      <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
         <SectionTitle>Unit Details</SectionTitle>
         <Field label="Unit:" />
         <Field label="Brand:" />
@@ -107,9 +107,10 @@ function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
       </div>
 
       {/* ═══ Service ═══ */}
-      <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2 content-start">
+      <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 content-start">
         <SectionTitle>Service Details</SectionTitle>
         <Field label="Technician/s:" className="col-span-2" />
+        <Field label="Cellphone #:" className="col-span-2" />
         <Field label="Vehicle:" className="col-span-2" />
         <Field label="Scope of Work:" className="col-span-2" />
         <Field className="col-span-2" />
@@ -117,46 +118,59 @@ function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
       </div>
 
       {/* ═══ Bottom ═══ */}
-      <div className="pt-2.5 mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
-        <Field label="Date Claimed/Delivered:"  />
-        <Field label="Amount:" />
+      <div className="mt-auto pt-2">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+          <Field label="Date Claimed/Delivered:" />
+          <Field label="Amount:" />
+        </div>
 
-        <Field label="Cellphone #:" className="col-span-2"/>
-
-      </div>
- <div className="pt-2.5 mt-2 flex gap-x-3 gap-y-2">
- <div className="grid">
-          {["Pull-Out & Return", "Home Service"].map((text) => (
-            <label
-              key={text}
-              className="inline-flex items-center gap-1 text-[10pt] font-bold text-gray-700"
+        {/* Service Fee */}
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-[9pt] font-bold uppercase tracking-wide text-gray-700 whitespace-nowrap">
+            Service Fee:
+          </span>
+          {["₱500", "₱800", "₱1,000"].map((fee) => (
+            <span
+              key={fee}
+              className="inline-flex items-center justify-center w-[52px] h-[20px] border-[1.5px] border-gray-500 rounded text-[8.5pt] font-bold text-gray-700"
             >
-              <span className="inline-block w-4 h-4 border-[1.5px] border-gray-600 rounded-sm" />
-              {text}
-            </label>
+              {fee}
+            </span>
           ))}
         </div>
+
+        <div className="mt-2 flex gap-x-3">
+          <div className="grid">
+            {["Pull-Out & Return", "Home Service"].map((text) => (
+              <label
+                key={text}
+                className="inline-flex items-center gap-1 text-[10pt] font-bold text-gray-700"
+              >
+                <span className="inline-block w-4 h-4 border-[1.5px] border-gray-600 rounded-sm" />
+                {text}
+              </label>
+            ))}
+          </div>
           <div className="flex-1 flex flex-col">
             <span className="flex-1 border-b border-gray-400 min-h-8" />
-            <span className="text-[7.5pt] text-gray-500 text-center mt-0.5">Printed Name and Signature</span>
+            <span className="text-[7.5pt] text-gray-500 text-center mt-0.5">
+              Printed Name and Signature
+            </span>
           </div>
+        </div>
 
-      </div>
-    {/* ═══ Note Box ═══ */}
-      <div className="mt-4 bg-gray-50 border border-gray-300 rounded px-2 py-1.5">
-        <p className="text-[7pt] text-gray-800 leading-snug">
-          <span className="font-bold">SERVICE FEE:</span> Check-up, transport
-          &amp; diagnosis &mdash;{" "}
-          <span className="font-extrabold text-red-700">
-            ₱500 &ndash; ₱1,000
-          </span>{" "}
-          (depending on location). This fee will be deducted from the total
-          service cost if you proceed with the repair.
-        </p>
-        <p className="text-[6.5pt] text-gray-700 leading-snug mt-1 font-semibold">
-          Units not claimed/delivered within 7 days after completion &mdash; the
-          company is not liable for any damage.
-        </p>
+        {/* ═══ Note Box ═══ */}
+        <div className="mt-2 bg-gray-50 border border-gray-300 rounded px-2 py-1">
+          <p className="text-[6.5pt] text-gray-800 leading-snug">
+            <span className="font-bold">SERVICE FEE:</span> Check-up, transport
+            &amp; diagnosis (depending on location). This fee will be deducted
+            from the total service cost if you proceed with the repair.
+          </p>
+          <p className="text-[6pt] text-gray-700 leading-snug mt-0.5 font-semibold">
+            Units not claimed/delivered within 7 days after completion &mdash;
+            the company is not liable for any damage.
+          </p>
+        </div>
       </div>
     </div>
   )
@@ -165,7 +179,7 @@ function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
 export const JobOrderTemplatePrintContent = React.forwardRef<
   HTMLDivElement,
   JobOrderTemplatePrintContentProps
->(function JobOrderTemplatePrintContent({ jobOrderNumbers }, ref) {
+>(function JobOrderTemplatePrintContent({ jobOrderNumbers, showPreviewMargins }, ref) {
   const pages = chunkPairs(jobOrderNumbers)
 
   return (
@@ -173,12 +187,20 @@ export const JobOrderTemplatePrintContent = React.forwardRef<
       {pages.map((page, pageIndex) => (
         <div
           key={pageIndex}
-          className="jo-page w-[10.5in] h-[8in] grid grid-cols-2 gap-x-5"
+          className={`${
+            showPreviewMargins
+              ? "w-[11in] h-[8.5in] p-[0.5in] bg-white border border-gray-300 rounded shadow-sm mb-4"
+              : ""
+          }`}
         >
-          {page.map((num) => (
-            <JobOrderSlip key={num} jobOrderNumber={num} />
-          ))}
-          {page.length === 1 && <div />}
+          <div
+            className="jo-page w-[10in] h-[7.5in] grid grid-cols-2 gap-x-[1in]"
+          >
+            {page.map((num) => (
+              <JobOrderSlip key={num} jobOrderNumber={num} />
+            ))}
+            {page.length === 1 && <div />}
+          </div>
         </div>
       ))}
     </div>

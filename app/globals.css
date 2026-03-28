@@ -278,9 +278,9 @@
   }
 
   .job-order-print .jo-page {
-    width: 10.5in !important;
-    height: 8in !important;
-    max-height: 8in !important;
+    width: 10in !important;
+    height: 7.5in !important;
+    max-height: 7.5in !important;
     overflow: hidden !important;
     break-inside: avoid;
     page-break-inside: avoid;
@@ -323,7 +323,7 @@
 
 @page job-order-page {
   size: letter landscape;
-  margin: 0.25in;
+  margin: 0.5in;
 }
 
 @keyframes fall {

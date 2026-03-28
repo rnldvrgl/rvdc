@@ -22,8 +22,24 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
-import { Eye, FileText, Printer, ShieldAlert } from "lucide-react"
-import { useMemo, useRef, useState } from "react"
+import { useJobOrderTemplatePrintMutations } from "@/lib/mutations/useJobOrderTemplatePrintMutations"
+import {
+    useJobOrderTemplatePrints,
+    useNextJobOrderNumber,
+} from "@/lib/queries/useJobOrderTemplatePrints"
+import {
+    CalendarDays,
+    Eye,
+    FileText,
+    History,
+    Info,
+    Loader2,
+    Printer,
+    ShieldAlert,
+    Sparkles,
+    User,
+} from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useReactToPrint } from "react-to-print"
 
 function formatJobOrderNumber(num: number): string {
@@ -34,14 +50,40 @@ const MAX_TEMPLATE_COUNT = 200
 
 export default function TemplatesSettingsPage() {
   const { canManage } = useCurrentUser()
-  const [startNumber, setStartNumber] = useState("1001")
-  const [endNumber, setEndNumber] = useState("1004")
+  const [startNumber, setStartNumber] = useState("")
+  const [endNumber, setEndNumber] = useState("")
   const [previewOpen, setPreviewOpen] = useState(false)
+  const [isPrinting, setIsPrinting] = useState(false)
+  const [hasAppliedSuggestion, setHasAppliedSuggestion] = useState(false)
 
   const start = Number(startNumber)
   const end = Number(endNumber)
 
   const printRef = useRef<HTMLDivElement>(null)
+
+  // Queries
+  const { data: nextNumberData, isLoading: isLoadingNext } = useNextJobOrderNumber()
+  const { data: printHistory, isLoading: isLoadingHistory } = useJobOrderTemplatePrints({ limit: 10 })
+
+  // Mutations
+  const { recordPrint } = useJobOrderTemplatePrintMutations()
+
+  // Auto-fill suggested starting number on first load
+  useEffect(() => {
+    if (nextNumberData?.next_number && !hasAppliedSuggestion && !startNumber) {
+      const next = nextNumberData.next_number
+      setStartNumber(String(next))
+      setEndNumber(String(next + 3))
+      setHasAppliedSuggestion(true)
+    }
+  }, [nextNumberData, hasAppliedSuggestion, startNumber])
+
+  const handleAfterPrint = useCallback(() => {
+    if (start && end && start <= end) {
+      recordPrint.mutateAsync({ start_number: start, end_number: end })
+    }
+    setIsPrinting(false)
+  }, [start, end, recordPrint])
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -49,7 +91,13 @@ export default function TemplatesSettingsPage() {
       start && end
         ? `job-order-templates-${start}-${end}`
         : "job-order-templates",
+    onAfterPrint: handleAfterPrint,
   })
+
+  const onPrintClick = useCallback(() => {
+    setIsPrinting(true)
+    handlePrint()
+  }, [handlePrint])
 
   const validationMessage = useMemo(() => {
     if (!startNumber || !endNumber) {
@@ -111,129 +159,176 @@ export default function TemplatesSettingsPage() {
         breadcrumbs={["Settings", "Templates"]}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left Column — Generate */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <CardTitle>Generate Templates</CardTitle>
+              </div>
+              <CardDescription>
+                Enter the range of job order numbers to print. The system tracks what&apos;s been printed so you always know the next available number.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              {/* Suggested next number */}
+              {nextNumberData && (
+                <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0" />
+                  <p className="text-sm text-primary">
+                    Suggested next: <span className="font-semibold">#{formatJobOrderNumber(nextNumberData.next_number)}</span>
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto h-7 text-xs"
+                    onClick={() => {
+                      const next = nextNumberData.next_number
+                      setStartNumber(String(next))
+                      setEndNumber(String(next + 3))
+                    }}
+                  >
+                    Apply
+                  </Button>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="start-number">Start</Label>
+                  <Input
+                    id="start-number"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={startNumber}
+                    placeholder={isLoadingNext ? "Loading..." : "e.g. 1001"}
+                    onChange={(event) => setStartNumber(event.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end-number">End</Label>
+                  <Input
+                    id="end-number"
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={endNumber}
+                    placeholder={isLoadingNext ? "Loading..." : "e.g. 1004"}
+                    onChange={(event) => setEndNumber(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              {validationMessage ? (
+                <Alert variant="warning">
+                  <ShieldAlert className="h-4 w-4" />
+                  <AlertTitle>Check the range</AlertTitle>
+                  <AlertDescription>{validationMessage}</AlertDescription>
+                </Alert>
+              ) : (
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-lg border bg-muted/30 px-3 py-2 text-center">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">First</p>
+                    <p className="text-lg font-semibold">{formatJobOrderNumber(jobOrderNumbers[0])}</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 px-3 py-2 text-center">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Last</p>
+                    <p className="text-lg font-semibold">{formatJobOrderNumber(jobOrderNumbers[jobOrderNumbers.length - 1])}</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 px-3 py-2 text-center">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total</p>
+                    <p className="text-lg font-semibold">{jobOrderNumbers.length}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Paper Settings Note */}
+              <div className="flex gap-3 rounded-lg bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground">
+                <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p>Paper: <span className="font-medium text-foreground">Letter (8.5&quot; &times; 11&quot;)</span> &mdash; <span className="font-medium text-foreground">Landscape</span></p>
+                  <p>Layout: <span className="font-medium text-foreground">2 templates per page</span> &mdash; Margin: <span className="font-medium text-foreground">0.5&quot;</span></p>
+                </div>
+              </div>
+
+              <Button
+                className="w-full"
+                size="lg"
+                onClick={() => setPreviewOpen(true)}
+                disabled={jobOrderNumbers.length === 0}
+              >
+                <Eye className="h-4 w-4" />
+                Preview &amp; Print
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Right Column — Print History */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              <CardTitle>Template Range</CardTitle>
+              <History className="h-5 w-5 text-muted-foreground" />
+              <CardTitle>Print History</CardTitle>
             </div>
             <CardDescription>
-              Enter the first and last job order numbers to create a printable batch.
+              Track which job order numbers have been printed and by whom.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="start-number">Starting job order number</Label>
-              <Input
-                id="start-number"
-                type="number"
-                min={1}
-                step={1}
-                value={startNumber}
-                onChange={(event) => setStartNumber(event.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="end-number">Ending job order number</Label>
-              <Input
-                id="end-number"
-                type="number"
-                min={1}
-                step={1}
-                value={endNumber}
-                onChange={(event) => setEndNumber(event.target.value)}
-              />
-            </div>
-
-            {validationMessage ? (
-              <Alert variant="warning">
-                <ShieldAlert className="h-4 w-4" />
-                <AlertTitle>Check the range</AlertTitle>
-                <AlertDescription>{validationMessage}</AlertDescription>
-              </Alert>
-            ) : (
-              <Alert variant="info">
-                <FileText className="h-4 w-4" />
-                <AlertTitle>Ready to print</AlertTitle>
-                <AlertDescription>
-                  {jobOrderNumbers.length} template{jobOrderNumbers.length === 1 ? "" : "s"} will be generated across {Math.ceil(jobOrderNumbers.length / 2)} page{Math.ceil(jobOrderNumbers.length / 2) === 1 ? "" : "s"}.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground space-y-1">
-              <p>Paper size: 8.5&quot; x 11&quot; landscape</p>
-              <p>Layout: 2 templates per page</p>
-              <p>Print margin: 0.5&quot; on all sides</p>
-            </div>
-
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={() => setPreviewOpen(true)}
-              disabled={jobOrderNumbers.length === 0}
-            >
-              <Eye className="h-4 w-4" />
-              Preview &amp; Print
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Preview Summary</CardTitle>
-            <CardDescription>
-              The printed document uses a clean two-up layout with prefilled job order numbers and blank service fields.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {jobOrderNumbers.length === 0 ? (
+          <CardContent>
+            {isLoadingHistory ? (
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                Loading history...
+              </div>
+            ) : !printHistory?.results?.length ? (
               <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                Enter a valid range to generate the printable batch.
+                No templates have been printed yet.
               </div>
             ) : (
-              <>
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border bg-muted/30 p-4">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                      First Number
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">{formatJobOrderNumber(jobOrderNumbers[0])}</p>
+              <div className="space-y-2">
+                {printHistory.results.map((record) => (
+                  <div
+                    key={record.id}
+                    className="rounded-lg border px-3 py-2.5 text-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="font-medium">
+                          #{formatJobOrderNumber(record.start_number)} &ndash; #{formatJobOrderNumber(record.end_number)}
+                        </span>
+                        <span className="text-muted-foreground">
+                          ({record.end_number - record.start_number + 1} templates)
+                        </span>
+                      </div>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <CalendarDays className="h-3 w-3" />
+                        {new Date(record.printed_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <User className="h-3 w-3" />
+                      Printed by <span className="font-medium text-foreground">{record.printed_by_name}</span>
+                    </div>
                   </div>
-                  <div className="rounded-xl border bg-muted/30 p-4">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                      Last Number
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">
-                      {formatJobOrderNumber(jobOrderNumbers[jobOrderNumbers.length - 1])}
-                    </p>
-                  </div>
-                  <div className="rounded-xl border bg-muted/30 p-4">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                      Total Templates
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">{jobOrderNumbers.length}</p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border bg-linear-to-br from-muted/30 to-background p-4">
-                  <p className="text-sm font-medium">Included job order numbers</p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {jobOrderNumbers.slice(0, 12).map(formatJobOrderNumber).join(", ")}
-                    {jobOrderNumbers.length > 12 ? " ..." : ""}
-                  </p>
-                </div>
-              </>
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Preview Sheet — same pattern as quotation */}
+      {/* Preview Sheet */}
       <Sheet open={previewOpen} onOpenChange={(next) => !next && setPreviewOpen(false)}>
-        <SheetContent side="right" className="max-w-4xl! w-full px-6 sm:px-8 py-8 overflow-y-auto">
+        <SheetContent side="right" className="max-w-5xl! w-full px-6 sm:px-8 py-8 overflow-y-auto">
           <SheetHeader className="mb-5 pb-5 border-b border-border">
             <div className="flex items-center justify-between">
               <div>
@@ -245,21 +340,31 @@ export default function TemplatesSettingsPage() {
                 </SheetDescription>
               </div>
               <Button
-                onClick={() => handlePrint()}
+                onClick={onPrintClick}
+                disabled={isPrinting || recordPrint.isPending}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                <Printer className="mr-2 h-4 w-4" />
-                Print
+                {isPrinting || recordPrint.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {recordPrint.isPending ? "Saving..." : "Printing..."}
+                  </>
+                ) : (
+                  <>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print
+                  </>
+                )}
               </Button>
             </div>
           </SheetHeader>
 
-          <div className="overflow-auto max-h-[calc(100vh-14rem)] rounded-lg bg-gray-100 p-4">
-            {/* eslint-disable-next-line react/forbid-dom-props */}
+          <div className="overflow-auto max-h-[calc(100vh-14rem)] rounded-lg bg-gray-100 dark:bg-gray-900 p-6 flex flex-col items-center gap-6">
             <div style={{ zoom: 0.75 }}>
               <JobOrderTemplatePrintContent
                 ref={printRef}
                 jobOrderNumbers={jobOrderNumbers}
+                showPreviewMargins
               />
             </div>
           </div>
