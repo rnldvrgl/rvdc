@@ -4,6 +4,14 @@ import { JobOrderTemplatePrintContent } from "@/components/custom/shared/JobOrde
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import {
     Card,
@@ -29,6 +37,7 @@ import {
 } from "@/lib/queries/useJobOrderTemplatePrints"
 import {
     CalendarDays,
+    CheckCircle2,
     Eye,
     FileText,
     History,
@@ -38,6 +47,7 @@ import {
     ShieldAlert,
     Sparkles,
     User,
+    XCircle,
 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useReactToPrint } from "react-to-print"
@@ -54,6 +64,7 @@ export default function TemplatesSettingsPage() {
   const [endNumber, setEndNumber] = useState("")
   const [previewOpen, setPreviewOpen] = useState(false)
   const [isPrinting, setIsPrinting] = useState(false)
+  const [showConfirmPrint, setShowConfirmPrint] = useState(false)
   const [hasAppliedSuggestion, setHasAppliedSuggestion] = useState(false)
 
   const start = Number(startNumber)
@@ -79,11 +90,25 @@ export default function TemplatesSettingsPage() {
   }, [nextNumberData, hasAppliedSuggestion, startNumber])
 
   const handleAfterPrint = useCallback(() => {
-    if (start && end && start <= end) {
-      recordPrint.mutateAsync({ start_number: start, end_number: end })
-    }
     setIsPrinting(false)
+    setShowConfirmPrint(true)
+  }, [])
+
+  const handleConfirmPrint = useCallback(() => {
+    if (start && end && start <= end) {
+      recordPrint.mutateAsync({ start_number: start, end_number: end }).then(() => {
+        setShowConfirmPrint(false)
+        setPreviewOpen(false)
+      })
+    } else {
+      setShowConfirmPrint(false)
+      setPreviewOpen(false)
+    }
   }, [start, end, recordPrint])
+
+  const handleCancelPrint = useCallback(() => {
+    setShowConfirmPrint(false)
+  }, [])
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -344,10 +369,10 @@ export default function TemplatesSettingsPage() {
                 disabled={isPrinting || recordPrint.isPending}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                {isPrinting || recordPrint.isPending ? (
+                {isPrinting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {recordPrint.isPending ? "Saving..." : "Printing..."}
+                    Printing...
                   </>
                 ) : (
                   <>
@@ -370,6 +395,55 @@ export default function TemplatesSettingsPage() {
           </div>
         </SheetContent>
       </Sheet>
+
+      {/* Print Confirmation Dialog */}
+      <AlertDialog open={showConfirmPrint}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader className="text-center sm:text-center">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+              <Printer className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+            </div>
+            <AlertDialogTitle className="text-lg">
+              Did the print complete successfully?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Confirming will record templates{" "}
+              <span className="font-semibold text-foreground">#{formatJobOrderNumber(start)}</span>
+              {" "}&ndash;{" "}
+              <span className="font-semibold text-foreground">#{formatJobOrderNumber(end)}</span>
+              {" "}as printed. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button
+              onClick={handleConfirmPrint}
+              disabled={recordPrint.isPending}
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+            >
+              {recordPrint.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Recording...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Yes, mark as printed
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleCancelPrint}
+              disabled={recordPrint.isPending}
+              className="w-full"
+            >
+              <XCircle className="mr-2 h-4 w-4" />
+              No, I cancelled the print
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Wrapper>
   )
 }
