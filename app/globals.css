@@ -304,8 +304,7 @@
     box-shadow: none !important;
     border-radius: 0 !important;
     background: white !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
+    overflow: hidden !important;
   }
 
   .job-order-print .jo-page-wrapper + .jo-page-wrapper {
@@ -315,7 +314,7 @@
 
   .job-order-print .jo-page {
     width: 11in !important;
-    height: 8.5in !important;
+    height: auto !important;
     max-height: 8.5in !important;
     padding: 0.25in !important;
     overflow: hidden !important;
@@ -325,13 +324,6 @@
     margin: 0 !important;
   }
 
-  .job-order-print > div {
-    border: none !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-  }
 
   /* ── Thermal Receipt (58mm) ── */
   .thermal-receipt-print {
