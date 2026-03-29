@@ -19,7 +19,7 @@ export default function AttendancePage() {
     if (role) {
       // Redirect based on role
       if (role === "admin") {
-        redirect("/attendance/overview")
+        redirect("/attendance/records")
       } else {
         redirect("/attendance/timetable")
       }

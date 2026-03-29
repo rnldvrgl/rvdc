@@ -10,12 +10,12 @@ import { DataTable } from "@/components/custom/table/DataTable"
 import LeaveRequestAdminForm from "@/components/forms/LeaveRequestAdminForm"
 import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -27,12 +27,12 @@ import { useLeaveRequestMutations } from "@/lib/mutations/useAttendanceMutations
 import { useLeaveRequests } from "@/lib/queries/useAttendance"
 import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import {
-  CheckCircle2,
-  Loader2,
-  MessageSquareWarning,
-  Plane,
-  Plus,
-  Trash2,
+    CheckCircle2,
+    Loader2,
+    MessageSquareWarning,
+    Plane,
+    Plus,
+    Trash2,
 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -300,6 +300,7 @@ export default function LeavesPage() {
               title="Archive leave request"
               description="This removes the leave request from the active list."
               confirmText="Archive"
+              variant="warning"
             />
 
             <Dialog

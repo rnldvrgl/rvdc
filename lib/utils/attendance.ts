@@ -1,10 +1,10 @@
 import {
-  AttendanceStatus,
-  AttendanceType,
-  CalendarAttendanceStatus,
-  DailyAttendance,
-  LeaveStatus,
-  LeaveType,
+    AttendanceStatus,
+    AttendanceType,
+    CalendarAttendanceStatus,
+    DailyAttendance,
+    LeaveStatus,
+    LeaveType,
 } from "@/lib/constants/types"
 import { formatDateToYMD } from "@/lib/utils/helpers"
 
@@ -202,6 +202,16 @@ export const convertAttendanceForCalendar = (
 const mapAttendanceToCalendarStatus = (
   attendance: DailyAttendance,
 ): CalendarAttendanceStatus => {
+  // If today and clocked in but not yet clocked out, treat as present (in-progress)
+  const today = formatDateToYMD(new Date())
+  if (
+    attendance.date === today &&
+    attendance.clock_in &&
+    !attendance.clock_out
+  ) {
+    return attendance.is_late ? "late" : "present"
+  }
+
   // If actually late (based on backend calculation), show as late
   if (attendance.is_late) {
     return "late"

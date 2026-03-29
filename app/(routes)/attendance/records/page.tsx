@@ -1,6 +1,7 @@
 "use client"
 
 import { getAttendanceColumns } from "@/app/(routes)/attendance/records/columns"
+import { MarkAbsentDialog } from "@/components/custom/attendance/MarkAbsentDialog"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
@@ -9,8 +10,11 @@ import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCale
 import { DataTable } from "@/components/custom/table/DataTable"
 import AttendanceForm from "@/components/forms/AttendanceForm"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import type { DailyAttendance } from "@/lib/constants/types"
+import { useAttendanceStats } from "@/lib/hooks/useAttendanceStats"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import { useNavigation } from "@/lib/hooks/useNavigation"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
@@ -20,12 +24,14 @@ import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { convertAttendanceForCalendar } from "@/lib/utils/attendance"
 import { formatDateToYMD } from "@/lib/utils/helpers"
 import {
-  CheckCircle2,
-  ClipboardList,
-  Plus,
-  TimerReset,
-  TriangleAlert,
-  X,
+    CalendarDays,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    ClipboardList,
+    Plus,
+    Users,
+    X,
 } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
@@ -36,12 +42,15 @@ type AttendanceDraftSeed = {
 }
 
 export default function AttendanceRecordsPage() {
+  const { isAdmin } = useCurrentUser()
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const { push } = useNavigation()
-  const { data: employees = [] } = useEmployeeChoices({
-    includeInPayroll: true,
-  })
+
+  // Calendar toggle
+  const [showCalendar, setShowCalendar] = useState(false)
+
+  // CRUD state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [attendanceToDelete, setAttendanceToDelete] = useState<number | null>(
     null,
@@ -49,6 +58,16 @@ export default function AttendanceRecordsPage() {
   const [draftSeed, setDraftSeed] = useState<AttendanceDraftSeed>({})
   const [addOpen, setAddOpen] = useState(false)
 
+  // Employee choices for table filters
+  const { data: employeeChoicesData } = useEmployeeChoices({
+    includeInPayroll: true,
+  })
+  const employeeChoices = useMemo(
+    () => employeeChoicesData ?? [],
+    [employeeChoicesData],
+  )
+
+  // Main table data
   const { data, isLoading, refetch } = useDailyAttendances({
     page,
     limit,
@@ -57,6 +76,22 @@ export default function AttendanceRecordsPage() {
     filter,
   })
 
+  // Monthly stats
+  const now = new Date()
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+  const { data: monthlyData, isLoading: isLoadingMonthly } =
+    useDailyAttendances({
+      filter: {
+        ...filter,
+        date_from: formatDateToYMD(firstDayOfMonth),
+        date_to: formatDateToYMD(lastDayOfMonth),
+      },
+      limit: 1000,
+    })
+
+  // Calendar data
   const { data: calendarData } = useDailyAttendances({
     limit: 1000,
     ordering: "-date",
@@ -75,22 +110,30 @@ export default function AttendanceRecordsPage() {
     closeEntity: closeEdit,
   } = useEntitySheet<DailyAttendance>()
 
+  // Stats
+  const monthlyRecords = monthlyData?.results || []
+  const calendarEvents = convertAttendanceForCalendar(monthlyRecords)
+  const stats = useAttendanceStats(monthlyRecords, calendarEvents)
+
+  // Calendar events
+  const calendarAttendances = useMemo(
+    () => convertAttendanceForCalendar(calendarData?.results || []),
+    [calendarData?.results],
+  )
+
+  // Table filters
   const employeeOptions = useMemo(
     () =>
-      employees.map((employee) => ({
-        label: employee.full_name,
-        value: String(employee.id),
+      employeeChoices.map((emp) => ({
+        label: `${emp.first_name} ${emp.last_name}`,
+        value: String(emp.id),
       })),
-    [employees],
+    [employeeChoices],
   )
 
   const filters = useMemo(
     () => [
-      {
-        key: "employee_id",
-        label: "Employee",
-        options: employeeOptions,
-      },
+      { key: "employee_id", label: "Employee", options: employeeOptions },
       {
         key: "status",
         label: "Status",
@@ -125,21 +168,7 @@ export default function AttendanceRecordsPage() {
     { label: "Status", value: "status" },
   ]
 
-  const calendarAttendances = useMemo(
-    () => convertAttendanceForCalendar(calendarData?.results || []),
-    [calendarData?.results],
-  )
-
-  const stats = useMemo(() => {
-    const records = data?.results || []
-    return {
-      total: records.length,
-      pending: records.filter((record) => record.status === "PENDING").length,
-      approved: records.filter((record) => record.status === "APPROVED").length,
-      late: records.filter((record) => record.is_late).length,
-    }
-  }, [data?.results])
-
+  // Handlers
   const handleDelete = (id: number) => {
     setAttendanceToDelete(id)
     setDeleteDialogOpen(true)
@@ -147,7 +176,6 @@ export default function AttendanceRecordsPage() {
 
   const confirmDelete = async () => {
     if (!attendanceToDelete) return
-
     await deleteAttendance.mutateAsync(attendanceToDelete)
     setDeleteDialogOpen(false)
     setAttendanceToDelete(null)
@@ -162,16 +190,12 @@ export default function AttendanceRecordsPage() {
 
   const handleDateClick = (date: Date) => {
     const nextDate = formatDateToYMD(date)
-
     push({
       page: 1,
       limit,
       search,
       ordering,
-      filter: {
-        ...filter,
-        date: nextDate,
-      },
+      filter: { ...filter, date: nextDate },
     })
 
     const hasRecordOnDate = (calendarData?.results || []).some(
@@ -191,167 +215,125 @@ export default function AttendanceRecordsPage() {
   const clearSelectedDate = () => {
     const nextFilter = { ...filter }
     delete nextFilter.date
-
-    push({
-      page: 1,
-      limit,
-      search,
-      ordering,
-      filter: nextFilter,
-    })
+    push({ page: 1, limit, search, ordering, filter: nextFilter })
   }
 
   const columns = getAttendanceColumns({
     onEdit: openEdit,
     onDelete: handleDelete,
-    onApprove: (attendance) =>
-      approveAttendance.mutate({ attendance_ids: [attendance.id] }),
-    onReject: (attendance) =>
-      rejectAttendance.mutate({ attendance_ids: [attendance.id] }),
+    onApprove: (a) =>
+      approveAttendance.mutate({ attendance_ids: [a.id] }),
+    onReject: (a) =>
+      rejectAttendance.mutate({ attendance_ids: [a.id] }),
   })
 
   const handleBulkApprove = async (rows: DailyAttendance[]) => {
     if (rows.length === 0) return
     await approveAttendance.mutateAsync({
-      attendance_ids: rows.map((row) => row.id),
+      attendance_ids: rows.map((r) => r.id),
     })
   }
 
   const handleBulkReject = async (rows: DailyAttendance[]) => {
     if (rows.length === 0) return
     await rejectAttendance.mutateAsync({
-      attendance_ids: rows.map((row) => row.id),
+      attendance_ids: rows.map((r) => r.id),
     })
   }
 
   const handleBulkArchive = async (rows: DailyAttendance[]) => {
     if (rows.length === 0) return
-
-    await Promise.all(rows.map((row) => deleteAttendance.mutateAsync(row.id)))
-    toast.success(`${rows.length} attendance record(s) archived.`)
+    await Promise.all(rows.map((r) => deleteAttendance.mutateAsync(r.id)))
+    toast.success(`${rows.length} record(s) archived.`)
   }
+
+  const monthName = new Date().toLocaleDateString("en-US", { month: "long" })
 
   return (
     <Wrapper>
-      <div className="space-y-4 md:space-y-6">
+      <div className="space-y-3">
+        {/* ── Header ── */}
         <PageHeader
-          title="Attendance Records"
-          description="Admin workspace for manual daily attendance adjustments, approvals, and cleanup."
-          icon={ClipboardList}
+          icon={Users}
+          title="Attendance"
+          description="View, filter, and manage attendance records."
+          breadcrumbs={["Attendance"]}
           onRefresh={refetch}
-          isAdminOnly
           actionButton={
-            <Button
-              onClick={() =>
-                openCreateSheet({
-                  date: selectedDate
-                    ? new Date(String(selectedDate))
-                    : undefined,
-                  employeeId: filter?.employee_id
-                    ? Number.parseInt(String(filter.employee_id), 10)
-                    : undefined,
-                })
-              }
-            >
-              <Plus className="mr-2 size-4" />
-              Add Attendance
-            </Button>
+            isAdmin ? (
+              <div className="flex items-center gap-2">
+                <MarkAbsentDialog />
+                <Button onClick={() => openCreateSheet()}>
+                  <Plus className="mr-2 size-4" />
+                  Add
+                </Button>
+              </div>
+            ) : undefined
           }
+          variant="compact"
         />
 
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Visible Records
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-3xl font-semibold">
-              {stats.total}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pending Review
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <span className="text-3xl font-semibold">{stats.pending}</span>
-              <TimerReset className="h-5 w-5 text-amber-500" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Approved
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <span className="text-3xl font-semibold">{stats.approved}</span>
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Late Records
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <span className="text-3xl font-semibold">{stats.late}</span>
-              <TriangleAlert className="h-5 w-5 text-rose-500" />
-            </CardContent>
-          </Card>
+        {/* ── Compact Metrics Strip ── */}
+        <CompactMetrics
+          stats={stats}
+          isLoading={isLoadingMonthly}
+          monthName={monthName}
+        />
+
+        {/* ── Calendar Toggle + Date Chip ── */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCalendar((v) => !v)}
+            className="gap-2 text-xs"
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+            Calendar
+            {showCalendar ? (
+              <ChevronUp className="h-3 w-3" />
+            ) : (
+              <ChevronDown className="h-3 w-3" />
+            )}
+          </Button>
+
+          {selectedDate && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={clearSelectedDate}
+              className="gap-1.5 text-xs h-7"
+            >
+              {String(selectedDate)}
+              <X className="h-3 w-3" />
+            </Button>
+          )}
         </div>
 
-        <Card className="overflow-hidden border-border/60">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border/60">
-            <div>
-              <CardTitle className="text-lg">Calendar</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Click a day to focus the table. Empty dates open the
-                add-attendance sheet immediately.
-              </p>
-            </div>
-
-            {selectedDate && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearSelectedDate}
-              >
-                <X className="mr-2 h-4 w-4" />
-                Clear {selectedDate}
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent className="p-0">
+        {/* ── Collapsible Calendar ── */}
+        {showCalendar && (
+          <div className="rounded-lg border overflow-hidden">
             <DashboardCalendar
               mode="attendance"
               useCustomData
               attendanceData={calendarAttendances}
               onDateClick={handleDateClick}
-              title="Attendance Calendar"
+              title=""
               description=""
               eventTypes={["attendance"]}
             />
-          </CardContent>
-        </Card>
+          </div>
+        )}
 
+        {/* ── Main Table ── */}
         <DataTable
           enableVirtualization
           enableRowSelection
-          title="Daily Attendance Records"
-          description="Full manual CRUD for attendance records with approval actions built in."
+          title="Attendance Records"
+          description="Manage records with inline approval actions and bulk operations."
           columns={columns}
           data={
-            data || {
-              count: 0,
-              next: null,
-              previous: null,
-              results: [],
-            }
+            data || { count: 0, next: null, previous: null, results: [] }
           }
           isLoading={isLoading}
           filters={filters}
@@ -359,39 +341,40 @@ export default function AttendanceRecordsPage() {
           onRefresh={refetch}
           bulkActions={[
             {
-              label: "Approve Selected",
+              label: "Approve",
               icon: CheckCircle2,
               variant: "outline",
               onClick: handleBulkApprove,
             },
             {
-              label: "Reject Selected",
+              label: "Reject",
               icon: X,
               variant: "destructive",
               onClick: handleBulkReject,
             },
             {
-              label: "Archive Selected",
+              label: "Archive",
               icon: ClipboardList,
               variant: "destructive",
               onClick: handleBulkArchive,
             },
           ]}
-          emptyTitle="No attendance records found"
-          emptyDescription="Adjust filters or click a date on the calendar to add the first record for that day."
+          emptyTitle="No records found"
+          emptyDescription="Adjust filters or use the calendar to add a record."
         />
       </div>
 
+      {/* ── Sheets & Dialogs ── */}
       <EntitySheet<DailyAttendance>
         open={editOpen}
         onClose={closeEdit}
         entity={entity}
         title="Edit Attendance"
-        description="Adjust the record, then let the backend recompute any metrics tied to clock times."
+        description="Update clock times, type, or status."
         withCloseConfirmation
-        renderForm={({ forceClose, entity: activeAttendance }) => (
+        renderForm={({ forceClose, entity: att }) => (
           <AttendanceForm
-            attendance={activeAttendance}
+            attendance={att}
             onClose={closeEdit}
             forceClose={forceClose}
           />
@@ -404,7 +387,7 @@ export default function AttendanceRecordsPage() {
         onClose={() => setAddOpen(false)}
         entity={draftSeed}
         title="Add Attendance"
-        description="Create a manual attendance record for a specific employee and day."
+        description="Create a manual attendance record."
         withCloseConfirmation
         renderForm={({ forceClose, entity: seed }) => (
           <AttendanceForm
@@ -422,9 +405,82 @@ export default function AttendanceRecordsPage() {
         onCancel={() => setDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
         title="Archive attendance"
-        description="This removes the record from the active list without using Django admin."
+        description="This removes the record from the active list."
         confirmText="Archive"
+        variant="warning"
       />
     </Wrapper>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────
+ * Compact inline metrics — replaces 7 stat cards with one row
+ * ───────────────────────────────────────────────────────── */
+function CompactMetrics({
+  stats,
+  isLoading,
+  monthName,
+}: {
+  stats: {
+    totalCount: number
+    approvedCount: number
+    pendingCount: number
+    rejectedCount: number
+    presentCount: number
+    absentCount: number
+    lateCount: number
+  }
+  isLoading: boolean
+  monthName: string
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-3 px-1">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="h-4 w-16" />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground px-1">
+      <span className="font-semibold uppercase tracking-wider text-[10px]">
+        {monthName}
+      </span>
+      <Separator orientation="vertical" className="h-3.5" />
+      <span>
+        <strong className="text-foreground tabular-nums">
+          {stats.totalCount}
+        </strong>{" "}
+        records
+      </span>
+      <span className="text-emerald-600 dark:text-emerald-400">
+        <strong className="tabular-nums">{stats.approvedCount}</strong> approved
+      </span>
+      {stats.pendingCount > 0 && (
+        <span className="text-amber-600 dark:text-amber-400 font-medium">
+          <strong className="tabular-nums">{stats.pendingCount}</strong> pending
+        </span>
+      )}
+      {stats.rejectedCount > 0 && (
+        <span className="text-red-600 dark:text-red-400">
+          <strong className="tabular-nums">{stats.rejectedCount}</strong>{" "}
+          rejected
+        </span>
+      )}
+      <Separator orientation="vertical" className="h-3.5" />
+      <span className="text-emerald-600 dark:text-emerald-400">
+        {stats.presentCount} present
+      </span>
+      <span className="text-rose-600 dark:text-rose-400">
+        {stats.absentCount} absent
+      </span>
+      {stats.lateCount > 0 && (
+        <span className="text-amber-600 dark:text-amber-400">
+          {stats.lateCount} late
+        </span>
+      )}
+    </div>
   )
 }

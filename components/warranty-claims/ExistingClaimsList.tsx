@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -569,6 +569,13 @@ export default function ExistingClaimsList() {
               : "Complete"
         }
         Icon={confirmAction.type === "complete" ? CheckCircle2 : XCircle}
+        variant={
+          confirmAction.type === "delete"
+            ? "destructive"
+            : confirmAction.type === "cancel"
+              ? "warning"
+              : "success"
+        }
       />
     </>
   )

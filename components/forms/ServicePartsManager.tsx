@@ -1176,6 +1176,7 @@ export default function ServicePartsManager({
         description="Are you sure you want to remove this part? This will return the quantity to stock."
         confirmText="Remove"
         cancelText="Cancel"
+        variant="warning"
       />
     </>
   )

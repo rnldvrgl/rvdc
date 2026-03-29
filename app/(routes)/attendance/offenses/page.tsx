@@ -17,9 +17,9 @@ import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useOffenseMutations } from "@/lib/mutations/useAttendanceMutations"
 import {
-  useOffenseFilters,
-  useOffenses,
-  useOffenseStatistics,
+    useOffenseFilters,
+    useOffenses,
+    useOffenseStatistics,
 } from "@/lib/queries/useAttendance"
 import { AlertCircle, AlertTriangle, Plus, UserX } from "lucide-react"
 import { useState } from "react"
@@ -258,6 +258,7 @@ export default function OffensesPage() {
             title="Archive Offense"
             description="Are you sure you want to archive this offense record? You can restore it from the Archived tab."
             confirmText="Archive"
+            variant="warning"
           />
         </>
       )}

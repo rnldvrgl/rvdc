@@ -3,43 +3,43 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog"
 import {
-  addDays,
-  addMonths,
-  addWeeks,
-  eachDayOfInterval,
-  endOfMonth,
-  endOfWeek,
-  format,
-  isSameMonth,
-  isToday,
-  startOfMonth,
-  startOfWeek,
-  subDays,
-  subMonths,
-  subWeeks,
+    addDays,
+    addMonths,
+    addWeeks,
+    eachDayOfInterval,
+    endOfMonth,
+    endOfWeek,
+    format,
+    isSameMonth,
+    isToday,
+    startOfMonth,
+    startOfWeek,
+    subDays,
+    subMonths,
+    subWeeks,
 } from "date-fns"
 import {
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  FileText,
-  Plane,
-  User,
+    Calendar,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    FileText,
+    Plane,
+    User,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 
@@ -47,8 +47,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useIsMobile } from "@/lib/hooks"
 import { useCalendarPreferences } from "@/lib/hooks/useCalendarPreferences"
 import {
-  CalendarEvent,
-  useCalendarEvents,
+    CalendarEvent,
+    useCalendarEvents,
 } from "@/lib/queries/calendar/useCalendarEvents"
 import { cn, formatDateToYMD } from "@/lib/utils/helpers"
 import { CalendarEventItem } from "./CalendarEventItem"
@@ -349,6 +349,15 @@ const getEventColors = (event: CalendarEvent): EventColors => {
   }
 }
 
+// Priority order: higher = wins when multiple employees share a day
+const STATUS_PRIORITY: Record<string, number> = {
+  present: 4,
+  late: 3,
+  leave: 2,
+  absent: 1,
+  invalid: 0,
+}
+
 const getDayBackgroundColor = (
   day: Date,
   eventsByDate: Record<string, CalendarEvent[]>,
@@ -357,17 +366,28 @@ const getDayBackgroundColor = (
   if (mode !== "attendance") return ""
 
   const dayEvents = eventsByDate[day.toDateString()] || []
-  const attendanceEvent = dayEvents.find(
+  const attendanceEvents = dayEvents.filter(
     (event) => event.extendedProps?.type === "attendance",
   )
 
-  if (!attendanceEvent) return ""
+  if (attendanceEvents.length === 0) return ""
 
-  const status =
-    attendanceEvent.extendedProps?.status ||
-    attendanceEvent.extendedProps?.attendance_status
-  const colors = EVENT_COLORS[status as string]
+  // Pick the dominant (highest-priority) status across all employees
+  let bestStatus = ""
+  let bestPriority = -1
 
+  for (const event of attendanceEvents) {
+    const status =
+      (event.extendedProps?.status ||
+        event.extendedProps?.attendance_status) as string
+    const priority = STATUS_PRIORITY[status] ?? 0
+    if (priority > bestPriority) {
+      bestPriority = priority
+      bestStatus = status
+    }
+  }
+
+  const colors = EVENT_COLORS[bestStatus]
   return colors ? `${colors.lightBg} ${colors.hoverBg}` : ""
 }
 

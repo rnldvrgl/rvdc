@@ -4,12 +4,12 @@ import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import { Badge, BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -200,6 +200,7 @@ export default function PullOutForm({ stock, onClose }: PullOutFormProps) {
         description={`Are you sure you want to pull out ${pendingData?.quantity ?? ""} ${unit} of "${stock.item?.display_name ?? "this item"}" from ${stock.stall?.name ?? "this stall"}?`}
         confirmText="Pull Out"
         Icon={PackageMinus}
+        variant="warning"
       />
     </>
   )

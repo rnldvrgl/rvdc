@@ -14,18 +14,18 @@ import ServiceDetail from "@/components/services/ServiceDetail"
 import ServiceKanbanBoard from "@/components/services/ServiceKanbanBoard"
 import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Service } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
@@ -34,9 +34,9 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import {
-  useService,
-  useServiceFilters,
-  useServices,
+    useService,
+    useServiceFilters,
+    useServices,
 } from "@/lib/queries/services/useServices"
 import { Kanban, List, Plus, Wrench } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -314,6 +314,7 @@ export default function ServicesPage() {
         }
         onConfirm={state.confirmDelete}
         confirmText="Archive"
+        variant="warning"
       />
 
       {/* Complete Confirmation Dialog */}
@@ -328,6 +329,7 @@ export default function ServicesPage() {
         }
         onConfirm={state.confirmComplete}
         confirmText="Complete"
+        variant="success"
       />
 
       {/* Status Change Confirmation Dialog */}
@@ -342,6 +344,7 @@ export default function ServicesPage() {
         }
         onConfirm={state.confirmStatusChange}
         confirmText="Start Progress"
+        variant="info"
       />
 
       {/* Cancel Service Dialog (with reason) */}

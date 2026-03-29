@@ -121,7 +121,7 @@ export function Sidebar() {
 
   const userPermissions = useGetPermissions(role || "guest", payrollIncluded)
 
-  const { navigation } = useSidebarNavigation({
+  const { sections } = useSidebarNavigation({
     permissions: userPermissions,
   })
 
@@ -197,7 +197,7 @@ export function Sidebar() {
       />
 
       <SidebarNav
-        sections={[{ title: "Navigation", items: navigation }]}
+        sections={sections}
         activePath={activePath}
         onAction={(action) => {
           switch (action) {
