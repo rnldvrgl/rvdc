@@ -1,15 +1,29 @@
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { LucideProps } from "lucide-react"
-import * as react from "react"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils/helpers"
+import { AlertTriangle, type LucideIcon, XCircle } from "lucide-react"
+
+const VARIANT_CONFIG = {
+  destructive: {
+    iconBg: "bg-red-100 dark:bg-red-900/30",
+    iconColor: "text-red-600 dark:text-red-400",
+    confirmClass: "bg-red-600 hover:bg-red-700 text-white",
+    DefaultIcon: AlertTriangle,
+  },
+  default: {
+    iconBg: "bg-blue-100 dark:bg-blue-900/30",
+    iconColor: "text-blue-600 dark:text-blue-400",
+    confirmClass: "",
+    DefaultIcon: AlertTriangle,
+  },
+} as const
 
 export function ConfirmDialog({
   open,
@@ -20,37 +34,61 @@ export function ConfirmDialog({
   Icon,
   confirmText = "Discard",
   cancelText = "Cancel",
+  variant = "destructive",
+  isLoading = false,
 }: {
   open: boolean
   onConfirm: () => void
   onCancel: () => void
   title?: string
-  Icon?: react.ForwardRefExoticComponent<
-    Omit<LucideProps, "ref"> & react.RefAttributes<SVGSVGElement>
-  >
+  Icon?: LucideIcon
   description?: string
   confirmText?: string
   cancelText?: string
+  variant?: "destructive" | "default"
+  isLoading?: boolean
 }) {
+  const config = VARIANT_CONFIG[variant]
+  const DisplayIcon = Icon || config.DefaultIcon
+
   return (
     <AlertDialog
       open={open}
       onOpenChange={(isOpen) => !isOpen && onCancel()}
     >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center rounded-md"
+      <AlertDialogContent className="max-w-md">
+        <AlertDialogHeader className="text-center sm:text-center">
+          <div
+            className={cn(
+              "mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full",
+              config.iconBg,
+            )}
           >
-            {Icon && <Icon className="mr-1 size-4" />}
+            <DisplayIcon className={cn("h-7 w-7", config.iconColor)} />
+          </div>
+          <AlertDialogTitle className="text-lg">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-muted-foreground">
+            {description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+          <Button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className={cn("w-full", config.confirmClass)}
+          >
+            {DisplayIcon && <DisplayIcon className="mr-2 h-4 w-4" />}
             {confirmText}
-          </AlertDialogAction>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onCancel}
+            disabled={isLoading}
+            className="w-full"
+          >
+            <XCircle className="mr-2 h-4 w-4" />
+            {cancelText}
+          </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

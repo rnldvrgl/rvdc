@@ -1,26 +1,17 @@
 "use client"
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuGroup,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils/helpers"
-import { AlertTriangle, LucideIcon, MoreHorizontal } from "lucide-react"
+import { LucideIcon, MoreHorizontal } from "lucide-react"
 import { useCallback, useState } from "react"
 
 interface DataTableActionsProps {
@@ -146,52 +137,21 @@ export function DataTableActions({ items }: DataTableActionsProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <AlertDialog
+      <ConfirmDialog
         open={!!confirmItem}
-        onOpenChange={() => setConfirmItem(null)}
-      >
-        <AlertDialogContent className="max-w-sm rounded-xl">
-          <AlertDialogHeader className="gap-3">
-            <div
-              className={cn(
-                "mx-auto flex size-11 items-center justify-center rounded-full",
-                confirmItem?.destructive
-                  ? "bg-destructive/10 text-destructive"
-                  : "bg-amber-500/10 text-amber-500",
-              )}
-            >
-              <AlertTriangle className="size-5" />
-            </div>
-            <AlertDialogTitle className="text-center text-base">
-              {confirmItem?.confirmText ?? "Are you sure?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-sm">
-              {confirmItem?.confirmDescription ??
-                (confirmItem?.destructive
-                  ? "This action cannot be undone."
-                  : "You can restore this later from the Archived tab.")}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row gap-2 sm:justify-center mt-1">
-            <AlertDialogCancel
-              onClick={() => setConfirmItem(null)}
-              className="mt-0 flex-1 rounded-lg"
-            >
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirm}
-              className={cn(
-                "flex-1 rounded-lg",
-                confirmItem?.destructive &&
-                  "bg-destructive text-white hover:bg-destructive/90",
-              )}
-            >
-              {confirmItem?.destructive ? "Delete" : "Continue"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onCancel={() => setConfirmItem(null)}
+        onConfirm={handleConfirm}
+        title={confirmItem?.confirmText ?? "Are you sure?"}
+        description={
+          confirmItem?.confirmDescription ??
+          (confirmItem?.destructive
+            ? "This action cannot be undone."
+            : "You can restore this later from the Archived tab.")
+        }
+        confirmText={confirmItem?.destructive ? "Delete" : "Continue"}
+        Icon={confirmItem?.icon}
+        variant={confirmItem?.destructive ? "destructive" : "default"}
+      />
     </>
   )
 }
