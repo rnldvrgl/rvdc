@@ -283,6 +283,36 @@
     visibility: visible !important;
   }
 
+  .job-order-print img {
+    display: inline-block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .job-order-print svg {
+    display: inline-block !important;
+    break-inside: avoid !important;
+  }
+
+  .job-order-print .jo-page-wrapper {
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .job-order-print .jo-page-wrapper + .jo-page-wrapper {
+    break-before: page;
+    page-break-before: always;
+  }
+
   .job-order-print .jo-page {
     width: 11in !important;
     height: 8.5in !important;
@@ -301,11 +331,6 @@
     margin: 0 !important;
     padding: 0 !important;
     border-radius: 0 !important;
-  }
-
-  .job-order-print .jo-page + .jo-page {
-    break-before: page;
-    page-break-before: always;
   }
 
   /* ── Thermal Receipt (58mm) ── */

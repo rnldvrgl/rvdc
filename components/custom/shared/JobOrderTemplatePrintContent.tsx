@@ -186,7 +186,7 @@ export const JobOrderTemplatePrintContent = React.forwardRef<
       {pages.map((page, pageIndex) => (
         <div
           key={pageIndex}
-          className={`${
+          className={`jo-page-wrapper ${
             showPreviewMargins
               ? "w-[11in] h-[8.5in] p-[0.25in] bg-white border border-gray-300 rounded shadow-sm mb-4"
               : ""
