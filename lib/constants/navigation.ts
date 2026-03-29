@@ -1,11 +1,9 @@
-import { NavigationEntry } from "@/lib/constants/types"
+import { NavigationEntry, NavigationSection } from "@/lib/constants/types"
 import {
     AlertTriangle,
     Banknote,
-    BarChart3,
     Boxes,
     Cake,
-    CalendarClock,
     CalendarDays,
     CircleDollarSign,
     ClipboardList,
@@ -33,17 +31,38 @@ import {
 } from "lucide-react"
 
 export const baseNavigation: Record<string, NavigationEntry> = {
+  // ── Main ──
   dashboard: {
     name: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
     permission: "view_dashboard",
   },
+
+  // ── Operations ──
   sales: {
     name: "Sales",
     href: "/sales",
     icon: CircleDollarSign,
     permission: "view_sales",
+  },
+  services: {
+    name: "Services",
+    href: "/services",
+    icon: Wrench,
+    permission: "view_services",
+  },
+  quotations: {
+    name: "Quotations",
+    href: "/quotations",
+    icon: FileText,
+    permission: "view_quotations",
+  },
+  warrantyClaims: {
+    name: "Warranty & Cleaning",
+    href: "/warranty-claims",
+    icon: ShieldCheck,
+    permission: "view_warranty_claims",
   },
   receivables: {
     name: "Receivables",
@@ -69,12 +88,14 @@ export const baseNavigation: Record<string, NavigationEntry> = {
       },
     ],
   },
+
+  // ── Finance ──
   expenses: {
     name: "Expenses",
     icon: Coins,
     children: [
       {
-        name: "All Expenses",
+        name: "Manage Expenses",
         href: "/expenses/manage",
         icon: Coins,
         permission: "view_expenses",
@@ -87,27 +108,9 @@ export const baseNavigation: Record<string, NavigationEntry> = {
       },
     ],
   },
-  clients: {
-    name: "Clients",
-    href: "/clients",
-    icon: Users,
-    permission: "view_clients",
-  },
-  reports: {
-    name: "Reports",
-    href: "/reports",
-    icon: FileSpreadsheet,
-    permission: "view_reports",
-  },
-  shortcuts: {
-    name: "Shortcuts",
-    href: "/shortcuts",
-    icon: Keyboard,
-    permission: "view_shortcuts",
-  },
   payroll: {
     name: "Payroll",
-    icon: LayoutDashboard,
+    icon: Banknote,
     children: [
       {
         name: "Weekly Payroll",
@@ -116,7 +119,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: "manage_payroll",
       },
       {
-        name: "My Payroll",
+        name: "My Payslips",
         href: "/payroll/slip",
         icon: FileText,
         permission: "view_payroll",
@@ -133,7 +136,27 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         icon: Banknote,
         permission: "manage_deductions",
       },
+      {
+        name: "Tax Brackets",
+        href: "/settings/tax-brackets",
+        icon: CircleDollarSign,
+        permission: "manage_tax_brackets",
+      },
+      {
+        name: "Government Benefits",
+        href: "/settings/government-benefits",
+        icon: Banknote,
+        permission: "manage_government_benefits",
+      },
     ],
+  },
+
+  // ── People ──
+  clients: {
+    name: "Clients",
+    href: "/clients",
+    icon: Users,
+    permission: "view_clients",
   },
   employees: {
     name: "Employees",
@@ -147,14 +170,8 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     children: [
       {
         name: "Overview",
-        href: "/attendance/overview",
-        icon: CalendarDays,
-        permission: "manage_attendance_admin",
-      },
-      {
-        name: "Records",
         href: "/attendance/records",
-        icon: ClipboardList,
+        icon: CalendarDays,
         permission: "manage_attendance_admin",
       },
       {
@@ -199,29 +216,24 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         icon: AlertTriangle,
         permission: "view_own_offenses",
       },
+      {
+        name: "Holidays",
+        href: "/settings/holidays",
+        icon: CalendarDays,
+        permission: "manage_holidays",
+      },
+      {
+        name: "Calendar Events",
+        href: "/settings/calendar-events",
+        icon: CalendarDays,
+        permission: "manage_calendar_events",
+      },
     ],
   },
-  services: {
-    name: "Services",
-    href: "/services",
-    icon: Wrench,
-    permission: "view_services",
-  },
-  // TODO: UNDER DEVELOPMENT
-  // messaging: {
-  //   name: "Messaging",
-  //   href: "/messaging",
-  //   icon: MessageCircle,
-  //   permission: "view_messaging",
-  // },
-  quotation: {
-    name: "Quotations",
-    href: "/quotations",
-    icon: FileText,
-    permission: "view_quotations",
-  },
+
+  // ── Inventory ──
   aircons: {
-    name: "Airconditioning",
+    name: "Aircon Units",
     icon: Wind,
     children: [
       {
@@ -241,12 +253,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         href: "/aircons/units",
         icon: Package,
         permission: "manage_aircon_units",
-      },
-      {
-        name: "Warranty & Cleaning",
-        href: "/warranty-claims",
-        icon: ShieldCheck,
-        permission: "view_warranty_claims",
       },
     ],
   },
@@ -290,60 +296,46 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         icon: LayoutList,
         permission: "view_items",
       },
-      {
-        name: "Reports",
-        href: "/inventory/reports",
-        icon: BarChart3,
-        permission: "manage_stockroom",
-      },
     ],
   },
-  settings: {
-    name: "Settings",
-    icon: Settings,
+
+  // ── Insights ──
+  reports: {
+    name: "Reports",
+    href: "/reports",
+    icon: FileSpreadsheet,
+    permission: "view_reports",
+  },
+  shortcuts: {
+    name: "Shortcuts",
+    href: "/shortcuts",
+    icon: Keyboard,
+    permission: "view_shortcuts",
+  },
+
+  // ── Admin ──
+  templates: {
+    name: "Templates",
+    href: "/settings/templates",
+    icon: FileText,
+    permission: "manage_job_order_templates",
+  },
+  applianceTypes: {
+    name: "Appliance Types",
+    href: "/settings/appliance-types",
+    icon: Wrench,
+    permission: "manage_appliance_types",
+  },
+  bulkUpdate: {
+    name: "Bulk Update",
+    href: "/settings/bulk-update",
+    icon: Layers,
+    permission: "manage_bulk_update",
+  },
+  system: {
+    name: "System",
+    icon: Server,
     children: [
-      {
-        name: "Holidays",
-        href: "/settings/holidays",
-        icon: CalendarDays,
-        permission: "manage_holidays",
-      },
-      {
-        name: "Bulk Update",
-        href: "/settings/bulk-update",
-        icon: Layers,
-        permission: "manage_bulk_update",
-      },
-      {
-        name: "Templates",
-        href: "/settings/templates",
-        icon: FileText,
-        permission: "manage_job_order_templates",
-      },
-      {
-        name: "Appliance Types",
-        href: "/settings/appliance-types",
-        icon: Wrench,
-        permission: "manage_appliance_types",
-      },
-      {
-        name: "Government Benefits",
-        href: "/settings/government-benefits",
-        icon: Banknote,
-        permission: "manage_government_benefits",
-      },
-      {
-        name: "Tax Brackets",
-        href: "/settings/tax-brackets",
-        icon: CircleDollarSign,
-        permission: "manage_tax_brackets",
-      },
-      {
-        name: "Calendar Events",
-        href: "/settings/calendar-events",
-        icon: CalendarDays,
-        permission: "manage_calendar_events",
-      },
       {
         name: "Birthday Greeting",
         href: "/settings/system",
@@ -351,13 +343,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: "manage_system_settings",
       },
       {
-        name: "Day Schedules",
-        href: "/settings/half-day-schedules",
-        icon: CalendarClock,
-        permission: "manage_system_settings",
-      },
-      {
-        name: "Server Maintenance",
+        name: "Maintenance",
         href: "/settings/maintenance",
         icon: Server,
         permission: "manage_server_maintenance",
@@ -372,25 +358,52 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   },
 }
 
-// Ordered navigation array to maintain consistent sidebar sorting with better business hierarchy
-export const orderedNavigation: NavigationEntry[] = [
-  baseNavigation.dashboard,
-  // Core Business Operations
-  baseNavigation.sales,
-  baseNavigation.services,
-  baseNavigation.quotation,
-  baseNavigation.receivables,
-  baseNavigation.expenses,
-  baseNavigation.inventory,
-  baseNavigation.aircons,
-  // Customer & People Management
-  baseNavigation.clients,
-  baseNavigation.employees,
-  // HR & Operations
-  baseNavigation.payroll,
-  baseNavigation.attendance,
-  // System Management
-  baseNavigation.reports,
-  baseNavigation.shortcuts,
-  baseNavigation.settings,
+// Sectioned navigation for sidebar grouping
+export const sectionedNavigation: NavigationSection[] = [
+  {
+    items: [baseNavigation.dashboard],
+  },
+  {
+    title: "Operations",
+    items: [
+      baseNavigation.sales,
+      baseNavigation.services,
+      baseNavigation.quotations,
+      baseNavigation.warrantyClaims,
+      baseNavigation.receivables,
+    ],
+  },
+  {
+    title: "Finance",
+    items: [baseNavigation.expenses, baseNavigation.payroll],
+  },
+  {
+    title: "People",
+    items: [
+      baseNavigation.clients,
+      baseNavigation.employees,
+      baseNavigation.attendance,
+    ],
+  },
+  {
+    title: "Inventory",
+    items: [baseNavigation.aircons, baseNavigation.inventory],
+  },
+  {
+    title: "Insights",
+    items: [baseNavigation.reports, baseNavigation.shortcuts],
+  },
+  {
+    title: "Admin",
+    items: [
+      baseNavigation.templates,
+      baseNavigation.applianceTypes,
+      baseNavigation.bulkUpdate,
+      baseNavigation.system,
+    ],
+  },
 ]
+
+// Flat ordered navigation (for search, command palette, etc.)
+export const orderedNavigation: NavigationEntry[] =
+  sectionedNavigation.flatMap((s) => s.items)

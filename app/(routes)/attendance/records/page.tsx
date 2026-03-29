@@ -1,6 +1,10 @@
 "use client"
 
 import { getAttendanceColumns } from "@/app/(routes)/attendance/records/columns"
+import { AttendanceManagementTabs } from "@/components/custom/attendance/AttendanceManagementTabs"
+import { AttendanceOverviewStats } from "@/components/custom/attendance/AttendanceOverviewStats"
+import { EmployeeFilter } from "@/components/custom/attendance/EmployeeFilter"
+import { MarkAbsentDialog } from "@/components/custom/attendance/MarkAbsentDialog"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
@@ -11,6 +15,8 @@ import AttendanceForm from "@/components/forms/AttendanceForm"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { DailyAttendance } from "@/lib/constants/types"
+import { useAttendanceStats } from "@/lib/hooks/useAttendanceStats"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import { useNavigation } from "@/lib/hooks/useNavigation"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
@@ -20,15 +26,19 @@ import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { convertAttendanceForCalendar } from "@/lib/utils/attendance"
 import { formatDateToYMD } from "@/lib/utils/helpers"
 import {
-  CheckCircle2,
-  ClipboardList,
-  Plus,
-  TimerReset,
-  TriangleAlert,
-  X,
+    CalendarDays,
+    CheckCircle2,
+    ClipboardList,
+    Plus,
+    Users,
+    X,
 } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
+
+type SelectedEmployeeType =
+  | (Record<"employee_id", number | string> & Record<"employee_name", string>)
+  | undefined
 
 type AttendanceDraftSeed = {
   date?: Date
@@ -36,12 +46,53 @@ type AttendanceDraftSeed = {
 }
 
 export default function AttendanceRecordsPage() {
+  const { isAdmin } = useCurrentUser()
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const { push } = useNavigation()
-  const { data: employees = [] } = useEmployeeChoices({
+
+  // Employee filter state
+  const { data: employeeChoicesData } = useEmployeeChoices({
     includeInPayroll: true,
   })
+  const employeeChoices = useMemo(
+    () => employeeChoicesData ?? [],
+    [employeeChoicesData],
+  )
+  const [selectedEmployee, setSelectedEmployee] =
+    useState<SelectedEmployeeType>(undefined)
+
+  // Sync employee filter from URL on initial load only
+  const initialSyncDone = useRef(false)
+  useEffect(() => {
+    if (initialSyncDone.current || !filter?.employee_id) return
+    const matched = employeeChoices.find(
+      (e) => String(e.id) === String(filter.employee_id),
+    )
+    if (matched) {
+      setSelectedEmployee({
+        employee_id: matched.id,
+        employee_name: `${matched.first_name} ${matched.last_name}`,
+      })
+      initialSyncDone.current = true
+    }
+  }, [employeeChoices, filter?.employee_id])
+
+  // Update URL when employee selection changes
+  const prevEmployeeId = useRef(selectedEmployee?.employee_id)
+  useEffect(() => {
+    if (prevEmployeeId.current === selectedEmployee?.employee_id) return
+    prevEmployeeId.current = selectedEmployee?.employee_id
+    push({
+      page: 1,
+      limit,
+      search,
+      ordering,
+      filter: { ...filter, employee_id: selectedEmployee?.employee_id },
+    })
+  }, [selectedEmployee?.employee_id, filter, push, limit, search, ordering])
+
+  // CRUD state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [attendanceToDelete, setAttendanceToDelete] = useState<number | null>(
     null,
@@ -49,6 +100,7 @@ export default function AttendanceRecordsPage() {
   const [draftSeed, setDraftSeed] = useState<AttendanceDraftSeed>({})
   const [addOpen, setAddOpen] = useState(false)
 
+  // Data queries
   const { data, isLoading, refetch } = useDailyAttendances({
     page,
     limit,
@@ -57,6 +109,30 @@ export default function AttendanceRecordsPage() {
     filter,
   })
 
+  // Monthly stats data
+  const now = new Date()
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+
+  const { data: monthlyData, isLoading: isLoadingMonthly } =
+    useDailyAttendances({
+      filter: {
+        ...filter,
+        date_from: formatDateToYMD(firstDayOfMonth),
+        date_to: formatDateToYMD(lastDayOfMonth),
+      },
+      limit: 1000,
+    })
+
+  // Recent activity for management tabs
+  const { data: recentData, isLoading: isLoadingRecent } =
+    useDailyAttendances({
+      filter,
+      limit: 10,
+      ordering: "-date,-created_at",
+    })
+
+  // Calendar data (all records for the selected employee, no page limits)
   const { data: calendarData } = useDailyAttendances({
     limit: 1000,
     ordering: "-date",
@@ -75,13 +151,25 @@ export default function AttendanceRecordsPage() {
     closeEntity: closeEdit,
   } = useEntitySheet<DailyAttendance>()
 
+  // Overview stats
+  const monthlyRecords = monthlyData?.results || []
+  const calendarEvents = convertAttendanceForCalendar(monthlyRecords)
+  const stats = useAttendanceStats(monthlyRecords, calendarEvents)
+
+  // Calendar events for interactive calendar
+  const calendarAttendances = useMemo(
+    () => convertAttendanceForCalendar(calendarData?.results || []),
+    [calendarData?.results],
+  )
+
+  // Table filters
   const employeeOptions = useMemo(
     () =>
-      employees.map((employee) => ({
-        label: employee.full_name,
+      employeeChoices.map((employee) => ({
+        label: `${employee.first_name} ${employee.last_name}`,
         value: String(employee.id),
       })),
-    [employees],
+    [employeeChoices],
   )
 
   const filters = useMemo(
@@ -125,21 +213,7 @@ export default function AttendanceRecordsPage() {
     { label: "Status", value: "status" },
   ]
 
-  const calendarAttendances = useMemo(
-    () => convertAttendanceForCalendar(calendarData?.results || []),
-    [calendarData?.results],
-  )
-
-  const stats = useMemo(() => {
-    const records = data?.results || []
-    return {
-      total: records.length,
-      pending: records.filter((record) => record.status === "PENDING").length,
-      approved: records.filter((record) => record.status === "APPROVED").length,
-      late: records.filter((record) => record.is_late).length,
-    }
-  }, [data?.results])
-
+  // Handlers
   const handleDelete = (id: number) => {
     setAttendanceToDelete(id)
     setDeleteDialogOpen(true)
@@ -147,7 +221,6 @@ export default function AttendanceRecordsPage() {
 
   const confirmDelete = async () => {
     if (!attendanceToDelete) return
-
     await deleteAttendance.mutateAsync(attendanceToDelete)
     setDeleteDialogOpen(false)
     setAttendanceToDelete(null)
@@ -162,16 +235,12 @@ export default function AttendanceRecordsPage() {
 
   const handleDateClick = (date: Date) => {
     const nextDate = formatDateToYMD(date)
-
     push({
       page: 1,
       limit,
       search,
       ordering,
-      filter: {
-        ...filter,
-        date: nextDate,
-      },
+      filter: { ...filter, date: nextDate },
     })
 
     const hasRecordOnDate = (calendarData?.results || []).some(
@@ -191,14 +260,7 @@ export default function AttendanceRecordsPage() {
   const clearSelectedDate = () => {
     const nextFilter = { ...filter }
     delete nextFilter.date
-
-    push({
-      page: 1,
-      limit,
-      search,
-      ordering,
-      filter: nextFilter,
-    })
+    push({ page: 1, limit, search, ordering, filter: nextFilter })
   }
 
   const columns = getAttendanceColumns({
@@ -226,7 +288,6 @@ export default function AttendanceRecordsPage() {
 
   const handleBulkArchive = async (rows: DailyAttendance[]) => {
     if (rows.length === 0) return
-
     await Promise.all(rows.map((row) => deleteAttendance.mutateAsync(row.id)))
     toast.success(`${rows.length} attendance record(s) archived.`)
   }
@@ -235,83 +296,61 @@ export default function AttendanceRecordsPage() {
     <Wrapper>
       <div className="space-y-4 md:space-y-6">
         <PageHeader
-          title="Attendance Records"
-          description="Admin workspace for manual daily attendance adjustments, approvals, and cleanup."
-          icon={ClipboardList}
+          icon={Users}
+          title="Attendance"
+          description="Manage attendance records, approvals, and monthly visibility."
+          breadcrumbs={[
+            "Attendance",
+            "Overview",
+            `${selectedEmployee?.employee_name || "All Employees"}`,
+          ]}
           onRefresh={refetch}
-          isAdminOnly
           actionButton={
-            <Button
-              onClick={() =>
-                openCreateSheet({
-                  date: selectedDate
-                    ? new Date(String(selectedDate))
-                    : undefined,
-                  employeeId: filter?.employee_id
-                    ? Number.parseInt(String(filter.employee_id), 10)
-                    : undefined,
-                })
-              }
-            >
-              <Plus className="mr-2 size-4" />
-              Add Attendance
-            </Button>
+            isAdmin ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  onClick={() =>
+                    openCreateSheet({
+                      date: selectedDate
+                        ? new Date(String(selectedDate))
+                        : undefined,
+                      employeeId: filter?.employee_id
+                        ? Number.parseInt(String(filter.employee_id), 10)
+                        : undefined,
+                    })
+                  }
+                >
+                  <Plus className="mr-2 size-4" />
+                  Add Attendance
+                </Button>
+                <MarkAbsentDialog />
+              </div>
+            ) : undefined
           }
+          variant="compact"
         />
 
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Visible Records
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-3xl font-semibold">
-              {stats.total}
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Pending Review
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <span className="text-3xl font-semibold">{stats.pending}</span>
-              <TimerReset className="h-5 w-5 text-amber-500" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Approved
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <span className="text-3xl font-semibold">{stats.approved}</span>
-              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Late Records
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <span className="text-3xl font-semibold">{stats.late}</span>
-              <TriangleAlert className="h-5 w-5 text-rose-500" />
-            </CardContent>
-          </Card>
-        </div>
+        <EmployeeFilter
+          employees={employeeChoices}
+          selectedEmployee={selectedEmployee ?? undefined}
+          onEmployeeChange={setSelectedEmployee}
+        />
+
+        <AttendanceOverviewStats
+          stats={stats}
+          isLoading={isLoadingMonthly}
+        />
 
         <Card className="overflow-hidden border-border/60">
           <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border/60">
             <div>
-              <CardTitle className="text-lg">Calendar</CardTitle>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CalendarDays className="h-5 w-5 text-primary" />
+                Monthly Calendar
+              </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Click a day to focus the table. Empty dates open the
-                add-attendance sheet immediately.
+                Click a day to filter the table. Empty dates open the
+                add-attendance sheet.
               </p>
             </div>
 
@@ -342,7 +381,7 @@ export default function AttendanceRecordsPage() {
         <DataTable
           enableVirtualization
           enableRowSelection
-          title="Daily Attendance Records"
+          title="Attendance Records"
           description="Full manual CRUD for attendance records with approval actions built in."
           columns={columns}
           data={
@@ -379,6 +418,13 @@ export default function AttendanceRecordsPage() {
           ]}
           emptyTitle="No attendance records found"
           emptyDescription="Adjust filters or click a date on the calendar to add the first record for that day."
+        />
+
+        <AttendanceManagementTabs
+          recentRecords={recentData?.results || []}
+          isLoadingRecent={isLoadingRecent}
+          showEmployeeCount={!selectedEmployee}
+          filter={filter}
         />
       </div>
 

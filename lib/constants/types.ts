@@ -1,13 +1,13 @@
 import { DATE_RANGE_PRESETS } from "@/lib/constants/general"
 import {
-  NavigationGroup,
-  NavigationLink,
-  ShortcutLink,
-  Stall,
+    NavigationGroup,
+    NavigationLink,
+    ShortcutLink,
+    Stall,
 } from "@/lib/constants/interface"
 import {
-  ChequeCollectionSchema,
-  userProfileSchema,
+    ChequeCollectionSchema,
+    userProfileSchema,
 } from "@/lib/constants/schema"
 import { RemixiconComponentType } from "@remixicon/react"
 import { LucideIcon } from "lucide-react"
@@ -19,6 +19,10 @@ export type UnitChoice = "pcs" | "ft" | "kg" | "roll" | "box"
 export type Roles = "admin" | "manager" | "clerk" | "technician" | "guest"
 export type NavigationEntry = NavigationLink | NavigationGroup
 export type ShortcutEntry = ShortcutLink
+export type NavigationSection = {
+  title?: string
+  items: NavigationEntry[]
+}
 
 export type ShopInfo = {
   name: string

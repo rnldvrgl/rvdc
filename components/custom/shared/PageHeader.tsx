@@ -24,7 +24,7 @@ const breadcrumbRouteMap: Record<string, string> = {
   Staff: "/employees",
   Employees: "/employees",
   Payroll: "/payroll/weekly",
-  Attendance: "/attendance/overview",
+  Attendance: "/attendance/records",
   Inventory: "/inventory/items",
   Stocks: "/inventory/stocks/stockroom",
   Aircons: "/aircons/units",

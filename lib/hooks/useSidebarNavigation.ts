@@ -1,15 +1,22 @@
 import { NavigationGroup, NavigationLink } from "@/lib/constants/interface"
-import { orderedNavigation } from "@/lib/constants/navigation"
+import { sectionedNavigation } from "@/lib/constants/navigation"
 import { useMemo } from "react"
 
 type UseNavigationProps = {
   permissions: string[]
 }
 
+type FilteredSection = {
+  title?: string
+  items: (NavigationGroup | NavigationLink)[]
+}
+
 export function useSidebarNavigation({ permissions }: UseNavigationProps) {
-  const navigation = useMemo(() => {
-    return orderedNavigation.reduce<(NavigationGroup | NavigationLink)[]>(
-      (acc, item) => {
+  const sections = useMemo<FilteredSection[]>(() => {
+    return sectionedNavigation.reduce<FilteredSection[]>((acc, section) => {
+      const filteredItems = section.items.reduce<
+        (NavigationGroup | NavigationLink)[]
+      >((itemAcc, item) => {
         if ("children" in item && Array.isArray(item.children)) {
           const filteredChildren = item.children.filter(
             (child) =>
@@ -17,26 +24,34 @@ export function useSidebarNavigation({ permissions }: UseNavigationProps) {
           )
 
           if (filteredChildren.length === 1) {
-            // Flatten single child - show child as parent
             const singleChild = filteredChildren[0]
-            acc.push({
+            itemAcc.push({
               name: singleChild.name,
               href: singleChild.href,
-              icon: item.icon, // Use parent's icon
+              icon: item.icon,
               permission: singleChild.permission,
             })
           } else if (filteredChildren.length > 1) {
-            // Keep as dropdown for multiple children
-            acc.push({ ...item, children: filteredChildren })
+            itemAcc.push({ ...item, children: filteredChildren })
           }
         } else if (!item.permission || permissions.includes(item.permission)) {
-          acc.push(item as NavigationGroup | NavigationLink)
+          itemAcc.push(item as NavigationGroup | NavigationLink)
         }
-        return acc
-      },
-      [],
-    )
+        return itemAcc
+      }, [])
+
+      if (filteredItems.length > 0) {
+        acc.push({ title: section.title, items: filteredItems })
+      }
+      return acc
+    }, [])
   }, [permissions])
 
-  return { navigation }
+  // Flat list for command palette / search
+  const navigation = useMemo(
+    () => sections.flatMap((s) => s.items),
+    [sections],
+  )
+
+  return { sections, navigation }
 }

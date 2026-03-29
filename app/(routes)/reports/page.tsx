@@ -5,11 +5,11 @@ import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useStalls } from "@/lib/queries/inventory/useStalls"
@@ -19,6 +19,7 @@ import { FormProvider, useForm, useFormContext } from "react-hook-form"
 
 import { ExportCenter } from "@/app/(routes)/reports/_components/ExportCenter"
 import { ExpensesReport } from "./_components/ExpensesReport"
+import { InventoryReport } from "./_components/InventoryReport"
 import { SalesReport } from "./_components/SalesReport"
 import { ServicesReport } from "./_components/ServicesReport"
 import { SummaryReport } from "./_components/SummaryReport"
@@ -127,6 +128,12 @@ export default function ReportsPage() {
                 </TabsTrigger>
               ) : null}
               <TabsTrigger
+                value="inventory"
+                className="text-xs sm:text-sm"
+              >
+                Inventory
+              </TabsTrigger>
+              <TabsTrigger
                 value="export"
                 className="gap-1 sm:gap-1.5 text-xs sm:text-sm"
               >
@@ -147,6 +154,9 @@ export default function ReportsPage() {
           </TabsContent>
           <TabsContent value="services">
             <ServicesReport />
+          </TabsContent>
+          <TabsContent value="inventory">
+            <InventoryReport />
           </TabsContent>
           <TabsContent value="export">
             <ExportCenter />

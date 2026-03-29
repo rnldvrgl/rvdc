@@ -1,18 +1,18 @@
 "use client"
 
 import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
+    CommandDialog,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+    CommandSeparator,
 } from "@/components/ui/command"
 import {
-  Item,
-  NavigationGroup,
-  NavigationLink,
+    Item,
+    NavigationGroup,
+    NavigationLink,
 } from "@/lib/constants/interface"
 import { orderedNavigation } from "@/lib/constants/navigation"
 import { useClients } from "@/lib/queries/clients/useClients"
@@ -21,23 +21,23 @@ import { useStallStocks } from "@/lib/queries/inventory/useStocks"
 import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useServices } from "@/lib/queries/services/useServices"
 import {
-  Banknote,
-  Box,
-  CircleDollarSign,
-  Coins,
-  CreditCard,
-  FileSpreadsheet,
-  FileText,
-  LayoutDashboard,
-  Loader2,
-  Package,
-  Plus,
-  Search,
-  ShoppingCart,
-  Tag,
-  Users,
-  Warehouse,
-  Wrench,
+    Banknote,
+    Box,
+    CircleDollarSign,
+    Coins,
+    CreditCard,
+    FileSpreadsheet,
+    FileText,
+    LayoutDashboard,
+    Loader2,
+    Package,
+    Plus,
+    Search,
+    ShoppingCart,
+    Tag,
+    Users,
+    Warehouse,
+    Wrench,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
@@ -205,7 +205,7 @@ const navigationShortcuts = [
   {
     keys: "Alt+Shift+T",
     label: "Go to Attendance",
-    href: "/attendance/overview",
+    href: "/attendance/records",
     icon: FileText,
     permission: "manage_attendance",
   },
@@ -509,7 +509,7 @@ export function CommandPalette({
             break
           case "t":
             e.preventDefault()
-            router.push("/attendance/overview")
+            router.push("/attendance/records")
             break
           case "p":
             e.preventDefault()
