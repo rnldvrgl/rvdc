@@ -16,6 +16,7 @@ type DashboardWSData = {
     | "stockroom_updated"
     | "stock_request_created"
     | "stock_request_updated"
+    | "jo_template_printed"
   [key: string]: unknown
 }
 
@@ -101,6 +102,12 @@ export function useDashboardWebSocket({ onEvent }: Options = {}) {
 
         if (e === "stock_request_created" || e === "stock_request_updated") {
           queryClient.invalidateQueries({ queryKey: ["stock-requests"] })
+        }
+
+        // --- Job Order Template events ---
+        if (e === "jo_template_printed") {
+          queryClient.invalidateQueries({ queryKey: ["jo-template-prints"] })
+          queryClient.invalidateQueries({ queryKey: ["jo-next-number"] })
         }
 
         // Sales and stock changes affect dashboard analytics

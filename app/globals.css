@@ -195,7 +195,7 @@
   }
 
   /* Hide everything except print content */
-  body > *:not(.quotation-print):not(.thermal-receipt-print) {
+  body > *:not(.quotation-print):not(.thermal-receipt-print):not(.job-order-print) {
     display: none !important;
   }
 
@@ -255,6 +255,53 @@
     break-inside: avoid !important;
   }
 
+  /* ── Job Order (Letter Landscape, 2-up) ── */
+  .job-order-print {
+    page: job-order-page;
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .job-order-print * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    visibility: visible !important;
+  }
+
+  .job-order-print .jo-page {
+    width: 11in !important;
+    height: 8.5in !important;
+    max-height: 8.5in !important;
+    padding: 0.25in !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin: 0 !important;
+  }
+
+  .job-order-print > div {
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .job-order-print .jo-page + .jo-page {
+    break-before: page;
+    page-break-before: always;
+  }
+
   /* ── Thermal Receipt (58mm) ── */
   .thermal-receipt-print {
     page: thermal-page;
@@ -280,6 +327,11 @@
 
 @page thermal-page {
   size: 58mm auto;
+  margin: 0;
+}
+
+@page job-order-page {
+  size: letter landscape;
   margin: 0;
 }
 

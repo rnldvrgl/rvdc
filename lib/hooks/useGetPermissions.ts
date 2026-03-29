@@ -33,6 +33,7 @@ export function useGetPermissions(
       "manage_holidays",
       "manage_cheque_collections",
       "manage_appliance_types",
+      "manage_job_order_templates",
       "manage_payroll",
       "manage_aircon_brands",
       "manage_aircon_models",
