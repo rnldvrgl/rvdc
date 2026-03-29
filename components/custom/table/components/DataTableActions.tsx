@@ -150,7 +150,7 @@ export function DataTableActions({ items }: DataTableActionsProps) {
         }
         confirmText={confirmItem?.destructive ? "Delete" : "Continue"}
         Icon={confirmItem?.icon}
-        variant={confirmItem?.destructive ? "destructive" : "default"}
+        variant={confirmItem?.destructive ? "destructive" : "warning"}
       />
     </>
   )

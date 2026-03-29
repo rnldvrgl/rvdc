@@ -5,8 +5,8 @@ import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
 import {
-  ServiceReceiptPrintContent,
-  type ServiceReceiptMode,
+    ServiceReceiptPrintContent,
+    type ServiceReceiptMode,
 } from "@/components/custom/shared/ServiceReceiptPrintContent"
 import ServiceApplianceManager from "@/components/forms/ServiceApplianceManager"
 import ServicePartsManager from "@/components/forms/ServicePartsManager"
@@ -17,33 +17,33 @@ import { Button } from "@/components/ui/button"
 import { Calendar as CalendarWidget } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
 } from "@/components/ui/popover"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Service, ServiceReceipt } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -55,43 +55,43 @@ import { useServiceItems } from "@/lib/queries/services/useServiceItems"
 import { useChequeChoices } from "@/lib/queries/useChoices"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
 import {
-  formatCurrency,
-  formatTimeTo12Hour,
-  getBadgeVariant,
+    formatCurrency,
+    formatTimeTo12Hour,
+    getBadgeVariant,
 } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import {
-  getServiceModeLabel,
-  getServiceStatusLabel,
-  getServiceTypeBadgeClass,
-  getServiceTypeLabel,
+    getServiceModeLabel,
+    getServiceStatusLabel,
+    getServiceTypeBadgeClass,
+    getServiceTypeLabel,
 } from "@/lib/utils/helpers/service"
 import { useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import {
-  AlertTriangle,
-  Calendar,
-  CalendarIcon,
-  CheckCircle,
-  Clock,
-  Edit,
-  Hash,
-  Info,
-  Kanban,
-  List,
-  MapPin,
-  Package,
-  PenLine,
-  Phone,
-  Plus,
-  Printer,
-  RotateCcw,
-  Trash2,
-  Truck,
-  User,
-  Wallet,
-  Wrench,
-  XIcon,
+    AlertTriangle,
+    Calendar,
+    CalendarIcon,
+    CheckCircle,
+    Clock,
+    Edit,
+    Hash,
+    Info,
+    Kanban,
+    List,
+    MapPin,
+    Package,
+    PenLine,
+    Phone,
+    Plus,
+    Printer,
+    RotateCcw,
+    Trash2,
+    Truck,
+    User,
+    Wallet,
+    Wrench,
+    XIcon,
 } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
@@ -2770,6 +2770,8 @@ export default function ServiceDetail({
             ? "Close"
             : "Complete Service"
         }
+        variant={hasUnfinishedAppliances || service.has_pending_items ? "warning" : "success"}
+        Icon={hasUnfinishedAppliances || service.has_pending_items ? AlertTriangle : CheckCircle}
       />
 
       {/* Reopen Service Dialog */}
@@ -3197,6 +3199,7 @@ export default function ServiceDetail({
         Icon={Printer}
         confirmText="Print"
         cancelText="No, thanks"
+        variant="info"
       />
 
       {/* Receipt Print Mode Selection Dialog */}

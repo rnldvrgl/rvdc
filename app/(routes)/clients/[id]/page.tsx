@@ -11,32 +11,32 @@ import ServiceDetail from "@/components/services/ServiceDetail"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type {
-  SalesTransaction,
-  Service,
-  ServicePayment,
+    SalesTransaction,
+    Service,
+    ServicePayment,
 } from "@/lib/constants/interface"
 import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -48,29 +48,29 @@ import { useService, useServices } from "@/lib/queries/services/useServices"
 import { formatCurrency } from "@/lib/utils/currency"
 import { getBadgeVariant } from "@/lib/utils/helpers"
 import {
-  getServiceModeLabel,
-  getServiceStatusLabel,
-  getServiceTypeBadgeClass,
-  getServiceTypeLabel,
+    getServiceModeLabel,
+    getServiceStatusLabel,
+    getServiceTypeBadgeClass,
+    getServiceTypeLabel,
 } from "@/lib/utils/helpers/service"
 import { format } from "date-fns"
 import {
-  Archive,
-  ArrowLeft,
-  Ban,
-  Calendar,
-  CreditCard,
-  DollarSign,
-  MapPin,
-  MoreHorizontal,
-  Phone,
-  Plus,
-  Receipt,
-  RotateCcw,
-  ShoppingCart,
-  User,
-  Wallet,
-  Wrench,
+    Archive,
+    ArrowLeft,
+    Ban,
+    Calendar,
+    CreditCard,
+    DollarSign,
+    MapPin,
+    MoreHorizontal,
+    Phone,
+    Plus,
+    Receipt,
+    RotateCcw,
+    ShoppingCart,
+    User,
+    Wallet,
+    Wrench,
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useState } from "react"
@@ -1036,6 +1036,7 @@ export default function ClientDetailPage() {
         description={`Service #${String(archiveTarget?.id ?? 0).padStart(4, "0")} will be archived. You can restore it later.`}
         Icon={Archive}
         confirmText="Archive"
+        variant="warning"
       />
     </Wrapper>
   )

@@ -15,43 +15,43 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
-  AirconUnits,
-  ApplianceStatus,
-  ServiceAppliance,
-  ServiceAppliancePayload,
+    AirconUnits,
+    ApplianceStatus,
+    ServiceAppliance,
+    ServiceAppliancePayload,
 } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
 import { useAirconModels, useAirconUnits } from "@/lib/queries/useAircons"
 import {
-  useApplianceTypeChoices,
-  useTechnicianChoices,
+    useApplianceTypeChoices,
+    useTechnicianChoices,
 } from "@/lib/queries/useChoices"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
 import { formatDate } from "date-fns"
 import {
-  ArrowRight,
-  CheckCircle,
-  ChevronDown,
-  ChevronUp,
-  CircleDollarSign,
-  Edit,
-  Package,
-  Plus,
-  RotateCcw,
-  Save,
-  Shield,
-  Trash2,
-  User,
-  Users,
-  Wrench,
+    ArrowRight,
+    CheckCircle,
+    ChevronDown,
+    ChevronUp,
+    CircleDollarSign,
+    Edit,
+    Package,
+    Plus,
+    RotateCcw,
+    Save,
+    Shield,
+    Trash2,
+    User,
+    Users,
+    Wrench,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
@@ -1345,6 +1345,7 @@ export default function ServiceApplianceManager({
         onConfirm={confirmDelete}
         title="Delete Appliance"
         description="Are you sure you want to delete this appliance? This will also delete all associated parts and cannot be undone."
+        variant="destructive"
       />
     </Card>
   )

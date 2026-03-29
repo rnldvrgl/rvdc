@@ -407,6 +407,7 @@ export default function AttendanceRecordsPage() {
         title="Archive attendance"
         description="This removes the record from the active list."
         confirmText="Archive"
+        variant="warning"
       />
     </Wrapper>
   )

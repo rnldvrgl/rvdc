@@ -19,17 +19,17 @@ import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { usePayrollMutations } from "@/lib/mutations/usePayrollMutations"
 import {
-  useWeeklyPayrollFilters,
-  useWeeklyPayrolls,
+    useWeeklyPayrollFilters,
+    useWeeklyPayrolls,
 } from "@/lib/queries/usePayroll"
 import {
-  Banknote,
-  FileText,
-  KanbanSquare,
-  List,
-  PhilippinePesoIcon,
-  Plus,
-  Users,
+    Banknote,
+    FileText,
+    KanbanSquare,
+    List,
+    PhilippinePesoIcon,
+    Plus,
+    Users,
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
@@ -329,6 +329,7 @@ export default function PayrollPage() {
         onConfirm={confirmDelete}
         confirmText="Archive"
         cancelText="Cancel"
+        variant="warning"
       />
     </Wrapper>
   )
