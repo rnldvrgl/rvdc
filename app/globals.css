@@ -278,14 +278,23 @@
   }
 
   .job-order-print .jo-page {
-    width: 10in !important;
-    height: 7.5in !important;
-    max-height: 7.5in !important;
+    width: 11in !important;
+    height: 8.5in !important;
+    max-height: 8.5in !important;
+    padding: 0.25in !important;
     overflow: hidden !important;
+    box-sizing: border-box !important;
     break-inside: avoid;
     page-break-inside: avoid;
     margin: 0 !important;
+  }
+
+  .job-order-print > div {
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
     padding: 0 !important;
+    border-radius: 0 !important;
   }
 
   .job-order-print .jo-page + .jo-page {
@@ -323,7 +332,7 @@
 
 @page job-order-page {
   size: letter landscape;
-  margin: 0.5in;
+  margin: 0;
 }
 
 @keyframes fall {
