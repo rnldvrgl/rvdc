@@ -8,22 +8,58 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils/helpers"
-import { AlertTriangle, type LucideIcon, XCircle } from "lucide-react"
+import {
+    AlertTriangle,
+    CheckCircle2,
+    Info,
+    type LucideIcon,
+    XCircle,
+} from "lucide-react"
 
-const VARIANT_CONFIG = {
+type Variant = "destructive" | "warning" | "success" | "info" | "default"
+
+const VARIANT_CONFIG: Record<
+  Variant,
+  {
+    iconBg: string
+    iconColor: string
+    confirmClass: string
+    DefaultIcon: LucideIcon
+  }
+> = {
   destructive: {
-    iconBg: "bg-red-100 dark:bg-red-900/30",
-    iconColor: "text-red-600 dark:text-red-400",
-    confirmClass: "bg-red-600 hover:bg-red-700 text-white",
+    iconBg: "bg-destructive/10",
+    iconColor: "text-destructive",
+    confirmClass: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
     DefaultIcon: AlertTriangle,
+  },
+  warning: {
+    iconBg: "bg-warning/10",
+    iconColor: "text-warning",
+    confirmClass: "bg-warning text-warning-foreground hover:bg-warning/90",
+    DefaultIcon: AlertTriangle,
+  },
+  success: {
+    iconBg: "bg-success/10",
+    iconColor: "text-success",
+    confirmClass: "bg-success text-success-foreground hover:bg-success/90",
+    DefaultIcon: CheckCircle2,
+  },
+  info: {
+    iconBg: "bg-info/10",
+    iconColor: "text-info",
+    confirmClass: "bg-info text-info-foreground hover:bg-info/90",
+    DefaultIcon: Info,
   },
   default: {
-    iconBg: "bg-blue-100 dark:bg-blue-900/30",
-    iconColor: "text-blue-600 dark:text-blue-400",
+    iconBg: "bg-primary/10",
+    iconColor: "text-primary",
     confirmClass: "",
-    DefaultIcon: AlertTriangle,
+    DefaultIcon: Info,
   },
-} as const
+}
+
+export type { Variant as ConfirmDialogVariant }
 
 export function ConfirmDialog({
   open,
@@ -45,7 +81,7 @@ export function ConfirmDialog({
   description?: string
   confirmText?: string
   cancelText?: string
-  variant?: "destructive" | "default"
+  variant?: Variant
   isLoading?: boolean
 }) {
   const config = VARIANT_CONFIG[variant]
