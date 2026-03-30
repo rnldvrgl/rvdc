@@ -82,7 +82,7 @@ function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
       </div>
 
       {/* ═══ Date ═══ */}
-      <Field label="Date Received:" />
+      <Field label="Date Received:" className="mt-3" />
 
       {/* ═══ Customer ═══ */}
       <div className="mt-4 grid grid-cols-2 gap-x-3 gap-y-1">
@@ -138,7 +138,7 @@ function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
 
 
 
-        <div className="mt-1.5 flex gap-x-3">
+        <div className="mt-4 flex gap-x-3">
           <div className="grid">
             {["Pull-Out & Return", "Home Service"].map((text) => (
               <label
@@ -188,7 +188,7 @@ export const JobOrderTemplatePrintContent = React.forwardRef<
           key={pageIndex}
           className={`jo-page-wrapper ${
             showPreviewMargins
-              ? "w-[11in] h-[8.5in] p-[0.25in] bg-white border border-gray-300 rounded shadow-sm mb-4"
+              ? "w-full h-full p-[0.25in] bg-white border border-gray-300 rounded shadow-sm mb-4"
               : ""
           }`}
         >
