@@ -238,6 +238,12 @@ export default function ServiceFormWizard({
     setSelectedWarrantyUnitIds([])
   }, [selectedClient])
 
+  // Reset unit selections when service purpose changes
+  useEffect(() => {
+    setSelectedFreeCleaningUnitIds([])
+    setSelectedWarrantyUnitIds([])
+  }, [selectedServicePurpose])
+
   // Filter modes based on type
   const availableServiceModes =
     selectedServiceType === "motor_rewind"
@@ -255,6 +261,12 @@ export default function ServiceFormWizard({
             ["repair", "inspection", "cleaning"].includes(t.value),
           )
         : serviceTypeOptions
+
+  // Hide the Units step for standard services (not applicable)
+  const visibleSteps =
+    selectedServicePurpose === "standard"
+      ? steps.filter((s) => s.id !== 1)
+      : steps
 
   useEffect(() => {
     if (selectedServicePurpose === "free_cleaning") {
@@ -348,11 +360,25 @@ export default function ServiceFormWizard({
 
   const goNext = async () => {
     if (await canAdvance(currentStep)) {
-      setCurrentStep((s) => Math.min(s + 1, steps.length - 1))
+      const next = currentStep + 1
+      // Skip Units step (id 1) when purpose is standard
+      if (next === 1 && selectedServicePurpose === "standard") {
+        setCurrentStep(2)
+      } else {
+        setCurrentStep((s) => Math.min(s + 1, steps.length - 1))
+      }
     }
   }
 
-  const goPrev = () => setCurrentStep((s) => Math.max(s - 1, 0))
+  const goPrev = () => {
+    const prev = currentStep - 1
+    // Skip Units step (id 1) when going back for standard purpose
+    if (prev === 1 && selectedServicePurpose === "standard") {
+      setCurrentStep(0)
+    } else {
+      setCurrentStep((s) => Math.max(s - 1, 0))
+    }
+  }
 
   // ── Submit ─────────────────────────────────────────────────────────────
 
@@ -495,10 +521,10 @@ export default function ServiceFormWizard({
       >
         {/* Step indicators */}
         <nav className="flex items-center justify-between gap-2">
-          {steps.map((step, i) => {
+          {visibleSteps.map((step, i) => {
             const StepIcon = step.icon
-            const isActive = i === currentStep
-            const isDone = i < currentStep
+            const isActive = step.id === currentStep
+            const isDone = step.id < currentStep
             return (
               <React.Fragment key={step.id}>
                 {i > 0 && (
@@ -512,7 +538,7 @@ export default function ServiceFormWizard({
                 <button
                   type="button"
                   onClick={() => {
-                    if (isDone) setCurrentStep(i)
+                    if (isDone) setCurrentStep(step.id)
                   }}
                   className={cn(
                     "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-all whitespace-nowrap",
@@ -632,10 +658,9 @@ export default function ServiceFormWizard({
         {currentStep === 1 && (
           <div className="space-y-4">
             <div className="text-sm text-muted-foreground">
-              Select any of this client&apos;s RVDC aircon units to include in
-              this service. Free cleaning and warranty claims will be
-              automatically filed. Skip if the client has no eligible units or
-              you will add unit details manually after creating the service.
+              {selectedServicePurpose === "free_cleaning"
+                ? "Select this client's RVDC units eligible for a free cleaning. Skip if the unit is not tracked in RVDC inventory — you can add appliance details manually in the Appliances tab after creating the service."
+                : "Select this client's RVDC units under warranty to file a warranty claim. Skip if the unit is not tracked in RVDC inventory — you can add appliance details manually in the Appliances tab after creating the service."}
             </div>
 
             {!selectedClient && (
@@ -651,8 +676,7 @@ export default function ServiceFormWizard({
             {selectedClient && !clientUnitsLoading && (
               <>
                 {/* Free Cleaning Section */}
-                {(selectedServiceType === "cleaning" ||
-                  freeCleaningEligibleUnits.length > 0) && (
+                {selectedServicePurpose === "free_cleaning" && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <SprayCan className="size-4 text-blue-500" />
@@ -709,14 +733,35 @@ export default function ServiceFormWizard({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-muted-foreground pl-1">
-                        No units eligible for free cleaning.
+                      <p className="text-xs text-muted-foreground pl-1 py-4 text-center border border-dashed rounded-lg">
+                        This client has no units eligible for free cleaning. You can skip and add appliance details manually.
                       </p>
+                    )}
+                    {selectedFreeCleaningUnitIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 p-2 bg-muted/40 rounded-lg">
+                        <span className="text-xs text-muted-foreground self-center mr-1">
+                          Selected:
+                        </span>
+                        {selectedFreeCleaningUnitIds.map((id) => {
+                          const u = freeCleaningEligibleUnits.find((x) => x.id === id)
+                          return (
+                            <Badge
+                              key={`fc-${id}`}
+                              variant="secondary"
+                              className="text-xs text-blue-600"
+                            >
+                              <SprayCan className="size-3 mr-1" />
+                              {u?.serial_number ?? id}
+                            </Badge>
+                          )
+                        })}
+                      </div>
                     )}
                   </div>
                 )}
 
                 {/* Warranty Section */}
+                {selectedServicePurpose === "warranty_claim" && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="size-4 text-green-500" />
@@ -775,56 +820,31 @@ export default function ServiceFormWizard({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-muted-foreground pl-1">
-                      No units under warranty.
+                    <p className="text-xs text-muted-foreground pl-1 py-4 text-center border border-dashed rounded-lg">
+                      This client has no units under warranty. You can skip and add appliance details manually.
                     </p>
+                  )}
+                  {selectedWarrantyUnitIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 p-2 bg-muted/40 rounded-lg">
+                      <span className="text-xs text-muted-foreground self-center mr-1">
+                        Selected:
+                      </span>
+                      {selectedWarrantyUnitIds.map((id) => {
+                        const u = warrantyEligibleUnits.find((x) => x.id === id)
+                        return (
+                          <Badge
+                            key={`w-${id}`}
+                            variant="secondary"
+                            className="text-xs text-green-600"
+                          >
+                            <ShieldCheck className="size-3 mr-1" />
+                            {u?.serial_number ?? id}
+                          </Badge>
+                        )
+                      })}
+                    </div>
                   )}
                 </div>
-
-                {freeCleaningEligibleUnits.length === 0 &&
-                  warrantyEligibleUnits.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
-                      This client has no units with active free cleaning or
-                      warranty benefits. You can add unit details manually after
-                      creating the service.
-                    </p>
-                  )}
-
-                {(selectedFreeCleaningUnitIds.length > 0 ||
-                  selectedWarrantyUnitIds.length > 0) && (
-                  <div className="flex flex-wrap gap-1.5 p-2 bg-muted/40 rounded-lg">
-                    <span className="text-xs text-muted-foreground self-center mr-1">
-                      Selected:
-                    </span>
-                    {selectedFreeCleaningUnitIds.map((id) => {
-                      const u = freeCleaningEligibleUnits.find(
-                        (x) => x.id === id,
-                      )
-                      return (
-                        <Badge
-                          key={`fc-${id}`}
-                          variant="secondary"
-                          className="text-xs text-blue-600"
-                        >
-                          <SprayCan className="size-3 mr-1" />
-                          {u?.serial_number ?? id}
-                        </Badge>
-                      )
-                    })}
-                    {selectedWarrantyUnitIds.map((id) => {
-                      const u = warrantyEligibleUnits.find((x) => x.id === id)
-                      return (
-                        <Badge
-                          key={`w-${id}`}
-                          variant="secondary"
-                          className="text-xs text-green-600"
-                        >
-                          <ShieldCheck className="size-3 mr-1" />
-                          {u?.serial_number ?? id}
-                        </Badge>
-                      )
-                    })}
-                  </div>
                 )}
               </>
             )}
