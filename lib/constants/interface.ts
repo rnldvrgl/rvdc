@@ -1379,6 +1379,8 @@ export interface LinkAirconUnitsPayload {
     issue_description: string
     customer_notes?: string
   }[]
+  /** IDs of ServiceAppliance records from past repairs/installs that are under warranty */
+  warranty_appliance_ids?: number[]
 }
 
 // Schedule

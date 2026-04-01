@@ -22,9 +22,10 @@ import {
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import { AssignmentType, AirconUnits, ServicePayload } from "@/lib/constants/interface"
+import { AssignmentType, AirconUnits, ServiceAppliance, ServicePayload } from "@/lib/constants/interface"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import { useAirconUnits } from "@/lib/queries/useAircons"
+import { useClientWarrantyAppliances } from "@/lib/queries/services/useWarrantyAppliances"
 import { useTechnicianChoices } from "@/lib/queries/useChoices"
 import { cn } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -156,6 +157,7 @@ export default function ServiceFormWizard({
   // Unit selection state for step 1
   const [selectedFreeCleaningUnitIds, setSelectedFreeCleaningUnitIds] = useState<number[]>([])
   const [selectedWarrantyUnitIds, setSelectedWarrantyUnitIds] = useState<number[]>([])
+  const [selectedWarrantyApplianceIds, setSelectedWarrantyApplianceIds] = useState<number[]>([])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(serviceSchema),
@@ -213,6 +215,12 @@ export default function ServiceFormWizard({
 
   const clientUnits: AirconUnits[] = clientUnitsData?.results ?? []
 
+  // Fetch past-repair appliances under active warranty for this client
+  const { data: warrantyAppliancePage, isLoading: warrantyAppliancesLoading } = useClientWarrantyAppliances(
+    selectedServicePurpose === "warranty_claim" && selectedClient ? selectedClient : undefined,
+  )
+  const warrantyAppliances: ServiceAppliance[] = warrantyAppliancePage?.results ?? []
+
   const freeCleaningEligibleUnits = clientUnits.filter(
     (u) => u.free_cleaning_status === "available" && !u.free_cleaning_redeemed,
   )
@@ -232,16 +240,24 @@ export default function ServiceFormWizard({
     )
   }
 
+  const toggleWarrantyAppliance = (id: number) => {
+    setSelectedWarrantyApplianceIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
+
   // Reset unit selections when client changes
   useEffect(() => {
     setSelectedFreeCleaningUnitIds([])
     setSelectedWarrantyUnitIds([])
+    setSelectedWarrantyApplianceIds([])
   }, [selectedClient])
 
   // Reset unit selections when service purpose changes
   useEffect(() => {
     setSelectedFreeCleaningUnitIds([])
     setSelectedWarrantyUnitIds([])
+    setSelectedWarrantyApplianceIds([])
   }, [selectedServicePurpose])
 
   // Filter modes based on type
@@ -257,9 +273,7 @@ export default function ServiceFormWizard({
     selectedServicePurpose === "free_cleaning"
       ? serviceTypeOptions.filter((t) => t.value === "cleaning")
       : selectedServicePurpose === "warranty_claim"
-        ? serviceTypeOptions.filter((t) =>
-            ["repair", "inspection", "cleaning"].includes(t.value),
-          )
+        ? serviceTypeOptions.filter((t) => t.value === "repair")
         : serviceTypeOptions
 
   // Hide the Units step for standard services (not applicable)
@@ -271,6 +285,8 @@ export default function ServiceFormWizard({
   useEffect(() => {
     if (selectedServicePurpose === "free_cleaning") {
       form.setValue("service_type", "cleaning")
+    } else if (selectedServicePurpose === "warranty_claim") {
+      form.setValue("service_type", "repair")
     }
   }, [selectedServicePurpose, form])
 
@@ -455,8 +471,9 @@ export default function ServiceFormWizard({
         const serviceId = response?.data?.id
         const hasFreeCleaningUnits = selectedFreeCleaningUnitIds.length > 0
         const hasWarrantyUnits = selectedWarrantyUnitIds.length > 0
+        const hasWarrantyAppliances = selectedWarrantyApplianceIds.length > 0
 
-        if (serviceId && (hasFreeCleaningUnits || hasWarrantyUnits)) {
+        if (serviceId && (hasFreeCleaningUnits || hasWarrantyUnits || hasWarrantyAppliances)) {
           linkAirconUnits.mutate(
             {
               id: serviceId,
@@ -470,6 +487,9 @@ export default function ServiceFormWizard({
                       claim_type: "repair" as const,
                       issue_description: "Warranty service",
                     }))
+                  : undefined,
+                warranty_appliance_ids: hasWarrantyAppliances
+                  ? selectedWarrantyApplianceIds
                   : undefined,
               },
             },
@@ -485,7 +505,8 @@ export default function ServiceFormWizard({
     })
   }
 
-  const isSubmitting = addService.status === "pending" || linkAirconUnits.status === "pending"
+  const isSubmitting =
+    addService.status === "pending" || linkAirconUnits.status === "pending"
 
   // ── Helpers for Review step ────────────────────────────────────────────
 
@@ -657,10 +678,17 @@ export default function ServiceFormWizard({
         {/* ── Step 1: Aircon Units ───────────────────────────────────── */}
         {currentStep === 1 && (
           <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              {selectedServicePurpose === "free_cleaning"
-                ? "Select this client's RVDC units eligible for a free cleaning. Skip if the unit is not tracked in RVDC inventory — you can add appliance details manually in the Appliances tab after creating the service."
-                : "Select this client's RVDC units under warranty to file a warranty claim. Skip if the unit is not tracked in RVDC inventory — you can add appliance details manually in the Appliances tab after creating the service."}
+            <div className="space-y-1.5">
+              <p className="text-sm text-muted-foreground">
+                {selectedServicePurpose === "free_cleaning"
+                  ? "Select this client's RVDC units eligible for a free cleaning. Skip if the unit is not tracked in RVDC inventory — you can add appliance details manually in the Appliances tab after creating the service."
+                  : "Optionally link an RVDC-tracked unit under warranty. You can skip this step — warranty also applies to past-repair appliances and newly installed units that may not be in the inventory yet. Add those manually in the Appliances tab after creating the service."}
+              </p>
+              {selectedServicePurpose === "warranty_claim" && (
+                <p className="text-xs text-muted-foreground border border-dashed rounded-md px-3 py-2 bg-muted/30">
+                  This step is <span className="font-medium text-foreground">optional</span>. Skip if the warranted appliance is not an RVDC-sold unit (e.g. a unit from a past repair or a brand new install not yet registered).
+                </p>
+              )}
             </div>
 
             {!selectedClient && (
@@ -669,7 +697,7 @@ export default function ServiceFormWizard({
               </p>
             )}
 
-            {selectedClient && clientUnitsLoading && (
+            {selectedClient && (clientUnitsLoading || warrantyAppliancesLoading) && (
               <p className="text-sm text-muted-foreground">Loading units…</p>
             )}
 
@@ -845,6 +873,96 @@ export default function ServiceFormWizard({
                     </div>
                   )}
                 </div>
+                )}
+
+                {/* Past-repair / installed appliances under warranty */}
+                {selectedServicePurpose === "warranty_claim" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Wrench className="size-4 text-amber-500" />
+                      <span className="text-sm font-semibold">Past Repair / Installed Appliances Under Warranty</span>
+                      {warrantyAppliances.length === 0 && (
+                        <Badge variant="outline" className="text-xs">
+                          None found
+                        </Badge>
+                      )}
+                    </div>
+                    {warrantyAppliances.length > 0 ? (
+                      <div className="grid gap-2">
+                        {warrantyAppliances.map((appliance: ServiceAppliance) => (
+                          <label
+                            key={appliance.id}
+                            className={cn(
+                              "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                              selectedWarrantyApplianceIds.includes(appliance.id)
+                                ? "border-amber-500 bg-amber-50 dark:bg-amber-950/20"
+                                : "border-border hover:border-muted-foreground/40",
+                            )}
+                          >
+                            <Checkbox
+                              checked={selectedWarrantyApplianceIds.includes(appliance.id)}
+                              onCheckedChange={() => toggleWarrantyAppliance(appliance.id)}
+                              className="mt-0.5"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium">
+                                {appliance.appliance_type?.name ?? "Unknown Type"}
+                                {appliance.brand ? ` • ${appliance.brand}` : ""}
+                                {appliance.model ? ` ${appliance.model}` : ""}
+                              </p>
+                              {appliance.serial_number && (
+                                <p className="text-xs text-muted-foreground">SN: {appliance.serial_number}</p>
+                              )}
+                              <div className="flex flex-wrap gap-1.5 mt-1">
+                                {appliance.is_labor_warranty_active && (
+                                  <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30">
+                                    Labor warranty until {appliance.labor_warranty_end_date
+                                      ? new Date(appliance.labor_warranty_end_date).toLocaleDateString("en-PH")
+                                      : "—"}
+                                  </Badge>
+                                )}
+                                {appliance.is_unit_warranty_active && (
+                                  <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30">
+                                    Unit warranty until {appliance.unit_warranty_end_date
+                                      ? new Date(appliance.unit_warranty_end_date).toLocaleDateString("en-PH")
+                                      : "—"}
+                                  </Badge>
+                                )}
+                                <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                  SVC-{appliance.service}
+                                </Badge>
+                              </div>
+                            </div>
+                            <Badge
+                              variant="secondary"
+                              className="text-xs shrink-0 text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-950/30"
+                            >
+                              <Wrench className="size-3 mr-1" />
+                              Warranty
+                            </Badge>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground pl-1 py-4 text-center border border-dashed rounded-lg">
+                        No past-repair or installed appliances with active warranty found for this client.
+                      </p>
+                    )}
+                    {selectedWarrantyApplianceIds.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 p-2 bg-muted/40 rounded-lg">
+                        <span className="text-xs text-muted-foreground self-center mr-1">Selected:</span>
+                        {selectedWarrantyApplianceIds.map((id) => {
+                          const a = warrantyAppliances.find((x: ServiceAppliance) => x.id === id)
+                          return (
+                            <Badge key={`wa-${id}`} variant="secondary" className="text-xs text-amber-600">
+                              <Wrench className="size-3 mr-1" />
+                              {a?.appliance_type?.name ?? `Appliance #${id}`}
+                            </Badge>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
               </>
             )}
@@ -1378,11 +1496,12 @@ export default function ServiceFormWizard({
 
             {/* Selected Units */}
             {(selectedFreeCleaningUnitIds.length > 0 ||
-              selectedWarrantyUnitIds.length > 0) && (
+              selectedWarrantyUnitIds.length > 0 ||
+              selectedWarrantyApplianceIds.length > 0) && (
               <Card>
                 <CardContent className="p-4 space-y-3">
                   <h4 className="text-sm font-semibold flex items-center gap-2">
-                    <Wind className="size-4" /> Linked Aircon Units
+                    <Wind className="size-4" /> Linked Units &amp; Appliances
                   </h4>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedFreeCleaningUnitIds.map((id) => {
@@ -1409,7 +1528,20 @@ export default function ServiceFormWizard({
                           className="text-xs text-green-600"
                         >
                           <ShieldCheck className="size-3 mr-1" />
-                          {u?.serial_number ?? id} (Warranty)
+                          {u?.serial_number ?? id} (Warranty – RVDC Unit)
+                        </Badge>
+                      )
+                    })}
+                    {selectedWarrantyApplianceIds.map((id) => {
+                      const a = warrantyAppliances.find((x: ServiceAppliance) => x.id === id)
+                      return (
+                        <Badge
+                          key={`wa-review-${id}`}
+                          variant="secondary"
+                          className="text-xs text-amber-600"
+                        >
+                          <Wrench className="size-3 mr-1" />
+                          {a?.appliance_type?.name ?? `Appliance #${id}`} (Warranty – Past Repair)
                         </Badge>
                       )
                     })}
