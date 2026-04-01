@@ -26,3 +26,18 @@ export function useClient(id: number | string | undefined) {
 export function useClientFilters() {
   return useFilters("client-filters", `${url}filters/`)
 }
+
+export function useRecentClients(limit: number = 10) {
+  return useApiQuery<Client[]>({
+    queryKey: ["recent-clients", limit],
+    url: `${url}recent/`,
+    params: { limit },
+  })
+}
+
+export function useFavoriteClients() {
+  return useApiQuery<Client[]>({
+    queryKey: ["favorite-clients"],
+    url: `${url}favorites/`,
+  })
+}

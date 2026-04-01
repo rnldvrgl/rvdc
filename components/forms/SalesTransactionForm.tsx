@@ -48,6 +48,7 @@ import {
 } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
+import { useRecentClients, useFavoriteClients } from "@/lib/queries/clients/useClients"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheetDialog } from "@/lib/hooks/useEntityDialog"
 import { useItemSelection } from "@/lib/hooks/useItemSelection"
@@ -239,6 +240,8 @@ export default function SalesTransactionForm({
   }, [])
   const { data: allItemsData, isLoading: itemsLoading } = useItemChoices()
   const { data: customItemTemplates = [] } = useCustomItemTemplateChoices()
+  const { data: recentClients = [] } = useRecentClients(8)
+  const { data: favoriteClients = [] } = useFavoriteClients()
   const allItems: Item[] = allItemsData ?? []
 
   // Fetch stock levels for the sub stall
@@ -657,6 +660,44 @@ export default function SalesTransactionForm({
                       onChange={(val) => field.onChange(val ?? null)}
                       allowCreate={!initialData}
                     />
+                    {!initialData && favoriteClients.length > 0 && !field.value && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">⭐ Favorites:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {favoriteClients.map((client) => (
+                            <Button
+                              key={client.id}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-6 text-xs px-2 border-amber-400 text-amber-700 dark:text-amber-400"
+                              onClick={() => field.onChange(client.id)}
+                            >
+                              {client.full_name}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {!initialData && recentClients.length > 0 && !field.value && (
+                      <div className="space-y-1">
+                        <p className="text-xs text-muted-foreground">Recent clients:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {recentClients.map((client) => (
+                            <Button
+                              key={client.id}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-6 text-xs px-2"
+                              onClick={() => field.onChange(client.id)}
+                            >
+                              {client.full_name}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

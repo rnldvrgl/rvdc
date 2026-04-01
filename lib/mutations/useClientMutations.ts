@@ -9,7 +9,7 @@ export function useClientMutations() {
   const queryClient = useQueryClient()
   const url = "/clients/"
 
-  const analyticsKeys = [["summary"], ["top_clients"], ["client-choices"]]
+  const analyticsKeys = [["summary"], ["top_clients"], ["client-choices"], ["favorite-clients"]]
 
   const addClient = useApiMutation({
     mutationFn: (data: ClientPayload) => api.post(url, data),
@@ -66,5 +66,19 @@ export function useClientMutations() {
     ],
   })
 
-  return { addClient, updateClient, deleteClient, bulkPreview, bulkUpdate }
+  const toggleFavorite = useApiMutation({
+    mutationFn: (clientId: number) =>
+      api.post(`${url}${clientId}/toggle-favorite/`),
+    invalidateQueries: [
+      { queryKey: ["clients"] },
+      { queryKey: ["favorite-clients"] },
+      { queryKey: ["recent-clients"] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
+    onSuccess: (_, clientId) => {
+      queryClient.invalidateQueries({ queryKey: ["client", `${clientId}`] })
+    },
+  })
+
+  return { addClient, updateClient, deleteClient, bulkPreview, bulkUpdate, toggleFavorite }
 }

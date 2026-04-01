@@ -15,7 +15,7 @@ import { useClientMutations } from "@/lib/mutations/useClientMutations"
 import { useClientChoices } from "@/lib/queries/useChoices"
 import { useBarangays, useCities, useProvinces } from "@/lib/queries/usePsgc"
 import { cn, getNameByCode, prepareOptions } from "@/lib/utils/helpers"
-import { Check, MapPin, Phone, Plus, Search, User, X } from "lucide-react"
+import { Check, MapPin, Phone, Plus, Search, Star, User, X } from "lucide-react"
 import { useCallback, useMemo, useState } from "react"
 
 function formatClientLabel(client: Client): string {
@@ -52,7 +52,12 @@ export function ClientComboBox({
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
   const [selectedBarangay, setSelectedBarangay] = useState<string | null>(null)
-  const { addClient } = useClientMutations()
+  const { addClient, toggleFavorite } = useClientMutations()
+
+  const selectedClient = useMemo(
+    () => (value && clients ? clients.find((c) => c.id === value) : null),
+    [value, clients],
+  )
 
   const { data: provinces = [] } = useProvinces()
   const { data: cities = [], isLoading: loadingCities } =
@@ -144,6 +149,26 @@ export function ClientComboBox({
             className={className}
           />
         </div>
+        {value && selectedClient && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            disabled={toggleFavorite.isPending}
+            onClick={() => toggleFavorite.mutate(value)}
+            title={selectedClient.is_favorite ? "Remove from favorites" : "Add to favorites"}
+          >
+            <Star
+              className={cn(
+                "size-4",
+                selectedClient.is_favorite
+                  ? "fill-amber-400 text-amber-400"
+                  : "text-muted-foreground",
+              )}
+            />
+          </Button>
+        )}
         {allowCreate && (
           <Button
             type="button"
