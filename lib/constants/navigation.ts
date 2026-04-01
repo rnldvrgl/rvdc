@@ -369,7 +369,6 @@ export const sectionedNavigation: NavigationSection[] = [
       baseNavigation.sales,
       baseNavigation.services,
       baseNavigation.quotations,
-      baseNavigation.warrantyClaims,
       baseNavigation.receivables,
     ],
   },

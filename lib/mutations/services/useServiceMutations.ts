@@ -1,6 +1,6 @@
 "use client"
 
-import { ServicePayload } from "@/lib/constants/interface"
+import { LinkAirconUnitsPayload, ServicePayload } from "@/lib/constants/interface"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
 import { useQueryClient } from "@tanstack/react-query"
@@ -157,6 +157,19 @@ export function useServiceMutations() {
     },
   })
 
+  const linkAirconUnits = useApiMutation({
+    mutationFn: ({ id, data }: { id: number; data: LinkAirconUnitsPayload }) =>
+      api.post(`${url}${id}/link-aircon-units/`, data),
+    invalidateQueries: [
+      { queryKey: ["services"] },
+      { queryKey: ["aircon-units"] },
+      { queryKey: ["warranty-claims"] },
+    ],
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
+    },
+  })
+
   return {
     addService,
     updateService,
@@ -167,5 +180,6 @@ export function useServiceMutations() {
     refundService,
     reopenService,
     toggleServiceItemsChecked,
+    linkAirconUnits,
   }
 }

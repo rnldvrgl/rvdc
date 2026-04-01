@@ -22,8 +22,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
-import { AssignmentType, ServicePayload } from "@/lib/constants/interface"
+import { AssignmentType, AirconUnits, ServicePayload } from "@/lib/constants/interface"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
+import { useAirconUnits } from "@/lib/queries/useAircons"
 import { useTechnicianChoices } from "@/lib/queries/useChoices"
 import { cn } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -38,10 +39,13 @@ import {
   Save,
   Search,
   Settings,
+  ShieldCheck,
+  SprayCan,
   Sparkles,
   Truck,
   User,
   Users,
+  Wind,
   Wrench,
   Zap,
 } from "lucide-react"
@@ -104,9 +108,10 @@ type FormValues = z.infer<typeof serviceSchema>
 
 const steps = [
   { id: 0, title: "Client & Type", icon: User },
-  { id: 1, title: "Schedule", icon: Calendar },
-  { id: 2, title: "Team", icon: Users },
-  { id: 3, title: "Review", icon: ClipboardList },
+  { id: 1, title: "Units", icon: Wind },
+  { id: 2, title: "Schedule", icon: Calendar },
+  { id: 3, title: "Team", icon: Users },
+  { id: 4, title: "Review", icon: ClipboardList },
 ]
 
 // ── Component ────────────────────────────────────────────────────────────
@@ -124,7 +129,11 @@ export default function ServiceFormWizard({
   defaultClientId,
 }: ServiceFormWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
-  const { addService } = useServiceMutations()
+  const { addService, linkAirconUnits } = useServiceMutations()
+
+  // Unit selection state for step 1
+  const [selectedFreeCleaningUnitIds, setSelectedFreeCleaningUnitIds] = useState<number[]>([])
+  const [selectedWarrantyUnitIds, setSelectedWarrantyUnitIds] = useState<number[]>([])
 
   const form = useForm<FormValues>({
     resolver: zodResolver(serviceSchema),
@@ -167,6 +176,40 @@ export default function ServiceFormWizard({
     control: form.control,
     name: "reinstall_same_address",
   })
+
+  // Fetch client's aircon units for step 1 (Units step)
+  const { data: clientUnitsData, isLoading: clientUnitsLoading } = useAirconUnits({
+    limit: 100,
+    filter: selectedClient ? { client: selectedClient } : undefined,
+    enabled: !!selectedClient,
+  })
+
+  const clientUnits: AirconUnits[] = clientUnitsData?.results ?? []
+
+  const freeCleaningEligibleUnits = clientUnits.filter(
+    (u) => u.free_cleaning_status === "available" && !u.free_cleaning_redeemed,
+  )
+  const warrantyEligibleUnits = clientUnits.filter(
+    (u) => u.warranty_status === "Under Warranty",
+  )
+
+  const toggleFreeCleaningUnit = (id: number) => {
+    setSelectedFreeCleaningUnitIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
+
+  const toggleWarrantyUnit = (id: number) => {
+    setSelectedWarrantyUnitIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    )
+  }
+
+  // Reset unit selections when client changes
+  useEffect(() => {
+    setSelectedFreeCleaningUnitIds([])
+    setSelectedWarrantyUnitIds([])
+  }, [selectedClient])
 
   // Filter modes based on type
   const availableServiceModes =
@@ -225,7 +268,10 @@ export default function ServiceFormWizard({
         const valid = await form.trigger(["service_type", "service_mode"])
         return valid
       }
-      case 1: {
+      case 1:
+        // Units step — always skippable
+        return true
+      case 2: {
         const mode = form.getValues("service_mode")
         if (mode === "pull_out") {
           const pickup = form.getValues("pickup_date")
@@ -251,7 +297,7 @@ export default function ServiceFormWizard({
         }
         return true
       }
-      case 2:
+      case 3:
         return true
       default:
         return true
@@ -329,7 +375,32 @@ export default function ServiceFormWizard({
     }
 
     addService.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        // After creating the service, link any selected aircon units
+        const serviceId = response?.data?.id
+        const hasFreeCleaningUnits = selectedFreeCleaningUnitIds.length > 0
+        const hasWarrantyUnits = selectedWarrantyUnitIds.length > 0
+
+        if (serviceId && (hasFreeCleaningUnits || hasWarrantyUnits)) {
+          linkAirconUnits.mutate(
+            {
+              id: serviceId,
+              data: {
+                free_cleaning_unit_ids: hasFreeCleaningUnits
+                  ? selectedFreeCleaningUnitIds
+                  : undefined,
+                warranty_unit_ids: hasWarrantyUnits
+                  ? selectedWarrantyUnitIds.map((uid) => ({
+                      unit_id: uid,
+                      claim_type: "repair" as const,
+                      issue_description: "Warranty service",
+                    }))
+                  : undefined,
+              },
+            },
+          )
+        }
+
         if (forceClose) {
           forceClose()
         } else {
@@ -339,7 +410,7 @@ export default function ServiceFormWizard({
     })
   }
 
-  const isSubmitting = addService.status === "pending"
+  const isSubmitting = addService.status === "pending" || linkAirconUnits.status === "pending"
 
   // ── Helpers for Review step ────────────────────────────────────────────
 
@@ -480,8 +551,211 @@ export default function ServiceFormWizard({
           </div>
         )}
 
-        {/* ── Step 1: Schedule & Location ─────────────────────────────── */}
+        {/* ── Step 1: Aircon Units ───────────────────────────────────── */}
         {currentStep === 1 && (
+          <div className="space-y-4">
+            <div className="text-sm text-muted-foreground">
+              Select any of this client&apos;s RVDC aircon units to include in
+              this service. Free cleaning and warranty claims will be
+              automatically filed. Skip if the client has no eligible units or
+              you will add unit details manually after creating the service.
+            </div>
+
+            {!selectedClient && (
+              <p className="text-sm text-muted-foreground italic">
+                Select a client in step 1 to see eligible units.
+              </p>
+            )}
+
+            {selectedClient && clientUnitsLoading && (
+              <p className="text-sm text-muted-foreground">Loading units…</p>
+            )}
+
+            {selectedClient && !clientUnitsLoading && (
+              <>
+                {/* Free Cleaning Section */}
+                {(selectedServiceType === "cleaning" ||
+                  freeCleaningEligibleUnits.length > 0) && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <SprayCan className="size-4 text-blue-500" />
+                      <span className="text-sm font-semibold">
+                        Free Cleaning Eligible
+                      </span>
+                      {freeCleaningEligibleUnits.length === 0 && (
+                        <Badge
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          None available
+                        </Badge>
+                      )}
+                    </div>
+                    {freeCleaningEligibleUnits.length > 0 ? (
+                      <div className="grid gap-2">
+                        {freeCleaningEligibleUnits.map((unit) => (
+                          <label
+                            key={unit.id}
+                            className={cn(
+                              "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                              selectedFreeCleaningUnitIds.includes(unit.id)
+                                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/20"
+                                : "border-border hover:border-muted-foreground/40",
+                            )}
+                          >
+                            <Checkbox
+                              checked={selectedFreeCleaningUnitIds.includes(
+                                unit.id,
+                              )}
+                              onCheckedChange={() =>
+                                toggleFreeCleaningUnit(unit.id)
+                              }
+                              className="mt-0.5"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium">
+                                {unit.model?.brand?.name ?? ""}{" "}
+                                {unit.model?.name ?? "Unknown Model"}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                SN: {unit.serial_number}
+                              </p>
+                            </div>
+                            <Badge
+                              variant="secondary"
+                              className="text-xs shrink-0 text-blue-600 border-blue-200 bg-blue-50 dark:bg-blue-950/30"
+                            >
+                              <SprayCan className="size-3 mr-1" />
+                              Free Cleaning
+                            </Badge>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground pl-1">
+                        No units eligible for free cleaning.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Warranty Section */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="size-4 text-green-500" />
+                    <span className="text-sm font-semibold">Under Warranty</span>
+                    {warrantyEligibleUnits.length === 0 && (
+                      <Badge
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        None available
+                      </Badge>
+                    )}
+                  </div>
+                  {warrantyEligibleUnits.length > 0 ? (
+                    <div className="grid gap-2">
+                      {warrantyEligibleUnits.map((unit) => (
+                        <label
+                          key={unit.id}
+                          className={cn(
+                            "flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors",
+                            selectedWarrantyUnitIds.includes(unit.id)
+                              ? "border-green-500 bg-green-50 dark:bg-green-950/20"
+                              : "border-border hover:border-muted-foreground/40",
+                          )}
+                        >
+                          <Checkbox
+                            checked={selectedWarrantyUnitIds.includes(unit.id)}
+                            onCheckedChange={() => toggleWarrantyUnit(unit.id)}
+                            className="mt-0.5"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium">
+                              {unit.model?.brand?.name ?? ""}{" "}
+                              {unit.model?.name ?? "Unknown Model"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              SN: {unit.serial_number}
+                            </p>
+                            {unit.warranty_end_date && (
+                              <p className="text-xs text-muted-foreground">
+                                Warranty until:{" "}
+                                {new Date(
+                                  unit.warranty_end_date,
+                                ).toLocaleDateString("en-PH")}
+                              </p>
+                            )}
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            className="text-xs shrink-0 text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30"
+                          >
+                            <ShieldCheck className="size-3 mr-1" />
+                            Warranty
+                          </Badge>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground pl-1">
+                      No units under warranty.
+                    </p>
+                  )}
+                </div>
+
+                {freeCleaningEligibleUnits.length === 0 &&
+                  warrantyEligibleUnits.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4 border border-dashed rounded-lg">
+                      This client has no units with active free cleaning or
+                      warranty benefits. You can add unit details manually after
+                      creating the service.
+                    </p>
+                  )}
+
+                {(selectedFreeCleaningUnitIds.length > 0 ||
+                  selectedWarrantyUnitIds.length > 0) && (
+                  <div className="flex flex-wrap gap-1.5 p-2 bg-muted/40 rounded-lg">
+                    <span className="text-xs text-muted-foreground self-center mr-1">
+                      Selected:
+                    </span>
+                    {selectedFreeCleaningUnitIds.map((id) => {
+                      const u = freeCleaningEligibleUnits.find(
+                        (x) => x.id === id,
+                      )
+                      return (
+                        <Badge
+                          key={`fc-${id}`}
+                          variant="secondary"
+                          className="text-xs text-blue-600"
+                        >
+                          <SprayCan className="size-3 mr-1" />
+                          {u?.serial_number ?? id}
+                        </Badge>
+                      )
+                    })}
+                    {selectedWarrantyUnitIds.map((id) => {
+                      const u = warrantyEligibleUnits.find((x) => x.id === id)
+                      return (
+                        <Badge
+                          key={`w-${id}`}
+                          variant="secondary"
+                          className="text-xs text-green-600"
+                        >
+                          <ShieldCheck className="size-3 mr-1" />
+                          {u?.serial_number ?? id}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── Step 2: Schedule & Location ─────────────────────────────── */}
+        {currentStep === 2 && (
           <div className="space-y-4">
             {/* Carry-In: Received At */}
             {selectedMode === "carry_in" && (
@@ -862,8 +1136,8 @@ export default function ServiceFormWizard({
           </div>
         )}
 
-        {/* ── Step 2: Technicians ────────────────────────────────── */}
-        {currentStep === 2 && (
+        {/* ── Step 3: Technicians ────────────────────────────────── */}
+        {currentStep === 3 && (
           <div className="space-y-4">
             <FormField
               name="technicians"
@@ -888,8 +1162,8 @@ export default function ServiceFormWizard({
           </div>
         )}
 
-        {/* ── Step 3: Review ──────────────────────────────────────────── */}
-        {currentStep === 3 && (
+        {/* ── Step 4: Review ──────────────────────────────────────────── */}
+        {currentStep === 4 && (
           <div className="space-y-4">
             <Card>
               <CardContent className="p-4 space-y-3">
@@ -996,6 +1270,48 @@ export default function ServiceFormWizard({
                         {name}
                       </Badge>
                     ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Selected Units */}
+            {(selectedFreeCleaningUnitIds.length > 0 ||
+              selectedWarrantyUnitIds.length > 0) && (
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">
+                    <Wind className="size-4" /> Linked Aircon Units
+                  </h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedFreeCleaningUnitIds.map((id) => {
+                      const u = freeCleaningEligibleUnits.find(
+                        (x) => x.id === id,
+                      )
+                      return (
+                        <Badge
+                          key={`fc-review-${id}`}
+                          variant="secondary"
+                          className="text-xs text-blue-600"
+                        >
+                          <SprayCan className="size-3 mr-1" />
+                          {u?.serial_number ?? id} (Free Cleaning)
+                        </Badge>
+                      )
+                    })}
+                    {selectedWarrantyUnitIds.map((id) => {
+                      const u = warrantyEligibleUnits.find((x) => x.id === id)
+                      return (
+                        <Badge
+                          key={`w-review-${id}`}
+                          variant="secondary"
+                          className="text-xs text-green-600"
+                        >
+                          <ShieldCheck className="size-3 mr-1" />
+                          {u?.serial_number ?? id} (Warranty)
+                        </Badge>
+                      )
+                    })}
                   </div>
                 </CardContent>
               </Card>

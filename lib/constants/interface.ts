@@ -1363,6 +1363,16 @@ export interface FreeCleaningBatchPayload {
   technician_ids?: number[]
 }
 
+export interface LinkAirconUnitsPayload {
+  free_cleaning_unit_ids?: number[]
+  warranty_unit_ids?: {
+    unit_id: number
+    claim_type: ClaimType
+    issue_description: string
+    customer_notes?: string
+  }[]
+}
+
 // Schedule
 export type ScheduleType = "home_service" | "pull_out" | "return" | "on_site"
 export type ScheduleStatus =
