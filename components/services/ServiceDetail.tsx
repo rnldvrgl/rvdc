@@ -166,6 +166,12 @@ export default function ServiceDetail({
   const [transactionDateOpen, setTransactionDateOpen] = useState(false)
   const [reServiceDialogOpen, setReServiceDialogOpen] = useState(false)
   const [reServiceReason, setReServiceReason] = useState("")
+  const [claimDialogOpen, setClaimDialogOpen] = useState(false)
+  const [forfeitDialogOpen, setForfeitDialogOpen] = useState(false)
+  const [forfeitNotes, setForfeitNotes] = useState("")
+  const [convertDialogOpen, setConvertDialogOpen] = useState(false)
+  const [acquisitionPrice, setAcquisitionPrice] = useState("")
+  const [convertNotes, setConvertNotes] = useState("")
   const {
     completeService,
     recordPayment,
@@ -174,6 +180,9 @@ export default function ServiceDetail({
     updateService,
     reopenService,
     toggleServiceItemsChecked,
+    markClaimed,
+    markForfeited,
+    convertToAcquisition,
   } = useServiceMutations()
   const { addService } = useServiceMutations()
   const { updateAppliance } = useServiceApplianceMutations()
@@ -199,6 +208,13 @@ export default function ServiceDetail({
   const canComplete = service.status === "in_progress"
   const isCompleted = service.status === "completed"
   const isCarryIn = service.service_mode === "carry_in"
+  const isUnclaimed =
+    isCompleted &&
+    !service.claimed_at &&
+    !service.is_forfeited &&
+    (service.service_mode === "carry_in" || service.service_mode === "pull_out")
+  const canConvertToAcquisition =
+    !service.is_forfeited && service.status !== "cancelled"
 
   // Initialize discount form with existing values
   useEffect(() => {
@@ -587,6 +603,22 @@ export default function ServiceDetail({
               Re-Service
             </Badge>
           )}
+          {service.claimed_at && (
+            <Badge
+              variant="outline"
+              className="text-[11px] px-2 py-0.5 border-green-500 text-green-700 bg-green-50 dark:bg-green-950/30"
+            >
+              Claimed
+            </Badge>
+          )}
+          {service.is_forfeited && (
+            <Badge
+              variant="outline"
+              className="text-[11px] px-2 py-0.5 border-red-500 text-red-700 bg-red-50 dark:bg-red-950/30"
+            >
+              {service.forfeiture_type === "client_sold" ? "Acquired" : "Forfeited"}
+            </Badge>
+          )}
         </div>
 
         {/* Action Buttons — icon-only on small screens */}
@@ -693,6 +725,67 @@ export default function ServiceDetail({
               </TooltipTrigger>
               <TooltipContent>
                 Create a back job / re-service for this completed service
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {isUnclaimed && canManage && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="success"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => setClaimDialogOpen(true)}
+                >
+                  <Truck className="mr-1 h-3.5 w-3.5" />
+                  Mark Claimed
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Client picked up / received their appliance
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {isUnclaimed && canManage && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="warning"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs"
+                  onClick={() => {
+                    setForfeitNotes("")
+                    setForfeitDialogOpen(true)
+                  }}
+                >
+                  <AlertTriangle className="mr-1 h-3.5 w-3.5" />
+                  Declare Forfeited
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Appliance unclaimed — declare as company property
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {canConvertToAcquisition && canManage && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs border-blue-500 text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                  onClick={() => {
+                    setAcquisitionPrice("")
+                    setConvertNotes("")
+                    setConvertDialogOpen(true)
+                  }}
+                >
+                  <Wallet className="mr-1 h-3.5 w-3.5" />
+                  Acquire Unit
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Client sells appliance to company — record as company acquisition
               </TooltipContent>
             </Tooltip>
           )}
@@ -3412,6 +3505,204 @@ export default function ServiceDetail({
             >
               <Copy className="mr-2 h-4 w-4" />
               {addService.isPending ? "Creating..." : "Create Re-Service"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mark as Claimed Dialog */}
+      <Dialog
+        open={claimDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) setClaimDialogOpen(false)
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Mark Service as Claimed</DialogTitle>
+            <DialogDescription>
+              Confirm that the client has picked up or received their appliance
+              for Service #{service.id}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 justify-end pt-2">
+            <Button variant="outline" onClick={() => setClaimDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="success"
+              disabled={markClaimed.isPending}
+              onClick={() => {
+                markClaimed.mutate(
+                  { id: service.id },
+                  {
+                    onSuccess: () => {
+                      setClaimDialogOpen(false)
+                      onRefresh?.()
+                    },
+                  },
+                )
+              }}
+            >
+              <Truck className="mr-2 h-4 w-4" />
+              {markClaimed.isPending ? "Saving..." : "Confirm Claimed"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Declare Forfeited Dialog */}
+      <Dialog
+        open={forfeitDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setForfeitDialogOpen(false)
+            setForfeitNotes("")
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Declare Appliance as Company Property</DialogTitle>
+            <DialogDescription>
+              Service #{service.id} has been completed but unclaimed. The
+              appliance will be forfeited and recorded as a company asset. The
+              balance will be written off.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="forfeit-notes">Notes (optional)</Label>
+              <Textarea
+                id="forfeit-notes"
+                placeholder="e.g. Client unreachable after multiple follow-ups..."
+                value={forfeitNotes}
+                onChange={(e) => setForfeitNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setForfeitDialogOpen(false)
+                setForfeitNotes("")
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={markForfeited.isPending}
+              onClick={() => {
+                markForfeited.mutate(
+                  { id: service.id, forfeiture_notes: forfeitNotes || undefined },
+                  {
+                    onSuccess: () => {
+                      setForfeitDialogOpen(false)
+                      setForfeitNotes("")
+                      onRefresh?.()
+                    },
+                  },
+                )
+              }}
+            >
+              <AlertTriangle className="mr-2 h-4 w-4" />
+              {markForfeited.isPending ? "Processing..." : "Declare Forfeited"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Convert to Acquisition Dialog */}
+      <Dialog
+        open={convertDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConvertDialogOpen(false)
+            setAcquisitionPrice("")
+            setConvertNotes("")
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Record Company Acquisition</DialogTitle>
+            <DialogDescription>
+              Client is selling their appliance to the company. Service #
+              {service.id} will be recorded as a company acquisition and the
+              balance written off.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="acquisition-price">
+                Acquisition Price (optional)
+              </Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                  ₱
+                </span>
+                <Input
+                  id="acquisition-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  className="pl-7"
+                  value={acquisitionPrice}
+                  onChange={(e) => setAcquisitionPrice(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="convert-notes">Notes (optional)</Label>
+              <Textarea
+                id="convert-notes"
+                placeholder="e.g. Client sold unit as payment in lieu of repair fees..."
+                value={convertNotes}
+                onChange={(e) => setConvertNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConvertDialogOpen(false)
+                setAcquisitionPrice("")
+                setConvertNotes("")
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={convertToAcquisition.isPending}
+              onClick={() => {
+                const price = acquisitionPrice
+                  ? parseFloat(acquisitionPrice)
+                  : null
+                convertToAcquisition.mutate(
+                  {
+                    id: service.id,
+                    acquisition_price: price,
+                    notes: convertNotes || undefined,
+                  },
+                  {
+                    onSuccess: () => {
+                      setConvertDialogOpen(false)
+                      setAcquisitionPrice("")
+                      setConvertNotes("")
+                      onRefresh?.()
+                    },
+                  },
+                )
+              }}
+            >
+              <Wallet className="mr-2 h-4 w-4" />
+              {convertToAcquisition.isPending ? "Recording..." : "Record Acquisition"}
             </Button>
           </div>
         </DialogContent>

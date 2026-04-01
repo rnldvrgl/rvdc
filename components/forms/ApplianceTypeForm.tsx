@@ -19,6 +19,8 @@ import * as z from "zod"
 
 const applianceTypeSchema = z.object({
   name: z.string().min(1, "Appliance type name is required"),
+  default_labor_warranty_months: z.coerce.number().min(0).max(120),
+  default_unit_warranty_months: z.coerce.number().min(0).max(120),
 })
 
 type FormValues = z.infer<typeof applianceTypeSchema>
@@ -38,6 +40,8 @@ export default function ApplianceTypeForm({
     resolver: zodResolver(applianceTypeSchema),
     defaultValues: {
       name: initialData?.name ?? "",
+      default_labor_warranty_months: initialData?.default_labor_warranty_months ?? 0,
+      default_unit_warranty_months: initialData?.default_unit_warranty_months ?? 0,
     },
   })
 
@@ -78,6 +82,55 @@ export default function ApplianceTypeForm({
             </FormItem>
           )}
         />
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="default_labor_warranty_months"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Default Labor Warranty (months)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="number"
+                    min={0}
+                    max={120}
+                    placeholder="0"
+                    disabled={isSubmitting}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Auto-applied to all service appliances of this type
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="default_unit_warranty_months"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Default Unit Warranty (months)</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    type="number"
+                    min={0}
+                    max={120}
+                    placeholder="0"
+                    disabled={isSubmitting}
+                  />
+                </FormControl>
+                <p className="text-xs text-muted-foreground">
+                  Only for brand-new installation services
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <Button
           type="submit"

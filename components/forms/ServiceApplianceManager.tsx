@@ -208,6 +208,33 @@ export default function ServiceApplianceManager({
     }
   }, [laborIsFree, laborFee, setValue])
 
+  // ─── Auto-fill warranty months from ApplianceType defaults (new records only) ─
+
+  useEffect(() => {
+    if (!isAdding) return // only auto-fill when adding a new appliance
+    if (!applianceType) return
+    const typeData = applianceTypes.find((t) => t.id === applianceType)
+    if (!typeData) return
+
+    // Labor warranty: fill if still at 0
+    const currentLabor = form.getValues("labor_warranty_months")
+    if (currentLabor === 0 && typeData.default_labor_warranty_months > 0) {
+      setValue("labor_warranty_months", typeData.default_labor_warranty_months)
+    }
+
+    // Unit warranty: only fill for brand-new installation services
+    const currentUnit = form.getValues("unit_warranty_months")
+    if (
+      currentUnit === 0 &&
+      typeData.default_unit_warranty_months > 0 &&
+      isInstallation &&
+      form.getValues("unit_type") === "brand_new"
+    ) {
+      setValue("unit_warranty_months", typeData.default_unit_warranty_months)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applianceType])
+
   // ─── Merge available + assigned units for ComboBox ──────────────────────────
 
   const unitOptions = useMemo(() => {

@@ -170,6 +170,50 @@ export function useServiceMutations() {
     },
   })
 
+  const markClaimed = useApiMutation({
+    mutationFn: ({ id, claimed_at }: { id: number; claimed_at?: string }) =>
+      api.post(`${url}${id}/mark-claimed/`, claimed_at ? { claimed_at } : {}),
+    successMessage: "Marked as claimed / delivered.",
+    invalidateQueries: [{ queryKey: ["services"] }, { queryKey: ["unclaimed-eligible"] }],
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
+    },
+  })
+
+  const markForfeited = useApiMutation({
+    mutationFn: ({ id, forfeiture_notes }: { id: number; forfeiture_notes?: string }) =>
+      api.post(`${url}${id}/mark-forfeited/`, { forfeiture_notes }),
+    successMessage: "Service forfeited. Appliance recorded as company asset.",
+    invalidateQueries: [
+      { queryKey: ["services"] },
+      { queryKey: ["unclaimed-eligible"] },
+      { queryKey: ["company-assets"] },
+    ],
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
+    },
+  })
+
+  const convertToAcquisition = useApiMutation({
+    mutationFn: ({
+      id,
+      acquisition_price,
+      notes,
+    }: {
+      id: number
+      acquisition_price?: number | null
+      notes?: string
+    }) => api.post(`${url}${id}/convert-to-acquisition/`, { acquisition_price, notes }),
+    successMessage: "Converted to company acquisition.",
+    invalidateQueries: [
+      { queryKey: ["services"] },
+      { queryKey: ["company-assets"] },
+    ],
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
+    },
+  })
+
   return {
     addService,
     updateService,
@@ -181,5 +225,8 @@ export function useServiceMutations() {
     reopenService,
     toggleServiceItemsChecked,
     linkAirconUnits,
+    markClaimed,
+    markForfeited,
+    convertToAcquisition,
   }
 }

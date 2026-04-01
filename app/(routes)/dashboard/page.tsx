@@ -9,6 +9,7 @@ import { PendingItemsAlert } from "@/components/custom/dashboard/PendingItemsAle
 import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
 import { RemindersAlerts } from "@/components/custom/dashboard/RemindersAlerts"
 import { SubStallSettlement } from "@/components/custom/dashboard/SubStallSettlement"
+import { UnclaimedApplianceAlerts } from "@/components/custom/dashboard/UnclaimedApplianceAlerts"
 import DateRangePicker from "@/components/custom/inputs/DateRangePicker"
 import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
 import DashboardCharts from "@/components/custom/shared/charts/DashboardCharts"
@@ -110,6 +111,13 @@ const DashboardPage = () => {
                       </WidgetErrorBoundary>
                     )}
 
+                    {/* Unclaimed Appliance Alerts for Manager */}
+                    {role === "manager" && (
+                      <WidgetErrorBoundary fallbackTitle="Unclaimed alerts failed to load">
+                        <UnclaimedApplianceAlerts />
+                      </WidgetErrorBoundary>
+                    )}
+
                     {/* Leave Balance */}
                     <LeaveBalanceSummary />
 
@@ -176,12 +184,15 @@ const DashboardPage = () => {
                     </WidgetErrorBoundary>
                   </div>
 
-                  {/* Pending Items + Birthday Reminders */}
-                  <div className="grid gap-6 lg:grid-cols-2">
+                  {/* Pending Items + Birthday Reminders + Unclaimed Alerts */}
+                  <div className="grid gap-6 lg:grid-cols-3">
                     <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
                       <PendingItemsAlert />
                     </WidgetErrorBoundary>
                     <BirthdayReminders />
+                    <WidgetErrorBoundary fallbackTitle="Unclaimed alerts failed to load">
+                      <UnclaimedApplianceAlerts />
+                    </WidgetErrorBoundary>
                   </div>
 
                   {/* Employee Performance - full width */}

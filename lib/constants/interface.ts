@@ -409,7 +409,7 @@ export interface ExpenseReimbursementPayload {
 
 // Payment enums
 export type PaymentType = "cash" | "gcash" | "credit" | "debit" | "cheque"
-export type PaymentStatus = "unpaid" | "partial" | "paid" | "refunded" | "n/a"
+export type PaymentStatus = "unpaid" | "partial" | "paid" | "refunded" | "n/a" | "written_off"
 
 // Payment
 export interface SalesPayment {
@@ -843,6 +843,8 @@ export type AssignmentType = "repair" | "pickup" | "delivery" | "inspect"
 export interface ApplianceType {
   id: number
   name: string
+  default_labor_warranty_months: number
+  default_unit_warranty_months: number
 }
 
 // Service Appliance
@@ -1175,6 +1177,15 @@ export interface Service {
   is_back_job?: boolean
   back_job_parent?: number | null
   back_job_reason?: string
+  // Completion and claim tracking
+  completed_at?: string | null
+  claimed_at?: string | null
+  // Forfeiture / unclaimed policy
+  is_forfeited?: boolean
+  forfeited_at?: string | null
+  forfeiture_type?: "unclaimed" | "client_sold" | null
+  forfeiture_notes?: string
+  acquisition_price?: string | null
   appliances?: ServiceAppliance[]
   installation_units?: AirconUnits[]
   technician_assignments?: TechnicianAssignment[]
@@ -1409,4 +1420,39 @@ export interface Schedule {
   notes?: string
   created_at: string
   updated_at: string
+}
+
+// Company Assets (forfeited / client-sold appliances)
+export type CompanyAssetAcquisitionType = "unclaimed" | "client_sold"
+export type CompanyAssetStatus = "holding" | "sold" | "repurposed" | "disposed"
+
+export interface CompanyAsset {
+  id: number
+  service: number
+  service_ref: string
+  client_name: string | null
+  service_appliance: number | null
+  appliance_description: string
+  acquisition_type: CompanyAssetAcquisitionType
+  acquisition_price: string | null
+  acquired_at: string
+  acquired_by: number | null
+  declared_by_name: string | null
+  condition_notes: string
+  status: CompanyAssetStatus
+  disposed_at: string | null
+  disposal_notes: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CompanyAssetPayload {
+  service: number
+  service_appliance?: number | null
+  appliance_description?: string
+  acquisition_type: CompanyAssetAcquisitionType
+  acquisition_price?: number | null
+  condition_notes?: string
+  status?: CompanyAssetStatus
+  disposal_notes?: string
 }
