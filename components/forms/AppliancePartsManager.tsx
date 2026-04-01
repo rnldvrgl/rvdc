@@ -71,6 +71,7 @@ export default function AppliancePartsManager({
   const [isFree, setIsFree] = useState(false)
   const [isCustom, setIsCustom] = useState(false)
   const [customPrice, setCustomPrice] = useState("")
+  const [customDescription, setCustomDescription] = useState("")
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null,
   )
@@ -82,6 +83,7 @@ export default function AppliancePartsManager({
       itemName: string
       quantity: string
       customPrice: string
+      customDescription: string
       isFree: boolean
       discountValue: string
       discountReason: string
@@ -165,6 +167,7 @@ export default function AppliancePartsManager({
           ...basePayload,
           item: null,
           custom_price: Math.round(parseFloat(customPrice) * 100) / 100,
+          custom_description: customDescription || undefined,
         }
       : { ...basePayload, item: selectedItemId }
 
@@ -176,6 +179,7 @@ export default function AppliancePartsManager({
       setIsFree(false)
       setIsCustom(false)
       setCustomPrice("")
+      setCustomDescription("")
       setSelectedTemplateId(null)
       setDiscountValue("")
       setDiscountReason("")
@@ -221,6 +225,10 @@ export default function AppliancePartsManager({
         toast.error("Please fill in price and quantity")
         return
       }
+      if (!customDescription?.trim()) {
+        toast.error("Please provide a name/description for the custom item")
+        return
+      }
     } else {
       if (!selectedItemId || !quantity) {
         toast.error("Please fill in all fields")
@@ -235,7 +243,7 @@ export default function AppliancePartsManager({
     }
 
     const itemName = isCustom
-      ? "Custom Item"
+      ? customDescription || "Custom Item"
       : items.find((i) => i.id === selectedItemId)?.name || "Unknown"
 
     setPendingItems((prev) => [
@@ -247,6 +255,7 @@ export default function AppliancePartsManager({
         itemName,
         quantity,
         customPrice,
+        customDescription,
         isFree,
         discountValue,
         discountReason,
@@ -259,6 +268,7 @@ export default function AppliancePartsManager({
     setIsFree(false)
     setIsCustom(false)
     setCustomPrice("")
+    setCustomDescription("")
     setSelectedTemplateId(null)
     setDiscountValue("")
     setDiscountReason("")
@@ -270,6 +280,7 @@ export default function AppliancePartsManager({
 
     let successCount = 0
     let failCount = 0
+    const stockAutoAddedItems: string[] = []
 
     for (const item of pendingItems) {
       const qty = parseFloat(item.quantity)
@@ -301,17 +312,29 @@ export default function AppliancePartsManager({
             ...basePayload,
             item: null,
             custom_price: Math.round(parseFloat(item.customPrice) * 100) / 100,
+            custom_description: item.customDescription || undefined,
           }
         : { ...basePayload, item: item.itemId }
 
       try {
-        await api.post("services/appliance-items/", payload)
+        const res = await api.post("services/appliance-items/", payload)
         successCount++
+        if (res.data?.stock_auto_added) {
+          stockAutoAddedItems.push(
+            `${item.itemName} (+${res.data.stock_auto_added_qty})`,
+          )
+        }
       } catch {
         failCount++
       }
     }
 
+    if (stockAutoAddedItems.length > 0) {
+      toast.warning(
+        `Stock auto-reconciled for: ${stockAutoAddedItems.join(", ")}`,
+        { duration: 6000 },
+      )
+    }
     if (successCount > 0) {
       toast.success(
         `${successCount} part${successCount > 1 ? "s" : ""} added successfully`,
@@ -347,9 +370,11 @@ export default function AppliancePartsManager({
     if (partIsCustom) {
       setSelectedItemId(null)
       setCustomPrice(part.custom_price?.toString() || "")
+      setCustomDescription(part.custom_description || "")
     } else {
       setSelectedItemId(part.item)
       setCustomPrice("")
+      setCustomDescription("")
     }
     setQuantity(part.quantity.toString())
     setIsFree(part.is_free || false)
@@ -744,6 +769,7 @@ export default function AppliancePartsManager({
                     setSelectedItemId(null)
                   } else {
                     setCustomPrice("")
+                    setCustomDescription("")
                   }
                 }}
                 className="cursor-pointer"
@@ -758,6 +784,16 @@ export default function AppliancePartsManager({
 
             {isCustom ? (
               <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Item Name / Description</Label>
+                  <Input
+                    type="text"
+                    value={customDescription}
+                    onChange={(e) => setCustomDescription(e.target.value)}
+                    placeholder="e.g. Capacitor 25uf, Copper tube 1/4"
+                    disabled={isDialogBusy}
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label>Price per Unit (₱)</Label>
                   <Input
@@ -785,6 +821,7 @@ export default function AppliancePartsManager({
                           const tpl = templates.find((t) => t.id === id)
                           if (tpl) {
                           setCustomPrice(tpl.default_price)
+                          setCustomDescription(tpl.name)
                           }
                         }
                       }}
