@@ -80,6 +80,7 @@ import {
   RotateCcw,
   Save,
   ShoppingCart,
+  Star,
   Trash2,
   X,
 } from "lucide-react"
@@ -669,16 +670,19 @@ export default function SalesTransactionForm({
                       allowCreate={!initialData}
                     />
                     {!initialData && pinnedClients.length > 0 && !field.value && (
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">📌 Pinned:</p>
-                        <div className="flex flex-wrap gap-1">
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                          <Star className="size-3" />
+                          Pinned
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
                           {pinnedClients.map((client) => (
                             <Button
                               key={client.id}
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="h-6 text-xs px-2 border-amber-400 text-amber-700 dark:text-amber-400"
+                              className="h-7 text-xs px-2.5"
                               onClick={() => field.onChange(client.id)}
                             >
                               {client.full_name}
@@ -688,16 +692,19 @@ export default function SalesTransactionForm({
                       </div>
                     )}
                     {!initialData && recentClients.length > 0 && !field.value && (
-                      <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">Recent clients:</p>
-                        <div className="flex flex-wrap gap-1">
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                          <Star className="size-3" />
+                          Recent
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
                           {recentClients.map((client) => (
                             <Button
                               key={client.id}
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="h-6 text-xs px-2"
+                              className="h-7 text-xs px-2.5"
                               onClick={() => field.onChange(client.id)}
                             >
                               {client.full_name}

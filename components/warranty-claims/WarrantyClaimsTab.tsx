@@ -1,6 +1,6 @@
 "use client"
 
-import { ClientComboBox } from "@/components/custom/inputs/ClientComboBox"
+import { ClientCardSelect } from "@/components/custom/inputs/ClientComboBox"
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -122,11 +122,9 @@ export default function WarrantyClaimsTab() {
             <CardContent className="space-y-4">
               <div>
                 <Label>Client</Label>
-                <ClientComboBox
+                <ClientCardSelect
                   value={selectedClientId}
                   onChange={handleClientChange}
-                  placeholder="Select a client..."
-                  nameOnly
                 />
               </div>
             </CardContent>
