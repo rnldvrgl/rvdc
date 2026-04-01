@@ -106,7 +106,6 @@ export type Client = BaseEntity & {
   city: string
   barangay?: string | null
   is_blocklisted: boolean
-  is_favorite: boolean
 }
 
 export type ClientPayload = Omit<Client, keyof BaseEntity>

@@ -35,9 +35,4 @@ export function useRecentClients(limit: number = 10) {
   })
 }
 
-export function useFavoriteClients() {
-  return useApiQuery<Client[]>({
-    queryKey: ["favorite-clients"],
-    url: `${url}favorites/`,
-  })
-}
+

@@ -48,16 +48,17 @@ import {
 } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
-import { useRecentClients, useFavoriteClients } from "@/lib/queries/clients/useClients"
+import { useRecentClients } from "@/lib/queries/clients/useClients"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheetDialog } from "@/lib/hooks/useEntityDialog"
 import { useItemSelection } from "@/lib/hooks/useItemSelection"
 import { usePrint } from "@/lib/hooks/usePrint"
 import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
 import { useCustomItemTemplateChoices } from "@/lib/queries/inventory/useCustomItemTemplates"
-import { useItemChoices, useStallChoices } from "@/lib/queries/useChoices"
+import { useItemChoices, useStallChoices, useClientChoices } from "@/lib/queries/useChoices"
 import { holdSale } from "@/lib/utils/heldSales"
 import { formatCurrency } from "@/lib/utils/helpers"
+import { getPinnedClientIds } from "@/lib/utils/pinnedClients"
 import {
   getSaleTemplates,
   removeSaleTemplate,
@@ -241,7 +242,14 @@ export default function SalesTransactionForm({
   const { data: allItemsData, isLoading: itemsLoading } = useItemChoices()
   const { data: customItemTemplates = [] } = useCustomItemTemplateChoices()
   const { data: recentClients = [] } = useRecentClients(8)
-  const { data: favoriteClients = [] } = useFavoriteClients()
+  const { data: allClients = [] } = useClientChoices()
+  const pinnedClients = useMemo(() => {
+    const ids = getPinnedClientIds()
+    if (ids.length === 0) return []
+    return ids
+      .map((id) => allClients.find((c) => c.id === id))
+      .filter(Boolean) as typeof allClients
+  }, [allClients])
   const allItems: Item[] = allItemsData ?? []
 
   // Fetch stock levels for the sub stall
@@ -660,11 +668,11 @@ export default function SalesTransactionForm({
                       onChange={(val) => field.onChange(val ?? null)}
                       allowCreate={!initialData}
                     />
-                    {!initialData && favoriteClients.length > 0 && !field.value && (
+                    {!initialData && pinnedClients.length > 0 && !field.value && (
                       <div className="space-y-1">
-                        <p className="text-xs text-muted-foreground">⭐ Favorites:</p>
+                        <p className="text-xs text-muted-foreground">📌 Pinned:</p>
                         <div className="flex flex-wrap gap-1">
-                          {favoriteClients.map((client) => (
+                          {pinnedClients.map((client) => (
                             <Button
                               key={client.id}
                               type="button"

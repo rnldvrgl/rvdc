@@ -14,9 +14,10 @@ import { Client } from "@/lib/constants/types"
 import { useClientMutations } from "@/lib/mutations/useClientMutations"
 import { useClientChoices } from "@/lib/queries/useChoices"
 import { useBarangays, useCities, useProvinces } from "@/lib/queries/usePsgc"
+import { isClientPinned, togglePinnedClient } from "@/lib/utils/pinnedClients"
 import { cn, getNameByCode, prepareOptions } from "@/lib/utils/helpers"
 import { Check, MapPin, Phone, Plus, Search, Star, User, X } from "lucide-react"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 function formatClientLabel(client: Client): string {
   const name = client.full_name
@@ -52,12 +53,13 @@ export function ClientComboBox({
   const [selectedProvince, setSelectedProvince] = useState<string | null>(null)
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
   const [selectedBarangay, setSelectedBarangay] = useState<string | null>(null)
-  const { addClient, toggleFavorite } = useClientMutations()
+  const { addClient } = useClientMutations()
 
-  const selectedClient = useMemo(
-    () => (value && clients ? clients.find((c) => c.id === value) : null),
-    [value, clients],
-  )
+  const [pinned, setPinned] = useState(() => (value ? isClientPinned(value) : false))
+
+  useEffect(() => {
+    setPinned(value ? isClientPinned(value) : false)
+  }, [value])
 
   const { data: provinces = [] } = useProvinces()
   const { data: cities = [], isLoading: loadingCities } =
@@ -149,20 +151,22 @@ export function ClientComboBox({
             className={className}
           />
         </div>
-        {value && selectedClient && (
+        {value && (
           <Button
             type="button"
             variant="ghost"
             size="icon"
             className="shrink-0"
-            disabled={toggleFavorite.isPending}
-            onClick={() => toggleFavorite.mutate(value)}
-            title={selectedClient.is_favorite ? "Remove from favorites" : "Add to favorites"}
+            onClick={() => {
+              const nowPinned = togglePinnedClient(value)
+              setPinned(nowPinned)
+            }}
+            title={pinned ? "Unpin client" : "Pin client"}
           >
             <Star
               className={cn(
                 "size-4",
-                selectedClient.is_favorite
+                pinned
                   ? "fill-amber-400 text-amber-400"
                   : "text-muted-foreground",
               )}
