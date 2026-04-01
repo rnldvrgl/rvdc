@@ -131,6 +131,7 @@ interface DataTableProps<TData, TValue> {
   enableExport?: boolean
   exportFileName?: string
   enableVirtualization?: boolean
+  searchPlaceholder?: string
 }
 
 export function DataTable<TData, TValue>({
@@ -152,6 +153,7 @@ export function DataTable<TData, TValue>({
   enableExport = false,
   exportFileName = "export",
   enableVirtualization = false,
+  searchPlaceholder = "Search...",
 }: DataTableProps<TData, TValue>) {
   const {
     page,
@@ -476,7 +478,7 @@ export function DataTable<TData, TValue>({
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search..."
+              placeholder={searchPlaceholder}
               value={localSearch}
               onChange={(e) => setLocalSearch(e.target.value)}
               className="pl-9 pr-9 bg-white dark:bg-muted/50 border-slate-300 dark:border-slate-700 focus-visible:ring-purple-500 h-9"
