@@ -1,6 +1,6 @@
 "use client"
 
-import { ClientComboBox } from "@/components/custom/inputs/ClientComboBox"
+import { ClientCardSelect } from "@/components/custom/inputs/ClientComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -117,11 +117,9 @@ export default function FreeCleaningTab() {
         <CardContent className="space-y-4">
           <div>
             <Label>Client</Label>
-            <ClientComboBox
+            <ClientCardSelect
               value={selectedClientId}
               onChange={handleClientChange}
-              placeholder="Select a client..."
-              nameOnly
             />
           </div>
           <div>

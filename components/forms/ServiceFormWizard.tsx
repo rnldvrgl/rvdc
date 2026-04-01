@@ -70,8 +70,30 @@ const serviceModeOptions = [
   { label: "Pull-Out", value: "pull_out", icon: Truck },
 ]
 
+const servicePurposeOptions = [
+  {
+    label: "Standard",
+    value: "standard",
+    icon: ClipboardList,
+    description: "Regular paid service",
+  },
+  {
+    label: "Warranty Claim",
+    value: "warranty_claim",
+    icon: ShieldCheck,
+    description: "Complementary warranty service",
+  },
+  {
+    label: "Free Cleaning",
+    value: "free_cleaning",
+    icon: SprayCan,
+    description: "Complementary cleaning service",
+  },
+]
+
 const serviceSchema = z.object({
   client: z.number().nullable().optional(),
+  service_purpose: z.enum(["standard", "warranty_claim", "free_cleaning"]),
   service_type: z.enum(
     [
       "repair",
@@ -139,6 +161,7 @@ export default function ServiceFormWizard({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
       client: defaultClientId ?? undefined,
+      service_purpose: "standard",
       service_type: undefined,
       service_mode: "carry_in",
       override_address: "",
@@ -163,6 +186,10 @@ export default function ServiceFormWizard({
   const { data: technicians = [] } = useTechnicianChoices()
 
   const selectedMode = useWatch({ control: form.control, name: "service_mode" })
+  const selectedServicePurpose = useWatch({
+    control: form.control,
+    name: "service_purpose",
+  })
   const selectedServiceType = useWatch({
     control: form.control,
     name: "service_type",
@@ -219,6 +246,21 @@ export default function ServiceFormWizard({
           selectedServiceType === "dismantle"
         ? serviceModeOptions.filter((m) => m.value === "home_service")
         : serviceModeOptions
+
+  const availableServiceTypes =
+    selectedServicePurpose === "free_cleaning"
+      ? serviceTypeOptions.filter((t) => t.value === "cleaning")
+      : selectedServicePurpose === "warranty_claim"
+        ? serviceTypeOptions.filter((t) =>
+            ["repair", "inspection", "cleaning"].includes(t.value),
+          )
+        : serviceTypeOptions
+
+  useEffect(() => {
+    if (selectedServicePurpose === "free_cleaning") {
+      form.setValue("service_type", "cleaning")
+    }
+  }, [selectedServicePurpose, form])
 
   // Auto-set mode for installation / dismantle / motor_rewind
   useEffect(() => {
@@ -333,6 +375,13 @@ export default function ServiceFormWizard({
       client: data.client!,
       service_type: data.service_type,
       service_mode: data.service_mode,
+      is_complementary: data.service_purpose !== "standard",
+      complementary_reason:
+        data.service_purpose === "warranty_claim"
+          ? "Warranty Claim"
+          : data.service_purpose === "free_cleaning"
+            ? "Free Cleaning"
+            : undefined,
       override_address: data.override_address,
       override_contact_person: data.override_contact_person,
       override_contact_number: data.override_contact_number,
@@ -429,6 +478,9 @@ export default function ServiceFormWizard({
   const typeLabel = serviceTypeOptions.find(
     (o) => o.value === form.getValues("service_type"),
   )?.label
+  const purposeLabel = servicePurposeOptions.find(
+    (o) => o.value === form.getValues("service_purpose"),
+  )?.label
   const modeLabel = serviceModeOptions.find(
     (o) => o.value === form.getValues("service_mode"),
   )?.label
@@ -515,13 +567,31 @@ export default function ServiceFormWizard({
             />
 
             <FormField
+              name="service_purpose"
+              control={form.control}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel required>Service Purpose</FormLabel>
+                  <CardSelect
+                    options={servicePurposeOptions}
+                    value={field.value ?? null}
+                    onChange={field.onChange}
+                    disabled={isSubmitting}
+                    columns={3}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
               name="service_type"
               control={form.control}
               render={({ field }) => (
                 <FormItem>
                   <FormLabel required>Service Type</FormLabel>
                   <CardSelect
-                    options={serviceTypeOptions}
+                    options={availableServiceTypes}
                     value={field.value ?? null}
                     onChange={field.onChange}
                     disabled={isSubmitting}
@@ -530,6 +600,13 @@ export default function ServiceFormWizard({
                 </FormItem>
               )}
             />
+
+            {selectedServicePurpose !== "standard" && (
+              <p className="text-xs text-muted-foreground rounded-md border border-dashed px-3 py-2 bg-muted/30">
+                This service will be created as complementary and will not
+                require payment.
+              </p>
+            )}
 
             <FormField
               name="service_mode"
@@ -1174,6 +1251,10 @@ export default function ServiceFormWizard({
                   <div>
                     <span className="text-muted-foreground">Client</span>
                     <p className="font-medium">{clientName}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Purpose</span>
+                    <p className="font-medium">{purposeLabel ?? "—"}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Type</span>

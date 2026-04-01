@@ -71,6 +71,7 @@ export default function ServicePartsManager({
   const [isFree, setIsFree] = useState(false)
   const [isCustom, setIsCustom] = useState(false)
   const [customPrice, setCustomPrice] = useState("")
+  const [customDescription, setCustomDescription] = useState("")
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
     null,
   )
@@ -82,6 +83,7 @@ export default function ServicePartsManager({
       itemName: string
       quantity: string
       customPrice: string
+      customDescription: string
       isFree: boolean
       discountValue: string
       discountReason: string
@@ -150,6 +152,7 @@ export default function ServicePartsManager({
           service: serviceId,
           item: null as null,
           custom_price: Math.round(parseFloat(customPrice) * 100) / 100,
+          custom_description: customDescription || undefined,
           quantity: roundedQty,
           is_free: isFree,
           discount_amount:
@@ -180,6 +183,7 @@ export default function ServicePartsManager({
       setIsFree(false)
       setIsCustom(false)
       setCustomPrice("")
+      setCustomDescription("")
       setSelectedTemplateId(null)
       setDiscountValue("")
       setDiscountReason("")
@@ -217,6 +221,10 @@ export default function ServicePartsManager({
         toast.error("Please fill in price and quantity")
         return
       }
+      if (!customDescription?.trim()) {
+        toast.error("Please provide a name/description for the custom item")
+        return
+      }
     } else {
       if (!selectedItemId || !quantity) {
         toast.error("Please fill in all fields")
@@ -231,7 +239,7 @@ export default function ServicePartsManager({
     }
 
     const itemName = isCustom
-      ? "Custom Item"
+      ? customDescription || "Custom Item"
       : items.find((i) => i.id === selectedItemId)?.name || "Unknown"
 
     setPendingItems((prev) => [
@@ -243,6 +251,7 @@ export default function ServicePartsManager({
         itemName,
         quantity,
         customPrice,
+        customDescription,
         isFree,
         discountValue,
         discountReason,
@@ -255,6 +264,7 @@ export default function ServicePartsManager({
     setIsFree(false)
     setIsCustom(false)
     setCustomPrice("")
+    setCustomDescription("")
     setSelectedTemplateId(null)
     setDiscountValue("")
     setDiscountReason("")
@@ -266,6 +276,7 @@ export default function ServicePartsManager({
 
     let successCount = 0
     let failCount = 0
+    const stockAutoAddedItems: string[] = []
 
     for (const item of pendingItems) {
       const qty = parseFloat(item.quantity)
@@ -283,6 +294,7 @@ export default function ServicePartsManager({
             service: serviceId,
             item: null as null,
             custom_price: Math.round(parseFloat(item.customPrice) * 100) / 100,
+            custom_description: item.customDescription || undefined,
             quantity: roundedQty,
             is_free: item.isFree,
             discount_amount:
@@ -310,13 +322,24 @@ export default function ServicePartsManager({
           }
 
       try {
-        await api.post("services/service-items/", payload)
+        const res = await api.post("services/service-items/", payload)
         successCount++
+        if (res.data?.stock_auto_added) {
+          stockAutoAddedItems.push(
+            `${item.isCustom ? item.customDescription || "Custom Item" : items.find((i) => i.id === item.itemId)?.name || "Item"} (+${res.data.stock_auto_added_qty})`,
+          )
+        }
       } catch {
         failCount++
       }
     }
 
+    if (stockAutoAddedItems.length > 0) {
+      toast.warning(
+        `Stock auto-reconciled for: ${stockAutoAddedItems.join(", ")}`,
+        { duration: 6000 },
+      )
+    }
     if (successCount > 0) {
       toast.success(
         `${successCount} part${successCount > 1 ? "s" : ""} added successfully`,
@@ -347,10 +370,12 @@ export default function ServicePartsManager({
     if (!part.item && !!part.custom_price) {
       setIsCustom(true)
       setCustomPrice(part.custom_price || "")
+      setCustomDescription(part.custom_description || "")
       setSelectedItemId(null)
     } else {
       setIsCustom(false)
       setCustomPrice("")
+      setCustomDescription("")
       setSelectedItemId(part.item)
     }
 
@@ -783,6 +808,7 @@ export default function ServicePartsManager({
                     setSelectedItemId(null)
                   } else {
                     setCustomPrice("")
+                    setCustomDescription("")
                   }
                 }}
                 className="cursor-pointer"
@@ -797,6 +823,16 @@ export default function ServicePartsManager({
 
             {isCustom ? (
               <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Item Name / Description</Label>
+                  <Input
+                    type="text"
+                    value={customDescription}
+                    onChange={(e) => setCustomDescription(e.target.value)}
+                    placeholder="e.g. Capacitor 25uf, Copper tube 1/4"
+                    disabled={isDialogBusy}
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label>Unit Price (₱)</Label>
                   <Input
@@ -824,6 +860,7 @@ export default function ServicePartsManager({
                           const tpl = templates.find((t) => t.id === id)
                           if (tpl) {
                           setCustomPrice(tpl.default_price)
+                          setCustomDescription(tpl.name)
                           }
                         }
                       }}

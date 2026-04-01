@@ -283,30 +283,52 @@
     visibility: visible !important;
   }
 
+  .job-order-print img {
+    display: inline-block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .job-order-print svg {
+    display: inline-block !important;
+    break-inside: avoid !important;
+  }
+
+  .job-order-print .jo-page-wrapper {
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  .job-order-print .jo-page-wrapper + .jo-page-wrapper {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .job-order-print .jo-page-wrapper:last-child {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
   .job-order-print .jo-page {
-    width: 11in !important;
-    height: 8.5in !important;
-    max-height: 8.5in !important;
-    padding: 0.25in !important;
-    overflow: hidden !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
     box-sizing: border-box !important;
     break-inside: avoid;
     page-break-inside: avoid;
     margin: 0 !important;
   }
 
-  .job-order-print > div {
-    border: none !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-  }
-
-  .job-order-print .jo-page + .jo-page {
-    break-before: page;
-    page-break-before: always;
-  }
 
   /* ── Thermal Receipt (58mm) ── */
   .thermal-receipt-print {
@@ -338,7 +360,7 @@
 
 @page job-order-page {
   size: letter landscape;
-  margin: 0;
+  margin: 0.25in;
 }
 
 @keyframes fall {

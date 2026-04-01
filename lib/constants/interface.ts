@@ -1171,6 +1171,10 @@ export interface Service {
   // Complementary service fields
   is_complementary?: boolean
   complementary_reason?: string
+  // Back job / re-service fields
+  is_back_job?: boolean
+  back_job_parent?: number | null
+  back_job_reason?: string
   appliances?: ServiceAppliance[]
   installation_units?: AirconUnits[]
   technician_assignments?: TechnicianAssignment[]
@@ -1244,6 +1248,10 @@ export interface ServicePayload {
   // Complementary service fields
   is_complementary?: boolean
   complementary_reason?: string
+  // Back job / re-service fields
+  is_back_job?: boolean
+  back_job_parent?: number | null
+  back_job_reason?: string
   // Service-level parts review
   service_parts_needed_notes?: string
   // Backdating

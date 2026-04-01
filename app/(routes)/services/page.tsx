@@ -239,6 +239,7 @@ export default function ServicesPage() {
           emptyIcon={Wrench}
           emptyTitle="No services found"
           emptyDescription="Create your first service request to get started"
+          searchPlaceholder="Search by client, phone, type, brand, model..."
         />
       ) : (
         <ServiceKanbanBoard
