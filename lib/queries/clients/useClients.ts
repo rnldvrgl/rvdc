@@ -34,5 +34,3 @@ export function useRecentClients(limit: number = 10) {
     params: { limit },
   })
 }
-
-
