@@ -45,7 +45,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Service, ServiceReceipt } from "@/lib/constants/interface"
+import { Service, ServicePayload, ServiceReceipt } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { usePrint } from "@/lib/hooks/usePrint"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
@@ -74,6 +74,7 @@ import {
     CalendarIcon,
     CheckCircle,
     Clock,
+    Copy,
     Edit,
     Hash,
     Info,
@@ -163,6 +164,8 @@ export default function ServiceDetail({
   }
   const [receiptDraft, setReceiptDraft] = useState(emptyReceiptDraft)
   const [transactionDateOpen, setTransactionDateOpen] = useState(false)
+  const [reServiceDialogOpen, setReServiceDialogOpen] = useState(false)
+  const [reServiceReason, setReServiceReason] = useState("")
   const {
     completeService,
     recordPayment,
@@ -172,6 +175,7 @@ export default function ServiceDetail({
     reopenService,
     toggleServiceItemsChecked,
   } = useServiceMutations()
+  const { addService } = useServiceMutations()
   const { updateAppliance } = useServiceApplianceMutations()
   const { addReceipt, updateReceipt, deleteReceipt } =
     useServiceReceiptMutations()
@@ -575,6 +579,14 @@ export default function ServiceDetail({
             {paymentStatusLabels[service.payment_status] ||
               service.payment_status}
           </Badge>
+          {service.is_back_job && (
+            <Badge
+              variant="outline"
+              className="text-[11px] px-2 py-0.5 border-orange-500 text-orange-600 bg-orange-50 dark:bg-orange-950/30"
+            >
+              Re-Service
+            </Badge>
+          )}
         </div>
 
         {/* Action Buttons — icon-only on small screens */}
@@ -663,6 +675,24 @@ export default function ServiceDetail({
               </TooltipTrigger>
               <TooltipContent>
                 Reopen service to add/remove parts, then re-complete
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {isCompleted && canManage && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-xs border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                  onClick={() => setReServiceDialogOpen(true)}
+                >
+                  <Copy className="mr-1 h-3.5 w-3.5" />
+                  Re-Service
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Create a back job / re-service for this completed service
               </TooltipContent>
             </Tooltip>
           )}
@@ -3309,6 +3339,79 @@ export default function ServiceDetail({
             >
               <Printer className="mr-2 h-4 w-4" />
               Print Receipt
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Re-Service / Back Job Dialog */}
+      <Dialog
+        open={reServiceDialogOpen}
+        onOpenChange={(open) => {
+          setReServiceDialogOpen(open)
+          if (!open) setReServiceReason("")
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Re-Service</DialogTitle>
+            <DialogDescription>
+              Create a back job / re-service for Service #{service.id}. The new
+              service will be linked to this one with the same client,
+              service type, and technicians.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-2">
+              <Label>Reason for Re-Service</Label>
+              <Textarea
+                placeholder="e.g. Unit still not cooling after initial repair..."
+                value={reServiceReason}
+                onChange={(e) => setReServiceReason(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setReServiceDialogOpen(false)
+                setReServiceReason("")
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={addService.isPending}
+              onClick={() => {
+                const payload: ServicePayload = {
+                  client: service.client?.id ?? 0,
+                  service_type: service.service_type as ServicePayload["service_type"],
+                  service_mode: service.service_mode as ServicePayload["service_mode"],
+                  override_address: service.override_address || undefined,
+                  override_contact_person: service.override_contact_person || undefined,
+                  override_contact_number: service.override_contact_number || undefined,
+                  is_back_job: true,
+                  back_job_parent: service.id,
+                  back_job_reason: reServiceReason || undefined,
+                  technician_assignments: service.technician_assignments?.map((ta) => ({
+                    technician: ta.technician!,
+                    assignment_type: ta.assignment_type as "repair" | "pickup" | "delivery",
+                    appliance: null,
+                  })),
+                }
+                addService.mutate(payload, {
+                  onSuccess: () => {
+                    setReServiceDialogOpen(false)
+                    setReServiceReason("")
+                    toast.success("Re-service created successfully")
+                  },
+                })
+              }}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              {addService.isPending ? "Creating..." : "Create Re-Service"}
             </Button>
           </div>
         </DialogContent>
