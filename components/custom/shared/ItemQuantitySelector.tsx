@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Item, ItemEntry } from "@/lib/constants/interface"
-import { formatCurrency } from "@/lib/utils/helpers"
+import { formatCurrency } from "@/lib/utils/currency"
 import { AlertTriangle, Info, Minus, Pencil, Plus, Star, X } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 
@@ -271,8 +271,8 @@ export default function ItemQuantitySelector({
                               label: `${c.name} — ${formatCurrency(c.retail_price)}`,
                               value: c.id.toString(),
                             }))}
-                          placeholder="Select untracked item or type below..."
-                          searchPlaceholder="Search untracked items..."
+                          placeholder="Select custom item or type below..."
+                          searchPlaceholder="Search custom items..."
                         />
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -308,7 +308,7 @@ export default function ItemQuantitySelector({
                           const stock = getAvailableStock(c.id)
                           return {
                             label: isItemUntracked
-                              ? `${c.name} (Untracked)`
+                              ? `${c.name} (Custom)`
                               : stock !== undefined
                                 ? `${c.name} (${stock})`
                                 : c.name,
@@ -574,7 +574,7 @@ export default function ItemQuantitySelector({
                   <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
                     {isUntracked ? (
                       <span className="text-violet-600 dark:text-violet-400 font-medium">
-                        Untracked
+                        Custom
                       </span>
                     ) : availableStock !== undefined ? (
                       <span
