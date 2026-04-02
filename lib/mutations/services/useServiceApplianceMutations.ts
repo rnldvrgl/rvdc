@@ -93,10 +93,73 @@ export function useServiceApplianceMutations() {
     },
   })
 
+  const markApplianceClaimed = useApiMutation({
+    mutationFn: ({ id, claimed_at }: { id: number; serviceId?: number; claimed_at?: string }) =>
+      api.post(`${url}${id}/mark-claimed/`, { claimed_at }),
+    successMessage: "Appliance marked as claimed.",
+    invalidateQueries: [
+      { queryKey: ["service-appliances"] },
+      { queryKey: ["services"] },
+      { queryKey: ["unclaimed-alerts"] },
+    ],
+    onSuccess: (_, variables) => {
+      if (variables.serviceId) {
+        queryClient.invalidateQueries({
+          queryKey: ["service", `${variables.serviceId}`],
+        })
+      }
+    },
+  })
+
+  const markApplianceForfeited = useApiMutation({
+    mutationFn: ({ id, forfeiture_notes }: { id: number; serviceId?: number; forfeiture_notes?: string }) =>
+      api.post(`${url}${id}/mark-forfeited/`, { forfeiture_notes }),
+    successMessage: "Appliance forfeited and recorded as company asset.",
+    invalidateQueries: [
+      { queryKey: ["service-appliances"] },
+      { queryKey: ["services"] },
+      { queryKey: ["company-assets"] },
+      { queryKey: ["unclaimed-alerts"] },
+    ],
+    onSuccess: (_, variables) => {
+      if (variables.serviceId) {
+        queryClient.invalidateQueries({
+          queryKey: ["service", `${variables.serviceId}`],
+        })
+      }
+    },
+  })
+
+  const convertApplianceToAcquisition = useApiMutation({
+    mutationFn: ({
+      id,
+      acquisition_price,
+      notes,
+    }: { id: number; serviceId?: number; acquisition_price?: number | null; notes?: string }) =>
+      api.post(`${url}${id}/convert-to-acquisition/`, { acquisition_price, notes }),
+    successMessage: "Appliance converted to company acquisition.",
+    invalidateQueries: [
+      { queryKey: ["service-appliances"] },
+      { queryKey: ["services"] },
+      { queryKey: ["company-assets"] },
+      { queryKey: ["unclaimed-alerts"] },
+    ],
+    onSuccess: (_, variables) => {
+      if (variables.serviceId) {
+        queryClient.invalidateQueries({
+          queryKey: ["service", `${variables.serviceId}`],
+        })
+      }
+    },
+  })
+
   return {
     addAppliance,
     updateAppliance,
     deleteAppliance,
     toggleItemsChecked,
+    markApplianceClaimed,
+    markApplianceForfeited,
+    convertApplianceToAcquisition,
   }
 }

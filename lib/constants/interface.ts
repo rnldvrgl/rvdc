@@ -889,6 +889,12 @@ export interface ServiceAppliance {
   unit_type?: "brand_new" | "second_hand" | "pre_order" | ""
   aircon_model?: number | null
   aircon_model_name?: string | null
+  // Per-appliance claiming / forfeiture tracking
+  claimed_at?: string | null
+  is_forfeited?: boolean
+  forfeiture_type?: "unclaimed" | "client_sold" | null
+  forfeiture_notes?: string
+  acquisition_price?: string | null
 }
 
 export interface ServiceAppliancePayload {

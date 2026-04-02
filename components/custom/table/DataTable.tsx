@@ -2,9 +2,11 @@
 
 import {
   ColumnDef,
+  RowData,
   RowSelectionState,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
 import { AnimatePresence, motion } from "framer-motion"
@@ -47,6 +49,15 @@ import {
   Search,
   X,
 } from "lucide-react"
+
+// Module augmentation for responsive column hiding via meta.thClass / meta.tdClass
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface ColumnMeta<TData extends RowData, TValue> {
+    thClass?: string
+    tdClass?: string
+  }
+}
 
 export interface BulkAction<TData> {
   label: string
@@ -96,6 +107,7 @@ function DataTableRow({
               "h-14 px-4 py-2.5 text-sm",
               isActionColumn && "text-center",
               isSelectColumn && "px-3",
+              cell.column.columnDef.meta?.tdClass,
             )}
             onClick={
               isSelectColumn || isActionColumn
@@ -113,7 +125,15 @@ function DataTableRow({
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
-  data: PaginatedResult<TData>
+  data?: PaginatedResult<TData>
+  /** Local array — enables local search/sort with no URL mutations */
+  localData?: TData[]
+  /** Custom filter for local mode (receives lower-cased query) */
+  filterFn?: (row: TData, query: string) => boolean
+  /** Right-side slot shown instead of date-range/export in local mode */
+  toolbar?: React.ReactNode
+  /** Hide the search input (useful when showing archived items) */
+  hideSearch?: boolean
   isLoading: boolean
   defaultRangePreset?: DateRangePresetLabel
   filters?: FilterDefinition[]
@@ -137,6 +157,10 @@ interface DataTableProps<TData, TValue> {
 export function DataTable<TData, TValue>({
   columns,
   data,
+  localData,
+  filterFn,
+  toolbar,
+  hideSearch = false,
   isLoading,
   defaultRangePreset,
   filters,
@@ -164,6 +188,7 @@ export function DataTable<TData, TValue>({
   } = useSearchParameters()
   const limit = Number(rawLimit) || 10
   const { push } = useNavigation()
+  const isLocal = localData !== undefined
 
   const totalCount = data?.count ?? 0
   const pageCount = Math.max(1, Math.ceil(totalCount / limit))
@@ -227,7 +252,7 @@ export function DataTable<TData, TValue>({
   })
 
   React.useEffect(() => {
-    if (debouncedSearch !== (search || "")) {
+    if (!isLocal && debouncedSearch !== (search || "")) {
       push({
         page: 1,
         limit,
@@ -236,18 +261,31 @@ export function DataTable<TData, TValue>({
         filter,
       })
     }
-  }, [debouncedSearch, search, limit, ordering, push, filter])
+  }, [isLocal, debouncedSearch, search, limit, ordering, push, filter])
 
   React.useEffect(() => {
     setLocalSearch(search || "")
   }, [search])
 
+  const filteredLocalData = React.useMemo(() => {
+    if (!isLocal) return [] as TData[]
+    const q = debouncedSearch.toLowerCase()
+    if (!q) return localData!
+    return localData!.filter((row) =>
+      filterFn
+        ? filterFn(row, q)
+        : Object.values(row as Record<string, unknown>).some((v) =>
+            String(v ?? "").toLowerCase().includes(q)
+          )
+    )
+  }, [isLocal, localData, debouncedSearch, filterFn])
+
   const table = useReactTable({
-    data: data.results ?? [],
+    data: isLocal ? filteredLocalData : (data?.results ?? []),
     columns: allColumns,
-    pageCount,
-    manualPagination: true,
-    manualSorting: true,
+    pageCount: isLocal ? 1 : pageCount,
+    manualPagination: !isLocal,
+    manualSorting: !isLocal,
     enableMultiSort: true,
     enableRowSelection,
     getRowId: (row) => String((row as Record<string, unknown>)?.id ?? row),
@@ -260,7 +298,9 @@ export function DataTable<TData, TValue>({
       rowSelection,
     },
     onRowSelectionChange: setRowSelection,
+    onSortingChange: setSortingState,
     onPaginationChange: (updater) => {
+      if (isLocal) return
       const nextPage =
         typeof updater === "function"
           ? updater({ pageIndex: page - 1, pageSize: limit }).pageIndex
@@ -275,6 +315,7 @@ export function DataTable<TData, TValue>({
       })
     },
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   })
 
   const rows = table.getRowModel().rows
@@ -282,7 +323,7 @@ export function DataTable<TData, TValue>({
   const isVirtualized = enableVirtualization && rows.length > 50
 
   const handleExportCSV = React.useCallback(() => {
-    const rows = data.results ?? []
+    const rows = data?.results ?? []
     if (rows.length === 0) return
 
     // Get visible columns (exclude select & action columns)
@@ -405,7 +446,7 @@ export function DataTable<TData, TValue>({
     a.download = `${exportFileName}-${new Date().toISOString().slice(0, 10)}.csv`
     a.click()
     URL.revokeObjectURL(url)
-  }, [data.results, exportFileName, table])
+  }, [data?.results, exportFileName, table])
 
   const activeFilterKeys = React.useMemo(() => {
     const keys = Object.keys(filter ?? {})
@@ -433,11 +474,13 @@ export function DataTable<TData, TValue>({
   }, [filter, defaultRangePreset])
 
   const hasActiveFilters = React.useMemo(() => {
+    if (isLocal) return Boolean(debouncedSearch)
     return Boolean(search || ordering || activeFilterKeys.length > 0)
-  }, [search, ordering, activeFilterKeys])
+  }, [isLocal, debouncedSearch, search, ordering, activeFilterKeys])
 
   const clearFilters = () => {
     setLocalSearch("")
+    if (isLocal) return
     setSortingState([])
     push({
       page: 1,
@@ -450,6 +493,7 @@ export function DataTable<TData, TValue>({
 
   const startIndex = (page - 1) * limit + 1
   const endIndex = Math.min(page * limit, totalCount)
+  const activeTotalCount = isLocal ? filteredLocalData.length : totalCount
 
   const selectedRows = table.getSelectedRowModel().rows.map((r) => r.original)
   const selectedCount = selectedRows.length
@@ -475,29 +519,31 @@ export function DataTable<TData, TValue>({
         {/* Top Row: Search and Filters */}
         <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
           {/* Search */}
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder={searchPlaceholder}
-              value={localSearch}
-              onChange={(e) => setLocalSearch(e.target.value)}
-              className="pl-9 pr-9 bg-white dark:bg-muted/50 border-slate-300 dark:border-slate-700 focus-visible:ring-purple-500 h-9"
-            />
-            {localSearch && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 hover:bg-transparent"
-                onClick={() => setLocalSearch("")}
-              >
-                <X className="size-3.5" />
-              </Button>
-            )}
-          </div>
+          {!hideSearch && (
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder={searchPlaceholder}
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
+                className="pl-9 pr-9 bg-white dark:bg-muted/50 border-slate-300 dark:border-slate-700 focus-visible:ring-purple-500 h-9"
+              />
+              {localSearch && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-1 top-1/2 size-7 -translate-y-1/2 p-0 hover:bg-transparent"
+                  onClick={() => setLocalSearch("")}
+                >
+                  <X className="size-3.5" />
+                </Button>
+              )}
+            </div>
+          )}
 
           {/* Sort and Filter Controls */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            {orderingOptions && orderingOptions.length > 0 && (
+            {!isLocal && orderingOptions && orderingOptions.length > 0 && (
               <DataTableSortDropdown
                 options={orderingOptions}
                 value={sortingState}
@@ -505,7 +551,7 @@ export function DataTable<TData, TValue>({
               />
             )}
 
-            {filters && filters.length > 0 && (
+            {!isLocal && filters && filters.length > 0 && (
               <DataTableFilterDropdown filters={filters} />
             )}
 
@@ -522,25 +568,31 @@ export function DataTable<TData, TValue>({
             )}
           </div>
 
-          {/* Right side: Date filter and Export */}
+          {/* Right side: toolbar (local mode) or date filter + export (server mode) */}
           <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
-            {!withoutDateRangeFilter && (
-              <DataTableDateRangeFilter
-                defaultRangePreset={defaultRangePreset}
-                className="flex-1 sm:flex-initial"
-              />
-            )}
-            {enableExport && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleExportCSV}
-                disabled={(data.results ?? []).length === 0}
-                className="gap-1.5 h-9 shrink-0"
-              >
-                <Download className="size-4" />
-                <span className="hidden sm:inline">Export</span>
-              </Button>
+            {isLocal ? (
+              toolbar
+            ) : (
+              <>
+                {!withoutDateRangeFilter && (
+                  <DataTableDateRangeFilter
+                    defaultRangePreset={defaultRangePreset}
+                    className="flex-1 sm:flex-initial"
+                  />
+                )}
+                {enableExport && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportCSV}
+                    disabled={(data?.results ?? []).length === 0}
+                    className="gap-1.5 h-9 shrink-0"
+                  >
+                    <Download className="size-4" />
+                    <span className="hidden sm:inline">Export</span>
+                  </Button>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -591,7 +643,16 @@ export function DataTable<TData, TValue>({
       {/* Data Display Info */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
         <div className="font-medium">
-          {totalCount > 0 ? (
+          {isLocal ? (
+            activeTotalCount > 0 ? (
+              <span>
+                <span className="font-semibold text-foreground">{activeTotalCount.toLocaleString()}</span>{" "}
+                result{activeTotalCount !== 1 ? "s" : ""}
+              </span>
+            ) : (
+              <span>No results found</span>
+            )
+          ) : totalCount > 0 ? (
             <span>
               Showing {startIndex} to {endIndex} of{" "}
               <span className="font-semibold text-foreground">
@@ -603,7 +664,7 @@ export function DataTable<TData, TValue>({
             <span>No results found</span>
           )}
         </div>
-        {totalCount > 0 && (
+        {!isLocal && totalCount > 0 && (
           <div className="flex items-center gap-2 text-xs">
             <Database className="size-3.5" />
             <span className="font-semibold">{totalCount.toLocaleString()}</span>
@@ -636,6 +697,7 @@ export function DataTable<TData, TValue>({
                         "h-11 px-4 font-semibold text-xs uppercase tracking-wider",
                         isActionColumn && "w-24 text-center",
                         isSelectColumn && "w-12 px-3",
+                        header.column.columnDef.meta?.thClass,
                       )}
                     >
                       <div className="flex items-center gap-2">
@@ -737,7 +799,7 @@ export function DataTable<TData, TValue>({
       </div>
 
       {/* Pagination */}
-      {totalCount > 0 && (
+      {!isLocal && totalCount > 0 && (
         <>
           <Separator className="bg-border/60" />
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-1">

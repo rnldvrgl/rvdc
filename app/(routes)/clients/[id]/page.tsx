@@ -8,35 +8,22 @@ import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { SalesTransactionDetails } from "@/components/details/SalesTransactionDetails"
 import ServiceFormWizard from "@/components/forms/ServiceFormWizard"
 import ServiceDetail from "@/components/services/ServiceDetail"
+import { DataTable } from "@/components/custom/table/DataTable"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type {
-    SalesTransaction,
-    Service,
-    ServicePayment,
+  SalesTransaction,
+  Service,
+  ServicePayment,
 } from "@/lib/constants/interface"
 import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -48,38 +35,42 @@ import { useService, useServices } from "@/lib/queries/services/useServices"
 import { formatCurrency } from "@/lib/utils/currency"
 import { getBadgeVariant } from "@/lib/utils/helpers"
 import {
-    getServiceModeLabel,
-    getServiceStatusLabel,
-    getServiceTypeBadgeClass,
-    getServiceTypeLabel,
+  getServiceModeLabel,
+  getServiceStatusLabel,
+  getServiceTypeBadgeClass,
+  getServiceTypeLabel,
 } from "@/lib/utils/helpers/service"
+import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
 import {
-    Archive,
-    ArrowLeft,
-    Ban,
-    Calendar,
-    CreditCard,
-    DollarSign,
-    MapPin,
-    MoreHorizontal,
-    Phone,
-    Plus,
-    Receipt,
-    RotateCcw,
-    ShoppingCart,
-    User,
-    Wallet,
-    Wrench,
+  Archive,
+  ArrowLeft,
+  Ban,
+  Calendar,
+  CreditCard,
+  DollarSign,
+  MapPin,
+  MoreHorizontal,
+  Phone,
+  Plus,
+  Receipt,
+  RotateCcw,
+  ShoppingCart,
+  User,
+  Wallet,
+  Wrench,
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
-import { useState } from "react"
+import { useMemo, useState } from "react"
+
+// ── Label maps ────────────────────────────────────────────────────────────────
 
 const paymentStatusLabels: Record<string, string> = {
   unpaid: "Unpaid",
   partial: "Partially Paid",
   paid: "Paid",
   refunded: "Refunded",
+  written_off: "Written Off",
   "n/a": "N/A",
 }
 
@@ -91,207 +82,614 @@ const paymentTypeLabels: Record<string, string> = {
   cheque: "Cheque",
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 function formatDate(dateStr: string) {
-  try {
-    return format(new Date(dateStr), "MMM dd, yyyy")
-  } catch {
-    return dateStr
-  }
+  try { return format(new Date(dateStr), "MMM dd, yyyy") } catch { return dateStr }
 }
-
 function formatDateTime(dateStr: string) {
-  try {
-    return format(new Date(dateStr), "MMM dd, yyyy hh:mm a")
-  } catch {
-    return dateStr
-  }
+  try { return format(new Date(dateStr), "MMM dd, yyyy hh:mm a") } catch { return dateStr }
 }
 
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
+// ── Stat card ─────────────────────────────────────────────────────────────────
+
+function StatCard({
+  icon,
+  label,
+  value,
+  accent = "default",
+  valueClass,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string | number
+  accent?: "default" | "blue" | "purple" | "green" | "red" | "muted"
+  valueClass?: string
+}) {
+  const Icon = icon
+  const styles = {
+    default: { card: "", icon: "bg-primary/10 text-primary" },
+    blue:    { card: "border-blue-500/20   bg-blue-500/5",   icon: "bg-blue-500/15   text-blue-500" },
+    purple:  { card: "border-purple-500/20 bg-purple-500/5", icon: "bg-purple-500/15 text-purple-500" },
+    green:   { card: "border-green-500/20  bg-green-500/5",  icon: "bg-green-500/15  text-green-500" },
+    red:     { card: "border-red-500/20    bg-red-500/5",    icon: "bg-red-500/15    text-destructive" },
+    muted:   { card: "bg-muted/30",                          icon: "bg-muted-foreground/10 text-muted-foreground" },
+  }[accent]
+  return (
+    <div className={`relative overflow-hidden rounded-xl border p-4 transition-all hover:shadow-md ${styles.card}`}>
+      <div className={`inline-flex items-center justify-center size-9 rounded-lg mb-3 ${styles.icon}`}>
+        <Icon className="size-4" />
+      </div>
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
+      <p className={`text-2xl font-bold tabular-nums tracking-tight ${valueClass ?? ""}`}>{value}</p>
+    </div>
+  )
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function ClientDetailPage() {
   const params = useParams()
   const router = useRouter()
   const clientId = params.id as string
-  const { role } = useCurrentUser()
-  const canManageServices = role === "admin" || role === "manager"
+  const { canManage } = useCurrentUser()
 
   const { data: client, isLoading: clientLoading } = useClient(clientId)
   const {
     data: servicesData,
     isLoading: servicesLoading,
     refetch: refetchServices,
-  } = useServices({
-    filter: { client: clientId },
-    limit: 100,
-  })
+  } = useServices({ filter: { client: clientId }, limit: 500 })
 
   const { data: salesData, isLoading: salesLoading } = useSalesTransactions({
     filter: { client: clientId },
-    limit: 100,
+    limit: 500,
   })
 
-  // Service detail sheet state
+  // ── Service detail sheet ─────────────────────────────────────────────────
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
-  const { data: detailService, refetch: refetchService } = useService(
-    selectedService?.id,
-  )
+  const { data: detailService, refetch: refetchService } = useService(selectedService?.id)
 
-  // Sales transaction detail sheet state
+  // ── Sales detail sheet ───────────────────────────────────────────────────
   const {
     entityState: salesViewSheet,
     openEntity: openSalesView,
     closeEntity: closeSalesView,
   } = useEntitySheet<SalesTransaction>()
 
-  // Service management state
+  // ── Create service sheet ─────────────────────────────────────────────────
   const {
     entityState: createServiceSheet,
     openEntity: openCreateService,
     closeEntity: closeCreateService,
   } = useEntitySheet()
+
+  // ── Archive ──────────────────────────────────────────────────────────────
   const [archiveTarget, setArchiveTarget] = useState<Service | null>(null)
   const [isArchivedView, setIsArchivedView] = useState(false)
   const { deleteService } = useServiceMutations()
   const { archivedQuery, restoreItem } = useArchive<Service>(
     "services/services/",
     "services",
-    { filter: { client: clientId }, limit: 100 },
+    { filter: { client: clientId } },
     isArchivedView,
   )
 
-  const archivedServices = archivedQuery.data?.results ?? []
 
-  const services = servicesData?.results ?? []
-  const salesTransactions = salesData?.results ?? []
+  // ── Derived data ─────────────────────────────────────────────────────────
+  const services: Service[] = useMemo(() => servicesData?.results ?? [], [servicesData])
+  const salesTransactions: SalesTransaction[] = useMemo(() => salesData?.results ?? [], [salesData])
+  const archivedServices: Service[] = archivedQuery.data?.results ?? []
 
-  // Collect all related_transaction IDs from services to exclude from standalone sales
-  const serviceRelatedTransactionIds = new Set(
-    services
-      .flatMap((s: Service) => [
-        s.related_transaction,
-        s.related_sub_transaction,
-      ])
-      .filter((id): id is number => id != null),
+  const serviceRelatedTransactionIds = useMemo(
+    () =>
+      new Set(
+        services
+          .flatMap((s) => [s.related_transaction, s.related_sub_transaction])
+          .filter((id): id is number => id != null),
+      ),
+    [services],
   )
 
-  // Filter out sales transactions that belong to services
-  const standaloneSalesTransactions = salesTransactions.filter(
-    (t: SalesTransaction) => !serviceRelatedTransactionIds.has(t.id),
+  const standaloneSales = useMemo(
+    () => salesTransactions.filter((t) => !serviceRelatedTransactionIds.has(t.id)),
+    [salesTransactions, serviceRelatedTransactionIds],
   )
 
-  // Collect all payments from all services
   const allPayments: (ServicePayment & {
     service_id: number
     service_type: string
     received_by_name?: string
-  })[] = []
-  services.forEach((service: Service) => {
-    service.payments?.forEach((payment) => {
-      allPayments.push({
-        ...payment,
-        service_id: service.id,
-        service_type: service.service_type,
-        received_by_name: (payment as unknown as Record<string, unknown>)
-          .received_by_name as string | undefined,
+  })[] = useMemo(() => {
+    const list: (ServicePayment & { service_id: number; service_type: string; received_by_name?: string })[] = []
+    services.forEach((service) => {
+      service.payments?.forEach((payment) => {
+        list.push({
+          ...payment,
+          service_id: service.id,
+          service_type: service.service_type,
+          received_by_name: (payment as unknown as Record<string, unknown>)
+            .received_by_name as string | undefined,
+        })
       })
     })
-  })
-  allPayments.sort(
-    (a, b) =>
-      new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime(),
-  )
+    return list.sort(
+      (a, b) => new Date(b.payment_date).getTime() - new Date(a.payment_date).getTime(),
+    )
+  }, [services])
 
-  // Summary stats (Services)
+  // ── Summary stats ────────────────────────────────────────────────────────
   const totalServices = services.length
-  const serviceRevenue = services.reduce(
-    (sum: number, s: Service) => sum + parseFloat(s.total_revenue || "0"),
-    0,
-  )
-  const serviceMainRevenue = services.reduce(
-    (sum: number, s: Service) => sum + parseFloat(s.main_stall_revenue || "0"),
-    0,
-  )
-  const serviceSubRevenue = services.reduce(
-    (sum: number, s: Service) => sum + parseFloat(s.sub_stall_revenue || "0"),
-    0,
-  )
-  const servicePaid = services.reduce(
-    (sum: number, s: Service) => sum + parseFloat(s.total_paid || "0"),
-    0,
-  )
-  const serviceBalance = services.reduce(
-    (sum: number, s: Service) => sum + parseFloat(s.balance_due || "0"),
-    0,
-  )
 
-  // Summary stats (Sales) - using only standalone sales, excluding service-related transactions
-  const salesRevenue = standaloneSalesTransactions.reduce(
-    (sum: number, t: SalesTransaction) =>
-      sum + parseFloat(String(t.computed_total || "0")),
-    0,
-  )
-  const salesPaid = standaloneSalesTransactions.reduce(
-    (sum: number, t: SalesTransaction) => {
-      const paid =
-        t.payments?.reduce(
-          (pSum, p) => pSum + parseFloat(String(p.amount || "0")),
-          0,
-        ) || 0
-      return sum + paid
-    },
-    0,
-  )
+  const serviceRevenue = services.reduce((s, x) => s + parseFloat(x.total_revenue || "0"), 0)
+  const serviceMainRev = services.reduce((s, x) => s + parseFloat(x.main_stall_revenue || "0"), 0)
+  const serviceSubRev = services.reduce((s, x) => s + parseFloat(x.sub_stall_revenue || "0"), 0)
+  const servicePaid = services.reduce((s, x) => s + parseFloat(x.total_paid || "0"), 0)
+  const serviceBalance = services.reduce((s, x) => s + parseFloat(x.balance_due || "0"), 0)
+
+  const salesRevenue = standaloneSales.reduce((s, t) => s + parseFloat(String(t.computed_total || "0")), 0)
+  const salesPaid = standaloneSales.reduce((s, t) => {
+    return s + (t.payments?.reduce((ps, p) => ps + parseFloat(String(p.amount || "0")), 0) || 0)
+  }, 0)
   const salesBalance = salesRevenue - salesPaid
-
-  // Standalone sales stall breakdown
-  const salesMainRevenue = standaloneSalesTransactions
+  const salesMainRev = standaloneSales
     .filter((t) => t.stall?.name?.toLowerCase().includes("main"))
-    .reduce(
-      (sum: number, t: SalesTransaction) =>
-        sum + parseFloat(String(t.computed_total || "0")),
-      0,
-    )
-  const salesSubRevenue = standaloneSalesTransactions
+    .reduce((s, t) => s + parseFloat(String(t.computed_total || "0")), 0)
+  const salesSubRev = standaloneSales
     .filter((t) => t.stall?.name?.toLowerCase().includes("sub"))
-    .reduce(
-      (sum: number, t: SalesTransaction) =>
-        sum + parseFloat(String(t.computed_total || "0")),
-      0,
-    )
+    .reduce((s, t) => s + parseFloat(String(t.computed_total || "0")), 0)
 
-  // Combined totals
   const totalRevenue = serviceRevenue + salesRevenue
   const totalPaid = servicePaid + salesPaid
   const totalBalance = serviceBalance + salesBalance
-  const totalMainRevenue = serviceMainRevenue + salesMainRevenue
-  const totalSubRevenue = serviceSubRevenue + salesSubRevenue
+  const totalMainRev = serviceMainRev + salesMainRev
+  const totalSubRev = serviceSubRev + salesSubRev
 
+  // ── Handlers ─────────────────────────────────────────────────────────────
   const handleViewService = (service: Service) => {
     setSelectedService(service)
     setDetailsOpen(true)
   }
-
   const handleCloseDetails = () => {
     setDetailsOpen(false)
     setSelectedService(null)
   }
 
+  // ── Filter functions (passed to LocalDataTable) ──────────────────────────
+  const serviceFilterFn = (s: Service, q: string) =>
+    String(s.id).includes(q) ||
+    getServiceTypeLabel(s.service_type).toLowerCase().includes(q) ||
+    getServiceModeLabel(s.service_mode).toLowerCase().includes(q) ||
+    getServiceStatusLabel(s.status).toLowerCase().includes(q) ||
+    (s.description ?? "").toLowerCase().includes(q)
+
+  const salesFilterFn = (t: SalesTransaction, q: string) =>
+    (t.manual_receipt_number ?? "").toLowerCase().includes(q) ||
+    (t.stall?.name ?? "").toLowerCase().includes(q) ||
+    (t.items?.some((i) => (i.item?.name ?? i.description ?? "").toLowerCase().includes(q)) ?? false)
+
+  const paymentFilterFn = (p: PaymentRowType, q: string) =>
+    String(p.service_id).includes(q) ||
+    (paymentTypeLabels[p.payment_type] ?? p.payment_type).toLowerCase().includes(q) ||
+    (p.received_by_name ?? "").toLowerCase().includes(q)
+
+  // ── Column definitions ────────────────────────────────────────────────────
+  const serviceColumns = useMemo<ColumnDef<Service>[]>(() => {
+    const cols: ColumnDef<Service>[] = [
+      {
+        id: "id",
+        accessorFn: (row) => row.id,
+        header: "SVC #",
+        enableSorting: true,
+        meta: { thClass: "w-28", tdClass: "w-28" },
+        cell: ({ row }) => (
+          <span className="font-mono font-semibold text-sm">
+            SVC-{String(row.original.id).padStart(4, "0")}
+          </span>
+        ),
+      },
+      {
+        id: "type",
+        header: "Type",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div>
+            <Badge variant="outline" className={`text-xs ${getServiceTypeBadgeClass(row.original.service_type)}`}>
+              {getServiceTypeLabel(row.original.service_type)}
+            </Badge>
+            {row.original.description && (
+              <p className="text-xs text-muted-foreground line-clamp-1 max-w-[180px] mt-0.5">
+                {row.original.description}
+              </p>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: "mode",
+        header: "Mode",
+        enableSorting: false,
+        meta: { thClass: "hidden sm:table-cell w-28", tdClass: "hidden sm:table-cell w-28" },
+        cell: ({ row }) => (
+          <Badge variant="outline" className="text-xs">
+            {getServiceModeLabel(row.original.service_mode)}
+          </Badge>
+        ),
+      },
+      {
+        id: "status",
+        header: "Status",
+        enableSorting: false,
+        meta: { thClass: "w-28", tdClass: "w-28" },
+        cell: ({ row }) => (
+          <Badge variant={getBadgeVariant(row.original.status)} className="text-xs">
+            {getServiceStatusLabel(row.original.status)}
+          </Badge>
+        ),
+      },
+      {
+        id: "created",
+        accessorFn: (row) => row.created_at,
+        header: "Created",
+        enableSorting: true,
+        meta: { thClass: "hidden md:table-cell w-32", tdClass: "hidden md:table-cell w-32" },
+        cell: ({ row }) => (
+          <span className="text-muted-foreground whitespace-nowrap">
+            {formatDate(row.original.created_at)}
+          </span>
+        ),
+      },
+      {
+        id: "main_rev",
+        accessorFn: (row) => parseFloat(row.main_stall_revenue || "0"),
+        header: "Main",
+        enableSorting: true,
+        meta: { thClass: "hidden lg:table-cell w-32", tdClass: "hidden lg:table-cell w-32" },
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {Number(row.original.main_stall_revenue) > 0 ? formatCurrency(row.original.main_stall_revenue) : "\u2014"}
+          </span>
+        ),
+      },
+      {
+        id: "sub_rev",
+        accessorFn: (row) => parseFloat(row.sub_stall_revenue || "0"),
+        header: "Sub",
+        enableSorting: true,
+        meta: { thClass: "hidden lg:table-cell w-32", tdClass: "hidden lg:table-cell w-32" },
+        cell: ({ row }) => (
+          <span className="text-muted-foreground">
+            {Number(row.original.sub_stall_revenue) > 0 ? formatCurrency(row.original.sub_stall_revenue) : "\u2014"}
+          </span>
+        ),
+      },
+      {
+        id: "total",
+        accessorFn: (row) => parseFloat(row.total_revenue || "0"),
+        header: "Total",
+        enableSorting: true,
+        meta: { thClass: "w-32", tdClass: "w-32" },
+        cell: ({ row }) => (
+          <span className="font-semibold">
+            {formatCurrency(row.original.total_revenue)}
+          </span>
+        ),
+      },
+      {
+        id: "payment_status",
+        header: "Payment",
+        enableSorting: false,
+        meta: { thClass: "w-32", tdClass: "w-32" },
+        cell: ({ row }) => (
+          <Badge variant={getBadgeVariant(row.original.payment_status)} className="text-xs">
+            {paymentStatusLabels[row.original.payment_status] ?? row.original.payment_status}
+          </Badge>
+        ),
+      },
+    ]
+    if (canManage) {
+      cols.push({
+        id: "actions",
+        header: "",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleViewService(row.original)}>
+                <Wrench className="mr-2 h-4 w-4" />View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => setArchiveTarget(row.original)}
+              >
+                <Archive className="mr-2 h-4 w-4" />Archive
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+      })
+    }
+    return cols
+  }, [canManage])
+
+  const archivedServiceColumns = useMemo<ColumnDef<Service>[]>(() => [
+    {
+      id: "id",
+      accessorFn: (row) => row.id,
+      header: "SVC #",
+      enableSorting: true,
+      meta: { thClass: "w-28", tdClass: "w-28" },
+      cell: ({ row }) => (
+        <span className="font-mono font-semibold text-sm">
+          SVC-{String(row.original.id).padStart(4, "0")}
+        </span>
+      ),
+    },
+    {
+      id: "type",
+      header: "Type",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Badge variant="outline" className={`text-xs ${getServiceTypeBadgeClass(row.original.service_type)}`}>
+          {getServiceTypeLabel(row.original.service_type)}
+        </Badge>
+      ),
+    },
+    {
+      id: "mode",
+      header: "Mode",
+      enableSorting: false,
+      meta: { thClass: "hidden sm:table-cell w-28", tdClass: "hidden sm:table-cell w-28" },
+      cell: ({ row }) => (
+        <Badge variant="outline" className="text-xs">
+          {getServiceModeLabel(row.original.service_mode)}
+        </Badge>
+      ),
+    },
+    {
+      id: "status",
+      header: "Status",
+      enableSorting: false,
+      meta: { thClass: "w-28", tdClass: "w-28" },
+      cell: ({ row }) => (
+        <Badge variant={getBadgeVariant(row.original.status)} className="text-xs">
+          {getServiceStatusLabel(row.original.status)}
+        </Badge>
+      ),
+    },
+    {
+      id: "created",
+      accessorFn: (row) => row.created_at,
+      header: "Created",
+      enableSorting: true,
+      meta: { thClass: "hidden md:table-cell w-32", tdClass: "hidden md:table-cell w-32" },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground whitespace-nowrap">
+          {formatDate(row.original.created_at)}
+        </span>
+      ),
+    },
+    {
+      id: "total",
+      accessorFn: (row) => parseFloat(row.total_revenue || "0"),
+      header: "Total",
+      enableSorting: true,
+      meta: { thClass: "w-32", tdClass: "w-32" },
+      cell: ({ row }) => (
+        <span className="font-semibold">
+          {formatCurrency(row.original.total_revenue)}
+        </span>
+      ),
+    },
+    {
+      id: "restore",
+      header: "",
+      enableSorting: false,
+      meta: { thClass: "w-12", tdClass: "w-12" },
+      cell: ({ row }) => (
+        <Button
+          variant="ghost" size="icon" className="size-8"
+          onClick={() => restoreItem.mutate(row.original.id)}
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+      ),
+    },
+  ], [restoreItem])
+
+  const salesColumns = useMemo<ColumnDef<SalesTransaction>[]>(() => [
+    {
+      id: "receipt",
+      header: "OR / SI #",
+      enableSorting: false,
+      meta: { thClass: "w-36", tdClass: "w-36" },
+      cell: ({ row }) => {
+        const tx = row.original
+        return tx.manual_receipt_number ? (
+          <span className="font-mono font-semibold text-sm">
+            {tx.document_type === "or" ? "OR" : "SI"} #{tx.manual_receipt_number}
+            {tx.receipt_book && (
+              <span className="block text-xs font-normal text-muted-foreground">
+                Book {tx.receipt_book}
+              </span>
+            )}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">\u2014</span>
+        )
+      },
+    },
+    {
+      id: "date",
+      accessorFn: (row) => row.created_at,
+      header: "Date",
+      enableSorting: true,
+      meta: { thClass: "w-32", tdClass: "w-32" },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground whitespace-nowrap">
+          {formatDate(row.original.created_at)}
+        </span>
+      ),
+    },
+    {
+      id: "items",
+      header: "Items",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const tx = row.original
+        const itemCount = tx.items?.length || 0
+        const totalQty = tx.items?.reduce((s, i) => s + parseFloat(String(i.quantity)), 0) || 0
+        return (
+          <div>
+            <p className="font-medium">
+              {itemCount} item{itemCount !== 1 ? "s" : ""}
+              <span className="text-muted-foreground font-normal"> ({totalQty} qty)</span>
+            </p>
+            {tx.items && tx.items.length > 0 && (
+              <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-0.5">
+                {tx.items.map((item) => {
+                  const qty = parseFloat(String(item.quantity))
+                  return `${item.item?.name ?? item.description} x${qty % 1 === 0 ? qty.toFixed(0) : qty}`
+                }).join(", ")}
+              </p>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      id: "stall",
+      header: "Stall",
+      enableSorting: false,
+      meta: { thClass: "hidden md:table-cell w-28", tdClass: "hidden md:table-cell w-28" },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.stall?.name || "\u2014"}</span>
+      ),
+    },
+    {
+      id: "source",
+      header: "Source",
+      enableSorting: false,
+      meta: { thClass: "hidden sm:table-cell w-24", tdClass: "hidden sm:table-cell w-24" },
+      cell: ({ row }) => {
+        const isServiceRelated = serviceRelatedTransactionIds.has(row.original.id)
+        return (
+          <Badge
+            variant="outline"
+            className={`text-xs ${isServiceRelated ? "border-blue-500/30 text-blue-600 dark:text-blue-400" : ""}`}
+          >
+            {isServiceRelated ? "Service" : "Walk-in"}
+          </Badge>
+        )
+      },
+    },
+    {
+      id: "amount",
+      accessorFn: (row) => parseFloat(String(row.computed_total || "0")),
+      header: "Amount",
+      enableSorting: true,
+      meta: { thClass: "w-32", tdClass: "w-32" },
+      cell: ({ row }) => (
+        <span className="font-semibold">
+          {formatCurrency(row.original.computed_total || 0)}
+        </span>
+      ),
+    },
+    {
+      id: "pay_status",
+      header: "Status",
+      enableSorting: false,
+      meta: { thClass: "w-32", tdClass: "w-32" },
+      cell: ({ row }) => (
+        <Badge variant={getBadgeVariant(row.original.payment_status)} className="text-xs">
+          {paymentStatusLabels[row.original.payment_status] ?? row.original.payment_status}
+        </Badge>
+      ),
+    },
+  ], [serviceRelatedTransactionIds])
+
+  type PaymentRowType = ServicePayment & { service_id: number; service_type: string; received_by_name?: string }
+  const paymentColumns = useMemo<ColumnDef<PaymentRowType>[]>(() => [
+    {
+      id: "date",
+      accessorFn: (row) => row.payment_date,
+      header: "Date & Time",
+      enableSorting: true,
+      meta: { thClass: "w-44", tdClass: "w-44" },
+      cell: ({ row }) => (
+        <span className="whitespace-nowrap">
+          {formatDateTime(row.original.payment_date)}
+        </span>
+      ),
+    },
+    {
+      id: "service",
+      header: "Service",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-mono font-semibold">
+            SVC-{String(row.original.service_id).padStart(4, "0")}
+          </span>
+          <Badge variant="outline" className={`text-xs ${getServiceTypeBadgeClass(row.original.service_type)}`}>
+            {getServiceTypeLabel(row.original.service_type)}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      id: "method",
+      header: "Method",
+      enableSorting: false,
+      meta: { thClass: "hidden sm:table-cell w-32", tdClass: "hidden sm:table-cell w-32" },
+      cell: ({ row }) => (
+        <Badge variant="outline" className="text-xs">
+          {paymentTypeLabels[row.original.payment_type] ?? row.original.payment_type}
+        </Badge>
+      ),
+    },
+    {
+      id: "received_by",
+      header: "Received By",
+      enableSorting: false,
+      meta: { thClass: "hidden md:table-cell", tdClass: "hidden md:table-cell" },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {row.original.received_by_name || "\u2014"}
+        </span>
+      ),
+    },
+    {
+      id: "amount",
+      accessorFn: (row) => parseFloat(String(row.amount || "0")),
+      header: "Amount",
+      enableSorting: true,
+      meta: { thClass: "w-32", tdClass: "w-32" },
+      cell: ({ row }) => (
+        <span className="font-semibold text-success">
+          {formatCurrency(row.original.amount)}
+        </span>
+      ),
+    },
+  ], [])
+
+  // ── Loading / not found ───────────────────────────────────────────────────
   if (clientLoading) {
     return (
       <Wrapper>
-        <div className="space-y-6">
+        <div className="space-y-4">
           <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-20 w-full" />
+          <div className="grid grid-cols-6 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-16" />)}
+          </div>
+          <Skeleton className="h-80 w-full" />
         </div>
       </Wrapper>
     )
@@ -300,29 +698,21 @@ export default function ClientDetailPage() {
   if (!client) {
     return (
       <Wrapper>
-        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
           <p className="text-muted-foreground">Client not found</p>
-          <Button
-            variant="outline"
-            onClick={() => router.push("/clients")}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Clients
+          <Button variant="outline" onClick={() => router.push("/clients")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />Back to Clients
           </Button>
         </div>
       </Wrapper>
     )
   }
 
-  const address = [
-    client.address,
-    client.barangay,
-    client.city,
-    client.province,
-  ]
+  const address = [client.address, client.barangay, client.city, client.province]
     .filter(Boolean)
     .join(", ")
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <Wrapper>
       <PageHeader
@@ -330,644 +720,169 @@ export default function ClientDetailPage() {
         title={client.full_name}
         breadcrumbs={["Clients", { label: client.full_name }]}
         actionButton={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push("/clients")}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+          <Button variant="outline" size="sm" onClick={() => router.push("/clients")}>
+            <ArrowLeft className="mr-2 h-4 w-4" />Back
           </Button>
         }
       />
 
-      {/* Client Details */}
-      <Card>
-        <CardContent className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-bold">
-            {getInitials(client.full_name)}
-          </div>
-          <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
-            {client.is_blocklisted && (
-              <Badge
-                variant="destructive"
-                className="gap-1 w-fit"
-              >
-                <Ban className="h-3 w-3" />
-                Blocklisted
-              </Badge>
-            )}
-            {client.contact_number && (
-              <span className="flex items-center gap-1.5">
-                <Phone className="h-3.5 w-3.5 shrink-0" />
-                {client.contact_number}
-              </span>
-            )}
-            {address && (
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                {address}
-              </span>
-            )}
-            {client.created_at && (
-              <span className="flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5 shrink-0" />
-                Client since {formatDate(client.created_at)}
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* ── Client profile + Stats ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {/* Client Profile Card */}
         <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-blue-500/10">
-              <Wrench className="h-4 w-4 text-blue-500" />
+          <CardContent className="space-y-4">
+            {/* Avatar + Namea + blocklist badge */}
+            <div className="flex items-center gap-3">
+                {client.is_blocklisted && (
+                  <Badge variant="destructive" className="gap-1 mt-1 text-xs">
+                    <Ban className="h-3 w-3" />Blocklisted
+                  </Badge>
+                )}
             </div>
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Services</p>
-              <p className="text-lg font-semibold leading-none truncate">
-                {totalServices}
-              </p>
+            {/* Per-row field list */}
+            <div className="space-y-3 text-sm">
+              {client.contact_number && (
+                <div className="flex items-start gap-2.5">
+                  <Phone className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Phone</p>
+                    <p className="font-medium">{client.contact_number}</p>
+                  </div>
+                </div>
+              )}
+              {address && (
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Address</p>
+                    <p className="font-medium">{address}</p>
+                  </div>
+                </div>
+              )}
+              {client.created_at && (
+                <div className="flex items-start gap-2.5">
+                  <Calendar className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Client Since</p>
+                    <p className="font-medium">{formatDate(client.created_at)}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-purple-500/10">
-              <Receipt className="h-4 w-4 text-purple-500" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Revenue</p>
-              <p className="text-lg font-semibold leading-none truncate">
-                {formatCurrency(totalRevenue)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Main Stall</p>
-            <p className="text-base font-semibold leading-none truncate">
-              {formatCurrency(totalMainRevenue)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground mb-1">Sub Stall</p>
-            <p className="text-base font-semibold leading-none truncate">
-              {formatCurrency(totalSubRevenue)}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-green-500/10">
-              <DollarSign className="h-4 w-4 text-success" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Paid</p>
-              <p className="text-lg font-semibold leading-none truncate text-success">
-                {formatCurrency(totalPaid)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-red-500/10">
-              <Wallet className="h-4 w-4 text-destructive" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Balance</p>
-              <p
-                className={`text-lg font-semibold leading-none truncate ${totalBalance > 0 ? "text-destructive" : "text-muted-foreground"}`}
-              >
-                {formatCurrency(totalBalance)}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+
+        {/* Stats Grid — pairs (2 cols on all sizes) */}
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 content-start">
+          <StatCard icon={Wrench}     accent="blue"   label="Total Services"  value={totalServices} />
+          <StatCard icon={Receipt}    accent="purple" label="Total Revenue"   value={formatCurrency(totalRevenue)} />
+          <StatCard icon={Receipt}    accent="muted"  label="Main Stall"      value={formatCurrency(totalMainRev)} />
+          <StatCard icon={Receipt}    accent="muted"  label="Sub Stall"       value={formatCurrency(totalSubRev)} />
+          <StatCard icon={DollarSign} accent="green"  label="Total Paid"      value={formatCurrency(totalPaid)} valueClass="text-success" />
+          <StatCard
+            icon={Wallet}
+            accent={totalBalance > 0 ? "red" : "muted"}
+            label="Balance Due"
+            value={formatCurrency(totalBalance)}
+            valueClass={totalBalance > 0 ? "text-destructive" : "text-muted-foreground"}
+          />
+        </div>
       </div>
 
-      {/* Services, Sales & Payments Tabs */}
-      <Tabs
-        defaultValue="services"
-        className="space-y-4"
-      >
+      {/* ── Tabs ── */}
+      <Tabs defaultValue="services" className="space-y-4">
         <TabsList>
-          <TabsTrigger
-            value="services"
-            className="gap-2"
-          >
+          <TabsTrigger value="services" className="gap-2">
             <Wrench className="h-4 w-4" />
-            Services ({totalServices})
+            Services
+            <Badge variant="outline" className="text-xs ml-1">{totalServices}</Badge>
           </TabsTrigger>
-          <TabsTrigger
-            value="sales"
-            className="gap-2"
-          >
+          <TabsTrigger value="sales" className="gap-2">
             <ShoppingCart className="h-4 w-4" />
-            Sales ({salesTransactions.length})
+            Sales
+            <Badge variant="outline" className="text-xs ml-1">{salesTransactions.length}</Badge>
           </TabsTrigger>
-          <TabsTrigger
-            value="payments"
-            className="gap-2"
-          >
+          <TabsTrigger value="payments" className="gap-2">
             <CreditCard className="h-4 w-4" />
-            Payments ({allPayments.length})
+            Payments
+            <Badge variant="outline" className="text-xs ml-1">{allPayments.length}</Badge>
           </TabsTrigger>
         </TabsList>
 
-        {/* Services Tab */}
+        {/* ════ Services Tab ════ */}
         <TabsContent value="services">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle className="text-base">Service History</CardTitle>
-                <CardDescription>
-                  {isArchivedView
-                    ? "Archived services for this client"
-                    : "All services requested by this client"}
-                </CardDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <ArchiveToggle
-                  isArchived={isArchivedView}
-                  onToggle={setIsArchivedView}
-                  archivedCount={archivedQuery.data?.count}
-                />
-                {canManageServices && !isArchivedView && (
-                  <Button
-                    size="sm"
-                    onClick={() => openCreateService()}
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Service
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="px-2 pb-2 pt-0">
-              {isArchivedView ? (
-                archivedQuery.isLoading ? (
-                  <div className="space-y-3 p-4">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton
-                        key={i}
-                        className="h-10 w-full"
-                      />
-                    ))}
-                  </div>
-                ) : archivedServices.length === 0 ? (
-                  <div className="py-12 text-center text-muted-foreground">
-                    No archived services for this client.
-                  </div>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-20">ID</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead className="hidden sm:table-cell">
-                          Mode
-                        </TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="hidden md:table-cell">
-                          Date
-                        </TableHead>
-                        <TableHead className="text-right">Total</TableHead>
-                        <TableHead className="w-10" />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {archivedServices.map((service: Service) => (
-                        <TableRow key={service.id}>
-                          <TableCell className="font-medium">
-                            #{String(service.id).padStart(4, "0")}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${getServiceTypeBadgeClass(service.service_type)}`}
-                            >
-                              {getServiceTypeLabel(service.service_type)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            <Badge
-                              variant="outline"
-                              className="text-xs"
-                            >
-                              {getServiceModeLabel(service.service_mode)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={getBadgeVariant(service.status)}
-                              className="text-xs"
-                            >
-                              {getServiceStatusLabel(service.status)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                            {formatDate(service.created_at)}
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(service.total_revenue)}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8"
-                              onClick={() => restoreItem.mutate(service.id)}
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )
-              ) : servicesLoading ? (
-                <div className="space-y-3 p-4">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton
-                      key={i}
-                      className="h-10 w-full"
-                    />
-                  ))}
+          <DataTable
+              title={isArchivedView ? "Archived Services" : "Service History"}
+              localData={isArchivedView ? archivedServices : services}
+              columns={isArchivedView ? archivedServiceColumns : serviceColumns}
+              isLoading={isArchivedView ? archivedQuery.isLoading : servicesLoading}
+              filterFn={isArchivedView ? undefined : serviceFilterFn}
+              hideSearch={isArchivedView}
+              searchPlaceholder="Search services…"
+              emptyTitle={
+                isArchivedView
+                  ? "No archived services for this client."
+                  : "No services found for this client."
+              }
+              onRowClick={isArchivedView ? undefined : handleViewService}
+              toolbar={
+                <div className="flex items-center gap-2">
+                  <ArchiveToggle
+                    isArchived={isArchivedView}
+                    onToggle={setIsArchivedView}
+                    archivedCount={archivedQuery.data?.count}
+                  />
+                  {canManage && !isArchivedView && (
+                    <Button size="sm" onClick={() => openCreateService()}>
+                      <Plus className="mr-2 h-4 w-4" />New Service
+                    </Button>
+                  )}
                 </div>
-              ) : services.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground">
-                  No services found for this client.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-20">ID</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead className="hidden sm:table-cell">
-                        Mode
-                      </TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Date
-                      </TableHead>
-                      <TableHead className="hidden lg:table-cell text-right">
-                        Main
-                      </TableHead>
-                      <TableHead className="hidden lg:table-cell text-right">
-                        Sub
-                      </TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead className="text-right">Payment</TableHead>
-                      {canManageServices && <TableHead className="w-10" />}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {services.map((service: Service) => (
-                      <TableRow
-                        key={service.id}
-                        className="cursor-pointer"
-                        onClick={() => handleViewService(service)}
-                      >
-                        <TableCell className="font-medium">
-                          #{String(service.id).padStart(4, "0")}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={`text-xs ${getServiceTypeBadgeClass(service.service_type)}`}
-                          >
-                            {getServiceTypeLabel(service.service_type)}
-                          </Badge>
-                          {service.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-1">
-                              {service.description}
-                            </p>
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <Badge
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {getServiceModeLabel(service.service_mode)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={getBadgeVariant(service.status)}
-                            className="text-xs"
-                          >
-                            {getServiceStatusLabel(service.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                          {formatDate(service.created_at)}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-right text-sm text-muted-foreground">
-                          {Number(service.main_stall_revenue) > 0
-                            ? formatCurrency(service.main_stall_revenue)
-                            : "—"}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell text-right text-sm text-muted-foreground">
-                          {Number(service.sub_stall_revenue) > 0
-                            ? formatCurrency(service.sub_stall_revenue)
-                            : "—"}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(service.total_revenue)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge
-                            variant={getBadgeVariant(service.payment_status)}
-                            className="text-xs"
-                          >
-                            {paymentStatusLabels[service.payment_status] ||
-                              service.payment_status}
-                          </Badge>
-                        </TableCell>
-                        {canManageServices && (
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger
-                                asChild
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align="end"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <DropdownMenuItem
-                                  onClick={() => handleViewService(service)}
-                                >
-                                  <Wrench className="mr-2 h-4 w-4" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => setArchiveTarget(service)}
-                                >
-                                  <Archive className="mr-2 h-4 w-4" />
-                                  Archive
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+              }
+            />
         </TabsContent>
 
-        {/* Sales Tab */}
+        {/* ════ Sales Tab ════ */}
         <TabsContent value="sales">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Sales Transactions</CardTitle>
-              <CardDescription>
-                All sales transactions across main and sub stall
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-2 pb-2 pt-0">
-              {salesLoading ? (
-                <div className="space-y-3 p-4">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton
-                      key={i}
-                      className="h-10 w-full"
-                    />
-                  ))}
-                </div>
-              ) : salesTransactions.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground">
-                  No sales transactions found for this client.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-28">Official Receipt #</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Items</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Stall
-                      </TableHead>
-                      <TableHead className="hidden sm:table-cell">
-                        Source
-                      </TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="text-right">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {salesTransactions.map((transaction: SalesTransaction) => {
-                      const itemCount = transaction.items?.length || 0
-                      const totalItems =
-                        transaction.items?.reduce(
-                          (sum, item) =>
-                            sum + parseFloat(String(item.quantity)),
-                          0,
-                        ) || 0
-                      const isServiceRelated = serviceRelatedTransactionIds.has(
-                        transaction.id,
-                      )
-
-                      return (
-                        <TableRow
-                          key={transaction.id}
-                          className="cursor-pointer"
-                          onClick={() => openSalesView(transaction)}
-                        >
-                          <TableCell className="font-medium">
-                            {transaction.manual_receipt_number ||
-                              transaction.system_receipt_number
-                                ?.slice(0, 8)
-                                .toUpperCase()}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(transaction.created_at)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <span className="font-medium">
-                                {itemCount} item{itemCount !== 1 ? "s" : ""}
-                              </span>
-                              <span className="text-muted-foreground">
-                                {" "}
-                                ({totalItems} qty)
-                              </span>
-                            </div>
-                            {transaction.items &&
-                              transaction.items.length > 0 && (
-                                <p className="text-xs text-muted-foreground line-clamp-1 max-w-[200px] mt-0.5">
-                                  {transaction.items
-                                    .map((item) => {
-                                      const qty = parseFloat(
-                                        String(item.quantity),
-                                      )
-                                      const qtyDisplay =
-                                        qty % 1 === 0 ? qty.toFixed(0) : qty
-                                      return `${item.item?.name ?? item.description} (x${qtyDisplay})`
-                                    })
-                                    .join(", ")}
-                                </p>
-                              )}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                            {transaction.stall?.name || "—"}
-                          </TableCell>
-                          <TableCell className="hidden sm:table-cell">
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${isServiceRelated ? "border-blue-500/30 text-blue-600 dark:text-blue-400" : ""}`}
-                            >
-                              {isServiceRelated ? "Service" : "Walk-in"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-medium">
-                            {formatCurrency(transaction.computed_total || 0)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Badge
-                              variant={getBadgeVariant(
-                                transaction.payment_status,
-                              )}
-                              className="text-xs"
-                            >
-                              {paymentStatusLabels[
-                                transaction.payment_status
-                              ] || transaction.payment_status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <DataTable
+              title="Sales Transactions"
+              localData={salesTransactions}
+              columns={salesColumns}
+              isLoading={salesLoading}
+              filterFn={salesFilterFn}
+              searchPlaceholder="Search OR #, items, stall…"
+              emptyTitle="No sales transactions for this client."
+              onRowClick={openSalesView}
+            />
         </TabsContent>
 
-        {/* Payments Tab */}
+        {/* ════ Payments Tab ════ */}
         <TabsContent value="payments">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Payment History</CardTitle>
-              <CardDescription>
-                All payments across all services
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-2 pb-2 pt-0">
-              {servicesLoading ? (
-                <div className="space-y-3 p-4">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton
-                      key={i}
-                      className="h-10 w-full"
-                    />
-                  ))}
-                </div>
-              ) : allPayments.length === 0 ? (
-                <div className="py-12 text-center text-muted-foreground">
-                  No payments found for this client.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Service</TableHead>
-                      <TableHead className="hidden sm:table-cell">
-                        Method
-                      </TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Received By
-                      </TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {allPayments.map((payment) => (
-                      <TableRow
-                        key={payment.id}
-                        className="cursor-pointer"
-                        onClick={() => {
-                          const svc = services.find(
-                            (s: Service) => s.id === payment.service_id,
-                          )
-                          if (svc) handleViewService(svc)
-                        }}
-                      >
-                        <TableCell className="text-sm">
-                          {formatDateTime(payment.payment_date)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">
-                              #{String(payment.service_id).padStart(4, "0")}
-                            </span>
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${getServiceTypeBadgeClass(payment.service_type)}`}
-                            >
-                              {getServiceTypeLabel(payment.service_type)}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden sm:table-cell">
-                          <Badge
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {paymentTypeLabels[payment.payment_type] ||
-                              payment.payment_type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                          {payment.received_by_name || "—"}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold text-success">
-                          {formatCurrency(payment.amount)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
+          <DataTable
+              title="Payment History"
+              localData={allPayments as PaymentRowType[]}
+              columns={paymentColumns}
+              isLoading={servicesLoading}
+              filterFn={paymentFilterFn}
+              searchPlaceholder="Search service #, method…"
+              emptyTitle="No payments found for this client."
+              onRowClick={(payment) => {
+                const svc = services.find((s) => s.id === payment.service_id)
+                if (svc) handleViewService(svc)
+              }}
+            />
         </TabsContent>
       </Tabs>
 
-      {/* Service Detail Sheet */}
+      {/* ── Sheets & Dialogs ── */}
+
       {detailsOpen && selectedService && (
         <EntitySheet
           className="sm:min-w-4xl md:min-w-5xl xl:min-w-6xl"
           open={detailsOpen}
           onClose={handleCloseDetails}
-          title={`Service #${String(selectedService.id).padStart(4, "0")}`}
+          title={`Service SVC-${String(selectedService.id).padStart(4, "0")}`}
           description={`Created ${new Date(selectedService.created_at).toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`}
           entity={detailService}
           renderForm={() => (
@@ -982,7 +897,6 @@ export default function ClientDetailPage() {
         />
       )}
 
-      {/* Sales Transaction Detail Sheet */}
       <EntitySheet<SalesTransaction>
         className="sm:min-w-2xl md:min-w-3xl xl:min-w-4xl"
         open={salesViewSheet.open}
@@ -991,16 +905,10 @@ export default function ClientDetailPage() {
         title="Transaction Details"
         description="View detailed information about this sales transaction."
         renderForm={({ onClose, entity }) =>
-          entity ? (
-            <SalesTransactionDetails
-              entity={entity}
-              onClose={onClose}
-            />
-          ) : null
+          entity ? <SalesTransactionDetails entity={entity} onClose={onClose} /> : null
         }
       />
 
-      {/* Create Service Sheet */}
       <EntitySheet
         className="sm:min-w-2xl md:min-w-3xl xl:min-w-4xl"
         open={createServiceSheet.open}
@@ -1018,7 +926,6 @@ export default function ClientDetailPage() {
         withCloseConfirmation
       />
 
-      {/* Archive Confirm Dialog */}
       <ConfirmDialog
         open={!!archiveTarget}
         onConfirm={() => {
@@ -1033,7 +940,7 @@ export default function ClientDetailPage() {
         }}
         onCancel={() => setArchiveTarget(null)}
         title="Archive service?"
-        description={`Service #${String(archiveTarget?.id ?? 0).padStart(4, "0")} will be archived. You can restore it later.`}
+        description={`SVC-${String(archiveTarget?.id ?? 0).padStart(4, "0")} will be archived. You can restore it later.`}
         Icon={Archive}
         confirmText="Archive"
         variant="warning"

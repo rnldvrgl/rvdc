@@ -166,12 +166,12 @@ export default function ServiceDetail({
   const [transactionDateOpen, setTransactionDateOpen] = useState(false)
   const [reServiceDialogOpen, setReServiceDialogOpen] = useState(false)
   const [reServiceReason, setReServiceReason] = useState("")
-  const [claimDialogOpen, setClaimDialogOpen] = useState(false)
-  const [forfeitDialogOpen, setForfeitDialogOpen] = useState(false)
-  const [forfeitNotes, setForfeitNotes] = useState("")
-  const [convertDialogOpen, setConvertDialogOpen] = useState(false)
-  const [acquisitionPrice, setAcquisitionPrice] = useState("")
-  const [convertNotes, setConvertNotes] = useState("")
+  const [claimingApplianceId, setClaimingApplianceId] = useState<number | null>(null)
+  const [forfeitingApplianceId, setForfeitingApplianceId] = useState<number | null>(null)
+  const [forfeitingApplianceNotes, setForfeitingApplianceNotes] = useState("")
+  const [acquiringApplianceId, setAcquiringApplianceId] = useState<number | null>(null)
+  const [acquiringAppliancePrice, setAcquiringAppliancePrice] = useState("")
+  const [acquiringApplianceNotes, setAcquiringApplianceNotes] = useState("")
   const {
     completeService,
     recordPayment,
@@ -180,12 +180,9 @@ export default function ServiceDetail({
     updateService,
     reopenService,
     toggleServiceItemsChecked,
-    markClaimed,
-    markForfeited,
-    convertToAcquisition,
   } = useServiceMutations()
   const { addService } = useServiceMutations()
-  const { updateAppliance } = useServiceApplianceMutations()
+  const { updateAppliance, markApplianceClaimed, markApplianceForfeited, convertApplianceToAcquisition } = useServiceApplianceMutations()
   const { addReceipt, updateReceipt, deleteReceipt } =
     useServiceReceiptMutations()
 
@@ -208,13 +205,9 @@ export default function ServiceDetail({
   const canComplete = service.status === "in_progress"
   const isCompleted = service.status === "completed"
   const isCarryIn = service.service_mode === "carry_in"
-  const isUnclaimed =
-    isCompleted &&
-    !service.claimed_at &&
-    !service.is_forfeited &&
-    (service.service_mode === "carry_in" || service.service_mode === "pull_out")
-  const canConvertToAcquisition =
-    !service.is_forfeited && service.status !== "cancelled"
+  const isUnclaimedMode = service.service_mode === "carry_in" || service.service_mode === "pull_out"
+  // Block reopen/reservice when any appliance is acquired or forfeited — company asset records already exist
+  const hasAnyForfeitedOrAcquired = service.is_forfeited || (service.appliances?.some((a) => a.is_forfeited) ?? false)
 
   // Initialize discount form with existing values
   useEffect(() => {
@@ -695,97 +688,46 @@ export default function ServiceDetail({
           {isCompleted && canManage && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs"
-                  onClick={() => setReopenDialogOpen(true)}
-                >
-                  <RotateCcw className="mr-1 h-3.5 w-3.5" />
-                  Reopen
-                </Button>
+                <span tabIndex={hasAnyForfeitedOrAcquired ? 0 : undefined}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-xs"
+                    onClick={() => setReopenDialogOpen(true)}
+                    disabled={hasAnyForfeitedOrAcquired}
+                  >
+                    <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                    Reopen
+                  </Button>
+                </span>
               </TooltipTrigger>
               <TooltipContent>
-                Reopen service to add/remove parts, then re-complete
+                {hasAnyForfeitedOrAcquired
+                  ? "Cannot reopen: appliance(s) have been acquired or forfeited as company property"
+                  : "Reopen service to add/remove parts, then re-complete"}
               </TooltipContent>
             </Tooltip>
           )}
           {isCompleted && canManage && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs border-orange-500 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/30"
-                  onClick={() => setReServiceDialogOpen(true)}
-                >
-                  <Copy className="mr-1 h-3.5 w-3.5" />
-                  Re-Service
-                </Button>
+                <span tabIndex={hasAnyForfeitedOrAcquired ? 0 : undefined}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 px-2.5 text-xs border-orange-500 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30"
+                    onClick={() => setReServiceDialogOpen(true)}
+                    disabled={hasAnyForfeitedOrAcquired}
+                  >
+                    <Copy className="mr-1 h-3.5 w-3.5" />
+                    Re-Service
+                  </Button>
+                </span>
               </TooltipTrigger>
               <TooltipContent>
-                Create a back job / re-service for this completed service
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {isUnclaimed && canManage && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="success"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs"
-                  onClick={() => setClaimDialogOpen(true)}
-                >
-                  <Truck className="mr-1 h-3.5 w-3.5" />
-                  Mark Claimed
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Client picked up / received their appliance
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {isUnclaimed && canManage && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="warning"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs"
-                  onClick={() => {
-                    setForfeitNotes("")
-                    setForfeitDialogOpen(true)
-                  }}
-                >
-                  <AlertTriangle className="mr-1 h-3.5 w-3.5" />
-                  Declare Forfeited
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Appliance unclaimed — declare as company property
-              </TooltipContent>
-            </Tooltip>
-          )}
-          {canConvertToAcquisition && canManage && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2.5 text-xs border-blue-500 text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
-                  onClick={() => {
-                    setAcquisitionPrice("")
-                    setConvertNotes("")
-                    setConvertDialogOpen(true)
-                  }}
-                >
-                  <Wallet className="mr-1 h-3.5 w-3.5" />
-                  Acquire Unit
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                Client sells appliance to company — record as company acquisition
+                {hasAnyForfeitedOrAcquired
+                  ? "Cannot re-service: appliance(s) have been acquired or forfeited as company property"
+                  : "Create a back job / re-service for this completed service"}
               </TooltipContent>
             </Tooltip>
           )}
@@ -1317,6 +1259,97 @@ export default function ServiceDetail({
                           <span>{formatCurrency(applianceTotal)}</span>
                         </div>
                       </div>
+
+                      {/* Per-appliance claiming / acquisition status & actions */}
+                      {(appliance.claimed_at || appliance.is_forfeited || (isCompleted && canManage && (isUnclaimedMode || service.status !== "cancelled"))) && (
+                        <>
+                          <Separator />
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            {/* Status badges */}
+                            <div className="flex flex-wrap gap-1.5">
+                              {appliance.claimed_at && (
+                                <Badge variant="outline" className="text-[11px] border-green-500 text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30">
+                                  <CheckCircle className="mr-1 h-3 w-3" />
+                                  Claimed {formatDate(new Date(appliance.claimed_at), "PP")}
+                                </Badge>
+                              )}
+                              {appliance.is_forfeited && appliance.forfeiture_type === "client_sold" && (
+                                <Badge variant="outline" className="text-[11px] border-blue-500 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30">
+                                  <Wallet className="mr-1 h-3 w-3" />
+                                  Acquired{appliance.acquisition_price ? ` @ ${formatCurrency(parseFloat(appliance.acquisition_price))}` : ""}
+                                </Badge>
+                              )}
+                              {appliance.is_forfeited && appliance.forfeiture_type !== "client_sold" && (
+                                <Badge variant="outline" className="text-[11px] border-red-500 text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30">
+                                  <AlertTriangle className="mr-1 h-3 w-3" />
+                                  Forfeited
+                                </Badge>
+                              )}
+                            </div>
+
+                            {/* Action buttons — only when not yet resolved and user can manage */}
+                            {!appliance.claimed_at && !appliance.is_forfeited && canManage && (
+                              <div className="flex flex-wrap gap-1.5">
+                                {isCompleted && isUnclaimedMode && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="success"
+                                        size="sm"
+                                        className="h-6 px-2 text-xs"
+                                        onClick={() => setClaimingApplianceId(appliance.id)}
+                                      >
+                                        <Truck className="mr-1 h-3 w-3" />
+                                        Mark Claimed
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Client collected this appliance</TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {isCompleted && isUnclaimedMode && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="warning"
+                                        size="sm"
+                                        className="h-6 px-2 text-xs"
+                                        onClick={() => {
+                                          setForfeitingApplianceNotes("")
+                                          setForfeitingApplianceId(appliance.id)
+                                        }}
+                                      >
+                                        <AlertTriangle className="mr-1 h-3 w-3" />
+                                        Forfeit
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Declare as company property (unclaimed)</TooltipContent>
+                                  </Tooltip>
+                                )}
+                                {service.status !== "cancelled" && (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-6 px-2 text-xs border-blue-500 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                                        onClick={() => {
+                                          setAcquiringAppliancePrice("")
+                                          setAcquiringApplianceNotes("")
+                                          setAcquiringApplianceId(appliance.id)
+                                        }}
+                                      >
+                                        <Wallet className="mr-1 h-3 w-3" />
+                                        Acquire
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Client sells this appliance to company</TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   )
                 })}
@@ -3510,34 +3543,34 @@ export default function ServiceDetail({
         </DialogContent>
       </Dialog>
 
-      {/* Mark as Claimed Dialog */}
+      {/* Mark Appliance as Claimed Dialog */}
       <Dialog
-        open={claimDialogOpen}
+        open={claimingApplianceId !== null}
         onOpenChange={(open) => {
-          if (!open) setClaimDialogOpen(false)
+          if (!open) setClaimingApplianceId(null)
         }}
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Mark Service as Claimed</DialogTitle>
+            <DialogTitle>Mark Appliance as Claimed</DialogTitle>
             <DialogDescription>
-              Confirm that the client has picked up or received their appliance
-              for Service #{service.id}.
+              Confirm that the client has picked up or received this specific appliance from Service #{service.id}.
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 justify-end pt-2">
-            <Button variant="outline" onClick={() => setClaimDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setClaimingApplianceId(null)}>
               Cancel
             </Button>
             <Button
               variant="success"
-              disabled={markClaimed.isPending}
+              disabled={markApplianceClaimed.isPending}
               onClick={() => {
-                markClaimed.mutate(
-                  { id: service.id },
+                if (!claimingApplianceId) return
+                markApplianceClaimed.mutate(
+                  { id: claimingApplianceId, serviceId: service.id },
                   {
                     onSuccess: () => {
-                      setClaimDialogOpen(false)
+                      setClaimingApplianceId(null)
                       onRefresh?.()
                     },
                   },
@@ -3545,19 +3578,19 @@ export default function ServiceDetail({
               }}
             >
               <Truck className="mr-2 h-4 w-4" />
-              {markClaimed.isPending ? "Saving..." : "Confirm Claimed"}
+              {markApplianceClaimed.isPending ? "Saving..." : "Confirm Claimed"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Declare Forfeited Dialog */}
+      {/* Forfeit Appliance Dialog */}
       <Dialog
-        open={forfeitDialogOpen}
+        open={forfeitingApplianceId !== null}
         onOpenChange={(open) => {
           if (!open) {
-            setForfeitDialogOpen(false)
-            setForfeitNotes("")
+            setForfeitingApplianceId(null)
+            setForfeitingApplianceNotes("")
           }
         }}
       >
@@ -3565,19 +3598,17 @@ export default function ServiceDetail({
           <DialogHeader>
             <DialogTitle>Declare Appliance as Company Property</DialogTitle>
             <DialogDescription>
-              Service #{service.id} has been completed but unclaimed. The
-              appliance will be forfeited and recorded as a company asset. The
-              balance will be written off.
+              This appliance will be forfeited under the 2-month unclaimed policy and recorded as a company asset.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-2">
-              <Label htmlFor="forfeit-notes">Notes (optional)</Label>
+              <Label htmlFor="forfeit-appliance-notes">Notes (optional)</Label>
               <Textarea
-                id="forfeit-notes"
+                id="forfeit-appliance-notes"
                 placeholder="e.g. Client unreachable after multiple follow-ups..."
-                value={forfeitNotes}
-                onChange={(e) => setForfeitNotes(e.target.value)}
+                value={forfeitingApplianceNotes}
+                onChange={(e) => setForfeitingApplianceNotes(e.target.value)}
                 rows={3}
               />
             </div>
@@ -3586,22 +3617,23 @@ export default function ServiceDetail({
             <Button
               variant="outline"
               onClick={() => {
-                setForfeitDialogOpen(false)
-                setForfeitNotes("")
+                setForfeitingApplianceId(null)
+                setForfeitingApplianceNotes("")
               }}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              disabled={markForfeited.isPending}
+              disabled={markApplianceForfeited.isPending}
               onClick={() => {
-                markForfeited.mutate(
-                  { id: service.id, forfeiture_notes: forfeitNotes || undefined },
+                if (!forfeitingApplianceId) return
+                markApplianceForfeited.mutate(
+                  { id: forfeitingApplianceId, serviceId: service.id, forfeiture_notes: forfeitingApplianceNotes || undefined },
                   {
                     onSuccess: () => {
-                      setForfeitDialogOpen(false)
-                      setForfeitNotes("")
+                      setForfeitingApplianceId(null)
+                      setForfeitingApplianceNotes("")
                       onRefresh?.()
                     },
                   },
@@ -3609,35 +3641,33 @@ export default function ServiceDetail({
               }}
             >
               <AlertTriangle className="mr-2 h-4 w-4" />
-              {markForfeited.isPending ? "Processing..." : "Declare Forfeited"}
+              {markApplianceForfeited.isPending ? "Processing..." : "Declare Forfeited"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Convert to Acquisition Dialog */}
+      {/* Acquire Appliance Dialog */}
       <Dialog
-        open={convertDialogOpen}
+        open={acquiringApplianceId !== null}
         onOpenChange={(open) => {
           if (!open) {
-            setConvertDialogOpen(false)
-            setAcquisitionPrice("")
-            setConvertNotes("")
+            setAcquiringApplianceId(null)
+            setAcquiringAppliancePrice("")
+            setAcquiringApplianceNotes("")
           }
         }}
       >
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Record Company Acquisition</DialogTitle>
+            <DialogTitle>Record Appliance Acquisition</DialogTitle>
             <DialogDescription>
-              Client is selling their appliance to the company. Service #
-              {service.id} will be recorded as a company acquisition and the
-              balance written off.
+              Client is selling this specific appliance to the company. It will be recorded as a company asset.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
             <div className="space-y-2">
-              <Label htmlFor="acquisition-price">
+              <Label htmlFor="acquiring-appliance-price">
                 Acquisition Price (optional)
               </Label>
               <div className="relative">
@@ -3645,24 +3675,24 @@ export default function ServiceDetail({
                   ₱
                 </span>
                 <Input
-                  id="acquisition-price"
+                  id="acquiring-appliance-price"
                   type="number"
                   min="0"
                   step="0.01"
                   placeholder="0.00"
                   className="pl-7"
-                  value={acquisitionPrice}
-                  onChange={(e) => setAcquisitionPrice(e.target.value)}
+                  value={acquiringAppliancePrice}
+                  onChange={(e) => setAcquiringAppliancePrice(e.target.value)}
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="convert-notes">Notes (optional)</Label>
+              <Label htmlFor="acquiring-appliance-notes">Notes (optional)</Label>
               <Textarea
-                id="convert-notes"
+                id="acquiring-appliance-notes"
                 placeholder="e.g. Client sold unit as payment in lieu of repair fees..."
-                value={convertNotes}
-                onChange={(e) => setConvertNotes(e.target.value)}
+                value={acquiringApplianceNotes}
+                onChange={(e) => setAcquiringApplianceNotes(e.target.value)}
                 rows={3}
               />
             </div>
@@ -3671,30 +3701,30 @@ export default function ServiceDetail({
             <Button
               variant="outline"
               onClick={() => {
-                setConvertDialogOpen(false)
-                setAcquisitionPrice("")
-                setConvertNotes("")
+                setAcquiringApplianceId(null)
+                setAcquiringAppliancePrice("")
+                setAcquiringApplianceNotes("")
               }}
             >
               Cancel
             </Button>
             <Button
-              disabled={convertToAcquisition.isPending}
+              disabled={convertApplianceToAcquisition.isPending}
               onClick={() => {
-                const price = acquisitionPrice
-                  ? parseFloat(acquisitionPrice)
-                  : null
-                convertToAcquisition.mutate(
+                if (!acquiringApplianceId) return
+                const price = acquiringAppliancePrice ? parseFloat(acquiringAppliancePrice) : null
+                convertApplianceToAcquisition.mutate(
                   {
-                    id: service.id,
+                    id: acquiringApplianceId,
+                    serviceId: service.id,
                     acquisition_price: price,
-                    notes: convertNotes || undefined,
+                    notes: acquiringApplianceNotes || undefined,
                   },
                   {
                     onSuccess: () => {
-                      setConvertDialogOpen(false)
-                      setAcquisitionPrice("")
-                      setConvertNotes("")
+                      setAcquiringApplianceId(null)
+                      setAcquiringAppliancePrice("")
+                      setAcquiringApplianceNotes("")
                       onRefresh?.()
                     },
                   },
@@ -3702,7 +3732,7 @@ export default function ServiceDetail({
               }}
             >
               <Wallet className="mr-2 h-4 w-4" />
-              {convertToAcquisition.isPending ? "Recording..." : "Record Acquisition"}
+              {convertApplianceToAcquisition.isPending ? "Recording..." : "Record Acquisition"}
             </Button>
           </div>
         </DialogContent>
