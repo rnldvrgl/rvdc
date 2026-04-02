@@ -239,20 +239,24 @@ export default function ItemQuantitySelector({
                         <ComboBox
                           disabled={disabled}
                           onChange={(val) => {
-                            if (!val) {
-                              handleUpdate(idx, "description", "")
-                              handleUpdate(idx, "final_price_per_unit", 0)
-                              return
-                            }
+                            if (!val) return
                             const found = allItems.find(
                               (c) => c.id.toString() === val,
                             )
                             if (found) {
-                              handleUpdate(idx, "description", found.name)
-                              handleUpdate(
-                                idx,
-                                "final_price_per_unit",
-                                Number(found.retail_price) || 0,
+                              onChange(
+                                items.map((it, i) =>
+                                  i === idx
+                                    ? {
+                                        ...it,
+                                        description: found.name,
+                                        final_price_per_unit:
+                                          Number(found.retail_price) || 0,
+                                        print_price_per_unit:
+                                          Number(found.retail_price) || 0,
+                                      }
+                                    : it,
+                                ),
                               )
                             }
                           }}
