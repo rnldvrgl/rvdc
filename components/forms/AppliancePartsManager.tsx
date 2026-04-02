@@ -124,8 +124,8 @@ export default function AppliancePartsManager({
 
   const handleSavePart = async () => {
     if (isCustom) {
-      if (!selectedUntrackedItemId || !customPrice || !quantity) {
-        toast.error("Please select an untracked item and fill in quantity")
+      if ((!selectedUntrackedItemId && !customDescription.trim()) || !customPrice || !quantity) {
+        toast.error("Please fill in item name, price, and quantity")
         return
       }
     } else {
@@ -218,8 +218,8 @@ export default function AppliancePartsManager({
 
   const handleAddToList = () => {
     if (isCustom) {
-      if (!selectedUntrackedItemId || !customPrice || !quantity) {
-        toast.error("Please select an untracked item and fill in quantity")
+      if ((!selectedUntrackedItemId && !customDescription.trim()) || !customPrice || !quantity) {
+        toast.error("Please fill in item name, price, and quantity")
         return
       }
     } else {
@@ -778,7 +778,7 @@ export default function AppliancePartsManager({
             {isCustom ? (
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>Untracked Item</Label>
+                  <Label>Select from untracked items</Label>
                   <ComboBox
                     options={untrackedItemOptions}
                     value={selectedUntrackedItemId}
@@ -796,27 +796,41 @@ export default function AppliancePartsManager({
                         setCustomDescription("")
                       }
                     }}
-                    placeholder="Select untracked item..."
+                    placeholder="Select untracked item or enter manually below..."
                     searchPlaceholder="Search untracked items..."
                     disabled={isDialogBusy}
                   />
                 </div>
-                {selectedUntrackedItemId && (
-                  <div className="space-y-2">
-                    <Label className="text-xs text-muted-foreground">
-                      Unit Price (₱) — auto-filled, can override
-                    </Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={customPrice}
-                      onChange={(e) => setCustomPrice(e.target.value)}
-                      placeholder="0.00"
-                      disabled={isDialogBusy}
-                    />
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <Label>
+                    Item Name{selectedUntrackedItemId ? " (from selection)" : ""}
+                  </Label>
+                  <Input
+                    value={customDescription}
+                    onChange={(e) => {
+                      setCustomDescription(e.target.value)
+                      if (selectedUntrackedItemId) {
+                        setSelectedUntrackedItemId(null)
+                      }
+                    }}
+                    placeholder="Enter item name..."
+                    disabled={isDialogBusy}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">
+                    Unit Price (₱){selectedUntrackedItemId ? " — auto-filled, can override" : ""}
+                  </Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={customPrice}
+                    onChange={(e) => setCustomPrice(e.target.value)}
+                    placeholder="0.00"
+                    disabled={isDialogBusy}
+                  />
+                </div>
               </div>
             ) : (
               <>

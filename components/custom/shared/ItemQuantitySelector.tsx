@@ -235,22 +235,58 @@ export default function ItemQuantitySelector({
                 <div className="flex items-center gap-2">
                   <div className="flex-1 min-w-0">
                     {isCustom ? (
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <Pencil className="size-3.5 text-violet-500" />
-                          <span className="text-[10px] font-medium text-violet-600 dark:text-violet-400 uppercase tracking-wide">
-                            Custom
-                          </span>
-                        </div>
-                        <Input
-                          placeholder="e.g. Motor Rewind"
-                          value={itm.description ?? ""}
-                          onChange={(e) =>
-                            handleUpdate(idx, "description", e.target.value)
-                          }
+                      <div className="space-y-2">
+                        <ComboBox
                           disabled={disabled}
-                          className="h-8"
+                          onChange={(val) => {
+                            if (!val) {
+                              handleUpdate(idx, "description", "")
+                              handleUpdate(idx, "final_price_per_unit", 0)
+                              return
+                            }
+                            const found = allItems.find(
+                              (c) => c.id.toString() === val,
+                            )
+                            if (found) {
+                              handleUpdate(idx, "description", found.name)
+                              handleUpdate(
+                                idx,
+                                "final_price_per_unit",
+                                Number(found.retail_price) || 0,
+                              )
+                            }
+                          }}
+                          value=""
+                          options={allItems
+                            .filter(
+                              (c) =>
+                                !c.is_tracked ||
+                                (untrackedItemIds?.has(c.id) ?? false),
+                            )
+                            .map((c) => ({
+                              label: `${c.name} — ${formatCurrency(c.retail_price)}`,
+                              value: c.id.toString(),
+                            }))}
+                          placeholder="Select untracked item or type below..."
+                          searchPlaceholder="Search untracked items..."
                         />
+                        <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Pencil className="size-3.5 text-violet-500" />
+                            <span className="text-[10px] font-medium text-violet-600 dark:text-violet-400 uppercase tracking-wide">
+                              Name
+                            </span>
+                          </div>
+                          <Input
+                            placeholder="e.g. Motor Rewind"
+                            value={itm.description ?? ""}
+                            onChange={(e) =>
+                              handleUpdate(idx, "description", e.target.value)
+                            }
+                            disabled={disabled}
+                            className="h-8"
+                          />
+                        </div>
                       </div>
                     ) : (
                       <ComboBox
