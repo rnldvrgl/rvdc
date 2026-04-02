@@ -37,6 +37,7 @@ export function AdminSessionsTable() {
     null,
   )
 
+  
   const handleRevokeClick = (session: AdminSession) => {
     setSessionToRevoke(session)
   }

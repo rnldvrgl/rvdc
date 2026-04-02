@@ -45,7 +45,10 @@ export function DropdownUserProfile({
 
         <DropdownMenuGroup>
           <DropdownMenuItem
-            onClick={() => logout.mutateAsync(refresh)}
+            onClick={() => {
+              if (!refresh) return
+              logout.mutateAsync(refresh)
+            }}
             className="inline-flex justify-between w-full"
           >
             Signout

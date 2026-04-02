@@ -24,9 +24,9 @@ export function useAuthentications() {
         })
         return response.data
       },
-      onSuccess: async (data) => {
+      onSuccess: async (data, values) => {
         const { access, refresh, role } = data
-        const rememberMe = (values.remember_me ?? true)
+        const rememberMe = values?.remember_me ?? true
 
         // Configure storage mode BEFORE writing tokens so they land in the
         // right storage (localStorage for persist, sessionStorage for session-only)

@@ -168,7 +168,10 @@ export function Navbar({ user }: { user: User | null }) {
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem
-                  onClick={() => logout.mutateAsync(refresh)}
+                  onClick={() => {
+                    if (!refresh) return
+                    logout.mutateAsync(refresh)
+                  }}
                   className="cursor-pointer"
                 >
                   <LogOutIcon className="mr-2 size-4" />
