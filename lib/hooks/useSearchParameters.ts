@@ -76,8 +76,15 @@ const useSearchParameters = (
     }
   })
 
-  // Apply default date range synchronously if URL has no dates
-  if (options?.defaultRangePreset && !filter.start_date && !filter.end_date) {
+  // Allow links to opt out of default date range via ?no_date_range=1
+  if (filter.no_date_range) {
+    delete filter.no_date_range
+  } else if (
+    options?.defaultRangePreset &&
+    !filter.start_date &&
+    !filter.end_date
+  ) {
+    // Apply default date range synchronously if URL has no dates
     const preset = DATE_RANGE_PRESETS.find(
       (p) => p.label === options.defaultRangePreset,
     )

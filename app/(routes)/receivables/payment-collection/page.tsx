@@ -298,7 +298,7 @@ export default function PaymentCollectionPage() {
         <CollectionSection
           title="Unpaid Services"
           icon={Wrench}
-          href="/services"
+          href="/services?payment_status=unpaid,partial"
           count={services.length}
         >
           {services.length === 0 ? (
@@ -334,7 +334,7 @@ export default function PaymentCollectionPage() {
         <CollectionSection
           title="Unpaid Sales"
           icon={Receipt}
-          href="/sales"
+          href="/sales?payment_status=unpaid,partial&no_date_range=1"
           count={sales.length}
         >
           {sales.length === 0 ? (
@@ -372,7 +372,7 @@ export default function PaymentCollectionPage() {
         <CollectionSection
           title="Pending Remittances"
           icon={Banknote}
-          href="/receivables/remittances"
+          href="/receivables/remittances?is_remitted=false&no_date_range=1"
           count={remittances.length}
         >
           {remittances.length === 0 ? (
@@ -388,8 +388,10 @@ export default function PaymentCollectionPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium truncate">
                     {r.stall_data?.name ?? "Stall"} —{" "}
-                    {r.created_at
-                      ? new Date(r.created_at).toLocaleDateString("en-PH", {
+                    {r.remittance_date
+                      ? new Date(
+                          r.remittance_date + "T00:00:00",
+                        ).toLocaleDateString("en-PH", {
                           month: "short",
                           day: "numeric",
                         })
@@ -419,7 +421,7 @@ export default function PaymentCollectionPage() {
         <CollectionSection
           title="Pending Cheques"
           icon={FileText}
-          href="/receivables/cheques"
+          href="/receivables/cheques?status=pending&no_date_range=1"
           count={cheques.length}
         >
           {cheques.length === 0 ? (

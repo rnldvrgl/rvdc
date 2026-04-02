@@ -23,7 +23,6 @@ import {
     Plane,
     Server,
     Settings,
-    ShieldCheck,
     Store,
     Users,
     Warehouse,
@@ -58,12 +57,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     href: "/quotations",
     icon: FileText,
     permission: "view_quotations",
-  },
-  warrantyClaims: {
-    name: "Warranty & Cleaning",
-    href: "/warranty-claims",
-    icon: ShieldCheck,
-    permission: "view_warranty_claims",
   },
   companyAssets: {
     name: "Company Assets",
@@ -376,7 +369,6 @@ export const sectionedNavigation: NavigationSection[] = [
       baseNavigation.sales,
       baseNavigation.services,
       baseNavigation.quotations,
-      baseNavigation.warrantyClaims,
       baseNavigation.companyAssets,
       baseNavigation.receivables,
     ],

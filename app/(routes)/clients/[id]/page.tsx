@@ -8,6 +8,7 @@ import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { SalesTransactionDetails } from "@/components/details/SalesTransactionDetails"
 import ServiceFormWizard from "@/components/forms/ServiceFormWizard"
 import ServiceDetail from "@/components/services/ServiceDetail"
+import { AirconUnitDetails } from "@/components/aircons/AirconUnitDetails"
 import { DataTable } from "@/components/custom/table/DataTable"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,6 +22,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type {
+  AirconUnits,
   SalesTransaction,
   Service,
   ServicePayment,
@@ -32,6 +34,7 @@ import { useServiceMutations } from "@/lib/mutations/services/useServiceMutation
 import { useClient } from "@/lib/queries/clients/useClients"
 import { useSalesTransactions } from "@/lib/queries/sales/useSalesTransactions"
 import { useService, useServices } from "@/lib/queries/services/useServices"
+import { useAirconUnits } from "@/lib/queries/useAircons"
 import { formatCurrency } from "@/lib/utils/currency"
 import { getBadgeVariant } from "@/lib/utils/helpers"
 import {
@@ -58,6 +61,7 @@ import {
   ShoppingCart,
   User,
   Wallet,
+  Wind,
   Wrench,
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
@@ -146,6 +150,11 @@ export default function ClientDetailPage() {
     limit: 500,
   })
 
+  const { data: unitsData, isLoading: unitsLoading } = useAirconUnits({
+    filter: { client: clientId },
+    limit: 500,
+  })
+
   // ── Service detail sheet ─────────────────────────────────────────────────
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
@@ -165,6 +174,13 @@ export default function ClientDetailPage() {
     closeEntity: closeCreateService,
   } = useEntitySheet()
 
+  // ── Unit detail sheet ────────────────────────────────────────────────────
+  const {
+    entityState: unitDetailSheet,
+    openEntity: openUnitDetail,
+    closeEntity: closeUnitDetail,
+  } = useEntitySheet<AirconUnits>()
+
   // ── Archive ──────────────────────────────────────────────────────────────
   const [archiveTarget, setArchiveTarget] = useState<Service | null>(null)
   const [isArchivedView, setIsArchivedView] = useState(false)
@@ -181,6 +197,8 @@ export default function ClientDetailPage() {
   const services: Service[] = useMemo(() => servicesData?.results ?? [], [servicesData])
   const salesTransactions: SalesTransaction[] = useMemo(() => salesData?.results ?? [], [salesData])
   const archivedServices: Service[] = archivedQuery.data?.results ?? []
+
+  const airconUnits: AirconUnits[] = useMemo(() => unitsData?.results ?? [], [unitsData])
 
   const serviceRelatedTransactionIds = useMemo(
     () =>
@@ -273,6 +291,13 @@ export default function ClientDetailPage() {
     String(p.service_id).includes(q) ||
     (paymentTypeLabels[p.payment_type] ?? p.payment_type).toLowerCase().includes(q) ||
     (p.received_by_name ?? "").toLowerCase().includes(q)
+
+  const unitFilterFn = (u: AirconUnits, q: string) =>
+    (u.serial_number ?? "").toLowerCase().includes(q) ||
+    (u.outdoor_serial_number ?? "").toLowerCase().includes(q) ||
+    (u.model?.brand?.name ?? "").toLowerCase().includes(q) ||
+    (u.model?.name ?? "").toLowerCase().includes(q) ||
+    (u.unit_status ?? "").toLowerCase().includes(q)
 
   // ── Column definitions ────────────────────────────────────────────────────
   const serviceColumns = useMemo<ColumnDef<Service>[]>(() => {
@@ -679,6 +704,98 @@ export default function ClientDetailPage() {
     },
   ], [])
 
+  const unitColumns = useMemo<ColumnDef<AirconUnits>[]>(() => [
+    {
+      id: "unit",
+      header: "Unit",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const u = row.original
+        return (
+          <div>
+            <p className="text-sm font-medium">
+              {u.model?.brand?.name} {u.model?.name}
+            </p>
+            <p className="text-xs text-muted-foreground font-mono mt-0.5">
+              SN: {u.serial_number}
+            </p>
+          </div>
+        )
+      },
+    },
+    {
+      id: "type",
+      header: "Type / HP",
+      enableSorting: false,
+      meta: { thClass: "hidden sm:table-cell w-32", tdClass: "hidden sm:table-cell w-32" },
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground capitalize">
+          {row.original.model?.aircon_type ?? "—"} · {row.original.model?.horsepower ?? "—"}HP
+        </span>
+      ),
+    },
+    {
+      id: "status",
+      header: "Status",
+      enableSorting: false,
+      meta: { thClass: "w-32", tdClass: "w-32" },
+      cell: ({ row }) => {
+        const status = row.original.unit_status ?? "Available"
+        const variant =
+          status === "Installed" ? "default" :
+          status === "For Installation" ? "secondary" :
+          status === "Sold" ? "default" :
+          "outline"
+        return <Badge variant={variant} className="text-xs">{status}</Badge>
+      },
+    },
+    {
+      id: "warranty",
+      header: "Warranty",
+      enableSorting: false,
+      meta: { thClass: "hidden md:table-cell w-36", tdClass: "hidden md:table-cell w-36" },
+      cell: ({ row }) => {
+        const u = row.original
+        if (!u.warranty_start_date) return <span className="text-xs text-muted-foreground">—</span>
+        const status = u.warranty_status ?? "expired"
+        const variant = status === "active" ? "default" : status === "expiring_soon" ? "secondary" : "outline"
+        return (
+          <div>
+            <Badge variant={variant} className="text-xs capitalize">{status.replace("_", " ")}</Badge>
+            {u.warranty_days_left != null && u.warranty_days_left > 0 && (
+              <p className="text-xs text-muted-foreground mt-0.5">{u.warranty_days_left}d left</p>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      id: "free_cleaning",
+      header: "Free Cleaning",
+      enableSorting: false,
+      meta: { thClass: "hidden lg:table-cell w-32", tdClass: "hidden lg:table-cell w-32" },
+      cell: ({ row }) => {
+        const u = row.original
+        return (
+          <Badge variant={u.free_cleaning_redeemed ? "outline" : "default"} className="text-xs">
+            {u.free_cleaning_redeemed ? "Redeemed" : "Available"}
+          </Badge>
+        )
+      },
+    },
+    {
+      id: "installed",
+      header: "Installed",
+      enableSorting: false,
+      meta: { thClass: "hidden lg:table-cell w-32", tdClass: "hidden lg:table-cell w-32" },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground whitespace-nowrap">
+          {row.original.installed_date ? formatDate(row.original.installed_date) : "—"}
+        </span>
+      ),
+    },
+  ], [])
+
   // ── Loading / not found ───────────────────────────────────────────────────
   if (clientLoading) {
     return (
@@ -808,6 +925,11 @@ export default function ClientDetailPage() {
             Payments
             <Badge variant="outline" className="text-xs ml-1">{allPayments.length}</Badge>
           </TabsTrigger>
+          <TabsTrigger value="units" className="gap-2">
+            <Wind className="h-4 w-4" />
+            Units
+            <Badge variant="outline" className="text-xs ml-1">{airconUnits.length}</Badge>
+          </TabsTrigger>
         </TabsList>
 
         {/* ════ Services Tab ════ */}
@@ -873,6 +995,20 @@ export default function ClientDetailPage() {
               }}
             />
         </TabsContent>
+
+        {/* ════ Units Tab ════ */}
+        <TabsContent value="units">
+          <DataTable
+              title="Aircon Units"
+              localData={airconUnits}
+              columns={unitColumns}
+              isLoading={unitsLoading}
+              filterFn={unitFilterFn}
+              searchPlaceholder="Search serial, model, brand…"
+              emptyTitle="No aircon units found for this client."
+              onRowClick={openUnitDetail}
+            />
+        </TabsContent>
       </Tabs>
 
       {/* ── Sheets & Dialogs ── */}
@@ -906,6 +1042,18 @@ export default function ClientDetailPage() {
         description="View detailed information about this sales transaction."
         renderForm={({ onClose, entity }) =>
           entity ? <SalesTransactionDetails entity={entity} onClose={onClose} /> : null
+        }
+      />
+
+      <EntitySheet<AirconUnits>
+        className="sm:min-w-2xl md:min-w-3xl xl:min-w-4xl"
+        open={unitDetailSheet.open}
+        onClose={closeUnitDetail}
+        entity={unitDetailSheet.entity}
+        title="Unit Details"
+        description={unitDetailSheet.entity ? `${unitDetailSheet.entity.model?.brand?.name ?? ""} ${unitDetailSheet.entity.model?.name ?? ""} — SN: ${unitDetailSheet.entity.serial_number}` : ""}
+        renderForm={({ onClose, entity }) =>
+          entity ? <AirconUnitDetails unit={entity} onClose={onClose} /> : null
         }
       />
 
