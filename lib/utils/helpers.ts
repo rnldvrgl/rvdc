@@ -196,6 +196,7 @@ export function getBadgeVariant(
   const variants: Record<string, badgeVariants> = {
     paid: "success",
     pending: "secondary",
+    no_charge: "outline",
     high_stock: "success",
     manual: "secondary",
     picked_up: "default",
