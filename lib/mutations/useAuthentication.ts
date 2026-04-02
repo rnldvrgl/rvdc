@@ -5,7 +5,7 @@ import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import useUserProfileStore from "@/lib/store/useUserProfileStore"
 import api from "@/lib/utils/api"
 import { getOrCreateDeviceId } from "@/lib/utils/device"
-import { removeToken, setToken } from "@/lib/utils/tokens"
+import { removeToken, setStorageMode, setToken } from "@/lib/utils/tokens"
 import { useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -26,11 +26,15 @@ export function useAuthentications() {
       },
       onSuccess: async (data) => {
         const { access, refresh, role } = data
+        const rememberMe = (values.remember_me ?? true)
 
-        // Set tokens in localStorage
+        // Configure storage mode BEFORE writing tokens so they land in the
+        // right storage (localStorage for persist, sessionStorage for session-only)
+        setStorageMode(rememberMe)
+
+        // Set tokens in chosen storage
         setToken("access", access)
         setToken("refresh", refresh)
-        setToken("remember", "true")
 
         // Set HTTP-only cookies
         try {
@@ -39,7 +43,7 @@ export function useAuthentications() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ access, refresh, role }),
+            body: JSON.stringify({ access, refresh, role, rememberMe }),
             credentials: "include",
           })
 

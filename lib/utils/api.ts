@@ -136,7 +136,10 @@ api.interceptors.response.use(
           const latestRefresh = refreshed?.refresh || getToken("refresh")
 
           if (newAccess) {
-            // Update cookies via API route
+            // Update cookies via API route — preserve persist/session-only mode
+            // by not setting maxAge when the user chose session-only storage
+            const isSessionOnly = typeof window !== "undefined" &&
+              sessionStorage.getItem("__rvdc_so") === "1"
             try {
               await fetch("/api/set-cookie", {
                 method: "POST",
@@ -145,6 +148,7 @@ api.interceptors.response.use(
                   access: newAccess,
                   refresh: latestRefresh || undefined,
                   role: getToken("role") || undefined,
+                  rememberMe: !isSessionOnly,
                 }),
                 credentials: "include",
               })
