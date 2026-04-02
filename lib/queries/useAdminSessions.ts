@@ -11,6 +11,9 @@ export interface AdminSession {
   }
   device_id: string
   device_label: string
+  browser_name: string
+  os_name: string
+  remember_me: boolean
   user_agent: string
   ip_address: string
   is_active: boolean
