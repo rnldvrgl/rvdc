@@ -57,19 +57,6 @@ export function getItemColumns({
       header: "Cost Price",
       cell: ({ getValue }) => formatCurrency(getValue() as number | string),
     },
-    {
-      accessorKey: "waste_tolerance_percentage",
-      header: "Waste Tolerance",
-      cell: ({ row }) => {
-        const val = parseFloat(row.original.waste_tolerance_percentage || "0")
-        if (val <= 0) return <span className="text-muted-foreground">—</span>
-        return (
-          <span className="text-warning font-medium">
-            {val}%
-          </span>
-        )
-      },
-    },
     ...(role === "admin"
       ? [
           {

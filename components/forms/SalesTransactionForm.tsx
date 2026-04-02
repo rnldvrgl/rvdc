@@ -301,7 +301,9 @@ export default function SalesTransactionForm({
   const { addTransaction, updateTransaction } = useSalesTransactionMutations()
   const { isAdmin } = useCurrentUser()
   const isVoided = initialData?.voided
-  const isDisabled = form.formState.isSubmitting || isVoided
+  const isInitialLoading = itemsLoading || stallsLoading
+  const isSaving = addTransaction.isPending || updateTransaction.isPending
+  const isDisabled = isSaving || isVoided
 
   const {
     entityState: voidingState,
@@ -511,10 +513,13 @@ export default function SalesTransactionForm({
     return () => window.removeEventListener("keydown", handler)
   }, [])
 
-  if (initialData && (itemsLoading || stallsLoading)) {
+  if (isInitialLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
         <Loader2 className="size-5 animate-spin text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">
+          {initialData ? "Loading transaction..." : "Loading sale form..."}
+        </p>
       </div>
     )
   }
@@ -528,6 +533,18 @@ export default function SalesTransactionForm({
           stall={subStall}
         />
       </div>
+
+      <div className="relative">
+        {isSaving && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center rounded-md bg-background/80 backdrop-blur-sm">
+            <div className="flex items-center gap-2 rounded-md border bg-background px-4 py-3 shadow-sm">
+              <Loader2 className="size-4 animate-spin text-primary" />
+              <span className="text-sm font-medium text-foreground">
+                {initialData ? "Saving transaction..." : "Creating transaction..."}
+              </span>
+            </div>
+          </div>
+        )}
 
       {initialData && (
         <div className="flex items-center justify-between pb-4">
@@ -1206,6 +1223,7 @@ export default function SalesTransactionForm({
                         type="button"
                         variant="warning"
                         className="shrink-0"
+                        disabled={isSaving}
                         onClick={() => {
                           const values = form.getValues()
                           holdSale({
@@ -1243,13 +1261,17 @@ export default function SalesTransactionForm({
                   type="submit"
                   className="w-full"
                   disabled={
-                    form.formState.isSubmitting ||
+                    isSaving ||
                     (!initialData &&
                       (!form.formState.isDirty || !form.formState.isValid))
                   }
                 >
-                  <Save className="mr-2 size-4" />
-                  {form.formState.isSubmitting
+                  {isSaving ? (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 size-4" />
+                  )}
+                  {isSaving
                     ? initialData
                       ? "Updating..."
                       : "Creating..."
@@ -1267,6 +1289,7 @@ export default function SalesTransactionForm({
           )}
         </form>
       </Form>
+      </div>
       <AlertDialog
         open={showPrintDialog}
         onOpenChange={(isOpen) => {

@@ -934,12 +934,6 @@ export default function ServicePartsManager({
                         {selectedItem.unit_of_measure}
                       </span>
                     </div>
-                    {Number(selectedItem.waste_tolerance_percentage) > 0 && (
-                      <div className="flex items-center justify-between text-xs text-amber-600">
-                        <span>Waste Tolerance:</span>
-                        <span>±{selectedItem.waste_tolerance_percentage}%</span>
-                      </div>
-                    )}
                     {selectedItemStock.status === "no_stock" && (
                       <p className="text-xs text-destructive font-medium">
                         No stock available

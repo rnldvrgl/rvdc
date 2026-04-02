@@ -237,21 +237,6 @@ export default function StocksPage() {
                         )}
                       </p>
                     </div>
-                    {parseFloat(
-                      entity.item?.waste_tolerance_percentage || "0",
-                    ) > 0 && (
-                      <div>
-                        <label className="text-sm font-medium text-muted-foreground">
-                          Waste Tolerance
-                        </label>
-                        <p className="text-base font-medium text-warning">
-                          {entity.item.waste_tolerance_percentage}%
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Acceptable loss when dispensing this item
-                        </p>
-                      </div>
-                    )}
                     <div className="sm:col-span-2">
                       <label className="text-sm font-medium text-muted-foreground">
                         Last Updated

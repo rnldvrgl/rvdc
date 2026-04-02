@@ -54,21 +54,6 @@ export function getStockRoomStockColumns({
       },
     },
     {
-      accessorKey: "waste_tolerance",
-      header: "Tolerance",
-      cell: ({ row }) => {
-        const val = parseFloat(
-          row.original.item.waste_tolerance_percentage || "0",
-        )
-        if (val <= 0) return <span className="text-muted-foreground">—</span>
-        return (
-          <span className="text-warning font-medium">
-            {val}%
-          </span>
-        )
-      },
-    },
-    {
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {

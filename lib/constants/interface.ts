@@ -171,7 +171,6 @@ export interface Item {
   wholesale_price: string
   technician_price: string
   cost_price: string
-  waste_tolerance_percentage: string
   is_tracked: boolean
   is_deleted: boolean
   created_at: string
@@ -205,7 +204,6 @@ export interface ItemPayload {
   cost_price: number
   category_id: number | null
   unit_of_measure: UnitChoice
-  waste_tolerance_percentage?: number
 }
 
 // ---------------------

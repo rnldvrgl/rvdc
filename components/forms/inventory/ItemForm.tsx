@@ -44,7 +44,6 @@ interface FormValues {
   wholesale_price: string
   technician_price: string
   cost_price: string
-  waste_tolerance_percentage: string
 }
 
 interface ItemFormProps {
@@ -148,8 +147,6 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
       wholesale_price: item?.wholesale_price?.toString() ?? "",
       technician_price: item?.technician_price?.toString() ?? "",
       cost_price: item?.cost_price?.toString() ?? "",
-      waste_tolerance_percentage:
-        item?.waste_tolerance_percentage?.toString() ?? "0",
     },
   })
 
@@ -188,8 +185,6 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
       wholesale_price: parseFloat(data.wholesale_price) || 0,
       technician_price: parseFloat(data.technician_price) || 0,
       cost_price: parseFloat(data.cost_price) || 0,
-      waste_tolerance_percentage:
-        parseFloat(data.waste_tolerance_percentage) || 0,
     }
 
     if (item?.id) {
@@ -406,34 +401,6 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
                       step="1"
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Waste Tolerance — only relevant for continuous units like kg, ft */}
-          <div className="space-y-4 grid">
-            <FormField
-              control={form.control}
-              name="waste_tolerance_percentage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Waste Tolerance %</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="e.g. 5 for 5%"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="100"
-                    />
-                  </FormControl>
-                  <p className="text-xs text-muted-foreground">
-                    Acceptable loss when dispensing (e.g. freon, copper tubes).
-                    Set 0 for items with no expected waste.
-                  </p>
                   <FormMessage />
                 </FormItem>
               )}

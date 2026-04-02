@@ -1,13 +1,13 @@
 "use client"
 
 import { getItemColumns } from "@/app/(routes)/inventory/items/columns"
-import { ArchiveToggle } from "@/components/custom/shared/ArchiveToggle"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
 import ItemForm from "@/components/forms/inventory/ItemForm"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Item } from "@/lib/constants/interface"
 import { useArchive } from "@/lib/hooks/useArchive"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -15,15 +15,17 @@ import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useItemMutations } from "@/lib/mutations/useItemMutations"
 import { useItemFilters, useItems } from "@/lib/queries/inventory/useItems"
-import { Package, Plus } from "lucide-react"
+import { Archive, Package, Plus } from "lucide-react"
 import { useState } from "react"
 
 export default function ItemsPage() {
   const { isAdmin, role } = useCurrentUser()
-  const [isArchived, setIsArchived] = useState(false)
+  const [viewMode, setViewMode] = useState<"active" | "untracked" | "archived">("active")
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const { deleteItem } = useItemMutations()
+  const isArchived = viewMode === "archived"
+  const isUntracked = viewMode === "untracked"
   const { archivedQuery, restoreItem } = useArchive<Item>(
     "/inventory/items/",
     "items",
@@ -35,7 +37,10 @@ export default function ItemsPage() {
     limit,
     search,
     ordering,
-    filter,
+    filter: {
+      ...filter,
+      is_tracked: isUntracked ? "false" : "true",
+    },
   })
   const { filters, orderingOptions } = useItemFilters()
 
@@ -83,6 +88,7 @@ export default function ItemsPage() {
         breadcrumbs={["Dashboard", "Inventory", "Items"]}
         actionButton={
           !isArchived &&
+          !isUntracked &&
           isAdmin && (
             <Button onClick={() => openAddSheet()}>
               <Plus className="size-4 mr-2" />
@@ -92,11 +98,36 @@ export default function ItemsPage() {
         }
       />
 
-      <ArchiveToggle
-        isArchived={isArchived}
-        onToggle={setIsArchived}
-        archivedCount={archivedQuery.data?.count}
-      />
+      <Tabs
+        value={viewMode}
+        onValueChange={(value) =>
+          setViewMode(value as "active" | "untracked" | "archived")
+        }
+      >
+        <TabsList>
+          <TabsTrigger
+            value="active"
+            className="gap-1.5"
+          >
+            <Package className="size-3.5" />
+            Active
+          </TabsTrigger>
+          <TabsTrigger
+            value="untracked"
+            className="gap-1.5"
+          >
+            <Package className="size-3.5" />
+            Untracked
+          </TabsTrigger>
+          <TabsTrigger
+            value="archived"
+            className="gap-1.5"
+          >
+            <Archive className="size-3.5" />
+            Archived
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {!isArchived && (
         <>
@@ -132,7 +163,13 @@ export default function ItemsPage() {
       <DataTable
         enableVirtualization
         title="Inventory Items"
-        description="Manage your product catalog and inventory"
+        description={
+          isArchived
+            ? "Review archived inventory items"
+            : isUntracked
+              ? "Catalogue-only items that are not deducted from stock"
+              : "Manage your tracked inventory catalog"
+        }
         isLoading={isArchived ? archivedQuery.isLoading : isLoading}
         columns={columns}
         data={
@@ -148,12 +185,18 @@ export default function ItemsPage() {
         onRefresh={isArchived ? archivedQuery.refetch : refetch}
         emptyIcon={Package}
         emptyTitle={
-          isArchived ? "No archived items" : "No inventory items found"
+          isArchived
+            ? "No archived items"
+            : isUntracked
+              ? "No untracked items found"
+              : "No inventory items found"
         }
         emptyDescription={
           isArchived
             ? "Archived items will appear here"
-            : "Add your first product to build your catalog"
+            : isUntracked
+              ? "Untracked catalogue items will appear here"
+              : "Add your first product to build your catalog"
         }
       />
     </Wrapper>
