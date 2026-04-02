@@ -54,7 +54,6 @@ import { useEntitySheetDialog } from "@/lib/hooks/useEntityDialog"
 import { useItemSelection } from "@/lib/hooks/useItemSelection"
 import { usePrint } from "@/lib/hooks/usePrint"
 import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
-import { useCustomItemTemplateChoices } from "@/lib/queries/inventory/useCustomItemTemplates"
 import { useItemChoices, useStallChoices, useClientChoices } from "@/lib/queries/useChoices"
 import { holdSale } from "@/lib/utils/heldSales"
 import { formatCurrency } from "@/lib/utils/helpers"
@@ -241,7 +240,6 @@ export default function SalesTransactionForm({
     setTemplates(getSaleTemplates())
   }, [])
   const { data: allItemsData, isLoading: itemsLoading } = useItemChoices()
-  const { data: customItemTemplates = [] } = useCustomItemTemplateChoices()
   const { data: recentClients = [] } = useRecentClients(8)
   const { data: allClients = [] } = useClientChoices()
   const pinnedClients = useMemo(() => {
@@ -1007,7 +1005,6 @@ export default function SalesTransactionForm({
               disabled={isDisabled}
               items={items}
               allItems={allItems}
-              customItemTemplates={customItemTemplates}
               stockMap={stockMap.size > 0 ? stockMap : undefined}
               untrackedItemIds={
                 untrackedItemIds.size > 0 ? untrackedItemIds : undefined

@@ -31,14 +31,12 @@ import {
 } from "@/components/ui/tooltip"
 import {
     ApplianceItemUsed,
-    CustomItemTemplate,
     Item,
     Stock,
 } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useApplianceItemMutations } from "@/lib/mutations/services/useApplianceItemMutations"
-import { useCustomItemTemplateChoices } from "@/lib/queries/inventory/useCustomItemTemplates"
 import { useApplianceItems } from "@/lib/queries/services/useApplianceItems"
 import { useItemChoices } from "@/lib/queries/useChoices"
 import api from "@/lib/utils/api"
@@ -72,7 +70,7 @@ export default function AppliancePartsManager({
   const [isCustom, setIsCustom] = useState(false)
   const [customPrice, setCustomPrice] = useState("")
   const [customDescription, setCustomDescription] = useState("")
-  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
+  const [selectedUntrackedItemId, setSelectedUntrackedItemId] = useState<number | null>(
     null,
   )
   const [pendingItems, setPendingItems] = useState<
@@ -95,25 +93,24 @@ export default function AppliancePartsManager({
 
   // Fetch all items for selection (unpaginated)
   const { data: itemsData, isLoading: itemsLoading } = useItemChoices()
-  const { data: templateData } = useCustomItemTemplateChoices()
 
   const { addItem, updateItem, deleteItem } = useApplianceItemMutations()
 
   const items: Item[] = itemsData ?? []
-  const templates: CustomItemTemplate[] = templateData ?? []
+  const untrackedItems = items.filter((i) => !i.is_tracked)
   const selectedItem = items.find((i) => i.id === selectedItemId)
   const isMutatingPart = addItem.isPending || updateItem.isPending
   const isDialogBusy = isSubmitting || isMutatingPart
 
   // Transform items to ComboBox options
-  const itemOptions = items.map((item) => ({
+  const itemOptions = items.filter((i) => i.is_tracked).map((item) => ({
     value: item.id,
     label: item.sku ? `${item.name} — ${item.sku}` : item.name,
   }))
 
-  const templateOptions = templates.map((t) => ({
-    value: t.id,
-    label: `${t.name} — ${formatCurrency(t.default_price)}`,
+  const untrackedItemOptions = untrackedItems.map((item) => ({
+    value: item.id,
+    label: `${item.name} — ${formatCurrency(item.retail_price)}`,
   }))
 
   // Fetch stock info for the selected item (to show availability)
@@ -180,7 +177,7 @@ export default function AppliancePartsManager({
       setIsCustom(false)
       setCustomPrice("")
       setCustomDescription("")
-      setSelectedTemplateId(null)
+      setSelectedUntrackedItemId(null)
       setDiscountValue("")
       setDiscountReason("")
     }
@@ -269,7 +266,7 @@ export default function AppliancePartsManager({
     setIsCustom(false)
     setCustomPrice("")
     setCustomDescription("")
-    setSelectedTemplateId(null)
+    setSelectedUntrackedItemId(null)
     setDiscountValue("")
     setDiscountReason("")
   }
@@ -655,7 +652,7 @@ export default function AppliancePartsManager({
             setIsFree(false)
             setDiscountValue("")
             setDiscountReason("")
-            setSelectedTemplateId(null)
+            setSelectedUntrackedItemId(null)
             setPendingItems([])
           }
         }}
@@ -806,27 +803,27 @@ export default function AppliancePartsManager({
                     disabled={isDialogBusy}
                   />
                 </div>
-                {templates.length > 0 && (
+                {untrackedItems.length > 0 && (
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">
-                      Quick-fill from template
+                      Quick-fill from custom item
                     </Label>
                     <ComboBox
-                      options={templateOptions}
-                      value={selectedTemplateId}
+                      options={untrackedItemOptions}
+                      value={selectedUntrackedItemId}
                       onChange={(value) => {
                         const id = value as number | null
-                        setSelectedTemplateId(id)
+                        setSelectedUntrackedItemId(id)
                         if (id) {
-                          const tpl = templates.find((t) => t.id === id)
-                          if (tpl) {
-                          setCustomPrice(tpl.default_price)
-                          setCustomDescription(tpl.name)
+                          const item = untrackedItems.find((i) => i.id === id)
+                          if (item) {
+                            setCustomPrice(item.retail_price)
+                            setCustomDescription(item.name)
                           }
                         }
                       }}
-                      placeholder="Select a template..."
-                      searchPlaceholder="Search templates..."
+                      placeholder="Select custom item..."
+                      searchPlaceholder="Search custom items..."
                       disabled={isDialogBusy}
                     />
                   </div>

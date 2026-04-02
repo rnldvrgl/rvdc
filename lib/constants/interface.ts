@@ -172,6 +172,7 @@ export interface Item {
   technician_price: string
   cost_price: string
   waste_tolerance_percentage: string
+  is_tracked: boolean
   is_deleted: boolean
   created_at: string
   updated_at: string

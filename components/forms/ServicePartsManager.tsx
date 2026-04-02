@@ -30,7 +30,6 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
-    CustomItemTemplate,
     Item,
     ServiceItemUsed,
     Stock,
@@ -38,7 +37,6 @@ import {
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useServiceItemMutations } from "@/lib/mutations/services/useServiceItemMutations"
-import { useCustomItemTemplateChoices } from "@/lib/queries/inventory/useCustomItemTemplates"
 import { useServiceItems } from "@/lib/queries/services/useServiceItems"
 import { useItemChoices } from "@/lib/queries/useChoices"
 import api from "@/lib/utils/api"
@@ -72,7 +70,7 @@ export default function ServicePartsManager({
   const [isCustom, setIsCustom] = useState(false)
   const [customPrice, setCustomPrice] = useState("")
   const [customDescription, setCustomDescription] = useState("")
-  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
+  const [selectedUntrackedItemId, setSelectedUntrackedItemId] = useState<number | null>(
     null,
   )
   const [pendingItems, setPendingItems] = useState<
@@ -94,25 +92,25 @@ export default function ServicePartsManager({
   const { data: partsUsed = [], isLoading } = useServiceItems(serviceId)
 
   const { data: itemsData, isLoading: itemsLoading } = useItemChoices()
-  const { data: templateData } = useCustomItemTemplateChoices()
 
   const { addItem, updateItem, deleteItem } = useServiceItemMutations()
 
   const items: Item[] = itemsData ?? []
+  const untrackedItems = items.filter((i) => !i.is_tracked)
   const selectedItem = items.find((i) => i.id === selectedItemId)
-  const isMutatingPart = addItem.isPending || updateItem.isPending
-  const isDialogBusy = isSubmitting || isMutatingPart
 
-  const itemOptions = items.map((item) => ({
+  const itemOptions = items.filter((i) => i.is_tracked).map((item) => ({
     value: item.id,
     label: item.sku ? `${item.name} — ${item.sku}` : item.name,
   }))
 
-  const templates: CustomItemTemplate[] = templateData ?? []
-  const templateOptions = templates.map((t) => ({
-    value: t.id,
-    label: `${t.name} — ${formatCurrency(t.default_price)}`,
+  const untrackedItemOptions = untrackedItems.map((item) => ({
+    value: item.id,
+    label: `${item.name} — ${formatCurrency(item.retail_price)}`,
   }))
+
+  const isMutatingPart = addItem.isPending || updateItem.isPending
+  const isDialogBusy = isSubmitting || isMutatingPart
 
   const { data: stockData } = useApiQuery<PaginatedResult<Stock>>({
     queryKey: ["stall-stocks", "item", selectedItemId],
@@ -184,7 +182,7 @@ export default function ServicePartsManager({
       setIsCustom(false)
       setCustomPrice("")
       setCustomDescription("")
-      setSelectedTemplateId(null)
+      setSelectedUntrackedItemId(null)
       setDiscountValue("")
       setDiscountReason("")
     }
@@ -265,7 +263,7 @@ export default function ServicePartsManager({
     setIsCustom(false)
     setCustomPrice("")
     setCustomDescription("")
-    setSelectedTemplateId(null)
+    setSelectedUntrackedItemId(null)
     setDiscountValue("")
     setDiscountReason("")
   }
@@ -650,7 +648,7 @@ export default function ServicePartsManager({
             setCustomPrice("")
             setDiscountValue("")
             setDiscountReason("")
-            setSelectedTemplateId(null)
+            setSelectedUntrackedItemId(null)
             setPendingItems([])
           }
         }}
@@ -845,27 +843,27 @@ export default function ServicePartsManager({
                     disabled={isDialogBusy}
                   />
                 </div>
-                {templates.length > 0 && (
+                {untrackedItems.length > 0 && (
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">
-                      Quick-fill from template
+                      Quick-fill from custom item
                     </Label>
                     <ComboBox
-                      options={templateOptions}
-                      value={selectedTemplateId}
+                      options={untrackedItemOptions}
+                      value={selectedUntrackedItemId}
                       onChange={(value) => {
                         const id = value as number | null
-                        setSelectedTemplateId(id)
+                        setSelectedUntrackedItemId(id)
                         if (id) {
-                          const tpl = templates.find((t) => t.id === id)
-                          if (tpl) {
-                          setCustomPrice(tpl.default_price)
-                          setCustomDescription(tpl.name)
+                          const item = untrackedItems.find((i) => i.id === id)
+                          if (item) {
+                            setCustomPrice(item.retail_price)
+                            setCustomDescription(item.name)
                           }
                         }
                       }}
-                      placeholder="Select a template..."
-                      searchPlaceholder="Search templates..."
+                      placeholder="Select custom item..."
+                      searchPlaceholder="Search custom items..."
                       disabled={isDialogBusy}
                     />
                   </div>
