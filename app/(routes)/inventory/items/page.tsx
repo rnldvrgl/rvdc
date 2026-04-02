@@ -20,12 +20,11 @@ import { useState } from "react"
 
 export default function ItemsPage() {
   const { isAdmin, role } = useCurrentUser()
-  const [viewMode, setViewMode] = useState<"active" | "untracked" | "archived">("active")
+  const [viewMode, setViewMode] = useState<"active" | "archived">("active")
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
-  const { deleteItem } = useItemMutations()
+  const { deleteItem, toggleTracked } = useItemMutations()
   const isArchived = viewMode === "archived"
-  const isUntracked = viewMode === "untracked"
   const { archivedQuery, restoreItem } = useArchive<Item>(
     "/inventory/items/",
     "items",
@@ -37,10 +36,7 @@ export default function ItemsPage() {
     limit,
     search,
     ordering,
-    filter: {
-      ...filter,
-      is_tracked: isUntracked ? "false" : "true",
-    },
+    filter,
   })
   const { filters, orderingOptions } = useItemFilters()
 
@@ -66,6 +62,10 @@ export default function ItemsPage() {
     if (item.id !== undefined) restoreItem.mutate(item.id)
   }
 
+  const handleToggleTracked = (item: Item) => {
+    if (item.id !== undefined) toggleTracked.mutate(item.id)
+  }
+
   const columns = isArchived
     ? getItemColumns({
         onEdit: () => {},
@@ -76,6 +76,7 @@ export default function ItemsPage() {
     : getItemColumns({
         onEdit: openEditSheet,
         onDelete: handleDelete,
+        onToggleTracked: handleToggleTracked,
         role: role || "guest",
       })
 
@@ -84,11 +85,10 @@ export default function ItemsPage() {
       <PageHeader
         icon={Package}
         title="Inventory Items"
-        description="Manage your product catalog, track item details, and monitor inventory levels across all categories."
+        description="Manage your product catalog and track item details across all categories."
         breadcrumbs={["Dashboard", "Inventory", "Items"]}
         actionButton={
           !isArchived &&
-          !isUntracked &&
           isAdmin && (
             <Button onClick={() => openAddSheet()}>
               <Plus className="size-4 mr-2" />
@@ -101,7 +101,7 @@ export default function ItemsPage() {
       <Tabs
         value={viewMode}
         onValueChange={(value) =>
-          setViewMode(value as "active" | "untracked" | "archived")
+          setViewMode(value as "active" | "archived")
         }
       >
         <TabsList>
@@ -111,13 +111,6 @@ export default function ItemsPage() {
           >
             <Package className="size-3.5" />
             Active
-          </TabsTrigger>
-          <TabsTrigger
-            value="untracked"
-            className="gap-1.5"
-          >
-            <Package className="size-3.5" />
-            Untracked
           </TabsTrigger>
           <TabsTrigger
             value="archived"
@@ -166,9 +159,7 @@ export default function ItemsPage() {
         description={
           isArchived
             ? "Review archived inventory items"
-            : isUntracked
-              ? "Catalogue-only items that are not deducted from stock"
-              : "Manage your tracked inventory catalog"
+            : "Manage your inventory catalog"
         }
         isLoading={isArchived ? archivedQuery.isLoading : isLoading}
         columns={columns}
@@ -187,16 +178,12 @@ export default function ItemsPage() {
         emptyTitle={
           isArchived
             ? "No archived items"
-            : isUntracked
-              ? "No untracked items found"
-              : "No inventory items found"
+            : "No inventory items found"
         }
         emptyDescription={
           isArchived
             ? "Archived items will appear here"
-            : isUntracked
-              ? "Untracked catalogue items will appear here"
-              : "Add your first product to build your catalog"
+            : "Add your first product to build your catalog"
         }
       />
     </Wrapper>

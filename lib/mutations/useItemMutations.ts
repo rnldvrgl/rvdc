@@ -50,6 +50,12 @@ export function useItemMutations() {
     ],
   })
 
+  const toggleTracked = useApiMutation({
+    mutationFn: (id: number) => api.post(`${url}${id}/toggle-tracked/`),
+    successMessage: "Item tracking updated.",
+    invalidateQueries: sharedInvalidations,
+  })
+
   const bulkPreview = useApiMutation<FormData, unknown>({
     mutationFn: (formData) =>
       api.post(`${url}bulk-preview/`, formData, {
@@ -70,5 +76,5 @@ export function useItemMutations() {
     invalidateQueries: sharedInvalidations,
   })
 
-  return { addItem, updateItem, deleteItem, bulkPreview, bulkUpdate }
+  return { addItem, updateItem, deleteItem, toggleTracked, bulkPreview, bulkUpdate }
 }

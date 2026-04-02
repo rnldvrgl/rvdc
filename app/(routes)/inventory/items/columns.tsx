@@ -1,12 +1,20 @@
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
 import { GetColumnsProps, Item } from "@/lib/constants/interface"
 import { Roles } from "@/lib/constants/types"
-import { formatCurrency, safeCell } from "@/lib/utils/helpers"
+import { formatCurrency } from "@/lib/utils/helpers"
 import { CellContext, ColumnDef } from "@tanstack/react-table"
-import { Archive, Edit, RotateCcw, Trash2 } from "lucide-react"
+import {
+  Archive,
+  Edit,
+  Eye,
+  EyeOff,
+  RotateCcw,
+  Trash2,
+} from "lucide-react"
 
 interface GetItemColumnsProps extends GetColumnsProps<Item> {
   role: Roles
+  onToggleTracked?: (item: Item) => void
 }
 
 export function getItemColumns({
@@ -14,56 +22,103 @@ export function getItemColumns({
   onDelete,
   onRestore,
   onHardDelete,
+  onToggleTracked,
   role,
 }: GetItemColumnsProps): ColumnDef<Item>[] {
   return [
     {
       accessorKey: "name",
-      header: "Name",
-    },
-    {
-      accessorKey: "sku",
-      header: "SKU",
-      cell: ({ getValue }) => safeCell(getValue()),
+      header: "Item",
+      cell: ({ row }: CellContext<Item, unknown>) => {
+        const item = row.original
+        return (
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <span className="font-medium text-foreground truncate">
+              {item.name}
+            </span>
+            <span className="text-xs text-muted-foreground font-mono">
+              {item.sku}
+            </span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "category.name",
       header: "Category",
-      cell: ({ row }: CellContext<Item, unknown>) =>
-        safeCell(row.original.category?.name),
+      cell: ({ row }: CellContext<Item, unknown>) => {
+        const name = row.original.category?.name
+        if (!name) return <span className="text-muted-foreground">—</span>
+        return (
+          <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            {name}
+          </span>
+        )
+      },
     },
     {
       accessorKey: "unit_of_measure",
       header: "Unit",
-      cell: ({ getValue }) => safeCell(getValue()),
+      cell: ({ getValue }) => (
+        <span className="text-sm text-muted-foreground uppercase">
+          {(getValue() as string) || "—"}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "is_tracked",
+      header: "Tracking",
+      cell: ({ row }: CellContext<Item, unknown>) => {
+        const tracked = row.original.is_tracked
+        return (
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+              tracked
+                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+            }`}
+          >
+            {tracked ? (
+              <>
+                <span className="size-1.5 rounded-full bg-emerald-500" />
+                Tracked
+              </>
+            ) : (
+              <>
+                <span className="size-1.5 rounded-full bg-zinc-400" />
+                Untracked
+              </>
+            )}
+          </span>
+        )
+      },
     },
     {
       accessorKey: "retail_price",
-      header: "Retail Price",
-      cell: ({ getValue }) => formatCurrency(getValue() as number | string),
-    },
-    {
-      accessorKey: "wholesale_price",
-      header: "Wholesale Price",
-      cell: ({ getValue }) => formatCurrency(getValue() as number | string),
-    },
-    {
-      accessorKey: "technician_price",
-      header: "Technician Price",
-      cell: ({ getValue }) => formatCurrency(getValue() as number | string),
+      header: () => <span className="text-right block">Retail</span>,
+      cell: ({ getValue }) => (
+        <span className="text-right block font-medium tabular-nums">
+          {formatCurrency(getValue() as number | string)}
+        </span>
+      ),
     },
     {
       accessorKey: "cost_price",
-      header: "Cost Price",
-      cell: ({ getValue }) => formatCurrency(getValue() as number | string),
+      header: () => <span className="text-right block">Cost</span>,
+      cell: ({ getValue }) => (
+        <span className="text-right block text-muted-foreground tabular-nums">
+          {formatCurrency(getValue() as number | string)}
+        </span>
+      ),
     },
     ...(role === "admin"
       ? [
           {
             accessorKey: "action",
-            header: "Action",
+            header: "",
             cell: ({ row }: CellContext<Item, unknown>) => {
               const item = row.original
+
               if (onRestore) {
                 return (
                   <DataTableActions
@@ -88,6 +143,7 @@ export function getItemColumns({
                   />
                 )
               }
+
               return (
                 <DataTableActions
                   items={[
@@ -96,11 +152,26 @@ export function getItemColumns({
                       icon: Edit,
                       onClick: () => onEdit(item),
                     },
+                    ...(onToggleTracked
+                      ? [
+                          {
+                            label: item.is_tracked
+                              ? "Untrack Item"
+                              : "Track Item",
+                            icon: item.is_tracked ? EyeOff : Eye,
+                            onClick: () => onToggleTracked(item),
+                            confirmText: item.is_tracked
+                              ? `Stop tracking stock for ${item.name}?`
+                              : `Start tracking stock for ${item.name}?`,
+                          },
+                        ]
+                      : []),
                     {
                       label: "Archive",
                       icon: Archive,
                       onClick: () => onDelete(item),
                       confirmText: `Archive ${item.name}?`,
+                      destructive: true,
                     },
                   ]}
                 />
