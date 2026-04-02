@@ -515,11 +515,16 @@ export default function SalesTransactionForm({
 
   if (isInitialLoading) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-        <Loader2 className="size-5 animate-spin text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
-          {initialData ? "Loading transaction..." : "Loading sale form..."}
-        </p>
+      <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-background/85 backdrop-blur-sm py-16 text-center">
+        <Loader2 className="size-6 animate-spin text-primary" />
+        <div className="space-y-0.5">
+          <p className="text-sm font-medium">
+            {initialData ? "Loading transaction..." : "Loading sale form..."}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Please wait while we prepare the form.
+          </p>
+        </div>
       </div>
     )
   }

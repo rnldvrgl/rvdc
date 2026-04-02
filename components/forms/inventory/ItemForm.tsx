@@ -199,7 +199,7 @@ export default function ItemForm({ item, onClose }: ItemFormProps) {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-6 max-w-md"
+          className="space-y-6"
         >
           <div className="space-y-4 grid">
             <FormField

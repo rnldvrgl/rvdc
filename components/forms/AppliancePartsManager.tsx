@@ -124,8 +124,8 @@ export default function AppliancePartsManager({
 
   const handleSavePart = async () => {
     if (isCustom) {
-      if (!customPrice || !quantity) {
-        toast.error("Please fill in price and quantity")
+      if (!selectedUntrackedItemId || !customPrice || !quantity) {
+        toast.error("Please select an untracked item and fill in quantity")
         return
       }
     } else {
@@ -218,12 +218,8 @@ export default function AppliancePartsManager({
 
   const handleAddToList = () => {
     if (isCustom) {
-      if (!customPrice || !quantity) {
-        toast.error("Please fill in price and quantity")
-        return
-      }
-      if (!customDescription?.trim()) {
-        toast.error("Please provide a name/description for the custom item")
+      if (!selectedUntrackedItemId || !customPrice || !quantity) {
+        toast.error("Please select an untracked item and fill in quantity")
         return
       }
     } else {
@@ -775,55 +771,48 @@ export default function AppliancePartsManager({
                 htmlFor="parts_is_custom"
                 className="text-sm font-medium cursor-pointer"
               >
-                Custom Item (not in inventory)
+                Untracked Item (no stock deduction)
               </Label>
             </div>
 
             {isCustom ? (
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>Item Name / Description</Label>
-                  <Input
-                    type="text"
-                    value={customDescription}
-                    onChange={(e) => setCustomDescription(e.target.value)}
-                    placeholder="e.g. Capacitor 25uf, Copper tube 1/4"
+                  <Label>Untracked Item</Label>
+                  <ComboBox
+                    options={untrackedItemOptions}
+                    value={selectedUntrackedItemId}
+                    onChange={(value) => {
+                      const id = value as number | null
+                      setSelectedUntrackedItemId(id)
+                      if (id) {
+                        const item = untrackedItems.find((i) => i.id === id)
+                        if (item) {
+                          setCustomPrice(item.retail_price)
+                          setCustomDescription(item.name)
+                        }
+                      } else {
+                        setCustomPrice("")
+                        setCustomDescription("")
+                      }
+                    }}
+                    placeholder="Select untracked item..."
+                    searchPlaceholder="Search untracked items..."
                     disabled={isDialogBusy}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Price per Unit (₱)</Label>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={customPrice}
-                    onChange={(e) => setCustomPrice(e.target.value)}
-                    placeholder="0.00"
-                    disabled={isDialogBusy}
-                  />
-                </div>
-                {untrackedItems.length > 0 && (
+                {selectedUntrackedItemId && (
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">
-                      Quick-fill from custom item
+                      Unit Price (₱) — auto-filled, can override
                     </Label>
-                    <ComboBox
-                      options={untrackedItemOptions}
-                      value={selectedUntrackedItemId}
-                      onChange={(value) => {
-                        const id = value as number | null
-                        setSelectedUntrackedItemId(id)
-                        if (id) {
-                          const item = untrackedItems.find((i) => i.id === id)
-                          if (item) {
-                            setCustomPrice(item.retail_price)
-                            setCustomDescription(item.name)
-                          }
-                        }
-                      }}
-                      placeholder="Select custom item..."
-                      searchPlaceholder="Search custom items..."
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={customPrice}
+                      onChange={(e) => setCustomPrice(e.target.value)}
+                      placeholder="0.00"
                       disabled={isDialogBusy}
                     />
                   </div>
@@ -1117,7 +1106,7 @@ export default function AppliancePartsManager({
                 disabled={
                   isDialogBusy ||
                   (isCustom
-                    ? !customPrice || !quantity
+                    ? !selectedUntrackedItemId || !quantity
                     : !selectedItemId || !quantity)
                 }
               >
@@ -1134,7 +1123,7 @@ export default function AppliancePartsManager({
                   disabled={
                     isDialogBusy ||
                     (isCustom
-                      ? !customPrice || !quantity
+                      ? !selectedUntrackedItemId || !quantity
                       : !selectedItemId || !quantity)
                   }
                 >

@@ -95,18 +95,18 @@ export function getItemColumns({
     },
     {
       accessorKey: "retail_price",
-      header: () => <span className="text-right block">Retail</span>,
+      header: "Retail",
       cell: ({ getValue }) => (
-        <span className="text-right block font-medium tabular-nums">
+        <span className="font-medium tabular-nums">
           {formatCurrency(getValue() as number | string)}
         </span>
       ),
     },
     {
       accessorKey: "cost_price",
-      header: () => <span className="text-right block">Cost</span>,
+      header: "Cost",
       cell: ({ getValue }) => (
-        <span className="text-right block text-muted-foreground tabular-nums">
+        <span className="text-muted-foreground tabular-nums">
           {formatCurrency(getValue() as number | string)}
         </span>
       ),
