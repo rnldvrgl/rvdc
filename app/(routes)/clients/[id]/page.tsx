@@ -147,8 +147,8 @@ export default function ClientDetailPage() {
     [services],
   )
   const warrantyClaimColumns = useMemo(
-    () => getWarrantyClaimColumns({ onViewService: handleViewService }),
-    [canManage],
+    () => getWarrantyClaimColumns(),
+    [],
   )
 
   // ── Loading / not found ───────────────────────────────────────────────────

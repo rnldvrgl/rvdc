@@ -152,7 +152,7 @@ export default function SalesTransactionsPage() {
       newUrl.searchParams.delete("view")
       router.replace(newUrl.pathname + newUrl.search, { scroll: false })
     }
-  }, [viewId, viewTransaction, router])
+  }, [viewId, viewTransaction, router, openView])
 
   // Reset the flag when viewId changes or is cleared
   useEffect(() => {

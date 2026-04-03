@@ -203,7 +203,6 @@ export function SalesTransactionDetails({
               }
               value={
                 entity.manual_receipt_number ||
-                entity.system_receipt_number ||
                 "N/A"
               }
               icon={<Hash className="size-4" />}

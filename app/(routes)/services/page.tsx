@@ -104,7 +104,7 @@ export default function ServicesPage() {
       newUrl.searchParams.delete("view")
       router.replace(newUrl.pathname + newUrl.search, { scroll: false })
     }
-  }, [viewId, viewService, router])
+  }, [viewId, viewService, router, state])
 
   // Reset the flag when viewId changes or is cleared
   useEffect(() => {

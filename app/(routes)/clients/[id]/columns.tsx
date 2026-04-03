@@ -8,6 +8,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import type { AirconUnits, SalesTransaction, Service, ServicePayment } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/currency"
 import { getBadgeVariant } from "@/lib/utils/helpers"
@@ -20,7 +25,7 @@ import {
 } from "@/lib/utils/helpers/service"
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { Archive, MoreHorizontal, RotateCcw, Shield, Wrench } from "lucide-react"
+import { Archive, Gift, MoreHorizontal, RotateCcw, Shield, Sparkles, Wrench } from "lucide-react"
 
 // ── Label maps ──────────────────────────────────────────────────────────────
 
@@ -101,31 +106,67 @@ export function getServiceColumns({
     },
     {
       id: "type",
-      header: "Type",
+      header: "Service",
       enableSorting: false,
-      cell: ({ row }) => (
-        <div>
-          <Badge variant="outline" className={`text-xs ${getServiceTypeBadgeClass(row.original.service_type)}`}>
-            {getServiceTypeLabel(row.original.service_type)}
-          </Badge>
-          {row.original.description && (
-            <p className="text-xs text-muted-foreground line-clamp-1 max-w-[180px] mt-0.5">
-              {row.original.description}
-            </p>
-          )}
-        </div>
-      ),
-    },
-    {
-      id: "mode",
-      header: "Mode",
-      enableSorting: false,
-      meta: { thClass: "hidden sm:table-cell w-28", tdClass: "hidden sm:table-cell w-28" },
-      cell: ({ row }) => (
-        <Badge variant="outline" className="text-xs">
-          {getServiceModeLabel(row.original.service_mode)}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const service = row.original
+        const warranty = service.appliances?.some(
+          (a) => a.is_labor_warranty_active || a.is_unit_warranty_active,
+        ) ?? false
+        const freeCleaning = service.installation_units?.some(
+          (u) => u.free_cleaning_redeemed === false && u.free_cleaning_status === "available",
+        ) ?? false
+
+        return (
+          <div className="space-y-0.5">
+            <div className="flex flex-wrap items-center gap-1">
+              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getServiceTypeBadgeClass(service.service_type)}`}>
+                {getServiceTypeLabel(service.service_type)}
+              </Badge>
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                {getServiceModeLabel(service.service_mode)}
+              </Badge>
+              {service.is_complementary && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] px-1.5 py-0 border-amber-500 text-amber-600 dark:text-amber-400 gap-0.5"
+                    >
+                      <Gift className="h-2.5 w-2.5" />
+                      {service.complementary_reason === "Warranty Claim" ? "Warranty" : "Free"}
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {service.complementary_reason || "Complementary Service"}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {warranty && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Shield className="h-3 w-3 text-blue-500 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>Active warranty</TooltipContent>
+                </Tooltip>
+              )}
+              {freeCleaning && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Sparkles className="h-3 w-3 text-success shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent>Free cleaning available</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            {service.description && (
+              <p className="text-xs text-muted-foreground line-clamp-1 max-w-[180px]">
+                {service.description}
+              </p>
+            )}
+          </div>
+        )
+      },
     },
     {
       id: "status",
@@ -185,6 +226,24 @@ export function getServiceColumns({
           {formatCurrency(row.original.total_revenue)}
         </span>
       ),
+    },
+    {
+      id: "balance",
+      accessorFn: (row) => parseFloat(row.balance_due || "0"),
+      header: "Balance",
+      enableSorting: true,
+      meta: { thClass: "w-28", tdClass: "w-28" },
+      cell: ({ row }) => {
+        const balance = parseFloat(row.original.balance_due || "0")
+        if (balance === 0) {
+          return <span className="text-muted-foreground text-sm">—</span>
+        }
+        return (
+          <span className={`font-medium tabular-nums text-sm ${balance < 0 ? "text-orange-600" : "text-destructive"}`}>
+            {formatCurrency(balance)}
+          </span>
+        )
+      },
     },
     {
       id: "payment_status",
@@ -248,24 +307,30 @@ export function getArchivedServiceColumns(
     },
     {
       id: "type",
-      header: "Type",
+      header: "Service",
       enableSorting: false,
-      cell: ({ row }) => (
-        <Badge variant="outline" className={`text-xs ${getServiceTypeBadgeClass(row.original.service_type)}`}>
-          {getServiceTypeLabel(row.original.service_type)}
-        </Badge>
-      ),
-    },
-    {
-      id: "mode",
-      header: "Mode",
-      enableSorting: false,
-      meta: { thClass: "hidden sm:table-cell w-28", tdClass: "hidden sm:table-cell w-28" },
-      cell: ({ row }) => (
-        <Badge variant="outline" className="text-xs">
-          {getServiceModeLabel(row.original.service_mode)}
-        </Badge>
-      ),
+      cell: ({ row }) => {
+        const service = row.original
+        return (
+          <div className="flex flex-wrap items-center gap-1">
+            <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getServiceTypeBadgeClass(service.service_type)}`}>
+              {getServiceTypeLabel(service.service_type)}
+            </Badge>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+              {getServiceModeLabel(service.service_mode)}
+            </Badge>
+            {service.is_complementary && (
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 border-amber-500 text-amber-600 dark:text-amber-400 gap-0.5"
+              >
+                <Gift className="h-2.5 w-2.5" />
+                {service.complementary_reason === "Warranty Claim" ? "Warranty" : "Free"}
+              </Badge>
+            )}
+          </div>
+        )
+      },
     },
     {
       id: "status",
@@ -608,11 +673,7 @@ export const warrantyFilterFn = (s: Service, q: string) =>
 
 // ── Warranty claim columns ──────────────────────────────────────────────────
 
-export function getWarrantyClaimColumns({
-  onViewService,
-}: {
-  onViewService: (s: Service) => void
-}): ColumnDef<Service>[] {
+export function getWarrantyClaimColumns(): ColumnDef<Service>[] {
   return [
     {
       id: "id",
