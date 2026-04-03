@@ -1,6 +1,6 @@
 "use client"
 
-import { ClientComboBox } from "@/components/custom/inputs/ClientComboBox"
+import { ClientCardSelect } from "@/components/custom/inputs/ClientComboBox"
 import DatePicker from "@/components/custom/inputs/DatePicker"
 import EntityDialog from "@/components/custom/shared/EntityDialog"
 import ItemQuantitySelector from "@/components/custom/shared/ItemQuantitySelector"
@@ -48,16 +48,16 @@ import {
 } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
-import { useRecentClients } from "@/lib/queries/clients/useClients"
+
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheetDialog } from "@/lib/hooks/useEntityDialog"
 import { useItemSelection } from "@/lib/hooks/useItemSelection"
 import { usePrint } from "@/lib/hooks/usePrint"
 import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
-import { useItemChoices, useStallChoices, useClientChoices } from "@/lib/queries/useChoices"
+import { useItemChoices, useStallChoices } from "@/lib/queries/useChoices"
 import { holdSale } from "@/lib/utils/heldSales"
 import { formatCurrency } from "@/lib/utils/helpers"
-import { getPinnedClientIds } from "@/lib/utils/pinnedClients"
+
 import {
   getSaleTemplates,
   removeSaleTemplate,
@@ -79,7 +79,6 @@ import {
   RotateCcw,
   Save,
   ShoppingCart,
-  Star,
   Trash2,
   X,
 } from "lucide-react"
@@ -240,15 +239,6 @@ export default function SalesTransactionForm({
     setTemplates(getSaleTemplates())
   }, [])
   const { data: allItemsData, isLoading: itemsLoading } = useItemChoices()
-  const { data: recentClients = [] } = useRecentClients(8)
-  const { data: allClients = [] } = useClientChoices()
-  const pinnedClients = useMemo(() => {
-    const ids = getPinnedClientIds()
-    if (ids.length === 0) return []
-    return ids
-      .map((id) => allClients.find((c) => c.id === id))
-      .filter(Boolean) as typeof allClients
-  }, [allClients])
   const allItems: Item[] = allItemsData ?? []
 
   // Fetch stock levels for the sub stall
@@ -683,56 +673,11 @@ export default function SalesTransactionForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel required>Client</FormLabel>
-                    <ClientComboBox
+                    <ClientCardSelect
                       disabled={isDisabled}
                       value={field.value ? Number(field.value) : null}
                       onChange={(val) => field.onChange(val ?? null)}
-                      allowCreate={!initialData}
                     />
-                    {!initialData && pinnedClients.length > 0 && !field.value && (
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                          <Star className="size-3" />
-                          Pinned
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {pinnedClients.map((client) => (
-                            <Button
-                              key={client.id}
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs px-2.5"
-                              onClick={() => field.onChange(client.id)}
-                            >
-                              {client.full_name}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {!initialData && recentClients.length > 0 && !field.value && (
-                      <div className="space-y-1.5">
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wide flex items-center gap-1">
-                          <Star className="size-3" />
-                          Recent
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {recentClients.map((client) => (
-                            <Button
-                              key={client.id}
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-xs px-2.5"
-                              onClick={() => field.onChange(client.id)}
-                            >
-                              {client.full_name}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     <FormMessage />
                   </FormItem>
                 )}
