@@ -2212,6 +2212,10 @@ export default function ServiceDetail({
                 variant="outline"
                 size="sm"
                 onClick={handleAddPayment}
+                disabled={
+                  parseFloat(service.total_revenue || "0") === 0 ||
+                  service.payment_status === "no_charge"
+                }
               >
                 <Wallet className="mr-1.5 h-3.5 w-3.5" />
                 Record Payment

@@ -44,6 +44,7 @@ interface PageHeaderProps {
   onRefresh?: () => void
   isLoading?: boolean
   actionButton?: React.ReactNode
+  children?: React.ReactNode
 }
 
 const PageHeader = ({
@@ -58,6 +59,7 @@ const PageHeader = ({
   actionButton,
   onRefresh,
   isLoading,
+  children,
 }: PageHeaderProps) => {
   const themeStyles = {
     default: {
@@ -195,7 +197,10 @@ const PageHeader = ({
         <div className={cn("flex flex-col", currentVariant.gap)}>
           {/* Main content */}
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
-            {/* Title and icon section */}
+            {children ? (
+              <div className="min-w-0 flex-1">{children}</div>
+            ) : (
+            /* Title and icon section */
             <div className="flex flex-col md:flex-row items-center md:items-start gap-4 min-w-0 flex-1">
               <div className="flex flex-col items-center justify-center space-y-3">
                 {/* Icon */}
@@ -253,6 +258,7 @@ const PageHeader = ({
                 )}
               </div>
             </div>
+            )}
 
             {/* Actions and badges */}
             <div className="flex flex-col xl:flex-row items-stretch sm:items-start xl:items-center gap-3 w-full md:w-auto">

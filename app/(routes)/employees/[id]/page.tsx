@@ -13,7 +13,7 @@ import EmployeeForm from "@/components/forms/EmployeeForm"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { CashAdvanceMovement } from "@/lib/constants/interface"
 import { Employee } from "@/lib/constants/types"
@@ -50,7 +50,6 @@ import {
   Plus,
   Store,
   Trash2,
-  User,
   Wallet,
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
@@ -108,34 +107,32 @@ const EmployeePage = () => {
   if (isLoading) {
     return (
       <div className="h-full py-8 px-4">
-        <div className="max-w-5xl mx-auto space-y-8">
-          {/* PROFILE HEADER SKELETON */}
-          <Card className="shadow-md">
-            <CardHeader className="flex flex-row items-center gap-6">
-              <Skeleton className="h-24 w-24 rounded-full" />
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-5 w-20" />
+        <div className="max-w-5xl mx-auto space-y-6">
+          {/* PAGE HEADER SKELETON */}
+          <Card className="shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <Skeleton className="h-16 w-16 rounded-full shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-6 w-48" />
+                  <Skeleton className="h-4 w-32" />
+                </div>
               </div>
-            </CardHeader>
+            </CardContent>
           </Card>
 
-          {/* CONTACT & EMPLOYMENT SKELETON */}
-          <div className="grid md:grid-cols-2 gap-6">
+          {/* INFO GRID SKELETON */}
+          <div className="grid md:grid-cols-2 gap-4">
             {[...Array(2)].map((_, i) => (
               <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-6 w-48" />
-                </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="p-4 space-y-3">
                   {[...Array(4)].map((__, j) => (
-                    <div
-                      key={j}
-                      className="space-y-1"
-                    >
-                      <Skeleton className="h-3 w-24" />
-                      <Skeleton className="h-4 w-full" />
+                    <div key={j} className="flex items-center gap-3">
+                      <Skeleton className="h-4 w-4 shrink-0" />
+                      <div className="space-y-1 flex-1">
+                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-4 w-full" />
+                      </div>
                     </div>
                   ))}
                 </CardContent>
@@ -160,14 +157,13 @@ const EmployeePage = () => {
   return (
     <Wrapper>
       <PageHeader
-        icon={User}
-        title="Employee Details"
-        description="View and manage employee profile information and employment details."
         breadcrumbs={["Dashboard", "Employees", "Details"]}
+        variant="compact"
         actionButton={
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
+              size="sm"
               onClick={() => router.push("/employees")}
               className="w-full sm:w-auto"
             >
@@ -176,6 +172,7 @@ const EmployeePage = () => {
               <span className="sm:hidden">Back</span>
             </Button>
             <Button
+              size="sm"
               onClick={() => openEntity(employee)}
               className="w-full sm:w-auto"
             >
@@ -184,45 +181,46 @@ const EmployeePage = () => {
             </Button>
           </div>
         }
-      />
-
-      <div className="mx-auto space-y-6">
-        {/* PROFILE HEADER */}
-        <Card className="shadow-md">
-          <CardHeader className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
-            <Avatar className="size-20 sm:size-24 border-2 border-primary shrink-0 text-2xl sm:text-3xl">
-              <AvatarImage
-                src={employee.profile_image}
-                alt={`${employee.first_name} ${employee.last_name}`}
-              />
-              <AvatarFallback className="bg-primary/20 text-primary font-bold">
-                {employee.first_name?.[0]}
-                {employee.last_name?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <div className="space-y-2 text-center sm:text-left flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold wrap-break-word">
-                {employee.first_name} {employee.last_name}
-              </h1>
-              <p className="text-sm sm:text-base text-muted-foreground capitalize">
+      >
+        {/* Profile in PageHeader */}
+        <div className="flex items-center gap-4">
+          <Avatar className="size-14 sm:size-16 border-2 border-primary shrink-0 text-xl sm:text-2xl">
+            <AvatarImage
+              src={employee.profile_image}
+              alt={`${employee.first_name} ${employee.last_name}`}
+            />
+            <AvatarFallback className="bg-primary/20 text-primary font-bold">
+              {employee.first_name?.[0]}
+              {employee.last_name?.[0]}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight truncate">
+              {employee.first_name} {employee.last_name}
+            </h1>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-sm text-muted-foreground capitalize">
                 {employee.role}
               </p>
-              <Badge variant={employee.is_active ? "default" : "outline"}>
+              <Badge
+                variant={employee.is_active ? "default" : "outline"}
+                className="text-[10px] px-1.5 py-0"
+              >
                 {employee.is_active ? "Active" : "Inactive"}
               </Badge>
             </div>
-          </CardHeader>
-        </Card>
+          </div>
+        </div>
+      </PageHeader>
 
-        {/* CONTACT & EMPLOYMENT */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      <div className="mx-auto space-y-4">
+        {/* CONTACT & EMPLOYMENT — compact 2-column grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
-            <CardHeader className="pb-3">
-              <h2 className="text-base sm:text-lg font-semibold">
+            <CardContent className="p-4 space-y-2.5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
                 Contact & Address
-              </h2>
-            </CardHeader>
-            <CardContent className="space-y-3">
+              </h3>
               <Detail
                 icon={<KeyRound className="size-4" />}
                 label="Username"
@@ -269,12 +267,10 @@ const EmployeePage = () => {
           </Card>
 
           <Card>
-            <CardHeader className="pb-3">
-              <h2 className="text-base sm:text-lg font-semibold">
-                Employment & Other Info
-              </h2>
-            </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="p-4 space-y-2.5">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                Employment Info
+              </h3>
               <Detail
                 icon={<Wallet className="size-4" />}
                 label="Basic Salary"
@@ -311,107 +307,98 @@ const EmployeePage = () => {
               />
             </CardContent>
           </Card>
+        </div>
 
-          {/* CASH ADVANCE SECTION */}
-          <Card className="col-span-full">
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0 pb-4">
-              <div className="flex-1">
-                <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-                  <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
+        {/* CASH BAN */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Cash Ban
-                </h2>
-                <p className="text-sm mt-1">
-                  <span className="text-muted-foreground">
-                    Available Balance:{" "}
-                  </span>
-                  <span
-                    className={
-                      Number(employee.cash_ban_balance || 0) > 0
-                        ? "text-success font-semibold"
-                        : "text-muted-foreground font-semibold"
-                    }
-                  >
-                    ₱{Number(employee.cash_ban_balance || 0).toLocaleString()}
-                  </span>
-                </p>
+                </h3>
+                <span
+                  className={`text-sm font-semibold ${
+                    Number(employee.cash_ban_balance || 0) > 0
+                      ? "text-success"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  ₱{Number(employee.cash_ban_balance || 0).toLocaleString()}
+                </span>
               </div>
               {canManageCashAdvance && (
                 <Button
                   size="sm"
-                  onClick={() => setShowCashAdvanceForm(!showCashAdvanceForm)}
                   variant={showCashAdvanceForm ? "outline" : "default"}
-                  className="w-full sm:w-auto"
+                  onClick={() => setShowCashAdvanceForm(!showCashAdvanceForm)}
+                  className="h-7 text-xs"
                 >
                   {showCashAdvanceForm ? (
-                    "Hide Form"
+                    "Cancel"
                   ) : (
                     <>
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="h-3.5 w-3.5 mr-1" />
                       Record Movement
                     </>
                   )}
                 </Button>
               )}
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Cash Advance Form */}
-              {canManageCashAdvance && showCashAdvanceForm && (
-                <div className="border rounded-lg p-4 bg-muted/50">
-                  <CashAdvanceForm
-                    employee={employee}
-                    onSuccess={() => setShowCashAdvanceForm(false)}
-                  />
-                </div>
-              )}
-
-              {/* Cash Advance History */}
-              <div>
-                <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                  <History className="h-4 w-4" />
-                  Transaction History
-                </h3>
-                {cashAdvances.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No cash ban movements recorded yet.
-                  </p>
-                ) : (
-                  <DataTable
-                    isLoading={isLoadingCashAdvances}
-                    columns={getCashAdvanceColumns({
-                      onDelete: (movement: CashAdvanceMovement) => {
-                        if (
-                          confirm(
-                            `Delete this ${movement.movement_type} movement of ₱${Number(movement.amount).toLocaleString()}? The balance will be reversed.`,
-                          )
-                        ) {
-                          deleteMovement.mutate(movement.id)
-                        }
-                      },
-                      canManage: canManageCashAdvance,
-                    })}
-                    data={
-                      cashAdvancesData || {
-                        count: 0,
-                        next: null,
-                        previous: null,
-                        results: [],
-                      }
-                    }
-                  />
-                )}
+            </div>
+            {/* Cash Advance Form */}
+            {canManageCashAdvance && showCashAdvanceForm && (
+              <div className="border rounded-lg p-3 bg-muted/50 mb-3">
+                <CashAdvanceForm
+                  employee={employee}
+                  onSuccess={() => setShowCashAdvanceForm(false)}
+                />
               </div>
-            </CardContent>
-          </Card>
+            )}
 
-          {/* MANUAL DEDUCTIONS SECTION */}
-          <Card className="col-span-full">
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
-              <div className="flex-1">
-                <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
-                  <BadgeDollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
+            {/* Cash Advance History */}
+            {cashAdvances.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-3">
+                No cash ban movements recorded yet.
+              </p>
+            ) : (
+              <DataTable
+                isLoading={isLoadingCashAdvances}
+                columns={getCashAdvanceColumns({
+                  onDelete: (movement: CashAdvanceMovement) => {
+                    if (
+                      confirm(
+                        `Delete this ${movement.movement_type} movement of ₱${Number(movement.amount).toLocaleString()}? The balance will be reversed.`,
+                      )
+                    ) {
+                      deleteMovement.mutate(movement.id)
+                    }
+                  },
+                  canManage: canManageCashAdvance,
+                })}
+                data={
+                  cashAdvancesData || {
+                    count: 0,
+                    next: null,
+                    previous: null,
+                    results: [],
+                  }
+                }
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* MANUAL DEDUCTIONS */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+              <div>
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                  <BadgeDollarSign className="h-4 w-4" />
                   Manual Deductions
-                </h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Per-employee deductions applied to payroll
                 </p>
               </div>
@@ -421,135 +408,121 @@ const EmployeePage = () => {
                   setSelectedDeduction(null)
                   setDeductionFormOpen(true)
                 }}
-                className="w-full sm:w-auto"
+                className="h-7 text-xs w-full sm:w-auto"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-3.5 w-3.5 mr-1" />
                 Add Deduction
               </Button>
-            </CardHeader>
-            <CardContent>
-              {employeeDeductions.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No manual deductions for this employee.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {employeeDeductions.map((ded) => (
-                    <div
-                      key={ded.id}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-md gap-3"
-                    >
-                      <div className="flex items-start gap-3 flex-1">
-                        <BadgeDollarSign className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-medium">{ded.name}</p>
-                            <Badge
-                              variant={
-                                ded.is_recurring ? "default" : "secondary"
-                              }
-                              className="text-xs"
-                            >
-                              {ded.is_recurring ? "Recurring" : "One-Time"}
+            </div>
+            {employeeDeductions.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-3">
+                No manual deductions for this employee.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {employeeDeductions.map((ded) => (
+                  <div
+                    key={ded.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-md gap-2"
+                  >
+                    <div className="flex items-start gap-2.5 flex-1">
+                      <BadgeDollarSign className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-sm font-medium">{ded.name}</p>
+                          <Badge
+                            variant={ded.is_recurring ? "default" : "secondary"}
+                            className="text-[10px] px-1.5 py-0"
+                          >
+                            {ded.is_recurring ? "Recurring" : "One-Time"}
+                          </Badge>
+                          {!ded.is_active && (
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              Paused
                             </Badge>
-                            {!ded.is_active && (
-                              <Badge
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                Paused
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="text-sm text-muted-foreground mt-1 space-y-1">
-                            <p>
-                              ₱{Number(ded.amount).toLocaleString()} / payroll
-                            </p>
-                            {ded.effective_date && (
-                              <p className="text-xs">
-                                {format(
-                                  new Date(ded.effective_date),
-                                  "MMM d, yyyy",
-                                )}
-                                {ded.end_date
-                                  ? ` - ${format(new Date(ded.end_date), "MMM d, yyyy")}`
-                                  : ded.is_recurring
-                                    ? " - Ongoing"
-                                    : ""}
-                              </p>
-                            )}
-                            {ded.description && (
-                              <p className="text-xs italic">
-                                {ded.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 sm:flex-col sm:self-start">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            toggleDeduction.mutate({
-                              id: ded.id,
-                              is_active: !ded.is_active,
-                            })
-                          }
-                          title={ded.is_active ? "Pause" : "Resume"}
-                          className="flex-1 sm:flex-none"
-                        >
-                          {ded.is_active ? (
-                            <Pause className="h-4 w-4" />
-                          ) : (
-                            <Play className="h-4 w-4" />
                           )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedDeduction(ded)
-                            setDeductionFormOpen(true)
-                          }}
-                          className="flex-1 sm:flex-none"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (
-                              confirm(
-                                `Archive deduction "${ded.name}"? It will be removed from future payrolls.`,
-                              )
-                            ) {
-                              deleteDeduction.mutate(ded.id)
-                            }
-                          }}
-                          className="flex-1 sm:flex-none"
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5 flex flex-wrap gap-x-3">
+                          <span>₱{Number(ded.amount).toLocaleString()} / payroll</span>
+                          {ded.effective_date && (
+                            <span>
+                              {format(new Date(ded.effective_date), "MMM d, yyyy")}
+                              {ded.end_date
+                                ? ` - ${format(new Date(ded.end_date), "MMM d, yyyy")}`
+                                : ded.is_recurring ? " - Ongoing" : ""}
+                            </span>
+                          )}
+                        </div>
+                        {ded.description && (
+                          <p className="text-[10px] italic text-muted-foreground mt-0.5">{ded.description}</p>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() =>
+                          toggleDeduction.mutate({
+                            id: ded.id,
+                            is_active: !ded.is_active,
+                          })
+                        }
+                        title={ded.is_active ? "Pause" : "Resume"}
+                      >
+                        {ded.is_active ? (
+                          <Pause className="h-3.5 w-3.5" />
+                        ) : (
+                          <Play className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => {
+                          setSelectedDeduction(ded)
+                          setDeductionFormOpen(true)
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => {
+                          if (
+                            confirm(
+                              `Archive deduction "${ded.name}"? It will be removed from future payrolls.`,
+                            )
+                          ) {
+                            deleteDeduction.mutate(ded.id)
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Government Benefit Overrides */}
-          {isAdmin && (
-            <Card className="col-span-full">
-              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
-                <div className="flex-1">
-                  <h2 className="text-base sm:text-lg font-semibold">
+        {/* Government Benefit Overrides */}
+        {isAdmin && (
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Government Benefit Overrides
-                  </h2>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Custom government benefit amounts — overrides standard rates for this employee
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Custom amounts — overrides standard rates for this employee
                   </p>
                 </div>
                 <Button
@@ -558,128 +531,126 @@ const EmployeePage = () => {
                     setSelectedOverride(null)
                     setBenefitOverrideOpen(true)
                   }}
-                  className="w-full sm:w-auto"
+                  className="h-7 text-xs w-full sm:w-auto"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-3.5 w-3.5 mr-1" />
                   Add Override
                 </Button>
-              </CardHeader>
-              <CardContent>
-                {benefitOverrides.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No benefit overrides configured. Standard rates apply.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(["sss", "philhealth", "pagibig", "bir_tax"] as const).map((type) => {
-                      const typeOverrides = benefitOverrides
-                        .filter((o) => o.benefit_type === type)
-                        .sort((a, b) => new Date(b.effective_start).getTime() - new Date(a.effective_start).getTime())
+              </div>
+              {benefitOverrides.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-3">
+                  No benefit overrides configured. Standard rates apply.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {(["sss", "philhealth", "pagibig", "bir_tax"] as const).map((type) => {
+                    const typeOverrides = benefitOverrides
+                      .filter((o) => o.benefit_type === type)
+                      .sort((a, b) => new Date(b.effective_start).getTime() - new Date(a.effective_start).getTime())
 
-                      if (typeOverrides.length === 0) return null
+                    if (typeOverrides.length === 0) return null
 
-                      const meta: Record<string, { icon: string; label: string }> = {
-                        sss: { icon: "🏦", label: "SSS" },
-                        philhealth: { icon: "🏥", label: "PhilHealth" },
-                        pagibig: { icon: "🏠", label: "Pag-IBIG" },
-                        bir_tax: { icon: "📊", label: "BIR Tax" },
-                      }
+                    const meta: Record<string, { icon: string; label: string }> = {
+                      sss: { icon: "🏦", label: "SSS" },
+                      philhealth: { icon: "🏥", label: "PhilHealth" },
+                      pagibig: { icon: "🏠", label: "Pag-IBIG" },
+                      bir_tax: { icon: "📊", label: "BIR Tax" },
+                    }
 
-                      return (
-                        <div key={type} className="rounded-lg border p-3 space-y-2">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg">{meta[type].icon}</span>
-                            <span className="text-sm font-semibold">{meta[type].label}</span>
-                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-                              {typeOverrides.length} {typeOverrides.length === 1 ? "entry" : "entries"}
-                            </Badge>
-                          </div>
-                          <div className="space-y-2">
-                            {typeOverrides.map((override, idx) => (
-                              <div
-                                key={override.id}
-                                className={`relative rounded-md border p-2.5 text-sm ${
-                                  !override.is_active ? "opacity-50" : idx === 0 ? "border-primary/30 bg-primary/5" : ""
-                                }`}
-                              >
-                                <div className="flex items-center justify-between mb-1">
-                                  <div className="flex items-center gap-1.5">
-                                    {idx === 0 && override.is_active && (
-                                      <Badge variant="default" className="text-[9px] px-1 py-0">Current</Badge>
-                                    )}
-                                    {!override.is_active && (
-                                      <Badge variant="secondary" className="text-[9px] px-1 py-0">Inactive</Badge>
-                                    )}
-                                    {idx > 0 && override.is_active && (
-                                      <Badge variant="outline" className="text-[9px] px-1 py-0">
-                                        <History className="h-2.5 w-2.5 mr-0.5" />
-                                        Historical
-                                      </Badge>
-                                    )}
-                                  </div>
-                                  <div className="flex gap-0.5">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 w-6 p-0"
-                                      onClick={() => {
-                                        setSelectedOverride(override)
-                                        setBenefitOverrideOpen(true)
-                                      }}
-                                    >
-                                      <Pencil className="h-3 w-3" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 w-6 p-0"
-                                      onClick={() => {
-                                        if (confirm(`Delete this ${meta[type].label} override?`)) {
-                                          deleteOverride.mutate(override.id)
-                                        }
-                                      }}
-                                    >
-                                      <Trash2 className="h-3 w-3 text-destructive" />
-                                    </Button>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-2">
-                                  <div>
-                                    <p className="text-[10px] text-muted-foreground">Employee</p>
-                                    <p className="text-xs font-medium">
-                                      ₱{Number(override.employee_share_amount).toLocaleString()}/wk
-                                    </p>
-                                  </div>
-                                  {override.employer_share_amount != null && (
-                                    <div>
-                                      <p className="text-[10px] text-muted-foreground">Employer</p>
-                                      <p className="text-xs font-medium">
-                                        ₱{Number(override.employer_share_amount).toLocaleString()}/wk
-                                      </p>
-                                    </div>
+                    return (
+                      <div key={type} className="rounded-lg border p-2.5 space-y-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-sm">{meta[type].icon}</span>
+                          <span className="text-xs font-semibold">{meta[type].label}</span>
+                          <Badge variant="outline" className="text-[9px] px-1 py-0">
+                            {typeOverrides.length}
+                          </Badge>
+                        </div>
+                        <div className="space-y-1.5">
+                          {typeOverrides.map((override, idx) => (
+                            <div
+                              key={override.id}
+                              className={`relative rounded-md border p-2 text-xs ${
+                                !override.is_active ? "opacity-50" : idx === 0 ? "border-primary/30 bg-primary/5" : ""
+                              }`}
+                            >
+                              <div className="flex items-center justify-between mb-0.5">
+                                <div className="flex items-center gap-1">
+                                  {idx === 0 && override.is_active && (
+                                    <Badge variant="default" className="text-[9px] px-1 py-0">Current</Badge>
+                                  )}
+                                  {!override.is_active && (
+                                    <Badge variant="secondary" className="text-[9px] px-1 py-0">Inactive</Badge>
+                                  )}
+                                  {idx > 0 && override.is_active && (
+                                    <Badge variant="outline" className="text-[9px] px-1 py-0">
+                                      <History className="h-2.5 w-2.5 mr-0.5" />
+                                      Historical
+                                    </Badge>
                                   )}
                                 </div>
-                                <p className="text-[10px] text-muted-foreground mt-1">
-                                  {format(new Date(override.effective_start), "MMM d, yyyy")}
-                                  {override.effective_end
-                                    ? ` — ${format(new Date(override.effective_end), "MMM d, yyyy")}`
-                                    : " — present"}
-                                </p>
-                                {override.notes && (
-                                  <p className="text-[10px] italic text-muted-foreground">{override.notes}</p>
+                                <div className="flex gap-0.5">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0"
+                                    onClick={() => {
+                                      setSelectedOverride(override)
+                                      setBenefitOverrideOpen(true)
+                                    }}
+                                  >
+                                    <Pencil className="h-2.5 w-2.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-5 w-5 p-0"
+                                    onClick={() => {
+                                      if (confirm(`Delete this ${meta[type].label} override?`)) {
+                                        deleteOverride.mutate(override.id)
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="h-2.5 w-2.5 text-destructive" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground">Employee</p>
+                                  <p className="text-xs font-medium">
+                                    ₱{Number(override.employee_share_amount).toLocaleString()}/wk
+                                  </p>
+                                </div>
+                                {override.employer_share_amount != null && (
+                                  <div>
+                                    <p className="text-[10px] text-muted-foreground">Employer</p>
+                                    <p className="text-xs font-medium">
+                                      ₱{Number(override.employer_share_amount).toLocaleString()}/wk
+                                    </p>
+                                  </div>
                                 )}
                               </div>
-                            ))}
-                          </div>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {format(new Date(override.effective_start), "MMM d, yyyy")}
+                                {override.effective_end
+                                  ? ` — ${format(new Date(override.effective_end), "MMM d, yyyy")}`
+                                  : " — present"}
+                              </p>
+                              {override.notes && (
+                                <p className="text-[10px] italic text-muted-foreground">{override.notes}</p>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* EDIT SHEET */}
