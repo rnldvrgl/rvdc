@@ -11,50 +11,48 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  useBulkToggleGovernmentBenefits,
-  useDeleteGovernmentBenefit,
   useToggleGovernmentBenefit,
 } from "@/lib/mutations/useGovernmentBenefitMutations"
 import { useGovernmentBenefits } from "@/lib/queries/useGovernmentBenefits"
 import type { GovernmentBenefit } from "@/lib/schemas/governmentBenefitSchema"
-import { getBadgeVariant } from "@/lib/utils/helpers"
 import { format } from "date-fns"
 import {
+  Banknote,
   CheckCircle2,
   Edit,
   History,
-  MoreVertical,
-  Plus,
-  Trash2,
   XCircle,
 } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
+const BENEFIT_META: Record<string, { icon: string; label: string; description: string }> = {
+  sss: {
+    icon: "🏦",
+    label: "SSS",
+    description: "Social Security System — employee & employer contributions for social insurance",
+  },
+  philhealth: {
+    icon: "🏥",
+    label: "PhilHealth",
+    description: "Philippine Health Insurance — healthcare coverage contributions",
+  },
+  pagibig: {
+    icon: "🏠",
+    label: "Pag-IBIG",
+    description: "Home Development Mutual Fund — housing and savings fund contributions",
+  },
+  bir_tax: {
+    icon: "📊",
+    label: "BIR Tax",
+    description: "Bureau of Internal Revenue — withholding tax based on income",
+  },
+}
+
 export default function GovernmentBenefitsPage() {
-  const [isAddOpen, setIsAddOpen] = useState(false)
-  const [editingBenefit, setEditingBenefit] =
-    useState<GovernmentBenefit | null>(null)
-  const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const [editingBenefit, setEditingBenefit] = useState<GovernmentBenefit | null>(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [showInactive, setShowInactive] = useState(false)
 
   const { data: benefitsData, isLoading } = useGovernmentBenefits({
@@ -65,8 +63,6 @@ export default function GovernmentBenefitsPage() {
 
   const benefits = benefitsData?.results || []
   const toggleMutation = useToggleGovernmentBenefit()
-  const deleteMutation = useDeleteGovernmentBenefit()
-  const bulkToggleMutation = useBulkToggleGovernmentBenefits()
 
   const handleToggle = async (benefit: GovernmentBenefit) => {
     try {
@@ -75,90 +71,29 @@ export default function GovernmentBenefitsPage() {
         is_active: !benefit.is_active,
       })
       toast.success(
-        `Benefit ${benefit.is_active ? "deactivated" : "activated"} successfully`,
+        `${benefit.name} ${benefit.is_active ? "deactivated" : "activated"}`,
       )
     } catch {
       toast.error("Failed to update benefit status")
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (
-      !confirm(
-        "Are you sure you want to delete this benefit? This action cannot be undone.",
-      )
-    )
-      return
-
-    try {
-      await deleteMutation.mutateAsync(id)
-      toast.success("Benefit deleted successfully")
-    } catch {
-      toast.error("Failed to delete benefit")
-    }
-  }
-
-  const handleBulkToggle = async (is_active: boolean) => {
-    if (selectedIds.length === 0) {
-      toast.error("Please select benefits to update")
-      return
-    }
-
-    try {
-      await bulkToggleMutation.mutateAsync({
-        ids: selectedIds,
-        is_active,
-      })
-      toast.success(
-        `${selectedIds.length} benefit(s) ${is_active ? "activated" : "deactivated"}`,
-      )
-      setSelectedIds([])
-    } catch {
-      toast.error("Failed to update benefits")
-    }
-  }
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked && benefits.length > 0) {
-      setSelectedIds(benefits.map((b) => b.id))
-    } else {
-      setSelectedIds([])
-    }
-  }
-
-  const handleSelectOne = (id: number, checked: boolean) => {
-    if (checked) {
-      setSelectedIds([...selectedIds, id])
-    } else {
-      setSelectedIds(selectedIds.filter((sid) => sid !== id))
-    }
-  }
-
-  const getBenefitIcon = (type: string) => {
-    switch (type) {
-      case "sss":
-        return "🏦"
-      case "philhealth":
-        return "🏥"
-      case "pagibig":
-        return "🏠"
-      case "bir_tax":
-        return "📊"
-      default:
-        return "💼"
-    }
+  const handleEdit = (benefit: GovernmentBenefit) => {
+    setEditingBenefit(benefit)
+    setIsFormOpen(true)
   }
 
   const formatRate = (rate: string | null) => {
-    if (!rate) return "N/A"
+    if (!rate) return "—"
     return `${(Number(rate) * 100).toFixed(2)}%`
   }
 
   const formatAmount = (amount: string | null) => {
-    if (!amount) return "N/A"
+    if (!amount) return "—"
     return `₱${Number(amount).toFixed(2)}`
   }
 
+  // Group benefits by type
   const groupedBenefits = benefits.reduce(
     (acc, benefit) => {
       if (!acc[benefit.benefit_type]) {
@@ -170,230 +105,61 @@ export default function GovernmentBenefitsPage() {
     {} as Record<string, GovernmentBenefit[]>,
   )
 
-  const renderBenefitRow = (benefit: GovernmentBenefit) => {
-    const isSelected = selectedIds.includes(benefit.id)
+  const renderShareInfo = (benefit: GovernmentBenefit) => {
+    if (benefit.calculation_method === "fixed") {
+      return (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Employee Share</p>
+            <p className="text-sm font-semibold">
+              {formatAmount(benefit.employee_share_amount)}
+              {benefit.period_type === "monthly" && (
+                <span className="text-xs font-normal text-muted-foreground ml-1">/mo</span>
+              )}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Employer Share</p>
+            <p className="text-sm font-semibold">
+              {formatAmount(benefit.employer_share_amount)}
+              {benefit.period_type === "monthly" && (
+                <span className="text-xs font-normal text-muted-foreground ml-1">/mo</span>
+              )}
+            </p>
+          </div>
+        </div>
+      )
+    }
+
+    if (benefit.calculation_method === "percentage") {
+      return (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Employee Rate</p>
+            <p className="text-sm font-semibold">{formatRate(benefit.employee_share_rate)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Employer Rate</p>
+            <p className="text-sm font-semibold">{formatRate(benefit.employer_share_rate)}</p>
+          </div>
+        </div>
+      )
+    }
 
     return (
-      <TableRow
-        key={benefit.id}
-        className={!benefit.is_active ? "opacity-50" : ""}
-      >
-        <TableCell>
-          <Checkbox
-            checked={isSelected}
-            onCheckedChange={(checked) =>
-              handleSelectOne(benefit.id, checked as boolean)
-            }
-          />
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">
-              {getBenefitIcon(benefit.benefit_type)}
-            </span>
-            <div>
-              <div className="font-medium">{benefit.name}</div>
-              <div className="text-xs text-muted-foreground">
-                {benefit.benefit_type.toUpperCase()}
-              </div>
-            </div>
-          </div>
-        </TableCell>
-        <TableCell>
-          <Badge variant={getBadgeVariant(benefit.calculation_method)}>
-            {benefit.calculation_method.replace("_", " ")}
-          </Badge>
-        </TableCell>
-        <TableCell>
-          <div className="text-sm">
-            {benefit.calculation_method === "fixed" ? (
-              <div>
-                <div className="font-medium">
-                  {formatAmount(benefit.employee_share_amount)}
-                  {benefit.period_type === "monthly" && (
-                    <span className="text-xs text-muted-foreground ml-1">
-                      /month
-                    </span>
-                  )}
-                </div>
-                {benefit.period_type === "monthly" &&
-                  benefit.employee_share_amount && (
-                    <div className="text-xs text-muted-foreground">
-                      ≈{" "}
-                      {formatAmount(
-                        String(Number(benefit.employee_share_amount) / 4),
-                      )}{" "}
-                      /week
-                    </div>
-                  )}
-              </div>
-            ) : benefit.calculation_method === "percentage" ? (
-              formatRate(benefit.employee_share_rate)
-            ) : (
-              "Tax Bracket"
-            )}
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="text-sm">
-            {benefit.calculation_method === "fixed" ? (
-              <div>
-                <div className="font-medium">
-                  {formatAmount(benefit.employer_share_amount)}
-                  {benefit.period_type === "monthly" && (
-                    <span className="text-xs text-muted-foreground ml-1">
-                      /month
-                    </span>
-                  )}
-                </div>
-                {benefit.period_type === "monthly" &&
-                  benefit.employer_share_amount && (
-                    <div className="text-xs text-muted-foreground">
-                      ≈{" "}
-                      {formatAmount(
-                        String(Number(benefit.employer_share_amount) / 4),
-                      )}{" "}
-                      /week
-                    </div>
-                  )}
-              </div>
-            ) : benefit.calculation_method === "percentage" ? (
-              formatRate(benefit.employer_share_rate)
-            ) : (
-              "N/A"
-            )}
-          </div>
-        </TableCell>
-        <TableCell>
-          <div className="text-xs text-muted-foreground">
-            <div>
-              {format(new Date(benefit.effective_start), "MMM dd, yyyy")}
-            </div>
-            {benefit.effective_end && (
-              <div>
-                to {format(new Date(benefit.effective_end), "MMM dd, yyyy")}
-              </div>
-            )}
-          </div>
-        </TableCell>
-        <TableCell>
-          {benefit.is_active ? (
-            <Badge
-              variant="default"
-              className="gap-1"
-            >
-              <CheckCircle2 className="h-3 w-3" />
-              Active
-            </Badge>
-          ) : (
-            <Badge
-              variant="secondary"
-              className="gap-1"
-            >
-              <XCircle className="h-3 w-3" />
-              Inactive
-            </Badge>
-          )}
-        </TableCell>
-        <TableCell>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => {
-                  setEditingBenefit(benefit)
-                  setIsAddOpen(true)
-                }}
-              >
-                <Edit className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleToggle(benefit)}>
-                {benefit.is_active ? (
-                  <>
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Deactivate
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Activate
-                  </>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => handleDelete(benefit.id)}
-                className="text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TableCell>
-      </TableRow>
+      <p className="text-sm text-muted-foreground">
+        Configure using fixed amount or percentage method
+      </p>
     )
   }
 
   return (
     <div className="p-6 space-y-6">
       <PageHeader
+        icon={Banknote}
         title="Government Benefits"
-        description="Manage government-mandated benefits (SSS, PhilHealth, Pag-IBIG, BIR Tax)"
-        breadcrumbs={["Settings", "Government Benefits"]}
-        actionButton={
-          <Button onClick={() => setIsAddOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Benefit
-          </Button>
-        }
+        description="Fixed government-mandated benefits — SSS, PhilHealth, Pag-IBIG, and BIR Tax"
       />
-
-      {/* Bulk Actions */}
-      {selectedIds.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
-                {selectedIds.length} benefit(s) selected
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkToggle(true)}
-                >
-                  Activate Selected
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkToggle(false)}
-                >
-                  Deactivate Selected
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setSelectedIds([])}
-                >
-                  Clear Selection
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* View Toggle */}
       <div className="flex items-center gap-2">
@@ -414,127 +180,107 @@ export default function GovernmentBenefitsPage() {
         </Button>
       </div>
 
-      {/* Benefits by Type */}
-      <Tabs
-        defaultValue="all"
-        className="w-full"
-      >
-        <TabsList>
-          <TabsTrigger value="all">All Benefits</TabsTrigger>
-          <TabsTrigger value="sss">SSS</TabsTrigger>
-          <TabsTrigger value="philhealth">PhilHealth</TabsTrigger>
-          <TabsTrigger value="pagibig">Pag-IBIG</TabsTrigger>
-          <TabsTrigger value="bir_tax">BIR Tax</TabsTrigger>
-        </TabsList>
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Loading benefits...</p>
+      ) : benefits.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            No government benefits configured yet. Contact your administrator.
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {(["sss", "philhealth", "pagibig", "bir_tax"] as const).map((type) => {
+            const meta = BENEFIT_META[type]
+            const typeBenefits = groupedBenefits[type] || []
 
-        <TabsContent value="all">
-          <Card>
-            <CardHeader>
-              <CardTitle>All Government Benefits</CardTitle>
-              <CardDescription>
-                View and manage all government benefit configurations
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <p className="text-sm text-muted-foreground">Loading...</p>
-              ) : benefits.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No government benefits configured
-                </p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={
-                            benefits.length > 0 &&
-                            selectedIds.length === benefits.length
-                          }
-                          onCheckedChange={handleSelectAll}
-                        />
-                      </TableHead>
-                      <TableHead>Benefit</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Employee Share</TableHead>
-                      <TableHead>Employer Share</TableHead>
-                      <TableHead>Effective Period</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="w-16"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {benefits.map((benefit) => renderBenefitRow(benefit))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {(["sss", "philhealth", "pagibig", "bir_tax"] as const).map((type) => (
-          <TabsContent
-            key={type}
-            value={type}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span className="text-2xl">{getBenefitIcon(type)}</span>
-                  {type.toUpperCase()} Benefits
-                </CardTitle>
-                <CardDescription>
-                  {type === "sss" && "Social Security System contributions"}
-                  {type === "philhealth" &&
-                    "Philippine Health Insurance contributions"}
-                  {type === "pagibig" &&
-                    "Home Development Mutual Fund contributions"}
-                  {type === "bir_tax" &&
-                    "Bureau of Internal Revenue withholding tax"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading...</p>
-                ) : !groupedBenefits[type] ||
-                  groupedBenefits[type].length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    No {type.toUpperCase()} benefits configured
-                  </p>
-                ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
-                          <Checkbox />
-                        </TableHead>
-                        <TableHead>Benefit</TableHead>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Employee Share</TableHead>
-                        <TableHead>Employer Share</TableHead>
-                        <TableHead>Effective Period</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="w-16"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {groupedBenefits[type].map((benefit) =>
-                        renderBenefitRow(benefit),
-                      )}
-                    </TableBody>
-                  </Table>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
+            return (
+              <Card key={type} className="relative">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">{meta.icon}</span>
+                      <div>
+                        <CardTitle className="text-base">{meta.label}</CardTitle>
+                        <CardDescription className="text-xs">{meta.description}</CardDescription>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {typeBenefits.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Not configured</p>
+                  ) : (
+                    typeBenefits.map((benefit) => (
+                      <div
+                        key={benefit.id}
+                        className={`rounded-lg border p-3 space-y-2 ${!benefit.is_active ? "opacity-50" : ""}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">{benefit.name}</span>
+                            <Badge
+                              variant={benefit.calculation_method === "fixed" ? "secondary" : benefit.calculation_method === "percentage" ? "default" : "outline"}
+                              className="text-[10px] px-1.5 py-0"
+                            >
+                              {benefit.calculation_method.replace("_", " ")}
+                            </Badge>
+                            {benefit.is_active ? (
+                              <Badge variant="default" className="text-[10px] px-1.5 py-0 gap-0.5">
+                                <CheckCircle2 className="h-2.5 w-2.5" />
+                                Active
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-0.5">
+                                <XCircle className="h-2.5 w-2.5" />
+                                Inactive
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => handleEdit(benefit)}
+                            >
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => handleToggle(benefit)}
+                            >
+                              {benefit.is_active ? (
+                                <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                              ) : (
+                                <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                        {renderShareInfo(benefit)}
+                        <p className="text-[11px] text-muted-foreground">
+                          Effective: {format(new Date(benefit.effective_start), "MMM dd, yyyy")}
+                          {benefit.effective_end
+                            ? ` — ${format(new Date(benefit.effective_end), "MMM dd, yyyy")}`
+                            : " — present"}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
 
       <GovernmentBenefitForm
-        open={isAddOpen}
+        open={isFormOpen}
         onOpenChange={(open) => {
-          setIsAddOpen(open)
+          setIsFormOpen(open)
           if (!open) setEditingBenefit(null)
         }}
         benefit={editingBenefit}

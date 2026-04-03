@@ -1,5 +1,6 @@
 "use client"
 
+import { CardSelect } from "@/components/custom/inputs/CardSelect"
 import DatePicker from "@/components/custom/inputs/DatePicker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +15,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { MultiSelect } from "@/components/ui/multi-select"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
@@ -72,7 +72,8 @@ export default function BulkGeneratePayrollForm({
     () =>
       employees.map((emp) => ({
         value: emp.id.toString(),
-        label: `${emp.first_name} ${emp.last_name}${emp.role ? ` (${emp.role})` : ""}`,
+        label: `${emp.first_name} ${emp.last_name}`,
+        description: emp.role || undefined,
       })),
     [employees],
   )
@@ -309,13 +310,16 @@ export default function BulkGeneratePayrollForm({
                 <FormItem>
                   <FormLabel>Select Employees</FormLabel>
                   <FormControl>
-                    <MultiSelect
-                      options={employeeOptions}
-                      selected={field.value}
-                      onChange={field.onChange}
-                      placeholder="Choose employees..."
-                      disabled={isLoading}
-                    />
+                    <ScrollArea className="max-h-[240px]">
+                      <CardSelect
+                        multi
+                        options={employeeOptions}
+                        value={field.value}
+                        onChange={field.onChange}
+                        disabled={isLoading}
+                        columns={4}
+                      />
+                    </ScrollArea>
                   </FormControl>
                   <FormDescription>
                     {field.value.length} employee

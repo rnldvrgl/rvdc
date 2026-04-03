@@ -60,7 +60,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
   },
   companyAssets: {
     name: "Company Assets",
-    href: "/services/company-assets",
+    href: "/company-assets",
     icon: Building2,
     permission: "view_services",
   },
@@ -135,12 +135,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         href: "/payroll/deductions",
         icon: Banknote,
         permission: "manage_deductions",
-      },
-      {
-        name: "Tax Brackets",
-        href: "/settings/tax-brackets",
-        icon: CircleDollarSign,
-        permission: "manage_tax_brackets",
       },
       {
         name: "Government Benefits",

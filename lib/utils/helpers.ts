@@ -241,7 +241,6 @@ export function getBadgeVariant(
     // Calculation methods
     fixed: "default",
     percentage: "secondary",
-    progressive_tax: "outline",
     // Reimbursement
     reimbursed: "success",
   }

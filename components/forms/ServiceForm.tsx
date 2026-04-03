@@ -34,13 +34,16 @@ import {
   ArrowDownUp,
   Ban,
   CheckCircle2,
+  ClipboardList,
   Home,
   Info,
   Loader2,
   Save,
   Search,
   Settings,
+  ShieldCheck,
   Sparkles,
+  SprayCan,
   Truck,
   Wrench,
   Zap,
@@ -64,6 +67,12 @@ const serviceModeOptions = [
   { label: "Pull-Out", value: "pull_out", icon: Truck },
 ]
 
+const servicePurposeOptions = [
+  { label: "Standard", value: "standard", icon: ClipboardList, description: "Regular paid service" },
+  { label: "Warranty Claim", value: "warranty_claim", icon: ShieldCheck, description: "Complementary warranty service" },
+  { label: "Free Cleaning", value: "free_cleaning", icon: SprayCan, description: "Complementary cleaning service" },
+]
+
 const serviceStatusOptions = [
   { label: "In Progress", value: "in_progress", icon: Loader2 },
   { label: "Completed", value: "completed", icon: CheckCircle2 },
@@ -72,6 +81,7 @@ const serviceStatusOptions = [
 
 const serviceSchema = z.object({
   client: z.number({ required_error: "Client is required" }),
+  service_purpose: z.enum(["standard", "warranty_claim", "free_cleaning"]),
   service_type: z.enum(
     [
       "repair",
@@ -119,6 +129,11 @@ export default function ServiceForm({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
       client: initialData?.client?.id ?? undefined,
+      service_purpose: initialData?.is_complementary
+        ? initialData?.complementary_reason === "Warranty Claim"
+          ? "warranty_claim"
+          : "free_cleaning"
+        : "standard",
       service_type: (initialData?.service_type as ServiceType) ?? undefined,
       service_mode: (initialData?.service_mode as ServiceMode) ?? "carry_in",
       status: (initialData?.status as ServiceStatus) ?? "in_progress",
@@ -271,6 +286,13 @@ export default function ServiceForm({
       service_type: data.service_type,
       service_mode: data.service_mode,
       status: data.status,
+      is_complementary: data.service_purpose !== "standard",
+      complementary_reason:
+        data.service_purpose === "warranty_claim"
+          ? "Warranty Claim"
+          : data.service_purpose === "free_cleaning"
+            ? "Free Cleaning"
+            : undefined,
       related_transaction: data.related_transaction ?? undefined,
       override_address: data.override_address,
       override_contact_person: data.override_contact_person,
@@ -354,6 +376,25 @@ export default function ServiceForm({
                 value={field.value ?? null}
                 onChange={field.onChange}
                 disabled={isSubmitting}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Service Purpose */}
+        <FormField
+          name="service_purpose"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel required>Service Purpose</FormLabel>
+              <CardSelect
+                options={servicePurposeOptions}
+                value={field.value ?? null}
+                onChange={field.onChange}
+                disabled={isSubmitting}
+                columns={3}
               />
               <FormMessage />
             </FormItem>

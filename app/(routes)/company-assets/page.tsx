@@ -1,6 +1,6 @@
 "use client"
 
-import { getCompanyAssetColumns } from "@/app/(routes)/services/company-assets/columns"
+import { getCompanyAssetColumns } from "@/app/(routes)/company-assets/columns"
 import { CardSelect } from "@/components/custom/inputs/CardSelect"
 import { ClientCardSelect } from "@/components/custom/inputs/ClientComboBox"
 import PageHeader from "@/components/custom/shared/PageHeader"

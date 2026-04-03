@@ -83,7 +83,7 @@ export function UnclaimedApplianceAlerts() {
               )
             })}
             {remaining > 0 && (
-              <Link href="/services/company-assets">
+              <Link href="/company-assets">
                 <p className="text-xs text-muted-foreground text-center py-1 hover:underline">
                   +{remaining} more — view Company Assets
                 </p>

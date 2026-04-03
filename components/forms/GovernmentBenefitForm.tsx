@@ -138,14 +138,8 @@ export function GovernmentBenefitForm({
     }
   }, [benefitType, isEditing, form])
 
-  // Auto-set calculation method for BIR tax and clear opposing fields when method changes
+  // Clear opposing fields when calculation method changes to prevent validation errors
   useEffect(() => {
-    // Force progressive_tax for BIR
-    if (benefitType === "bir_tax" && calculationMethod !== "progressive_tax") {
-      form.setValue("calculation_method", "progressive_tax")
-    }
-
-    // Clear opposing fields when calculation method changes to prevent validation errors
     if (calculationMethod === "fixed") {
       // Clear percentage fields
       form.setValue("employee_share_rate", null)
@@ -154,14 +148,8 @@ export function GovernmentBenefitForm({
       // Clear fixed amount fields
       form.setValue("employee_share_amount", null)
       form.setValue("employer_share_amount", null)
-    } else if (calculationMethod === "progressive_tax") {
-      // Clear both fixed and percentage fields
-      form.setValue("employee_share_amount", null)
-      form.setValue("employer_share_amount", null)
-      form.setValue("employee_share_rate", null)
-      form.setValue("employer_share_rate", null)
     }
-  }, [benefitType, calculationMethod, form])
+  }, [calculationMethod, form])
 
   const onSubmit = async (data: GovernmentBenefitFormData) => {
     try {
@@ -217,8 +205,6 @@ export function GovernmentBenefitForm({
         return "Enter fixed weekly amounts for employee and employer shares"
       case "percentage":
         return "Enter rates as decimals (e.g., 0.045 for 4.5%, 0.02 for 2%)"
-      case "progressive_tax":
-        return "Tax calculated automatically using tax brackets based on gross pay"
       default:
         return ""
     }
@@ -316,9 +302,6 @@ export function GovernmentBenefitForm({
                       <SelectItem value="fixed">Fixed Amount</SelectItem>
                       <SelectItem value="percentage">
                         Percentage of Gross
-                      </SelectItem>
-                      <SelectItem value="progressive_tax">
-                        Progressive Tax Bracket
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -499,16 +482,6 @@ export function GovernmentBenefitForm({
             )}
 
             {/* Progressive Tax - No additional fields needed */}
-            {calculationMethod === "progressive_tax" && (
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  Tax will be calculated automatically using the appropriate tax
-                  bracket based on gross pay amount.
-                </AlertDescription>
-              </Alert>
-            )}
-
             {/* Effective Dates */}
             <div className="grid grid-cols-2 gap-4">
               <FormField

@@ -9,7 +9,7 @@ export const governmentBenefitSchema = z
 			.string()
 			.min(1, "Name is required")
 			.max(100, "Name is too long"),
-		calculation_method: z.enum(["fixed", "percentage", "progressive_tax"], {
+		calculation_method: z.enum(["fixed", "percentage"], {
 			required_error: "Calculation method is required",
 		}),
 		period_type: z.enum(["weekly", "monthly"], {
@@ -61,24 +61,11 @@ export const governmentBenefitSchema = z
 					data.employee_share_rate > 0
 				);
 			}
-			// Progressive tax uses TaxBracket.compute_tax() automatically, no field required
+			// No additional validation for progressive_tax needed
 			return true;
 		},
 		{
 			message: "Required fields missing for selected calculation method",
-			path: ["calculation_method"],
-		},
-	)
-	.refine(
-		(data) => {
-			// BIR tax must use progressive_tax
-			if (data.benefit_type === "bir_tax") {
-				return data.calculation_method === "progressive_tax";
-			}
-			return true;
-		},
-		{
-			message: "BIR tax must use progressive tax calculation method",
 			path: ["calculation_method"],
 		},
 	)
@@ -102,7 +89,7 @@ export interface GovernmentBenefit {
 	id: number;
 	benefit_type: "sss" | "philhealth" | "pagibig" | "bir_tax";
 	name: string;
-	calculation_method: "fixed" | "percentage" | "progressive_tax";
+	calculation_method: "fixed" | "percentage";
 	period_type: "weekly" | "monthly";
 	employee_share_amount: string | null;
 	employer_share_amount: string | null;

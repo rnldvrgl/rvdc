@@ -546,10 +546,10 @@ const EmployeePage = () => {
               <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0">
                 <div className="flex-1">
                   <h2 className="text-base sm:text-lg font-semibold">
-                    Benefit Overrides
+                    Government Benefit Overrides
                   </h2>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    Custom government benefit amounts for this employee
+                    Custom government benefit amounts — overrides standard rates for this employee
                   </p>
                 </div>
                 <Button
@@ -570,86 +570,110 @@ const EmployeePage = () => {
                     No benefit overrides configured. Standard rates apply.
                   </p>
                 ) : (
-                  <div className="space-y-3">
-                    {benefitOverrides.map((override) => (
-                      <div
-                        key={override.id}
-                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-md gap-3"
-                      >
-                        <div className="flex items-start gap-3 flex-1">
-                          <BadgeDollarSign className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium">
-                                {override.benefit_type_display}
-                              </p>
-                              {!override.is_active && (
-                                <Badge
-                                  variant="secondary"
-                                  className="text-xs"
-                                >
-                                  Inactive
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="text-sm text-muted-foreground mt-1 space-y-1">
-                              <p>
-                                Employee: ₱
-                                {Number(
-                                  override.employee_share_amount,
-                                ).toLocaleString()}
-                                /week
-                                {override.employer_share_amount &&
-                                  ` • Employer: ₱${Number(override.employer_share_amount).toLocaleString()}/week`}
-                              </p>
-                              <p className="text-xs">
-                                {format(
-                                  new Date(override.effective_start),
-                                  "MMM d, yyyy",
-                                )}
-                                {override.effective_end &&
-                                  ` - ${format(new Date(override.effective_end), "MMM d, yyyy")}`}
-                                {!override.effective_end && " - Ongoing"}
-                              </p>
-                              {override.notes && (
-                                <p className="text-xs italic">
-                                  {override.notes}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(["sss", "philhealth", "pagibig", "bir_tax"] as const).map((type) => {
+                      const typeOverrides = benefitOverrides
+                        .filter((o) => o.benefit_type === type)
+                        .sort((a, b) => new Date(b.effective_start).getTime() - new Date(a.effective_start).getTime())
+
+                      if (typeOverrides.length === 0) return null
+
+                      const meta: Record<string, { icon: string; label: string }> = {
+                        sss: { icon: "🏦", label: "SSS" },
+                        philhealth: { icon: "🏥", label: "PhilHealth" },
+                        pagibig: { icon: "🏠", label: "Pag-IBIG" },
+                        bir_tax: { icon: "📊", label: "BIR Tax" },
+                      }
+
+                      return (
+                        <div key={type} className="rounded-lg border p-3 space-y-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-lg">{meta[type].icon}</span>
+                            <span className="text-sm font-semibold">{meta[type].label}</span>
+                            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                              {typeOverrides.length} {typeOverrides.length === 1 ? "entry" : "entries"}
+                            </Badge>
+                          </div>
+                          <div className="space-y-2">
+                            {typeOverrides.map((override, idx) => (
+                              <div
+                                key={override.id}
+                                className={`relative rounded-md border p-2.5 text-sm ${
+                                  !override.is_active ? "opacity-50" : idx === 0 ? "border-primary/30 bg-primary/5" : ""
+                                }`}
+                              >
+                                <div className="flex items-center justify-between mb-1">
+                                  <div className="flex items-center gap-1.5">
+                                    {idx === 0 && override.is_active && (
+                                      <Badge variant="default" className="text-[9px] px-1 py-0">Current</Badge>
+                                    )}
+                                    {!override.is_active && (
+                                      <Badge variant="secondary" className="text-[9px] px-1 py-0">Inactive</Badge>
+                                    )}
+                                    {idx > 0 && override.is_active && (
+                                      <Badge variant="outline" className="text-[9px] px-1 py-0">
+                                        <History className="h-2.5 w-2.5 mr-0.5" />
+                                        Historical
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="flex gap-0.5">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0"
+                                      onClick={() => {
+                                        setSelectedOverride(override)
+                                        setBenefitOverrideOpen(true)
+                                      }}
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0"
+                                      onClick={() => {
+                                        if (confirm(`Delete this ${meta[type].label} override?`)) {
+                                          deleteOverride.mutate(override.id)
+                                        }
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-destructive" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div>
+                                    <p className="text-[10px] text-muted-foreground">Employee</p>
+                                    <p className="text-xs font-medium">
+                                      ₱{Number(override.employee_share_amount).toLocaleString()}/wk
+                                    </p>
+                                  </div>
+                                  {override.employer_share_amount != null && (
+                                    <div>
+                                      <p className="text-[10px] text-muted-foreground">Employer</p>
+                                      <p className="text-xs font-medium">
+                                        ₱{Number(override.employer_share_amount).toLocaleString()}/wk
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                  {format(new Date(override.effective_start), "MMM d, yyyy")}
+                                  {override.effective_end
+                                    ? ` — ${format(new Date(override.effective_end), "MMM d, yyyy")}`
+                                    : " — present"}
                                 </p>
-                              )}
-                            </div>
+                                {override.notes && (
+                                  <p className="text-[10px] italic text-muted-foreground">{override.notes}</p>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         </div>
-                        <div className="flex gap-2 sm:flex-col sm:self-start">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedOverride(override)
-                              setBenefitOverrideOpen(true)
-                            }}
-                            className="flex-1 sm:flex-none"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  `Delete ${override.benefit_type_display} override?`,
-                                )
-                              ) {
-                                deleteOverride.mutate(override.id)
-                              }
-                            }}
-                            className="flex-1 sm:flex-none"
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </CardContent>

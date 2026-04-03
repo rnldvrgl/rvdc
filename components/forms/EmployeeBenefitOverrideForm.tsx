@@ -188,8 +188,8 @@ export function EmployeeBenefitOverrideForm({
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                Overrides take precedence over standard GovernmentBenefit and
-                TaxBracket calculations. Use for employees with custom benefit
+                Overrides take precedence over standard GovernmentBenefit
+                calculations. Use for employees with custom benefit
                 arrangements (e.g., owners, contractors).
               </AlertDescription>
             </Alert>
