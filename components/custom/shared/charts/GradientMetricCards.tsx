@@ -166,7 +166,7 @@ export default function GradientMetricCards({
           <MetricCardItem card={card} />
         </FadeUpItem>
       ))}
-      {children && <FadeUpItem>{children}</FadeUpItem>}
+      {children && <FadeUpItem className="h-full">{children}</FadeUpItem>}
     </StaggerGrid>
   )
 }

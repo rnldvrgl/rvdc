@@ -161,7 +161,7 @@ const DashboardPage = () => {
               <SectionReveal delay={0.15}>
                 <GradientMetricCards>
                   <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
-                    <SubStallSettlement />
+                    <SubStallSettlement enableShortcut />
                   </WidgetErrorBoundary>
                 </GradientMetricCards>
               </SectionReveal>
