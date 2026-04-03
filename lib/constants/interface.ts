@@ -408,7 +408,7 @@ export interface ExpenseReimbursementPayload {
 
 // Payment enums
 export type PaymentType = "cash" | "gcash" | "credit" | "debit" | "cheque"
-export type PaymentStatus = "unpaid" | "partial" | "paid" | "refunded" | "n/a" | "written_off"
+export type PaymentStatus = "pending" | "unpaid" | "partial" | "paid" | "refunded" | "no_charge" | "written_off"
 
 // Payment
 export interface SalesPayment {

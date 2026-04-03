@@ -91,6 +91,16 @@ export const paymentStatusLabels: Record<string, string> = {
   PAID: "Paid",
   OVERDUE: "Overdue",
   CANCELLED: "Cancelled",
+  // Lowercase variants (from API)
+  pending: "Pending",
+  unpaid: "Unpaid",
+  partial: "Partially Paid",
+  paid: "Paid",
+  refunded: "Refunded",
+  written_off: "Written Off",
+  overdue: "Overdue",
+  cancelled: "Cancelled",
+  no_charge: "No Charge",
 }
 
 export const paymentMethodLabels: Record<string, string> = {
