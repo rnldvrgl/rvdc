@@ -6,7 +6,7 @@ import { CompanyAsset } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { formatDateFull } from "@/lib/utils/helpers/date"
 import { ColumnDef } from "@tanstack/react-table"
-import { Trash2 } from "lucide-react"
+import { DollarSign, RefreshCw, Trash2 } from "lucide-react"
 
 function getAcquisitionTypeBadge(type: CompanyAsset["acquisition_type"]) {
   if (type === "unclaimed") {
@@ -39,11 +39,13 @@ function getStatusBadge(status: CompanyAsset["status"]) {
 }
 
 interface GetCompanyAssetColumnsProps {
+  onSell: (asset: CompanyAsset) => void
   onDispose: (asset: CompanyAsset) => void
   onUpdateStatus: (asset: CompanyAsset) => void
 }
 
 export function getCompanyAssetColumns({
+  onSell,
   onDispose,
   onUpdateStatus,
 }: GetCompanyAssetColumnsProps): ColumnDef<CompanyAsset>[] {
@@ -84,6 +86,23 @@ export function getCompanyAssetColumns({
       },
     },
     {
+      accessorKey: "sale_price",
+      header: "Sale Price",
+      cell: ({ row }) => {
+        const v = row.original.sale_price
+        if (!v) return <span className="text-muted-foreground">—</span>
+        return <span className="text-sm font-medium text-green-600">{formatCurrency(v)}</span>
+      },
+    },
+    {
+      accessorKey: "sold_to",
+      header: "Sold To",
+      cell: ({ getValue }) => {
+        const v = getValue() as string
+        return v || <span className="text-muted-foreground">—</span>
+      },
+    },
+    {
       accessorKey: "acquired_at",
       header: "Acquired",
       cell: ({ getValue }) => formatDateFull(getValue() as string),
@@ -94,45 +113,35 @@ export function getCompanyAssetColumns({
       cell: ({ row }) => getStatusBadge(row.original.status),
     },
     {
-      accessorKey: "condition_notes",
-      header: "Condition Notes",
-      cell: ({ getValue }) => {
-        const v = getValue() as string
-        if (!v) return <span className="text-muted-foreground">—</span>
-        return (
-          <span className="text-xs text-muted-foreground line-clamp-2 max-w-[180px]">
-            {v}
-          </span>
-        )
-      },
-    },
-    {
       accessorKey: "action",
       header: "Action",
       cell: ({ row }) => {
         const asset = row.original
-        const items = []
+        if (asset.status !== "holding") return null
 
-        if (asset.status !== "disposed") {
-          items.push({
-            label: "Update Status",
-            onClick: () => onUpdateStatus(asset),
-          })
-        }
-
-        if (asset.status !== "disposed") {
-          items.push({
-            label: "Mark Disposed",
-            icon: Trash2,
-            onClick: () => onDispose(asset),
-            destructive: true as const,
-            confirmText: `Mark this asset as disposed? This cannot be undone.`,
-          })
-        }
-
-        if (items.length === 0) return null
-
-        return <DataTableActions items={items} />
+        return (
+          <DataTableActions
+            items={[
+              {
+                label: "Sell Asset",
+                icon: DollarSign,
+                onClick: () => onSell(asset),
+              },
+              {
+                label: "Change Status",
+                icon: RefreshCw,
+                onClick: () => onUpdateStatus(asset),
+              },
+              {
+                label: "Mark Disposed",
+                icon: Trash2,
+                onClick: () => onDispose(asset),
+                destructive: true as const,
+                confirmText: "Mark this asset as disposed? This cannot be undone.",
+              },
+            ]}
+          />
+        )
       },
     },
   ]

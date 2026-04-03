@@ -222,14 +222,14 @@ export default function ServiceDetail({
     setDiscountReason(service.discount_reason || "")
   }, [service.id, service.service_discount_amount, service.discount_reason])
 
-  // Auto-fill payment amount when cheque is selected
+  // Auto-fill payment amount with billing amount when cheque is selected
   useEffect(() => {
     if (selectedCheque && chequeRawData.length > 0) {
       const selectedChequeData = chequeRawData.find(
         (c) => c.id === selectedCheque,
       )
       if (selectedChequeData) {
-        setPaymentAmount(selectedChequeData.cheque_amount)
+        setPaymentAmount(selectedChequeData.billing_amount)
       }
     }
   }, [selectedCheque, chequeRawData])
@@ -3044,7 +3044,7 @@ export default function ServiceDetail({
               />
               {paymentType === "cheque" && selectedCheque && (
                 <p className="text-xs text-muted-foreground">
-                  Amount is set to the selected cheque&apos;s value
+                  Amount is set to the cheque&apos;s billing amount
                 </p>
               )}
             </div>

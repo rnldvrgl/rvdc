@@ -11,8 +11,33 @@ export function useCompanyAssetMutations() {
 
   const dispose = useApiMutation({
     mutationFn: ({ id, notes }: { id: number; notes?: string }) =>
-      api.post(`${url}${id}/dispose/`, { notes }),
+      api.post(`${url}${id}/dispose/`, { status: "disposed", disposal_notes: notes }),
     successMessage: "Asset marked as disposed.",
+    invalidateQueries: [{ queryKey: ["company-assets"] }],
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["company-asset", id] })
+    },
+  })
+
+  const sell = useApiMutation({
+    mutationFn: ({
+      id,
+      sale_price,
+      sold_to,
+      disposal_notes,
+    }: {
+      id: number
+      sale_price: number
+      sold_to: string
+      disposal_notes?: string
+    }) =>
+      api.post(`${url}${id}/dispose/`, {
+        status: "sold",
+        sale_price,
+        sold_to,
+        disposal_notes,
+      }),
+    successMessage: "Asset marked as sold.",
     invalidateQueries: [{ queryKey: ["company-assets"] }],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["company-asset", id] })
@@ -33,5 +58,5 @@ export function useCompanyAssetMutations() {
     invalidateQueries: [{ queryKey: ["company-assets"] }],
   })
 
-  return { dispose, updateStatus }
+  return { dispose, sell, updateStatus }
 }

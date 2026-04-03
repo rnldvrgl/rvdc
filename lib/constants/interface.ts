@@ -1447,6 +1447,8 @@ export interface CompanyAsset {
   status: CompanyAssetStatus
   disposed_at: string | null
   disposal_notes: string
+  sale_price: string | null
+  sold_to: string
   created_at: string
   updated_at: string
 }

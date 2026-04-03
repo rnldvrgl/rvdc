@@ -1,6 +1,7 @@
 "use client"
 
 import { getCompanyAssetColumns } from "@/app/(routes)/services/company-assets/columns"
+import { CardSelect } from "@/components/custom/inputs/CardSelect"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
@@ -12,14 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { CompanyAsset } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
@@ -29,8 +24,29 @@ import {
   useCompanyAssetFilters,
   useCompanyAssets,
 } from "@/lib/queries/services/useCompanyAssets"
-import { Building2 } from "lucide-react"
+import { Building2, Package, Recycle, Trash2 } from "lucide-react"
 import { useState } from "react"
+
+const statusOptions = [
+  {
+    label: "In Storage",
+    value: "holding",
+    icon: Package,
+    description: "Keep in company inventory",
+  },
+  {
+    label: "Repurposed",
+    value: "repurposed",
+    icon: Recycle,
+    description: "Used for parts or internal use",
+  },
+  {
+    label: "Disposed",
+    value: "disposed",
+    icon: Trash2,
+    description: "Scrapped or discarded",
+  },
+]
 
 const emptyData: PaginatedResult<CompanyAsset> = {
   count: 0,
@@ -52,14 +68,29 @@ export default function CompanyAssetsPage() {
   })
 
   const { filters, orderingOptions } = useCompanyAssetFilters()
-  const { dispose, updateStatus } = useCompanyAssetMutations()
+  const { dispose, sell, updateStatus } = useCompanyAssetMutations()
 
+  // Dispose dialog
   const [disposeTarget, setDisposeTarget] = useState<CompanyAsset | null>(null)
   const [disposeNotes, setDisposeNotes] = useState("")
 
+  // Sell dialog
+  const [sellTarget, setSellTarget] = useState<CompanyAsset | null>(null)
+  const [salePrice, setSalePrice] = useState("")
+  const [soldTo, setSoldTo] = useState("")
+  const [sellNotes, setSellNotes] = useState("")
+
+  // Update status dialog
   const [updateTarget, setUpdateTarget] = useState<CompanyAsset | null>(null)
   const [newStatus, setNewStatus] = useState("")
   const [statusNotes, setStatusNotes] = useState("")
+
+  const handleSell = (asset: CompanyAsset) => {
+    setSellTarget(asset)
+    setSalePrice("")
+    setSoldTo("")
+    setSellNotes("")
+  }
 
   const handleDispose = (asset: CompanyAsset) => {
     setDisposeTarget(asset)
@@ -70,6 +101,27 @@ export default function CompanyAssetsPage() {
     setUpdateTarget(asset)
     setNewStatus(asset.status)
     setStatusNotes(asset.condition_notes ?? "")
+  }
+
+  const confirmSell = () => {
+    if (!sellTarget || !salePrice || !soldTo) return
+    sell.mutate(
+      {
+        id: sellTarget.id,
+        sale_price: parseFloat(salePrice),
+        sold_to: soldTo,
+        disposal_notes: sellNotes || undefined,
+      },
+      {
+        onSuccess: () => {
+          setSellTarget(null)
+          setSalePrice("")
+          setSoldTo("")
+          setSellNotes("")
+          refetch()
+        },
+      },
+    )
   }
 
   const confirmDispose = () => {
@@ -106,6 +158,7 @@ export default function CompanyAssetsPage() {
   }
 
   const columns = getCompanyAssetColumns({
+    onSell: handleSell,
     onDispose: handleDispose,
     onUpdateStatus: handleUpdateStatus,
   })
@@ -131,6 +184,82 @@ export default function CompanyAssetsPage() {
         emptyDescription="Appliances declared as company property will appear here"
         searchPlaceholder="Search by client, appliance, service ref..."
       />
+
+      {/* Sell Dialog */}
+      <Dialog
+        open={!!sellTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSellTarget(null)
+            setSalePrice("")
+            setSoldTo("")
+            setSellNotes("")
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sell Asset</DialogTitle>
+            <DialogDescription>
+              {sellTarget
+                ? `Record sale of "${sellTarget.appliance_description}"`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="sale-price">Sale Price</Label>
+              <Input
+                id="sale-price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Enter sale price"
+                value={salePrice}
+                onChange={(e) => setSalePrice(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sold-to">Sold To</Label>
+              <Input
+                id="sold-to"
+                placeholder="Buyer name"
+                value={soldTo}
+                onChange={(e) => setSoldTo(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="sell-notes">Notes (optional)</Label>
+              <Textarea
+                id="sell-notes"
+                placeholder="Any notes about the sale..."
+                value={sellNotes}
+                onChange={(e) => setSellNotes(e.target.value)}
+                rows={2}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSellTarget(null)
+                  setSalePrice("")
+                  setSoldTo("")
+                  setSellNotes("")
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmSell}
+                disabled={sell.isPending || !salePrice || !soldTo}
+              >
+                {sell.isPending ? "Selling..." : "Confirm Sale"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dispose Dialog */}
       <Dialog
@@ -197,36 +326,31 @@ export default function CompanyAssetsPage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Update Asset Status</DialogTitle>
+            <DialogTitle>Change Asset Status</DialogTitle>
             <DialogDescription>
               {updateTarget
                 ? `Update status for "${updateTarget.appliance_description}"`
                 : ""}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 pt-2">
-            <div className="space-y-1.5">
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
               <Label>Status</Label>
-              <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="holding">In Storage</SelectItem>
-                  <SelectItem value="sold">Sold</SelectItem>
-                  <SelectItem value="repurposed">Repurposed</SelectItem>
-                  <SelectItem value="disposed">Disposed</SelectItem>
-                </SelectContent>
-              </Select>
+              <CardSelect
+                options={statusOptions}
+                value={newStatus}
+                onChange={setNewStatus}
+                columns={3}
+              />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="status-notes">Condition Notes (optional)</Label>
               <Textarea
                 id="status-notes"
-                placeholder="Any notes about the asset condition or disposition..."
+                placeholder="Any notes about the asset condition..."
                 value={statusNotes}
                 onChange={(e) => setStatusNotes(e.target.value)}
-                rows={3}
+                rows={2}
               />
             </div>
             <div className="flex justify-end gap-2">

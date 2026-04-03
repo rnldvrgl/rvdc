@@ -250,10 +250,10 @@ export default function PaymentMethodSelector({
                                 (c) => c.id === value,
                               )
                               if (selectedCheque) {
-                                // Auto-fill amount from cheque value
+                                // Auto-fill amount from billing amount (withholding tax absorbed)
                                 setValue(
                                   `payments.${idx}.amount` as const,
-                                  parseFloat(selectedCheque.cheque_amount),
+                                  parseFloat(selectedCheque.billing_amount),
                                 )
                               }
                             }
@@ -265,7 +265,7 @@ export default function PaymentMethodSelector({
                       )}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Amount will be set to the cheque&apos;s value
+                      Amount will be set to the cheque&apos;s billing amount
                     </p>
                   </div>
                 )}
