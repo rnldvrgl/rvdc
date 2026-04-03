@@ -9,7 +9,7 @@ import {
     type ServiceReceiptMode,
 } from "@/components/custom/shared/ServiceReceiptPrintContent"
 import ServiceApplianceManager from "@/components/forms/ServiceApplianceManager"
-import ServicePartsManager from "@/components/forms/ServicePartsManager"
+import PartsManager from "@/components/forms/PartsManager"
 import ApplianceKanbanBoard from "@/components/services/ApplianceKanbanBoard"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -2108,8 +2108,9 @@ export default function ServiceDetail({
           />
 
           {/* Service-Level Parts (chipping, pre-installation materials) */}
-          <ServicePartsManager
-            serviceId={service.id}
+          <PartsManager
+            entityType="service"
+            entityId={service.id}
             disabled={isCompleted}
             onUpdate={onRefresh}
           />

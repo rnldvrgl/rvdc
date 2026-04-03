@@ -30,34 +30,102 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import {
+    ApplianceItemUsed,
     Item,
     ServiceItemUsed,
     Stock,
 } from "@/lib/constants/interface"
 import { PaginatedResult } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
+import { useApplianceItemMutations } from "@/lib/mutations/services/useApplianceItemMutations"
 import { useServiceItemMutations } from "@/lib/mutations/services/useServiceItemMutations"
+import { useApplianceItems } from "@/lib/queries/services/useApplianceItems"
 import { useServiceItems } from "@/lib/queries/services/useServiceItems"
 import { useItemChoices } from "@/lib/queries/useChoices"
 import api from "@/lib/utils/api"
-import { cn, formatCurrency } from "@/lib/utils/helpers"
+import { cn } from "@/lib/utils/helpers"
+import { formatCurrency } from "@/lib/utils/currency"
 import { useQueryClient } from "@tanstack/react-query"
-import { Edit, HardHat, Info, Loader2, Plus, Trash2, X } from "lucide-react"
+import { Edit, HardHat, Info, Loader2, Package, Plus, Trash2, X } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
 
-interface ServicePartsManagerProps {
-  serviceId: number
+type ItemUsed = ServiceItemUsed | ApplianceItemUsed
+
+interface PartsManagerProps {
+  entityType: "service" | "appliance"
+  entityId: number
   disabled?: boolean
   onUpdate?: () => void | Promise<void>
 }
 
-export default function ServicePartsManager({
-  serviceId,
+const ENTITY_CONFIG = {
+  service: {
+    icon: HardHat,
+    label: "Service-Level Parts",
+    emptyText: "No service-level parts added yet",
+    description: "Parts used for pre-installation work (chipping, piping) or general materials not tied to a specific unit.",
+    dialogTitle: "Add Service-Level Part",
+    dialogDescription: "Add items for pre-installation work (chipping, piping, etc.)",
+    submitLabel: "Service",
+    apiEndpoint: "services/service-items/",
+    cardClassName: "",
+    cardHeaderClassName: "",
+    cardContentClassName: "",
+    badgeVariant: "default" as const,
+    checkboxIdPrefix: "service_parts",
+    queryKeysToInvalidate: [
+      ["service"],
+      ["service-items"],
+    ] as string[][],
+    batchQueryKeysToInvalidate: [
+      ["service"],
+      ["services"],
+      ["stocks"],
+      ["sales-transactions"],
+      ["pending-items-stats"],
+    ] as string[][],
+  },
+  appliance: {
+    icon: Package,
+    label: "Parts Used",
+    emptyText: "No parts added yet",
+    description: "",
+    dialogTitle: "Add Part",
+    dialogDescription: "Select an item from inventory and specify the quantity used.",
+    submitLabel: "Appliance",
+    apiEndpoint: "services/appliance-items/",
+    cardClassName: "bg-transparent border-0 p-0",
+    cardHeaderClassName: "px-0",
+    cardContentClassName: "px-0",
+    badgeVariant: "secondary" as const,
+    checkboxIdPrefix: "parts",
+    queryKeysToInvalidate: [
+      ["service"],
+      ["service-appliances"],
+      ["appliance-items"],
+    ] as string[][],
+    batchQueryKeysToInvalidate: [
+      ["service"],
+      ["services"],
+      ["service-appliances"],
+      ["stocks"],
+      ["sales-transactions"],
+      ["pending-items-stats"],
+    ] as string[][],
+  },
+} as const
+
+export default function PartsManager({
+  entityType,
+  entityId,
   disabled = false,
   onUpdate,
-}: ServicePartsManagerProps) {
+}: PartsManagerProps) {
+  const config = ENTITY_CONFIG[entityType]
+  const Icon = config.icon
   const queryClient = useQueryClient()
+
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingPartId, setEditingPartId] = useState<number | null>(null)
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null)
@@ -70,9 +138,7 @@ export default function ServicePartsManager({
   const [isCustom, setIsCustom] = useState(false)
   const [customPrice, setCustomPrice] = useState("")
   const [customDescription, setCustomDescription] = useState("")
-  const [selectedUntrackedItemId, setSelectedUntrackedItemId] = useState<number | null>(
-    null,
-  )
+  const [selectedUntrackedItemId, setSelectedUntrackedItemId] = useState<number | null>(null)
   const [pendingItems, setPendingItems] = useState<
     Array<{
       id: string
@@ -88,12 +154,20 @@ export default function ServicePartsManager({
     }>
   >([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showCloseWarning, setShowCloseWarning] = useState(false)
 
-  const { data: partsUsed = [], isLoading } = useServiceItems(serviceId)
+  // Call both hooks unconditionally (React rules of hooks), only enable the active one
+  const serviceItemsQuery = useServiceItems(entityType === "service" ? entityId : undefined)
+  const applianceItemsQuery = useApplianceItems(entityType === "appliance" ? entityId : undefined)
+  const { data: partsUsed = [], isLoading } = entityType === "service" ? serviceItemsQuery : applianceItemsQuery
 
   const { data: itemsData, isLoading: itemsLoading } = useItemChoices()
 
-  const { addItem, updateItem, deleteItem } = useServiceItemMutations()
+  // Call both mutation hooks unconditionally (rules of hooks), use wrappers for type safety
+  const serviceMutations = useServiceItemMutations()
+  const applianceMutations = useApplianceItemMutations()
+  const activeMutations = entityType === "service" ? serviceMutations : applianceMutations
+  const isMutatingPart = activeMutations.addItem.isPending || activeMutations.updateItem.isPending
 
   const items: Item[] = itemsData ?? []
   const untrackedItems = items.filter((i) => !i.is_tracked)
@@ -109,8 +183,10 @@ export default function ServicePartsManager({
     label: `${item.name} — ${formatCurrency(item.retail_price)}`,
   }))
 
-  const isMutatingPart = addItem.isPending || updateItem.isPending
   const isDialogBusy = isSubmitting || isMutatingPart
+
+  // Check if the user has unsaved work (pending items or form partially filled)
+  const hasUnsavedChanges = pendingItems.length > 0 || !!selectedItemId || (isCustom && (!!customDescription || !!customPrice))
 
   const { data: stockData } = useApiQuery<PaginatedResult<Stock>>({
     queryKey: ["stall-stocks", "item", selectedItemId],
@@ -119,6 +195,64 @@ export default function ServicePartsManager({
     enabled: !!selectedItemId,
   })
   const selectedItemStock = stockData?.results?.[0]
+
+  const buildPayload = (opts: {
+    isCustomItem: boolean
+    itemId: number | null
+    qty: number
+    isFreeItem: boolean
+    discount: string
+    discReason: string
+    price: string
+    description: string
+  }) => {
+    const entityRef = entityType === "service"
+      ? { service: entityId }
+      : { appliance: entityId }
+    const base = {
+      ...entityRef,
+      quantity: opts.qty,
+      is_free: opts.isFreeItem,
+      discount_amount:
+        !opts.isFreeItem && opts.discount
+          ? Math.round(parseFloat(opts.discount || "0") * 100) / 100
+          : 0,
+      discount_percentage: 0,
+      discount_reason: opts.isFreeItem ? undefined : opts.discReason || undefined,
+    }
+
+    if (opts.isCustomItem) {
+      return {
+        ...base,
+        item: null as null,
+        custom_price: Math.round(parseFloat(opts.price) * 100) / 100,
+        custom_description: opts.description || undefined,
+      }
+    }
+    return { ...base, item: opts.itemId }
+  }
+
+  // Type-safe mutation wrappers that dispatch to the correct hook
+  const mutateAdd = async (payload: ReturnType<typeof buildPayload>) => {
+    if (entityType === "service") {
+      return serviceMutations.addItem.mutateAsync(payload as Parameters<typeof serviceMutations.addItem.mutateAsync>[0])
+    }
+    return applianceMutations.addItem.mutateAsync(payload as Parameters<typeof applianceMutations.addItem.mutateAsync>[0])
+  }
+
+  const mutateUpdate = async (id: number, payload: ReturnType<typeof buildPayload>) => {
+    if (entityType === "service") {
+      return serviceMutations.updateItem.mutateAsync({ id, data: payload as Parameters<typeof serviceMutations.updateItem.mutateAsync>[0]["data"] })
+    }
+    return applianceMutations.updateItem.mutateAsync({ id, data: payload as Parameters<typeof applianceMutations.updateItem.mutateAsync>[0]["data"] })
+  }
+
+  const mutateDelete = async (id: number) => {
+    if (entityType === "service") {
+      return serviceMutations.deleteItem.mutateAsync({ id, serviceId: entityId })
+    }
+    return applianceMutations.deleteItem.mutateAsync({ id, applianceId: entityId })
+  }
 
   const handleSavePart = async () => {
     if (isCustom) {
@@ -145,33 +279,16 @@ export default function ServicePartsManager({
         ? Math.round(qty * 100) / 100
         : Math.round(qty) || 1
 
-    const payload = isCustom
-      ? {
-          service: serviceId,
-          item: null as null,
-          custom_price: Math.round(parseFloat(customPrice) * 100) / 100,
-          custom_description: customDescription || undefined,
-          quantity: roundedQty,
-          is_free: isFree,
-          discount_amount:
-            !isFree && discountValue
-              ? Math.round(parseFloat(discountValue || "0") * 100) / 100
-              : 0,
-          discount_percentage: 0,
-          discount_reason: isFree ? undefined : discountReason || undefined,
-        }
-      : {
-          service: serviceId,
-          item: selectedItemId,
-          quantity: roundedQty,
-          is_free: isFree,
-          discount_amount:
-            !isFree && discountValue
-              ? Math.round(parseFloat(discountValue || "0") * 100) / 100
-              : 0,
-          discount_percentage: 0,
-          discount_reason: isFree ? undefined : discountReason || undefined,
-        }
+    const payload = buildPayload({
+      isCustomItem: isCustom,
+      itemId: selectedItemId,
+      qty: roundedQty,
+      isFreeItem: isFree,
+      discount: discountValue,
+      discReason: discountReason,
+      price: customPrice,
+      description: customDescription,
+    })
 
     const resetForm = () => {
       setDialogOpen(false)
@@ -189,21 +306,17 @@ export default function ServicePartsManager({
 
     try {
       if (editingPartId) {
-        await updateItem.mutateAsync({ id: editingPartId, data: payload })
+        await mutateUpdate(editingPartId, payload)
       } else {
-        await addItem.mutateAsync(payload)
+        await mutateAdd(payload)
       }
 
       resetForm()
-
       await new Promise((resolve) => setTimeout(resolve, 150))
 
-      await queryClient.invalidateQueries({
-        queryKey: ["service"],
-      })
-      await queryClient.invalidateQueries({
-        queryKey: ["service-items"],
-      })
+      for (const key of config.queryKeysToInvalidate) {
+        await queryClient.invalidateQueries({ queryKey: key })
+      }
 
       if (onUpdate) {
         await onUpdate()
@@ -283,40 +396,19 @@ export default function ServicePartsManager({
           ? Math.round(qty * 100) / 100
           : Math.round(qty) || 1
 
-      const payload = item.isCustom
-        ? {
-            service: serviceId,
-            item: null as null,
-            custom_price: Math.round(parseFloat(item.customPrice) * 100) / 100,
-            custom_description: item.customDescription || undefined,
-            quantity: roundedQty,
-            is_free: item.isFree,
-            discount_amount:
-              !item.isFree && item.discountValue
-                ? Math.round(parseFloat(item.discountValue || "0") * 100) / 100
-                : 0,
-            discount_percentage: 0,
-            discount_reason: item.isFree
-              ? undefined
-              : item.discountReason || undefined,
-          }
-        : {
-            service: serviceId,
-            item: item.itemId,
-            quantity: roundedQty,
-            is_free: item.isFree,
-            discount_amount:
-              !item.isFree && item.discountValue
-                ? Math.round(parseFloat(item.discountValue || "0") * 100) / 100
-                : 0,
-            discount_percentage: 0,
-            discount_reason: item.isFree
-              ? undefined
-              : item.discountReason || undefined,
-          }
+      const payload = buildPayload({
+        isCustomItem: item.isCustom,
+        itemId: item.itemId,
+        qty: roundedQty,
+        isFreeItem: item.isFree,
+        discount: item.discountValue,
+        discReason: item.discountReason,
+        price: item.customPrice,
+        description: item.customDescription,
+      })
 
       try {
-        const res = await api.post("services/service-items/", payload)
+        const res = await api.post(config.apiEndpoint, payload)
         successCount++
         if (res.data?.stock_auto_added) {
           stockAutoAddedItems.push(
@@ -343,14 +435,21 @@ export default function ServicePartsManager({
       toast.error(`Failed to add ${failCount} part${failCount > 1 ? "s" : ""}`)
     }
 
-    await queryClient.invalidateQueries({ queryKey: ["service"] })
-    await queryClient.invalidateQueries({ queryKey: ["services"] })
-    await queryClient.invalidateQueries({
-      queryKey: ["service-items", serviceId],
-    })
-    await queryClient.invalidateQueries({ queryKey: ["stocks"] })
-    await queryClient.invalidateQueries({ queryKey: ["sales-transactions"] })
-    await queryClient.invalidateQueries({ queryKey: ["pending-items-stats"] })
+    for (const key of config.batchQueryKeysToInvalidate) {
+      await queryClient.invalidateQueries({ queryKey: key })
+    }
+    if (entityType === "appliance") {
+      await queryClient.invalidateQueries({
+        queryKey: ["appliance-items", entityId],
+      })
+      await queryClient.invalidateQueries({
+        queryKey: ["service-appliance", `${entityId}`],
+      })
+    } else {
+      await queryClient.invalidateQueries({
+        queryKey: ["service-items", entityId],
+      })
+    }
     if (onUpdate) await onUpdate()
 
     setIsSubmitting(false)
@@ -358,12 +457,12 @@ export default function ServicePartsManager({
     setDialogOpen(false)
   }
 
-  const handleEditPart = (part: ServiceItemUsed) => {
+  const handleEditPart = (part: ItemUsed) => {
     setEditingPartId(part.id)
 
     if (!part.item && !!part.custom_price) {
       setIsCustom(true)
-      setCustomPrice(part.custom_price || "")
+      setCustomPrice(part.custom_price?.toString() || "")
       setCustomDescription(part.custom_description || "")
       setSelectedItemId(null)
     } else {
@@ -376,7 +475,6 @@ export default function ServicePartsManager({
     setQuantity(part.quantity.toString())
     setIsFree(part.is_free || false)
 
-    // Set discount values
     if (part.discount_amount && parseFloat(part.discount_amount) > 0) {
       setDiscountValue(part.discount_amount)
     } else {
@@ -395,19 +493,16 @@ export default function ServicePartsManager({
   const confirmDelete = async () => {
     if (itemToDelete) {
       try {
-        await deleteItem.mutateAsync({ id: itemToDelete, serviceId })
+        await mutateDelete(itemToDelete)
 
         setItemToDelete(null)
         setDeleteConfirmOpen(false)
 
         await new Promise((resolve) => setTimeout(resolve, 150))
 
-        await queryClient.invalidateQueries({
-          queryKey: ["service"],
-        })
-        await queryClient.invalidateQueries({
-          queryKey: ["service-items"],
-        })
+        for (const key of config.queryKeysToInvalidate) {
+          await queryClient.invalidateQueries({ queryKey: key })
+        }
 
         if (onUpdate) {
           await onUpdate()
@@ -420,7 +515,7 @@ export default function ServicePartsManager({
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className={config.cardClassName || undefined}>
         <CardContent className="p-6">
           <p className="text-sm text-muted-foreground">Loading parts...</p>
         </CardContent>
@@ -430,15 +525,24 @@ export default function ServicePartsManager({
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
+      <Card className={config.cardClassName || undefined}>
+        <CardHeader className={cn("flex flex-row items-center justify-between pb-3", config.cardHeaderClassName)}>
           <CardTitle className="text-sm flex items-center gap-1.5 text-muted-foreground">
-            <HardHat className="h-3.5 w-3.5" />
+            <Icon className="h-3.5 w-3.5" />
             <span className="font-medium uppercase tracking-wide">
-              Service-Level Parts
+              {config.label}
             </span>
             {partsUsed.length > 0 && (
-              <Badge className="text-xs font-normal">{partsUsed.length}</Badge>
+              entityType === "appliance" ? (
+                <Badge
+                  variant="secondary"
+                  className="h-4 min-w-4 px-1 text-[10px] rounded-full"
+                >
+                  {partsUsed.length}
+                </Badge>
+              ) : (
+                <Badge className="text-xs font-normal">{partsUsed.length}</Badge>
+              )
             )}
           </CardTitle>
           {!disabled && (
@@ -454,16 +558,17 @@ export default function ServicePartsManager({
             </Button>
           )}
         </CardHeader>
-        <CardContent>
-          <p className="text-xs text-muted-foreground mb-3">
-            Parts used for pre-installation work (chipping, piping) or general
-            materials not tied to a specific unit.
-          </p>
+        <CardContent className={config.cardContentClassName || undefined}>
+          {config.description && (
+            <p className="text-xs text-muted-foreground mb-3">
+              {config.description}
+            </p>
+          )}
           {partsUsed.length === 0 ? (
             <div className="text-center py-6">
-              <HardHat className="h-6 w-6 mx-auto text-muted-foreground/40 mb-2" />
+              <Icon className="h-6 w-6 mx-auto text-muted-foreground/40 mb-2" />
               <p className="text-xs text-muted-foreground">
-                No service-level parts added yet
+                {config.emptyText}
               </p>
             </div>
           ) : (
@@ -485,8 +590,8 @@ export default function ServicePartsManager({
                     <TableRow key={part.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          {part.item_name}
-                          {!part.item && part.custom_description && (
+                          <span>{part.item_name}</span>
+                          {!part.item && part.custom_price != null && (
                             <Badge
                               variant="secondary"
                               className="text-xs"
@@ -634,6 +739,10 @@ export default function ServicePartsManager({
         open={dialogOpen}
         onOpenChange={(open) => {
           if (!open && isDialogBusy) return
+          if (!open && !editingPartId && hasUnsavedChanges) {
+            setShowCloseWarning(true)
+            return
+          }
           setDialogOpen(open)
           if (!open) {
             setEditingPartId(null)
@@ -650,13 +759,21 @@ export default function ServicePartsManager({
         }}
       >
         <DialogContent
-          className="max-w-md! overflow-hidden md:max-w-lg!"
+          className={entityType === "service" ? "max-w-md! overflow-hidden md:max-w-lg!" : "max-w-sm overflow-hidden md:max-w-md"}
           showCloseButton={!isDialogBusy}
           onEscapeKeyDown={(event) => {
             if (isDialogBusy) event.preventDefault()
+            if (!editingPartId && hasUnsavedChanges) {
+              event.preventDefault()
+              setShowCloseWarning(true)
+            }
           }}
           onPointerDownOutside={(event) => {
             if (isDialogBusy) event.preventDefault()
+            if (!editingPartId && hasUnsavedChanges) {
+              event.preventDefault()
+              setShowCloseWarning(true)
+            }
           }}
         >
           {isDialogBusy && (
@@ -678,12 +795,12 @@ export default function ServicePartsManager({
           )}
           <DialogHeader>
             <DialogTitle>
-              {editingPartId ? "Edit Part" : "Add Service-Level Part"}
+              {editingPartId ? "Edit Part" : config.dialogTitle}
             </DialogTitle>
             <DialogDescription>
               {editingPartId
                 ? "Update the part details"
-                : "Add items for pre-installation work (chipping, piping, etc.)"}
+                : config.dialogDescription}
             </DialogDescription>
           </DialogHeader>
 
@@ -789,11 +906,11 @@ export default function ServicePartsManager({
             </div>
           )}
 
-          <div className="max-h-[70vh] space-y-4 overflow-y-auto py-4 pr-1">
+          <div className={entityType === "service" ? "max-h-[70vh] space-y-4 overflow-y-auto py-4 pr-1" : "max-h-[70vh] space-y-4 overflow-y-auto py-4 px-1 pr-2"}>
             {/* Custom Item Toggle */}
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="service_parts_is_custom"
+                id={`${config.checkboxIdPrefix}_is_custom`}
                 checked={isCustom}
                 disabled={isDialogBusy}
                 onCheckedChange={(checked) => {
@@ -808,17 +925,17 @@ export default function ServicePartsManager({
                 className="cursor-pointer"
               />
               <Label
-                htmlFor="service_parts_is_custom"
+                htmlFor={`${config.checkboxIdPrefix}_is_custom`}
                 className="text-sm font-medium cursor-pointer"
               >
-                Untracked Item (no stock deduction)
+                Custom Item (no stock deduction)
               </Label>
             </div>
 
             {isCustom ? (
               <div className="space-y-3">
                 <div className="space-y-2">
-                  <Label>Select from untracked items</Label>
+                  <Label>Select from custom items</Label>
                   <ComboBox
                     options={untrackedItemOptions}
                     value={selectedUntrackedItemId}
@@ -836,8 +953,8 @@ export default function ServicePartsManager({
                         setCustomDescription("")
                       }
                     }}
-                    placeholder="Select untracked item or enter manually below..."
-                    searchPlaceholder="Search untracked items..."
+                    placeholder="Select custom item or enter manually below..."
+                    searchPlaceholder="Search custom items..."
                     disabled={isDialogBusy}
                   />
                 </div>
@@ -1029,7 +1146,7 @@ export default function ServicePartsManager({
             {/* Is Free Checkbox */}
             <div className="flex items-center space-x-2">
               <Checkbox
-                id="service_parts_is_free"
+                id={`${config.checkboxIdPrefix}_is_free`}
                 checked={isFree}
                 disabled={isDialogBusy}
                 onCheckedChange={(checked) => {
@@ -1042,7 +1159,7 @@ export default function ServicePartsManager({
                 className="cursor-pointer"
               />
               <Label
-                htmlFor="service_parts_is_free"
+                htmlFor={`${config.checkboxIdPrefix}_is_free`}
                 className="text-sm font-medium cursor-pointer"
               >
                 Part is Free (Warranty/Complementary)
@@ -1140,37 +1257,39 @@ export default function ServicePartsManager({
             )}
           </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              disabled={isDialogBusy}
-              onClick={() => {
-                setDialogOpen(false)
-                setEditingPartId(null)
-                setPendingItems([])
-              }}
-            >
-              {editingPartId ? "Cancel" : "Done"}
-            </Button>
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
             {editingPartId ? (
-              <Button
-                onClick={handleSavePart}
-                disabled={
-                  isDialogBusy ||
-                  (isCustom
-                    ? !selectedUntrackedItemId || !quantity
-                    : !selectedItemId || !quantity)
-                }
-              >
-                {isMutatingPart && (
-                  <Loader2 className="mr-2 size-4 animate-spin" />
-                )}
-                {isMutatingPart ? "Updating..." : "Update Part"}
-              </Button>
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="outline"
+                  disabled={isDialogBusy}
+                  onClick={() => {
+                    setDialogOpen(false)
+                    setEditingPartId(null)
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSavePart}
+                  disabled={
+                    isDialogBusy ||
+                    (isCustom
+                      ? !selectedUntrackedItemId || !quantity
+                      : !selectedItemId || !quantity)
+                  }
+                >
+                  {isMutatingPart && (
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                  )}
+                  {isMutatingPart ? "Updating..." : "Update Part"}
+                </Button>
+              </div>
             ) : (
               <>
                 <Button
-                  variant="secondary"
+                  variant="outline"
+                  className="w-full"
                   onClick={handleAddToList}
                   disabled={
                     isDialogBusy ||
@@ -1179,10 +1298,12 @@ export default function ServicePartsManager({
                       : !selectedItemId || !quantity)
                   }
                 >
-                  {pendingItems.length > 0 ? "Add Another" : "Add to List"}
+                  <Plus className="mr-2 size-4" />
+                  {pendingItems.length > 0 ? "Add Another Item" : "Add Item"}
                 </Button>
                 {pendingItems.length > 0 && (
                   <Button
+                    className="w-full"
                     onClick={handleSubmitAll}
                     disabled={isDialogBusy}
                   >
@@ -1190,8 +1311,8 @@ export default function ServicePartsManager({
                       <Loader2 className="mr-2 size-4 animate-spin" />
                     )}
                     {isSubmitting
-                      ? `Adding ${pendingItems.length}...`
-                      : `Add ${pendingItems.length} to Service`}
+                      ? `Saving ${pendingItems.length} item${pendingItems.length > 1 ? "s" : ""}...`
+                      : `Save ${pendingItems.length} Item${pendingItems.length > 1 ? "s" : ""} to ${config.submitLabel}`}
                   </Button>
                 )}
               </>
@@ -1208,6 +1329,30 @@ export default function ServicePartsManager({
         description="Are you sure you want to remove this part? This will return the quantity to stock."
         confirmText="Remove"
         cancelText="Cancel"
+        variant="warning"
+      />
+
+      <ConfirmDialog
+        open={showCloseWarning}
+        onCancel={() => setShowCloseWarning(false)}
+        onConfirm={() => {
+          setShowCloseWarning(false)
+          setDialogOpen(false)
+          setEditingPartId(null)
+          setSelectedItemId(null)
+          setQuantity("1")
+          setIsFree(false)
+          setIsCustom(false)
+          setCustomPrice("")
+          setDiscountValue("")
+          setDiscountReason("")
+          setSelectedUntrackedItemId(null)
+          setPendingItems([])
+        }}
+        title="Discard Changes?"
+        description={`You have ${pendingItems.length > 0 ? `${pendingItems.length} unsaved item${pendingItems.length > 1 ? "s" : ""}` : "unsaved changes"} that will be lost. Are you sure you want to close?`}
+        confirmText="Discard"
+        cancelText="Keep Editing"
         variant="warning"
       />
     </>

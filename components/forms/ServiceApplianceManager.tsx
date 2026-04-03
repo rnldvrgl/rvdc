@@ -8,17 +8,11 @@ import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 
 import { ConfirmDialog } from "@/components/custom/shared/ConfirmDialog"
-import AppliancePartsManager from "@/components/forms/AppliancePartsManager"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/components/ui/tooltip"
 import {
     AirconUnits,
     ApplianceStatus,
@@ -32,33 +26,31 @@ import {
     useApplianceTypeChoices,
     useTechnicianChoices,
 } from "@/lib/queries/useChoices"
-import { formatCurrency } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQueryClient } from "@tanstack/react-query"
-import { formatDate } from "date-fns"
 import {
-    ArrowRight,
-    CheckCircle,
-    ChevronDown,
-    ChevronUp,
     CircleDollarSign,
     Edit,
     Package,
     Plus,
-    RotateCcw,
     Save,
     Shield,
-    Trash2,
-    User,
     Users,
     Wrench,
 } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
-import { z } from "zod"
 
-// ─── Types & Constants ──────────────────────────────────────────────────────────
+import { ApplianceCard } from "./service-appliance"
+import {
+  applianceFormSchema,
+  applianceStatusOptions,
+  DEFAULT_VALUES,
+  type ApplianceFormValues,
+} from "./service-appliance/applianceFormSchema"
+
+// ─── Types ──────────────────────────────────────────────────────────────────────
 
 interface ServiceApplianceManagerProps {
   serviceId: number
@@ -69,62 +61,6 @@ interface ServiceApplianceManagerProps {
   onUpdate?: () => void | Promise<void>
   disabled?: boolean
   canManageParts?: boolean
-}
-
-const applianceStatusOptions: { value: ApplianceStatus; label: string }[] = [
-  { value: "pending", label: "Pending" },
-  { value: "completed", label: "Completed" },
-  { value: "cancelled", label: "Cancelled" },
-]
-
-// ─── Zod Schema ─────────────────────────────────────────────────────────────────
-
-const applianceFormSchema = z.object({
-  appliance_type: z.number().nullable(),
-  brand: z.string(),
-  model: z.string(),
-  serial_number: z.string(),
-  issue_reported: z.string(),
-  diagnosis_notes: z.string(),
-  status: z.enum(["pending", "completed", "cancelled"]),
-  labor_fee: z.coerce.number().min(0, "Labor fee must be non-negative"),
-  labor_is_free: z.boolean(),
-  labor_original_amount: z.coerce.number().min(0),
-  labor_discount_amount: z.coerce.number().min(0).optional(),
-  labor_discount_reason: z.string().optional(),
-  unit_price: z.coerce.number().min(0).nullable().optional(),
-  total_service_fee: z.coerce.number().min(0).nullable().optional(),
-  auto_adjust_labor: z.boolean(),
-  labor_warranty_months: z.coerce.number().min(0),
-  unit_warranty_months: z.coerce.number().min(0),
-  warranty_notes: z.string(),
-  parts_needed_notes: z.string(),
-  assigned_technicians: z.array(z.number()),
-  unit_type: z.enum(["brand_new", "second_hand", "pre_order"]).optional(),
-  unit_id: z.number().optional(),
-  model_id: z.number().optional(),
-})
-
-type ApplianceFormValues = z.infer<typeof applianceFormSchema>
-
-const DEFAULT_VALUES: ApplianceFormValues = {
-  appliance_type: null,
-  brand: "",
-  model: "",
-  serial_number: "",
-  issue_reported: "",
-  diagnosis_notes: "",
-  status: "pending",
-  labor_fee: 0,
-  labor_is_free: false,
-  labor_original_amount: 0,
-  total_service_fee: null,
-  auto_adjust_labor: false,
-  labor_warranty_months: 0,
-  unit_warranty_months: 0,
-  warranty_notes: "",
-  parts_needed_notes: "",
-  assigned_technicians: [],
 }
 
 // ─── Component ──────────────────────────────────────────────────────────────────
@@ -169,7 +105,6 @@ export default function ServiceApplianceManager({
   const modelId = watch("model_id")
   const laborIsFree = watch("labor_is_free")
   const laborFee = watch("labor_fee")
-  const laborDiscountAmount = watch("labor_discount_amount")
   const autoAdjustLabor = watch("auto_adjust_labor")
   const totalServiceFee = watch("total_service_fee")
   const brand = watch("brand")
@@ -178,7 +113,6 @@ export default function ServiceApplianceManager({
   const unitPrice = watch("unit_price")
   const applianceType = watch("appliance_type")
   const assignedTechnicians = watch("assigned_technicians")
-  const laborDiscountReason = watch("labor_discount_reason")
   const issueReported = watch("issue_reported")
   const diagnosisNotes = watch("diagnosis_notes")
   const laborWarrantyMonths = watch("labor_warranty_months")
@@ -198,7 +132,6 @@ export default function ServiceApplianceManager({
   const [applianceToDelete, setApplianceToDelete] = useState<number | null>(
     null,
   )
-  const [showLaborDiscount, setShowLaborDiscount] = useState(false)
 
   // ─── Auto-clear labor fee when marked free ──────────────────────────────────
 
@@ -216,9 +149,13 @@ export default function ServiceApplianceManager({
     const typeData = applianceTypes.find((t) => t.id === applianceType)
     if (!typeData) return
 
-    // Labor warranty: fill if still at 0
+    // Labor warranty: fill if still at 0 (repair services only)
     const currentLabor = form.getValues("labor_warranty_months")
-    if (currentLabor === 0 && typeData.default_labor_warranty_months > 0) {
+    if (
+      currentLabor === 0 &&
+      typeData.default_labor_warranty_months > 0 &&
+      serviceType === "repair"
+    ) {
       setValue("labor_warranty_months", typeData.default_labor_warranty_months)
     }
 
@@ -304,7 +241,6 @@ export default function ServiceApplianceManager({
     setIsEditing(false)
     setIsAdding(false)
     setEditingId(null)
-    setShowLaborDiscount(false)
   }
 
   const getStatusLabel = (s: ApplianceStatus) =>
@@ -389,27 +325,10 @@ export default function ServiceApplianceManager({
     setEditingId(appliance.id)
     setIsAdding(false)
     setIsEditing(true)
-
-    if (
-      appliance.labor_discount_amount &&
-      parseFloat(appliance.labor_discount_amount) > 0
-    ) {
-      setShowLaborDiscount(true)
-    }
   }
 
   const onSubmit = async (data: ApplianceFormValues) => {
     const fee = data.labor_fee || 0
-    const discAmt = data.labor_discount_amount || 0
-
-    if (discAmt > 0 && discAmt > fee) {
-      toast.error(
-        `Labor discount (₱${discAmt.toFixed(2)}) cannot exceed labor fee (₱${fee.toFixed(2)})`,
-      )
-      return
-    }
-
-    const hasDiscount = discAmt > 0
 
     const payload: ServiceAppliancePayload = {
       service: serviceId,
@@ -424,11 +343,9 @@ export default function ServiceApplianceManager({
       labor_is_free: data.labor_is_free || false,
       labor_original_amount:
         Math.round((data.labor_original_amount || 0) * 100) / 100,
-      labor_discount_amount: discAmt > 0 ? Math.round(discAmt * 100) / 100 : 0,
+      labor_discount_amount: 0,
       labor_discount_percentage: 0,
-      labor_discount_reason: hasDiscount
-        ? data.labor_discount_reason || ""
-        : "",
+      labor_discount_reason: "",
       total_service_fee:
         data.total_service_fee !== undefined && data.total_service_fee !== null
           ? Math.round(data.total_service_fee * 100) / 100
@@ -1161,59 +1078,7 @@ export default function ServiceApplianceManager({
                 )}
               </div>
 
-              {/* Labor Discount */}
-              <div className="space-y-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowLaborDiscount(!showLaborDiscount)}
-                  className="w-full justify-start text-xs text-muted-foreground p-0 h-auto hover:text-foreground"
-                >
-                  {showLaborDiscount ? (
-                    <ChevronUp className="h-3.5 w-3.5 mr-1" />
-                  ) : (
-                    <ChevronDown className="h-3.5 w-3.5 mr-1" />
-                  )}
-                  Labor Discount (Optional)
-                </Button>
 
-                {showLaborDiscount && (
-                  <div className="grid grid-cols-2 gap-3 rounded-lg border bg-background p-3">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Amount (₱)</Label>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={laborDiscountAmount ?? ""}
-                            onChange={(e) => {
-                              const val = parseFloat(e.target.value) || 0
-                              setField("labor_discount_amount", val)
-                            }}
-                            placeholder="0"
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          Enter discount in peso amount
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-medium">Reason</Label>
-                      <Input
-                        placeholder="Optional"
-                        value={laborDiscountReason || ""}
-                        onChange={(e) =>
-                          setField("labor_discount_reason", e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* ── Section 4: Service Details (non-installation only) ──── */}
@@ -1265,8 +1130,8 @@ export default function ServiceApplianceManager({
               </div>
             )}
 
-            {/* ── Section 5: Warranty (non-installation only) ────────── */}
-            {!isInstallation && (
+            {/* ── Section 5: Labor Warranty (repair only) ─────────── */}
+            {serviceType === "repair" && (
               <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Shield className="h-3.5 w-3.5" />
@@ -1274,7 +1139,7 @@ export default function ServiceApplianceManager({
                     Warranty
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">
                       Labor Warranty (months)
@@ -1293,23 +1158,6 @@ export default function ServiceApplianceManager({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">
-                      Unit Warranty (months)
-                    </Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      value={unitWarrantyMonths || 0}
-                      onChange={(e) =>
-                        setField(
-                          "unit_warranty_months",
-                          parseInt(e.target.value) || 0,
-                        )
-                      }
-                      placeholder="0 for no warranty"
-                    />
-                  </div>
-                  <div className="space-y-2 col-span-2">
                     <Label className="text-sm font-medium">
                       Warranty Notes
                       <span className="text-muted-foreground text-xs ml-1">
@@ -1375,882 +1223,5 @@ export default function ServiceApplianceManager({
         variant="destructive"
       />
     </Card>
-  )
-}
-
-// ─── Appliance Display Card (extracted to reduce main component size) ─────────
-
-// ─── Status flow definitions ─────────────────────────────────────────────────
-
-const INSTALLATION_STATUS_FLOW: {
-  from: ApplianceStatus
-  to: ApplianceStatus
-  label: string
-  icon: typeof CheckCircle
-  variant: "success" | "outline" | "secondary" | "destructive"
-}[] = [
-  {
-    from: "pending",
-    to: "completed",
-    label: "Mark Completed",
-    icon: CheckCircle,
-    variant: "success",
-  },
-  {
-    from: "pending",
-    to: "cancelled",
-    label: "Cancel",
-    icon: RotateCcw,
-    variant: "destructive",
-  },
-  {
-    from: "completed",
-    to: "pending",
-    label: "Reopen",
-    icon: RotateCcw,
-    variant: "secondary",
-  },
-  {
-    from: "cancelled",
-    to: "pending",
-    label: "Reopen",
-    icon: RotateCcw,
-    variant: "secondary",
-  },
-]
-
-const REPAIR_STATUS_FLOW: {
-  from: ApplianceStatus
-  to: ApplianceStatus
-  label: string
-  icon: typeof ArrowRight
-  variant: "success" | "outline" | "secondary" | "destructive"
-}[] = [
-  {
-    from: "pending",
-    to: "completed",
-    label: "Mark Completed",
-    icon: CheckCircle,
-    variant: "success",
-  },
-  {
-    from: "pending",
-    to: "cancelled",
-    label: "Cancel",
-    icon: RotateCcw,
-    variant: "destructive",
-  },
-  {
-    from: "completed",
-    to: "pending",
-    label: "Reopen",
-    icon: RotateCcw,
-    variant: "secondary",
-  },
-  {
-    from: "cancelled",
-    to: "pending",
-    label: "Reopen",
-    icon: RotateCcw,
-    variant: "secondary",
-  },
-]
-
-interface ApplianceCardProps {
-  appliance: ServiceAppliance
-  serviceId: number
-  isInstallation: boolean
-  installationUnits: AirconUnits[]
-  serviceTechnicians: number[]
-  users: { id: number; full_name: string }[]
-  disabled: boolean
-  canManageParts: boolean
-  expanded: boolean
-  onToggleExpand: () => void
-  onEdit: () => void
-  onDelete: () => void
-  onUpdate?: () => void | Promise<void>
-  getStatusLabel: (s: ApplianceStatus) => string
-  updateAppliance: {
-    mutateAsync: (args: {
-      id: number
-      data: ServiceAppliancePayload
-    }) => Promise<unknown>
-  }
-  toggleItemsChecked: {
-    mutateAsync: (args: { id: number; serviceId?: number }) => Promise<unknown>
-    isPending: boolean
-  }
-  canConfirmItems: boolean
-  invalidateServiceQueries: () => Promise<void>
-}
-
-function ApplianceCard({
-  appliance,
-  serviceId,
-  isInstallation,
-  installationUnits,
-  serviceTechnicians,
-  users,
-  disabled,
-  canManageParts,
-  expanded,
-  onToggleExpand,
-  onEdit,
-  onDelete,
-  onUpdate,
-  getStatusLabel,
-  updateAppliance,
-  toggleItemsChecked,
-  canConfirmItems,
-  invalidateServiceQueries,
-}: ApplianceCardProps) {
-  const [statusLoading, setStatusLoading] = useState(false)
-
-  const statusActions = isInstallation
-    ? INSTALLATION_STATUS_FLOW
-    : REPAIR_STATUS_FLOW
-  const availableActions = statusActions.filter(
-    (a) => a.from === appliance.status,
-  )
-
-  const handleStatusChange = async (newStatus: ApplianceStatus) => {
-    setStatusLoading(true)
-    try {
-      await updateAppliance.mutateAsync({
-        id: appliance.id,
-        data: {
-          service: serviceId,
-          appliance_type_id: appliance.appliance_type?.id ?? null,
-          labor_fee: parseFloat(appliance.labor_fee),
-          status: newStatus,
-        },
-      })
-      toast.success(`Status changed to ${getStatusLabel(newStatus)}`)
-      await invalidateServiceQueries()
-    } catch {
-      // handled by useApiMutation
-    } finally {
-      setStatusLoading(false)
-    }
-  }
-  return (
-    <div className="rounded-lg border bg-card overflow-hidden">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3 p-4 pb-3">
-        <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="text-sm font-semibold">
-              {appliance.appliance_type?.name ||
-                appliance.aircon_model_name ||
-                (appliance.brand && appliance.model
-                  ? `${appliance.brand} ${appliance.model}`
-                  : "Unknown Appliance")}
-            </h4>
-            <Badge
-              variant="outline"
-              className="text-xs font-medium"
-            >
-              {getStatusLabel(appliance.status)}
-            </Badge>
-            {appliance.unit_type === "pre_order" && (
-              <Badge
-                variant="outline"
-                className="text-xs font-medium border-amber-500 text-amber-600 dark:text-amber-400"
-              >
-                Pre-Order
-              </Badge>
-            )}
-          </div>
-
-          {(appliance.brand || appliance.model) && (
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <Package className="h-3 w-3" />
-              <span className="font-medium">{appliance.brand || "—"}</span>
-              {appliance.model && (
-                <>
-                  <span className="text-muted-foreground/50">·</span>
-                  <span>{appliance.model}</span>
-                </>
-              )}
-            </p>
-          )}
-
-          {serviceTechnicians.length > 0 && (
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-              <User className="h-3 w-3" />
-              <span>
-                {serviceTechnicians
-                  .map(
-                    (techId) => users.find((u) => u.id === techId)?.full_name,
-                  )
-                  .filter(Boolean)
-                  .join(", ") || "—"}
-              </span>
-            </p>
-          )}
-        </div>
-
-        <div className="flex gap-0.5 shrink-0">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={onToggleExpand}
-                className="h-7 w-7 p-0"
-              >
-                {expanded ? (
-                  <ChevronUp className="h-3.5 w-3.5" />
-                ) : (
-                  <ChevronDown className="h-3.5 w-3.5" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {expanded
-                  ? "Hide parts used"
-                  : canManageParts && !disabled
-                    ? "Show and manage parts used"
-                    : "Show parts used"}
-              </p>
-            </TooltipContent>
-          </Tooltip>
-          {!disabled && (
-            <>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={onEdit}
-                    className="h-7 w-7 p-0"
-                  >
-                    <Edit className="h-3.5 w-3.5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Edit {isInstallation ? "unit" : "appliance"} details</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={onDelete}
-                    className="h-7 w-7 p-0"
-                  >
-                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Delete appliance and all its parts</p>
-                </TooltipContent>
-              </Tooltip>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Status Actions */}
-      {!disabled && availableActions.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap px-4 pb-3">
-          {availableActions.map((action) => {
-            const Icon = action.icon
-            return (
-              <Button
-                key={`${action.from}-${action.to}`}
-                type="button"
-                variant={action.variant}
-                size="sm"
-                disabled={statusLoading}
-                onClick={() => handleStatusChange(action.to)}
-                className="h-6 text-xs px-2"
-              >
-                <Icon className="mr-1 h-3 w-3" />
-                {action.label}
-              </Button>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Content */}
-      <div className="px-4 pb-4 space-y-3">
-        {appliance.issue_reported && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Issue Reported
-            </p>
-            <p className="text-sm leading-relaxed bg-muted/40 p-2.5 rounded-md">
-              {appliance.issue_reported}
-            </p>
-          </div>
-        )}
-
-        {appliance.diagnosis_notes && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Diagnosis
-            </p>
-            <p className="text-sm leading-relaxed bg-blue-50 dark:bg-blue-950/20 p-2.5 rounded-md border border-blue-200/50 dark:border-blue-900/50">
-              {appliance.diagnosis_notes}
-            </p>
-          </div>
-        )}
-
-        {/* Parts Needed Notes (from manager/technician) */}
-        {appliance.parts_needed_notes && (
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-orange-600 dark:text-orange-400 flex items-center gap-1">
-              <Package className="h-3 w-3" />
-              Parts Needed
-            </p>
-            <p className="text-sm leading-relaxed bg-orange-50 dark:bg-orange-950/20 p-2.5 rounded-md border border-orange-200/50 dark:border-orange-900/50">
-              {appliance.parts_needed_notes}
-            </p>
-          </div>
-        )}
-
-        {/* Items Confirmed Toggle — only when parts_needed_notes exists */}
-        {appliance.parts_needed_notes && (
-          <div className="flex items-center justify-between gap-3 rounded-lg border p-3">
-            <div className="flex items-center gap-2 min-w-0">
-              {appliance.items_checked ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <CheckCircle className="h-4 w-4 text-success shrink-0" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Parts have been reviewed and confirmed by clerk
-                  </TooltipContent>
-                </Tooltip>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Package className="h-4 w-4 text-orange-500 shrink-0" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Clerk needs to review and confirm parts
-                  </TooltipContent>
-                </Tooltip>
-              )}
-              <div className="min-w-0">
-                <p className="text-sm font-medium">
-                  {appliance.items_checked
-                    ? "Items Confirmed"
-                    : "Items Not Yet Confirmed"}
-                </p>
-                {appliance.items_checked && appliance.items_checked_by && (
-                  <p className="text-xs text-muted-foreground">
-                    by {appliance.items_checked_by_name || "Unknown"}{" "}
-                    {appliance.items_checked_at &&
-                      `· ${formatDate(new Date(appliance.items_checked_at), "MMM d, yyyy h:mm a")}`}
-                  </p>
-                )}
-              </div>
-            </div>
-            {canConfirmItems && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant={appliance.items_checked ? "outline" : "default"}
-                    size="sm"
-                    disabled={
-                      toggleItemsChecked.isPending ||
-                      (!appliance.items_checked &&
-                        (!appliance.items_used ||
-                          appliance.items_used.length === 0))
-                    }
-                    onClick={async () => {
-                      try {
-                        await toggleItemsChecked.mutateAsync({
-                          id: appliance.id,
-                          serviceId,
-                        })
-                        toast.success(
-                          appliance.items_checked
-                            ? "Items marked as not confirmed"
-                            : "Items confirmed successfully",
-                        )
-                        await invalidateServiceQueries()
-                      } catch {
-                        // handled by useApiMutation
-                      }
-                    }}
-                    className="h-7 text-xs shrink-0"
-                  >
-                    {appliance.items_checked ? (
-                      <>
-                        <RotateCcw className="mr-1 h-3 w-3" />
-                        Unconfirm
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="mr-1 h-3 w-3" />
-                        Confirm Items
-                      </>
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {appliance.items_checked
-                    ? "Mark items as needing re-review"
-                    : !appliance.items_used || appliance.items_used.length === 0
-                      ? "Add parts first before confirming"
-                      : "Confirm that all listed parts are correct and complete"}
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        )}
-
-        {/* Financial Summary — compact inline */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-muted/30 p-3 text-sm">
-          {/* Labor Fee */}
-          <div>
-            <p className="text-xs text-muted-foreground">Labor</p>
-            {appliance.labor_is_free ? (
-              <Badge
-                variant="success"
-                className="text-xs mt-0.5"
-              >
-                FREE
-              </Badge>
-            ) : (
-              <div className="flex items-baseline gap-1.5">
-                <span className="font-semibold text-primary">
-                  {formatCurrency(
-                    parseFloat(
-                      appliance.discounted_labor_fee || appliance.labor_fee,
-                    ),
-                  )}
-                </span>
-                {appliance.labor_discount_amount &&
-                  parseFloat(appliance.labor_discount_amount) > 0 && (
-                    <span className="text-xs text-success">
-                      ₱{appliance.labor_discount_amount} off
-                    </span>
-                  )}
-              </div>
-            )}
-          </div>
-
-          {/* Unit Price (installation only) */}
-          {isInstallation && (
-            <>
-              <Separator
-                orientation="vertical"
-                className="h-8"
-              />
-              <UnitPriceInline
-                appliance={appliance}
-                serviceId={serviceId}
-                installationUnits={installationUnits}
-                disabled={disabled}
-                updateAppliance={updateAppliance}
-                invalidateServiceQueries={invalidateServiceQueries}
-              />
-            </>
-          )}
-
-          {/* Parts Cost */}
-          <Separator
-            orientation="vertical"
-            className="h-8"
-          />
-          <div>
-            <p className="text-xs text-muted-foreground">Parts</p>
-            {appliance.items_used && appliance.items_used.length > 0 ? (
-              <div className="flex items-baseline gap-1.5">
-                <span className="font-semibold text-primary">
-                  {formatCurrency(
-                    parseFloat(appliance.total_parts_cost || "0"),
-                  )}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  ({appliance.items_used.length}{" "}
-                  {appliance.items_used.length === 1 ? "item" : "items"})
-                </span>
-              </div>
-            ) : (
-              <span className="text-muted-foreground text-xs">No parts</span>
-            )}
-          </div>
-        </div>
-
-        {/* Warranty */}
-        {!isInstallation &&
-          (appliance.labor_warranty_months ||
-            appliance.unit_warranty_months ||
-            appliance.warranty_notes) && <WarrantyCard appliance={appliance} />}
-
-        {/* Parts Summary (collapsed) */}
-        {!expanded &&
-          appliance.items_used &&
-          appliance.items_used.length > 0 && (
-            <PartsSummary parts={appliance.items_used} />
-          )}
-      </div>
-
-      {/* Expandable Parts Manager */}
-      {expanded && (
-        <div className="border-t bg-muted/10">
-          <div className="p-4">
-            <AppliancePartsManager
-              applianceId={appliance.id}
-              disabled={!canManageParts}
-              onUpdate={onUpdate}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Sub-components ─────────────────────────────────────────────────────────────
-
-function UnitPriceInline({
-  appliance,
-  serviceId,
-  installationUnits,
-  disabled,
-  updateAppliance,
-  invalidateServiceQueries,
-}: {
-  appliance: ServiceAppliance
-  serviceId: number
-  installationUnits: AirconUnits[]
-  disabled: boolean
-  updateAppliance: {
-    mutateAsync: (args: {
-      id: number
-      data: ServiceAppliancePayload
-    }) => Promise<unknown>
-  }
-  invalidateServiceQueries: () => Promise<void>
-}) {
-  const [isEditingPrice, setIsEditingPrice] = useState(false)
-  const [editPrice, setEditPrice] = useState<string>("")
-  const [isSaving, setIsSaving] = useState(false)
-
-  const matchingUnit = appliance.serial_number
-    ? installationUnits.find(
-        (unit) => unit.serial_number === appliance.serial_number,
-      )
-    : null
-
-  const defaultPrice = matchingUnit?.model
-    ? parseFloat(
-        matchingUnit.model.selling_price ||
-          matchingUnit.model.retail_price ||
-          "0",
-      )
-    : 0
-
-  const currentPrice = appliance.unit_price
-    ? parseFloat(appliance.unit_price)
-    : defaultPrice
-
-  const hasOverride =
-    appliance.unit_price != null &&
-    parseFloat(appliance.unit_price) !== defaultPrice
-
-  const handleStartEdit = () => {
-    setEditPrice(currentPrice > 0 ? currentPrice.toString() : "")
-    setIsEditingPrice(true)
-  }
-
-  const handleCancelEdit = () => {
-    setIsEditingPrice(false)
-    setEditPrice("")
-  }
-
-  const handleSavePrice = async () => {
-    setIsSaving(true)
-    try {
-      const newPrice = editPrice ? parseFloat(editPrice) : null
-      await updateAppliance.mutateAsync({
-        id: appliance.id,
-        data: {
-          service: serviceId,
-          appliance_type_id: appliance.appliance_type?.id ?? null,
-          labor_fee: parseFloat(appliance.labor_fee),
-          status: appliance.status,
-          unit_price:
-            newPrice !== null ? Math.round(newPrice * 100) / 100 : null,
-        },
-      })
-      toast.success("Unit price updated!")
-      setIsEditingPrice(false)
-      await invalidateServiceQueries()
-    } catch {
-      // handled by useApiMutation
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleResetToDefault = async () => {
-    setIsSaving(true)
-    try {
-      await updateAppliance.mutateAsync({
-        id: appliance.id,
-        data: {
-          service: serviceId,
-          appliance_type_id: appliance.appliance_type?.id ?? null,
-          labor_fee: parseFloat(appliance.labor_fee),
-          status: appliance.status,
-          unit_price: null,
-        },
-      })
-      toast.success("Unit price reset to default!")
-      setIsEditingPrice(false)
-      await invalidateServiceQueries()
-    } catch {
-      // handled by useApiMutation
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  return (
-    <div>
-      <div className="flex items-center gap-1">
-        <p className="text-xs text-muted-foreground">Unit</p>
-        {!disabled && !isEditingPrice && currentPrice > 0 && (
-          <button
-            type="button"
-            onClick={handleStartEdit}
-            title="Edit unit price"
-            className="text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Edit className="h-2.5 w-2.5" />
-          </button>
-        )}
-      </div>
-
-      {isEditingPrice ? (
-        <div className="space-y-1.5 mt-0.5">
-          <Input
-            type="number"
-            min="0"
-            step="0.01"
-            value={editPrice}
-            onChange={(e) => setEditPrice(e.target.value)}
-            placeholder={`₱${defaultPrice.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`}
-            className="h-7 text-xs w-32"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSavePrice()
-              if (e.key === "Escape") handleCancelEdit()
-            }}
-          />
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleSavePrice}
-              disabled={isSaving}
-              className="h-5 text-[10px] px-1.5"
-            >
-              Save
-            </Button>
-            {hasOverride && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleResetToDefault}
-                disabled={isSaving}
-                className="h-5 text-[10px] px-1.5"
-              >
-                Reset
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={handleCancelEdit}
-              disabled={isSaving}
-              className="h-5 text-[10px] px-1.5"
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      ) : currentPrice > 0 ? (
-        <div className="flex items-baseline gap-1.5">
-          <span className="font-semibold text-primary">
-            {formatCurrency(currentPrice)}
-          </span>
-          {hasOverride && (
-            <span
-              className={`text-xs ${currentPrice < defaultPrice ? "text-success" : "text-orange-600"}`}
-            >
-              {currentPrice < defaultPrice
-                ? `${formatCurrency(defaultPrice - currentPrice)} off`
-                : `+${formatCurrency(currentPrice - defaultPrice)}`}
-            </span>
-          )}
-        </div>
-      ) : (
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">
-            {matchingUnit ? "Not set" : "Labor only"}
-          </span>
-          {!disabled && (
-            <button
-              type="button"
-              onClick={handleStartEdit}
-              className="text-xs text-primary hover:underline"
-            >
-              Set
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
-function WarrantyCard({ appliance }: { appliance: ServiceAppliance }) {
-  return (
-    <div className="rounded-lg border border-blue-200/50 bg-blue-50/30 dark:bg-blue-950/10 p-3 space-y-2">
-      <div className="flex items-center gap-1.5">
-        <Shield className="h-3 w-3 text-blue-600 dark:text-blue-400" />
-        <span className="text-xs font-medium uppercase tracking-wide text-blue-700 dark:text-blue-300">
-          Warranty
-        </span>
-      </div>
-
-      <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        {appliance.labor_warranty_months != null &&
-          appliance.labor_warranty_months > 0 && (
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">Labor</p>
-              <div className="flex items-center gap-1.5">
-                <span className="font-medium">
-                  {appliance.labor_warranty_months} months
-                </span>
-                {appliance.is_labor_warranty_active && (
-                  <Badge
-                    variant="success"
-                    className="text-[10px] px-1 py-0"
-                  >
-                    Active
-                  </Badge>
-                )}
-              </div>
-              {appliance.labor_warranty_end_date && (
-                <p className="text-[10px] text-muted-foreground">
-                  Until{" "}
-                  {new Date(
-                    appliance.labor_warranty_end_date,
-                  ).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          )}
-
-        {appliance.unit_warranty_months != null &&
-          appliance.unit_warranty_months > 0 && (
-            <div className="space-y-0.5">
-              <p className="text-xs text-muted-foreground">Unit</p>
-              <div className="flex items-center gap-1.5">
-                <span className="font-medium">
-                  {appliance.unit_warranty_months} months
-                </span>
-                {appliance.is_unit_warranty_active && (
-                  <Badge
-                    variant="success"
-                    className="text-[10px] px-1 py-0"
-                  >
-                    Active
-                  </Badge>
-                )}
-              </div>
-              {appliance.unit_warranty_end_date && (
-                <p className="text-[10px] text-muted-foreground">
-                  Until{" "}
-                  {new Date(
-                    appliance.unit_warranty_end_date,
-                  ).toLocaleDateString()}
-                </p>
-              )}
-            </div>
-          )}
-      </div>
-
-      {appliance.warranty_notes && (
-        <p className="text-xs text-muted-foreground pt-1 border-t border-blue-200/50 dark:border-blue-800/50">
-          {appliance.warranty_notes}
-        </p>
-      )}
-
-      {appliance.warranty_start_date && (
-        <p className="text-[10px] text-muted-foreground">
-          Started:{" "}
-          {new Date(appliance.warranty_start_date).toLocaleDateString()}
-        </p>
-      )}
-    </div>
-  )
-}
-
-function PartsSummary({
-  parts = [],
-}: {
-  parts?: ServiceAppliance["items_used"]
-}) {
-  return (
-    <div className="space-y-1.5">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Parts Used
-      </p>
-      <div className="rounded-md bg-muted/20 divide-y">
-        {parts.map((part) => {
-          const hasDiscount =
-            (part.discount_amount && parseFloat(part.discount_amount) > 0) ||
-            (part.discount_percentage &&
-              parseFloat(part.discount_percentage) > 0)
-
-          return (
-            <div
-              key={part.id}
-              className="flex justify-between items-center text-xs px-3 py-1.5 gap-2"
-            >
-              <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                <span className="text-muted-foreground truncate">
-                  {part.item_name}
-                </span>
-                <span className="text-muted-foreground/60 shrink-0">
-                  x{part.quantity}
-                </span>
-                {hasDiscount && (
-                  <span className="text-success shrink-0">
-                    {part.discount_percentage &&
-                    parseFloat(part.discount_percentage) > 0
-                      ? `${part.discount_percentage}% off`
-                      : `₱${part.discount_amount} off`}
-                  </span>
-                )}
-              </div>
-              <span className="font-medium shrink-0">
-                {formatCurrency(part.line_total)}
-              </span>
-            </div>
-          )
-        })}
-      </div>
-    </div>
   )
 }
