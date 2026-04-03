@@ -146,7 +146,7 @@ export default function PaymentCollectionPage() {
     limit: 200,
   })
   const { data: salesData, isLoading: loadingSales } = useSalesTransactions({
-    filter: { payment_status: "unpaid,partial" },
+    filter: { payment_status: "unpaid,partial", transaction_type: "sale,replacement,pull_out,asset_sale" },
     limit: 200,
   })
   const { data: remittancesData, isLoading: loadingRemittances } =
@@ -177,6 +177,7 @@ export default function PaymentCollectionPage() {
       (salesData?.results ?? []).filter(
         (s) =>
           !s.voided &&
+          s.transaction_type !== "service" &&
           (s.payment_status === "unpaid" || s.payment_status === "partial"),
       ),
     [salesData],
@@ -298,7 +299,7 @@ export default function PaymentCollectionPage() {
         <CollectionSection
           title="Unpaid Services"
           icon={Wrench}
-          href="/services?payment_status=unpaid,partial"
+          href="/services?payment_status=unpaid,partial&no_date_range=1"
           count={services.length}
         >
           {services.length === 0 ? (
