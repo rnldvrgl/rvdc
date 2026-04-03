@@ -28,7 +28,7 @@ export function useCompanyAssetMutations() {
     }: {
       id: number
       sale_price: number
-      sold_to: string
+      sold_to: number
       disposal_notes?: string
     }) =>
       api.post(`${url}${id}/dispose/`, {

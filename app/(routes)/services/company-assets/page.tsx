@@ -2,6 +2,7 @@
 
 import { getCompanyAssetColumns } from "@/app/(routes)/services/company-assets/columns"
 import { CardSelect } from "@/components/custom/inputs/CardSelect"
+import { ClientCardSelect } from "@/components/custom/inputs/ClientComboBox"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
@@ -77,7 +78,7 @@ export default function CompanyAssetsPage() {
   // Sell dialog
   const [sellTarget, setSellTarget] = useState<CompanyAsset | null>(null)
   const [salePrice, setSalePrice] = useState("")
-  const [soldTo, setSoldTo] = useState("")
+  const [soldTo, setSoldTo] = useState<number | null>(null)
   const [sellNotes, setSellNotes] = useState("")
 
   // Update status dialog
@@ -88,7 +89,7 @@ export default function CompanyAssetsPage() {
   const handleSell = (asset: CompanyAsset) => {
     setSellTarget(asset)
     setSalePrice("")
-    setSoldTo("")
+    setSoldTo(null)
     setSellNotes("")
   }
 
@@ -109,14 +110,14 @@ export default function CompanyAssetsPage() {
       {
         id: sellTarget.id,
         sale_price: parseFloat(salePrice),
-        sold_to: soldTo,
+        sold_to: soldTo!,
         disposal_notes: sellNotes || undefined,
       },
       {
         onSuccess: () => {
           setSellTarget(null)
           setSalePrice("")
-          setSoldTo("")
+          setSoldTo(null)
           setSellNotes("")
           refetch()
         },
@@ -192,12 +193,12 @@ export default function CompanyAssetsPage() {
           if (!open) {
             setSellTarget(null)
             setSalePrice("")
-            setSoldTo("")
+            setSoldTo(null)
             setSellNotes("")
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Sell Asset</DialogTitle>
             <DialogDescription>
@@ -206,7 +207,14 @@ export default function CompanyAssetsPage() {
                 : ""}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 pt-2">
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <Label>Sold To</Label>
+              <ClientCardSelect
+                value={soldTo}
+                onChange={setSoldTo}
+              />
+            </div>
             <div className="space-y-1.5">
               <Label htmlFor="sale-price">Sale Price</Label>
               <Input
@@ -217,15 +225,6 @@ export default function CompanyAssetsPage() {
                 placeholder="Enter sale price"
                 value={salePrice}
                 onChange={(e) => setSalePrice(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="sold-to">Sold To</Label>
-              <Input
-                id="sold-to"
-                placeholder="Buyer name"
-                value={soldTo}
-                onChange={(e) => setSoldTo(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
@@ -244,7 +243,7 @@ export default function CompanyAssetsPage() {
                 onClick={() => {
                   setSellTarget(null)
                   setSalePrice("")
-                  setSoldTo("")
+                  setSoldTo(null)
                   setSellNotes("")
                 }}
               >

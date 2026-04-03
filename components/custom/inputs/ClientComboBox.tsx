@@ -14,7 +14,7 @@ import { Client } from "@/lib/constants/types"
 import { useClientMutations } from "@/lib/mutations/useClientMutations"
 import { useClientChoices } from "@/lib/queries/useChoices"
 import { useBarangays, useCities, useProvinces } from "@/lib/queries/usePsgc"
-import { isClientPinned, togglePinnedClient } from "@/lib/utils/pinnedClients"
+import { getPinnedClientIds, isClientPinned, togglePinnedClient } from "@/lib/utils/pinnedClients"
 import { cn, getNameByCode, prepareOptions } from "@/lib/utils/helpers"
 import { Check, MapPin, Phone, Plus, Search, Star, User, X } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
@@ -321,6 +321,7 @@ export function ClientCardSelect({
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
   const [selectedBarangay, setSelectedBarangay] = useState<string | null>(null)
   const { addClient } = useClientMutations()
+  const [pinnedIds, setPinnedIds] = useState(() => getPinnedClientIds())
 
   const { data: provinces = [] } = useProvinces()
   const { data: cities = [], isLoading: loadingCities } =
@@ -395,19 +396,36 @@ export function ClientCardSelect({
   )
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return clients.slice(0, MAX_VISIBLE)
+    const sortPinned = (list: typeof clients) => {
+      const pinSet = new Set(pinnedIds)
+      return [...list].sort((a, b) => {
+        const ap = pinSet.has(a.id) ? 0 : 1
+        const bp = pinSet.has(b.id) ? 0 : 1
+        return ap - bp
+      })
+    }
+    if (!search.trim()) return sortPinned(clients).slice(0, MAX_VISIBLE)
     const q = search.toLowerCase()
-    return clients
-      .filter(
+    return sortPinned(
+      clients.filter(
         (c) =>
           c.full_name.toLowerCase().includes(q) ||
           c.contact_number?.toLowerCase().includes(q) ||
           c.address?.toLowerCase().includes(q) ||
           c.city?.toLowerCase().includes(q) ||
           c.province?.toLowerCase().includes(q),
-      )
-      .slice(0, MAX_VISIBLE)
-  }, [clients, search])
+      ),
+    ).slice(0, MAX_VISIBLE)
+  }, [clients, search, pinnedIds])
+
+  const handleTogglePin = useCallback(
+    (e: React.MouseEvent, clientId: number) => {
+      e.stopPropagation()
+      togglePinnedClient(clientId)
+      setPinnedIds(getPinnedClientIds())
+    },
+    [],
+  )
 
   if (isLoading) {
     return (
@@ -509,6 +527,7 @@ export function ClientCardSelect({
 
           {filtered.map((client) => {
             const isSelected = client.id === value
+            const isPinned = pinnedIds.includes(client.id)
 
             return (
               <button
@@ -528,6 +547,24 @@ export function ClientCardSelect({
                 {isSelected && (
                   <div className="absolute top-1.5 right-1.5 flex items-center justify-center size-4 rounded-full bg-primary">
                     <Check className="size-2.5 text-primary-foreground" />
+                  </div>
+                )}
+                {!isSelected && (
+                  <div
+                    role="button"
+                    tabIndex={-1}
+                    className="absolute top-1.5 right-1.5 p-0.5 rounded hover:bg-muted"
+                    onClick={(e) => handleTogglePin(e, client.id)}
+                    title={isPinned ? "Unpin client" : "Pin client"}
+                  >
+                    <Star
+                      className={cn(
+                        "size-3",
+                        isPinned
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-muted-foreground/40 hover:text-muted-foreground",
+                      )}
+                    />
                   </div>
                 )}
                 <div className="flex items-center justify-center size-8 rounded-full bg-primary/10 shrink-0 mt-0.5">

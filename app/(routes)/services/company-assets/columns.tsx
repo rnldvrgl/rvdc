@@ -95,10 +95,10 @@ export function getCompanyAssetColumns({
       },
     },
     {
-      accessorKey: "sold_to",
+      accessorKey: "sold_to_name",
       header: "Sold To",
       cell: ({ getValue }) => {
-        const v = getValue() as string
+        const v = getValue() as string | null
         return v || <span className="text-muted-foreground">—</span>
       },
     },

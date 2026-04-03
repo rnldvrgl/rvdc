@@ -1448,7 +1448,8 @@ export interface CompanyAsset {
   disposed_at: string | null
   disposal_notes: string
   sale_price: string | null
-  sold_to: string
+  sold_to: number | null
+  sold_to_name: string | null
   created_at: string
   updated_at: string
 }
