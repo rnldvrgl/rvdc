@@ -116,7 +116,6 @@ export default function ServiceApplianceManager({
   const issueReported = watch("issue_reported")
   const diagnosisNotes = watch("diagnosis_notes")
   const laborWarrantyMonths = watch("labor_warranty_months")
-  const unitWarrantyMonths = watch("unit_warranty_months")
   const warrantyNotes = watch("warranty_notes")
   const partsNeededNotes = watch("parts_needed_notes")
 
