@@ -11,6 +11,7 @@ import {
 import type { AirconUnits, SalesTransaction, Service, ServicePayment } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/currency"
 import { getBadgeVariant } from "@/lib/utils/helpers"
+import { paymentStatusLabels } from "@/lib/constants/enumMappings"
 import {
   getServiceModeLabel,
   getServiceStatusLabel,
@@ -22,15 +23,6 @@ import { format } from "date-fns"
 import { Archive, MoreHorizontal, RotateCcw, Wrench } from "lucide-react"
 
 // ── Label maps ──────────────────────────────────────────────────────────────
-
-export const paymentStatusLabels: Record<string, string> = {
-  unpaid: "Unpaid",
-  partial: "Partially Paid",
-  paid: "Paid",
-  refunded: "Refunded",
-  written_off: "Written Off",
-  "n/a": "N/A",
-}
 
 export const paymentTypeLabels: Record<string, string> = {
   cash: "Cash",

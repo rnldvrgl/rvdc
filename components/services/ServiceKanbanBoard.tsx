@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Service, ServiceStatus } from "@/lib/constants/interface"
 import { formatCurrency, getBadgeVariant, safeCell } from "@/lib/utils/helpers"
+import { paymentStatusLabels } from "@/lib/constants/enumMappings"
 import {
   getServiceModeLabel,
   getServiceStatusLabel,
@@ -378,7 +379,7 @@ function ServiceCard({
               variant={getBadgeVariant(service.payment_status)}
               className="text-[9px] px-1 py-0 h-3.5"
             >
-              {safeCell(service.payment_status)}
+              {paymentStatusLabels[service.payment_status] || safeCell(service.payment_status)}
             </Badge>
           </div>
           <span className="text-[10px] text-muted-foreground">

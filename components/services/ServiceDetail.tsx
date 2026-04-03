@@ -59,6 +59,7 @@ import {
     formatTimeTo12Hour,
     getBadgeVariant,
 } from "@/lib/utils/helpers"
+import { paymentStatusLabels } from "@/lib/constants/enumMappings"
 import { formatDate } from "@/lib/utils/helpers/date"
 import {
     getServiceModeLabel,
@@ -101,13 +102,6 @@ interface ServiceDetailProps {
   service: Service
   onEdit?: () => void
   onRefresh?: () => void
-}
-
-const paymentStatusLabels: Record<string, string> = {
-  pending: "Pending",
-  unpaid: "Unpaid",
-  partial: "Partially Paid",
-  paid: "Paid",
 }
 
 const applianceStatusLabels: Record<string, string> = {

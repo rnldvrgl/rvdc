@@ -12,6 +12,7 @@ import {
   getBadgeVariant,
   safeCell,
 } from "@/lib/utils/helpers"
+import { paymentStatusLabels } from "@/lib/constants/enumMappings"
 import { formatDate } from "@/lib/utils/helpers/date"
 import {
   getServiceModeLabel,
@@ -453,14 +454,17 @@ export function getServiceColumns({
     {
       accessorKey: "payment_status",
       header: "Payment",
-      cell: ({ getValue }) => (
-        <Badge
-          variant={getBadgeVariant(getValue() as string)}
-          className="text-[11px]"
-        >
-          {safeCell(getValue())}
-        </Badge>
-      ),
+      cell: ({ getValue }) => {
+        const value = getValue() as string
+        return (
+          <Badge
+            variant={getBadgeVariant(value)}
+            className="text-[11px]"
+          >
+            {paymentStatusLabels[value] || safeCell(value)}
+          </Badge>
+        )
+      },
     },
 
     // -- Created date (compact relative) --

@@ -1,3 +1,5 @@
+import { paymentStatusLabels } from "@/lib/constants/enumMappings"
+
 /**
  * Centralized status-to-badge/color mappings for UI display
  * Extracted from 8+ component files to standardize status display
@@ -191,28 +193,24 @@ export const salesOrderStatusConfigMap: Record<string, StatusConfig> = {
   },
 }
 
-export const paymentStatusConfigMap: Record<string, StatusConfig> = {
-  PENDING: {
-    label: "Pending",
-    variant: "secondary",
-  },
-  PARTIAL: {
-    label: "Partial",
-    variant: "warning",
-  },
-  PAID: {
-    label: "Paid",
-    variant: "success",
-  },
-  OVERDUE: {
-    label: "Overdue",
-    variant: "destructive",
-  },
-  CANCELLED: {
-    label: "Cancelled",
-    variant: "outline",
-  },
-}
+export const paymentStatusConfigMap: Record<string, StatusConfig> = (() => {
+  const variantMap: Record<string, BadgeVariant> = {
+    pending: "secondary",
+    unpaid: "destructive",
+    partial: "warning",
+    paid: "success",
+    overdue: "destructive",
+    cancelled: "outline",
+    no_charge: "default",
+    refunded: "secondary",
+    written_off: "outline",
+  }
+  const map: Record<string, StatusConfig> = {}
+  for (const [key, label] of Object.entries(paymentStatusLabels)) {
+    map[key] = { label, variant: variantMap[key.toLowerCase()] ?? "default" }
+  }
+  return map
+})()
 
 // ============================================================================
 // SERVICE STATUS MAPPINGS (Extends existing from service.ts)
