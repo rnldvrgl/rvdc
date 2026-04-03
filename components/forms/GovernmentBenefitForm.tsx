@@ -527,7 +527,7 @@ export function GovernmentBenefitForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes (Optional)</FormLabel>
+                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}

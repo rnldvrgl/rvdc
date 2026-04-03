@@ -185,7 +185,7 @@ export function AddManualDeductionForm({
               name="deduction_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Deduction Type</FormLabel>
+                  <FormLabel required>Deduction Type</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
@@ -276,7 +276,7 @@ export function AddManualDeductionForm({
                   render={({ field }) => (
                     <DatePicker
                       field={field}
-                      label="End Date (Optional)"
+                      label="End Date"
                       placeholder="No end date (ongoing)"
                       description="Leave blank for indefinite recurring deduction"
                       minDate={form.watch("effective_date")}

@@ -1109,7 +1109,7 @@ export default function ServiceFormWizard({
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Delivery Date (Optional)</FormLabel>
+                        <FormLabel>Delivery Date</FormLabel>
                         <FormControl>
                           <DateTimePicker
                             value={field.value ?? undefined}
@@ -1329,7 +1329,7 @@ export default function ServiceFormWizard({
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Reinstall Appointment (Optional)
+                            Reinstall Appointment
                           </FormLabel>
                           <FormControl>
                             <DateTimePicker

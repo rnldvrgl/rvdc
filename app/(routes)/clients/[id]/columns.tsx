@@ -20,7 +20,7 @@ import {
 } from "@/lib/utils/helpers/service"
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { Archive, MoreHorizontal, RotateCcw, Wrench } from "lucide-react"
+import { Archive, MoreHorizontal, RotateCcw, Shield, Wrench } from "lucide-react"
 
 // ── Label maps ──────────────────────────────────────────────────────────────
 
@@ -595,3 +595,114 @@ export const unitColumns: ColumnDef<AirconUnits>[] = [
     ),
   },
 ]
+
+// ── Warranty claim filter ───────────────────────────────────────────────────
+
+export const warrantyFilterFn = (s: Service, q: string) =>
+  String(s.id).includes(q) ||
+  (s.complementary_reason ?? "").toLowerCase().includes(q) ||
+  getServiceStatusLabel(s.status).toLowerCase().includes(q) ||
+  (s.appliances?.some(
+    (a) => (a.brand ?? "").toLowerCase().includes(q) || (a.model ?? "").toLowerCase().includes(q),
+  ) ?? false)
+
+// ── Warranty claim columns ──────────────────────────────────────────────────
+
+export function getWarrantyClaimColumns({
+  onViewService,
+}: {
+  onViewService: (s: Service) => void
+}): ColumnDef<Service>[] {
+  return [
+    {
+      id: "id",
+      accessorFn: (row) => row.id,
+      header: "SVC #",
+      enableSorting: true,
+      meta: { thClass: "w-28", tdClass: "w-28" },
+      cell: ({ row }) => (
+        <span className="font-mono font-semibold text-sm">
+          SVC-{String(row.original.id).padStart(4, "0")}
+        </span>
+      ),
+    },
+    {
+      id: "reason",
+      header: "Claim Type",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <Badge variant="outline" className="text-xs gap-1 border-amber-500 text-amber-600 dark:text-amber-400">
+          <Shield className="h-3 w-3" />
+          {row.original.complementary_reason || "Warranty"}
+        </Badge>
+      ),
+    },
+    {
+      id: "appliances",
+      header: "Appliance",
+      enableSorting: false,
+      cell: ({ row }) => {
+        const appliances = row.original.appliances || []
+        if (appliances.length === 0) return <span className="text-muted-foreground text-sm">—</span>
+        const first = appliances[0]
+        return (
+          <div>
+            <p className="text-sm font-medium">
+              {first.brand && first.model
+                ? `${first.brand} ${first.model}`
+                : first.appliance_type?.name || "Unknown"}
+            </p>
+            {first.serial_number && (
+              <p className="text-xs text-muted-foreground font-mono mt-0.5">
+                SN: {first.serial_number}
+              </p>
+            )}
+            {appliances.length > 1 && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                +{appliances.length - 1} more
+              </p>
+            )}
+          </div>
+        )
+      },
+    },
+    {
+      id: "status",
+      header: "Status",
+      enableSorting: false,
+      meta: { thClass: "w-28", tdClass: "w-28" },
+      cell: ({ row }) => (
+        <Badge variant={getBadgeVariant(row.original.status)} className="text-xs">
+          {getServiceStatusLabel(row.original.status)}
+        </Badge>
+      ),
+    },
+    {
+      id: "revenue",
+      header: "Parts Cost",
+      enableSorting: true,
+      accessorFn: (row) => parseFloat(row.total_revenue || "0"),
+      meta: { thClass: "w-28", tdClass: "w-28" },
+      cell: ({ row }) => {
+        const rev = parseFloat(row.original.total_revenue || "0")
+        return rev > 0 ? (
+          <span className="font-semibold text-sm">{formatCurrency(rev)}</span>
+        ) : (
+          <span className="text-muted-foreground text-sm">Free</span>
+        )
+      },
+    },
+    {
+      id: "created",
+      accessorFn: (row) => row.created_at,
+      header: "Claimed",
+      enableSorting: true,
+      meta: { thClass: "w-32", tdClass: "w-32" },
+      cell: ({ row }) => (
+        <span className="text-muted-foreground whitespace-nowrap text-sm">
+          {formatDate(row.original.created_at)}
+        </span>
+      ),
+    },
+  ]
+}

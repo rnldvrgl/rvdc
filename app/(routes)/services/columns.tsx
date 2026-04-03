@@ -28,6 +28,7 @@ import {
   CheckCircle,
   Edit,
   Eye,
+  Gift,
   Package,
   RotateCcw,
   Shield,
@@ -253,6 +254,7 @@ export function getServiceColumns({
     {
       accessorKey: "client.full_name",
       header: "Client",
+      size: 200,
       cell: ({ row }) => {
         const service = row.original
         const warranty = hasActiveWarranty(service)
@@ -263,7 +265,7 @@ export function getServiceColumns({
         return (
           <div className="min-w-0">
             <div className="flex items-center gap-1">
-              <span className="font-medium text-sm truncate max-w-32">
+              <span className="font-medium text-sm truncate max-w-48">
                 {safeCell(service.client?.full_name || "Unknown")}
               </span>
               {pendingItems && (
@@ -305,6 +307,8 @@ export function getServiceColumns({
     {
       accessorKey: "status",
       header: "Status",
+      size: 100,
+      maxSize: 120,
       cell: ({ row }) => {
         const service = row.original
         const value = service.status
@@ -363,6 +367,8 @@ export function getServiceColumns({
     {
       accessorKey: "service_type",
       header: "Service",
+      size: 100,
+      maxSize: 120,
       cell: ({ row }) => {
         const service = row.original
         const typeColor = getServiceTypeBadgeClass(service.service_type)
@@ -380,6 +386,24 @@ export function getServiceColumns({
             >
               {getServiceModeLabel(service.service_mode)}
             </Badge>
+            {service.is_complementary && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] px-1.5 py-0 border-amber-500 text-amber-600 dark:text-amber-400 gap-0.5"
+                  >
+                    <Gift className="h-2.5 w-2.5" />
+                    {service.complementary_reason === "Warranty Claim"
+                      ? "Warranty"
+                      : "Free"}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {service.complementary_reason || "Complementary Service"}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         )
       },
@@ -389,6 +413,8 @@ export function getServiceColumns({
     {
       accessorKey: "pickup_date",
       header: "Schedule",
+      size: 120,
+      maxSize: 140,
       cell: ({ row }) => {
         const service = row.original
         const primary = getPrimarySchedule(service)
@@ -438,6 +464,7 @@ export function getServiceColumns({
     {
       accessorKey: "total_revenue",
       header: "Revenue",
+      size: 90,
       cell: ({ getValue }) => {
         const value = getValue()
         return value ? (
@@ -446,6 +473,28 @@ export function getServiceColumns({
           </span>
         ) : (
           <span className="text-muted-foreground text-sm">₱0</span>
+        )
+      },
+    },
+
+    // -- Balance --
+    {
+      accessorKey: "balance_due",
+      header: "Balance",
+      size: 90,
+      cell: ({ row }) => {
+        const balance = parseFloat(row.original.balance_due || "0")
+        if (balance === 0) {
+          return <span className="text-muted-foreground text-sm">—</span>
+        }
+        return (
+          <span
+            className={`font-medium tabular-nums text-sm ${
+              balance < 0 ? "text-orange-600" : "text-destructive"
+            }`}
+          >
+            {formatCurrency(balance)}
+          </span>
         )
       },
     },
@@ -471,6 +520,8 @@ export function getServiceColumns({
     {
       accessorKey: "created_at",
       header: "Added",
+      size: 70,
+      maxSize: 80,
       cell: ({ getValue }) => {
         const value = getValue() as string
         if (!value) return <span className="text-muted-foreground">—</span>

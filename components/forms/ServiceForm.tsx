@@ -622,7 +622,7 @@ export default function ServiceForm({
                 control={form.control}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Delivery Date & Time (Optional)</FormLabel>
+                    <FormLabel>Delivery Date & Time</FormLabel>
                     <FormControl>
                       <DateTimePicker
                         value={field.value ?? undefined}

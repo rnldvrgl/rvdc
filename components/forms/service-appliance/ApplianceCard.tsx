@@ -116,6 +116,7 @@ export interface ApplianceCardProps {
   appliance: ServiceAppliance
   serviceId: number
   isInstallation: boolean
+  isComplementary?: boolean
   installationUnits: AirconUnits[]
   serviceTechnicians: number[]
   users: { id: number; full_name: string }[]
@@ -147,6 +148,7 @@ export function ApplianceCard({
   appliance,
   serviceId,
   isInstallation,
+  isComplementary,
   installationUnits,
   serviceTechnicians,
   users,
@@ -277,7 +279,7 @@ export function ApplianceCard({
               </p>
             </TooltipContent>
           </Tooltip>
-          {!disabled && (
+          {!disabled && !isComplementary && (
             <>
               <Tooltip>
                 <TooltipTrigger asChild>

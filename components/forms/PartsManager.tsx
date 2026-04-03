@@ -1169,7 +1169,7 @@ export default function PartsManager({
             {/* Discount Section */}
             <div className="space-y-3 pt-3 border-t">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Item Discount (Optional)
+                Item Discount
               </Label>
               {isFree ? (
                 <p className="text-xs text-muted-foreground">

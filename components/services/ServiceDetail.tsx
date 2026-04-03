@@ -88,6 +88,7 @@ import {
     Plus,
     Printer,
     RotateCcw,
+    Shield,
     Trash2,
     Truck,
     User,
@@ -874,6 +875,15 @@ export default function ServiceDetail({
                     >
                       {getServiceModeLabel(service.service_mode)}
                     </Badge>
+                    {service.is_complementary && (
+                      <Badge
+                        variant="warning"
+                        className="text-[11px]"
+                      >
+                        <Shield className="h-3 w-3 mr-1" />
+                        {service.complementary_reason || "Complementary"}
+                      </Badge>
+                    )}
                     {service.stall && (
                       <Badge
                         variant="outline"
@@ -2087,6 +2097,7 @@ export default function ServiceDetail({
               onUpdate={onRefresh}
               disabled={isCompleted || !canManage}
               canManageParts={!isCompleted}
+              isComplementary={service.is_complementary}
             />
           )}
 

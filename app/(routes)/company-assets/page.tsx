@@ -228,7 +228,7 @@ export default function CompanyAssetsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="sell-notes">Notes (optional)</Label>
+              <Label htmlFor="sell-notes">Notes</Label>
               <Textarea
                 id="sell-notes"
                 placeholder="Any notes about the sale..."
@@ -281,7 +281,7 @@ export default function CompanyAssetsPage() {
           </DialogHeader>
           <div className="space-y-3 pt-2">
             <div className="space-y-1.5">
-              <Label htmlFor="dispose-notes">Disposal Notes (optional)</Label>
+              <Label htmlFor="dispose-notes">Disposal Notes</Label>
               <Textarea
                 id="dispose-notes"
                 placeholder="e.g. Scrapped, donated, sold as parts..."
@@ -343,7 +343,7 @@ export default function CompanyAssetsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="status-notes">Condition Notes (optional)</Label>
+              <Label htmlFor="status-notes">Condition Notes</Label>
               <Textarea
                 id="status-notes"
                 placeholder="Any notes about the asset condition..."

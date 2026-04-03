@@ -246,6 +246,7 @@ export default function BulkGeneratePayrollForm({
               <DatePicker
                 field={field}
                 label="Week Start"
+                required
                 description="Start date of the payroll period"
                 placeholder="Select week start date"
                 disabled={isLoading}
@@ -262,6 +263,7 @@ export default function BulkGeneratePayrollForm({
               <DatePicker
                 field={field}
                 label="Week End"
+                required
                 description="End date of the payroll period"
                 placeholder="Select week end date"
                 disabled={isLoading}
@@ -363,7 +365,7 @@ export default function BulkGeneratePayrollForm({
             name="notes"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Notes (Optional)</FormLabel>
+                <FormLabel>Notes</FormLabel>
                 <FormControl>
                   <Textarea
                     {...field}

@@ -31,6 +31,7 @@ import {
   Phone,
   Plus,
   Receipt,
+  Shield,
   ShoppingCart,
   User,
   Wallet,
@@ -44,6 +45,7 @@ import {
   getArchivedServiceColumns,
   getSalesColumns,
   getServiceColumns,
+  getWarrantyClaimColumns,
   paymentColumns,
   paymentFilterFn,
   type PaymentRowType,
@@ -51,6 +53,7 @@ import {
   serviceFilterFn,
   unitColumns,
   unitFilterFn,
+  warrantyFilterFn,
 } from "./columns"
 import { StatCard } from "./StatCard"
 import { useClientDetailData } from "./useClientDetailData"
@@ -136,6 +139,16 @@ export default function ClientDetailPage() {
   const salesColumns = useMemo(
     () => getSalesColumns(serviceRelatedTransactionIds),
     [serviceRelatedTransactionIds],
+  )
+
+  // ── Warranty claims (derived from services) ────────────────────────────
+  const warrantyClaims = useMemo(
+    () => services.filter((s) => s.is_complementary && (s.complementary_reason ?? "").toLowerCase().includes("warranty")),
+    [services],
+  )
+  const warrantyClaimColumns = useMemo(
+    () => getWarrantyClaimColumns({ onViewService: handleViewService }),
+    [canManage],
   )
 
   // ── Loading / not found ───────────────────────────────────────────────────
@@ -272,6 +285,13 @@ export default function ClientDetailPage() {
             Units
             <Badge variant="outline" className="text-xs ml-1">{airconUnits.length}</Badge>
           </TabsTrigger>
+          {warrantyClaims.length > 0 && (
+            <TabsTrigger value="warranty" className="gap-2">
+              <Shield className="h-4 w-4" />
+              Warranty
+              <Badge variant="outline" className="text-xs ml-1">{warrantyClaims.length}</Badge>
+            </TabsTrigger>
+          )}
         </TabsList>
 
         {/* ════ Services Tab ════ */}
@@ -351,6 +371,22 @@ export default function ClientDetailPage() {
               onRowClick={openUnitDetail}
             />
         </TabsContent>
+
+        {/* ════ Warranty Claims Tab ════ */}
+        {warrantyClaims.length > 0 && (
+          <TabsContent value="warranty">
+            <DataTable
+              title="Warranty Claims"
+              localData={warrantyClaims}
+              columns={warrantyClaimColumns}
+              isLoading={servicesLoading}
+              filterFn={warrantyFilterFn}
+              searchPlaceholder="Search service #, brand, model…"
+              emptyTitle="No warranty claims for this client."
+              onRowClick={handleViewService}
+            />
+          </TabsContent>
+        )}
       </Tabs>
 
       {/* ── Sheets & Dialogs ── */}

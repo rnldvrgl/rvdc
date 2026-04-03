@@ -113,7 +113,7 @@ export default function PayrollForm({ onClose }: PayrollFormProps) {
             name="employee"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Employee</FormLabel>
+                <FormLabel required>Employee</FormLabel>
                 <FormControl>
                   <ComboBox
                     disabled={isLoading}
@@ -146,6 +146,7 @@ export default function PayrollForm({ onClose }: PayrollFormProps) {
               <DatePicker
                 field={field}
                 label="Week Start"
+                required
                 description="Start date of the payroll period"
                 placeholder="Select week start date"
                 disabled={isLoading}
@@ -162,6 +163,7 @@ export default function PayrollForm({ onClose }: PayrollFormProps) {
               <DatePicker
                 field={field}
                 label="Week End"
+                required
                 description="End date of the payroll period"
                 placeholder="Select week end date"
                 disabled={isLoading}
@@ -177,7 +179,7 @@ export default function PayrollForm({ onClose }: PayrollFormProps) {
             name="notes"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Notes (Optional)</FormLabel>
+                <FormLabel>Notes</FormLabel>
                 <FormControl>
                   <Textarea
                     {...field}

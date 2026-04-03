@@ -359,7 +359,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username (Optional)</FormLabel>
+                      <FormLabel>Username</FormLabel>
                       <FormControl>
                         <Input
                           {...field}

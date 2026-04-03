@@ -156,7 +156,7 @@ export default function StockRequestsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="decline-reason">Reason (optional)</Label>
+            <Label htmlFor="decline-reason">Reason</Label>
             <Input
               id="decline-reason"
               value={declineReason}

@@ -528,7 +528,7 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
         {/* Notes */}
         <Section
           icon={FileText}
-          title="Notes (Optional)"
+          title="Notes"
         >
           <FormField
             control={form.control}
