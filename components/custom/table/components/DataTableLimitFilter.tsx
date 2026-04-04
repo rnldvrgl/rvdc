@@ -10,7 +10,7 @@ import {
 import { useNavigation } from "@/lib/hooks/useNavigation"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 
-const LIMIT_OPTIONS = [10, 25, 50, 100] as const
+const LIMIT_OPTIONS = [10, 25, 50, 100, 200, 500] as const
 
 export function DataTableLimitFilter() {
   const { limit = 10, ordering, search, filter } = useSearchParameters()

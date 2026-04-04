@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Settings, Shield, User as UserIcon, Wallet } from "lucide-react"
+import { Settings, Shield, User as UserIcon, Volume2, Wallet } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 
@@ -25,6 +25,7 @@ import { TUserProfile, UserProfilePayload } from "@/lib/constants/types"
 import useFileUpload from "@/lib/hooks/useFileUpload"
 import { useProfileSettingMutations } from "@/lib/mutations/useProfileSettingMutations"
 import { useUserProfile } from "@/lib/queries/useUserProfile"
+import useSettingsStore from "@/lib/store/useSettingsStore"
 import useUserProfileStore from "@/lib/store/useUserProfileStore"
 import { normalizeProfileImage } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
@@ -150,11 +151,52 @@ export default function SettingsPage() {
   const { data, isLoading, refetch } = useUserProfile()
   const { updateUserProfile } = useProfileSettingMutations()
 
+  // Sound volume preference
+  const userProfile = useUserProfileStore((s) => s.userProfile)
+  const userId = userProfile?.id
+  const getSoundVolume = useSettingsStore((s) => s.getSoundVolume)
+  const setSoundVolume = useSettingsStore((s) => s.setSoundVolume)
+  const soundVolume = userId ? getSoundVolume(userId) : 0.5
+
+  const handleVolumeChange = (value: number) => {
+    if (!userId) return
+    setSoundVolume(userId, value)
+  }
+
+  const handleTestSound = () => {
+    try {
+      const AudioCtx = window.AudioContext
+      if (!AudioCtx) return
+      // Use the shared context so the volume is applied
+      import("@/lib/utils/getSoundVolume").then(({ getSoundVolume: getVol }) => {
+        import("@/lib/utils/audioContext").then(({ getAudioContext }) => {
+          const ctx = getAudioContext()
+          if (ctx.state === "suspended") ctx.resume()
+          const vol = getVol()
+          const now = ctx.currentTime
+          const notes = [523.25, 659.25, 783.99] // C5, E5, G5
+          notes.forEach((freq, i) => {
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+            osc.type = "sine"
+            osc.frequency.value = freq
+            gain.gain.setValueAtTime(0.45 * vol, now + i * 0.12)
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.3)
+            osc.connect(gain)
+            gain.connect(ctx.destination)
+            osc.start(now + i * 0.12)
+            osc.stop(now + i * 0.12 + 0.3)
+          })
+        })
+      })
+    } catch {
+      // ignore
+    }
+  }
+
   // State for confirm dialog
   const [showResetConfirm, setShowResetConfirm] = useState(false)
-
   const setUserProfile = useUserProfileStore((s) => s.setUserProfile)
-  const userProfile = useUserProfileStore((s) => s.userProfile)
 
   const form = useForm<TUserProfile>({
     resolver: zodResolver(userProfileSchema),
@@ -316,6 +358,58 @@ export default function SettingsPage() {
               </Info>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Sound Preferences */}
+      <Card className="overflow-hidden">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Volume2 className="size-5" />
+            Sound Preferences
+          </CardTitle>
+          <CardDescription>
+            Adjust the volume for notification, chat, and sale sounds
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Sound Volume</span>
+              <span className="text-sm tabular-nums text-muted-foreground w-12 text-right">
+                {Math.round(soundVolume * 100)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Volume2 className="size-4 text-muted-foreground shrink-0" />
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={soundVolume}
+                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                aria-label="Sound volume"
+                title="Sound volume"
+                className="flex-1 h-2 rounded-full accent-primary cursor-pointer"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleTestSound}
+              >
+                Test Sound
+              </Button>
+              {soundVolume === 0 && (
+                <span className="text-xs text-muted-foreground">
+                  Sounds are muted
+                </span>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { getAudioContext } from "@/lib/utils/audioContext"
+import { getSoundVolume } from "@/lib/utils/getSoundVolume"
 import clsx from "clsx"
 import {
   AlertTriangle,
@@ -275,6 +276,7 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
       const ctx = getAudioContext()
       if (ctx.state !== "running") return
       const now = ctx.currentTime
+      const vol = getSoundVolume()
 
       // Two-tone "ding" chime
       const osc1 = ctx.createOscillator()
@@ -286,7 +288,7 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
       osc2.type = "sine"
       osc2.frequency.setValueAtTime(1100, now + 0.12)
 
-      gain.gain.setValueAtTime(0.2, now)
+      gain.gain.setValueAtTime(0.55 * vol, now)
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
 
       osc1.connect(gain)

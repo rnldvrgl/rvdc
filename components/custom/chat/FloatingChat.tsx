@@ -9,12 +9,14 @@ import { type ChatMessage, useChat } from "@/lib/hooks/useChat"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import useChatStore from "@/lib/store/useChatStore"
 import { getAudioContext } from "@/lib/utils/audioContext"
+import { getSoundVolume } from "@/lib/utils/getSoundVolume"
 import { cn } from "@/lib/utils/helpers"
 import { AnimatePresence, motion } from "framer-motion"
 import {
   ArrowLeft,
   Check,
   CheckCheck,
+  ImageIcon,
   Loader2,
   MessageCircle,
   Reply,
@@ -311,7 +313,7 @@ function UserList({
                         <MessageStatusMuted seen={seenBy.has(user.id)} />
                       )}
                       <p className="text-xs text-muted-foreground truncate min-w-0 flex-1">
-                        {user.last_message.body}
+                        {user.last_message.body || "(Image)"}
                       </p>
                       <span className="text-[10px] text-muted-foreground/60 shrink-0 ml-auto">
                         {formatCompactTime(user.last_message.ts)}
@@ -342,6 +344,8 @@ function MessageThread({
   typingFrom,
   seenByPartner,
   loadingHistory,
+  draft,
+  onDraftChange,
   onSend,
   onTyping,
   onReact,
@@ -359,16 +363,25 @@ function MessageThread({
   typingFrom: number | null
   seenByPartner: boolean
   loadingHistory: boolean
+  draft: string
+  onDraftChange: (value: string) => void
   onSend: (
     body: string,
     replyTo?: { id: string; body: string; from_name: string },
+    imageUrl?: string,
   ) => void
   onTyping: () => void
   onReact: (msgId: string, emoji: string) => void
   onBack: () => void
   onClose: () => void
 }) {
-  const [input, setInput] = useState("")
+  const input = draft
+  const setInput = onDraftChange
+  const [pendingImage, setPendingImage] = useState<{
+    file: File
+    previewUrl: string
+  } | null>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(
     null,
   )
@@ -420,19 +433,29 @@ function MessageThread({
     [activeActions],
   )
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const body = input.trim()
-    if (!body) return
-    if (replyingTo) {
-      onSend(body, {
-        id: replyingTo.id,
-        body: replyingTo.body,
-        from_name: replyingTo.from_name,
-      })
-      setReplyingTo(null)
+    if (!body && !pendingImage) return
+
+    const replyPayload = replyingTo
+      ? {
+          id: replyingTo.id,
+          body: replyingTo.body,
+          from_name: replyingTo.from_name,
+        }
+      : undefined
+
+    if (pendingImage) {
+      const imageUrl = await uploadImage(pendingImage.file)
+      if (!imageUrl) return
+      onSend(body, replyPayload, imageUrl)
+      URL.revokeObjectURL(pendingImage.previewUrl)
+      setPendingImage(null)
     } else {
-      onSend(body)
+      onSend(body, replyPayload)
     }
+
+    if (replyingTo) setReplyingTo(null)
     setInput("")
     // Reset textarea height
     if (textareaRef.current) {
@@ -462,6 +485,48 @@ function MessageThread({
         typingThrottle.current = undefined
       }, 2000)
     }
+  }
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      const { getToken } = await import("@/lib/utils/tokens")
+      const token = getToken("access")
+      if (!token) return null
+      const baseUrl =
+        process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
+      const form = new FormData()
+      form.append("image", file)
+      const res = await fetch(`${baseUrl}/api/chat/upload-image/`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      })
+      if (!res.ok) return null
+      const data = await res.json()
+      return data.url as string
+    } catch {
+      return null
+    }
+  }
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const items = Array.from(e.clipboardData.items)
+    const imageItem = items.find((item) => item.type.startsWith("image/"))
+    if (!imageItem) return
+    e.preventDefault()
+    const file = imageItem.getAsFile()
+    if (!file) return
+    if (pendingImage) URL.revokeObjectURL(pendingImage.previewUrl)
+    setPendingImage({ file, previewUrl: URL.createObjectURL(file) })
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (pendingImage) URL.revokeObjectURL(pendingImage.previewUrl)
+    setPendingImage({ file, previewUrl: URL.createObjectURL(file) })
+    // Reset input so the same file can be picked again
+    e.target.value = ""
   }
 
   const isPartnerTyping = typingFrom === partnerId
@@ -607,7 +672,9 @@ function MessageThread({
                     <p className="font-medium text-[10px]">
                       {msg.reply_to.from_name}
                     </p>
-                    <p className="truncate">{msg.reply_to.body}</p>
+                    <p className="truncate">
+                      {msg.reply_to.body || "(Image)"}
+                    </p>
                   </div>
                 )}
 
@@ -626,9 +693,18 @@ function MessageThread({
                     setReactionPickerFor(isPickerOpen ? null : msg.id)
                   }
                 >
-                  <p className="wrap-break-word whitespace-pre-wrap">
-                    {msg.body}
-                  </p>
+                  {msg.image_url && (
+                    <img
+                      src={msg.image_url}
+                      alt="image"
+                      className="max-w-[200px] rounded-lg mb-1 object-contain"
+                    />
+                  )}
+                  {msg.body && (
+                    <p className="wrap-break-word whitespace-pre-wrap">
+                      {msg.body}
+                    </p>
+                  )}
                   <div
                     className={cn(
                       "flex items-center gap-1 mt-0.5",
@@ -802,12 +878,50 @@ function MessageThread({
 
       {/* Input */}
       <div className="px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] border-t border-border bg-card">
+        {/* Image preview */}
+        {pendingImage && (
+          <div className="relative mb-2 inline-block">
+            <img
+              src={pendingImage.previewUrl}
+              alt="preview"
+              className="max-h-24 rounded-lg object-contain border border-border"
+            />
+            <button
+              title="Remove image"
+              onClick={() => {
+                URL.revokeObjectURL(pendingImage.previewUrl)
+                setPendingImage(null)
+              }}
+              className="absolute -top-1.5 -right-1.5 size-5 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground hover:text-foreground"
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+        )}
         <div className="flex gap-2 items-end">
+          {/* Hidden file input */}
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            aria-label="Attach image"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            className="size-9 shrink-0 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Attach image"
+          >
+            <ImageIcon className="size-4" />
+          </button>
           <Textarea
             ref={textareaRef}
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder="Type a message..."
             className="flex-1 min-h-9 max-h-24 text-base sm:text-sm resize-none py-2"
             maxLength={2000}
@@ -818,7 +932,7 @@ function MessageThread({
             size="icon"
             className="size-9 shrink-0"
             onClick={handleSend}
-            disabled={!input.trim()}
+            disabled={!input.trim() && !pendingImage}
           >
             <Send className="size-4" />
           </Button>
@@ -834,6 +948,7 @@ export default function FloatingChat() {
   const { role, user_id } = useCurrentUser()
   const [isOpen, setIsOpen] = useState(false)
   const [activeChat, setActiveChat] = useState<number | null>(null)
+  const [drafts, setDrafts] = useState<Record<number, string>>({})
   const chatWindowRef = useRef<HTMLDivElement>(null)
   // Prevent SSR/client hydration mismatch (Zustand reads localStorage on client)
   const [mounted, setMounted] = useState(false)
@@ -923,9 +1038,10 @@ export default function FloatingChat() {
     (
       body: string,
       replyTo?: { id: string; body: string; from_name: string },
+      imageUrl?: string,
     ) => {
       if (activeChat) {
-        sendMessage(activeChat, body, replyTo)
+        sendMessage(activeChat, body, replyTo, imageUrl)
         playSendSound()
       }
     },
@@ -953,7 +1069,6 @@ export default function FloatingChat() {
 
   const handleClose = useCallback(() => {
     setIsOpen(false)
-    setActiveChat(null)
   }, [])
 
   const handleToggle = useCallback(() => {
@@ -1035,6 +1150,10 @@ export default function FloatingChat() {
                 typingFrom={typingFrom}
                 seenByPartner={seenBy.has(activeChat)}
                 loadingHistory={loadingHistory}
+                draft={drafts[activeChat] ?? ""}
+                onDraftChange={(value) =>
+                  setDrafts((prev) => ({ ...prev, [activeChat]: value }))
+                }
                 onSend={handleSend}
                 onTyping={handleTyping}
                 onReact={handleReact}
@@ -1072,6 +1191,7 @@ function playReceiveSound() {
     const ctx = getAudioContext()
     if (ctx.state !== "running") return
     const t = ctx.currentTime
+    const vol = getSoundVolume()
 
     // Three-note ascending chime (like iMessage receive)
     const notes = [1046.5, 1318.5, 1568] // C6, E6, G6
@@ -1084,7 +1204,7 @@ function playReceiveSound() {
       osc.frequency.value = freq
       const start = t + i * 0.08
       gain.gain.setValueAtTime(0, start)
-      gain.gain.linearRampToValueAtTime(0.06, start + 0.01)
+      gain.gain.linearRampToValueAtTime(0.25 * vol, start + 0.01)
       gain.gain.exponentialRampToValueAtTime(0.001, start + 0.15)
       osc.start(start)
       osc.stop(start + 0.15)
@@ -1099,6 +1219,7 @@ function playSendSound() {
     const ctx = getAudioContext()
     if (ctx.state !== "running") return
     const t = ctx.currentTime
+    const vol = getSoundVolume()
 
     // Quick ascending swoosh (like iMessage send)
     const osc = ctx.createOscillator()
@@ -1108,7 +1229,7 @@ function playSendSound() {
     osc.type = "sine"
     osc.frequency.setValueAtTime(800, t)
     osc.frequency.linearRampToValueAtTime(1200, t + 0.1)
-    gain.gain.setValueAtTime(0.05, t)
+    gain.gain.setValueAtTime(0.18 * vol, t)
     gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12)
     osc.start(t)
     osc.stop(t + 0.12)

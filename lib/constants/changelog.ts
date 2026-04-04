@@ -9,6 +9,9 @@
  *    version yet (tracked per-user via localStorage).
  */
 
+import { title } from "process"
+import { date } from "zod"
+
 export type ChangelogCategory =
   | "feature"
   | "fix"
@@ -186,10 +189,38 @@ export const CHANGELOG: ChangelogEntry[] = [
         text: "Admin dashboard metric grid now uniformly fits the Sub Stall stat card without breaking the layout.",
         roles: ["admin"],
       },
+      {
+        category: "feature",
+        text: "You can now send images in chat — paste a copied image directly into the message box or click the image icon to attach a file.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "improvement",
+        text: "Chat draft messages are now preserved when you close the chat window — your unsent text is still there when you reopen it.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "improvement",
+        text: "Notification, chat, and sale sounds are louder and easier to hear. You can also set your own preferred volume in Account Settings → Sound Preferences.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "feature",
+        text: "You can now add stall stock directly from the sales form — when an item shows 0 available stock, an \"Add Stock\" button appears on that row to restock it without leaving the sale.",
+        roles: ["admin", "manager", "clerk"],
+      },
       // ── Bug Fixes ──
       {
         category: "fix",
-        text: "Reopening a completed service no longer resets the Total to ₱0.00 — the service fee is now correctly preserved and recalculated from existing parts and labor fees.",
+        text: "Resuming a held sale no longer keeps the Submit button disabled — the form now correctly allows submission when continuing from a held sale.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      // ── Improvements ──
+      {
+        category: "improvement",
+        text: "Stall stock table now supports up to 500 rows per page, making it easier to view and audit all items at once.",
+        roles: ["admin", "manager", "clerk"],
+      },
         roles: ["admin", "manager", "clerk"],
       },
       {

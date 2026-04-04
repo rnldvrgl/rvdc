@@ -3,6 +3,7 @@
 import { ClientCardSelect } from "@/components/custom/inputs/ClientComboBox"
 import DatePicker from "@/components/custom/inputs/DatePicker"
 import EntityDialog from "@/components/custom/shared/EntityDialog"
+import AddStockForm from "@/components/forms/inventory/AddStockForm"
 import ItemQuantitySelector from "@/components/custom/shared/ItemQuantitySelector"
 import PaymentMethodSelector from "@/components/custom/shared/PaymentMethodSelector"
 import { SalesTransactionPrintContent } from "@/components/custom/shared/SalesTransactionPrintContent"
@@ -15,6 +16,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -233,6 +241,7 @@ export default function SalesTransactionForm({
   const [templates, setTemplates] = useState<SaleTemplate[]>([])
   const [showSaveTemplate, setShowSaveTemplate] = useState(false)
   const [templateName, setTemplateName] = useState("")
+  const [addStockDialogStock, setAddStockDialogStock] = useState<Stock | null>(null)
 
   // Load templates on mount
   useEffect(() => {
@@ -246,7 +255,7 @@ export default function SalesTransactionForm({
   const { data: stockData } = useApiQuery<PaginatedResult<Stock>>({
     queryKey: ["stall-stocks-for-sale", selectedStallId],
     url: "/inventory/stocks/",
-    params: { stall: selectedStallId, limit: 100 },
+    params: { stall: selectedStallId, limit: 500 },
     enabled: !!selectedStallId,
   })
 
@@ -976,6 +985,12 @@ export default function SalesTransactionForm({
               untrackedItemIds={
                 untrackedItemIds.size > 0 ? untrackedItemIds : undefined
               }
+              onAddStock={(itemId) => {
+                const stock = stockData?.results.find(
+                  (s) => s.item.id === itemId,
+                )
+                if (stock) setAddStockDialogStock(stock)
+              }}
               onChange={(updatedItems) => {
                 form.setValue(
                   "items",
@@ -1213,6 +1228,7 @@ export default function SalesTransactionForm({
                   disabled={
                     isSaving ||
                     (!initialData &&
+                      !heldSale &&
                       (!form.formState.isDirty || !form.formState.isValid))
                   }
                 >
@@ -1322,6 +1338,27 @@ export default function SalesTransactionForm({
           />
         )}
       />
+
+      {/* Add Stall Stock shortcut dialog */}
+      <Dialog
+        open={!!addStockDialogStock}
+        onOpenChange={(v) => !v && setAddStockDialogStock(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Stall Stock</DialogTitle>
+            <DialogDescription>
+              Directly add quantity to stall stock for this item.
+            </DialogDescription>
+          </DialogHeader>
+          {addStockDialogStock && (
+            <AddStockForm
+              stock={addStockDialogStock}
+              onClose={() => setAddStockDialogStock(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

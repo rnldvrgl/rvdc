@@ -14,6 +14,7 @@ export type ChatMessage = {
   to: number
   body: string
   ts: number
+  image_url?: string
   reactions?: Record<string, number[]>
   reply_to?: { id: string; body: string; from_name: string }
 }
@@ -242,6 +243,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
       to: number,
       body: string,
       replyTo?: { id: string; body: string; from_name: string },
+      imageUrl?: string,
     ) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         const payload: Record<string, unknown> = {
@@ -251,6 +253,9 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
         }
         if (replyTo) {
           payload.reply_to = replyTo
+        }
+        if (imageUrl) {
+          payload.image_url = imageUrl
         }
         wsRef.current.send(JSON.stringify(payload))
         // Clear seen state for this partner since we just sent a new message

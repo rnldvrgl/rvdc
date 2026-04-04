@@ -17,7 +17,7 @@ interface UseSearchParametersOptions {
   defaultRangePreset?: DateRangePresetLabel
 }
 
-const ALLOWED_LIMITS = [10, 25, 50, 100]
+const ALLOWED_LIMITS = [10, 25, 50, 100, 200, 500]
 const RESERVED_KEYS = new Set(["page", "limit", "search", "ordering"])
 
 const useSearchParameters = (

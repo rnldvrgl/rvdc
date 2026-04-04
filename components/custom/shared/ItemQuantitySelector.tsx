@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Item, ItemEntry } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/currency"
-import { AlertTriangle, Info, Minus, Pencil, Plus, Star, X } from "lucide-react"
+import { AlertTriangle, Info, Minus, PackagePlus, Pencil, Plus, Star, X } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 
 const RECENT_ITEMS_KEY = "rvdc_recent_sale_items"
@@ -43,6 +43,7 @@ export default function ItemQuantitySelector({
   allowPriceChange,
   stockMap,
   untrackedItemIds,
+  onAddStock,
 }: {
   items: ItemEntry[]
   allItems: Item[]
@@ -53,6 +54,10 @@ export default function ItemQuantitySelector({
   stockMap?: Map<number, number>
   /** Set of item IDs that have track_stock=false (skip stock display) */
   untrackedItemIds?: Set<number>
+  /** Called when the user wants to add stall stock for an item (item_id) */
+  onAddStock?: (itemId: number) => void
+  /** Called when the user wants to add stall stock for an item (item_id) */
+  onAddStock?: (itemId: number) => void
 }) {
   const handleAdd = () => {
     if (allItems.length === 0) return
@@ -594,6 +599,27 @@ export default function ItemQuantitySelector({
                         <AlertTriangle className="size-3" />
                         Exceeds stock
                       </span>
+                    )}
+                    {!isUntracked && availableStock !== undefined && availableStock <= 0 && onAddStock && itm.item && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-5 px-1.5 text-[10px] border-orange-300 text-orange-600 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-950/30"
+                              onClick={() => onAddStock(itm.item!.id)}
+                            >
+                              <PackagePlus className="size-3 mr-0.5" />
+                              Add Stock
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Directly add stall stock for this item</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                     {isDuplicate && (
                       <span className="text-warning flex items-center gap-0.5">
