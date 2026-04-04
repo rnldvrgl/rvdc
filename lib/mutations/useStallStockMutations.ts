@@ -130,6 +130,26 @@ export function useStallStockMutations() {
     },
   })
 
+  const bulkPreview = useApiMutation<FormData, unknown>({
+    mutationFn: (formData) =>
+      api.post(`/inventory/stocks/bulk-preview/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    usePromiseToast: true,
+    loadingMessage: "Analyzing file...",
+  })
+
+  const bulkUpdate = useApiMutation<FormData, unknown>({
+    mutationFn: (formData) =>
+      api.post(`/inventory/stocks/bulk-update/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    usePromiseToast: true,
+    loadingMessage: "Processing bulk update...",
+    successMessage: "Bulk update started. You will be notified when it's done.",
+    invalidateQueries: sharedInvalidations,
+  })
+
   return {
     updateStallStock,
     softDeleteStallStock,
@@ -137,5 +157,7 @@ export function useStallStockMutations() {
     addStallStock,
     auditStallStock,
     pullOutStallStock,
+    bulkPreview,
+    bulkUpdate,
   }
 }

@@ -32,6 +32,8 @@ import { useHolidayMutations } from "@/lib/mutations/payroll/holidays/useHoliday
 import { useClientMutations } from "@/lib/mutations/useClientMutations"
 import { useEmployeeMutations } from "@/lib/mutations/useEmployeeMutations"
 import { useItemMutations } from "@/lib/mutations/useItemMutations"
+import { useStallStockMutations } from "@/lib/mutations/useStallStockMutations"
+import { useStockRoomStockMutations } from "@/lib/mutations/useStockRoomStockMutations"
 import usePendingActionsStore, {
   type PendingActionType,
 } from "@/lib/store/usePendingActionsStore"
@@ -48,6 +50,8 @@ import {
   Upload,
   UserCog,
   Users,
+  Warehouse,
+  X,
 } from "lucide-react"
 import { useCallback, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -56,6 +60,8 @@ import { toast } from "sonner"
 type BulkUpdateResult = {
   updated: number
   skipped: number
+  created?: number
+  deleted?: number
   errors: { row: number; sku?: string; error: string }[]
 }
 
@@ -63,6 +69,7 @@ type BulkPreviewChange = {
   row: number
   sku: string
   name: string
+  action?: "update" | "delete" | "create"
   changes: { field: string; old: string; new: string }[]
 }
 
@@ -111,6 +118,13 @@ function BulkUpdateSection({
   const [downloading, setDownloading] = useState(false)
   const [preview, setPreview] = useState<BulkPreviewData | null>(null)
   const [pendingFile, setPendingFile] = useState<FormData | null>(null)
+  const [excludedRows, setExcludedRows] = useState<Set<number>>(new Set())
+
+  const removeRow = (row: number) => {
+    setExcludedRows((prev) => new Set([...prev, row]))
+  }
+
+  const activeChanges = preview?.changes.filter((c) => !excludedRows.has(c.row)) ?? []
 
   const downloadTemplate = async () => {
     setDownloading(true)
@@ -161,6 +175,7 @@ function BulkUpdateSection({
       }
       toast.success("Preview ready. Please review the changes below.")
       setPreview(data)
+      setExcludedRows(new Set())
       const updateForm = new FormData()
       updateForm.append("file", file)
       setPendingFile(updateForm)
@@ -173,16 +188,21 @@ function BulkUpdateSection({
 
   const handleConfirm = () => {
     if (!pendingFile) return
+    if (excludedRows.size > 0) {
+      pendingFile.set("excluded_rows", JSON.stringify([...excludedRows]))
+    }
     updateMutation.mutateAsync(pendingFile).then(() => {
       onUploadStarted()
     })
     setPreview(null)
     setPendingFile(null)
+    setExcludedRows(new Set())
   }
 
   const handleCancel = () => {
     setPreview(null)
     setPendingFile(null)
+    setExcludedRows(new Set())
   }
 
   return (
@@ -274,6 +294,22 @@ function BulkUpdateSection({
                   >
                     {result.updated} updated
                   </Badge>
+                  {(result.created ?? 0) > 0 && (
+                    <Badge
+                      variant="default"
+                      className="text-[10px] sm:text-xs bg-emerald-600 hover:bg-emerald-600"
+                    >
+                      {result.created} created
+                    </Badge>
+                  )}
+                  {(result.deleted ?? 0) > 0 && (
+                    <Badge
+                      variant="destructive"
+                      className="text-[10px] sm:text-xs"
+                    >
+                      {result.deleted} deleted
+                    </Badge>
+                  )}
                   <Badge
                     variant="secondary"
                     className="text-[10px] sm:text-xs"
@@ -326,48 +362,99 @@ function BulkUpdateSection({
 
           <ScrollArea className="flex-1 -mx-6 px-6">
             <div className="space-y-3 py-2">
-              {preview?.changes && preview.changes.length > 0 && (
+              {activeChanges.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">
-                    Records to update ({preview.changes.length})
+                    Records to apply ({activeChanges.length}
+                    {excludedRows.size > 0 && (
+                      <span className="text-muted-foreground/70">
+                        {" "}· {excludedRows.size} removed
+                      </span>
+                    )}
+                    )
                   </p>
-                  {preview.changes.map((item, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg border p-2.5 sm:p-3 space-y-1.5"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className="text-[10px] font-mono"
-                        >
-                          {item.sku}
-                        </Badge>
-                        <span className="text-xs font-medium truncate">
-                          {item.name}
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        {item.changes.map((change, j) => (
-                          <div
-                            key={j}
-                            className="flex items-center gap-1.5 text-[10px] sm:text-xs"
-                          >
-                            <span className="text-muted-foreground min-w-[90px] sm:min-w-[110px]">
-                              {change.field}:
+                  {activeChanges.map((item, i) => {
+                    const isDelete = item.action === "delete"
+                    const isCreate = item.action === "create"
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded-lg border p-2.5 sm:p-3 space-y-1.5 ${
+                          isDelete
+                            ? "border-destructive/40 bg-destructive/5"
+                            : isCreate
+                              ? "border-emerald-500/40 bg-emerald-500/5"
+                              : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            {item.sku ? (
+                              <Badge
+                                variant={isDelete ? "destructive" : "outline"}
+                                className="text-[10px] font-mono shrink-0"
+                              >
+                                {item.sku}
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="text-[10px] font-mono shrink-0 border-emerald-500 text-emerald-600"
+                              >
+                                NEW
+                              </Badge>
+                            )}
+                            <span
+                              className={`text-xs font-medium truncate ${isDelete ? "line-through text-muted-foreground" : ""}`}
+                            >
+                              {item.name}
                             </span>
-                            <span className="text-destructive line-through">
-                              {change.old}
-                            </span>
-                            <ArrowRight className="size-3 text-muted-foreground shrink-0" />
-                            <span className="text-success font-medium">
-                              {change.new}
-                            </span>
+                            {isDelete && (
+                              <Badge
+                                variant="destructive"
+                                className="text-[10px] shrink-0"
+                              >
+                                DELETE
+                              </Badge>
+                            )}
                           </div>
-                        ))}
+                          <button
+                            type="button"
+                            onClick={() => removeRow(item.row)}
+                            className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            title="Remove this row from update"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </div>
+                        {!isDelete && item.changes.length > 0 && (
+                          <div className="space-y-1">
+                            {item.changes.map((change, j) => (
+                              <div
+                                key={j}
+                                className="flex items-center gap-1.5 text-[10px] sm:text-xs"
+                              >
+                                <span className="text-muted-foreground min-w-[90px] sm:min-w-[110px]">
+                                  {change.field}:
+                                </span>
+                                {change.old ? (
+                                  <>
+                                    <span className="text-destructive line-through">
+                                      {change.old}
+                                    </span>
+                                    <ArrowRight className="size-3 text-muted-foreground shrink-0" />
+                                  </>
+                                ) : null}
+                                <span className="text-success font-medium">
+                                  {change.new}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
 
@@ -390,9 +477,11 @@ function BulkUpdateSection({
                 </div>
               )}
 
-              {preview && preview.skipped > 0 && (
+              {preview && (preview.skipped > 0 || excludedRows.size > 0) && (
                 <p className="text-[10px] sm:text-xs text-muted-foreground">
-                  {preview.skipped} records unchanged (will be skipped)
+                  {preview.skipped + excludedRows.size} records will be skipped (
+                  {preview.skipped} unchanged
+                  {excludedRows.size > 0 && `, ${excludedRows.size} removed`})
                 </p>
               )}
             </div>
@@ -409,8 +498,7 @@ function BulkUpdateSection({
               onClick={handleConfirm}
               disabled={
                 updateMutation.isPending ||
-                !preview?.changes ||
-                preview.changes.length === 0
+                activeChanges.length === 0
               }
               className="text-xs gap-1.5"
             >
@@ -421,7 +509,7 @@ function BulkUpdateSection({
               )}
               {updateMutation.isPending
                 ? "Applying..."
-                : `Apply ${preview?.changes?.length ?? 0} Changes`}
+                : `Apply ${activeChanges.length} Operations`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -509,6 +597,32 @@ const CATEGORIES: CategoryConfig[] = [
     accentFrom: "from-violet-500",
     accentTo: "to-purple-600",
   },
+  {
+    key: "stall_stocks",
+    exportType: "stall_stock_bulk_update",
+    pendingType: "stall_stock_bulk_update",
+    pendingLabel: "Bulk Stall Stock Update",
+    title: "Stall Stock",
+    description:
+      "Update stall stock quantities, low stock thresholds, and tracking status.",
+    templateEndpoint: "/inventory/stocks/bulk-template/",
+    templateFilename: "stall_stock_template.xlsx",
+    accentFrom: "from-rose-500",
+    accentTo: "to-pink-600",
+  },
+  {
+    key: "stockroom_stocks",
+    exportType: "stockroom_bulk_update",
+    pendingType: "stockroom_bulk_update",
+    pendingLabel: "Bulk Stockroom Update",
+    title: "Stockroom Stock",
+    description:
+      "Update stockroom quantities and low stock thresholds in bulk.",
+    templateEndpoint: "/inventory/stockroom/stocks/bulk-template/",
+    templateFilename: "stockroom_stock_template.xlsx",
+    accentFrom: "from-teal-500",
+    accentTo: "to-cyan-600",
+  },
 ]
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
@@ -517,6 +631,8 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   holidays: CalendarDays,
   aircon_models: Snowflake,
   employees: UserCog,
+  stall_stocks: Package,
+  stockroom_stocks: Warehouse,
 }
 
 // -- Main Page --
@@ -537,6 +653,10 @@ export default function BulkUpdatePage() {
   } = useAirconModelMutations()
   const { bulkPreview: employeeBulkPreview, bulkUpdate: employeeBulkUpdate } =
     useEmployeeMutations()
+  const { bulkPreview: stallStockBulkPreview, bulkUpdate: stallStockBulkUpdate } =
+    useStallStockMutations()
+  const { bulkPreview: stockroomBulkPreview, bulkUpdate: stockroomBulkUpdate } =
+    useStockRoomStockMutations()
 
   const mutations: Record<
     string,
@@ -559,6 +679,8 @@ export default function BulkUpdatePage() {
       update: airconModelBulkUpdate,
     },
     employees: { preview: employeeBulkPreview, update: employeeBulkUpdate },
+    stall_stocks: { preview: stallStockBulkPreview, update: stallStockBulkUpdate },
+    stockroom_stocks: { preview: stockroomBulkPreview, update: stockroomBulkUpdate },
   }
 
   // Per-category state

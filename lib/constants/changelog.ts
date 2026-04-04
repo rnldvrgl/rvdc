@@ -70,6 +70,42 @@ export const CATEGORY_META: Record<
 // ── Changelog entries (newest first) ──────────────────────────────────────────
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.7.0",
+    title: "Inventory Bulk Update & In-App Changelog Button",
+    date: "2026-04-04",
+    items: [
+      {
+        category: "feature",
+        text: "Bulk update for stall stock — download a pre-filled template, edit quantities and thresholds in Excel, then upload to preview and confirm changes in one go.",
+        roles: ["admin", "manager"],
+      },
+      {
+        category: "feature",
+        text: "Bulk update for stockroom stock — same download → preview → confirm flow, now available for stockroom stock levels.",
+        roles: ["admin", "manager"],
+      },
+      {
+        category: "feature",
+        text: "Item bulk update now supports creating new items — add a row with a blank SKU and fill in the name and price to create the item directly from the spreadsheet.",
+        roles: ["admin"],
+      },
+      {
+        category: "feature",
+        text: "Item bulk update now supports deleting items — set the Action column to DELETE in the template to soft-delete an item.",
+        roles: ["admin"],
+      },
+      {
+        category: "improvement",
+        text: "Bulk update preview dialog now highlights delete rows in red and new-item rows in green so you can clearly see what will be created or removed before confirming.",
+        roles: ["admin", "manager"],
+      },
+      {
+        category: "feature",
+        text: "\"What's New\" button added to the sidebar (desktop and mobile) — click it any time to re-open the changelog.",
+      },
+    ],
+  },
+  {
     version: "1.6.0",
     title: "Appliance Claiming Fixes",
     date: "2026-04-04",

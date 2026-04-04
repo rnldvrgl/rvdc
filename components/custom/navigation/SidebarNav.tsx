@@ -2,6 +2,10 @@
 
 import NavList from "@/components/custom/navigation/NavList"
 import NotificationArea from "@/components/custom/navigation/NotificationArea"
+import {
+  ChangelogDialog,
+  ChangelogUnseenBadge,
+} from "@/components/custom/changelog/ChangelogBanner"
 import { DeveloperCredit } from "@/components/custom/shared/DeveloperCredit"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -25,6 +29,7 @@ import {
   LucideIcon,
   Menu,
   Moon,
+  Sparkles,
   Sun,
   UserIcon,
   X,
@@ -58,6 +63,7 @@ export default function SidebarNav({
   user: User | null
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [changelogOpen, setChangelogOpen] = useState(false)
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -249,15 +255,43 @@ export default function SidebarNav({
             </AnimatePresence>
           </div>
 
-          {/* Bottom: Credit */}
-          {!collapsed && (
-            <div className="shrink-0 pt-2">
-              <DeveloperCredit
-                variant="subtle"
-                size="sm"
-              />
-            </div>
-          )}
+          {/* Bottom: What's New + Credit */}
+          <div className="shrink-0 pt-2 space-y-1">
+            {collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={() => setChangelogOpen(true)}
+                    className="relative flex items-center justify-center size-10 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-all duration-200 mx-auto"
+                    aria-label="What's New"
+                  >
+                    <Sparkles className="size-[18px]" />
+                    <ChangelogUnseenBadge className="absolute -top-1 -right-1 min-w-3.5! h-3.5! text-[8px]!" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" sideOffset={8}>
+                  What&apos;s New
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setChangelogOpen(true)}
+                  className="flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <Sparkles className="size-3.5 shrink-0" />
+                  What&apos;s New
+                  <ChangelogUnseenBadge className="ml-auto" />
+                </button>
+                <DeveloperCredit
+                  variant="subtle"
+                  size="sm"
+                />
+              </>
+            )}
+          </div>
         </div>
       </motion.aside>
 
@@ -411,6 +445,15 @@ export default function SidebarNav({
                 </a>
                 <button
                   type="button"
+                  onClick={() => { setChangelogOpen(true); setMobileMenuOpen(false) }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <Sparkles className="size-4 shrink-0" />
+                  What&apos;s New
+                  <ChangelogUnseenBadge className="ml-auto" />
+                </button>
+                <button
+                  type="button"
                   onClick={() => {
                     if (!refresh) return
                     logout.mutateAsync(refresh)
@@ -431,6 +474,10 @@ export default function SidebarNav({
           </motion.div>
         )}
       </AnimatePresence>
+      <ChangelogDialog
+        open={changelogOpen}
+        onOpenChange={setChangelogOpen}
+      />
     </TooltipProvider>
   )
 }
