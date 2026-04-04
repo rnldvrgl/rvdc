@@ -1,6 +1,5 @@
 "use client"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,67 +14,82 @@ import { useChangelog } from "@/lib/hooks/useChangelog"
 import { cn } from "@/lib/utils/helpers"
 import { AnimatePresence, motion } from "framer-motion"
 import {
+  ArrowRight,
   BookOpen,
   CheckCheck,
-  ExternalLink,
   Sparkles,
   X,
 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
-function EntryCard({
+function DialogEntryCard({
   entry,
   isNew,
+  isLast,
 }: {
   entry: ChangelogEntry
   isNew: boolean
+  isLast: boolean
 }) {
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-mono font-bold text-muted-foreground">
-          v{entry.version}
-        </span>
-        {isNew && (
-          <Badge className="text-[10px] px-1.5 py-0 bg-primary/15 text-primary border-primary/20 font-semibold">
-            NEW
-          </Badge>
+    <div className="flex gap-4">
+      {/* Timeline rail */}
+      <div className="flex flex-col items-center">
+        <div
+          className={cn(
+            "size-2.5 rounded-full mt-1.5 shrink-0 ring-2",
+            isNew
+              ? "bg-primary ring-primary/30"
+              : "bg-muted-foreground/30 ring-muted-foreground/10",
+          )}
+        />
+        {!isLast && (
+          <div className="w-px flex-1 bg-border mt-1.5" />
         )}
-        <span className="text-sm font-semibold">{entry.title}</span>
-        <span className="ml-auto text-[11px] text-muted-foreground">
-          {new Date(entry.date).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })}
-        </span>
       </div>
 
-      <ul className="space-y-2">
-        {entry.items.map((item, idx) => {
-          const meta = CATEGORY_META[item.category]
-          return (
-            <li
-              key={idx}
-              className="flex items-start gap-2.5 text-sm"
-            >
-              <span
-                className={cn(
-                  "mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold leading-tight",
-                  meta.bg,
-                  meta.color,
-                )}
-              >
-                {meta.label}
-              </span>
-              <span className="text-muted-foreground leading-snug">
-                {item.text}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
+      {/* Content */}
+      <div className={cn("flex-1 pb-5", isLast && "pb-0")}>
+        <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+          <span className="text-[10px] font-mono font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+            v{entry.version}
+          </span>
+          {isNew && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/15 text-primary">
+              NEW
+            </span>
+          )}
+          <span className="text-sm font-semibold leading-tight">{entry.title}</span>
+          <span className="ml-auto text-[10px] text-muted-foreground shrink-0">
+            {new Date(entry.date).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
+        </div>
+
+        <ul className="space-y-1.5">
+          {entry.items.map((item, idx) => {
+            const meta = CATEGORY_META[item.category]
+            return (
+              <li key={idx} className="flex items-start gap-2 text-[13px]">
+                <span
+                  className={cn(
+                    "mt-px shrink-0 rounded px-1.5 py-px text-[10px] font-semibold leading-tight",
+                    meta.bg,
+                    meta.color,
+                  )}
+                >
+                  {meta.label}
+                </span>
+                <span className="text-muted-foreground leading-snug">{item.text}</span>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
     </div>
   )
 }
@@ -103,23 +117,34 @@ export function ChangelogDialog({
         else onOpenChange(true)
       }}
     >
-      <DialogContent className="max-w-lg p-0 overflow-hidden gap-0">
-        <DialogHeader className="px-5 pt-5 pb-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <BookOpen className="size-4 text-primary" />
-              What&apos;s New
-            </DialogTitle>
-            <div className="flex items-center gap-2">
+      <DialogContent
+        showCloseButton={false}
+        className="max-w-md p-0 overflow-hidden gap-0"
+      >
+        {/* Header */}
+        <DialogHeader className="px-5 pt-5 pb-4">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <div className="flex items-center justify-center size-7 rounded-lg bg-primary/10">
+                  <BookOpen className="size-3.5 text-primary" />
+                </div>
+                What&apos;s New
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground mt-1 ml-9">
+                Updates and changes relevant to your role.
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
               {unseenVersions.size > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs gap-1.5 text-muted-foreground"
+                  className="h-7 text-xs gap-1 text-muted-foreground"
                   onClick={markAllRead}
                 >
                   <CheckCheck className="size-3.5" />
-                  Mark all read
+                  Mark read
                 </Button>
               )}
               <Button
@@ -132,45 +157,41 @@ export function ChangelogDialog({
               </Button>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Updates and changes relevant to your role.
-          </p>
         </DialogHeader>
 
-        <Separator className="mt-4" />
+        <Separator />
 
-        <ScrollArea className="max-h-[60vh]">
-          <div className="px-5 py-4 space-y-5">
+        <ScrollArea className="max-h-[58vh]">
+          <div className="px-5 py-5">
             {entries.length === 0 ? (
               <p className="text-sm text-center text-muted-foreground py-8">
                 No changelog entries to show.
               </p>
             ) : (
               entries.map((entry, idx) => (
-                <div key={entry.version}>
-                  <EntryCard
-                    entry={entry}
-                    isNew={unseenVersions.has(entry.version)}
-                  />
-                  {idx < entries.length - 1 && <Separator className="mt-5" />}
-                </div>
+                <DialogEntryCard
+                  key={entry.version}
+                  entry={entry}
+                  isNew={unseenVersions.has(entry.version)}
+                  isLast={idx === entries.length - 1}
+                />
               ))
             )}
           </div>
         </ScrollArea>
 
         <Separator />
-        <div className="px-5 py-3 flex justify-end">
+        <div className="px-5 py-3">
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5 text-xs"
+            className="w-full gap-1.5 text-xs text-muted-foreground justify-center"
             asChild
             onClick={handleClose}
           >
             <Link href="/changelog">
               View full changelog
-              <ExternalLink className="size-3" />
+              <ArrowRight className="size-3" />
             </Link>
           </Button>
         </div>
@@ -196,40 +217,49 @@ export function ChangelogBanner() {
       <AnimatePresence>
         {!dismissed && latestUnseen && (
           <motion.div
-            initial={{ opacity: 0, y: -12 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            exit={{ opacity: 0, y: -8, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             className="mx-3 md:mx-4 mt-2"
           >
-            <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-sm">
+            <div className="relative flex items-center gap-3 rounded-xl border border-primary/25 bg-primary/5 dark:bg-primary/10 pl-4 pr-3 py-2.5">
+              {/* Left accent line */}
+              <div className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-primary/60" />
+
               <Sparkles className="size-4 text-primary shrink-0" />
+
               <div className="flex-1 min-w-0">
-                <span className="font-semibold text-foreground">
+                <p className="text-sm font-semibold text-foreground leading-tight truncate">
                   v{latestUnseen.version} — {latestUnseen.title}
-                </span>
-                {unseenCount > 1 && (
-                  <span className="ml-1.5 text-xs text-muted-foreground">
-                    +{unseenCount - 1} more update
-                    {unseenCount - 1 > 1 ? "s" : ""}
-                  </span>
+                </p>
+                {unseenCount > 1 ? (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    +{unseenCount - 1} more update{unseenCount - 1 > 1 ? "s" : ""}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {latestUnseen.items.length} change{latestUnseen.items.length !== 1 ? "s" : ""} in this release
+                  </p>
                 )}
               </div>
+
               <Button
-                variant="outline"
                 size="sm"
-                className="h-7 text-xs shrink-0"
+                className="h-7 text-xs shrink-0 gap-1"
                 onClick={() => setDialogOpen(true)}
               >
                 See what&apos;s new
+                <ArrowRight className="size-3" />
               </Button>
+
               <button
                 type="button"
                 onClick={handleDismiss}
-                className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                aria-label="Dismiss changelog banner"
+                className="flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                aria-label="Dismiss"
               >
-                <X className="size-4" />
+                <X className="size-3.5" />
               </button>
             </div>
           </motion.div>
