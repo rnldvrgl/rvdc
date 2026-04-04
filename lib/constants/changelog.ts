@@ -221,8 +221,6 @@ export const CHANGELOG: ChangelogEntry[] = [
         text: "Stall stock table now supports up to 500 rows per page, making it easier to view and audit all items at once.",
         roles: ["admin", "manager", "clerk"],
       },
-        roles: ["admin", "manager", "clerk"],
-      },
       {
         category: "fix",
         text: "Clicking \"Mark Claimed\" on a service appliance now immediately updates the button state without needing to close and reopen the service detail.",
