@@ -2,6 +2,7 @@ import { NavigationEntry, NavigationSection } from "@/lib/constants/types"
 import {
     AlertTriangle,
     Banknote,
+    BookOpen,
     Boxes,
     Building2,
     Cake,
@@ -306,6 +307,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Keyboard,
     permission: "view_shortcuts",
   },
+  changelog: {
+    name: "Changelog",
+    href: "/changelog",
+    icon: BookOpen,
+    permission: "view_dashboard",
+  },
 
   // ── Admin ──
   templates: {
@@ -385,7 +392,7 @@ export const sectionedNavigation: NavigationSection[] = [
   },
   {
     title: "Insights",
-    items: [baseNavigation.reports, baseNavigation.shortcuts],
+    items: [baseNavigation.reports, baseNavigation.shortcuts, baseNavigation.changelog],
   },
   {
     title: "Admin",

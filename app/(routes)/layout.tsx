@@ -1,4 +1,5 @@
 "use client"
+import { ChangelogBanner } from "@/components/custom/changelog/ChangelogBanner"
 import FloatingChat from "@/components/custom/chat/FloatingChat"
 import { Navbar } from "@/components/custom/navigation/Navbar"
 import { Sidebar } from "@/components/custom/navigation/Sidebar"
@@ -52,6 +53,8 @@ export default function MainLayout({
         )}
       >
         <Navbar user={userProfile} />
+
+        <ChangelogBanner />
 
         <main className="flex-1 flex flex-col">{children}</main>
       </div>

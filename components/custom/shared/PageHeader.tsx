@@ -30,6 +30,7 @@ const breadcrumbRouteMap: Record<string, string> = {
   Aircons: "/aircons/units",
   Messaging: "/messaging",
   Settings: "/settings/profile",
+  Changelog: "/changelog",
 }
 
 interface PageHeaderProps {
