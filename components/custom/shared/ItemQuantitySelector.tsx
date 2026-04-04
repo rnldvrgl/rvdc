@@ -56,8 +56,6 @@ export default function ItemQuantitySelector({
   untrackedItemIds?: Set<number>
   /** Called when the user wants to add stall stock for an item (item_id) */
   onAddStock?: (itemId: number) => void
-  /** Called when the user wants to add stall stock for an item (item_id) */
-  onAddStock?: (itemId: number) => void
 }) {
   const handleAdd = () => {
     if (allItems.length === 0) return

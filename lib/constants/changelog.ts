@@ -9,9 +9,6 @@
  *    version yet (tracked per-user via localStorage).
  */
 
-import { title } from "process"
-import { date } from "zod"
-
 export type ChangelogCategory =
   | "feature"
   | "fix"
@@ -207,6 +204,11 @@ export const CHANGELOG: ChangelogEntry[] = [
       {
         category: "feature",
         text: "You can now add stall stock directly from the sales form — when an item shows 0 available stock, an \"Add Stock\" button appears on that row to restock it without leaving the sale.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "improvement",
+        text: "Quotation line items can now be reordered — use the up and down arrow buttons on each item to rearrange them before saving.",
         roles: ["admin", "manager", "clerk"],
       },
       // ── Bug Fixes ──

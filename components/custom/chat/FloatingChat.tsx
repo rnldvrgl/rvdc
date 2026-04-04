@@ -694,6 +694,7 @@ function MessageThread({
                   }
                 >
                   {msg.image_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={msg.image_url}
                       alt="image"
@@ -881,6 +882,7 @@ function MessageThread({
         {/* Image preview */}
         {pendingImage && (
           <div className="relative mb-2 inline-block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={pendingImage.previewUrl}
               alt="preview"

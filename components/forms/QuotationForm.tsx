@@ -42,6 +42,8 @@ import { addDays, format } from "date-fns"
 import {
   Bold,
   CalendarIcon,
+  ChevronDown,
+  ChevronUp,
   GripVertical,
   Italic,
   Loader2,
@@ -577,6 +579,18 @@ export default function QuotationForm({
     )
   }, [])
 
+  const moveItem = useCallback((id: string, direction: "up" | "down") => {
+    setItems((prev) => {
+      const idx = prev.findIndex((i) => i.id === id)
+      if (idx === -1) return prev
+      const next = [...prev]
+      const swapIdx = direction === "up" ? idx - 1 : idx + 1
+      if (swapIdx < 0 || swapIdx >= next.length) return prev
+      ;[next[idx], next[swapIdx]] = [next[swapIdx], next[idx]]
+      return next
+    })
+  }, [])
+
   const updateItem = useCallback(
     (id: string, field: keyof Omit<FormItem, "id">, value: string | number) => {
       setItems((prev) =>
@@ -969,23 +983,56 @@ export default function QuotationForm({
               className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-2"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">
-                  Item {idx + 1}
-                </span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeItem(item.id)}
-                      disabled={items.length === 1}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Remove item</TooltipContent>
-                </Tooltip>
+                <div className="flex items-center gap-1">
+                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Item {idx + 1}
+                  </span>
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground"
+                        onClick={() => moveItem(item.id, "up")}
+                        disabled={idx === 0}
+                      >
+                        <ChevronUp className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Move up</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground"
+                        onClick={() => moveItem(item.id, "down")}
+                        disabled={idx === items.length - 1}
+                      >
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Move down</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => removeItem(item.id)}
+                        disabled={items.length === 1}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Remove item</TooltipContent>
+                  </Tooltip>
+                </div>
               </div>
               {isPriceList ? (
                 <div className="space-y-1.5">
