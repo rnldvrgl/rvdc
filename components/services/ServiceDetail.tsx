@@ -46,6 +46,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Service, ServicePayload, ServiceReceipt } from "@/lib/constants/interface"
+import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { usePrint } from "@/lib/hooks/usePrint"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
@@ -121,6 +122,15 @@ export default function ServiceDetail({
 }: ServiceDetailProps) {
   const queryClient = useQueryClient()
   const { canManage, role, isAdmin } = useCurrentUser()
+
+  // Subscribe to the service detail query so mutations that invalidate
+  // ["service", id] cause this component to re-render with fresh appliance data.
+  const { data: freshService } = useApiQuery<Service>({
+    queryKey: ["service", `${service.id}`],
+    url: `services/services/${service.id}/`,
+    options: { initialData: service },
+  })
+  const currentAppliances = freshService?.appliances ?? service.appliances ?? []
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState("")
@@ -202,7 +212,7 @@ export default function ServiceDetail({
   const isCarryIn = service.service_mode === "carry_in"
   const isUnclaimedMode = service.service_mode === "carry_in" || service.service_mode === "pull_out"
   // Block reopen/reservice when any appliance is acquired or forfeited — company asset records already exist
-  const hasAnyForfeitedOrAcquired = service.is_forfeited || (service.appliances?.some((a) => a.is_forfeited) ?? false)
+  const hasAnyForfeitedOrAcquired = service.is_forfeited || currentAppliances.some((a) => a.is_forfeited)
 
   // Initialize discount form with existing values
   useEffect(() => {
@@ -238,7 +248,7 @@ export default function ServiceDetail({
   }
 
   // Check if all appliances are ready for completion
-  const hasUnfinishedAppliances = service.appliances?.some(
+  const hasUnfinishedAppliances = currentAppliances.some(
     (appliance) => appliance.status === "pending",
   )
 
@@ -771,12 +781,12 @@ export default function ServiceDetail({
             <span className="inline sm:hidden">
               {service.service_type === "installation" ? "Units" : "Items"}
             </span>
-            {service.appliances && service.appliances.length > 0 && (
+            {currentAppliances.length > 0 && (
               <Badge
                 variant="secondary"
                 className="h-5 min-w-5 px-1 text-[10px] rounded-full"
               >
-                {service.appliances.length}
+                {currentAppliances.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -1012,14 +1022,14 @@ export default function ServiceDetail({
           </div>
 
           {/* Appliances Breakdown */}
-          {service.appliances && service.appliances.length > 0 && (
+          {currentAppliances.length > 0 && (
             <div className="rounded-lg border bg-card px-4 py-3">
               <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
                 <Package className="h-3.5 w-3.5" />
                 Appliances & Charges
               </p>
               <div className="space-y-2">
-                {service.appliances.map((appliance) => {
+                {currentAppliances.map((appliance) => {
                   const laborFee = parseFloat(appliance.labor_fee || "0")
                   const discountedLaborFee = parseFloat(
                     appliance.discounted_labor_fee ||
@@ -1378,7 +1388,7 @@ export default function ServiceDetail({
                         {(() => {
                           // Calculate subtotal from appliances (before service discount)
                           const appliancesSubtotal =
-                            service.appliances?.reduce((total, appliance) => {
+                            currentAppliances.reduce((total, appliance) => {
                               const laborFee = parseFloat(
                                 appliance.discounted_labor_fee ||
                                   appliance.labor_fee ||
@@ -2024,7 +2034,7 @@ export default function ServiceDetail({
           className="space-y-4"
         >
           {/* View toggle + kanban board */}
-          {canManage && service.appliances && service.appliances.length > 0 && (
+          {canManage && currentAppliances.length > 0 && (
             <div className="flex items-center justify-end gap-0.5">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -2058,10 +2068,9 @@ export default function ServiceDetail({
           )}
 
           {applianceView === "kanban" &&
-            service.appliances &&
-            service.appliances.length > 0 && (
+            currentAppliances.length > 0 && (
               <ApplianceKanbanBoard
-                appliances={service.appliances}
+                appliances={currentAppliances}
                 onStatusChange={(appliance, newStatus) => {
                   updateAppliance.mutate(
                     {
@@ -2087,7 +2096,7 @@ export default function ServiceDetail({
             <ServiceApplianceManager
               serviceId={service.id}
               serviceType={service.service_type}
-              appliances={service.appliances || []}
+              appliances={currentAppliances}
               installationUnits={service.installation_units || []}
               serviceTechnicians={
                 service.technician_assignments
@@ -2121,7 +2130,7 @@ export default function ServiceDetail({
           />
 
           {!isCompleted &&
-            (!service.appliances || service.appliances.length === 0) && (
+            currentAppliances.length === 0 && (
               <div className="rounded-lg border border-dashed p-8 text-center">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted mx-auto mb-3">
                   <Wrench className="h-5 w-5 text-muted-foreground" />
@@ -2926,7 +2935,7 @@ export default function ServiceDetail({
             ? `Warning: Some appliances are not finished yet. Please update their status before completing the service.`
             : service.has_pending_items
               ? `Warning: Items have not been confirmed for all appliances. Please ask the clerk to confirm parts/items used before completing.`
-              : service.appliances && service.appliances.length > 0
+              : currentAppliances.length > 0
                 ? `Complete service #${service.id}? This will finalize stock consumption, create transactions, and mark the service as completed.`
                 : `Complete service #${service.id}? Note: This service has no appliances/items. No sales transactions will be created.`
         }

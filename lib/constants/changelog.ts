@@ -70,6 +70,23 @@ export const CATEGORY_META: Record<
 // ── Changelog entries (newest first) ──────────────────────────────────────────
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.6.0",
+    title: "Appliance Claiming Fixes",
+    date: "2026-04-04",
+    items: [
+      {
+        category: "fix",
+        text: "Clicking \"Mark Claimed\" on a service appliance now immediately updates the button state without needing to close and reopen the service detail.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "feature",
+        text: "Completing a carry-in or pull-out service now automatically marks all unclaimed appliances as claimed — no need to manually click \"Mark Claimed\" for each appliance.",
+        roles: ["admin", "manager", "clerk"],
+      },
+    ],
+  },
+  {
     version: "1.5.0",
     title: "Dashboard Stat Card & In-App Changelog",
     date: "2026-04-04",
