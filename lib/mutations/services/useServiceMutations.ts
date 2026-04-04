@@ -61,6 +61,43 @@ export function useServiceMutations() {
     },
   })
 
+  const editPayment = useApiMutation({
+    mutationFn: ({
+      id,
+      payment_id,
+      payment_type,
+      amount,
+      notes,
+      payment_date,
+    }: {
+      id: number
+      payment_id: number
+      payment_type?: string
+      amount?: string | number
+      notes?: string
+      payment_date?: string
+    }) =>
+      api.post(`${url}${id}/edit-payment/`, {
+        payment_id,
+        ...(payment_type !== undefined && { payment_type }),
+        ...(amount !== undefined && { amount }),
+        ...(notes !== undefined && { notes }),
+        ...(payment_date !== undefined && { payment_date }),
+      }),
+    successMessage: "Payment updated successfully.",
+    invalidateQueries: [
+      { queryKey: ["services"] },
+      { queryKey: ["sales-transactions"] },
+      { queryKey: ["remittances"] },
+      { queryKey: ["daily-sales"] },
+      { queryKey: ["cheque-choices"] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
+    },
+  })
+
   const voidPayment = useApiMutation({
     mutationFn: ({
       id,
@@ -243,6 +280,7 @@ export function useServiceMutations() {
     updateService,
     deleteService,
     completeService,
+    editPayment,
     voidPayment,
     recordPayment,
     cancelService,

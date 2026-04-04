@@ -70,103 +70,11 @@ export const CATEGORY_META: Record<
 // ── Changelog entries (newest first) ──────────────────────────────────────────
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: "1.7.1",
-    title: "Service Reopen & Payment Correction Fixes",
-    date: "2026-04-04",
-    roles: ["admin", "manager", "clerk"],
-    items: [
-      {
-        category: "fix",
-        text: "Reopening a completed service no longer resets the Total to ₱0.00 — the service fee is now correctly preserved and recalculated from existing parts and labor fees.",
-        roles: ["admin", "manager", "clerk"],
-      },
-      {
-        category: "feature",
-        text: "You can now void (remove) a recorded payment on a reopened service, making it easy to correct a wrong payment method before re-completing.",
-        roles: ["admin", "manager", "clerk"],
-      },
-    ],
-  },
-  {
     version: "1.7.0",
-    title: "Inventory Bulk Update & In-App Changelog Button",
+    title: "Services, Inventory Bulk Update & App Improvements",
     date: "2026-04-04",
     items: [
-      {
-        category: "feature",
-        text: "Bulk update for stall stock — download a pre-filled template, edit quantities and thresholds in Excel, then upload to preview and confirm changes in one go.",
-        roles: ["admin", "manager"],
-      },
-      {
-        category: "feature",
-        text: "Bulk update for stockroom stock — same download → preview → confirm flow, now available for stockroom stock levels.",
-        roles: ["admin", "manager"],
-      },
-      {
-        category: "feature",
-        text: "Item bulk update now supports creating new items — add a row with a blank SKU and fill in the name and price to create the item directly from the spreadsheet.",
-        roles: ["admin"],
-      },
-      {
-        category: "feature",
-        text: "Item bulk update now supports deleting items — set the Action column to DELETE in the template to soft-delete an item.",
-        roles: ["admin"],
-      },
-      {
-        category: "improvement",
-        text: "Bulk update preview dialog now highlights delete rows in red and new-item rows in green so you can clearly see what will be created or removed before confirming.",
-        roles: ["admin", "manager"],
-      },
-      {
-        category: "feature",
-        text: "\"What's New\" button added to the sidebar (desktop and mobile) — click it any time to re-open the changelog.",
-      },
-    ],
-  },
-  {
-    version: "1.6.0",
-    title: "Appliance Claiming Fixes",
-    date: "2026-04-04",
-    items: [
-      {
-        category: "fix",
-        text: "Clicking \"Mark Claimed\" on a service appliance now immediately updates the button state without needing to close and reopen the service detail.",
-        roles: ["admin", "manager", "clerk"],
-      },
-      {
-        category: "feature",
-        text: "Completing a carry-in or pull-out service now automatically marks all unclaimed appliances as claimed — no need to manually click \"Mark Claimed\" for each appliance.",
-        roles: ["admin", "manager", "clerk"],
-      },
-    ],
-  },
-  {
-    version: "1.5.0",
-    title: "Dashboard Stat Card & In-App Changelog",
-    date: "2026-04-04",
-    items: [
-      {
-        category: "feature",
-        text: "Sub Stall Daily Settlement now appears as a compact stat card on the admin dashboard, matching the height and style of other metric cards. Click it to open the full settlement breakdown.",
-        roles: ["admin"],
-      },
-      {
-        category: "feature",
-        text: "In-app Changelog is live — you'll see a banner when new updates are available, with a full changelog page filtered to changes relevant to your role.",
-      },
-      {
-        category: "improvement",
-        text: "Admin dashboard metric grid now uniformly fits the Sub Stall stat card without breaking the layout.",
-        roles: ["admin"],
-      },
-    ],
-  },
-  {
-    version: "1.4.0",
-    title: "Services, Company Assets & Client Improvements",
-    date: "2026-04-04",
-    items: [
-      // ── Features ──
+      // ── Features: Services ──
       {
         category: "feature",
         text: "Warranty & free cleaning indicators are now shown directly on the services list for quick at-a-glance status.",
@@ -189,12 +97,53 @@ export const CHANGELOG: ChangelogEntry[] = [
       },
       {
         category: "feature",
-        text: "Sub Stall Daily Settlement now appears as a compact stat card on the admin dashboard matching other metric cards. Click to view the full breakdown.",
+        text: "Completing a carry-in or pull-out service now automatically marks all unclaimed appliances as claimed — no need to manually click \"Mark Claimed\" for each appliance.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "feature",
+        text: "You can now void a recorded service payment, making it easy to correct a wrong entry.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "feature",
+        text: "You can now edit a recorded service payment — change the payment type, amount, notes, or date without having to void and re-record.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      // ── Features: Inventory ──
+      {
+        category: "feature",
+        text: "Bulk update for stall stock — download a pre-filled template, edit quantities and thresholds in Excel, then upload to preview and confirm changes in one go.",
+        roles: ["admin", "manager"],
+      },
+      {
+        category: "feature",
+        text: "Bulk update for stockroom stock — same download → preview → confirm flow, now available for stockroom stock levels.",
+        roles: ["admin", "manager"],
+      },
+      {
+        category: "feature",
+        text: "Item bulk update now supports creating new items — add a row with a blank SKU and fill in the name and price to create the item directly from the spreadsheet.",
         roles: ["admin"],
       },
       {
         category: "feature",
-        text: "In-app Changelog (this screen) — get notified directly in the app whenever updates are released, filtered by your role.",
+        text: "Item bulk update now supports deleting items — set the Action column to DELETE in the template to soft-delete an item.",
+        roles: ["admin"],
+      },
+      // ── Features: Dashboard & App ──
+      {
+        category: "feature",
+        text: "Sub Stall Daily Settlement now appears as a compact stat card on the admin dashboard, matching the height and style of other metric cards. Click it to open the full settlement breakdown.",
+        roles: ["admin"],
+      },
+      {
+        category: "feature",
+        text: "In-app Changelog is live — you'll see a banner when new updates are available, with a full changelog page filtered to changes relevant to your role.",
+      },
+      {
+        category: "feature",
+        text: "\"What's New\" button added to the sidebar (desktop and mobile) — click it any time to re-open the changelog.",
       },
       // ── Improvements ──
       {
@@ -227,7 +176,27 @@ export const CHANGELOG: ChangelogEntry[] = [
         text: "Inventory items can now be marked as untracked (catalogue-only) — useful for items that don't need stock management.",
         roles: ["admin", "manager"],
       },
-      // ── Fixes ──
+      {
+        category: "improvement",
+        text: "Bulk update preview dialog now highlights delete rows in red and new-item rows in green so you can clearly see what will be created or removed before confirming.",
+        roles: ["admin", "manager"],
+      },
+      {
+        category: "improvement",
+        text: "Admin dashboard metric grid now uniformly fits the Sub Stall stat card without breaking the layout.",
+        roles: ["admin"],
+      },
+      // ── Bug Fixes ──
+      {
+        category: "fix",
+        text: "Reopening a completed service no longer resets the Total to ₱0.00 — the service fee is now correctly preserved and recalculated from existing parts and labor fees.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "fix",
+        text: "Clicking \"Mark Claimed\" on a service appliance now immediately updates the button state without needing to close and reopen the service detail.",
+        roles: ["admin", "manager", "clerk"],
+      },
       {
         category: "fix",
         text: "Payment status 'Pending' added as a proper status. 'N/A' renamed to 'No Charge' for clarity across services and sales.",

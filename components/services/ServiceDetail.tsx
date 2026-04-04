@@ -84,6 +84,7 @@ import {
     List,
     MapPin,
     Package,
+    Pencil,
     PenLine,
     Phone,
     Plus,
@@ -171,6 +172,11 @@ export default function ServiceDetail({
   const [transactionDateOpen, setTransactionDateOpen] = useState(false)
   const [reServiceDialogOpen, setReServiceDialogOpen] = useState(false)
   const [reServiceReason, setReServiceReason] = useState("")
+  const [editPaymentId, setEditPaymentId] = useState<number | null>(null)
+  const [editPaymentType, setEditPaymentType] = useState("cash")
+  const [editPaymentAmount, setEditPaymentAmount] = useState("")
+  const [editPaymentNotes, setEditPaymentNotes] = useState("")
+  const [editPaymentDialogOpen, setEditPaymentDialogOpen] = useState(false)
   const [claimingApplianceId, setClaimingApplianceId] = useState<number | null>(null)
   const [forfeitingApplianceId, setForfeitingApplianceId] = useState<number | null>(null)
   const [forfeitingApplianceNotes, setForfeitingApplianceNotes] = useState("")
@@ -180,6 +186,8 @@ export default function ServiceDetail({
   const {
     completeService,
     recordPayment,
+    editPayment,
+    voidPayment,
     cancelService,
     refundService,
     updateService,
@@ -2294,6 +2302,7 @@ export default function ServiceDetail({
               // Merge payments and refunds into a single sorted list
               const transactions: {
                 type: "payment" | "refund"
+                id?: number
                 amount: number
                 date: string
                 method: string
@@ -2306,6 +2315,7 @@ export default function ServiceDetail({
                 for (const p of service.payments) {
                   transactions.push({
                     type: "payment",
+                    id: p.id,
                     amount: parseFloat(p.amount.toString()),
                     date: p.created_at,
                     method: p.payment_type,
@@ -2421,6 +2431,40 @@ export default function ServiceDetail({
                           <p className="text-xs text-muted-foreground">
                             {formatDate(new Date(tx.date), "h:mm a")}
                           </p>
+                          {!isRefund && canManage && tx.id && (
+                            <div className="flex gap-1 justify-end mt-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-5 w-5"
+                                title="Edit payment"
+                                onClick={() => {
+                                  setEditPaymentId(tx.id!)
+                                  setEditPaymentType(tx.method)
+                                  setEditPaymentAmount(tx.amount.toString())
+                                  setEditPaymentNotes(tx.notes ?? "")
+                                  setEditPaymentDialogOpen(true)
+                                }}
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-5 w-5 text-destructive hover:text-destructive"
+                                title="Void payment"
+                                onClick={() => {
+                                  voidPayment.mutate({
+                                    id: service.id,
+                                    payment_id: tx.id!,
+                                  })
+                                }}
+                                disabled={voidPayment.isPending}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )
@@ -3119,6 +3163,90 @@ export default function ServiceDetail({
               disabled={recordPayment.isPending}
             >
               {recordPayment.isPending ? "Recording..." : "Record Payment"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Payment Dialog */}
+      <Dialog
+        open={editPaymentDialogOpen}
+        onOpenChange={setEditPaymentDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Payment</DialogTitle>
+            <DialogDescription>
+              Update the payment details. Only changed fields will be updated.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Payment Type</Label>
+              <Select
+                value={editPaymentType}
+                onValueChange={setEditPaymentType}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cash">Cash</SelectItem>
+                  <SelectItem value="gcash">GCash</SelectItem>
+                  <SelectItem value="credit">Credit Card</SelectItem>
+                  <SelectItem value="debit">Debit Card</SelectItem>
+                  <SelectItem value="cheque">Cheque</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Amount (₱)</Label>
+              <Input
+                type="number"
+                step="1"
+                value={editPaymentAmount}
+                onChange={(e) => setEditPaymentAmount(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Notes</Label>
+              <Input
+                type="text"
+                value={editPaymentNotes}
+                onChange={(e) => setEditPaymentNotes(e.target.value)}
+                placeholder="e.g., Corrected payment method"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setEditPaymentDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!editPaymentId) return
+                editPayment.mutate(
+                  {
+                    id: service.id,
+                    payment_id: editPaymentId,
+                    payment_type: editPaymentType,
+                    amount: editPaymentAmount,
+                    notes: editPaymentNotes,
+                  },
+                  { onSuccess: () => setEditPaymentDialogOpen(false) },
+                )
+              }}
+              disabled={
+                editPayment.isPending ||
+                !editPaymentAmount ||
+                parseFloat(editPaymentAmount) <= 0
+              }
+            >
+              {editPayment.isPending ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </DialogContent>
