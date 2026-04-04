@@ -9,6 +9,7 @@ import { PendingItemsAlert } from "@/components/custom/dashboard/PendingItemsAle
 import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
 import { RemindersAlerts } from "@/components/custom/dashboard/RemindersAlerts"
 import { SubStallSettlement } from "@/components/custom/dashboard/SubStallSettlement"
+import { SubStallSettlementStatCard } from "@/components/custom/dashboard/SubStallSettlementStatCard"
 import { UnclaimedApplianceAlerts } from "@/components/custom/dashboard/UnclaimedApplianceAlerts"
 import DateRangePicker from "@/components/custom/inputs/DateRangePicker"
 import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
@@ -161,7 +162,7 @@ const DashboardPage = () => {
               <SectionReveal delay={0.15}>
                 <GradientMetricCards>
                   <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
-                    <SubStallSettlement enableShortcut />
+                    <SubStallSettlementStatCard enableShortcut />
                   </WidgetErrorBoundary>
                 </GradientMetricCards>
               </SectionReveal>
