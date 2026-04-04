@@ -70,6 +70,24 @@ export const CATEGORY_META: Record<
 // ── Changelog entries (newest first) ──────────────────────────────────────────
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.7.1",
+    title: "Service Reopen & Payment Correction Fixes",
+    date: "2026-04-04",
+    roles: ["admin", "manager", "clerk"],
+    items: [
+      {
+        category: "fix",
+        text: "Reopening a completed service no longer resets the Total to ₱0.00 — the service fee is now correctly preserved and recalculated from existing parts and labor fees.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "feature",
+        text: "You can now void (remove) a recorded payment on a reopened service, making it easy to correct a wrong payment method before re-completing.",
+        roles: ["admin", "manager", "clerk"],
+      },
+    ],
+  },
+  {
     version: "1.7.0",
     title: "Inventory Bulk Update & In-App Changelog Button",
     date: "2026-04-04",

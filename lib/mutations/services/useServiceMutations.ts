@@ -61,6 +61,30 @@ export function useServiceMutations() {
     },
   })
 
+  const voidPayment = useApiMutation({
+    mutationFn: ({
+      id,
+      payment_id,
+      reason,
+    }: {
+      id: number
+      payment_id: number
+      reason?: string
+    }) => api.post(`${url}${id}/void-payment/`, { payment_id, reason }),
+    successMessage: "Payment voided successfully.",
+    invalidateQueries: [
+      { queryKey: ["services"] },
+      { queryKey: ["sales-transactions"] },
+      { queryKey: ["remittances"] },
+      { queryKey: ["daily-sales"] },
+      { queryKey: ["cheque-choices"] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
+    },
+  })
+
   const recordPayment = useApiMutation({
     mutationFn: ({
       id,
@@ -219,6 +243,7 @@ export function useServiceMutations() {
     updateService,
     deleteService,
     completeService,
+    voidPayment,
     recordPayment,
     cancelService,
     refundService,
