@@ -33,7 +33,7 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 
-const DEFAULT_PUBLIC_IP = "49.151.165.129"
+const DEFAULT_PUBLIC_IP = "192.168.1."
 const DEFAULT_PORT = 34567
 
 interface CameraFormDialogProps {
@@ -199,15 +199,15 @@ export function CameraFormDialog({
               <FormField
                 control={form.control}
                 name="public_ip"
-                rules={{ required: !isEdit ? "Public IP is required" : false }}
+                rules={{ required: !isEdit ? "Camera IP is required" : false }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Public IP</FormLabel>
-                    <FormControl>
-                      <Input placeholder="49.151.165.129" {...field} />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Router&apos;s public IP address
+                  <FormLabel>Camera IP</FormLabel>
+                  <FormControl>
+                    <Input placeholder="192.168.1.2" {...field} />
+                  </FormControl>
+                  <FormDescription className="text-xs">
+                    Local IP of the camera on the shop network
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -219,7 +219,7 @@ export function CameraFormDialog({
                 rules={{ required: !isEdit ? "Port is required" : false }}
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>External Port</FormLabel>
+                    <FormLabel>Port</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -229,7 +229,7 @@ export function CameraFormDialog({
                       />
                     </FormControl>
                     <FormDescription className="text-xs">
-                      Port forwarding rule (34567–34572)
+                      XMeye cameras always use 34567
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
