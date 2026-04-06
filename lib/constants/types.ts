@@ -272,6 +272,7 @@ export type Employee = BaseEntity & {
   has_pagibig?: boolean
   has_bir_tax?: boolean
   has_cash_ban?: boolean
+  is_technician?: boolean
   profile_image?: string
   e_signature?: string | null
   assigned_stall?: Stall

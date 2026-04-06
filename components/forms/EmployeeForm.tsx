@@ -121,6 +121,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
       has_pagibig: formData.has_pagibig ?? true,
       has_bir_tax: formData.has_bir_tax ?? true,
       has_cash_ban: formData.has_cash_ban ?? true,
+      is_technician: formData.is_technician ?? false,
       profile_image: "",
       e_signature: "",
       role: formData.role ?? "technician",
@@ -147,7 +148,7 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
   // Watch the role field to conditionally show stall assignment
   const selectedRole = form.watch("role")
   const showStallAssignment =
-    selectedRole === "manager" || selectedRole === "clerk"
+    selectedRole === "manager" || selectedRole === "clerk" || selectedRole === "technician"
 
   // Create stall options for ComboBox
   const stallOptions: ComboboxOption[] = [
@@ -430,6 +431,27 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
                         className="h-11"
                       />
                     </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="is_technician"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                    <FormControl>
+                      <Checkbox
+                        checked={!!field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Can Do Technician Work</FormLabel>
+                      <FormDescription>
+                        Allow this employee to be assigned as a technician in service jobs, regardless of their role.
+                      </FormDescription>
+                    </div>
                   </FormItem>
                 )}
               />
