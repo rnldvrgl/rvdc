@@ -18,6 +18,7 @@ export interface CCTVCamera {
 
 export interface Go2rtcStatus {
   configured: boolean
+  running: boolean
   streams: Record<string, unknown>
   error?: string
 }
