@@ -101,6 +101,7 @@ export interface User {
   basic_salary?: string
   cash_ban_balance?: string
   has_cash_ban?: boolean
+  is_superuser?: boolean
 }
 
 // ---------------------

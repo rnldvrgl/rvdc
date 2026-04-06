@@ -10,10 +10,9 @@ export const useCurrentUser = () => {
     first_name: userProfile?.first_name,
     last_name: userProfile?.last_name,
     isSuperAdmin: userProfile?.is_superuser === true,
-    isAdmin: userProfile?.is_superuser === true || userProfile?.role === "admin",
+    isAdmin: userProfile?.role === "admin",
     payrollIncluded: userProfile?.include_in_payroll,
     canManage:
-      userProfile?.is_superuser === true ||
       userProfile?.role === "manager" ||
       userProfile?.role === "admin",
   }
