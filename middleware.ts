@@ -8,6 +8,19 @@ export default function middleware(request: NextRequest) {
 
   const redirect = (path: string) => NextResponse.redirect(`${origin}${path}`)
 
+  // Maintenance mode — show maintenance page to everyone
+  if (process.env.NEXT_PUBLIC_MAINTENANCE === "true") {
+    if (pathname !== "/maintenance") {
+      return redirect("/maintenance")
+    }
+    return NextResponse.next()
+  }
+
+  // Prevent accessing /maintenance when not in maintenance mode
+  if (pathname === "/maintenance") {
+    return redirect("/")
+  }
+
   // Consider user authenticated if either access or refresh token exists
   // (refresh can be used to get a new access token client-side)
   const isAuthenticated = !!access || !!refresh
