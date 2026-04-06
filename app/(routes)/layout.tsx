@@ -11,7 +11,9 @@ import { useDashboardWebSocket } from "@/lib/hooks/useDashboardWebSocket"
 import { usePushNotifications } from "@/lib/hooks/usePushNotifications"
 import { useSidebarCollapse } from "@/lib/hooks/useSidebarCollapse"
 import { useSystemSettings } from "@/lib/queries/useSystemSettings"
+import { useUserProfile } from "@/lib/queries/useUserProfile"
 import useChatStore from "@/lib/store/useChatStore"
+import useUserProfileStore from "@/lib/store/useUserProfileStore"
 import { cn } from "@/lib/utils/helpers"
 import { SHOP_INFO } from "@/lib/constants/meta"
 import { Wrench } from "lucide-react"
@@ -25,6 +27,15 @@ export default function MainLayout({
   const { collapsed } = useSidebarCollapse()
   const { userProfile, isAdmin } = useCurrentUser()
   const { data: systemSettings } = useSystemSettings()
+  const { data: freshProfile } = useUserProfile()
+  const setUserProfile = useUserProfileStore((s) => s.setUserProfile)
+
+  // Sync fresh profile from API into store on mount — ensures fields added
+  // to the serializer after the user last logged in (e.g. is_superuser) are
+  // always up-to-date without requiring a logout/login cycle.
+  useEffect(() => {
+    if (freshProfile) setUserProfile(freshProfile)
+  }, [freshProfile, setUserProfile])
 
   const inMaintenance = systemSettings?.maintenance_mode === true && !isAdmin
 
