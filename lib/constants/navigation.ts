@@ -28,6 +28,7 @@ import {
     Store,
     Users,
     Warehouse,
+    Video,
     Wind,
     Wrench,
 } from "lucide-react"
@@ -334,6 +335,13 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Wrench,
     permission: "manage_appliance_types",
   },
+  surveillance: {
+    name: "Surveillance",
+    href: "/surveillance",
+    icon: Video,
+    permission: "manage_server_maintenance",
+    superAdminOnly: true,
+  },
   bulkUpdate: {
     name: "Bulk Update",
     href: "/settings/bulk-update",
@@ -408,6 +416,7 @@ export const sectionedNavigation: NavigationSection[] = [
       baseNavigation.templates,
       baseNavigation.applianceTypes,
       baseNavigation.bulkUpdate,
+      baseNavigation.surveillance,
       baseNavigation.system,
     ],
   },
