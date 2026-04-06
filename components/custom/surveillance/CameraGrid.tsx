@@ -93,15 +93,15 @@ export function CameraGrid({
         <div className="flex items-center gap-2">
           {go2rtcStatus !== undefined && (
             <Badge
-              variant={go2rtcStatus.configured ? "default" : "destructive"}
+              variant={go2rtcStatus.configured && !go2rtcStatus.error ? "default" : "destructive"}
               className="gap-1"
             >
-              {go2rtcStatus.configured ? (
+              {go2rtcStatus.configured && !go2rtcStatus.error ? (
                 <Wifi className="size-3" />
               ) : (
                 <WifiOff className="size-3" />
               )}
-              {go2rtcStatus.configured ? "go2rtc online" : "go2rtc offline"}
+              {go2rtcStatus.configured && !go2rtcStatus.error ? "go2rtc online" : "go2rtc unreachable"}
             </Badge>
           )}
           {go2rtcStatus?.error && (
