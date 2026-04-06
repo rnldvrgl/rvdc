@@ -115,7 +115,7 @@ function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
       </div>
 
               {/* Service Fee */}
-        <div className="my-2 flex items-center gap-2">
+        <div className="my-1 flex items-center gap-2">
           <span className="text-[10pt] font-bold uppercase tracking-wide text-gray-900 whitespace-nowrap">
             Service Check-Up Fee:
           </span>
@@ -138,7 +138,7 @@ function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
 
 
 
-        <div className="mt-4 flex gap-x-3">
+        <div className="mt-2 flex gap-x-3">
           <div className="grid">
             {["Pull-Out & Return", "Home Service"].map((text) => (
               <label
