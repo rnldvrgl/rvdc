@@ -117,7 +117,7 @@ function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
               {/* Service Fee */}
         <div className="my-2 flex items-center gap-2">
           <span className="text-[10pt] font-bold uppercase tracking-wide text-gray-900 whitespace-nowrap">
-            Service Fee:
+            Service Check-Up Fee:
           </span>
           {["₱500", "₱800", "₱1,000"].map((fee) => (
             <span
@@ -161,7 +161,7 @@ function JobOrderSlip({ jobOrderNumber }: { jobOrderNumber: number }) {
         {/* ═══ Note Box ═══ */}
         <div className="mt-3 bg-gray-100 border-2 border-gray-500 rounded px-2.5 py-1.5">
           <p className="text-[8pt] text-black leading-snug">
-            <span className="font-extrabold text-destructive">SERVICE FEE:</span> Check-up, transport
+            <span className="font-extrabold text-destructive">SERVICE CHECK-UP FEE:</span> Check-up, transport
             &amp; diagnosis (depending on location). This fee will be deducted
             from the total service cost if you proceed with the repair.
           </p>
