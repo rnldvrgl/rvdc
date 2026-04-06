@@ -290,6 +290,7 @@ export interface ShortcutLink extends NavigationItemBase {
 
 export interface NavigationLink extends NavigationItemBase {
   href: string
+  superAdminOnly?: boolean
 }
 
 export interface NavigationGroup extends NavigationItemBase {

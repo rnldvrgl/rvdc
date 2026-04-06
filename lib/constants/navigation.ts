@@ -355,6 +355,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         href: "/settings/maintenance",
         icon: Server,
         permission: "manage_server_maintenance",
+        superAdminOnly: true,
       },
       {
         name: "Active Sessions",

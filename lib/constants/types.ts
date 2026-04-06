@@ -250,6 +250,7 @@ export type QuotationTermsTemplatePayload = {
 export type Employee = BaseEntity & {
   username?: string
   role: "admin" | "manager" | "clerk" | "technician"
+  is_superuser?: boolean
   is_active?: boolean
   email?: string
   birthday?: string

@@ -13,10 +13,12 @@ import {
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSystemSettings } from "@/lib/queries/useSystemSettings"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { Cake, Settings2 } from "lucide-react"
 
 export default function SystemSettingsPage() {
   const { data: settings, isLoading } = useSystemSettings()
+  const { isSuperAdmin } = useCurrentUser()
 
   return (
     <Wrapper>
@@ -28,6 +30,7 @@ export default function SystemSettingsPage() {
 
       <div className="space-y-6">
         {/* Business Operations */}
+        {isSuperAdmin && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -53,6 +56,7 @@ export default function SystemSettingsPage() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Birthday Greeting Settings Card */}
         <Card>

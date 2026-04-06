@@ -114,7 +114,7 @@ const ENTITY_CONFIG = {
 type EntityType = keyof typeof ENTITY_CONFIG
 
 export function Sidebar() {
-  const { userProfile, role, payrollIncluded } = useCurrentUser()
+  const { userProfile, role, payrollIncluded, isSuperAdmin } = useCurrentUser()
   const pathname = usePathname()
   const isActive = useActivePath()
   const activePath = isActive ? pathname : ""
@@ -123,6 +123,7 @@ export function Sidebar() {
 
   const { sections } = useSidebarNavigation({
     permissions: userPermissions,
+    isSuperAdmin,
   })
 
   const {

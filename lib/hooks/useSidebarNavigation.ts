@@ -4,6 +4,7 @@ import { useMemo } from "react"
 
 type UseNavigationProps = {
   permissions: string[]
+  isSuperAdmin?: boolean
 }
 
 type FilteredSection = {
@@ -11,7 +12,7 @@ type FilteredSection = {
   items: (NavigationGroup | NavigationLink)[]
 }
 
-export function useSidebarNavigation({ permissions }: UseNavigationProps) {
+export function useSidebarNavigation({ permissions, isSuperAdmin = false }: UseNavigationProps) {
   const sections = useMemo<FilteredSection[]>(() => {
     return sectionedNavigation.reduce<FilteredSection[]>((acc, section) => {
       const filteredItems = section.items.reduce<
@@ -20,7 +21,8 @@ export function useSidebarNavigation({ permissions }: UseNavigationProps) {
         if ("children" in item && Array.isArray(item.children)) {
           const filteredChildren = item.children.filter(
             (child) =>
-              !child.permission || permissions.includes(child.permission),
+              (!child.permission || permissions.includes(child.permission)) &&
+              (!child.superAdminOnly || isSuperAdmin),
           )
 
           if (filteredChildren.length === 1) {

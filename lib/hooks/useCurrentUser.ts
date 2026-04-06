@@ -9,8 +9,12 @@ export const useCurrentUser = () => {
     assigned_stall: userProfile?.assigned_stall,
     first_name: userProfile?.first_name,
     last_name: userProfile?.last_name,
-    isAdmin: userProfile?.role === "admin",
+    isSuperAdmin: userProfile?.is_superuser === true,
+    isAdmin: userProfile?.is_superuser === true || userProfile?.role === "admin",
     payrollIncluded: userProfile?.include_in_payroll,
-    canManage: userProfile?.role === "manager" || userProfile?.role === "admin",
+    canManage:
+      userProfile?.is_superuser === true ||
+      userProfile?.role === "manager" ||
+      userProfile?.role === "admin",
   }
 }
