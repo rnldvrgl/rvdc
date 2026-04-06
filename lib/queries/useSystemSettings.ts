@@ -12,6 +12,8 @@ export interface SystemSettings {
   birthday_greeting_male_emojis: string
   birthday_greeting_female_emojis: string
   birthday_greeting_variant: string
+  maintenance_mode: boolean
+  check_stock_on_sale: boolean
   updated_at: string
 }
 

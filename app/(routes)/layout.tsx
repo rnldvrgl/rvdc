@@ -10,8 +10,11 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useDashboardWebSocket } from "@/lib/hooks/useDashboardWebSocket"
 import { usePushNotifications } from "@/lib/hooks/usePushNotifications"
 import { useSidebarCollapse } from "@/lib/hooks/useSidebarCollapse"
+import { useSystemSettings } from "@/lib/queries/useSystemSettings"
 import useChatStore from "@/lib/store/useChatStore"
 import { cn } from "@/lib/utils/helpers"
+import { SHOP_INFO } from "@/lib/constants/meta"
+import { Wrench } from "lucide-react"
 import React, { useEffect } from "react"
 
 export default function MainLayout({
@@ -20,7 +23,10 @@ export default function MainLayout({
   children: React.ReactNode
 }) {
   const { collapsed } = useSidebarCollapse()
-  const { userProfile } = useCurrentUser()
+  const { userProfile, isAdmin } = useCurrentUser()
+  const { data: systemSettings } = useSystemSettings()
+
+  const inMaintenance = systemSettings?.maintenance_mode === true && !isAdmin
 
   useDashboardWebSocket()
   usePushNotifications()
@@ -41,27 +47,52 @@ export default function MainLayout({
     <div className="min-h-screen">
       <Background />
 
-      <div className="fixed top-0 left-0 lg:h-full z-40 w-full lg:w-auto">
-        <Sidebar />
-      </div>
+      {/* Maintenance screen for non-admin users */}
+      {inMaintenance && (
+        <div className="min-h-screen flex items-center justify-center p-6">
+          <div className="max-w-sm w-full flex flex-col items-center text-center gap-5">
+            <div className="size-18 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center">
+              <Wrench className="size-8 text-primary" strokeWidth={1.5} />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                Under Maintenance
+              </h1>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                We&rsquo;re making improvements to the system. We&rsquo;ll be
+                back up shortly. Thank you for your patience.
+              </p>
+            </div>
+            <div className="w-full border-t border-border/40" />
+            <p className="text-xs text-muted-foreground/50">{SHOP_INFO.name}</p>
+          </div>
+        </div>
+      )}
 
-      {/* Main Content Area */}
-      <div
-        className={cn(
-          "flex flex-col min-h-screen transition-all duration-300 mt-[calc(3.5rem+env(safe-area-inset-top))] lg:mt-0",
-          collapsed ? "lg:ml-[108px]" : "lg:ml-72",
-        )}
-      >
-        <Navbar user={userProfile} />
+      {/* Normal layout — hidden during maintenance */}
+      {!inMaintenance && (
+        <>
+          <div className="fixed top-0 left-0 lg:h-full z-40 w-full lg:w-auto">
+            <Sidebar />
+          </div>
 
-        <ChangelogBanner />
+          {/* Main Content Area */}
+          <div
+            className={cn(
+              "flex flex-col min-h-screen transition-all duration-300 mt-[calc(3.5rem+env(safe-area-inset-top))] lg:mt-0",
+              collapsed ? "lg:ml-[108px]" : "lg:ml-72",
+            )}
+          >
+            <Navbar user={userProfile} />
+            <ChangelogBanner />
+            <main className="flex-1 flex flex-col">{children}</main>
+          </div>
 
-        <main className="flex-1 flex flex-col">{children}</main>
-      </div>
-
-      <ScrollToTop />
-      <FloatingChat />
-      <PendingActions />
+          <ScrollToTop />
+          <FloatingChat />
+          <PendingActions />
+        </>
+      )}
     </div>
   )
 }
