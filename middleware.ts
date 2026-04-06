@@ -9,8 +9,8 @@ export default function middleware(request: NextRequest) {
   const redirect = (path: string) => NextResponse.redirect(`${origin}${path}`)
 
   // Maintenance mode — show maintenance page to everyone
-  if (process.env.NEXT_PUBLIC_MAINTENANCE === "true") {
-    if (pathname !== "/maintenance") {
+  if (process.env. === "true") {
+    if (pathname !== "/maintenance"u) {
       return redirect("/maintenance")
     }
     return NextResponse.next()
