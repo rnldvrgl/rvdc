@@ -36,7 +36,10 @@ export function useSidebarNavigation({ permissions, isSuperAdmin = false }: UseN
           } else if (filteredChildren.length > 1) {
             itemAcc.push({ ...item, children: filteredChildren })
           }
-        } else if (!item.permission || permissions.includes(item.permission)) {
+        } else if (
+          (!item.permission || permissions.includes(item.permission)) &&
+          (!("superAdminOnly" in item) || !item.superAdminOnly || isSuperAdmin)
+        ) {
           itemAcc.push(item as NavigationGroup | NavigationLink)
         }
         return itemAcc
@@ -47,7 +50,7 @@ export function useSidebarNavigation({ permissions, isSuperAdmin = false }: UseN
       }
       return acc
     }, [])
-  }, [permissions])
+  }, [permissions, isSuperAdmin])
 
   // Flat list for command palette / search
   const navigation = useMemo(
