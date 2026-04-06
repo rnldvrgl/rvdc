@@ -33,7 +33,7 @@ import { normalizeProfileImage } from "@/lib/utils/helpers"
 import api from "@/lib/utils/api"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { RefreshCw, RotateCcw } from "lucide-react"
-import useSettingsStore, { SettingsStore } from "@/lib/store/useSettingsStore"
+import useSettingsStore, { DEFAULT_SOUND_VOLUME, SettingsStore } from "@/lib/store/useSettingsStore"
 
 /* -------------------------------- helpers -------------------------------- */
 
@@ -168,9 +168,10 @@ export default function SettingsPage() {
   // Sound volume preference
   const userProfile = useUserProfileStore((s) => s.userProfile)
   const userId = userProfile?.id
-  const getSoundVolume = useSettingsStore((s: SettingsStore) => s.getSoundVolume)
   const setSoundVolume = useSettingsStore((s: SettingsStore) => s.setSoundVolume)
-  const soundVolume = userId ? getSoundVolume(userId) : 0.5
+  const soundVolume = useSettingsStore((s: SettingsStore) =>
+    userId != null ? (s.byUser[userId]?.soundVolume ?? DEFAULT_SOUND_VOLUME) : DEFAULT_SOUND_VOLUME,
+  )
 
   // Sidebar preference
   const { collapsed: sidebarCollapsed, setCollapsed: setSidebarCollapsed } = useSidebarCollapse()
