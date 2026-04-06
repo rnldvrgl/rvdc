@@ -45,6 +45,7 @@ export interface GetColumnsProps<T> {
   // Archive actions
   onRestore?: (item: T) => void
   onHardDelete?: (item: T) => void
+  onMerge?: (item: T) => void
 }
 
 export interface EntitySheetProps<T> {

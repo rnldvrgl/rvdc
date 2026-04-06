@@ -66,5 +66,17 @@ export function useClientMutations() {
     ],
   })
 
-  return { addClient, updateClient, deleteClient, bulkPreview, bulkUpdate }
+  const mergeClient = useApiMutation<{ targetId: number; sourceClientId: number }, unknown>({
+    mutationFn: ({ targetId, sourceClientId }) =>
+      api.post(`${url}${targetId}/merge/`, { source_client_id: sourceClientId }),
+    usePromiseToast: true,
+    loadingMessage: "Merging clients...",
+    successMessage: "Clients merged successfully.",
+    invalidateQueries: [
+      { queryKey: ["clients"] },
+      ...analyticsKeys.map((key) => ({ queryKey: key })),
+    ],
+  })
+
+  return { addClient, updateClient, deleteClient, bulkPreview, bulkUpdate, mergeClient }
 }
