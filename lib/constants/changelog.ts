@@ -70,6 +70,39 @@ export const CATEGORY_META: Record<
 // ── Changelog entries (newest first) ──────────────────────────────────────────
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.8.0",
+    title: "Account Preferences & Personalization",
+    date: "2026-04-06",
+    items: [
+      {
+        category: "feature",
+        text: "Account Settings now has a full Preferences panel — manage your sound volume, sidebar default state, landing page, push notifications, and changelog banner visibility all in one place.",
+      },
+      {
+        category: "feature",
+        text: "Choose your default landing page after login — Dashboard, Sales, Services, or Attendance — so you land right where you work.",
+      },
+      {
+        category: "feature",
+        text: "Sidebar default state preference added — set whether the sidebar starts expanded or collapsed each session.",
+      },
+      {
+        category: "feature",
+        text: "Push notifications can now be enabled or disabled from Account Settings — grant or revoke browser notification permission without leaving the app.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "feature",
+        text: "Changelog banner visibility is now a user preference — hide it if you prefer not to see update banners after each release.",
+      },
+      {
+        category: "improvement",
+        text: "Week Starts On calendar preference is now shown in the Preferences panel (admin and manager only).",
+        roles: ["admin", "manager"],
+      },
+    ],
+  },
+  {
     version: "1.7.0",
     title: "Services, Inventory Bulk Update & App Improvements",
     date: "2026-04-04",

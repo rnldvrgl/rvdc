@@ -1,8 +1,8 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Settings, Shield, User as UserIcon, Volume2, Wallet } from "lucide-react"
-import { useEffect, useState } from "react"
+import { Bell, BellOff, BookOpen, Calendar, Home, LayoutDashboard, PanelLeft, Settings, Shield, SlidersHorizontal, User as UserIcon, Volume2, Wallet } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 
 import Loader from "@/app/loading"
@@ -25,11 +25,15 @@ import { TUserProfile, UserProfilePayload } from "@/lib/constants/types"
 import useFileUpload from "@/lib/hooks/useFileUpload"
 import { useProfileSettingMutations } from "@/lib/mutations/useProfileSettingMutations"
 import { useUserProfile } from "@/lib/queries/useUserProfile"
-import useSettingsStore from "@/lib/store/useSettingsStore"
 import useUserProfileStore from "@/lib/store/useUserProfileStore"
+import { useCalendarPreferences } from "@/lib/hooks/useCalendarPreferences"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useSidebarCollapse } from "@/lib/hooks/useSidebarCollapse"
 import { normalizeProfileImage } from "@/lib/utils/helpers"
+import api from "@/lib/utils/api"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { RefreshCw, RotateCcw } from "lucide-react"
+import useSettingsStore, { SettingsStore } from "@/lib/store/useSettingsStore"
 
 /* -------------------------------- helpers -------------------------------- */
 
@@ -147,6 +151,16 @@ function getChangeSummary(
 
 /* ------------------------------- component -------------------------------- */
 
+function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/")
+  const rawData = atob(base64)
+  const buffer = new ArrayBuffer(rawData.length)
+  const outputArray = new Uint8Array(buffer)
+  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i)
+  return outputArray
+}
+
 export default function SettingsPage() {
   const { data, isLoading, refetch } = useUserProfile()
   const { updateUserProfile } = useProfileSettingMutations()
@@ -154,9 +168,91 @@ export default function SettingsPage() {
   // Sound volume preference
   const userProfile = useUserProfileStore((s) => s.userProfile)
   const userId = userProfile?.id
-  const getSoundVolume = useSettingsStore((s) => s.getSoundVolume)
-  const setSoundVolume = useSettingsStore((s) => s.setSoundVolume)
+  const getSoundVolume = useSettingsStore((s: SettingsStore) => s.getSoundVolume)
+  const setSoundVolume = useSettingsStore((s: SettingsStore) => s.setSoundVolume)
   const soundVolume = userId ? getSoundVolume(userId) : 0.5
+
+  // Sidebar preference
+  const { collapsed: sidebarCollapsed, setCollapsed: setSidebarCollapsed } = useSidebarCollapse()
+
+  // Calendar preference (admin/manager only)
+  const { canManage } = useCurrentUser()
+  const { preferences: calendarPrefs, setWeekStartsOn } = useCalendarPreferences()
+
+  // Landing page preference
+  const getLandingPage = useSettingsStore((s: SettingsStore) => s.getLandingPage)
+  const setLandingPage = useSettingsStore((s: SettingsStore) => s.setLandingPage)
+  const landingPage = userId ? getLandingPage(userId) : "/dashboard"
+
+  // Changelog banner preference
+  const getShowChangelogBanner = useSettingsStore((s: SettingsStore) => s.getShowChangelogBanner)
+  const setShowChangelogBanner = useSettingsStore((s: SettingsStore) => s.setShowChangelogBanner)
+  const showChangelogBanner = userId ? getShowChangelogBanner(userId) : true
+
+  // Push notification state
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | "unsupported">("default")
+  const [pushSubscribed, setPushSubscribed] = useState(false)
+  const [pushLoading, setPushLoading] = useState(false)
+  const pushSubscribeRef = useRef(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setPushPermission("unsupported")
+      return
+    }
+    setPushPermission(Notification.permission)
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.ready.then((reg) => {
+        reg.pushManager.getSubscription().then((sub) => {
+          setPushSubscribed(!!sub)
+        })
+      })
+    }
+  }, [])
+
+  const handleEnablePush = async () => {
+    if (pushLoading || pushSubscribeRef.current) return
+    pushSubscribeRef.current = true
+    setPushLoading(true)
+    try {
+      const permission = await Notification.requestPermission()
+      setPushPermission(permission)
+      if (permission !== "granted") return
+      const reg = await navigator.serviceWorker.ready
+      const { data } = await api.get("/notifications/push/vapid-key/")
+      const vapidKey: string = data.public_key
+      const keyBytes = urlBase64ToUint8Array(vapidKey)
+      const existing = await reg.pushManager.getSubscription()
+      if (existing) await existing.unsubscribe()
+      const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes })
+      const subJson = sub.toJSON()
+      await api.post("/notifications/push/subscribe/", { endpoint: subJson.endpoint, keys: subJson.keys })
+      setPushSubscribed(true)
+    } catch {
+      // ignore
+    } finally {
+      setPushLoading(false)
+      pushSubscribeRef.current = false
+    }
+  }
+
+  const handleDisablePush = async () => {
+    if (pushLoading) return
+    setPushLoading(true)
+    try {
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.getSubscription()
+      if (sub) {
+        await api.delete("/notifications/push/subscribe/", { data: { endpoint: sub.endpoint } })
+        await sub.unsubscribe()
+      }
+      setPushSubscribed(false)
+    } catch {
+      // ignore
+    } finally {
+      setPushLoading(false)
+    }
+  }
 
   const handleVolumeChange = (value: number) => {
     if (!userId) return
@@ -361,27 +457,28 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Sound Preferences */}
+      {/* Preferences */}
       <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Volume2 className="size-5" />
-            Sound Preferences
+            <SlidersHorizontal className="size-5" />
+            Preferences
           </CardTitle>
           <CardDescription>
-            Adjust the volume for notification, chat, and sale sounds
+            Customize your sound, interface, and notification settings
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Sound Volume</span>
-              <span className="text-sm tabular-nums text-muted-foreground w-12 text-right">
-                {Math.round(soundVolume * 100)}%
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Volume2 className="size-4 text-muted-foreground shrink-0" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {/* Sound */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <Volume2 className="size-4 text-muted-foreground shrink-0" />
+                <span className="text-sm font-medium">Sound Volume</span>
+                <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+                  {Math.round(soundVolume * 100)}%
+                </span>
+              </div>
               <input
                 type="range"
                 min={0}
@@ -391,24 +488,181 @@ export default function SettingsPage() {
                 onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
                 aria-label="Sound volume"
                 title="Sound volume"
-                className="flex-1 h-2 rounded-full accent-primary cursor-pointer"
+                className="w-full h-2 rounded-full accent-primary cursor-pointer"
               />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleTestSound}
+                  className="text-xs h-7"
+                >
+                  Test Sound
+                </Button>
+                {soundVolume === 0 && (
+                  <span className="text-xs text-muted-foreground">Muted</span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleTestSound}
-              >
-                Test Sound
-              </Button>
-              {soundVolume === 0 && (
-                <span className="text-xs text-muted-foreground">
-                  Sounds are muted
-                </span>
+
+            {/* Sidebar */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <PanelLeft className="size-4 text-muted-foreground shrink-0" />
+                <span className="text-sm font-medium">Sidebar</span>
+              </div>
+              <div className="flex gap-1.5">
+                {([{ label: "Expanded", value: false }, { label: "Collapsed", value: true }] as const).map(
+                  ({ label, value }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setSidebarCollapsed(value)}
+                      className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                        sidebarCollapsed === value
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ),
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Default state when the page loads</p>
+            </div>
+
+            {/* Landing Page */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <Home className="size-4 text-muted-foreground shrink-0" />
+                <span className="text-sm font-medium">Landing Page</span>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {([
+                  { label: "Dashboard", value: "/dashboard", icon: LayoutDashboard },
+                  { label: "Sales", value: "/sales", icon: null },
+                  { label: "Services", value: "/services", icon: null },
+                  { label: "Attendance", value: "/attendance", icon: null },
+                ] as const).map(({ label, value }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => userId && setLandingPage(userId, value)}
+                    className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer text-left ${
+                      landingPage === value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">Page shown after login</p>
+            </div>
+
+            {/* Push Notifications */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                {pushSubscribed ? (
+                  <Bell className="size-4 text-muted-foreground shrink-0" />
+                ) : (
+                  <BellOff className="size-4 text-muted-foreground shrink-0" />
+                )}
+                <span className="text-sm font-medium">Push Notifications</span>
+              </div>
+              {pushPermission === "unsupported" ? (
+                <p className="text-xs text-muted-foreground">Not supported in this browser</p>
+              ) : pushPermission === "denied" ? (
+                <p className="text-xs text-destructive">Blocked by browser — allow notifications in browser settings</p>
+              ) : (
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleEnablePush}
+                    disabled={pushLoading || (pushPermission === "granted" && pushSubscribed)}
+                    className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                      pushSubscribed
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {pushLoading && !pushSubscribed ? "Enabling…" : "Enabled"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDisablePush}
+                    disabled={pushLoading || !pushSubscribed}
+                    className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                      !pushSubscribed
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                  >
+                    {pushLoading && pushSubscribed ? "Disabling…" : "Disabled"}
+                  </button>
+                </div>
               )}
+              <p className="text-xs text-muted-foreground">Browser push alerts when the tab is closed</p>
             </div>
+
+            {/* Changelog Banner */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="size-4 text-muted-foreground shrink-0" />
+                <span className="text-sm font-medium">Changelog Banner</span>
+              </div>
+              <div className="flex gap-1.5">
+                {([{ label: "Show", value: true }, { label: "Hide", value: false }] as const).map(
+                  ({ label, value }) => (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => userId && setShowChangelogBanner(userId, value)}
+                      className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                        showChangelogBanner === value
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ),
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">New-version banner at the top of the page</p>
+            </div>
+
+            {/* Calendar — admin/manager only */}
+            {canManage && (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <Calendar className="size-4 text-muted-foreground shrink-0" />
+                  <span className="text-sm font-medium">Week Starts On</span>
+                </div>
+                <div className="flex gap-1.5">
+                  {([{ label: "Sunday", value: 0 }, { label: "Monday", value: 1 }] as const).map(
+                    ({ label, value }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setWeekStartsOn(value)}
+                        className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+                          calendarPrefs.weekStartsOn === value
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ),
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">Applies to calendar and schedule views</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

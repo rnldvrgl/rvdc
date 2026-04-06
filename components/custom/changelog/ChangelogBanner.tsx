@@ -11,6 +11,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { CATEGORY_META, ChangelogEntry } from "@/lib/constants/changelog"
 import { useChangelog } from "@/lib/hooks/useChangelog"
+import useSettingsStore from "@/lib/store/useSettingsStore"
+import useUserProfileStore from "@/lib/store/useUserProfileStore"
 import { cn } from "@/lib/utils/helpers"
 import { AnimatePresence, motion } from "framer-motion"
 import {
@@ -205,7 +207,12 @@ export function ChangelogBanner() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
-  if (!mounted || !latestUnseen || dismissed) return null
+  const userId = useUserProfileStore.getState().userProfile?.id
+  const showBanner = userId
+    ? useSettingsStore.getState().getShowChangelogBanner(userId)
+    : true
+
+  if (!mounted || !latestUnseen || dismissed || !showBanner) return null
 
   function handleDismiss() {
     markAllRead()

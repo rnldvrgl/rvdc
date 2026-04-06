@@ -2,6 +2,7 @@
 
 import { LoginFormValues } from "@/lib/constants/types"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
+import useSettingsStore from "@/lib/store/useSettingsStore"
 import useUserProfileStore from "@/lib/store/useUserProfileStore"
 import api from "@/lib/utils/api"
 import { getOrCreateDeviceId } from "@/lib/utils/device"
@@ -63,7 +64,7 @@ export function useAuthentications() {
         await new Promise((res) => setTimeout(res, 200))
 
         // Redirect to dashboard
-        router.push("/dashboard")
+        router.push(useSettingsStore.getState().getLandingPage(data.id))
       },
     })
   }
