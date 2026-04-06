@@ -345,7 +345,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Server,
     children: [
       {
-        name: "Birthday Greeting",
+        name: "System Settings",
         href: "/settings/system",
         icon: Cake,
         permission: "manage_system_settings",
