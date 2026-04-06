@@ -4,9 +4,7 @@ import { useApiQuery } from "@/lib/hooks/useApiQuery"
 export interface CCTVCamera {
   id: number
   name: string
-  uid?: string          // write-only on API, not returned
-  username?: string     // write-only on API, not returned
-  channel: number
+  // stream_url is write-only on the API — not returned in responses
   location: string
   notes: string
   is_active: boolean

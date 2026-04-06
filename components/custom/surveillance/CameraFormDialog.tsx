@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { CCTVCamera } from "@/lib/queries/useSurveillance"
 import { CCTVCameraPayload } from "@/lib/mutations/useSurveillance"
 import {
@@ -20,10 +20,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
 import {
   Select,
   SelectContent,
@@ -31,6 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { Separator } from "@/components/ui/separator"
+
+const DEFAULT_PUBLIC_IP = "49.151.165.129"
+const DEFAULT_PORT = 34567
 
 interface CameraFormDialogProps {
   open: boolean
@@ -40,7 +44,37 @@ interface CameraFormDialogProps {
   isLoading?: boolean
 }
 
-type FormValues = CCTVCameraPayload
+type FormValues = {
+  name: string
+  username: string
+  password: string
+  public_ip: string
+  port: number
+  channel: number
+  location: string
+  notes: string
+  is_active: boolean
+  order: number
+}
+
+function buildStreamUrl(v: Partial<FormValues>): string {
+  if (!v.username || !v.public_ip || !v.port) return ""
+  const auth = v.password ? `${v.username}:${v.password}` : v.username
+  return `dvrip://${auth}@${v.public_ip}:${v.port}?channel=${v.channel ?? 0}`
+}
+
+const BLANK_DEFAULTS: FormValues = {
+  name: "",
+  username: "",
+  password: "",
+  public_ip: DEFAULT_PUBLIC_IP,
+  port: DEFAULT_PORT,
+  channel: 0,
+  location: "",
+  notes: "",
+  is_active: true,
+  order: 0,
+}
 
 export function CameraFormDialog({
   open,
@@ -51,68 +85,41 @@ export function CameraFormDialog({
 }: CameraFormDialogProps) {
   const isEdit = !!camera
 
-  const form = useForm<FormValues>({
-    defaultValues: {
-      name: "",
-      uid: "",
-      username: "admin",
-      password: "",
-      channel: 0,
-      location: "",
-      notes: "",
-      is_active: true,
-      order: 0,
-    },
-  })
+  const form = useForm<FormValues>({ defaultValues: BLANK_DEFAULTS })
+  const watched = useWatch({ control: form.control })
+  const preview = buildStreamUrl(watched)
 
   useEffect(() => {
-    if (open) {
-      if (camera) {
-        form.reset({
-          name: camera.name,
-          uid: "",          // write-only, not returned by API
-          username: "",     // write-only, not returned by API
-          password: "",
-          channel: camera.channel,
-          location: camera.location,
-          notes: camera.notes,
-          is_active: camera.is_active,
-          order: camera.order,
-        })
-      } else {
-        form.reset({
-          name: "",
-          uid: "",
-          username: "admin",
-          password: "",
-          channel: 0,
-          location: "",
-          notes: "",
-          is_active: true,
-          order: 0,
-        })
-      }
-    }
+    if (!open) return
+    form.reset(
+      camera
+        ? {
+            ...BLANK_DEFAULTS,
+            name: camera.name,
+            location: camera.location,
+            notes: camera.notes,
+            is_active: camera.is_active,
+            order: camera.order,
+          }
+        : BLANK_DEFAULTS
+    )
   }, [open, camera, form])
 
   const handleSubmit = (values: FormValues) => {
-    // On edit, omit uid/username/password if empty (don't overwrite with blanks)
-    if (isEdit) {
-      const payload: Partial<CCTVCameraPayload> = {
-        name: values.name,
-        channel: values.channel,
-        location: values.location,
-        notes: values.notes,
-        is_active: values.is_active,
-        order: values.order,
-      }
-      if (values.uid) payload.uid = values.uid
-      if (values.username) payload.username = values.username
-      if (values.password) payload.password = values.password
-      onSubmit(payload as CCTVCameraPayload)
-    } else {
-      onSubmit(values)
+    const url = buildStreamUrl(values)
+    if (!isEdit && !url) {
+      form.setError("username", { type: "manual", message: "Username is required" })
+      return
     }
+    const payload: Partial<CCTVCameraPayload> = {
+      name: values.name,
+      location: values.location,
+      notes: values.notes,
+      is_active: values.is_active,
+      order: values.order,
+    }
+    if (url) payload.stream_url = url
+    onSubmit(payload as CCTVCameraPayload)
   }
 
   return (
@@ -123,6 +130,8 @@ export function CameraFormDialog({
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+
+            {/* ── Camera name ── */}
             <FormField
               control={form.control}
               name="name"
@@ -138,40 +147,32 @@ export function CameraFormDialog({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="uid"
-              rules={{ required: !isEdit ? "SN is required" : false }}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>SN (Serial Number)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder={isEdit ? "Leave blank to keep current" : "e.g. ABCD1234EFGH5678"}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    iCSee app → Device Info → SN
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
+            <Separator />
+
+            {/* ── Connection details ── */}
+            <div className="space-y-1">
+              <p className="text-sm font-medium leading-none">Connection</p>
+              {isEdit && (
+                <p className="text-xs text-muted-foreground">
+                  Leave all fields blank to keep the current stream settings.
+                </p>
               )}
-            />
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="username"
+                rules={{ required: !isEdit ? "Username is required" : false }}
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Device Login Name</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder={isEdit ? "Keep current" : "admin"}
-                        {...field}
-                      />
+                      <Input placeholder="e.g. akhs" {...field} />
                     </FormControl>
+                    <FormDescription className="text-xs">
+                      iCSee → About Device → Device Login Name
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -183,12 +184,53 @@ export function CameraFormDialog({
                   <FormItem>
                     <FormLabel>Device Password</FormLabel>
                     <FormControl>
+                      <Input type="password" placeholder="Device password" {...field} />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      iCSee → About Device → Device Password
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="public_ip"
+                rules={{ required: !isEdit ? "Public IP is required" : false }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Public IP</FormLabel>
+                    <FormControl>
+                      <Input placeholder="49.151.165.129" {...field} />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Router&apos;s public IP address
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="port"
+                rules={{ required: !isEdit ? "Port is required" : false }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>External Port</FormLabel>
+                    <FormControl>
                       <Input
-                        type="password"
-                        placeholder={isEdit ? "Leave blank to keep" : "Device password"}
+                        type="number"
+                        placeholder="34567"
                         {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                       />
                     </FormControl>
+                    <FormDescription className="text-xs">
+                      Port forwarding rule (34567–34572)
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -200,7 +242,7 @@ export function CameraFormDialog({
               name="channel"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Lens / Channel</FormLabel>
+                  <FormLabel>Channel</FormLabel>
                   <Select
                     value={String(field.value)}
                     onValueChange={(v) => field.onChange(Number(v))}
@@ -211,18 +253,25 @@ export function CameraFormDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="0">Main lens (Channel 0)</SelectItem>
-                      <SelectItem value="1">Sub lens (Channel 1)</SelectItem>
+                      <SelectItem value="0">0 — Main stream</SelectItem>
+                      <SelectItem value="1">1 — Sub stream</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription className="text-xs">
-                    Dual-lens cameras: 0 = wide, 1 = telephoto
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Live URL preview */}
+            {preview && (
+              <div className="rounded-md bg-muted px-3 py-2 text-xs font-mono break-all text-muted-foreground">
+                {preview}
+              </div>
+            )}
+
+            <Separator />
+
+            {/* ── Location / Notes ── */}
             <FormField
               control={form.control}
               name="location"
