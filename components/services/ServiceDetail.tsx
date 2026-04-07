@@ -2313,59 +2313,71 @@ export default function ServiceDetail({
 
                   {/* Add new charge form */}
                   {showExtraChargeForm && editingExtraChargeId === null && (
-                    <div className="flex items-center gap-2 px-4 py-2.5">
-                      <Input
-                        className="h-7 text-xs flex-1"
-                        placeholder="Description (e.g. Dismantle Fee)"
-                        value={extraChargeDescription}
-                        onChange={(e) => setExtraChargeDescription(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveExtraCharge()
-                          if (e.key === "Escape") {
-                            setShowExtraChargeForm(false)
-                            setExtraChargeDescription("")
-                            setExtraChargeAmount("")
-                          }
-                        }}
-                        autoFocus
-                      />
-                      <Input
-                        className="h-7 text-xs w-28"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="Amount"
-                        value={extraChargeAmount}
-                        onChange={(e) => setExtraChargeAmount(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveExtraCharge()
-                          if (e.key === "Escape") {
-                            setShowExtraChargeForm(false)
-                            setExtraChargeDescription("")
-                            setExtraChargeAmount("")
-                          }
-                        }}
-                      />
-                      <Button
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={handleSaveExtraCharge}
-                        disabled={addExtraCharge.isPending}
-                      >
-                        Add
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-xs"
-                        onClick={() => {
-                          setShowExtraChargeForm(false)
-                          setExtraChargeDescription("")
-                          setExtraChargeAmount("")
-                        }}
-                      >
-                        Cancel
-                      </Button>
+                    <div className="px-4 py-3 bg-muted/40 border-t">
+                      <p className="text-xs font-medium text-muted-foreground mb-2">
+                        New Extra Charge
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                          className="h-9 text-sm flex-1"
+                          placeholder="Description (e.g. Dismantle Fee)"
+                          value={extraChargeDescription}
+                          onChange={(e) => setExtraChargeDescription(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSaveExtraCharge()
+                            if (e.key === "Escape") {
+                              setShowExtraChargeForm(false)
+                              setExtraChargeDescription("")
+                              setExtraChargeAmount("")
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <div className="flex items-center gap-2">
+                          <div className="relative w-44">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                              ₱
+                            </span>
+                            <Input
+                              className="h-9 text-sm pl-7 w-full"
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={extraChargeAmount}
+                              onChange={(e) => setExtraChargeAmount(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveExtraCharge()
+                                if (e.key === "Escape") {
+                                  setShowExtraChargeForm(false)
+                                  setExtraChargeDescription("")
+                                  setExtraChargeAmount("")
+                                }
+                              }}
+                            />
+                          </div>
+                          <Button
+                            size="sm"
+                            className="h-9 px-4"
+                            onClick={handleSaveExtraCharge}
+                            disabled={addExtraCharge.isPending}
+                          >
+                            Add
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-9 px-3"
+                            onClick={() => {
+                              setShowExtraChargeForm(false)
+                              setExtraChargeDescription("")
+                              setExtraChargeAmount("")
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   )}
 
