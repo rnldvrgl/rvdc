@@ -8,10 +8,15 @@ interface HlsPlayerProps {
   className?: string
 }
 
+const MAX_RETRIES = 12
+const RETRY_DELAY_MS = 3000
+
 export function HlsPlayer({ src, className }: HlsPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [error, setError] = useState(false)
   const [loading, setLoading] = useState(true)
+  const retryCount = useRef(0)
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     const video = videoRef.current
@@ -19,10 +24,14 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
 
     setError(false)
     setLoading(true)
+    retryCount.current = 0
 
     let hls: import("hls.js").default | null = null
 
     const init = async () => {
+      hls?.destroy()
+      hls = null
+
       const Hls = (await import("hls.js")).default
 
       if (Hls.isSupported()) {
@@ -38,22 +47,23 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
         hls.loadSource(src)
         hls.attachMedia(video)
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          retryCount.current = 0
           setLoading(false)
           video.play().catch(() => {})
         })
         hls.on(Hls.Events.ERROR, (_e, data) => {
           if (data.fatal) {
-            switch (data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                hls?.startLoad()
-                break
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                hls?.recoverMediaError()
-                break
-              default:
-                setError(true)
-                setLoading(false)
-                break
+            hls?.destroy()
+            hls = null
+            if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              // Recoverable media error — just reinit
+            }
+            if (retryCount.current < MAX_RETRIES) {
+              retryCount.current++
+              retryTimer.current = setTimeout(init, RETRY_DELAY_MS)
+            } else {
+              setError(true)
+              setLoading(false)
             }
           }
         })
@@ -77,6 +87,7 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
     init()
 
     return () => {
+      if (retryTimer.current) clearTimeout(retryTimer.current)
       hls?.destroy()
       if (video) {
         video.src = ""
