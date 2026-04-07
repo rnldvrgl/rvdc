@@ -54,7 +54,6 @@ import { useServiceMutations } from "@/lib/mutations/services/useServiceMutation
 import { useServiceReceiptMutations } from "@/lib/mutations/services/useServiceReceiptMutations"
 import { useServiceExtraChargeMutations } from "@/lib/mutations/services/useServiceExtraChargeMutations"
 import { useServiceItems } from "@/lib/queries/services/useServiceItems"
-import { useServiceExtraCharges } from "@/lib/queries/services/useServiceExtraCharges"
 import { useChequeChoices } from "@/lib/queries/useChoices"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
 import {
