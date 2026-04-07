@@ -46,6 +46,8 @@ interface CameraFormDialogProps {
 
 type FormValues = {
   name: string
+  connection_type: "dvrip" | "rtsp"
+  stream_url_direct: string
   username: string
   password: string
   public_ip: string
@@ -58,6 +60,7 @@ type FormValues = {
 }
 
 function buildStreamUrl(v: Partial<FormValues>): string {
+  if (v.connection_type === "rtsp") return v.stream_url_direct?.trim() ?? ""
   if (!v.username || !v.public_ip || !v.port) return ""
   const auth = v.password ? `${v.username}:${v.password}` : v.username
   return `dvrip://${auth}@${v.public_ip}:${v.port}?channel=${v.channel ?? 0}`
@@ -65,6 +68,8 @@ function buildStreamUrl(v: Partial<FormValues>): string {
 
 const BLANK_DEFAULTS: FormValues = {
   name: "",
+  connection_type: "dvrip",
+  stream_url_direct: "",
   username: "",
   password: "",
   public_ip: DEFAULT_PUBLIC_IP,
@@ -88,6 +93,7 @@ export function CameraFormDialog({
   const form = useForm<FormValues>({ defaultValues: BLANK_DEFAULTS })
   const watched = useWatch({ control: form.control })
   const preview = buildStreamUrl(watched)
+  const isDvrip = watched.connection_type !== "rtsp"
 
   useEffect(() => {
     if (!open) return
@@ -108,7 +114,11 @@ export function CameraFormDialog({
   const handleSubmit = (values: FormValues) => {
     const url = buildStreamUrl(values)
     if (!isEdit && !url) {
-      form.setError("username", { type: "manual", message: "Username is required" })
+      if (values.connection_type === "rtsp") {
+        form.setError("stream_url_direct", { type: "manual", message: "Stream URL is required" })
+      } else {
+        form.setError("username", { type: "manual", message: "Username is required" })
+      }
       return
     }
     const payload: Partial<CCTVCameraPayload> = {
@@ -159,108 +169,152 @@ export function CameraFormDialog({
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="username"
-                rules={{ required: !isEdit ? "Username is required" : false }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Device Login Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. akhs" {...field} />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      iCSee → About Device → Device Login Name
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Device Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Device password" {...field} />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      iCSee → About Device → Device Password
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="public_ip"
-                rules={{ required: !isEdit ? "Camera IP is required" : false }}
-                render={({ field }) => (
-                  <FormItem>
-                  <FormLabel>Camera IP</FormLabel>
-                  <FormControl>
-                    <Input placeholder="192.168.1.2" {...field} />
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    Local IP of the camera on the shop network
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="port"
-                rules={{ required: !isEdit ? "Port is required" : false }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Port</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="34567"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      XMeye cameras always use 34567
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
+            {/* Connection type toggle */}
             <FormField
               control={form.control}
-              name="channel"
+              name="connection_type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Channel</FormLabel>
-                  <Select
-                    value={String(field.value)}
-                    onValueChange={(v) => field.onChange(Number(v))}
-                  >
+                  <FormLabel>Connection Type</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="0">0 — Main stream</SelectItem>
-                      <SelectItem value="1">1 — Sub stream</SelectItem>
+                      <SelectItem value="dvrip">iCSee / XMEye (DVRIP)</SelectItem>
+                      <SelectItem value="rtsp">RTSP / Custom URL</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormMessage />
                 </FormItem>
               )}
             />
+
+            {isDvrip ? (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="username"
+                    rules={{ required: !isEdit && isDvrip ? "Username is required" : false }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Device Login Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. akhs" {...field} />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          iCSee → About Device → Device Login Name
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Device Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" placeholder="Device password" {...field} />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          iCSee → About Device → Device Password
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="public_ip"
+                    rules={{ required: !isEdit && isDvrip ? "Camera IP is required" : false }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Camera IP</FormLabel>
+                        <FormControl>
+                          <Input placeholder="192.168.1.2" {...field} />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          Local IP of the camera on the shop network
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="port"
+                    rules={{ required: !isEdit && isDvrip ? "Port is required" : false }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Port</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="34567"
+                            {...field}
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-xs">
+                          XMeye cameras always use 34567
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="channel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Channel</FormLabel>
+                      <Select
+                        value={String(field.value)}
+                        onValueChange={(v) => field.onChange(Number(v))}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="0">0 — Main stream</SelectItem>
+                          <SelectItem value="1">1 — Sub stream</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            ) : (
+              <FormField
+                control={form.control}
+                name="stream_url_direct"
+                rules={{ required: !isEdit ? "Stream URL is required" : false }}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stream URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="rtsp://10.0.0.2:8554/cam_1" {...field} />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Full stream URL, e.g. rtsp://10.0.0.2:8554/cam_1
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* Live URL preview */}
             {preview && (
