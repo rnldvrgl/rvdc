@@ -57,6 +57,7 @@ export enum AirconTypes {
   CASSETTE = "cassette",
   PORTABLE = "portable",
   CENTRALIZED = "centralized",
+  CEILING_SUSPENDED_FLOOR = "ceiling_suspended_floor"
 }
 
 /** Centralized staleTime constants for React Query caching */
