@@ -52,7 +52,9 @@ import { usePrint } from "@/lib/hooks/usePrint"
 import { useServiceApplianceMutations } from "@/lib/mutations/services/useServiceApplianceMutations"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import { useServiceReceiptMutations } from "@/lib/mutations/services/useServiceReceiptMutations"
+import { useServiceExtraChargeMutations } from "@/lib/mutations/services/useServiceExtraChargeMutations"
 import { useServiceItems } from "@/lib/queries/services/useServiceItems"
+import { useServiceExtraCharges } from "@/lib/queries/services/useServiceExtraCharges"
 import { useChequeChoices } from "@/lib/queries/useChoices"
 import { useSchedulesByService } from "@/lib/queries/useSchedules"
 import {
@@ -183,6 +185,11 @@ export default function ServiceDetail({
   const [acquiringApplianceId, setAcquiringApplianceId] = useState<number | null>(null)
   const [acquiringAppliancePrice, setAcquiringAppliancePrice] = useState("")
   const [acquiringApplianceNotes, setAcquiringApplianceNotes] = useState("")
+  // Extra charge form state
+  const [showExtraChargeForm, setShowExtraChargeForm] = useState(false)
+  const [editingExtraChargeId, setEditingExtraChargeId] = useState<number | null>(null)
+  const [extraChargeDescription, setExtraChargeDescription] = useState("")
+  const [extraChargeAmount, setExtraChargeAmount] = useState("")
   const {
     completeService,
     recordPayment,
@@ -198,6 +205,8 @@ export default function ServiceDetail({
   const { updateAppliance, markApplianceClaimed, markApplianceForfeited, convertApplianceToAcquisition } = useServiceApplianceMutations()
   const { addReceipt, updateReceipt, deleteReceipt } =
     useServiceReceiptMutations()
+  const { addExtraCharge, updateExtraCharge, deleteExtraCharge } =
+    useServiceExtraChargeMutations()
 
   // Receipt printing
   const {
@@ -321,6 +330,60 @@ export default function ServiceDetail({
     setPaymentNotes("")
     setSelectedCheque(null)
     setPaymentDialogOpen(true)
+  }
+
+  // Extra charge handlers
+  const handleSaveExtraCharge = () => {
+    const description = extraChargeDescription.trim()
+    const amount = parseFloat(extraChargeAmount)
+    if (!description) {
+      toast.error("Please enter a description for the charge.")
+      return
+    }
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Please enter a valid amount greater than 0.")
+      return
+    }
+    if (editingExtraChargeId !== null) {
+      updateExtraCharge.mutate(
+        { id: editingExtraChargeId, data: { description, amount, service: service.id } },
+        {
+          onSuccess: () => {
+            setShowExtraChargeForm(false)
+            setEditingExtraChargeId(null)
+            setExtraChargeDescription("")
+            setExtraChargeAmount("")
+            onRefresh?.()
+          },
+        },
+      )
+    } else {
+      addExtraCharge.mutate(
+        { service: service.id, description, amount },
+        {
+          onSuccess: () => {
+            setShowExtraChargeForm(false)
+            setExtraChargeDescription("")
+            setExtraChargeAmount("")
+            onRefresh?.()
+          },
+        },
+      )
+    }
+  }
+
+  const handleEditExtraCharge = (charge: { id: number; description: string; amount: string }) => {
+    setEditingExtraChargeId(charge.id)
+    setExtraChargeDescription(charge.description)
+    setExtraChargeAmount(charge.amount)
+    setShowExtraChargeForm(true)
+  }
+
+  const handleDeleteExtraCharge = (id: number) => {
+    deleteExtraCharge.mutate(
+      { id, serviceId: service.id },
+      { onSuccess: () => { onRefresh?.() } },
+    )
   }
 
   const handleCancelService = () => {
@@ -2136,6 +2199,200 @@ export default function ServiceDetail({
             disabled={isCompleted}
             onUpdate={onRefresh}
           />
+
+          {/* Extra Charges (e.g. Dismantle Fee, Site Survey) */}
+          {(() => {
+            const extraCharges = freshService?.extra_charges ?? service.extra_charges ?? []
+            return (
+              <div className="rounded-lg border bg-card">
+                <div className="flex items-center justify-between px-4 py-3 border-b">
+                  <div className="flex items-center gap-2">
+                    <Wallet className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Extra Charges</span>
+                    {extraCharges.length > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        ({extraCharges.length})
+                      </span>
+                    )}
+                  </div>
+                  {!isCompleted && canManage && !showExtraChargeForm && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 text-xs"
+                      onClick={() => {
+                        setEditingExtraChargeId(null)
+                        setExtraChargeDescription("")
+                        setExtraChargeAmount("")
+                        setShowExtraChargeForm(true)
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add Charge
+                    </Button>
+                  )}
+                </div>
+
+                <div className="divide-y">
+                  {extraCharges.map((charge) => (
+                    <div
+                      key={charge.id}
+                      className="flex items-center justify-between px-4 py-2.5 group"
+                    >
+                      {editingExtraChargeId === charge.id && showExtraChargeForm ? (
+                        <div className="flex flex-1 items-center gap-2">
+                          <Input
+                            className="h-7 text-xs flex-1"
+                            placeholder="Description"
+                            value={extraChargeDescription}
+                            onChange={(e) => setExtraChargeDescription(e.target.value)}
+                          />
+                          <Input
+                            className="h-7 text-xs w-28"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="Amount"
+                            value={extraChargeAmount}
+                            onChange={(e) => setExtraChargeAmount(e.target.value)}
+                          />
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={handleSaveExtraCharge}
+                            disabled={updateExtraCharge.isPending}
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                              setShowExtraChargeForm(false)
+                              setEditingExtraChargeId(null)
+                              setExtraChargeDescription("")
+                              setExtraChargeAmount("")
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="text-sm">{charge.description}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium">
+                              {formatCurrency(parseFloat(charge.amount))}
+                            </span>
+                            {!isCompleted && canManage && (
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6"
+                                  onClick={() => handleEditExtraCharge(charge)}
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-6 w-6 text-destructive hover:text-destructive"
+                                  onClick={() => handleDeleteExtraCharge(charge.id)}
+                                  disabled={deleteExtraCharge.isPending}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+
+                  {/* Add new charge form */}
+                  {showExtraChargeForm && editingExtraChargeId === null && (
+                    <div className="flex items-center gap-2 px-4 py-2.5">
+                      <Input
+                        className="h-7 text-xs flex-1"
+                        placeholder="Description (e.g. Dismantle Fee)"
+                        value={extraChargeDescription}
+                        onChange={(e) => setExtraChargeDescription(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveExtraCharge()
+                          if (e.key === "Escape") {
+                            setShowExtraChargeForm(false)
+                            setExtraChargeDescription("")
+                            setExtraChargeAmount("")
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <Input
+                        className="h-7 text-xs w-28"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Amount"
+                        value={extraChargeAmount}
+                        onChange={(e) => setExtraChargeAmount(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveExtraCharge()
+                          if (e.key === "Escape") {
+                            setShowExtraChargeForm(false)
+                            setExtraChargeDescription("")
+                            setExtraChargeAmount("")
+                          }
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={handleSaveExtraCharge}
+                        disabled={addExtraCharge.isPending}
+                      >
+                        Add
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 text-xs"
+                        onClick={() => {
+                          setShowExtraChargeForm(false)
+                          setExtraChargeDescription("")
+                          setExtraChargeAmount("")
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+
+                  {extraCharges.length === 0 && !showExtraChargeForm && (
+                    <div className="px-4 py-3 text-xs text-muted-foreground">
+                      No extra charges added.
+                    </div>
+                  )}
+                </div>
+
+                {extraCharges.length > 0 && (
+                  <div className="flex justify-end px-4 py-2.5 border-t bg-muted/30">
+                    <span className="text-xs text-muted-foreground mr-3">Total Extra Charges</span>
+                    <span className="text-sm font-semibold">
+                      {formatCurrency(
+                        extraCharges.reduce(
+                          (sum, c) => sum + parseFloat(c.amount),
+                          0,
+                        ),
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {!isCompleted &&
             currentAppliances.length === 0 && (

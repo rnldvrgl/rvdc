@@ -1214,8 +1214,28 @@ export interface Service {
   service_items_checked_at?: string | null
   // BIR receipts (multiple per service)
   receipts?: ServiceReceipt[]
+  // Extra charges (e.g. dismantle fee, site survey)
+  extra_charges?: ServiceExtraCharge[]
   // Backdating
   transaction_date?: string | null
+}
+
+// Service Extra Charge
+export interface ServiceExtraCharge {
+  id: number
+  service: number
+  description: string
+  amount: string
+  created_by?: number | null
+  created_by_name?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ServiceExtraChargePayload {
+  service: number
+  description: string
+  amount: number | string
 }
 
 export interface ServiceReceipt {
