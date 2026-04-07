@@ -27,9 +27,13 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
 
       if (Hls.isSupported()) {
         hls = new Hls({
-          liveSyncDurationCount: 1,
-          liveMaxLatencyDurationCount: 3,
-          lowLatencyMode: true,
+          liveSyncDurationCount: 2,
+          liveMaxLatencyDurationCount: 6,
+          lowLatencyMode: false,
+          maxBufferLength: 10,
+          maxMaxBufferLength: 20,
+          fragLoadingTimeOut: 20000,
+          manifestLoadingTimeOut: 20000,
         })
         hls.loadSource(src)
         hls.attachMedia(video)
@@ -39,8 +43,18 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
         })
         hls.on(Hls.Events.ERROR, (_e, data) => {
           if (data.fatal) {
-            setError(true)
-            setLoading(false)
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                hls?.startLoad()
+                break
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                hls?.recoverMediaError()
+                break
+              default:
+                setError(true)
+                setLoading(false)
+                break
+            }
           }
         })
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
