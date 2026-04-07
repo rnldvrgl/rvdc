@@ -43,6 +43,10 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
           maxMaxBufferLength: 20,
           fragLoadingTimeOut: 20000,
           manifestLoadingTimeOut: 20000,
+          // Retry media playlist until go2rtc produces the first segment (~3-5s startup)
+          levelLoadingMaxRetry: 15,
+          levelLoadingRetryDelay: 1000,
+          levelLoadingMaxRetryTimeout: 4000,
         })
         hls.loadSource(src)
         hls.attachMedia(video)
