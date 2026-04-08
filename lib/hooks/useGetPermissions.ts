@@ -80,6 +80,7 @@ export function useGetPermissions(
         "view_messaging",
         "manage_bulk_update",
         "manage_user_sessions",
+        "manage_surveillance"
       ],
       manager: [
         ...commonAdminPermissions,
