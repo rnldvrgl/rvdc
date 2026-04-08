@@ -6,7 +6,6 @@ import { useApiMutation } from "@/lib/hooks/useApiMutation"
 export interface CCTVCameraPayload {
   name: string
   stream_name: string
-  stream_url: string
   location: string
   notes: string
   is_active: boolean

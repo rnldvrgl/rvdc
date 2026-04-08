@@ -4,7 +4,7 @@ import { CCTVCamera } from "@/lib/queries/useSurveillance"
 import { HlsPlayer } from "@/components/custom/surveillance/HlsPlayer"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Pencil, RefreshCw, Trash2 } from "lucide-react"
+import { MoreVertical, Pencil, RefreshCw, Trash2, Eye, EyeOff } from "lucide-react"
 import { cn } from "@/lib/utils/helpers"
 
 const GO2RTC_URL = process.env.NEXT_PUBLIC_GO2RTC_URL ?? "http://localhost:1984"
@@ -14,27 +14,29 @@ interface CameraCardProps {
   onEdit?: (camera: CCTVCamera) => void
   onDelete?: (camera: CCTVCamera) => void
   onSync?: (id: number) => void
+  onToggleActive?: (camera: CCTVCamera) => void
   onClick?: () => void
   isSyncing?: boolean
   compact?: boolean
 }
 
-export function CameraCard({ camera, onEdit, onDelete, onSync, onClick, isSyncing, compact }: CameraCardProps) {
+export function CameraCard({ camera, onEdit, onDelete, onSync, onToggleActive, onClick, isSyncing, compact }: CameraCardProps) {
   const hlsUrl = `${GO2RTC_URL}/api/stream.m3u8?src=${camera.stream_name}`
-  const hasActions = onEdit || onDelete || onSync
+  const hasActions = onEdit || onDelete || onSync || onToggleActive
 
   return (
     <div
       className={cn(
-        "relative aspect-video bg-black cursor-pointer group overflow-hidden rounded-sm",
+        "relative bg-black cursor-pointer group overflow-hidden rounded-sm",
       )}
       onClick={onClick}
     >
       {camera.is_active ? (
-        <HlsPlayer src={hlsUrl} className="absolute inset-0 w-full h-full" />
+        <HlsPlayer src={hlsUrl} className="w-full" />
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-white/30">
-          <span className="text-[10px] uppercase tracking-widest">Offline</span>
+        <div className="aspect-video flex flex-col items-center justify-center gap-1 text-white/30">
+          <EyeOff className="size-5" />
+          <span className="text-[10px] uppercase tracking-widest">Disabled</span>
         </div>
       )}
 
@@ -81,6 +83,15 @@ export function CameraCard({ camera, onEdit, onDelete, onSync, onClick, isSyncin
                 <DropdownMenuItem onClick={() => onEdit(camera)}>
                   <Pencil className="size-4 mr-2" />
                   Edit
+                </DropdownMenuItem>
+              )}
+              {onToggleActive && (
+                <DropdownMenuItem onClick={() => onToggleActive(camera)}>
+                  {camera.is_active ? (
+                    <><EyeOff className="size-4 mr-2" />Disable</>
+                  ) : (
+                    <><Eye className="size-4 mr-2" />Enable</>
+                  )}
                 </DropdownMenuItem>
               )}
               {onSync && (

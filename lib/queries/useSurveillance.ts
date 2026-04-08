@@ -26,7 +26,7 @@ export function useCCTVCameras() {
   return useApiQuery<CCTVCamera[]>({
     queryKey: ["cctv-cameras"],
     url: "/surveillance/cameras/",
-    staleTime: STALE_TIME.DEFAULT,
+    staleTime: STALE_TIME.STATIC,
   })
 }
 
@@ -34,7 +34,7 @@ export function useGo2rtcStatus() {
   return useApiQuery<Go2rtcStatus>({
     queryKey: ["go2rtc-status"],
     url: "/surveillance/cameras/go2rtc-status/",
-    staleTime: 10_000,
-    refetchInterval: 30_000,
+    staleTime: STALE_TIME.DEFAULT,
+    refetchInterval: 60_000,
   })
 }

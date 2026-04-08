@@ -118,7 +118,7 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
       )}
       <video
         ref={videoRef}
-        className="w-full h-full object-contain"
+        className="w-full h-full object-cover"
         muted
         playsInline
         autoPlay

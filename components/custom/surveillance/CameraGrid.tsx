@@ -103,6 +103,10 @@ export function CameraGrid({
     }
   }
 
+  const handleToggleActive = (camera: CCTVCamera) => {
+    onUpdate(camera.id, { is_active: !camera.is_active })
+  }
+
   const handleCameraClick = (camera: CCTVCamera) => {
     if (reorderMode) return
     if (focusedCamera?.id === camera.id) {
@@ -127,8 +131,9 @@ export function CameraGrid({
   const sortedCameras = [...cameras].sort((a, b) => a.order - b.order || a.id - b.id)
   const activeCameras = sortedCameras.filter((c) => c.is_active)
 
-  // When focused on a single camera, show it full-width
-  const displayCameras = focusedCamera ? [focusedCamera] : activeCameras
+  // Admins see all cameras (to re-enable disabled ones), viewers see only active
+  const visibleCameras = canManage ? sortedCameras : activeCameras
+
   const currentLayout = focusedCamera ? LAYOUT_OPTIONS[0] : LAYOUT_OPTIONS.find((l) => l.value === layout) ?? LAYOUT_OPTIONS[1]
 
   return (
@@ -219,7 +224,7 @@ export function CameraGrid({
       )}
 
       {/* CCTV Monitor Grid */}
-      {displayCameras.length === 0 ? (
+      {visibleCameras.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground border rounded-lg bg-black/50">
           <p className="text-sm">No cameras configured yet.</p>
           {canManage && (
@@ -236,13 +241,20 @@ export function CameraGrid({
           // Mobile: always 1 col on small, 2 col on medium
           !focusedCamera && "max-sm:grid-cols-1 max-md:grid-cols-2",
         )}>
-          {displayCameras.map((camera, idx) => (
-            <div key={camera.id} className="relative">
+          {visibleCameras.map((camera, idx) => (
+            <div
+              key={camera.id}
+              className={cn(
+                "relative",
+                focusedCamera && focusedCamera.id !== camera.id && "hidden"
+              )}
+            >
               <CameraCard
                 camera={camera}
                 onEdit={canManage && !reorderMode ? handleEdit : undefined}
                 onDelete={canManage && !reorderMode ? setDeleteTarget : undefined}
                 onSync={canManage && !reorderMode ? handleSyncOne : undefined}
+                onToggleActive={canManage && !reorderMode ? handleToggleActive : undefined}
                 onClick={() => handleCameraClick(camera)}
                 isSyncing={syncingId === camera.id}
                 compact={layout >= 8 && !focusedCamera}
