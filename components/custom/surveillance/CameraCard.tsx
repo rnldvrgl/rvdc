@@ -32,17 +32,25 @@ export function CameraCard({ camera, onEdit, onDelete, onSync, onToggleActive, o
       )}
       onClick={onClick}
     >
-      {camera.is_active ? (
-        <HlsPlayer src={hlsUrl} className="w-full" />
-      ) : (
-        <div className="aspect-video flex flex-col items-center justify-center gap-1 text-white/30">
-          <EyeOff className="size-5" />
-          <span className="text-[10px] uppercase tracking-widest">Disabled</span>
+      <HlsPlayer src={hlsUrl} className="w-full" />
+
+      {/* Disabled badge — top left, next to stream name */}
+      {!camera.is_active && (
+        <div className="absolute top-1.5 left-1.5 pointer-events-none z-10">
+          <Badge variant="destructive" className={cn(
+            "font-mono rounded-md",
+            compact ? "text-[8px] px-1 py-0" : "text-[10px] px-1.5 py-0.5"
+          )}>
+            Disabled
+          </Badge>
         </div>
       )}
 
-      {/* Stream name badge — top left */}
-      <div className="absolute top-1.5 left-1.5 pointer-events-none">
+      {/* Stream name badge — top left (shifts right if disabled) */}
+      <div className={cn(
+        "absolute top-1.5 pointer-events-none",
+        !camera.is_active ? "left-[4.5rem]" : "left-1.5"
+      )}>
         <Badge className={cn(
           "font-mono rounded-md",
           compact ? "text-[8px] px-1 py-0" : "text-[10px] px-1.5 py-0.5"

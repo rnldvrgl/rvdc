@@ -135,9 +135,9 @@ export function CameraGrid({
     if (swapIdx < 0 || swapIdx >= sortedCameras.length) return
 
     const target = sortedCameras[swapIdx]
-    // Swap order values
-    onUpdate(camera.id, { order: target.order })
-    onUpdate(target.id, { order: camera.order })
+    // Use index-based order values to ensure they're always distinct
+    onUpdate(camera.id, { order: swapIdx })
+    onUpdate(target.id, { order: idx })
   }
 
   const sortedCameras = [...cameras].sort((a, b) => a.order - b.order || a.id - b.id)
