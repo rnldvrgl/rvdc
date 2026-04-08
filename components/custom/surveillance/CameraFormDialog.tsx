@@ -46,6 +46,7 @@ interface CameraFormDialogProps {
 
 type FormValues = {
   name: string
+  stream_name: string
   connection_type: "dvrip" | "rtsp"
   stream_url_direct: string
   username: string
@@ -68,6 +69,7 @@ function buildStreamUrl(v: Partial<FormValues>): string {
 
 const BLANK_DEFAULTS: FormValues = {
   name: "",
+  stream_name: "",
   connection_type: "dvrip",
   stream_url_direct: "",
   username: "",
@@ -102,6 +104,7 @@ export function CameraFormDialog({
         ? {
             ...BLANK_DEFAULTS,
             name: camera.name,
+            stream_name: camera.stream_name,
             location: camera.location,
             notes: camera.notes,
             is_active: camera.is_active,
@@ -123,6 +126,7 @@ export function CameraFormDialog({
     }
     const payload: Partial<CCTVCameraPayload> = {
       name: values.name,
+      stream_name: values.stream_name,
       location: values.location,
       notes: values.notes,
       is_active: values.is_active,
@@ -152,6 +156,25 @@ export function CameraFormDialog({
                   <FormControl>
                     <Input placeholder="e.g. Front Gate" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* ── Stream name (go2rtc identifier) ── */}
+            <FormField
+              control={form.control}
+              name="stream_name"
+              rules={{ required: "Stream name is required", pattern: { value: /^[a-zA-Z0-9_-]+$/, message: "Only letters, numbers, hyphens, underscores" } }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Stream Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. cam_1" {...field} />
+                  </FormControl>
+                  <FormDescription className="text-xs">
+                    Must match the stream name in your local go2rtc config (e.g. cam_1, cam_2)
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
