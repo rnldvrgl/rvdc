@@ -3,6 +3,7 @@
 import { CCTVCamera } from "@/lib/queries/useSurveillance"
 import { HlsPlayer } from "@/components/custom/surveillance/HlsPlayer"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { MoreVertical, Pencil, RefreshCw, Trash2, Eye, EyeOff } from "lucide-react"
 import { cn } from "@/lib/utils/helpers"
@@ -40,27 +41,35 @@ export function CameraCard({ camera, onEdit, onDelete, onSync, onToggleActive, o
         </div>
       )}
 
-      {/* Camera label overlay — bottom left */}
-      <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/80 to-transparent px-2 py-1.5 pointer-events-none">
+      {/* Stream name badge — top left */}
+      <div className="absolute top-1.5 left-1.5 pointer-events-none">
+        <Badge className={cn(
+          "font-mono rounded-md",
+          compact ? "text-[8px] px-1 py-0" : "text-[10px] px-1.5 py-0.5"
+        )}>
+          {camera.stream_name}
+        </Badge>
+      </div>
+
+      {/* Camera name & location — bottom left */}
+      <div className={cn(
+        "absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none",
+        compact ? "px-1.5 py-1" : "px-2 py-1.5"
+      )}>
         <p className={cn(
-          "text-white font-medium truncate",
+          "text-white font-medium truncate leading-tight",
           compact ? "text-[10px]" : "text-xs"
         )}>
           {camera.name}
         </p>
-        {!compact && camera.location && (
-          <p className="text-[10px] text-white/60 truncate">{camera.location}</p>
+        {camera.location && (
+          <p className={cn(
+            "text-white/60 truncate leading-tight",
+            compact ? "text-[8px]" : "text-[10px]"
+          )}>
+            {camera.location}
+          </p>
         )}
-      </div>
-
-      {/* Stream name badge — top left */}
-      <div className="absolute top-1 left-1.5">
-        <span className={cn(
-          "bg-red-600/90 text-white font-mono rounded px-1 py-0.5",
-          compact ? "text-[8px]" : "text-[10px]"
-        )}>
-          {camera.stream_name}
-        </span>
       </div>
 
       {/* Admin actions — top right, visible on hover */}

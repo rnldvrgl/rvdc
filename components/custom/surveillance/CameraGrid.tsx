@@ -204,13 +204,12 @@ export function CameraGrid({
         )}
       </div>
 
-      {/* go2rtc status banner */}
-      {go2rtcStatus && !go2rtcStatus.running && (
+      {/* go2rtc status banner — only show when URL is configured */}
+      {go2rtcStatus && !go2rtcStatus.running && go2rtcStatus.error && !go2rtcStatus.error.includes("not configured") && (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           <CircleAlert className="size-4 shrink-0" />
           <span>
-            go2rtc is <strong>offline</strong>
-            {go2rtcStatus.error ? ` — ${go2rtcStatus.error}` : ". Camera streams will not load."}
+            go2rtc is <strong>offline</strong> — {go2rtcStatus.error}
           </span>
         </div>
       )}
