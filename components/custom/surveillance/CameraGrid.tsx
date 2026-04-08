@@ -22,12 +22,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Grid2x2, Maximize, Plus, RefreshCw, LayoutGrid, ArrowUp, ArrowDown, CircleAlert, CheckCircle2, Zap, Play, Mic, MicOff } from "lucide-react"
+import { Grid2x2, Maximize, Plus, RefreshCw, LayoutGrid, ArrowUp, ArrowDown, CircleAlert, CheckCircle2, Mic, MicOff } from "lucide-react"
 import { Go2rtcStatus } from "@/lib/queries/useSurveillance"
 import { cn } from "@/lib/utils/helpers"
 
 type GridLayout = 1 | 4 | 8
-type PlayerMode = "webrtc" | "hls"
 
 const LAYOUT_OPTIONS: { value: GridLayout; label: string; icon: React.ReactNode; cols: string }[] = [
   { value: 1, label: "Single", icon: <Maximize className="size-4" />, cols: "grid-cols-1" },
@@ -71,7 +70,6 @@ export function CameraGrid({
   const [layout, setLayout] = useState<GridLayout>(8)
   const [focusedCamera, setFocusedCamera] = useState<CCTVCamera | null>(null)
   const [reorderMode, setReorderMode] = useState(false)
-  const [playerMode, setPlayerMode] = useState<PlayerMode>("webrtc")
   const [enableMic, setEnableMic] = useState(false)
 
   // Stream names from go2rtc, excluding ones already assigned to other cameras
@@ -180,50 +178,8 @@ export function CameraGrid({
             ))}
           </div>
 
-          {/* Player mode toggle: WebRTC / HLS */}
-          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setPlayerMode("webrtc")}
-                  aria-label="WebRTC mode"
-                  className={cn(
-                    "p-1.5 rounded-md transition-colors",
-                    playerMode === "webrtc"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Zap className="size-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                WebRTC (low latency)
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setPlayerMode("hls")}
-                  aria-label="HLS mode"
-                  className={cn(
-                    "p-1.5 rounded-md transition-colors",
-                    playerMode === "hls"
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Play className="size-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">
-                HLS (compatibility)
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          {/* Mic toggle — only in WebRTC mode for focused (single) camera */}
-          {playerMode === "webrtc" && focusedCamera && (
+          {/* Mic toggle — only for focused (single) camera */}
+          {focusedCamera && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -337,7 +293,6 @@ export function CameraGrid({
                 onClick={() => handleCameraClick(camera)}
                 isSyncing={syncingId === camera.id}
                 compact={layout >= 8 && !focusedCamera}
-                playerMode={playerMode}
                 enableMic={enableMic && focusedCamera?.id === camera.id}
                 focused={focusedCamera?.id === camera.id}
               />

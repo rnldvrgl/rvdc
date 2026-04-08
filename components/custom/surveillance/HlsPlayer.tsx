@@ -8,7 +8,7 @@ interface HlsPlayerProps {
   className?: string
 }
 
-const MAX_RETRIES = 5
+const MAX_RETRIES = 10
 const RETRY_DELAY_MS = 3000
 
 export function HlsPlayer({ src, className }: HlsPlayerProps) {

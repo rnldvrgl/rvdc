@@ -11,7 +11,7 @@ interface WebRtcPlayerProps {
 }
 
 const RECONNECT_DELAY_MS = 3000
-const MAX_RETRIES = 5
+const MAX_RETRIES = 10
 
 export function WebRtcPlayer({ src, className, enableMic = false, focused = false }: WebRtcPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
