@@ -28,6 +28,10 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
 
     let hls: import("hls.js").default | null = null
 
+    // Hide loader only when the video actually renders a frame
+    const onPlaying = () => setLoading(false)
+    video.addEventListener("playing", onPlaying)
+
     const init = async () => {
       hls?.destroy()
       hls = null
@@ -52,7 +56,6 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
         hls.attachMedia(video)
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           retryCount.current = 0
-          setLoading(false)
           video.play().catch(() => {})
         })
         hls.on(Hls.Events.ERROR, (_e, data) => {
@@ -74,10 +77,6 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
         // Native HLS (Safari)
         video.src = src
-        video.addEventListener("loadedmetadata", () => {
-          setLoading(false)
-          video.play().catch(() => {})
-        })
         video.addEventListener("error", () => {
           setError(true)
           setLoading(false)
@@ -92,6 +91,7 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
 
     return () => {
       if (retryTimer.current) clearTimeout(retryTimer.current)
+      video.removeEventListener("playing", onPlaying)
       hls?.destroy()
       if (video) {
         video.src = ""
@@ -112,7 +112,7 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
   return (
     <div className={`relative bg-black ${className}`}>
       {loading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black gap-3">
+        <div className="flex flex-col items-center justify-center bg-black gap-3 aspect-[3/4]">
           {/* Pulsing camera outline */}
           <div className="relative size-14">
             <div className="absolute inset-0 rounded-full border-2 border-white/20 animate-ping" />
@@ -132,7 +132,7 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
       )}
       <video
         ref={videoRef}
-        className="w-full h-full object-cover"
+        className={`w-full h-full object-cover ${loading ? "absolute inset-0" : ""}`}
         muted
         playsInline
         autoPlay

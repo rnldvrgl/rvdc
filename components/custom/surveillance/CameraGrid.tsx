@@ -67,7 +67,7 @@ export function CameraGrid({
   const [editCamera, setEditCamera] = useState<CCTVCamera | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<CCTVCamera | null>(null)
   const [syncingId, setSyncingId] = useState<number | null>(null)
-  const [layout, setLayout] = useState<GridLayout>(4)
+  const [layout, setLayout] = useState<GridLayout>(8)
   const [focusedCamera, setFocusedCamera] = useState<CCTVCamera | null>(null)
   const [reorderMode, setReorderMode] = useState(false)
 

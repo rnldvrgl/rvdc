@@ -51,9 +51,9 @@ export function CameraCard({ camera, onEdit, onDelete, onSync, onToggleActive, o
         </Badge>
       </div>
 
-      {/* Camera name & location — bottom left */}
+      {/* Camera name & location — bottom right */}
       <div className={cn(
-        "absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none",
+        "absolute bottom-0 right-0 bg-gradient-to-t from-black/80 to-transparent pointer-events-none text-right rounded-tl-md",
         compact ? "px-1.5 py-1" : "px-2 py-1.5"
       )}>
         <p className={cn(
