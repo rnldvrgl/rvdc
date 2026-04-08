@@ -6,8 +6,6 @@ import { CameraGrid } from "@/components/custom/surveillance/CameraGrid"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
-import { redirect } from "next/navigation"
-import { useEffect } from "react"
 import { PageLoadingSkeleton } from "@/components/custom/shared/skeletons"
 import { Video } from "lucide-react"
 
@@ -16,12 +14,6 @@ export default function SurveillancePage() {
   const { data: cameras = [], isLoading: camerasLoading, refetch } = useCCTVCameras()
   const { data: go2rtcStatus } = useGo2rtcStatus()
   const { createCamera, updateCamera, deleteCamera, syncAll, syncOne } = useCCTVMutations()
-
-  useEffect(() => {
-    if (userProfile !== null && !isSuperAdmin) {
-      redirect("/dashboard")
-    }
-  }, [isSuperAdmin, userProfile])
 
   if (!userProfile || camerasLoading) {
     return <PageLoadingSkeleton message="Loading surveillance..." />
@@ -32,11 +24,10 @@ export default function SurveillancePage() {
       <PageHeader
         icon={Video}
         title="Surveillance"
-        description="Monitor live camera feeds and manage your iCSee / XMEye CCTV cameras."
-        breadcrumbs={["Dashboard", "Admin", "Surveillance"]}
+        description="Monitor live camera feeds."
+        breadcrumbs={["Dashboard", "Surveillance"]}
         onRefresh={refetch}
         isLoading={camerasLoading}
-        isAdminOnly={!isSuperAdmin}
       />
       <CameraGrid
         cameras={cameras}
@@ -50,6 +41,7 @@ export default function SurveillancePage() {
         isAdding={createCamera.isPending}
         isUpdating={updateCamera.isPending}
         isDeleting={deleteCamera.isPending}
+        canManage={isSuperAdmin}
       />
     </Wrapper>
   )

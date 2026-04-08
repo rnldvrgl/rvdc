@@ -339,8 +339,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     name: "Surveillance",
     href: "/surveillance",
     icon: Video,
-    permission: "manage_server_maintenance",
-    superAdminOnly: true,
   },
   bulkUpdate: {
     name: "Bulk Update",
