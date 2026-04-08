@@ -2,6 +2,7 @@
 
 import { CCTVCamera } from "@/lib/queries/useSurveillance"
 import { HlsPlayer } from "@/components/custom/surveillance/HlsPlayer"
+import { WebRtcPlayer } from "@/components/custom/surveillance/WebRtcPlayer"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -19,10 +20,13 @@ interface CameraCardProps {
   onClick?: () => void
   isSyncing?: boolean
   compact?: boolean
+  playerMode?: "webrtc" | "hls"
+  enableMic?: boolean
 }
 
-export function CameraCard({ camera, onEdit, onDelete, onSync, onToggleActive, onClick, isSyncing, compact }: CameraCardProps) {
+export function CameraCard({ camera, onEdit, onDelete, onSync, onToggleActive, onClick, isSyncing, compact, playerMode = "webrtc", enableMic = false }: CameraCardProps) {
   const hlsUrl = `${GO2RTC_URL}/api/stream.m3u8?src=${camera.stream_name}`
+  const wsUrl = `${GO2RTC_URL.replace(/^http/, "ws")}/api/ws?src=${camera.stream_name}`
   const hasActions = onEdit || onDelete || onSync || onToggleActive
 
   return (
@@ -32,7 +36,11 @@ export function CameraCard({ camera, onEdit, onDelete, onSync, onToggleActive, o
       )}
       onClick={onClick}
     >
-      <HlsPlayer src={hlsUrl} className="w-full" />
+      {playerMode === "webrtc" ? (
+        <WebRtcPlayer src={wsUrl} className="w-full" enableMic={enableMic} />
+      ) : (
+        <HlsPlayer src={hlsUrl} className="w-full" />
+      )}
 
       {/* Disabled badge — top left, next to stream name */}
       {!camera.is_active && (
