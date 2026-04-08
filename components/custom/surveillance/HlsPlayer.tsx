@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Loader2, VideoOff } from "lucide-react"
+import { VideoOff } from "lucide-react"
 
 interface HlsPlayerProps {
   src: string
@@ -112,8 +112,22 @@ export function HlsPlayer({ src, className }: HlsPlayerProps) {
   return (
     <div className={`relative bg-black ${className}`}>
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black">
-          <Loader2 className="size-6 text-white/50 animate-spin" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black gap-3">
+          {/* Pulsing camera outline */}
+          <div className="relative size-14">
+            <div className="absolute inset-0 rounded-full border-2 border-white/20 animate-ping" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <svg className="size-7 text-white/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+            </div>
+          </div>
+          {/* Scanning line */}
+          <div className="w-24 h-0.5 rounded-full overflow-hidden bg-white/10">
+            <div className="h-full w-1/3 bg-white/40 rounded-full animate-[shimmer_1.5s_ease-in-out_infinite]" />
+          </div>
+          <span className="text-[10px] text-white/30 uppercase tracking-widest">Connecting</span>
         </div>
       )}
       <video

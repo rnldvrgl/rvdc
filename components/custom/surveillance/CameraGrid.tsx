@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { CCTVCamera } from "@/lib/queries/useSurveillance"
 import { CCTVCameraPayload } from "@/lib/mutations/useSurveillance"
 import { CameraCard } from "@/components/custom/surveillance/CameraCard"
@@ -70,6 +70,18 @@ export function CameraGrid({
   const [layout, setLayout] = useState<GridLayout>(4)
   const [focusedCamera, setFocusedCamera] = useState<CCTVCamera | null>(null)
   const [reorderMode, setReorderMode] = useState(false)
+
+  // Stream names from go2rtc, excluding ones already assigned to other cameras
+  const go2rtcStreamNames = useMemo(() => {
+    if (!go2rtcStatus?.streams) return []
+    const allStreams = Object.keys(go2rtcStatus.streams)
+    const usedNames = new Set(
+      cameras
+        .filter((c) => !editCamera || c.id !== editCamera.id)
+        .map((c) => c.stream_name)
+    )
+    return allStreams.filter((name) => !usedNames.has(name))
+  }, [go2rtcStatus?.streams, cameras, editCamera])
 
   const handleEdit = (camera: CCTVCamera) => {
     setEditCamera(camera)
@@ -293,6 +305,7 @@ export function CameraGrid({
           onClose={handleFormClose}
           onSubmit={handleFormSubmit}
           isLoading={isAdding || isUpdating}
+          availableStreams={go2rtcStreamNames}
         />
       )}
 

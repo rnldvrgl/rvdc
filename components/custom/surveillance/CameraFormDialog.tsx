@@ -23,6 +23,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface CameraFormDialogProps {
   open: boolean
@@ -30,6 +37,7 @@ interface CameraFormDialogProps {
   onClose: () => void
   onSubmit: (data: CCTVCameraPayload) => void
   isLoading?: boolean
+  availableStreams?: string[]
 }
 
 type FormValues = {
@@ -52,6 +60,7 @@ export function CameraFormDialog({
   onClose,
   onSubmit,
   isLoading,
+  availableStreams = [],
 }: CameraFormDialogProps) {
   const isEdit = !!camera
 
@@ -107,11 +116,33 @@ export function CameraFormDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Stream ID</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. cam_1" {...field} />
-                  </FormControl>
+                  {availableStreams.length > 0 ? (
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a stream" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {availableStreams.map((name) => (
+                          <SelectItem key={name} value={name}>
+                            {name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <FormControl>
+                      <Input placeholder="e.g. cam_1" {...field} />
+                    </FormControl>
+                  )}
                   <FormDescription className="text-xs">
-                    Must match the stream name in go2rtc
+                    {availableStreams.length > 0
+                      ? "Select a stream configured in go2rtc"
+                      : "Must match the stream name in go2rtc"}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
