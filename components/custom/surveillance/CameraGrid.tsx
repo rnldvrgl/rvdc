@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Grid2x2, Maximize, Plus, RefreshCw, LayoutGrid, ArrowUp, ArrowDown } from "lucide-react"
+import { Grid2x2, Maximize, Plus, RefreshCw, LayoutGrid, ArrowUp, ArrowDown, CircleAlert, CheckCircle2 } from "lucide-react"
 import { Go2rtcStatus } from "@/lib/queries/useSurveillance"
 import { cn } from "@/lib/utils/helpers"
 
@@ -198,6 +198,25 @@ export function CameraGrid({
           </div>
         )}
       </div>
+
+      {/* go2rtc status banner */}
+      {go2rtcStatus && !go2rtcStatus.running && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <CircleAlert className="size-4 shrink-0" />
+          <span>
+            go2rtc is <strong>offline</strong>
+            {go2rtcStatus.error ? ` — ${go2rtcStatus.error}` : ". Camera streams will not load."}
+          </span>
+        </div>
+      )}
+      {go2rtcStatus?.running && canManage && (
+        <div className="flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2 text-xs text-green-700 dark:text-green-400">
+          <CheckCircle2 className="size-3.5 shrink-0" />
+          <span>
+            go2rtc {go2rtcStatus.version ? `v${go2rtcStatus.version}` : ""} — {go2rtcStatus.stream_count} stream{go2rtcStatus.stream_count !== 1 ? "s" : ""} configured
+          </span>
+        </div>
+      )}
 
       {/* CCTV Monitor Grid */}
       {displayCameras.length === 0 ? (
