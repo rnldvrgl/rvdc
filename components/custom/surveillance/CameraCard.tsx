@@ -22,9 +22,10 @@ interface CameraCardProps {
   compact?: boolean
   playerMode?: "webrtc" | "hls"
   enableMic?: boolean
+  focused?: boolean
 }
 
-export function CameraCard({ camera, onEdit, onDelete, onSync, onToggleActive, onClick, isSyncing, compact, playerMode = "webrtc", enableMic = false }: CameraCardProps) {
+export function CameraCard({ camera, onEdit, onDelete, onSync, onToggleActive, onClick, isSyncing, compact, playerMode = "webrtc", enableMic = false, focused = false }: CameraCardProps) {
   const hlsUrl = `${GO2RTC_URL}/api/stream.m3u8?src=${camera.stream_name}`
   const wsUrl = `${GO2RTC_URL.replace(/^http/, "ws")}/api/ws?src=${camera.stream_name}`
   const hasActions = onEdit || onDelete || onSync || onToggleActive
@@ -37,7 +38,7 @@ export function CameraCard({ camera, onEdit, onDelete, onSync, onToggleActive, o
       onClick={onClick}
     >
       {playerMode === "webrtc" ? (
-        <WebRtcPlayer src={wsUrl} className="w-full" enableMic={enableMic} />
+        <WebRtcPlayer src={wsUrl} className="w-full" enableMic={enableMic} focused={focused} />
       ) : (
         <HlsPlayer src={hlsUrl} className="w-full" />
       )}

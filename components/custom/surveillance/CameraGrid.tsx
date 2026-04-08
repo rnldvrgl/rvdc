@@ -339,6 +339,7 @@ export function CameraGrid({
                 compact={layout >= 8 && !focusedCamera}
                 playerMode={playerMode}
                 enableMic={enableMic && focusedCamera?.id === camera.id}
+                focused={focusedCamera?.id === camera.id}
               />
               {reorderMode && canManage && (
                 <div className="absolute top-1/2 -translate-y-1/2 right-2 flex flex-col gap-1 z-10">

@@ -1,19 +1,19 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import { VideoOff, RefreshCw, Mic, MicOff } from "lucide-react"
+import { VideoOff, RefreshCw, Mic, MicOff, Volume2, VolumeOff } from "lucide-react"
 
 interface WebRtcPlayerProps {
   src: string // WebSocket URL: ws://host:1984/api/ws?src=stream_name
   className?: string
   enableMic?: boolean
-  onMicStateChange?: (active: boolean) => void
+  focused?: boolean
 }
 
 const RECONNECT_DELAY_MS = 3000
 const MAX_RETRIES = 5
 
-export function WebRtcPlayer({ src, className, enableMic = false, onMicStateChange }: WebRtcPlayerProps) {
+export function WebRtcPlayer({ src, className, enableMic = false, focused = false }: WebRtcPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const pcRef = useRef<RTCPeerConnection | null>(null)
@@ -24,6 +24,7 @@ export function WebRtcPlayer({ src, className, enableMic = false, onMicStateChan
   const [state, setState] = useState<"connecting" | "connected" | "error">("connecting")
   const [retryNum, setRetryNum] = useState(0)
   const [micActive, setMicActive] = useState(false)
+  const [unmuted, setUnmuted] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
 
   const cleanup = useCallback(() => {
@@ -45,8 +46,7 @@ export function WebRtcPlayer({ src, className, enableMic = false, onMicStateChan
       wsRef.current = null
     }
     setMicActive(false)
-    onMicStateChange?.(false)
-  }, [onMicStateChange])
+  }, [])
 
   const startStream = useCallback(() => {
     cleanup()
@@ -55,6 +55,37 @@ export function WebRtcPlayer({ src, className, enableMic = false, onMicStateChan
     retryCount.current = 0
     setRetryKey((k) => k + 1)
   }, [cleanup])
+
+  // Toggle mic — add/remove sendonly audio track without reconnecting
+  const toggleMic = useCallback(async () => {
+    const pc = pcRef.current
+    if (!pc) return
+
+    if (micActive && micStreamRef.current) {
+      // Stop mic
+      micStreamRef.current.getTracks().forEach((t) => t.stop())
+      micStreamRef.current = null
+      // Remove sender
+      pc.getSenders().forEach((s) => {
+        if (s.track?.kind === "audio" && s.track.readyState === "ended") {
+          pc.removeTrack(s)
+        }
+      })
+      setMicActive(false)
+    } else {
+      // Start mic
+      try {
+        const micStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+        micStreamRef.current = micStream
+        micStream.getTracks().forEach((track) => {
+          pc.addTrack(track, micStream)
+        })
+        setMicActive(true)
+      } catch {
+        setMicActive(false)
+      }
+    }
+  }, [micActive])
 
   useEffect(() => {
     if (!src || !videoRef.current) return
@@ -75,23 +106,6 @@ export function WebRtcPlayer({ src, className, enableMic = false, onMicStateChan
       })
       pcRef.current = pc
 
-      // Request mic if enabled
-      if (enableMic) {
-        try {
-          const micStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-          micStreamRef.current = micStream
-          micStream.getTracks().forEach((track) => {
-            pc.addTransceiver(track, { direction: "sendonly" })
-          })
-          setMicActive(true)
-          onMicStateChange?.(true)
-        } catch {
-          // Mic denied or unavailable — continue without
-          setMicActive(false)
-          onMicStateChange?.(false)
-        }
-      }
-
       // Add receive-only transceivers for video and audio
       pc.addTransceiver("video", { direction: "recvonly" })
       pc.addTransceiver("audio", { direction: "recvonly" })
@@ -101,7 +115,6 @@ export function WebRtcPlayer({ src, className, enableMic = false, onMicStateChan
         if (ev.streams.length > 0) {
           video.srcObject = ev.streams[0]
         } else {
-          // Fallback: build stream from tracks
           const stream = video.srcObject instanceof MediaStream ? video.srcObject : new MediaStream()
           stream.addTrack(ev.track)
           video.srcObject = stream
@@ -181,7 +194,14 @@ export function WebRtcPlayer({ src, className, enableMic = false, onMicStateChan
     connect()
 
     return cleanup
-  }, [src, enableMic, retryKey, cleanup, onMicStateChange])
+  }, [src, retryKey, cleanup])
+
+  // Sync muted state with video element
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = !unmuted
+    }
+  }, [unmuted])
 
   if (state === "error") {
     return (
@@ -200,7 +220,7 @@ export function WebRtcPlayer({ src, className, enableMic = false, onMicStateChan
   }
 
   return (
-    <div className={`relative bg-black ${className}`}>
+    <div className={`relative bg-black group/player ${className}`}>
       {state === "connecting" && (
         <div className="flex flex-col items-center justify-center bg-black gap-3 aspect-3/4">
           {/* Pulsing camera outline */}
@@ -225,23 +245,33 @@ export function WebRtcPlayer({ src, className, enableMic = false, onMicStateChan
       <video
         ref={videoRef}
         className={`w-full h-full object-cover ${state === "connecting" ? "absolute inset-0" : ""}`}
-        muted={!enableMic}
+        muted
         playsInline
         autoPlay
       />
-      {/* Mic indicator */}
-      {enableMic && state === "connected" && (
-        <div className="absolute bottom-1.5 left-1.5 z-10">
-          {micActive ? (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-green-500/80 text-white text-[9px]">
-              <Mic className="size-3" />
-              <span>Mic On</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-red-500/60 text-white text-[9px]">
-              <MicOff className="size-3" />
-              <span>Mic Off</span>
-            </div>
+      {/* Audio / Mic controls — bottom left, visible on hover or when focused */}
+      {state === "connected" && (
+        <div className={`absolute bottom-1.5 left-1.5 z-10 flex items-center gap-1 transition-opacity ${focused ? "opacity-100" : "opacity-0 group-hover/player:opacity-100"}`}>
+          {/* Volume toggle */}
+          <button
+            onClick={(e) => { e.stopPropagation(); setUnmuted((v) => !v) }}
+            className={`flex items-center gap-1 px-1.5 py-1 rounded-md text-white text-[9px] transition-colors ${
+              unmuted ? "bg-white/20 hover:bg-white/30" : "bg-black/60 hover:bg-black/80"
+            }`}
+          >
+            {unmuted ? <Volume2 className="size-3" /> : <VolumeOff className="size-3" />}
+          </button>
+          {/* Mic toggle — only show when enableMic prop is true (focused + mic enabled from toolbar) */}
+          {enableMic && (
+            <button
+              onClick={(e) => { e.stopPropagation(); toggleMic() }}
+              className={`flex items-center gap-1 px-1.5 py-1 rounded-md text-white text-[9px] transition-colors ${
+                micActive ? "bg-green-500/80 hover:bg-green-500/90" : "bg-black/60 hover:bg-black/80"
+              }`}
+            >
+              {micActive ? <Mic className="size-3" /> : <MicOff className="size-3" />}
+              <span>{micActive ? "Mic On" : "Mic"}</span>
+            </button>
           )}
         </div>
       )}
