@@ -22,6 +22,7 @@ import {
     LayoutList,
     Lock,
     Package,
+    PackagePlus,
     Plane,
     Server,
     Settings,
@@ -285,6 +286,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         name: "Stock Requests",
         href: "/inventory/stock-requests",
         icon: ClipboardList,
+        permission: "view_items",
+      },
+      {
+        name: "Direct Requests",
+        href: "/inventory/stock-requests/direct",
+        icon: PackagePlus,
         permission: "view_items",
       },
       {

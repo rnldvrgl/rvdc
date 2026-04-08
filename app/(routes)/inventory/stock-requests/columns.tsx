@@ -59,7 +59,9 @@ export function getStockRequestColumns({
       header: "Source",
       cell: ({ getValue }) => {
         const source = getValue() as string
-        return source === "service_appliance" ? "Appliance" : "Service"
+        if (source === "service_appliance") return "Appliance"
+        if (source === "service") return "Service"
+        return "Direct"
       },
     },
     {

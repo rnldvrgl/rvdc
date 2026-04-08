@@ -1020,11 +1020,14 @@ export interface StockRequest {
   item: number
   item_name: string
   item_sku: string
+  item_unit: string
   stall: number
   stall_name: string
   requested_quantity: string
+  approved_quantity: string | null
   status: "pending" | "approved" | "declined" | "cancelled"
-  source: "service_appliance" | "service"
+  source: "service_appliance" | "service" | "direct"
+  batch: number | null
   service: number | null
   service_id: number | null
   appliance_item: number | null
@@ -1040,6 +1043,31 @@ export interface StockRequest {
   available_stock: number
   created_at: string
   updated_at: string
+}
+
+export interface DirectStockRequestBatch {
+  id: number
+  notes: string
+  status: "pending" | "completed" | "cancelled"
+  requested_by: number | null
+  requested_by_name: string | null
+  items: StockRequest[]
+  pending_count: number
+  approved_count: number
+  declined_count: number
+  total_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface DirectStockRequestBatchPayload {
+  notes?: string
+  items: {
+    item: number
+    stall: number
+    requested_quantity: number
+    notes?: string
+  }[]
 }
 
 export interface CustomItemTemplate {
