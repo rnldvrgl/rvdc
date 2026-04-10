@@ -37,8 +37,6 @@ import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
 import {
   AlertCircle,
-  ArrowDown,
-  ArrowUp,
   Calendar,
   FileText,
   Loader2,
@@ -157,18 +155,18 @@ export function WeeklyPayrollSlip({
       {/* Modern Payslip Card */}
       <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
         {/* Top Header Bar */}
-        <div className="bg-primary/5 dark:bg-primary/10 px-6 py-4 border-b">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="bg-primary/5 dark:bg-primary/10 px-5 py-3 border-b">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 text-primary">
-                <Receipt className="h-5 w-5" />
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary/10 text-primary">
+                <Receipt className="h-4 w-4" />
               </div>
               <div>
-                <h2 className="text-lg font-bold tracking-tight">
+                <h2 className="text-base font-bold tracking-tight">
                   Payroll Slip
                 </h2>
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <Calendar className="h-3.5 w-3.5" />
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Calendar className="h-3 w-3" />
                   <span>
                     {format(weekStartDate, "MMM dd")} –{" "}
                     {format(weekEndDate, "MMM dd, yyyy")}
@@ -176,53 +174,51 @@ export function WeeklyPayrollSlip({
                 </div>
               </div>
             </div>
-            <StatusBadge status={payroll.status} />
+            <div className="flex items-center gap-2">
+              <PayrollActions
+                status={payroll.status}
+                isAdmin={isAdmin}
+                isProcessing={isProcessing}
+                onApprove={async () => {
+                  setIsProcessing(true)
+                  await updateStatus.mutateAsync({
+                    id: payrollId,
+                    status: "approved",
+                  })
+                  setIsProcessing(false)
+                }}
+                onMarkPaid={async () => {
+                  setIsProcessing(true)
+                  await updateStatus.mutateAsync({
+                    id: payrollId,
+                    status: "paid",
+                  })
+                  setIsProcessing(false)
+                }}
+                onRecompute={async () => {
+                  setIsProcessing(true)
+                  await recomputePayroll.mutateAsync({})
+                  setIsProcessing(false)
+                }}
+                onAddEarning={() => setAdditionalEarningDialogOpen(true)}
+                onAddDeduction={() => setManualDeductionDialogOpen(true)}
+                onAddCashAdvance={() => setCashAdvanceDialogOpen(true)}
+                onReturnToDraft={async () => {
+                  setIsProcessing(true)
+                  await updateStatus.mutateAsync({
+                    id: payrollId,
+                    status: "draft",
+                  })
+                  setIsProcessing(false)
+                }}
+              />
+              <StatusBadge status={payroll.status} />
+            </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="px-6 pt-4 print:hidden">
-          <PayrollActions
-            status={payroll.status}
-            isAdmin={isAdmin}
-            isProcessing={isProcessing}
-            onApprove={async () => {
-              setIsProcessing(true)
-              await updateStatus.mutateAsync({
-                id: payrollId,
-                status: "approved",
-              })
-              setIsProcessing(false)
-            }}
-            onMarkPaid={async () => {
-              setIsProcessing(true)
-              await updateStatus.mutateAsync({
-                id: payrollId,
-                status: "paid",
-              })
-              setIsProcessing(false)
-            }}
-            onRecompute={async () => {
-              setIsProcessing(true)
-              await recomputePayroll.mutateAsync({})
-              setIsProcessing(false)
-            }}
-            onAddEarning={() => setAdditionalEarningDialogOpen(true)}
-            onAddDeduction={() => setManualDeductionDialogOpen(true)}
-            onAddCashAdvance={() => setCashAdvanceDialogOpen(true)}
-            onReturnToDraft={async () => {
-              setIsProcessing(true)
-              await updateStatus.mutateAsync({
-                id: payrollId,
-                status: "draft",
-              })
-              setIsProcessing(false)
-            }}
-          />
-        </div>
-
         {/* Employee & Company Info */}
-        <div className="px-6 py-4">
+        <div className="px-5 pt-4 pb-3">
           <div className="grid md:grid-cols-2 gap-3">
             <CompanyInfoCard />
             <EmployeeInfoCard
@@ -234,12 +230,8 @@ export function WeeklyPayrollSlip({
           </div>
         </div>
 
-        <div className="px-6">
-          <Separator />
-        </div>
-
         {/* Time Summary */}
-        <div className="px-6 py-4">
+        <div className="px-5 pb-3">
           <TimeSummary
             regularHours={regularHours}
             approvedOtHours={approvedOtHours}
@@ -250,13 +242,9 @@ export function WeeklyPayrollSlip({
           />
         </div>
 
-        <div className="px-6">
-          <Separator />
-        </div>
-
         {/* Earnings & Deductions — side by side */}
-        <div className="px-6 py-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="px-5 pb-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <EarningsSection
               basicPay={basicPay}
               approvedOtPay={approvedOtPay}
@@ -286,30 +274,16 @@ export function WeeklyPayrollSlip({
           </div>
         </div>
 
-        {/* Financial Summary */}
-        <div className="px-6 pb-2">
-          <div className="rounded-xl border bg-muted/30 p-4 space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <ArrowUp className="h-3.5 w-3.5 text-success" />
-                Total Earnings
-              </span>
-              <span className="font-semibold text-success">
-                {formatCurrency(totalEarnings)}
-              </span>
+        {/* Net Pay Summary */}
+        <div className="px-5 pb-3">
+          <div className="rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20 p-4">
+            <div className="flex justify-between items-center text-xs text-muted-foreground mb-1">
+              <span>Earnings: {formatCurrency(totalEarnings)}</span>
+              <span>Deductions: ({formatCurrency(totalDeductions)})</span>
             </div>
-            <div className="flex justify-between items-center text-sm">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <ArrowDown className="h-3.5 w-3.5 text-destructive" />
-                Total Deductions
-              </span>
-              <span className="font-semibold text-destructive">
-                ({formatCurrency(totalDeductions)})
-              </span>
-            </div>
-            <Separator />
+            <Separator className="my-2" />
             <div className="flex justify-between items-center">
-              <span className="font-bold text-base">Net Pay</span>
+              <span className="font-bold text-sm">Net Pay</span>
               <span className="text-2xl sm:text-3xl font-bold text-primary tracking-tight">
                 {formatCurrency(netPay)}
               </span>
@@ -319,13 +293,13 @@ export function WeeklyPayrollSlip({
 
         {/* Notes */}
         {payroll.notes && (
-          <div className="px-6 pb-4">
-            <div className="rounded-lg border bg-muted/20 p-3">
-              <div className="flex items-center gap-2 mb-1.5">
-                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                <h3 className="text-sm font-semibold">Notes</h3>
+          <div className="px-5 pb-3">
+            <div className="rounded-lg border bg-muted/20 p-2.5">
+              <div className="flex items-center gap-1.5 mb-1">
+                <FileText className="h-3 w-3 text-muted-foreground" />
+                <h3 className="text-xs font-semibold">Notes</h3>
               </div>
-              <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">
+              <p className="text-xs text-muted-foreground whitespace-pre-wrap">
                 {payroll.notes}
               </p>
             </div>
@@ -333,19 +307,14 @@ export function WeeklyPayrollSlip({
         )}
 
         {/* Footer */}
-        <div className="bg-muted/20 border-t px-6 py-3">
+        <div className="bg-muted/20 border-t px-5 py-2.5">
           <div className="text-center text-[10px] text-muted-foreground space-y-0.5">
-            <p>Computer-generated payroll slip</p>
             <p>
               Generated{" "}
               {format(
                 new Date(payroll.created_at),
                 "MMM dd, yyyy 'at' h:mm a",
               )}
-            </p>
-            <p>
-              If you have questions about this payroll slip, please contact
-              admin.
             </p>
           </div>
         </div>

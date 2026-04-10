@@ -11,15 +11,13 @@ interface EmployeeInfoProps {
 
 export function CompanyInfoCard() {
   return (
-    <div className="rounded-lg border bg-card p-3">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-          <Building className="h-4 w-4 text-primary" />
-        </div>
-        <h3 className="text-sm sm:text-base font-semibold">Company</h3>
+    <div className="rounded-lg border bg-card p-2.5">
+      <div className="flex items-center gap-2 mb-1.5">
+        <Building className="h-3.5 w-3.5 text-primary" />
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Company</h3>
       </div>
-      <div className="space-y-0.5 text-xs sm:text-sm text-muted-foreground">
-        <p className="font-medium text-foreground">{SHOP_INFO.name}</p>
+      <div className="space-y-0.5 text-xs text-muted-foreground">
+        <p className="font-medium text-foreground text-sm">{SHOP_INFO.name}</p>
         <p>{SHOP_INFO.address}</p>
         <p>{SHOP_INFO.contactEmail}</p>
       </div>
@@ -34,28 +32,26 @@ export function EmployeeInfoCard({
   hourlyRate,
 }: EmployeeInfoProps) {
   return (
-    <div className="rounded-lg border bg-card p-3">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-          <User className="h-4 w-4 text-primary" />
-        </div>
-        <h3 className="text-sm sm:text-base font-semibold">Employee</h3>
+    <div className="rounded-lg border bg-card p-2.5">
+      <div className="flex items-center gap-2 mb-1.5">
+        <User className="h-3.5 w-3.5 text-primary" />
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Employee</h3>
       </div>
-      <div className="space-y-0.5 text-xs sm:text-sm">
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Name:</span>
-          <span className="font-medium text-right truncate">{name}</span>
+      <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+        <div className="flex justify-between gap-1 col-span-2">
+          <span className="text-muted-foreground">Name</span>
+          <span className="font-medium text-sm truncate">{name}</span>
         </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Position:</span>
-          <span className="text-right capitalize truncate">{role}</span>
+        <div className="flex justify-between gap-1 col-span-2">
+          <span className="text-muted-foreground">Position</span>
+          <span className="capitalize truncate">{role}</span>
         </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Daily:</span>
+        <div className="flex justify-between gap-1">
+          <span className="text-muted-foreground">Daily</span>
           <span className="font-medium">{formatCurrency(dailyRate)}</span>
         </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Hourly:</span>
+        <div className="flex justify-between gap-1">
+          <span className="text-muted-foreground">Hourly</span>
           <span className="font-medium">{formatCurrency(hourlyRate)}</span>
         </div>
       </div>

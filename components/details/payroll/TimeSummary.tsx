@@ -17,67 +17,36 @@ export function TimeSummary({
   totalDays,
   hoursPerDay,
 }: TimeSummaryProps) {
+  const items = [
+    { label: "Regular", value: regularHours, color: "text-blue-600 dark:text-blue-400" },
+    { label: "OT", value: approvedOtHours, color: "text-orange-600 dark:text-orange-400" },
+    { label: "Holiday", value: holidayHours, color: "text-success" },
+    { label: "Night Diff", value: nightDiffHours, color: "text-purple-600 dark:text-purple-400" },
+  ]
+
   return (
-    <div className="rounded-lg border p-3">
-      <div className="flex items-center gap-2 mb-2.5">
-        <Clock className="h-4 w-4 text-primary" />
-        <h3 className="text-sm sm:text-base font-semibold">Time Summary</h3>
-      </div>
-      <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-2">
-        <TimeCard
-          label="Regular"
-          hours={regularHours}
-          color="blue"
-        />
-        <TimeCard
-          label="Approved OT"
-          hours={approvedOtHours}
-          color="orange"
-        />
-        <TimeCard
-          label="Holiday"
-          hours={holidayHours}
-          color="green"
-        />
-        <TimeCard
-          label="Night Diff"
-          hours={nightDiffHours}
-          color="purple"
-        />
-      </div>
-      {typeof totalDays === "number" && hoursPerDay ? (
-        <div className="mt-3 text-xs text-muted-foreground text-center">
-          <span className="font-medium">Total Days:</span>{" "}
-          {totalDays.toFixed(2)}d &nbsp;
-          <span className="text-muted-foreground">
-            ({hoursPerDay}h per day)
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+      <span className="flex items-center gap-1.5 text-muted-foreground font-medium">
+        <Clock className="h-3.5 w-3.5" />
+        Hours
+      </span>
+      {items.map((item) => (
+        <span key={item.label} className="flex items-center gap-1">
+          <span className={`font-semibold tabular-nums ${item.color}`}>
+            {item.value.toFixed(1)}
           </span>
-        </div>
+          <span className="text-xs text-muted-foreground">{item.label}</span>
+        </span>
+      ))}
+      {typeof totalDays === "number" && hoursPerDay ? (
+        <>
+          <span className="text-muted-foreground/40">·</span>
+          <span className="text-xs text-muted-foreground">
+            <span className="font-medium">{totalDays.toFixed(2)}d</span>{" "}
+            ({hoursPerDay}h/day)
+          </span>
+        </>
       ) : null}
-    </div>
-  )
-}
-
-interface TimeCardProps {
-  label: string
-  hours: number
-  color: "blue" | "orange" | "green" | "purple"
-}
-
-function TimeCard({ label, hours, color }: TimeCardProps) {
-  const colorClasses = {
-    blue: "text-blue-600 dark:text-blue-400",
-    orange: "text-orange-600 dark:text-orange-400",
-    green: "text-success",
-    purple: "text-purple-600 dark:text-purple-400",
-  }
-
-  return (
-    <div className="text-center p-2 rounded-md bg-white/80 dark:bg-gray-900/40 border">
-      <p className={`text-lg font-bold ${colorClasses[color]}`}>
-        {hours.toFixed(1)}
-      </p>
-      <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{label}</p>
     </div>
   )
 }

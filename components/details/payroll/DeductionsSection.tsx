@@ -57,15 +57,15 @@ export function DeductionsSection({
   })
 
   return (
-    <div className="rounded-lg border border-red-200/60 dark:border-red-900/40 bg-linear-to-br from-red-50/30 to-rose-50/30 dark:from-red-950/10 dark:to-rose-950/10 p-3 flex flex-col">
-      <div className="flex items-center gap-2 mb-2.5">
-        <Minus className="h-4 w-4 text-destructive" />
-        <h3 className="text-sm sm:text-base font-semibold text-destructive">
+    <div className="rounded-lg border border-red-200/60 dark:border-red-900/40 bg-linear-to-br from-red-50/30 to-rose-50/30 dark:from-red-950/10 dark:to-rose-950/10 p-2.5 flex flex-col">
+      <div className="flex items-center gap-1.5 mb-2">
+        <Minus className="h-3.5 w-3.5 text-destructive" />
+        <h3 className="text-sm font-semibold text-destructive">
           Deductions
         </h3>
       </div>
       {totalDeductions > 0 ? (
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {sortedDeductions.map(([key, value]) => {
             const amount = toNumber(value)
             if (amount <= 0) return null
@@ -128,7 +128,7 @@ export function DeductionsSection({
       )}
       {totalDeductions > 0 && (
         <>
-          <Separator className="my-2" />
+          <Separator className="my-1.5" />
           <div className="flex justify-between font-semibold text-destructive text-xs sm:text-sm">
             <span>Total Deductions</span>
             <span>{formatCurrency(totalDeductions)}</span>
