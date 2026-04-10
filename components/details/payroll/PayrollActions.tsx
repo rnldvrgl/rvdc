@@ -7,6 +7,7 @@ import {
   PhilippinePesoIcon,
   Plus,
   RefreshCw,
+  Undo2,
 } from "lucide-react"
 
 interface PayrollActionsProps {
@@ -19,6 +20,7 @@ interface PayrollActionsProps {
   onAddEarning: () => void
   onAddDeduction: () => void
   onAddCashAdvance?: () => void
+  onReturnToDraft?: () => void
 }
 
 export function PayrollActions({
@@ -31,6 +33,7 @@ export function PayrollActions({
   onAddEarning,
   onAddDeduction,
   onAddCashAdvance,
+  onReturnToDraft,
 }: PayrollActionsProps) {
   if (isAdmin) {
     return (
@@ -87,16 +90,29 @@ export function PayrollActions({
           </>
         )}
         {status === "approved" && (
-          <Button
-            size="sm"
-            variant="success"
-            className="col-span-full"
-            onClick={onMarkPaid}
-            disabled={isProcessing}
-          >
-            <Banknote className="h-3.5 w-3.5 mr-1.5" />
-            Mark as Paid
-          </Button>
+          <>
+            {onReturnToDraft && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onReturnToDraft}
+                disabled={isProcessing}
+              >
+                <Undo2 className="h-3.5 w-3.5 mr-1.5" />
+                Return to Draft
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant="success"
+              className={onReturnToDraft ? "" : "col-span-full"}
+              onClick={onMarkPaid}
+              disabled={isProcessing}
+            >
+              <Banknote className="h-3.5 w-3.5 mr-1.5" />
+              Mark as Paid
+            </Button>
+          </>
         )}
       </div>
     )

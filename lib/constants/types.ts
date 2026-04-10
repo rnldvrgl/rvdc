@@ -420,6 +420,13 @@ export type WeeklyPayroll = {
     reference: string
   }>
 
+  attendance_dates?: string[]
+  holiday_details?: Array<{
+    date: string
+    name: string
+    kind: string
+  }>
+
   gross_pay: string | number
 
   night_diff_pay: string | number
