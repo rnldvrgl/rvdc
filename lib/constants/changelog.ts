@@ -75,6 +75,11 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: "2026-04-12",
     items: [
       {
+        category: "fix",
+        text: "Extra charges (e.g. Special Bracket, Hauling Fee) are now correctly recorded as line items in the Sales Transaction Record — previously they were included in the payment total but missing from the transaction breakdown.",
+        roles: ["admin", "manager"],
+      },
+      {
         category: "improvement",
         text: "Weekly payroll slip has a new document-style layout — company and employee details are side-by-side in a clean header, sections have clear visual separation, and the Net Pay figure is more prominent.",
         roles: ["admin", "manager", "clerk"],
