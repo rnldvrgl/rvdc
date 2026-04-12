@@ -23,7 +23,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Separator } from "@/components/ui/separator"
 
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useRecomputeWeeklyPayroll } from "@/lib/mutations/payroll/usePayrollMutations"
@@ -35,13 +34,7 @@ import { useWeeklyPayroll } from "@/lib/queries/usePayroll"
 import { formatCurrency, toNumber } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
-import {
-  AlertCircle,
-  Calendar,
-  FileText,
-  Loader2,
-  Receipt,
-} from "lucide-react"
+import { AlertCircle, FileText, Loader2 } from "lucide-react"
 import { useState } from "react"
 
 interface WeeklyPayrollSlipProps {

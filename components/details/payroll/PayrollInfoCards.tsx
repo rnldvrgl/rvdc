@@ -1,6 +1,6 @@
 import { SHOP_INFO } from "@/lib/constants/meta"
 import { formatCurrency } from "@/lib/utils/currency"
-import { Building, Mail, MapPin, User } from "lucide-react"
+import { Building, User } from "lucide-react"
 
 interface EmployeeInfoProps {
   name: string
