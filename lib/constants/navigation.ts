@@ -14,6 +14,7 @@ import {
     CreditCard,
     FileSpreadsheet,
     FileText,
+    GraduationCap,
     Hand,
     Keyboard,
     Layers,
@@ -21,12 +22,14 @@ import {
     LayoutList,
     Lock,
     Package,
+    PackagePlus,
     Plane,
     Server,
     Settings,
     Store,
     Users,
     Warehouse,
+    Video,
     Wind,
     Wrench,
 } from "lucide-react"
@@ -286,6 +289,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         permission: "view_items",
       },
       {
+        name: "Direct Requests",
+        href: "/inventory/stock-requests/direct",
+        icon: PackagePlus,
+        permission: "view_items",
+      },
+      {
         name: "Custom Items",
         href: "/inventory/custom-items",
         icon: LayoutList,
@@ -307,6 +316,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Keyboard,
     permission: "view_shortcuts",
   },
+  guide: {
+    name: "Guide",
+    href: "/guide",
+    icon: GraduationCap,
+    permission: "view_dashboard",
+  },
   changelog: {
     name: "Changelog",
     href: "/changelog",
@@ -327,6 +342,12 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Wrench,
     permission: "manage_appliance_types",
   },
+  surveillance: {
+    name: "Surveillance",
+    href: "/surveillance",
+    icon: Video,
+    permission: "manage_surveillance",
+  },
   bulkUpdate: {
     name: "Bulk Update",
     href: "/settings/bulk-update",
@@ -338,7 +359,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Server,
     children: [
       {
-        name: "Birthday Greeting",
+        name: "System Settings",
         href: "/settings/system",
         icon: Cake,
         permission: "manage_system_settings",
@@ -348,6 +369,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         href: "/settings/maintenance",
         icon: Server,
         permission: "manage_server_maintenance",
+        superAdminOnly: true,
       },
       {
         name: "Active Sessions",
@@ -392,7 +414,7 @@ export const sectionedNavigation: NavigationSection[] = [
   },
   {
     title: "Insights",
-    items: [baseNavigation.reports, baseNavigation.shortcuts, baseNavigation.changelog],
+    items: [baseNavigation.reports, baseNavigation.shortcuts, baseNavigation.guide, baseNavigation.changelog],
   },
   {
     title: "Admin",
@@ -400,6 +422,7 @@ export const sectionedNavigation: NavigationSection[] = [
       baseNavigation.templates,
       baseNavigation.applianceTypes,
       baseNavigation.bulkUpdate,
+      baseNavigation.surveillance,
       baseNavigation.system,
     ],
   },

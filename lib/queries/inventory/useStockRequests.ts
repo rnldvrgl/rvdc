@@ -1,10 +1,11 @@
-import { StockRequest } from "@/lib/constants/interface"
+import { DirectStockRequestBatch, StockRequest } from "@/lib/constants/interface"
 import type { PaginatedFilterProps } from "@/lib/constants/types"
 import { usePaginatedQuery } from "@/lib/hooks/usePaginatedQuery"
 import api from "@/lib/utils/api"
 import { useQuery } from "@tanstack/react-query"
 
 const stockRequestUrl = "/inventory/stock-requests/"
+const directBatchUrl = "/inventory/direct-stock-batches/"
 
 export function useStockRequests(props: PaginatedFilterProps = {}) {
   return usePaginatedQuery<StockRequest>({
@@ -21,5 +22,13 @@ export function usePendingStockRequestCount() {
       const { data } = await api.get(`${stockRequestUrl}pending-count/`)
       return data
     },
+  })
+}
+
+export function useDirectStockBatches(props: PaginatedFilterProps = {}) {
+  return usePaginatedQuery<DirectStockRequestBatch>({
+    ...props,
+    url: directBatchUrl,
+    queryKeyBase: "direct-stock-batches",
   })
 }

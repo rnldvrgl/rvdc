@@ -38,6 +38,9 @@ import usePendingActionsStore, {
   type PendingActionType,
 } from "@/lib/store/usePendingActionsStore"
 import api from "@/lib/utils/api"
+import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import {
   AlertTriangle,
   ArrowRight,
@@ -47,6 +50,7 @@ import {
   Loader2,
   Package,
   Snowflake,
+  TrendingDown,
   Upload,
   UserCog,
   Users,
@@ -78,6 +82,131 @@ type BulkPreviewData = {
   skipped: number
   errors: { row: number; sku?: string; error: string }[]
   summary: string
+}
+
+// -- Stock Usage Export Section --
+function StockUsageExportSection() {
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
+  const [includeSales, setIncludeSales] = useState(true)
+  const [includeServices, setIncludeServices] = useState(true)
+  const [downloading, setDownloading] = useState(false)
+
+  const handleExport = async () => {
+    if (!includeSales && !includeServices) {
+      toast.error("Select at least one source (Sales or Services).")
+      return
+    }
+    setDownloading(true)
+    try {
+      const params = new URLSearchParams()
+      if (dateFrom) params.set("date_from", dateFrom)
+      if (dateTo) params.set("date_to", dateTo)
+      params.set("include_sales", String(includeSales))
+      params.set("include_services", String(includeServices))
+
+      const res = await api.get(`/inventory/stocks/usage-export/?${params}`, {
+        responseType: "blob",
+      })
+      const blob = new Blob([res.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      const label = dateFrom || dateTo ? `_${dateFrom || "start"}_${dateTo || "end"}` : ""
+      link.setAttribute("download", `stocks_used${label}.xlsx`)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+      toast.success("Stock usage export downloaded.")
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail ?? "No data found for the selected filters."
+      toast.error(msg)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="pb-3 sm:pb-4 px-3 sm:px-6">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="shrink-0 rounded-lg sm:rounded-xl p-1.5 sm:p-2.5 bg-linear-to-br from-amber-500 to-orange-600">
+            <Download className="size-3.5 sm:size-5 text-white" />
+          </div>
+          <div className="min-w-0">
+            <CardTitle className="text-sm sm:text-base">Stock Usage Export</CardTitle>
+            <CardDescription className="text-[10px] sm:text-xs mt-0.5">
+              Export an XLSX showing items consumed via sales and/or service
+              parts within a date range. Use this file as input for Bulk Deduct
+              Stock below.
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4 px-3 sm:px-6">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Date From</Label>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="text-xs h-8"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Date To</Label>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="text-xs h-8"
+            />
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="include-sales"
+              checked={includeSales}
+              onCheckedChange={(v) => setIncludeSales(!!v)}
+            />
+            <Label htmlFor="include-sales" className="text-xs cursor-pointer">
+              Include Sales Transactions
+            </Label>
+          </div>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="include-services"
+              checked={includeServices}
+              onCheckedChange={(v) => setIncludeServices(!!v)}
+            />
+            <Label htmlFor="include-services" className="text-xs cursor-pointer">
+              Include Service Parts
+            </Label>
+          </div>
+        </div>
+        <Button
+          size="sm"
+          onClick={handleExport}
+          disabled={downloading}
+          className="gap-1.5 text-xs"
+        >
+          {downloading ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Download className="size-3.5" />
+          )}
+          {downloading ? "Exporting..." : "Download Stocks Used"}
+        </Button>
+      </CardContent>
+    </Card>
+  )
 }
 
 // -- Generic Bulk Update Section --
@@ -623,6 +752,19 @@ const CATEGORIES: CategoryConfig[] = [
     accentFrom: "from-teal-500",
     accentTo: "to-cyan-600",
   },
+  {
+    key: "stall_stocks_deduct",
+    exportType: "stall_stock_deduct",
+    pendingType: "stall_stock_deduct" as PendingActionType,
+    pendingLabel: "Bulk Stock Deduction",
+    title: "Deduct Stock from Usage",
+    description:
+      "Upload the stocks-used XLSX (downloaded above) to deduct consumed quantities from stall stock. Download, review, then upload.",
+    templateEndpoint: "/inventory/stocks/usage-export/",
+    templateFilename: "stocks_used.xlsx",
+    accentFrom: "from-red-500",
+    accentTo: "to-rose-600",
+  },
 ]
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
@@ -633,6 +775,7 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
   employees: UserCog,
   stall_stocks: Package,
   stockroom_stocks: Warehouse,
+  stall_stocks_deduct: TrendingDown,
 }
 
 // -- Main Page --
@@ -653,8 +796,12 @@ export default function BulkUpdatePage() {
   } = useAirconModelMutations()
   const { bulkPreview: employeeBulkPreview, bulkUpdate: employeeBulkUpdate } =
     useEmployeeMutations()
-  const { bulkPreview: stallStockBulkPreview, bulkUpdate: stallStockBulkUpdate } =
-    useStallStockMutations()
+  const {
+    bulkPreview: stallStockBulkPreview,
+    bulkUpdate: stallStockBulkUpdate,
+    bulkDeductPreview: stallStockDeductPreview,
+    bulkDeduct: stallStockDeduct,
+  } = useStallStockMutations()
   const { bulkPreview: stockroomBulkPreview, bulkUpdate: stockroomBulkUpdate } =
     useStockRoomStockMutations()
 
@@ -681,6 +828,7 @@ export default function BulkUpdatePage() {
     employees: { preview: employeeBulkPreview, update: employeeBulkUpdate },
     stall_stocks: { preview: stallStockBulkPreview, update: stallStockBulkUpdate },
     stockroom_stocks: { preview: stockroomBulkPreview, update: stockroomBulkUpdate },
+    stall_stocks_deduct: { preview: stallStockDeductPreview, update: stallStockDeduct },
   }
 
   // Per-category state
@@ -733,6 +881,7 @@ export default function BulkUpdatePage() {
       />
 
       <div className="space-y-4">
+        <StockUsageExportSection />
         {CATEGORIES.map((cat) => (
           <BulkUpdateSection
             key={cat.key}

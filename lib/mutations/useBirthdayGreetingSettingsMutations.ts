@@ -2,9 +2,17 @@ import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import { SystemSettings } from "@/lib/queries/useSystemSettings"
 import api from "@/lib/utils/api"
 
-export type UpdateBirthdayGreetingSettingsPayload = Omit<
+export type UpdateBirthdayGreetingSettingsPayload = Pick<
   SystemSettings,
-  "id" | "updated_at"
+  | "birthday_greeting_enabled"
+  | "birthday_greeting_title"
+  | "birthday_greeting_message"
+  | "birthday_greeting_button_text"
+  | "birthday_greeting_show_confetti"
+  | "birthday_greeting_show_emojis"
+  | "birthday_greeting_male_emojis"
+  | "birthday_greeting_female_emojis"
+  | "birthday_greeting_variant"
 >
 
 export function useBirthdayGreetingSettingsMutations() {

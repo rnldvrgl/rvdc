@@ -17,6 +17,13 @@ export function TimeSummary({
   totalDays,
   hoursPerDay,
 }: TimeSummaryProps) {
+  const items = [
+    { label: "Regular", value: regularHours, color: "text-blue-600 dark:text-blue-400" },
+    { label: "OT", value: approvedOtHours, color: "text-orange-600 dark:text-orange-400" },
+    { label: "Holiday", value: holidayHours, color: "text-success" },
+    { label: "Night Diff", value: nightDiffHours, color: "text-purple-600 dark:text-purple-400" },
+  ]
+
   return (
     <div className="rounded-xl border bg-muted/20 p-4">
       <div className="flex items-center gap-2 mb-3">

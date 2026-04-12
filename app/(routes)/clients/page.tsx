@@ -6,6 +6,7 @@ import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
+import { MergeClientDialog } from "@/components/custom/clients/MergeClientDialog"
 import ClientForm from "@/components/forms/ClientForm"
 import { Button } from "@/components/ui/button"
 
@@ -13,6 +14,7 @@ import { Client } from "@/lib/constants/types"
 import { useArchive } from "@/lib/hooks/useArchive"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useClientMutations } from "@/lib/mutations/useClientMutations"
 import { useClientFilters, useClients } from "@/lib/queries/clients/useClients"
 import { Plus, Users } from "lucide-react"
@@ -28,9 +30,11 @@ const emptyData = {
 
 export default function ClientsPage() {
   const router = useRouter()
+  const { isAdmin } = useCurrentUser()
   const searchParams = useSearchParameters()
   const { page, limit, search, ordering, filter } = searchParams
   const [isArchived, setIsArchived] = useState(false)
+  const [mergeTarget, setMergeTarget] = useState<Client | null>(null)
 
   const { deleteClient, updateClient } = useClientMutations()
   const { data, isLoading, refetch } = useClients({
@@ -95,6 +99,7 @@ export default function ClientsPage() {
         onDelete: handleDelete,
         onCustomAction: handleToggleBlocklisted,
         onView: (client) => router.push(`/clients/${client.id}`),
+        onMerge: isAdmin ? (client) => setMergeTarget(client) : undefined,
       })
 
   const tableData = isArchived
@@ -176,6 +181,12 @@ export default function ClientsPage() {
             ? "Deleted clients will appear here"
             : "Add your first client to build your customer database"
         }
+      />
+
+      <MergeClientDialog
+        open={!!mergeTarget}
+        targetClient={mergeTarget}
+        onClose={() => setMergeTarget(null)}
       />
     </Wrapper>
   )

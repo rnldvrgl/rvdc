@@ -45,6 +45,7 @@ export interface GetColumnsProps<T> {
   // Archive actions
   onRestore?: (item: T) => void
   onHardDelete?: (item: T) => void
+  onMerge?: (item: T) => void
 }
 
 export interface EntitySheetProps<T> {
@@ -100,6 +101,7 @@ export interface User {
   basic_salary?: string
   cash_ban_balance?: string
   has_cash_ban?: boolean
+  is_superuser?: boolean
 }
 
 // ---------------------
@@ -289,6 +291,7 @@ export interface ShortcutLink extends NavigationItemBase {
 
 export interface NavigationLink extends NavigationItemBase {
   href: string
+  superAdminOnly?: boolean
 }
 
 export interface NavigationGroup extends NavigationItemBase {
@@ -1017,11 +1020,14 @@ export interface StockRequest {
   item: number
   item_name: string
   item_sku: string
+  item_unit: string
   stall: number
   stall_name: string
   requested_quantity: string
+  approved_quantity: string | null
   status: "pending" | "approved" | "declined" | "cancelled"
-  source: "service_appliance" | "service"
+  source: "service_appliance" | "service" | "direct"
+  batch: number | null
   service: number | null
   service_id: number | null
   appliance_item: number | null
@@ -1037,6 +1043,31 @@ export interface StockRequest {
   available_stock: number
   created_at: string
   updated_at: string
+}
+
+export interface DirectStockRequestBatch {
+  id: number
+  notes: string
+  status: "pending" | "completed" | "cancelled"
+  requested_by: number | null
+  requested_by_name: string | null
+  items: StockRequest[]
+  pending_count: number
+  approved_count: number
+  declined_count: number
+  total_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface DirectStockRequestBatchPayload {
+  notes?: string
+  items: {
+    item: number
+    stall: number
+    requested_quantity: number
+    notes?: string
+  }[]
 }
 
 export interface CustomItemTemplate {
@@ -1211,8 +1242,28 @@ export interface Service {
   service_items_checked_at?: string | null
   // BIR receipts (multiple per service)
   receipts?: ServiceReceipt[]
+  // Extra charges (e.g. dismantle fee, site survey)
+  extra_charges?: ServiceExtraCharge[]
   // Backdating
   transaction_date?: string | null
+}
+
+// Service Extra Charge
+export interface ServiceExtraCharge {
+  id: number
+  service: number
+  description: string
+  amount: string
+  created_by?: number | null
+  created_by_name?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ServiceExtraChargePayload {
+  service: number
+  description: string
+  amount: number | string
 }
 
 export interface ServiceReceipt {

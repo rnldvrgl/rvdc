@@ -9,6 +9,7 @@ export type PendingActionType =
   | "aircon_model_bulk_update"
   | "employee_bulk_update"
   | "stall_stock_bulk_update"
+  | "stall_stock_deduct"
   | "stockroom_bulk_update"
 
 export interface PendingAction {

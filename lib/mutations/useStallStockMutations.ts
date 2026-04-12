@@ -150,6 +150,26 @@ export function useStallStockMutations() {
     invalidateQueries: sharedInvalidations,
   })
 
+  const bulkDeductPreview = useApiMutation<FormData, unknown>({
+    mutationFn: (formData) =>
+      api.post(`/inventory/stocks/bulk-deduct-preview/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    usePromiseToast: true,
+    loadingMessage: "Analyzing file...",
+  })
+
+  const bulkDeduct = useApiMutation<FormData, unknown>({
+    mutationFn: (formData) =>
+      api.post(`/inventory/stocks/bulk-deduct/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      }),
+    usePromiseToast: true,
+    loadingMessage: "Processing stock deduction...",
+    successMessage: "Stock deduction started. You will be notified when it's done.",
+    invalidateQueries: sharedInvalidations,
+  })
+
   return {
     updateStallStock,
     softDeleteStallStock,
@@ -159,5 +179,7 @@ export function useStallStockMutations() {
     pullOutStallStock,
     bulkPreview,
     bulkUpdate,
+    bulkDeductPreview,
+    bulkDeduct,
   }
 }

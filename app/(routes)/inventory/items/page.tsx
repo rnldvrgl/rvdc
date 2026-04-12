@@ -1,6 +1,7 @@
 "use client"
 
 import { getItemColumns } from "@/app/(routes)/inventory/items/columns"
+import { MergeItemDialog } from "@/components/custom/inventory/MergeItemDialog"
 import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
@@ -40,6 +41,11 @@ export default function ItemsPage() {
   })
   const { filters, orderingOptions } = useItemFilters()
 
+  const [
+    mergeTarget,
+    setMergeTarget,
+  ] = useState<Item | null>(null)
+
   const {
     entityState: { open: editOpen, entity },
     openEntity: openEditSheet,
@@ -77,6 +83,7 @@ export default function ItemsPage() {
         onEdit: openEditSheet,
         onDelete: handleDelete,
         onToggleTracked: handleToggleTracked,
+        onMerge: (item) => setMergeTarget(item),
         role: role || "guest",
       })
 
@@ -148,6 +155,13 @@ export default function ItemsPage() {
             description="Fill out the form below to add a new item."
             withCloseConfirmation
             renderForm={({ forceClose }) => <ItemForm onClose={forceClose} />}
+          />
+
+          {/* Merge Duplicate Item Dialog */}
+          <MergeItemDialog
+            open={!!mergeTarget}
+            targetItem={mergeTarget}
+            onClose={() => setMergeTarget(null)}
           />
         </>
       )}

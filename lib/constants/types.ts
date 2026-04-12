@@ -250,6 +250,7 @@ export type QuotationTermsTemplatePayload = {
 export type Employee = BaseEntity & {
   username?: string
   role: "admin" | "manager" | "clerk" | "technician"
+  is_superuser?: boolean
   is_active?: boolean
   email?: string
   birthday?: string
@@ -272,6 +273,7 @@ export type Employee = BaseEntity & {
   has_pagibig?: boolean
   has_bir_tax?: boolean
   has_cash_ban?: boolean
+  is_technician?: boolean
   profile_image?: string
   e_signature?: string | null
   assigned_stall?: Stall
@@ -416,6 +418,13 @@ export type WeeklyPayroll = {
     amount: string
     description: string
     reference: string
+  }>
+
+  attendance_dates?: string[]
+  holiday_details?: Array<{
+    date: string
+    name: string
+    kind: string
   }>
 
   gross_pay: string | number

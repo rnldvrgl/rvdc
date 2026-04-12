@@ -44,6 +44,7 @@ const SOURCE_FILTER: FilterDefinition = {
   options: [
     { label: "Appliance", value: "service_appliance" },
     { label: "Service", value: "service" },
+    { label: "Direct", value: "direct" },
   ],
 }
 
@@ -69,7 +70,7 @@ export default function StockRequestsPage() {
   const [declineReason, setDeclineReason] = useState("")
 
   const handleApprove = async (request: StockRequest) => {
-    await approveMutation.mutateAsync(request.id)
+    await approveMutation.mutateAsync({ id: request.id })
   }
 
   const handleDeclineClick = (request: StockRequest) => {

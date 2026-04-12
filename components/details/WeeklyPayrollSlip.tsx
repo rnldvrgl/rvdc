@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Separator } from "@/components/ui/separator"
 
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useRecomputeWeeklyPayroll } from "@/lib/mutations/payroll/usePayrollMutations"
@@ -34,7 +35,13 @@ import { useWeeklyPayroll } from "@/lib/queries/usePayroll"
 import { formatCurrency, toNumber } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
-import { AlertCircle, FileText, Loader2 } from "lucide-react"
+import {
+  AlertCircle,
+  Calendar,
+  FileText,
+  Loader2,
+  Receipt,
+} from "lucide-react"
 import { useState } from "react"
 
 interface WeeklyPayrollSlipProps {
@@ -348,7 +355,7 @@ export function WeeklyPayrollSlip({
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
               <div className="font-semibold text-foreground">
-                ⚠️ Warning: This will permanently delete this deduction.
+                Warning: This will permanently delete this deduction.
               </div>
               <div className="space-y-2 text-sm">
                 <div>

@@ -11,6 +11,7 @@ import {
   Ban,
   Edit,
   Eye,
+  Merge,
   RotateCcw,
   ShieldCheck,
   Trash2,
@@ -24,6 +25,7 @@ export function getClientColumns({
   onView,
   onRestore,
   onHardDelete,
+  onMerge,
 }: GetColumnsProps<Client>): ColumnDef<Client>[] {
   return [
     {
@@ -136,6 +138,15 @@ export function getClientColumns({
                 icon: Eye,
                 onClick: () => onView?.(client),
               },
+              ...(onMerge
+                ? [
+                    {
+                      label: "Merge into another",
+                      icon: Merge,
+                      onClick: () => onMerge(client),
+                    },
+                  ]
+                : []),
               {
                 label: "Edit",
                 icon: Edit,

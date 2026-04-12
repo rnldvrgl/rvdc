@@ -53,6 +53,7 @@ import {
   Terminal,
   Trash2,
   Upload,
+  Video,
   Wrench,
   Zap,
 } from "lucide-react"
@@ -150,6 +151,7 @@ const CONTAINER_LABELS: Record<string, { label: string; icon: typeof Server }> =
     "rvdc_backend-api-1": { label: "API Server", icon: Server },
     "rvdc_backend-redis-1": { label: "Redis", icon: Database },
     "rvdc_backend-db-1": { label: "PostgreSQL", icon: Database },
+    "rvdc_backend-go2rtc-1": { label: "go2rtc (CCTV)", icon: Video },
   }
 
 const CLEANUP_ACTIONS = [

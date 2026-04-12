@@ -8,6 +8,7 @@ import {
   Edit,
   Eye,
   EyeOff,
+  Merge,
   RotateCcw,
   Trash2,
 } from "lucide-react"
@@ -15,6 +16,7 @@ import {
 interface GetItemColumnsProps extends GetColumnsProps<Item> {
   role: Roles
   onToggleTracked?: (item: Item) => void
+  onMerge?: (item: Item) => void
 }
 
 export function getItemColumns({
@@ -23,6 +25,7 @@ export function getItemColumns({
   onRestore,
   onHardDelete,
   onToggleTracked,
+  onMerge,
   role,
 }: GetItemColumnsProps): ColumnDef<Item>[] {
   return [
@@ -163,6 +166,15 @@ export function getItemColumns({
                             confirmText: item.is_tracked
                               ? `Stop tracking stock for ${item.name}?`
                               : `Start tracking stock for ${item.name}?`,
+                          },
+                        ]
+                      : []),
+                    ...(onMerge
+                      ? [
+                          {
+                            label: "Merge Duplicate",
+                            icon: Merge,
+                            onClick: () => onMerge(item),
                           },
                         ]
                       : []),

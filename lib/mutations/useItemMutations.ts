@@ -76,5 +76,14 @@ export function useItemMutations() {
     invalidateQueries: sharedInvalidations,
   })
 
-  return { addItem, updateItem, deleteItem, toggleTracked, bulkPreview, bulkUpdate }
+  const mergeItem = useApiMutation<{ targetId: number; sourceItemId: number }, unknown>({
+    mutationFn: ({ targetId, sourceItemId }) =>
+      api.post(`${url}${targetId}/merge/`, { source_item_id: sourceItemId }),
+    usePromiseToast: true,
+    loadingMessage: "Merging items...",
+    successMessage: "Items merged successfully.",
+    invalidateQueries: sharedInvalidations,
+  })
+
+  return { addItem, updateItem, deleteItem, toggleTracked, bulkPreview, bulkUpdate, mergeItem }
 }

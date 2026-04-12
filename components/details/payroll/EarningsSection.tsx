@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { formatCurrency, toNumber } from "@/lib/utils/currency"
+import { format, parseISO } from "date-fns"
 import { Plus, X } from "lucide-react"
 
 interface AdditionalEarningDetail {
@@ -10,6 +11,12 @@ interface AdditionalEarningDetail {
   amount: string | number
   description?: string
   reference?: string
+}
+
+interface HolidayDetail {
+  date: string
+  name: string
+  kind: string
 }
 
 interface EarningsSectionProps {
@@ -24,6 +31,8 @@ interface EarningsSectionProps {
   canDelete: boolean
   canManage: boolean
   onDeleteEarning: (id: number) => void
+  attendanceDates?: string[]
+  holidayDetails?: HolidayDetail[]
 }
 
 export function EarningsSection({
@@ -38,19 +47,24 @@ export function EarningsSection({
   canDelete,
   canManage,
   onDeleteEarning,
-  // Accept extra props for computation sample
   totalDays,
   dailyRate,
+  attendanceDates,
+  holidayDetails,
 }: EarningsSectionProps & { totalDays?: number; dailyRate?: number }) {
+  const formattedDates =
+    attendanceDates && attendanceDates.length > 0
+      ? attendanceDates.map((d) => format(parseISO(d), "MMM d")).join(", ")
+      : null
   return (
-    <div className="rounded-lg border border-green-200/60 dark:border-green-900/40 bg-linear-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/10 dark:to-emerald-950/10 p-3 flex flex-col">
-      <div className="flex items-center gap-2 mb-2.5">
-        <Plus className="h-4 w-4 text-success" />
-        <h3 className="text-sm sm:text-base font-semibold text-success">
+    <div className="rounded-lg border border-green-200/60 dark:border-green-900/40 bg-linear-to-br from-green-50/30 to-emerald-50/30 dark:from-green-950/10 dark:to-emerald-950/10 p-2.5 flex flex-col">
+      <div className="flex items-center gap-1.5 mb-2">
+        <Plus className="h-3.5 w-3.5 text-success" />
+        <h3 className="text-sm font-semibold text-success">
           Earnings
         </h3>
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         <div>
           <EarningItem
             label="Basic Pay"
@@ -65,6 +79,11 @@ export function EarningsSection({
               )
             </div>
           ) : null}
+          {formattedDates && (
+            <div className="text-[10px] text-muted-foreground/70 ml-2 mt-0.5">
+              {formattedDates}
+            </div>
+          )}
         </div>
 
         {approvedOtPay > 0 && (
@@ -75,10 +94,32 @@ export function EarningsSection({
         )}
 
         {holidayPayTotal > 0 && (
-          <EarningItem
-            label="Holiday"
-            amount={holidayPayTotal}
-          />
+          <div>
+            <EarningItem
+              label="Holiday"
+              amount={holidayPayTotal}
+            />
+            {holidayDetails && holidayDetails.length > 0 && (
+              <div className="ml-2 mt-0.5 space-y-0.5">
+                {holidayDetails.map((h) => (
+                  <div
+                    key={h.date}
+                    className="text-[10px] text-muted-foreground/70 flex items-center gap-1"
+                  >
+                    <span>{format(parseISO(h.date), "MMM d")}</span>
+                    <span>—</span>
+                    <span>{h.name}</span>
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] px-1 py-0 h-3.5"
+                    >
+                      {h.kind === "regular" ? "Regular" : "Special"}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {nightDiffPay > 0 && (
@@ -117,8 +158,8 @@ export function EarningsSection({
           </>
         )}
       </div>
-      <Separator className="my-2 mt-auto" />
-      <div className="flex justify-between font-semibold text-success text-sm">
+      <Separator className="my-1.5 mt-auto" />
+      <div className="flex justify-between font-semibold text-success text-xs sm:text-sm">
         <span>Total</span>
         <span>{formatCurrency(totalEarnings)}</span>
       </div>
