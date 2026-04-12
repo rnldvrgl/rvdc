@@ -4,10 +4,13 @@ import { DailyAttendance } from "@/lib/constants/types"
 import {
   formatAttendanceDate,
   formatAttendanceTime,
-  getAttendanceStatusVariant,
-  getAttendanceTypeColor,
 } from "@/lib/utils/attendance"
 import { safeCell } from "@/lib/utils/helpers"
+import {
+  attendanceStatusConfigMap,
+  attendanceTypeConfigMap,
+  getStatusConfig,
+} from "@/lib/utils/statusMapping"
 import { ColumnDef, Row } from "@tanstack/react-table"
 import { Archive, CheckCircle2, Clock3, Edit, XCircle } from "lucide-react"
 
@@ -77,14 +80,21 @@ export function getAttendanceColumns({
     {
       accessorKey: "attendance_type",
       header: "Type",
-      cell: ({ row }: { row: Row<DailyAttendance> }) => (
-        <Badge
-          variant="outline"
-          className={getAttendanceTypeColor(row.original.attendance_type)}
-        >
-          {row.original.attendance_type_display}
-        </Badge>
-      ),
+      cell: ({ row }: { row: Row<DailyAttendance> }) => {
+        const config = getStatusConfig(
+          attendanceTypeConfigMap,
+          row.original.attendance_type,
+          { label: row.original.attendance_type_display, variant: "secondary" },
+        )
+        return (
+          <Badge
+            variant={config.variant}
+            className="font-semibold text-xs"
+          >
+            {row.original.attendance_type_display}
+          </Badge>
+        )
+      },
     },
     {
       accessorKey: "paid_hours",
@@ -114,11 +124,21 @@ export function getAttendanceColumns({
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }: { row: Row<DailyAttendance> }) => (
-        <Badge variant={getAttendanceStatusVariant(row.original.status)}>
-          {row.original.status_display}
-        </Badge>
-      ),
+      cell: ({ row }: { row: Row<DailyAttendance> }) => {
+        const config = getStatusConfig(
+          attendanceStatusConfigMap,
+          row.original.status,
+          { label: row.original.status_display, variant: "secondary" },
+        )
+        return (
+          <Badge
+            variant={config.variant}
+            className="font-semibold text-xs"
+          >
+            {row.original.status_display}
+          </Badge>
+        )
+      },
     },
     {
       accessorKey: "actions",

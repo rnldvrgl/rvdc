@@ -70,6 +70,38 @@ export const CATEGORY_META: Record<
 // ── Changelog entries (newest first) ──────────────────────────────────────────
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: "1.8.0",
+    title: "Payroll Slip Redesign & Consistent Status Badges",
+    date: "2026-04-12",
+    items: [
+      {
+        category: "improvement",
+        text: "Weekly payroll slip has a new document-style layout — company and employee details are side-by-side in a clean header, sections have clear visual separation, and the Net Pay figure is more prominent.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "improvement",
+        text: "Time summary cards now show hours with color-coded borders (Regular, Overtime, Holiday, Night Diff) with total days in the header row.",
+        roles: ["admin", "manager", "clerk"],
+      },
+      {
+        category: "improvement",
+        text: "Status badges on the weekly payroll table now use consistent styling (Draft, Approved, Paid) matching the rest of the app.",
+        roles: ["admin", "manager"],
+      },
+      {
+        category: "improvement",
+        text: "Attendance record table badges (type and status) now use standardized variant colors for better readability at a glance.",
+        roles: ["admin", "manager"],
+      },
+      {
+        category: "improvement",
+        text: "Deduction category badges in the payroll slip use the unified badge system for clearer visual hierarchy.",
+        roles: ["admin"],
+      },
+    ],
+  },
+  {
     version: "1.7.0",
     title: "Services, Inventory Bulk Update & App Improvements",
     date: "2026-04-04",

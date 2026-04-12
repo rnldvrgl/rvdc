@@ -144,134 +144,151 @@ export function WeeklyPayrollSlip({
   const canDelete = isAdmin && payroll.status === "draft"
 
   return (
-    <div className={cn("mx-auto w-full space-y-4", className)}>
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg sm:text-xl font-bold">Payroll Slip</h2>
-            <StatusBadge status={payroll.status} />
+    <div className={cn("w-full", className)}>
+      {/* ── Document card ─────────────────────────────────────────────── */}
+      <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+
+        {/* ── Slip header ───────────────────────────────────────────── */}
+        <div className="bg-muted/30 dark:bg-muted/10 border-b px-6 py-5">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5">
+            {/* Company + Employee info */}
+            <div className="grid sm:grid-cols-2 gap-5 flex-1">
+              <CompanyInfoCard />
+              <EmployeeInfoCard
+                name={employeeName}
+                role={employeeRole}
+                dailyRate={employeeDailyRate}
+                hourlyRate={employeeHourlyRate}
+              />
+            </div>
+            {/* Slip identity */}
+            <div className="sm:text-right shrink-0">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">
+                Weekly Payroll Slip
+              </p>
+              <p className="text-sm font-medium text-foreground mb-2">
+                {format(weekStartDate, "MMM dd")} &ndash;{" "}
+                {format(weekEndDate, "MMM dd, yyyy")}
+              </p>
+              <StatusBadge status={payroll.status} />
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {format(weekStartDate, "MMM dd")} -{" "}
-            {format(weekEndDate, "MMM dd, yyyy")}
-          </p>
         </div>
-        <PayrollActions
-          status={payroll.status}
-          isAdmin={isAdmin}
-          isProcessing={isProcessing}
-          onApprove={async () => {
-            setIsProcessing(true)
-            await updateStatus.mutateAsync({
-              id: payrollId,
-              status: "approved",
-            })
-            setIsProcessing(false)
-          }}
-          onMarkPaid={async () => {
-            setIsProcessing(true)
-            await updateStatus.mutateAsync({
-              id: payrollId,
-              status: "paid",
-            })
-            setIsProcessing(false)
-          }}
-          onRecompute={async () => {
-            setIsProcessing(true)
-            await recomputePayroll.mutateAsync({})
-            setIsProcessing(false)
-          }}
-          onAddEarning={() => setAdditionalEarningDialogOpen(true)}
-          onAddDeduction={() => setManualDeductionDialogOpen(true)}
-          onAddCashAdvance={() => setCashAdvanceDialogOpen(true)}
-        />
-      </div>
 
-      {/* Employee & Company Info */}
-      <div className="grid md:grid-cols-2 gap-3">
-        <CompanyInfoCard />
-        <EmployeeInfoCard
-          name={employeeName}
-          role={employeeRole}
-          dailyRate={employeeDailyRate}
-          hourlyRate={employeeHourlyRate}
-        />
-      </div>
-
-      {/* Time Summary */}
-      <TimeSummary
-        regularHours={regularHours}
-        approvedOtHours={approvedOtHours}
-        holidayHours={holidayHours}
-        nightDiffHours={nightDiffHours}
-        totalDays={totalDays}
-        hoursPerDay={hoursPerDay}
-      />
-
-      {/* Earnings and Deductions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <EarningsSection
-          basicPay={basicPay}
-          approvedOtPay={approvedOtPay}
-          holidayPayTotal={holidayPayTotal}
-          nightDiffPay={nightDiffPay}
-          allowances={allowances}
-          additionalEarnings={additionalEarnings}
-          additionalEarningsDetails={payroll.additional_earnings_details}
-          totalEarnings={totalEarnings}
-          canDelete={canDelete}
-          canManage={canManage}
-          onDeleteEarning={setDeleteEarningId}
-          totalDays={totalDays}
-          dailyRate={employeeDailyRate}
-        />
-
-        <DeductionsSection
-          deductions={payroll.deductions || {}}
-          deductionMetadata={payroll.deduction_metadata}
-          totalDeductions={totalDeductions}
-          canDelete={canDelete}
-          canManage={canManage}
-          onDeleteDeduction={setDeleteDeductionId}
-        />
-      </div>
-
-      {/* Net Pay Summary */}
-      <div className="rounded-xl bg-linear-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 p-5 text-white shadow-md print:bg-white print:border-2 print:border-green-600 print:text-success">
-        <div className="text-center space-y-1">
-          <p className="text-sm font-medium opacity-90 print:opacity-100">
-            Net Pay
-          </p>
-          <p className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight">
-            {formatCurrency(netPay)}
-          </p>
+        {/* ── Admin actions ─────────────────────────────────────────── */}
+        <div className="px-6 py-3 border-b bg-background print:hidden">
+          <PayrollActions
+            status={payroll.status}
+            isAdmin={isAdmin}
+            isProcessing={isProcessing}
+            onApprove={async () => {
+              setIsProcessing(true)
+              await updateStatus.mutateAsync({
+                id: payrollId,
+                status: "approved",
+              })
+              setIsProcessing(false)
+            }}
+            onMarkPaid={async () => {
+              setIsProcessing(true)
+              await updateStatus.mutateAsync({
+                id: payrollId,
+                status: "paid",
+              })
+              setIsProcessing(false)
+            }}
+            onRecompute={async () => {
+              setIsProcessing(true)
+              await recomputePayroll.mutateAsync({})
+              setIsProcessing(false)
+            }}
+            onAddEarning={() => setAdditionalEarningDialogOpen(true)}
+            onAddDeduction={() => setManualDeductionDialogOpen(true)}
+            onAddCashAdvance={() => setCashAdvanceDialogOpen(true)}
+          />
         </div>
-      </div>
 
-      {/* Notes */}
-      {payroll.notes && (
-        <div className="rounded-lg border bg-muted/30 p-3">
-          <div className="flex items-center gap-2 mb-1.5">
-            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-            <h3 className="text-sm font-semibold">Notes</h3>
+        {/* ── Body ──────────────────────────────────────────────────── */}
+        <div className="px-6 py-5 space-y-5">
+          {/* Time Summary */}
+          <TimeSummary
+            regularHours={regularHours}
+            approvedOtHours={approvedOtHours}
+            holidayHours={holidayHours}
+            nightDiffHours={nightDiffHours}
+            totalDays={totalDays}
+            hoursPerDay={hoursPerDay}
+          />
+
+          {/* Earnings + Deductions */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <EarningsSection
+              basicPay={basicPay}
+              approvedOtPay={approvedOtPay}
+              holidayPayTotal={holidayPayTotal}
+              nightDiffPay={nightDiffPay}
+              allowances={allowances}
+              additionalEarnings={additionalEarnings}
+              additionalEarningsDetails={payroll.additional_earnings_details}
+              totalEarnings={totalEarnings}
+              canDelete={canDelete}
+              canManage={canManage}
+              onDeleteEarning={setDeleteEarningId}
+              totalDays={totalDays}
+              dailyRate={employeeDailyRate}
+            />
+            <DeductionsSection
+              deductions={payroll.deductions || {}}
+              deductionMetadata={payroll.deduction_metadata}
+              totalDeductions={totalDeductions}
+              canDelete={canDelete}
+              canManage={canManage}
+              onDeleteDeduction={setDeleteDeductionId}
+            />
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground whitespace-pre-wrap">
-            {payroll.notes}
-          </p>
-        </div>
-      )}
 
-      {/* Footer */}
-      <div className="text-center text-[10px] text-muted-foreground space-y-0.5 pt-2 border-t">
-        <p>Computer-generated payroll slip</p>
-        <p>
-          Generated{" "}
-          {format(new Date(payroll.created_at), "MMM dd, yyyy 'at' h:mm a")}
-        </p>
-        <p>
-          If you have questions about this payroll slip, please contact admin.
-        </p>
+          {/* ── Net Pay ─────────────────────────────────────────────── */}
+          <div className="rounded-xl bg-linear-to-r from-green-500 to-emerald-600 dark:from-green-600 dark:to-emerald-700 p-6 text-white shadow-md print:bg-white print:border-2 print:border-green-600 print:text-success">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold opacity-80 print:opacity-100 uppercase tracking-widest">
+                  Net Pay
+                </p>
+                <p className="text-xs opacity-60 print:opacity-100 mt-0.5">
+                  Total Earnings − Total Deductions
+                </p>
+              </div>
+              <p className="text-4xl sm:text-5xl font-bold tracking-tight tabular-nums">
+                {formatCurrency(netPay)}
+              </p>
+            </div>
+          </div>
+
+          {/* ── Notes ───────────────────────────────────────────────── */}
+          {payroll.notes && (
+            <div className="rounded-lg border bg-muted/30 px-4 py-3">
+              <div className="flex items-center gap-2 mb-1.5">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Notes
+                </h3>
+              </div>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {payroll.notes}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* ── Footer ────────────────────────────────────────────────── */}
+        <div className="px-6 py-4 border-t bg-muted/20 text-center text-[11px] text-muted-foreground space-y-0.5">
+          <p>Computer-generated payroll slip — do not alter</p>
+          <p>
+            Generated{" "}
+            {format(new Date(payroll.created_at), "MMM dd, yyyy 'at' h:mm a")}
+          </p>
+          <p>For questions, please contact your administrator.</p>
+        </div>
       </div>
 
       {/* Developer Credit */}
@@ -279,6 +296,8 @@ export function WeeklyPayrollSlip({
         variant="default"
         size="sm"
       />
+
+      {/* Dialogs */}
 
       {/* Additional Earning Dialog */}
       <AddAdditionalEarningForm

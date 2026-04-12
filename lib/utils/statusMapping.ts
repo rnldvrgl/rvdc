@@ -145,6 +145,58 @@ export const payrollStatusConfigMap: Record<string, StatusConfig> = {
     label: "Paid",
     variant: "success",
   },
+  // Lowercase frontend PayrollStatus values
+  draft: {
+    label: "Draft",
+    variant: "secondary",
+  },
+  approved: {
+    label: "Approved",
+    variant: "success",
+  },
+  paid: {
+    label: "Paid",
+    variant: "default",
+  },
+}
+
+// ============================================================================
+// ATTENDANCE TYPE MAPPINGS
+// ============================================================================
+
+export const attendanceTypeConfigMap: Record<string, StatusConfig> = {
+  FULL_DAY: {
+    label: "Full Day",
+    variant: "success",
+  },
+  HALF_DAY: {
+    label: "Half Day",
+    variant: "warning",
+  },
+  PARTIAL: {
+    label: "Partial",
+    variant: "secondary",
+  },
+  ABSENT: {
+    label: "Absent",
+    variant: "destructive",
+  },
+  LEAVE: {
+    label: "On Leave",
+    variant: "outline",
+  },
+  SHOP_CLOSED: {
+    label: "Shop Closed",
+    variant: "secondary",
+  },
+  PENDING: {
+    label: "Pending",
+    variant: "secondary",
+  },
+  INVALID: {
+    label: "Invalid",
+    variant: "destructive",
+  },
 }
 
 // ============================================================================

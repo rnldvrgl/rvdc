@@ -140,6 +140,7 @@ export {
   // Attendance
   attendanceStatusConfigMap,
   attendanceTypeColorMap,
+  attendanceTypeConfigMap,
   // Warranty
   claimTypeConfigMap,
   getStatusColors,

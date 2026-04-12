@@ -3,15 +3,16 @@ import { Badge } from "@/components/ui/badge"
 import { WeeklyPayroll } from "@/lib/constants/types"
 import { safeCell } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
+import {
+  getStatusConfig,
+  payrollStatusConfigMap,
+} from "@/lib/utils/statusMapping"
 import { ColumnDef, Row } from "@tanstack/react-table"
 import {
   Archive,
-  Banknote,
   Calendar,
-  CheckCircle2,
   Clock,
   Eye,
-  FilePenLine,
   FileText,
   RotateCcw,
   Trash2,
@@ -23,44 +24,6 @@ interface GetPayrollColumnsProps {
   isAdmin: boolean
   onRestore?: (payroll: WeeklyPayroll) => void
   onHardDelete?: (payroll: WeeklyPayroll) => void
-}
-
-const getStatusBadge = (status: string) => {
-  const config: Record<
-    string,
-    { color: string; label: string; icon: React.ReactNode }
-  > = {
-    draft: {
-      color:
-        "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-300 dark:border-gray-600",
-      label: "Draft",
-      icon: <FilePenLine className="h-3 w-3 mr-1" />,
-    },
-    approved: {
-      color:
-        "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 border-blue-300 dark:border-blue-600",
-      label: "Approved",
-      icon: <CheckCircle2 className="h-3 w-3 mr-1" />,
-    },
-    paid: {
-      color:
-        "bg-green-100 text-success dark:bg-green-900 border-green-300 dark:border-green-600",
-      label: "Paid",
-      icon: <Banknote className="h-3 w-3 mr-1" />,
-    },
-  }
-
-  const { color, label, icon } = config[status] || config.draft
-
-  return (
-    <Badge
-      variant="outline"
-      className={`${color} flex items-center w-fit font-medium`}
-    >
-      {icon}
-      {label}
-    </Badge>
-  )
 }
 
 export function getPayrollColumns({
@@ -108,8 +71,21 @@ export function getPayrollColumns({
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }: { row: Row<WeeklyPayroll> }) =>
-        getStatusBadge(row.original.status),
+      cell: ({ row }: { row: Row<WeeklyPayroll> }) => {
+        const config = getStatusConfig(
+          payrollStatusConfigMap,
+          row.original.status,
+          { label: row.original.status, variant: "secondary" },
+        )
+        return (
+          <Badge
+            variant={config.variant}
+            className="w-fit font-semibold text-xs"
+          >
+            {config.label}
+          </Badge>
+        )
+      },
     },
     {
       accessorKey: "total_hours",

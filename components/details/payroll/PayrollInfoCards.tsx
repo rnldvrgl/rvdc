@@ -1,6 +1,6 @@
 import { SHOP_INFO } from "@/lib/constants/meta"
 import { formatCurrency } from "@/lib/utils/currency"
-import { Building, User } from "lucide-react"
+import { Building, Mail, MapPin, User } from "lucide-react"
 
 interface EmployeeInfoProps {
   name: string
@@ -11,17 +11,29 @@ interface EmployeeInfoProps {
 
 export function CompanyInfoCard() {
   return (
-    <div className="rounded-lg border bg-card p-3">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-          <Building className="h-4 w-4 text-primary" />
+    <div className="space-y-2">
+      <div className="flex items-center gap-2.5">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <Building className="h-4.5 w-4.5 text-primary" />
         </div>
-        <h3 className="text-sm sm:text-base font-semibold">Company</h3>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Employer
+          </p>
+          <p className="text-sm font-bold text-foreground leading-tight">
+            {SHOP_INFO.name}
+          </p>
+        </div>
       </div>
-      <div className="space-y-0.5 text-xs sm:text-sm text-muted-foreground">
-        <p className="font-medium text-foreground">{SHOP_INFO.name}</p>
-        <p>{SHOP_INFO.address}</p>
-        <p>{SHOP_INFO.contactEmail}</p>
+      <div className="space-y-1 pl-11">
+        <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+          <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
+          <span>{SHOP_INFO.address}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Mail className="h-3 w-3 shrink-0" />
+          <span>{SHOP_INFO.contactEmail}</span>
+        </div>
       </div>
     </div>
   )
@@ -34,29 +46,38 @@ export function EmployeeInfoCard({
   hourlyRate,
 }: EmployeeInfoProps) {
   return (
-    <div className="rounded-lg border bg-card p-3">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-          <User className="h-4 w-4 text-primary" />
+    <div className="space-y-2">
+      <div className="flex items-center gap-2.5">
+        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+          <User className="h-4.5 w-4.5 text-primary" />
         </div>
-        <h3 className="text-sm sm:text-base font-semibold">Employee</h3>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Employee
+          </p>
+          <p className="text-sm font-bold text-foreground leading-tight truncate max-w-[180px]">
+            {name}
+          </p>
+        </div>
       </div>
-      <div className="space-y-0.5 text-xs sm:text-sm">
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Name:</span>
-          <span className="font-medium text-right truncate">{name}</span>
+      <div className="pl-11 grid grid-cols-2 gap-x-4 gap-y-1">
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Position
+          </p>
+          <p className="text-xs font-medium capitalize">{role}</p>
         </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Position:</span>
-          <span className="text-right capitalize truncate">{role}</span>
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Daily Rate
+          </p>
+          <p className="text-xs font-semibold">{formatCurrency(dailyRate)}</p>
         </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Daily:</span>
-          <span className="font-medium">{formatCurrency(dailyRate)}</span>
-        </div>
-        <div className="flex justify-between gap-2">
-          <span className="text-muted-foreground">Hourly:</span>
-          <span className="font-medium">{formatCurrency(hourlyRate)}</span>
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Hourly Rate
+          </p>
+          <p className="text-xs font-semibold">{formatCurrency(hourlyRate)}</p>
         </div>
       </div>
     </div>

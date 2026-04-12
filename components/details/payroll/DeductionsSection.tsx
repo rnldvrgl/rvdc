@@ -5,26 +5,20 @@ import { formatCurrency, toNumber } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
 import { Minus, X } from "lucide-react"
 
-const CATEGORY_COLOR_MAP: Record<string, string> = {
-  late_penalty:
-    "bg-red-100 text-destructive dark:bg-red-900/40 border-red-300 dark:border-red-600",
-  government:
-    "bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 border-orange-300 dark:border-orange-600",
-  manual:
-    "bg-green-100 text-success dark:bg-green-900/40 border-green-300 dark:border-green-600",
-  deduction:
-    "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 border-purple-300 dark:border-purple-600",
-  other:
-    "bg-gray-100 text-gray-700 dark:bg-gray-900/40 dark:text-gray-300 border-gray-300 dark:border-gray-600",
+const CATEGORY_VARIANTS: Record<
+  string,
+  "destructive" | "warning" | "success" | "secondary" | "outline" | "default"
+> = {
+  late_penalty: "destructive",
+  government: "warning",
+  manual: "success",
+  deduction: "secondary",
+  other: "outline",
 }
 
-const getCategoryBadgeColor = (category?: string): string => {
-  if (!category) return CATEGORY_COLOR_MAP.other
-  const key = category.toLowerCase()
-  return (
-    Object.entries(CATEGORY_COLOR_MAP).find(([k]) => key === k)?.[1] ||
-    CATEGORY_COLOR_MAP.other
-  )
+const getCategoryVariant = (category?: string) => {
+  if (!category) return "outline" as const
+  return CATEGORY_VARIANTS[category.toLowerCase()] ?? ("outline" as const)
 }
 
 interface DeductionMetadata {
@@ -94,10 +88,8 @@ export function DeductionsSection({
                 >
                   {metadata?.category && canManage && (
                     <Badge
-                      className={cn(
-                        "text-xs sm:text-sm px-1.5 py-0 border",
-                        getCategoryBadgeColor(metadata.category),
-                      )}
+                      variant={getCategoryVariant(metadata.category)}
+                      className="text-[10px] px-1.5 py-0 font-semibold"
                     >
                       {metadata.category.replace(/_/g, " ")}
                     </Badge>
