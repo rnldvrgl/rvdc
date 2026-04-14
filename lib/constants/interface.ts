@@ -546,6 +546,15 @@ export interface AnalyticsSummary {
     name: string | null // name of the top selling item (nullable)
     quantity: number // quantity sold
   }
+
+  // Payment metrics
+  payment_collection_rate: number // percentage of paid services
+
+  // Top technician
+  top_service_technician: {
+    name: string
+    services_completed: number
+  } | null
 }
 
 export type TopSellingItems = {

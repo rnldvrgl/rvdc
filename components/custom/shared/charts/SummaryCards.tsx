@@ -148,7 +148,27 @@ function getSummaryGroups(
           trend(data.service_completion_rate, prev?.service_completion_rate),
           "/services",
         ),
-      ],
+        buildCard(
+          "Payment Collection Rate",
+          `${data.payment_collection_rate}%`,
+          DollarSign,
+          data.payment_collection_rate >= 80 ? "success" : "warning",
+          trend(data.payment_collection_rate, prev?.payment_collection_rate),
+          "/receivables/payment-collection",
+        ),
+        data.top_service_technician
+          ? buildCard(
+              "Top Service Technician",
+              data.top_service_technician.name,
+              Users,
+              "info",
+              {
+                value: data.top_service_technician.services_completed,
+                label: "services completed",
+              },
+            )
+          : null,
+      ].filter(Boolean),
     },
     {
       title: "Business Growth",
