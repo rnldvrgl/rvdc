@@ -313,6 +313,7 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch: refetchNotifications,
   } = useNotifications()
   const { data: unreadCountData } = useUnreadNotificationCount()
   const { deleteNotification, markAllAsRead, markAsRead } =
@@ -324,6 +325,11 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
       fetchNextPage()
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  useEffect(() => {
+    if (!open) return
+    refetchNotifications()
+  }, [open, unreadCountData?.unread_count, refetchNotifications])
 
   const hasUnread = useMemo(
     () => notifications.some((n) => !n.is_read),
