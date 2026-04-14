@@ -47,71 +47,7 @@ export function EmployeePerformanceStats() {
 
   return (
     <div className="grid lg:grid-cols-2 gap-6">
-      {/* Top Service Types */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
-            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-950 shrink-0">
-              <Wrench className="size-4 text-purple-600 dark:text-purple-400" />
-            </div>
-            <span className="truncate">Top Service Types</span>
-            <Badge
-              variant="secondary"
-              className="ml-auto text-xs shrink-0"
-            >
-              Completed
-            </Badge>
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Most completed service types in this period
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {data.top_service_types.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No completed services in this period
-            </p>
-          ) : (
-            data.top_service_types.map((type, index) => {
-              const maxCount = data.top_service_types[0]?.count || 1
-              return (
-                <div
-                  key={type.service_type}
-                  className="space-y-1.5"
-                >
-                  <div className="flex items-center justify-between text-sm gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">
-                        #{index + 1}
-                      </span>
-                      <span className="font-medium truncate">
-                        {getServiceTypeLabel(type.service_type)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                      <span className="text-xs text-muted-foreground hidden sm:inline">
-                        {formatCurrency(type.revenue)}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className="text-xs tabular-nums"
-                      >
-                        {type.count} jobs
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-500 rounded-full transition-all"
-                      style={{ width: `${(type.count / maxCount) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </CardContent>
-      </Card>
+
 
       {/* Top Technicians */}
       <Card>
@@ -188,65 +124,7 @@ export function EmployeePerformanceStats() {
         </CardContent>
       </Card>
 
-      {/* Most Late */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
-            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950 shrink-0">
-              <Timer className="size-4 text-destructive" />
-            </div>
-            <span className="truncate">Most Late Arrivals</span>
-            <Badge
-              variant="outline"
-              className="ml-auto text-xs shrink-0 border-red-200 text-destructive dark:border-red-800"
-            >
-              Attendance
-            </Badge>
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Employees with the most late check-ins
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {data.most_late.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No late arrivals recorded — great job everyone! 🎉
-            </p>
-          ) : (
-            data.most_late.map((emp) => {
-              const hours = Math.floor(emp.total_late_minutes / 60)
-              const mins = emp.total_late_minutes % 60
-              const lateTime = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
-              return (
-                <div
-                  key={emp.employee_id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-950/50">
-                    <Clock className="size-4 text-destructive" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {emp.employee_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Total late: {lateTime}
-                    </p>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className="text-xs tabular-nums border-red-200 text-destructive dark:border-red-800"
-                  >
-                    {emp.late_count} {emp.late_count === 1 ? "day" : "days"}
-                  </Badge>
-                </div>
-              )
-            })
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Most Punctual */}
+   {/* Most Punctual */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
@@ -314,6 +192,131 @@ export function EmployeePerformanceStats() {
           )}
         </CardContent>
       </Card>
+
+      {/* Most Late */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950 shrink-0">
+              <Timer className="size-4 text-destructive" />
+            </div>
+            <span className="truncate">Most Late Arrivals</span>
+            <Badge
+              variant="outline"
+              className="ml-auto text-xs shrink-0 border-red-200 text-destructive dark:border-red-800"
+            >
+              Attendance
+            </Badge>
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Employees with the most late check-ins
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {data.most_late.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No late arrivals recorded — great job everyone! 🎉
+            </p>
+          ) : (
+            data.most_late.map((emp) => {
+              const hours = Math.floor(emp.total_late_minutes / 60)
+              const mins = emp.total_late_minutes % 60
+              const lateTime = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
+              return (
+                <div
+                  key={emp.employee_id}
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-950/50">
+                    <Clock className="size-4 text-destructive" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {emp.employee_name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Total late: {lateTime}
+                    </p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className="text-xs tabular-nums border-red-200 text-destructive dark:border-red-800"
+                  >
+                    {emp.late_count} {emp.late_count === 1 ? "day" : "days"}
+                  </Badge>
+                </div>
+              )
+            })
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Top Service Types */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-950 shrink-0">
+              <Wrench className="size-4 text-purple-600 dark:text-purple-400" />
+            </div>
+            <span className="truncate">Top Service Types</span>
+            <Badge
+              variant="secondary"
+              className="ml-auto text-xs shrink-0"
+            >
+              Completed
+            </Badge>
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Most completed service types in this period
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {data.top_service_types.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              No completed services in this period
+            </p>
+          ) : (
+            data.top_service_types.map((type, index) => {
+              const maxCount = data.top_service_types[0]?.count || 1
+              return (
+                <div
+                  key={type.service_type}
+                  className="space-y-1.5"
+                >
+                  <div className="flex items-center justify-between text-sm gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">
+                        #{index + 1}
+                      </span>
+                      <span className="font-medium truncate">
+                        {getServiceTypeLabel(type.service_type)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                      <span className="text-xs text-muted-foreground hidden sm:inline">
+                        {formatCurrency(type.revenue)}
+                      </span>
+                      <Badge
+                        variant="outline"
+                        className="text-xs tabular-nums"
+                      >
+                        {type.count} jobs
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-purple-500 rounded-full transition-all"
+                      style={{ width: `${(type.count / maxCount) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </CardContent>
+      </Card>
+
     </div>
   )
 }
