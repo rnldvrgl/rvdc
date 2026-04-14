@@ -3,6 +3,7 @@
 import { usePsgcForm } from "@/lib/hooks/usePsgcForm"
 import { useClientMutations } from "@/lib/mutations/useClientMutations"
 import { SubmitHandler, useForm } from "react-hook-form"
+import { useRef } from "react"
 
 import type { PsgcSelectProps } from "@/components/custom/inputs/PsgcSelect"
 import { PsgcSelect } from "@/components/custom/inputs/PsgcSelect"
@@ -18,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Client } from "@/lib/constants/types"
+import { Loader2 } from "lucide-react"
 
 function LocationField({
   name,
@@ -70,6 +72,7 @@ interface ClientFormProps {
 }
 
 export default function ClientForm({ client, onClose }: ClientFormProps) {
+  const submitLockRef = useRef(false)
   const form = useForm<FormValues>({
     defaultValues: {
       full_name: client?.full_name ?? "",
@@ -115,7 +118,10 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
     return normalized || null
   }
 
-  const handleSubmit: SubmitHandler<FormValues> = (data) => {
+  const handleSubmit: SubmitHandler<FormValues> = async (data) => {
+    if (submitLockRef.current || isSubmitting) return
+    submitLockRef.current = true
+
     const payload = {
       ...data,
       full_name: data.full_name.toUpperCase(),
@@ -126,17 +132,16 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
       address: data.address?.trim().toUpperCase() || null,
     }
 
-    if (client?.id) {
-      updateClient.mutate(
-        { id: client.id, data: payload },
-        {
-          onSuccess: onClose,
-        },
-      )
-    } else {
-      addClient.mutate(payload, {
-        onSuccess: onClose,
-      })
+    try {
+      if (client?.id) {
+        await updateClient.mutateAsync({ id: client.id, data: payload })
+      } else {
+        await addClient.mutateAsync(payload)
+      }
+
+      onClose()
+    } finally {
+      submitLockRef.current = false
     }
   }
 
@@ -272,13 +277,26 @@ export default function ClientForm({ client, onClose }: ClientFormProps) {
           />
         </div>
 
-        <div className="pt-4 flex justify-end">
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Saving..." : "Save Client"}
-          </Button>
+        <div className="sticky bottom-0 z-10 -mx-1 mt-4 border-t bg-background/95 px-1 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto sm:min-w-32"
+            >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting ? "Saving..." : "Save Client"}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

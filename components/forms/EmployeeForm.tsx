@@ -32,11 +32,13 @@ import {
   Briefcase,
   CreditCard,
   Info,
+  Loader2,
   MapPin,
   Phone,
   User,
   Users,
 } from "lucide-react"
+import { useRef } from "react"
 
 // Form-specific type for handling assigned_stall as ID
 type EmployeeFormData = Omit<Employee, "assigned_stall"> & {
@@ -99,6 +101,7 @@ interface EmployeeProps {
 }
 
 export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
+  const submitLockRef = useRef(false)
   const formData = employeeToFormData(employee)
 
   const form = useForm<EmployeeFormData>({
@@ -180,7 +183,13 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
   const { addEmployee, updateEmployee } = useEmployeeMutations()
   const isSubmitting = addEmployee.isPending || updateEmployee.isPending
 
-  const handleSubmit: SubmitHandler<EmployeeFormData> = (data) => {
+  const handleSubmit: SubmitHandler<EmployeeFormData> = async (data) => {
+    if (submitLockRef.current || isSubmitting) {
+      return
+    }
+
+    submitLockRef.current = true
+
     const payload = {
       ...data,
       province: provinceName,
@@ -195,26 +204,25 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
             : data.assigned_stall_id,
     }
 
-    if (employee?.id) {
-      updateEmployee.mutate(
-        { id: employee.id, data: payload },
-        {
-          onSuccess: onClose,
-        },
-      )
-    } else {
-      addEmployee.mutate(payload, {
-        onSuccess: onClose,
-      })
+    try {
+      if (employee?.id) {
+        await updateEmployee.mutateAsync({ id: employee.id, data: payload })
+      } else {
+        await addEmployee.mutateAsync(payload)
+      }
+
+      onClose()
+    } finally {
+      submitLockRef.current = false
     }
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="mx-auto w-full max-w-4xl px-1 sm:px-0">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-8"
+          className="space-y-5 sm:space-y-8"
         >
           {/* Info Alert for New Employees */}
           {!employee && (
@@ -812,27 +820,36 @@ export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
           </Card>
 
           {/* Form Actions */}
-          <div className="flex justify-end gap-4 pt-6">
+          <div className="sticky bottom-0 z-10 -mx-1 border-t bg-background/95 px-1 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-4 sm:pt-6">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               size="lg"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               size="lg"
-              className="min-w-32"
+              className="min-w-32 w-full sm:w-auto"
               disabled={isSubmitting}
             >
-              {isSubmitting
-                ? "Saving..."
-                : employee
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                employee
                   ? "Update Employee"
-                  : "Create Employee"}
+                  : "Create Employee"
+              )}
             </Button>
+            </div>
           </div>
         </form>
       </Form>

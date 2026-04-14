@@ -697,14 +697,27 @@ export default function ServiceForm({
           </div>
         )}
 
-        <Button
-          type="submit"
-          disabled={!form.formState.isDirty || isSubmitting}
-          className="w-full"
-        >
-          <Save className="mr-2 h-4 w-4" />
-          {initialData ? "Update Service" : "Create Service"}
-        </Button>
+        <div className="sticky bottom-0 z-10 -mx-1 mt-4 border-t bg-background/95 px-1 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={!form.formState.isDirty || isSubmitting}
+              className="w-full sm:w-auto sm:min-w-40"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {initialData ? "Update Service" : "Create Service"}
+            </Button>
+          </div>
+        </div>
       </form>
     </Form>
   )

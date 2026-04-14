@@ -85,7 +85,7 @@ function FormItem({ className, ...props }: React.ComponentProps<"div">) {
 		<FormItemContext.Provider value={{ id }}>
 			<div
 				data-slot="form-item"
-				className={cn("grid gap-2", className)}
+				className={cn("grid gap-1.5 sm:gap-2", className)}
 				{...props}
 			/>
 		</FormItemContext.Provider>
@@ -105,7 +105,7 @@ function FormLabel({
 			data-slot="form-label"
 			data-error={!!error}
 			className={cn(
-				"data-[error=true]:text-destructive font-semibold text-sm uppercase tracking-wider",
+				"data-[error=true]:text-destructive font-semibold uppercase tracking-wide text-[11px] sm:text-xs md:text-sm",
 				className,
 			)}
 			htmlFor={formItemId}
@@ -143,7 +143,7 @@ function FormDescription({ className, ...props }: React.ComponentProps<"p">) {
 		<p
 			data-slot="form-description"
 			id={formDescriptionId}
-			className={cn("text-muted-foreground text-sm", className)}
+			className={cn("text-muted-foreground text-xs sm:text-sm", className)}
 			{...props}
 		/>
 	);
@@ -153,11 +153,11 @@ function FormMessage({ className, ...props }: React.ComponentProps<"p">) {
 	const { error, formMessageId } = useFormField();
 	const body = error ? String(error?.message ?? "") : props.children;
 	return (
-		<div className="min-h-5">
+		<div className="min-h-4 sm:min-h-5">
 			<p
 				data-slot="form-message"
 				id={formMessageId}
-				className={cn("text-destructive text-sm", className)}
+				className={cn("text-destructive text-[11px] sm:text-sm", className)}
 				{...props}
 			>
 				{body}

@@ -353,10 +353,10 @@ function ServiceCard({
                     className={`h-1.5 w-1.5 rounded-full ${
                       status === "completed"
                         ? "bg-emerald-500"
-                        : status === "in_repair"
-                          ? "bg-blue-500"
-                          : status === "diagnosed"
-                            ? "bg-violet-500"
+                        : status === "pending"
+                          ? "bg-amber-500"
+                          : status === "cancelled"
+                            ? "bg-red-500"
                             : "bg-gray-400"
                     }`}
                   />

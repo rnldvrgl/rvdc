@@ -51,7 +51,7 @@ export default function EntitySheet<T>({
         <SheetContent
           side="right"
           className={cn(
-            "w-full sm:w-auto sm:min-w-[480px] sm:max-w-lg px-4 sm:px-6 py-8 overflow-y-auto",
+            "w-full max-w-[100vw] overflow-x-hidden px-4 py-8 sm:w-auto sm:min-w-[480px] sm:max-w-lg sm:px-6 overflow-y-auto",
             className,
           )}
         >

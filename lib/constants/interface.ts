@@ -1089,6 +1089,33 @@ export interface CustomItemTemplatePayload {
   is_active?: boolean
 }
 
+export interface ServicePartTemplateLine {
+  id?: number
+  item?: number | null
+  item_name?: string
+  custom_description?: string
+  custom_price?: string | number | null
+  quantity: string | number
+  sort_order?: number
+}
+
+export interface ServicePartTemplate {
+  id: number
+  name: string
+  description: string
+  lines: ServicePartTemplateLine[]
+  created_by: number | null
+  created_by_name: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ServicePartTemplatePayload {
+  name: string
+  description?: string
+  lines: ServicePartTemplateLine[]
+}
+
 // Technician Assignment
 export interface TechnicianAssignment {
   id: number

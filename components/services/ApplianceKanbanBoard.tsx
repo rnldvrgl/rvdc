@@ -29,11 +29,7 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  Package,
-  Search,
-  Truck,
   User,
-  Wrench,
 } from "lucide-react"
 import { useCallback, useMemo, useState } from "react"
 
@@ -52,14 +48,9 @@ type KanbanColumn = {
 
 // --- Allowed appliance transitions ---
 const APPLIANCE_TRANSITIONS: Record<string, string[]> = {
-  received: ["diagnosed", "in_repair", "completed"],
-  diagnosed: ["in_repair", "completed"],
-  in_repair: ["completed", "ready_for_pickup"],
-  completed: ["ready_for_pickup", "delivered"],
-  ready_for_pickup: ["delivered"],
-  delivered: [],
-  reserved: ["installed"],
-  installed: [],
+  pending: ["completed", "cancelled"],
+  completed: ["pending"],
+  cancelled: ["pending"],
 }
 
 function isTransitionAllowed(from: string, to: string): boolean {
@@ -68,48 +59,25 @@ function isTransitionAllowed(from: string, to: string): boolean {
 
 // --- Columns config ---
 const REPAIR_COLUMNS: KanbanColumn[] = [
-  { id: "received", label: "Received", icon: <Package className="h-4 w-4" /> },
-  { id: "diagnosed", label: "Diagnosed", icon: <Search className="h-4 w-4" /> },
-  {
-    id: "in_repair",
-    label: "In Repair",
-    icon: <Wrench className="h-4 w-4" />,
-  },
+  { id: "pending", label: "Pending", icon: <Clock className="h-4 w-4" /> },
   {
     id: "completed",
     label: "Completed",
     icon: <CheckCircle className="h-4 w-4" />,
   },
   {
-    id: "ready_for_pickup",
-    label: "Ready for Pickup",
-    icon: <Clock className="h-4 w-4" />,
-  },
-  {
-    id: "delivered",
-    label: "Delivered",
-    icon: <Truck className="h-4 w-4" />,
+    id: "cancelled",
+    label: "Cancelled",
+    icon: <AlertCircle className="h-4 w-4" />,
   },
 ]
 
-const INSTALLATION_COLUMNS: KanbanColumn[] = [
-  { id: "reserved", label: "Reserved", icon: <Package className="h-4 w-4" /> },
-  {
-    id: "installed",
-    label: "Installed",
-    icon: <CheckCircle className="h-4 w-4" />,
-  },
-]
+const INSTALLATION_COLUMNS: KanbanColumn[] = REPAIR_COLUMNS
 
 const statusColors: Record<string, string> = {
-  received: "text-slate-500",
-  diagnosed: "text-blue-500",
-  in_repair: "text-amber-500",
+  pending: "text-amber-500",
   completed: "text-success",
-  ready_for_pickup: "text-violet-500",
-  delivered: "text-success",
-  reserved: "text-orange-500",
-  installed: "text-success",
+  cancelled: "text-destructive",
 }
 
 // --- Droppable Column ---
@@ -315,27 +283,10 @@ export default function ApplianceKanbanBoard({
     }),
   )
 
-  // Determine if this is an installation service based on appliance statuses
-  const hasInstallationStatuses = appliances.some(
-    (a) =>
-      (a.status as string) === "reserved" ||
-      (a.status as string) === "installed",
-  )
-  const columns = hasInstallationStatuses
-    ? INSTALLATION_COLUMNS
-    : REPAIR_COLUMNS
+  const columns = INSTALLATION_COLUMNS
 
-  // Only show columns that have appliances or are transition targets
-  const activeStatuses = new Set(appliances.map((a) => a.status as string))
-  const transitionTargets = new Set<string>()
-  appliances.forEach((a) => {
-    const targets = APPLIANCE_TRANSITIONS[a.status] || []
-    targets.forEach((t) => transitionTargets.add(t))
-  })
-
-  const visibleColumns = columns.filter(
-    (c) => activeStatuses.has(c.id) || transitionTargets.has(c.id),
-  )
+  // Keep canonical statuses visible so reopened items always have a lane.
+  const visibleColumns = columns
 
   const groupedAppliances = useMemo(() => {
     const grouped: Record<string, ServiceAppliance[]> = {}
@@ -461,17 +412,9 @@ export default function ApplianceKanbanBoard({
         </motion.div>
       )}
 
-      <div
-        className="flex gap-3 overflow-x-auto pb-2 md:grid md:overflow-visible"
-        style={{
-          gridTemplateColumns: `repeat(${Math.min(visibleColumns.length, 6)}, minmax(0, 1fr))`,
-        }}
-      >
+      <div className="grid gap-3 pb-2 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         {visibleColumns.map((column) => (
-          <div
-            key={column.id}
-            className="min-w-[220px] md:min-w-0"
-          >
+          <div key={column.id}>
             <DroppableColumn
               column={column}
               appliances={groupedAppliances[column.id] || []}

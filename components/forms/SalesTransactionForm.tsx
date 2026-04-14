@@ -342,6 +342,7 @@ export default function SalesTransactionForm({
   const changeDue = totalPayments - grandTotal
 
   const hasInitializedRef = useRef(false)
+  const submitLockRef = useRef(false)
 
   useEffect(() => {
     if (!initialData) return
@@ -399,7 +400,10 @@ export default function SalesTransactionForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, allItemsData, stalls, subStall])
 
-  const handleSubmit = (data: FormValues) => {
+  const handleSubmit = async (data: FormValues) => {
+    if (submitLockRef.current || isSaving) return
+    submitLockRef.current = true
+
     const isFree = data.transaction_type !== "sale"
     const subtotal = data.items.reduce(
       (acc, i) => acc + i.quantity * i.final_price_per_unit,
@@ -434,33 +438,46 @@ export default function SalesTransactionForm({
           })),
     }
 
-    if (initialData) {
-      updateTransaction.mutate(
-        { id: initialData.id, data: payload },
-        { onSuccess: onClose },
-      )
-    } else {
-      addTransaction.mutate(payload, {
-        onSuccess: (data: { data: SalesTransaction }) => {
-          playSuccessSound()
-          const formItems = form.getValues().items
+    try {
+      if (initialData) {
+        await updateTransaction.mutateAsync({ id: initialData.id, data: payload })
+        onClose()
+        return
+      }
 
-          const printPrices = formItems.map((i) => i.print_price_per_unit)
+      const createdResponse = await addTransaction.mutateAsync(payload) as {
+        data?: SalesTransaction | { data: SalesTransaction }
+      }
 
-          const itemsWithPrintPrice = data.data.items.map((item, idx) => ({
-            ...item,
-            final_price_per_unit: item.final_price_per_unit,
-            print_price_per_unit: printPrices[idx],
-          }))
+      const responseData = createdResponse?.data
+      const createdSale =
+        responseData && typeof responseData === "object" && "data" in responseData
+          ? responseData.data
+          : (responseData as SalesTransaction | undefined)
 
-          setCreatedTransaction({
-            ...data.data,
-            items: itemsWithPrintPrice,
-          })
+      if (!createdSale) return
 
-          setShowPrintDialog(true)
-        },
+      playSuccessSound()
+      const formItems = form.getValues().items
+
+      const printPrices = formItems.map((i) => i.print_price_per_unit)
+
+      const itemsWithPrintPrice = createdSale.items.map((item, idx) => ({
+        ...item,
+        final_price_per_unit: item.final_price_per_unit,
+        print_price_per_unit: printPrices[idx],
+      }))
+
+      setCreatedTransaction({
+        ...createdSale,
+        items: itemsWithPrintPrice,
       })
+
+      setShowPrintDialog(true)
+    } catch {
+      // handled by useApiMutation
+    } finally {
+      submitLockRef.current = false
     }
   }
 
@@ -605,7 +622,7 @@ export default function SalesTransactionForm({
             initialData
               ? (e) => {
                   e.preventDefault()
-                  handleSubmit(form.getValues())
+                  void handleSubmit(form.getValues())
                 }
               : form.handleSubmit(handleSubmit)
           }
@@ -1179,7 +1196,7 @@ export default function SalesTransactionForm({
 
           {/* Submit */}
           {!isVoided && (
-            <div className="space-y-1">
+            <div className="sticky bottom-0 z-10 -mx-2 mt-4 space-y-1 border-t bg-background/95 px-2 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
               <div className="grid gap-2">
                 {!initialData && onHeld && watchedItems.length > 0 && (
                   <Tooltip>
@@ -1187,7 +1204,7 @@ export default function SalesTransactionForm({
                       <Button
                         type="button"
                         variant="warning"
-                        className="shrink-0"
+                        className="w-full sm:shrink-0"
                         disabled={isSaving}
                         onClick={() => {
                           const values = form.getValues()
@@ -1248,7 +1265,7 @@ export default function SalesTransactionForm({
                         : "Create Transaction"}
                 </Button>
               </div>
-              <p className="text-[10px] text-muted-foreground text-center">
+              <p className="text-[10px] text-muted-foreground text-center sm:text-xs">
                 Ctrl + Enter
               </p>
             </div>

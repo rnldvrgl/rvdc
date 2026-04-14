@@ -220,14 +220,9 @@ export const statusConfig: Record<
 }
 
 export const applianceStatusLabels: Record<string, string> = {
-  received: "Received",
-  diagnosed: "Diagnosed",
-  in_repair: "In Repair",
+  pending: "Pending",
   completed: "Completed",
-  ready_for_pickup: "Ready",
-  delivered: "Delivered",
-  reserved: "Reserved",
-  installed: "Installed",
+  cancelled: "Cancelled",
 }
 
 // --- Column definition ---

@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 
 import {
@@ -74,7 +74,7 @@ function Section({
         <div className="flex items-center justify-center size-9 rounded-lg bg-primary/10 text-primary">
           <Icon className="size-5" />
         </div>
-        <h3 className="text-base font-semibold">{title}</h3>
+        <h3 className="text-sm font-semibold sm:text-base">{title}</h3>
       </div>
       <Separator className="bg-border/60" />
       {children}
@@ -90,6 +90,7 @@ interface Props {
 }
 
 export default function ChequeCollectionForm({ initialData, onClose }: Props) {
+  const submitLockRef = useRef(false)
   const [sameAsClient, setSameAsClient] = useState(true)
   const { addChequeCollection, updateChequeCollection } =
     useChequeCollectionMutations()
@@ -160,20 +161,26 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
     }
   }, [selectedStatus, form])
 
-  const onSubmit = (data: ChequeCollectionPayload) => {
+  const onSubmit = async (data: ChequeCollectionPayload) => {
+    if (submitLockRef.current || mutationLoading) return
+    submitLockRef.current = true
+
     const payload = {
       ...data,
       cheque_date: new Date(formatBackDate(data.cheque_date)),
       date_collected: data.date_collected,
     }
 
-    if (isEditing) {
-      updateChequeCollection.mutate(
-        { id: initialData!.id, data: payload },
-        { onSuccess: onClose },
-      )
-    } else {
-      addChequeCollection.mutate(payload, { onSuccess: onClose })
+    try {
+      if (isEditing) {
+        await updateChequeCollection.mutateAsync({ id: initialData!.id, data: payload })
+      } else {
+        await addChequeCollection.mutateAsync(payload)
+      }
+
+      onClose()
+    } finally {
+      submitLockRef.current = false
     }
   }
 
@@ -551,28 +558,30 @@ export default function ChequeCollectionForm({ initialData, onClose }: Props) {
         </Section>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={mutationLoading}
-            className="min-w-[100px]"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={mutationLoading}
-            className="min-w-[140px]"
-          >
-            {mutationLoading ? (
-              <Loader2 className="size-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="size-4 mr-2" />
-            )}
-            {isEditing ? "Update Cheque" : "Save Cheque"}
-          </Button>
+        <div className="sticky bottom-0 z-10 -mx-1 mt-4 border-t bg-background/95 px-1 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={mutationLoading}
+              className="w-full sm:min-w-[100px] sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={mutationLoading}
+              className="w-full sm:min-w-[140px] sm:w-auto"
+            >
+              {mutationLoading ? (
+                <Loader2 className="size-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="size-4 mr-2" />
+              )}
+              {mutationLoading ? "Saving..." : isEditing ? "Update Cheque" : "Save Cheque"}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

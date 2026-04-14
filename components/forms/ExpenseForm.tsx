@@ -38,6 +38,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
 import { Calendar as CalendarIcon, Loader2 } from "lucide-react"
 import { useForm } from "react-hook-form"
+import { useRef } from "react"
 import z from "zod"
 
 interface ExpenseFormProps {
@@ -46,6 +47,7 @@ interface ExpenseFormProps {
 }
 
 export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
+  const submitLockRef = useRef(false)
   const { role } = useCurrentUser()
 
   const formSchema = z.object({
@@ -120,7 +122,10 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
     return "partial"
   }
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
+    if (submitLockRef.current || isLoading) return
+    submitLockRef.current = true
+
     const paidAmount = data.paid_amount ?? 0
     const paymentStatus = calculatePaymentStatus(paidAmount, data.total_price)
 
@@ -137,13 +142,16 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
       is_reimbursable: data.is_reimbursable ?? false,
     }
 
-    if (expense?.id) {
-      updateExpense.mutate(
-        { id: expense.id, data: payload },
-        { onSuccess: onClose },
-      )
-    } else {
-      addExpense.mutate(payload, { onSuccess: onClose })
+    try {
+      if (expense?.id) {
+        await updateExpense.mutateAsync({ id: expense.id, data: payload })
+      } else {
+        await addExpense.mutateAsync(payload)
+      }
+
+      onClose()
+    } finally {
+      submitLockRef.current = false
     }
   }
 
@@ -455,7 +463,7 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                 <div className="space-y-0.5">
-                  <FormLabel className="text-base">
+                  <FormLabel className="text-sm sm:text-base">
                     Reimbursable Expense
                   </FormLabel>
                   <FormDescription>
@@ -476,22 +484,26 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 justify-end pt-4 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={isLoading}
-          >
-            {isLoading && <Loader2 className="size-4 mr-2 animate-spin" />}
-            {expense ? "Update Expense" : "Create Expense"}
-          </Button>
+        <div className="sticky bottom-0 z-10 -mx-1 mt-4 border-t bg-background/95 px-1 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full sm:w-auto sm:min-w-36"
+            >
+              {isLoading && <Loader2 className="size-4 mr-2 animate-spin" />}
+              {isLoading ? "Saving..." : expense ? "Update Expense" : "Create Expense"}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>

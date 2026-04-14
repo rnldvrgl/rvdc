@@ -110,10 +110,7 @@ interface ServiceDetailProps {
 
 const applianceStatusLabels: Record<string, string> = {
   pending: "Pending",
-  in_repair: "In Repair",
   completed: "Completed",
-  ready_for_pickup: "Ready for Pickup",
-  delivered: "Delivered",
   cancelled: "Cancelled",
 }
 
@@ -272,7 +269,7 @@ export default function ServiceDetail({
     // Validate appliances are ready
     if (hasUnfinishedAppliances) {
       toast.error(
-        "Cannot complete service. Some appliances are not finished yet. Please update appliance status to 'Completed' or 'Ready for Pickup' first.",
+        "Cannot complete service. Some appliances are not finished yet. Please update appliance status to 'Completed' or 'Cancelled' first.",
       )
       setCompleteDialogOpen(false)
       return
@@ -690,7 +687,7 @@ export default function ServiceDetail({
         </div>
 
         {/* Action Buttons — icon-only on small screens */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center justify-start gap-1.5 sm:justify-end">
           {!isCompleted && onEdit && canManage && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -832,56 +829,56 @@ export default function ServiceDetail({
         defaultValue="overview"
         className="w-full"
       >
-        <TabsList className="grid w-full grid-cols-4 h-9">
-          <TabsTrigger
-            value="overview"
-            className="text-xs sm:text-sm gap-1.5"
-          >
-            <Info className="h-3.5 w-3.5 hidden sm:block" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger
-            value="appliances"
-            className="text-xs sm:text-sm gap-1.5"
-          >
-            <Package className="h-3.5 w-3.5 hidden sm:block" />
-            <span className="hidden sm:inline">
-              {service.service_type === "installation" ? "Units" : "Appliances"}
-            </span>
-            <span className="inline sm:hidden">
-              {service.service_type === "installation" ? "Units" : "Items"}
-            </span>
-            {currentAppliances.length > 0 && (
-              <Badge
-                variant="secondary"
-                className="h-5 min-w-5 px-1 text-[10px] rounded-full"
-              >
-                {currentAppliances.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="payments"
-            className="text-xs sm:text-sm gap-1.5"
-          >
-            <Wallet className="h-3.5 w-3.5 hidden sm:block" />
-            Payments
-            {service.payments && service.payments.length > 0 && (
-              <Badge
-                variant="secondary"
-                className="h-5 min-w-5 px-1 text-[10px] rounded-full"
-              >
-                {service.payments.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="schedule"
-            className="text-xs sm:text-sm gap-1.5"
-          >
-            <Calendar className="h-3.5 w-3.5 hidden sm:block" />
-            Schedule
-          </TabsTrigger>
+        <TabsList className="group-data-[orientation=horizontal]/tabs:h-auto! mb-1 grid w-full grid-cols-2 items-stretch gap-1 p-1 max-[420px]:grid-cols-1 sm:grid-cols-4">
+            <TabsTrigger
+              value="overview"
+              className="gap-1.5 px-2 py-1.5 text-xs sm:text-sm"
+            >
+              <Info className="hidden h-3.5 w-3.5 sm:block" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="appliances"
+              className="gap-1.5 px-2 py-1.5 text-xs sm:text-sm"
+            >
+              <Package className="hidden h-3.5 w-3.5 sm:block" />
+              <span className="hidden sm:inline">
+                {service.service_type === "installation" ? "Units" : "Appliances"}
+              </span>
+              <span className="inline sm:hidden">
+                {service.service_type === "installation" ? "Units" : "Items"}
+              </span>
+              {currentAppliances.length > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="h-5 min-w-5 px-1 text-[10px] rounded-full"
+                >
+                  {currentAppliances.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="payments"
+              className="gap-1.5 px-2 py-1.5 text-xs sm:text-sm"
+            >
+              <Wallet className="hidden h-3.5 w-3.5 sm:block" />
+              Payments
+              {service.payments && service.payments.length > 0 && (
+                <Badge
+                  variant="secondary"
+                  className="h-5 min-w-5 px-1 text-[10px] rounded-full"
+                >
+                  {service.payments.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="schedule"
+              className="gap-1.5 px-2 py-1.5 text-xs sm:text-sm"
+            >
+              <Calendar className="hidden h-3.5 w-3.5 sm:block" />
+              Schedule
+            </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -918,7 +915,7 @@ export default function ServiceDetail({
               <Separator />
 
               {/* Details grid */}
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
                 {/* Client */}
                 <div className="col-span-2 sm:col-span-1">
                   <p className="text-xs text-muted-foreground mb-0.5 flex items-center gap-1">
@@ -2473,18 +2470,17 @@ export default function ServiceDetail({
                   </div>
                 </div>
                 {/* Progress bar */}
-                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${
-                      paidPercent >= 100
-                        ? "bg-green-500"
-                        : paidPercent > 0
-                          ? "bg-primary"
-                          : "bg-muted"
-                    }`}
-                    style={{ width: `${paidPercent}%` }}
-                  />
-                </div>
+                <progress
+                  max={100}
+                  value={Math.max(0, Math.min(100, paidPercent))}
+                  className={`h-1.5 w-full overflow-hidden rounded-full bg-muted [&::-webkit-progress-bar]:bg-muted ${
+                    paidPercent >= 100
+                      ? "[&::-webkit-progress-value]:bg-green-500 [&::-moz-progress-bar]:bg-green-500"
+                      : paidPercent > 0
+                        ? "[&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary"
+                        : "[&::-webkit-progress-value]:bg-muted [&::-moz-progress-bar]:bg-muted"
+                  }`}
+                />
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{Math.round(paidPercent)}% paid</span>
                   <Badge
@@ -2988,7 +2984,7 @@ export default function ServiceDetail({
           {/* Vertical timeline */}
           <div className="relative ml-2">
             {/* Timeline line */}
-            <div className="absolute left-[8px] top-2 bottom-2 w-px bg-border/50" />
+            <div className="absolute left-2 top-2 bottom-2 w-px bg-border/50" />
 
             {/* Created */}
             <div className="flex gap-3 pb-3">

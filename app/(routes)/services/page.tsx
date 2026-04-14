@@ -251,7 +251,7 @@ export default function ServicesPage() {
 
       {/* Create/Edit Sheet */}
       <EntitySheet
-        className="sm:min-w-2xl md:min-w-3xl xl:min-w-4xl"
+        className="w-full sm:w-[92vw] lg:w-[82vw] xl:w-[74vw] 2xl:w-[68vw] sm:max-w-[1400px]"
         open={entityState.open}
         onClose={closeEntity}
         title={entityState.entity ? "Edit Service" : "Create New Service"}
@@ -282,7 +282,7 @@ export default function ServicesPage() {
       {state.detailsOpen && state.selectedService && (
         <EntitySheet
           withCloseConfirmation
-          className="sm:min-w-4xl md:min-w-5xl xl:min-w-6xl"
+          className="w-full sm:w-[95vw] lg:w-[90vw] xl:w-[84vw] 2xl:w-[78vw] sm:max-w-[1700px]"
           open={state.detailsOpen}
           onClose={state.closeDetails}
           title={`Service #${String(state.selectedService.id).padStart(4, "0")}`}
