@@ -19,25 +19,25 @@ export async function POST(req: Request) {
     })
   }
 
-  // Access cookie — 24h when persistent, session-only when not remembering
+  // Access cookie — 30 days when persistent, session-only when not remembering
   if (access) {
     response.cookies.set("access", access, {
       httpOnly: true,
       secure: isProduction,
       path: "/",
       sameSite: "lax",
-      ...(persist ? { maxAge: 60 * 60 * 24 } : {}), // 24h or session cookie
+      ...(persist ? { maxAge: 60 * 60 * 24 * 30 } : {}), // 30 days or session cookie
     })
   }
 
-  // Refresh cookie — 30 days when persistent, session-only when not remembering
+  // Refresh cookie — 60 days when persistent, session-only when not remembering
   if (refresh) {
     response.cookies.set("refresh", refresh, {
       httpOnly: true,
       secure: isProduction,
       path: "/",
       sameSite: "lax",
-      ...(persist ? { maxAge: 60 * 60 * 24 * 30 } : {}), // 30 days or session cookie
+      ...(persist ? { maxAge: 60 * 60 * 24 * 60 } : {}), // 60 days or session cookie
     })
   }
 
