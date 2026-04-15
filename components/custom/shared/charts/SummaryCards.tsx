@@ -42,6 +42,10 @@ type SummaryGroup = {
   cards: CardConfig[]
 }
 
+function isCardConfig(card: CardConfig | null): card is CardConfig {
+  return card !== null
+}
+
 /** Calculate percentage change, returning 0 when previous is 0 */
 function pctChange(current: number, previous: number): number {
   if (previous === 0) return current > 0 ? 100 : 0
@@ -168,7 +172,7 @@ function getSummaryGroups(
               },
             )
           : null,
-      ].filter(Boolean),
+      ].filter(isCardConfig),
     },
     {
       title: "Business Growth",
