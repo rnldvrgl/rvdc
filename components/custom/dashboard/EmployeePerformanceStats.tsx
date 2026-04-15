@@ -305,11 +305,42 @@ export function EmployeePerformanceStats() {
                     </div>
                   </div>
                   <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-purple-500 rounded-full transition-all"
-                      style={{ width: `${(type.count / maxCount) * 100}%` }}
-                    />
+                    <svg
+                      viewBox="0 0 100 6"
+                      className="h-1.5 w-full"
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      <rect
+                        x="0"
+                        y="0"
+                        width="100"
+                        height="6"
+                        rx="3"
+                        fill="currentColor"
+                        className="text-muted"
+                      />
+                      <rect
+                        x="0"
+                        y="0"
+                        width={`${(type.count / maxCount) * 100}`}
+                        height="6"
+                        rx="3"
+                        fill="currentColor"
+                        className="text-purple-500"
+                      />
+                    </svg>
                   </div>
+                  {type.top_technician && (
+                    <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                      <span className="truncate">
+                        Top tech: {type.top_technician.employee_name}
+                      </span>
+                      <span className="shrink-0 tabular-nums">
+                        {type.top_technician.completed_count} completed
+                      </span>
+                    </div>
+                  )}
                 </div>
               )
             })

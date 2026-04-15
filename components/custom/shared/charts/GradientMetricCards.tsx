@@ -11,13 +11,19 @@ import {
   AlertCircle,
   CheckCircle2,
   Clock,
+  DollarSign,
   LucideIcon,
   Receipt,
+  TrendingUp,
   UserPlus,
 } from "lucide-react"
 import Link from "next/link"
 import { type ReactNode, useMemo } from "react"
 import { FadeUpItem, StaggerGrid } from "./MotionWrappers"
+
+function isMetricCard(card: MetricCard | null): card is MetricCard {
+  return card !== null
+}
 
 interface MetricCard {
   title: string
@@ -116,6 +122,36 @@ function buildMetricCards(
       },
     },
     {
+      title: "Payment Collection",
+      value: `${data.payment_collection_rate}%`,
+      icon: DollarSign,
+      href: "/receivables/payment-collection",
+      trend: trend(data.payment_collection_rate, prev?.payment_collection_rate),
+      accent: {
+        iconBg: "bg-emerald-100 dark:bg-emerald-950/50",
+        iconColor: "text-success",
+        border: "border-emerald-300 dark:border-emerald-700",
+        ring: "ring-emerald-200/50 dark:ring-emerald-800/30",
+      },
+    },
+    data.top_service_technician
+      ? {
+          title: "Top Service Tech",
+          value: data.top_service_technician.name,
+          icon: TrendingUp,
+          trend: {
+            value: data.top_service_technician.services_completed,
+            label: "services completed",
+          },
+          accent: {
+            iconBg: "bg-slate-100 dark:bg-slate-900/60",
+            iconColor: "text-foreground",
+            border: "border-slate-300 dark:border-slate-700",
+            ring: "ring-slate-200/50 dark:ring-slate-800/30",
+          },
+        }
+      : null,
+    {
       title: "New Clients",
       value: formatNumber(data.new_clients),
       icon: UserPlus,
@@ -152,7 +188,7 @@ export default function GradientMetricCards({
 
   const cards = useMemo(() => {
     if (!data) return []
-    return buildMetricCards(data, prevData)
+    return buildMetricCards(data, prevData).filter(isMetricCard)
   }, [data, prevData])
 
   if (isLoading) {

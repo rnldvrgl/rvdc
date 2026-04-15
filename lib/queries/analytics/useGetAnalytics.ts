@@ -91,6 +91,11 @@ export interface EmployeePerformanceData {
     service_type: string
     count: number
     revenue: number
+    top_technician: {
+      employee_id: number
+      employee_name: string
+      completed_count: number
+    } | null
   }[]
   top_technicians: {
     employee_id: number
