@@ -21,10 +21,6 @@ import Link from "next/link"
 import { type ReactNode, useMemo } from "react"
 import { FadeUpItem, StaggerGrid } from "./MotionWrappers"
 
-function isMetricCard(card: MetricCard | null): card is MetricCard {
-  return card !== null
-}
-
 interface MetricCard {
   title: string
   value: string
@@ -134,23 +130,25 @@ function buildMetricCards(
         ring: "ring-emerald-200/50 dark:ring-emerald-800/30",
       },
     },
-    data.top_service_technician
-      ? {
-          title: "Top Service Tech",
-          value: data.top_service_technician.name,
-          icon: TrendingUp,
-          trend: {
-            value: data.top_service_technician.services_completed,
-            label: "services completed",
+    ...(data.top_service_technician
+      ? [
+          {
+            title: "Top Service Tech",
+            value: data.top_service_technician.name,
+            icon: TrendingUp,
+            trend: {
+              value: data.top_service_technician.services_completed,
+              label: "services completed",
+            },
+            accent: {
+              iconBg: "bg-slate-100 dark:bg-slate-900/60",
+              iconColor: "text-foreground",
+              border: "border-slate-300 dark:border-slate-700",
+              ring: "ring-slate-200/50 dark:ring-slate-800/30",
+            },
           },
-          accent: {
-            iconBg: "bg-slate-100 dark:bg-slate-900/60",
-            iconColor: "text-foreground",
-            border: "border-slate-300 dark:border-slate-700",
-            ring: "ring-slate-200/50 dark:ring-slate-800/30",
-          },
-        }
-      : null,
+        ]
+      : []),
     {
       title: "New Clients",
       value: formatNumber(data.new_clients),
@@ -188,7 +186,7 @@ export default function GradientMetricCards({
 
   const cards = useMemo(() => {
     if (!data) return []
-    return buildMetricCards(data, prevData).filter(isMetricCard)
+    return buildMetricCards(data, prevData)
   }, [data, prevData])
 
   if (isLoading) {
