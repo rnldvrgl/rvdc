@@ -10,6 +10,13 @@ import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCale
 import { DataTable } from "@/components/custom/table/DataTable"
 import AttendanceForm from "@/components/forms/AttendanceForm"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { DailyAttendance } from "@/lib/constants/types"
@@ -29,6 +36,7 @@ import {
     ChevronDown,
     ChevronUp,
     ClipboardList,
+    Filter,
     Plus,
     Users,
     X,
@@ -98,6 +106,7 @@ export default function AttendanceRecordsPage() {
     filter: {
       employee_id: filter?.employee_id,
       status: filter?.status,
+      attendance_type: filter?.attendance_type,
     },
   })
 
@@ -184,6 +193,16 @@ export default function AttendanceRecordsPage() {
   const openCreateSheet = (seed?: AttendanceDraftSeed) => {
     setDraftSeed(seed || {})
     setAddOpen(true)
+  }
+
+  const updateFilter = (key: string, value?: string) => {
+    const nextFilter = { ...filter }
+    if (!value || value === "all") {
+      delete nextFilter[key]
+    } else {
+      nextFilter[key] = value
+    }
+    push({ page: 1, limit, search, ordering, filter: nextFilter })
   }
 
   const selectedDate = filter?.date
@@ -281,33 +300,109 @@ export default function AttendanceRecordsPage() {
         />
 
         {/* ── Calendar Toggle + Date Chip ── */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowCalendar((v) => !v)}
-            className="gap-2 text-xs"
-          >
-            <CalendarDays className="h-3.5 w-3.5" />
-            Calendar
-            {showCalendar ? (
-              <ChevronUp className="h-3 w-3" />
-            ) : (
-              <ChevronDown className="h-3 w-3" />
-            )}
-          </Button>
-
-          {selectedDate && (
+        <div className="rounded-lg border bg-muted/20 px-3 py-2.5 space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
-              variant="secondary"
+              variant="outline"
               size="sm"
-              onClick={clearSelectedDate}
-              className="gap-1.5 text-xs h-7"
+              onClick={() => setShowCalendar((v) => !v)}
+              className="gap-2 text-xs"
             >
-              {String(selectedDate)}
-              <X className="h-3 w-3" />
+              <CalendarDays className="h-3.5 w-3.5" />
+              Calendar
+              {showCalendar ? (
+                <ChevronUp className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
             </Button>
-          )}
+
+            {selectedDate && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={clearSelectedDate}
+                className="gap-1.5 text-xs h-7"
+              >
+                {String(selectedDate)}
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                push({ page: 1, limit, search, ordering, filter: {} })
+              }
+              className="gap-1.5 text-xs"
+            >
+              <Filter className="h-3.5 w-3.5" />
+              Reset filters
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+            <Select
+              value={String(filter?.employee_id || "all")}
+              onValueChange={(value) => updateFilter("employee_id", value)}
+            >
+              <SelectTrigger className="h-8 text-xs bg-background">
+                <SelectValue placeholder="All employees" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All employees</SelectItem>
+                {employeeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={String(filter?.status || "all")}
+              onValueChange={(value) => updateFilter("status", value)}
+            >
+              <SelectTrigger className="h-8 text-xs bg-background">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="APPROVED">Approved</SelectItem>
+                <SelectItem value="REJECTED">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={String(filter?.attendance_type || "all")}
+              onValueChange={(value) => updateFilter("attendance_type", value)}
+            >
+              <SelectTrigger className="h-8 text-xs bg-background">
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="FULL_DAY">Full Day</SelectItem>
+                <SelectItem value="HALF_DAY">Half Day</SelectItem>
+                <SelectItem value="PARTIAL">Partial</SelectItem>
+                <SelectItem value="ABSENT">Absent</SelectItem>
+                <SelectItem value="LEAVE">Leave</SelectItem>
+                <SelectItem value="SHOP_CLOSED">Shop Closed</SelectItem>
+                <SelectItem value="INVALID">Invalid</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => setShowCalendar(true)}
+            >
+              Pick date from calendar
+            </Button>
+          </div>
         </div>
 
         {/* ── Collapsible Calendar ── */}
