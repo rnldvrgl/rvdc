@@ -358,6 +358,7 @@ function ChatPanel({
 
 function MessageBubble({ message }: { message: FBMessage }) {
   const isOutgoing = message.direction === "out"
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
   const time = new Date(message.timestamp).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
@@ -380,13 +381,18 @@ function MessageBubble({ message }: { message: FBMessage }) {
           <div className="mt-1 space-y-1">
             {message.attachments.map((att, i) =>
               att.type === "image" ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <button
                   key={i}
-                  src={att.url}
-                  alt="attachment"
-                  className="rounded-lg max-w-full max-h-64"
-                />
+                  type="button"
+                  onClick={() => setPreviewImageUrl(att.url)}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={att.url}
+                    alt="attachment"
+                    className="rounded-lg max-w-full max-h-64 cursor-zoom-in"
+                  />
+                </button>
               ) : (
                 <a
                   key={i}
@@ -413,6 +419,24 @@ function MessageBubble({ message }: { message: FBMessage }) {
           )}
         </div>
       </div>
+
+      <Dialog
+        open={Boolean(previewImageUrl)}
+        onOpenChange={(open) => !open && setPreviewImageUrl(null)}
+      >
+        <DialogContent className="max-w-4xl p-2">
+          {previewImageUrl && (
+            <div className="max-h-[80vh] overflow-auto rounded-md">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewImageUrl}
+                alt="Chat attachment"
+                className="w-full h-auto object-contain rounded-md"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

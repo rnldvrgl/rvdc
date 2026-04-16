@@ -3,6 +3,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { type ChatMessage, useChat } from "@/lib/hooks/useChat"
@@ -33,6 +34,45 @@ const ROLE_COLORS: Record<string, string> = {
 }
 
 const REACTION_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"]
+const CHAT_BUBBLE_SIZE = 56
+const CHAT_BUBBLE_MARGIN = 16
+const CHAT_BUBBLE_STORAGE_KEY = "rvdc-floating-chat-bubble-position"
+
+type BubblePosition = { x: number; y: number }
+type ViewportSize = { width: number; height: number }
+
+function clampBubblePosition(position: BubblePosition, viewport: ViewportSize) {
+  const maxX = Math.max(CHAT_BUBBLE_MARGIN, viewport.width - CHAT_BUBBLE_SIZE - CHAT_BUBBLE_MARGIN)
+  const maxY = Math.max(CHAT_BUBBLE_MARGIN, viewport.height - CHAT_BUBBLE_SIZE - CHAT_BUBBLE_MARGIN)
+  return {
+    x: Math.min(Math.max(position.x, CHAT_BUBBLE_MARGIN), maxX),
+    y: Math.min(Math.max(position.y, CHAT_BUBBLE_MARGIN), maxY),
+  }
+}
+
+function getDefaultBubblePosition(viewport: ViewportSize): BubblePosition {
+  return clampBubblePosition(
+    {
+      x: viewport.width - CHAT_BUBBLE_SIZE - CHAT_BUBBLE_MARGIN,
+      y: viewport.height - CHAT_BUBBLE_SIZE - 24,
+    },
+    viewport,
+  )
+}
+
+function snapBubblePosition(position: BubblePosition, viewport: ViewportSize) {
+  const clamped = clampBubblePosition(position, viewport)
+  const centerX = clamped.x + CHAT_BUBBLE_SIZE / 2
+  const midpoint = viewport.width / 2
+  const snappedX =
+    centerX < midpoint
+      ? CHAT_BUBBLE_MARGIN
+      : Math.max(
+          CHAT_BUBBLE_MARGIN,
+          viewport.width - CHAT_BUBBLE_SIZE - CHAT_BUBBLE_MARGIN,
+        )
+  return clampBubblePosition({ x: snappedX, y: clamped.y }, viewport)
+}
 
 // ── Message status check icons (Messenger-style) ────────────────────
 
@@ -186,14 +226,103 @@ function formatLastSeen(ts: number | null | undefined): string {
 function ChatBubble({
   onClick,
   totalUnread,
+  position,
+  viewport,
+  onPositionChange,
 }: {
   onClick: () => void
   totalUnread: number
+  position: BubblePosition
+  viewport: ViewportSize
+  onPositionChange: (next: BubblePosition) => void
 }) {
+  const dragStateRef = useRef<{
+    pointerId: number
+    startX: number
+    startY: number
+    startPosition: BubblePosition
+    dragged: boolean
+  } | null>(null)
+
+  const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startPosition: position,
+      dragged: false,
+    }
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const dragState = dragStateRef.current
+    if (!dragState || dragState.pointerId !== event.pointerId) return
+
+    const deltaX = event.clientX - dragState.startX
+    const deltaY = event.clientY - dragState.startY
+
+    if (!dragState.dragged && (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4)) {
+      dragState.dragged = true
+    }
+    if (!dragState.dragged) return
+
+    onPositionChange(
+      clampBubblePosition(
+        {
+          x: dragState.startPosition.x + deltaX,
+          y: dragState.startPosition.y + deltaY,
+        },
+        viewport,
+      ),
+    )
+  }
+
+  const handlePointerUp = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const dragState = dragStateRef.current
+    if (!dragState || dragState.pointerId !== event.pointerId) return
+
+    if (!dragState.dragged) {
+      onClick()
+    } else {
+      onPositionChange(snapBubblePosition(position, viewport))
+    }
+
+    dragStateRef.current = null
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    } catch {
+      // Ignore pointer release issues.
+    }
+  }
+
+  const handlePointerCancel = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const dragState = dragStateRef.current
+    if (!dragState || dragState.pointerId !== event.pointerId) return
+    dragStateRef.current = null
+    try {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    } catch {
+      // Ignore pointer release issues.
+    }
+  }
+
   return (
     <motion.button
-      onClick={onClick}
-      className="fixed bottom-6 right-4 sm:right-6 z-50 size-12 sm:size-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center"
+      type="button"
+      className="fixed z-50 size-12 sm:size-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center touch-none cursor-grab active:cursor-grabbing"
+      style={{ left: position.x, top: position.y }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          onClick()
+        }
+      }}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       initial={{ scale: 0, opacity: 0 }}
@@ -385,6 +514,7 @@ function MessageThread({
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(
     null,
   )
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null)
   // Track which message has actions visible (for mobile tap) and position
   const [activeActions, setActiveActions] = useState<{
@@ -694,12 +824,18 @@ function MessageThread({
                   }
                 >
                   {msg.image_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={msg.image_url}
-                      alt="image"
-                      className="max-w-[200px] rounded-lg mb-1 object-contain"
-                    />
+                    <button
+                      type="button"
+                      className="mb-1"
+                      onClick={() => setPreviewImageUrl(msg.image_url || null)}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={msg.image_url}
+                        alt="image"
+                        className="max-w-[200px] rounded-lg object-contain cursor-zoom-in"
+                      />
+                    </button>
                   )}
                   {msg.body && (
                     <p className="wrap-break-word whitespace-pre-wrap">
@@ -940,6 +1076,24 @@ function MessageThread({
           </Button>
         </div>
       </div>
+
+      <Dialog
+        open={Boolean(previewImageUrl)}
+        onOpenChange={(open) => !open && setPreviewImageUrl(null)}
+      >
+        <DialogContent className="max-w-4xl p-2">
+          {previewImageUrl && (
+            <div className="max-h-[80vh] overflow-auto rounded-md">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previewImageUrl}
+                alt="Chat attachment"
+                className="w-full h-auto object-contain rounded-md"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -954,7 +1108,60 @@ export default function FloatingChat() {
   const chatWindowRef = useRef<HTMLDivElement>(null)
   // Prevent SSR/client hydration mismatch (Zustand reads localStorage on client)
   const [mounted, setMounted] = useState(false)
+  const [viewport, setViewport] = useState<ViewportSize>({ width: 0, height: 0 })
+  const [bubblePosition, setBubblePosition] = useState<BubblePosition | null>(null)
   useEffect(() => setMounted(true), [])
+
+  useEffect(() => {
+    if (!mounted) return
+
+    const currentViewport = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    }
+    setViewport(currentViewport)
+
+    const savedRaw = window.localStorage.getItem(CHAT_BUBBLE_STORAGE_KEY)
+    if (savedRaw) {
+      try {
+        const parsed = JSON.parse(savedRaw) as BubblePosition
+        if (typeof parsed?.x === "number" && typeof parsed?.y === "number") {
+          setBubblePosition(clampBubblePosition(parsed, currentViewport))
+          return
+        }
+      } catch {
+        // Ignore malformed saved data and use default.
+      }
+    }
+
+    setBubblePosition(getDefaultBubblePosition(currentViewport))
+  }, [mounted])
+
+  useEffect(() => {
+    if (!mounted) return
+
+    const handleResize = () => {
+      const nextViewport = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      }
+      setViewport(nextViewport)
+      setBubblePosition((prev) =>
+        clampBubblePosition(prev || getDefaultBubblePosition(nextViewport), nextViewport),
+      )
+    }
+
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [mounted])
+
+  useEffect(() => {
+    if (!mounted || !bubblePosition) return
+    window.localStorage.setItem(
+      CHAT_BUBBLE_STORAGE_KEY,
+      JSON.stringify(bubblePosition),
+    )
+  }, [mounted, bubblePosition])
 
   // Listen for push notification open-chat requests
   const { openWithUserId, clearOpenChat } = useChatStore()
@@ -1126,6 +1333,10 @@ export default function FloatingChat() {
 
   if (!mounted || !canChat) return null
 
+  const dockLeft = bubblePosition
+    ? bubblePosition.x < Math.max(320, viewport.width / 2)
+    : false
+
   return (
     <>
       {/* Chat window */}
@@ -1137,7 +1348,10 @@ export default function FloatingChat() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="fixed z-50 inset-0 sm:inset-auto sm:bottom-20 sm:right-6 sm:w-80 sm:h-[min(480px,calc(100dvh-6rem))] sm:rounded-2xl sm:border border-border bg-card sm:shadow-2xl overflow-hidden flex flex-col"
+            className={cn(
+              "fixed z-50 inset-0 sm:inset-auto sm:bottom-20 sm:w-80 sm:h-[min(480px,calc(100dvh-6rem))] sm:rounded-2xl sm:border border-border bg-card sm:shadow-2xl overflow-hidden flex flex-col",
+              dockLeft ? "sm:left-6" : "sm:right-6",
+            )}
           >
             {activeChat && activePartner ? (
               <MessageThread
@@ -1177,10 +1391,15 @@ export default function FloatingChat() {
 
       {/* Floating bubble — only show when chat window is closed */}
       {!isOpen && (
-        <ChatBubble
-          onClick={handleToggle}
-          totalUnread={totalUnread}
-        />
+        bubblePosition && (
+          <ChatBubble
+            onClick={handleToggle}
+            totalUnread={totalUnread}
+            position={bubblePosition}
+            viewport={viewport}
+            onPositionChange={setBubblePosition}
+          />
+        )
       )}
     </>
   )
