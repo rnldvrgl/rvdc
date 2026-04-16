@@ -243,9 +243,43 @@ function ChatBubble({
     startPosition: BubblePosition
     dragged: boolean
   } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [isSnapping, setIsSnapping] = useState(false)
+  const [isIdle, setIsIdle] = useState(false)
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const snapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clearIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current)
+      idleTimerRef.current = null
+    }
+  }, [])
+
+  const resetIdleState = useCallback(() => {
+    setIsIdle(false)
+    clearIdleTimer()
+    idleTimerRef.current = setTimeout(() => {
+      setIsIdle(true)
+    }, 3000)
+  }, [clearIdleTimer])
+
+  useEffect(() => {
+    resetIdleState()
+    return () => {
+      clearIdleTimer()
+      if (snapTimerRef.current) {
+        clearTimeout(snapTimerRef.current)
+        snapTimerRef.current = null
+      }
+    }
+  }, [clearIdleTimer, resetIdleState])
 
   const handlePointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
     if (event.pointerType === "mouse" && event.button !== 0) return
+    setIsDragging(true)
+    setIsSnapping(false)
+    resetIdleState()
     dragStateRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -286,10 +320,19 @@ function ChatBubble({
     if (!dragState.dragged) {
       onClick()
     } else {
+      setIsSnapping(true)
       onPositionChange(snapBubblePosition(position, viewport))
+      if (snapTimerRef.current) {
+        clearTimeout(snapTimerRef.current)
+      }
+      snapTimerRef.current = setTimeout(() => {
+        setIsSnapping(false)
+      }, 320)
     }
 
     dragStateRef.current = null
+    setIsDragging(false)
+    resetIdleState()
     try {
       event.currentTarget.releasePointerCapture(event.pointerId)
     } catch {
@@ -301,6 +344,9 @@ function ChatBubble({
     const dragState = dragStateRef.current
     if (!dragState || dragState.pointerId !== event.pointerId) return
     dragStateRef.current = null
+    setIsDragging(false)
+    setIsSnapping(false)
+    resetIdleState()
     try {
       event.currentTarget.releasePointerCapture(event.pointerId)
     } catch {
@@ -311,12 +357,19 @@ function ChatBubble({
   return (
     <motion.button
       type="button"
-      className="fixed z-50 size-12 sm:size-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center touch-none cursor-grab active:cursor-grabbing"
+      className={cn(
+        "fixed z-50 size-12 sm:size-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl flex items-center justify-center touch-none cursor-grab active:cursor-grabbing transition-opacity duration-300",
+        isSnapping && !isDragging ? "transition-[left,top] duration-300 ease-out" : "transition-opacity",
+      )}
       style={{ left: position.x, top: position.y }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerCancel}
+      onMouseEnter={() => setIsIdle(false)}
+      onMouseLeave={resetIdleState}
+      onFocus={resetIdleState}
+      onBlur={resetIdleState}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault()
@@ -326,8 +379,13 @@ function ChatBubble({
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.95 }}
       initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      animate={{ scale: 1, opacity: isIdle && !isDragging ? 0.9 : 1 }}
+      transition={{
+        type: "spring",
+        stiffness: 260,
+        damping: 20,
+        opacity: { duration: 0.25 },
+      }}
     >
       <MessageCircle className="size-5 sm:size-6" />
       {totalUnread > 0 && (
