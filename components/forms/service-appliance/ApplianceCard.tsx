@@ -568,6 +568,11 @@ export function ApplianceCard({
               entityType="appliance"
               entityId={appliance.id}
               disabled={!canManageParts}
+              disabledReason={
+                !canManageParts
+                  ? "Parts are locked for this appliance because the service is completed. Reopen the service first to revise parts, then complete it again."
+                  : undefined
+              }
               onUpdate={onUpdate}
             />
           </div>

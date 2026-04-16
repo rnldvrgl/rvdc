@@ -2193,6 +2193,11 @@ export default function ServiceDetail({
             entityType="service"
             entityId={service.id}
             disabled={isCompleted}
+            disabledReason={
+              isCompleted
+                ? "Service is completed. Reopen this service first to add or change parts, then complete it again so sales transaction and sub-stall settlement update correctly."
+                : undefined
+            }
             onUpdate={onRefresh}
           />
 

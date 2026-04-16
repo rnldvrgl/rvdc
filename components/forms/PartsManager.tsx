@@ -91,6 +91,7 @@ interface PartsManagerProps {
   entityType: "service" | "appliance"
   entityId: number
   disabled?: boolean
+  disabledReason?: string
   onUpdate?: () => void | Promise<void>
 }
 
@@ -155,6 +156,7 @@ export default function PartsManager({
   entityType,
   entityId,
   disabled = false,
+  disabledReason,
   onUpdate,
 }: PartsManagerProps) {
   const config = ENTITY_CONFIG[entityType]
@@ -270,6 +272,11 @@ export default function PartsManager({
   }))
 
   const isDialogBusy = isSubmitting || isMutatingPart
+  const defaultDisabledReason =
+    "Parts are locked because this service is completed. Reopen the service first before adding, editing, or deleting parts so sales and sub-stall settlement remain accurate."
+  const partsFlowNote =
+    "Finalize all parts before completing the service. If changes are needed after completion, reopen the service, update parts, then complete again."
+  const activeDisabledReason = disabledReason || defaultDisabledReason
   const pendingCount =
     !editingPartId
       ? servicePendingParts?.length ?? 0
@@ -1065,17 +1072,28 @@ export default function PartsManager({
               )
             )}
           </CardTitle>
-          {!disabled && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setDialogOpen(true)}
-              disabled={disabled}
-              className="h-7 text-xs"
-            >
-              <Plus className="h-3 w-3 mr-1" />
-              Add Part
-            </Button>
+          {!disabled ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setDialogOpen(true)}
+                  disabled={disabled}
+                  className="h-7 text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Part
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Finalize parts before completion. Reopen service first if post-completion changes are needed.</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Badge variant="secondary" className="text-[10px]">
+              Parts Locked
+            </Badge>
           )}
         </CardHeader>
         <CardContent className={config.cardContentClassName || undefined}>
@@ -1083,6 +1101,13 @@ export default function PartsManager({
             <p className="text-xs text-muted-foreground mb-3">
               {config.description}
             </p>
+          )}
+          {disabled ? (
+            <div className="mb-3 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+              {activeDisabledReason}
+            </div>
+          ) : (
+            <p className="mb-3 text-xs text-muted-foreground">{partsFlowNote}</p>
           )}
           {partsUsed.length === 0 ? (
             <div className="text-center py-6">
@@ -1207,7 +1232,7 @@ export default function PartsManager({
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Edit part quantity or apply discount</p>
+                                <p>Edit part quantity/discount before completion. For completed services, reopen first.</p>
                               </TooltipContent>
                             </Tooltip>
                             <Tooltip>
@@ -1222,7 +1247,7 @@ export default function PartsManager({
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Remove part and return to stock</p>
+                                <p>Remove part and return reserved stock before completion. Reopen first if already completed.</p>
                               </TooltipContent>
                             </Tooltip>
                           </div>
@@ -1328,8 +1353,8 @@ export default function PartsManager({
             </DialogTitle>
             <DialogDescription>
               {editingPartId
-                ? "Update the part details"
-                : config.dialogDescription}
+                ? "Update the part details. If this service is completed, reopen it first before editing parts."
+                : `${config.dialogDescription} Finalize parts before completion.`}
             </DialogDescription>
           </DialogHeader>
 
