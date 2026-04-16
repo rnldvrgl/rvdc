@@ -26,6 +26,7 @@ self.addEventListener("push", (event) => {
     url = "/",
     tag = "",
     sender_id = null,
+    sound,
   } = payload
 
   event.waitUntil(
@@ -35,6 +36,7 @@ self.addEventListener("push", (event) => {
       badge: "/rvdc_logo.png",
       tag: tag || undefined,
       data: { url, sender_id },
+      sound,
       vibrate: [200, 100, 200],
     }),
   )

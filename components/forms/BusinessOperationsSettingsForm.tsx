@@ -1,10 +1,13 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { useOperationsSettingsMutations } from "@/lib/mutations/useOperationsSettingsMutations"
 import { SystemSettings } from "@/lib/queries/useSystemSettings"
-import { PackageCheck, Wrench } from "lucide-react"
+import { BellRing, PackageCheck, Wrench } from "lucide-react"
 
 interface Props {
   settings: SystemSettings
@@ -12,6 +15,18 @@ interface Props {
 
 export function BusinessOperationsSettingsForm({ settings }: Props) {
   const { updateOperationsSettings } = useOperationsSettingsMutations()
+  const [notificationSound, setNotificationSound] = useState(settings.notification_sound)
+
+  useEffect(() => {
+    setNotificationSound(settings.notification_sound)
+  }, [settings.notification_sound])
+
+  const saveNotificationSound = () => {
+    updateOperationsSettings.mutate({ notification_sound: notificationSound.trim() })
+  }
+
+  const hasSoundChanged =
+    notificationSound.trim() !== (settings.notification_sound || "").trim()
 
   return (
     <div className="space-y-5">
@@ -58,6 +73,37 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             updateOperationsSettings.mutate({ check_stock_on_sale: checked })
           }
         />
+      </div>
+
+      <div className="border-t border-border/40" />
+
+      {/* Push Notification Sound */}
+      <div className="flex items-start gap-3">
+        <BellRing className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+        <div className="space-y-0.5">
+          <Label className="text-sm font-medium">Push Notification Sound</Label>
+          <p className="text-xs text-muted-foreground">
+            Set a custom sound file path for web push notifications.
+            Example: /sounds/reminder.mp3
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 pl-7">
+        <Input
+          value={notificationSound}
+          disabled={updateOperationsSettings.isPending}
+          onChange={(e) => setNotificationSound(e.target.value)}
+          placeholder="/sounds/default-notification.mp3"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          disabled={updateOperationsSettings.isPending || !hasSoundChanged}
+          onClick={saveNotificationSound}
+        >
+          Save
+        </Button>
       </div>
     </div>
   )

@@ -14,6 +14,7 @@ export interface SystemSettings {
   birthday_greeting_variant: string
   maintenance_mode: boolean
   check_stock_on_sale: boolean
+  notification_sound: string
   updated_at: string
 }
 

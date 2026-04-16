@@ -4,6 +4,7 @@ import api from "@/lib/utils/api"
 export interface UpdateOperationsSettingsPayload {
   maintenance_mode?: boolean
   check_stock_on_sale?: boolean
+  notification_sound?: string
 }
 
 export function useOperationsSettingsMutations() {
