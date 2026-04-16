@@ -14,7 +14,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSystemSettings } from "@/lib/queries/useSystemSettings"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
-import { Cake, Settings2 } from "lucide-react"
+import { Cake, Settings2, Sparkles } from "lucide-react"
 
 export default function SystemSettingsPage() {
   const { data: settings, isLoading } = useSystemSettings()
@@ -24,28 +24,30 @@ export default function SystemSettingsPage() {
     <Wrapper>
       <PageHeader
         title="System Settings"
-        description="Manage system-wide settings and business operations"
+        description="Control operations, alerts, and greeting behavior from one place"
         breadcrumbs={["Settings", "System Settings"]}
       />
 
-      <div className="space-y-6">
+      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <div className="space-y-4">
         {/* Business Operations */}
         {isSuperAdmin && (
-        <Card>
-          <CardHeader>
+        <Card className="border-primary/20 bg-linear-to-b from-primary/5 to-background">
+          <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <Settings2 className="h-5 w-5 text-primary" />
               <CardTitle>Business Operations</CardTitle>
             </div>
             <CardDescription>
-              Control system-wide operational toggles
+              Critical runtime controls and notification behavior
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {isLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-14 w-full" />
-                <Skeleton className="h-14 w-full" />
+              <div className="space-y-3">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-28 w-full" />
               </div>
             ) : settings ? (
               <BusinessOperationsSettingsForm settings={settings} />
@@ -59,8 +61,8 @@ export default function SystemSettingsPage() {
         )}
 
         {/* Birthday Greeting Settings Card */}
-        <Card>
-          <CardHeader>
+        <Card className="border-pink-200/60">
+          <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <Cake className="h-5 w-5 text-pink-500" />
               <CardTitle>Birthday Greeting Settings</CardTitle>
@@ -71,10 +73,10 @@ export default function SystemSettingsPage() {
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-16 w-full" />
+              <div className="space-y-3">
+                <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-24 w-full" />
               </div>
             ) : settings ? (
               <BirthdayGreetingSettingsForm settings={settings} />
@@ -83,6 +85,25 @@ export default function SystemSettingsPage() {
                 Failed to load system settings
               </div>
             )}
+          </CardContent>
+        </Card>
+        </div>
+
+        <Card className="h-fit lg:sticky lg:top-4">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              <CardTitle className="text-base">Admin Notes</CardTitle>
+            </div>
+            <CardDescription>
+              Quick reminders to keep system settings safe and consistent
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2 text-xs text-muted-foreground">
+            <p>Use maintenance mode only during planned updates.</p>
+            <p>Keep notification sounds short for faster push playback.</p>
+            <p>Review birthday greeting copy monthly for relevance.</p>
+            <p>After major backend updates, reinstall cron jobs from maintenance.</p>
           </CardContent>
         </Card>
       </div>
