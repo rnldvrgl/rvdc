@@ -1,13 +1,13 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
-import { Calendar as CalendarIcon, Clock } from "lucide-react"
+import { CheckCircle2, Clock3, Sparkles, UserCircle2 } from "lucide-react"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 
+import DatePicker from "@/components/custom/inputs/DatePicker"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
 import {
   Form,
   FormControl,
@@ -17,19 +17,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEmployeeChoices } from "@/lib/queries/useChoices"
@@ -38,7 +25,6 @@ import {
   OvertimeRequestFormData,
   overtimeRequestSchema,
 } from "@/lib/schemas/overtimeRequestSchema"
-import { cn } from "@/lib/utils/helpers"
 
 interface OvertimeRequestFormProps {
   overtimeRequest?: OvertimeRequest
@@ -91,12 +77,37 @@ export function OvertimeRequestForm({
     }
   }, [overtimeRequest, form, isAdmin, employeeChoices])
 
+  const combineDateAndTime = (date: Date, time: Date) => {
+    const merged = new Date(date)
+    merged.setHours(time.getHours(), time.getMinutes(), 0, 0)
+    return merged
+  }
+
+  const handleSubmit = (values: OvertimeRequestFormData) => {
+    const start = combineDateAndTime(values.date, values.time_start)
+    const end = combineDateAndTime(values.date, values.time_end)
+
+    onSubmit({
+      ...values,
+      time_start: start,
+      time_end: end,
+    })
+  }
+
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(handleSubmit)}
         className="space-y-6"
       >
+        <Alert className="border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-100">
+          <Sparkles className="h-4 w-4" />
+          <AlertDescription className="text-sm">
+            Pick the overtime date first, then choose start and end time.
+            This keeps entries fast and avoids datetime mistakes.
+          </AlertDescription>
+        </Alert>
+
         {isAdmin && (
           <FormField
             control={form.control}
@@ -104,140 +115,125 @@ export function OvertimeRequestForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Employee *</FormLabel>
-                <Select
-                  value={field.value ? String(field.value) : ""}
-                  onValueChange={(value) =>
-                    field.onChange(Number.parseInt(value, 10))
-                  }
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select employee" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {employeeChoices.map((employee) => (
-                      <SelectItem
-                        key={employee.id}
-                        value={String(employee.id)}
-                      >
-                        {employee.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormControl>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {employeeChoices.map((employee) => {
+                      const isSelected = field.value === employee.id
+                      return (
+                        <button
+                          key={employee.id}
+                          type="button"
+                          onClick={() => field.onChange(employee.id)}
+                          className={
+                            "group rounded-xl border p-3 text-left transition-all " +
+                            (isSelected
+                              ? "border-primary bg-primary/5 shadow-sm"
+                              : "border-border bg-background hover:border-primary/50 hover:bg-muted/30")
+                          }
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className="rounded-lg bg-muted p-2 text-muted-foreground group-hover:text-foreground">
+                                <UserCircle2 className="h-4 w-4" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium leading-tight">
+                                  {employee.full_name}
+                                </p>
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <CheckCircle2 className="h-4 w-4 text-primary" />
+                            )}
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         )}
 
-        {/* Date */}
-        <FormField
-          control={form.control}
-          name="date"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Date *</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full pl-3 text-left font-normal",
-                        !field.value && "text-muted-foreground",
-                      )}
-                    >
-                      {field.value ? (
-                        format(field.value, "PPP")
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0"
-                  align="start"
-                >
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={field.onChange}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormDescription>The date you worked overtime</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid gap-4 rounded-xl border border-border/60 bg-card p-4 md:grid-cols-2 md:p-5">
+          <div className="md:col-span-2">
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <DatePicker
+                  label="Overtime Date"
+                  required
+                  field={field}
+                  mode="date"
+                  withMessage
+                  description="Select the date this overtime happened."
+                  captionLayout="dropdown-months"
+                />
+              )}
+            />
+          </div>
 
-        {/* Time Start */}
-        <FormField
-          control={form.control}
-          name="time_start"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Start Time *</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="datetime-local"
-                    value={
-                      field.value
-                        ? format(field.value, "yyyy-MM-dd'T'HH:mm")
-                        : ""
-                    }
-                    onChange={(e) => field.onChange(new Date(e.target.value))}
-                    className="pl-10"
+          <FormField
+            control={form.control}
+            name="time_start"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Start Time *</FormLabel>
+                <FormControl>
+                  <DatePicker
+                    field={{
+                      value: field.value,
+                      onChange: field.onChange,
+                    }}
+                    mode="time"
+                    withoutLabel
+                    withMessage
+                    placeholder="Select start time"
+                    minuteStep={5}
                   />
-                </div>
-              </FormControl>
-              <FormDescription>
-                When you started working overtime
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                </FormControl>
+                <FormDescription>
+                  <span className="inline-flex items-center gap-1">
+                    <Clock3 className="h-3.5 w-3.5" />
+                    Time when overtime work started.
+                  </span>
+                </FormDescription>
+              </FormItem>
+            )}
+          />
 
-        {/* Time End */}
-        <FormField
-          control={form.control}
-          name="time_end"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>End Time *</FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="datetime-local"
-                    value={
-                      field.value
-                        ? format(field.value, "yyyy-MM-dd'T'HH:mm")
-                        : ""
-                    }
-                    onChange={(e) => field.onChange(new Date(e.target.value))}
-                    className="pl-10"
+          <FormField
+            control={form.control}
+            name="time_end"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>End Time *</FormLabel>
+                <FormControl>
+                  <DatePicker
+                    field={{
+                      value: field.value,
+                      onChange: field.onChange,
+                    }}
+                    mode="time"
+                    withoutLabel
+                    withMessage
+                    placeholder="Select end time"
+                    minuteStep={5}
                   />
-                </div>
-              </FormControl>
-              <FormDescription>
-                When you finished working overtime
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                </FormControl>
+                <FormDescription>
+                  <span className="inline-flex items-center gap-1">
+                    <Clock3 className="h-3.5 w-3.5" />
+                    Time when overtime work ended.
+                  </span>
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Reason */}
         <FormField

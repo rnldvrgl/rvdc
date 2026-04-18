@@ -1,7 +1,6 @@
 "use client"
 
 import DatePicker from "@/components/custom/inputs/DatePicker"
-import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -32,7 +31,14 @@ import { useAttendanceMutations } from "@/lib/mutations/useAttendanceMutations"
 import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { formatDateToYMD } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertTriangle, Loader2, Sparkles } from "lucide-react"
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock3,
+  Loader2,
+  Sparkles,
+  UserCircle2,
+} from "lucide-react"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -207,11 +213,21 @@ export default function AttendanceForm({
   }, [attendance, employeeChoices, form, initialEmployeeId])
 
   const onSubmit = async (values: AttendanceFormValues) => {
+    const mergeDateAndTime = (baseDate: Date, timeValue: Date) => {
+      const merged = new Date(baseDate)
+      merged.setHours(timeValue.getHours(), timeValue.getMinutes(), 0, 0)
+      return merged
+    }
+
     const payload: AttendancePayload = {
       employee: values.employee,
       date: formatDateToYMD(values.date),
-      clock_in: values.clock_in ? values.clock_in.toISOString() : null,
-      clock_out: values.clock_out ? values.clock_out.toISOString() : null,
+      clock_in: values.clock_in
+        ? mergeDateAndTime(values.date, values.clock_in).toISOString()
+        : null,
+      clock_out: values.clock_out
+        ? mergeDateAndTime(values.date, values.clock_out).toISOString()
+        : null,
       status: values.status,
       missing_uniform_shirt: values.missing_uniform_shirt,
       missing_uniform_pants: values.missing_uniform_pants,
@@ -271,29 +287,41 @@ export default function AttendanceForm({
               render={({ field }) => (
                 <FormItem className="lg:col-span-7">
                   <FormLabel required>Employee</FormLabel>
-                  <Select
-                    onValueChange={(value) =>
-                      field.onChange(Number.parseInt(value, 10))
-                    }
-                    value={field.value ? String(field.value) : ""}
-                    disabled={!!attendance}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select employee" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {employeeChoices.map((employee) => (
-                        <SelectItem
-                          key={employee.id}
-                          value={String(employee.id)}
-                        >
-                          {employee.full_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {employeeChoices.map((employee) => {
+                        const isSelected = field.value === employee.id
+                        return (
+                          <button
+                            key={employee.id}
+                            type="button"
+                            onClick={() => field.onChange(employee.id)}
+                            disabled={!!attendance}
+                            className={
+                              "group rounded-xl border p-3 text-left transition-all disabled:cursor-not-allowed disabled:opacity-60 " +
+                              (isSelected
+                                ? "border-primary bg-primary/5 shadow-sm"
+                                : "border-border bg-background hover:border-primary/50 hover:bg-muted/30")
+                            }
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <div className="rounded-lg bg-muted p-2 text-muted-foreground group-hover:text-foreground">
+                                  <UserCircle2 className="h-4 w-4" />
+                                </div>
+                                <p className="text-sm font-medium leading-tight">
+                                  {employee.full_name}
+                                </p>
+                              </div>
+                              {isSelected && (
+                                <CheckCircle2 className="h-4 w-4 text-primary" />
+                              )}
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -322,16 +350,24 @@ export default function AttendanceForm({
                 <FormItem className="lg:col-span-6">
                   <FormLabel>Clock In</FormLabel>
                   <FormControl>
-                    <DateTimePicker
-                      value={field.value ?? undefined}
-                      onChange={(date) => field.onChange(date ?? null)}
-                      disablePastDates={false}
+                    <DatePicker
+                      field={{
+                        value: field.value ?? undefined,
+                        onChange: (date) => field.onChange(date ?? null),
+                      }}
+                      mode="time"
+                      withoutLabel
+                      withMessage
                       disabled={requiresNoClock}
                       placeholder="Select clock-in time"
+                      minuteStep={5}
                     />
                   </FormControl>
                   <FormDescription className="min-h-10">
-                    Leave blank for absences, leave, or shop-closed entries.
+                    <span className="inline-flex items-center gap-1">
+                      <Clock3 className="h-3.5 w-3.5" />
+                      Time only. Date comes from Attendance Date.
+                    </span>
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -345,17 +381,24 @@ export default function AttendanceForm({
                 <FormItem className="lg:col-span-6">
                   <FormLabel>Clock Out</FormLabel>
                   <FormControl>
-                    <DateTimePicker
-                      value={field.value ?? undefined}
-                      onChange={(date) => field.onChange(date ?? null)}
-                      disablePastDates={false}
+                    <DatePicker
+                      field={{
+                        value: field.value ?? undefined,
+                        onChange: (date) => field.onChange(date ?? null),
+                      }}
+                      mode="time"
+                      withoutLabel
+                      withMessage
                       disabled={requiresNoClock}
                       placeholder="Select clock-out time"
+                      minuteStep={5}
                     />
                   </FormControl>
                   <FormDescription className="min-h-10">
-                    Optional for incomplete records. Save clock-in first, then
-                    finalize later.
+                    <span className="inline-flex items-center gap-1">
+                      <Clock3 className="h-3.5 w-3.5" />
+                      Optional. Save clock-in first, then finalize later.
+                    </span>
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
