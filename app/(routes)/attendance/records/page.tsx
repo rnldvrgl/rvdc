@@ -474,7 +474,7 @@ export default function AttendanceRecordsPage() {
             forceClose={forceClose}
           />
         )}
-        className="min-w-xl"
+        className="sm:min-w-5xl sm:max-w-[1200px]"
       />
 
       <EntitySheet<AttendanceDraftSeed>
@@ -492,7 +492,7 @@ export default function AttendanceRecordsPage() {
             forceClose={forceClose}
           />
         )}
-        className="min-w-xl"
+        className="sm:min-w-5xl sm:max-w-[1200px]"
       />
 
       <ConfirmDialog

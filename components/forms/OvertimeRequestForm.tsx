@@ -23,8 +23,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
+import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { OvertimeRequest } from "@/lib/queries/useOvertimeRequests"
 import {
   OvertimeRequestFormData,
@@ -43,7 +51,10 @@ export function OvertimeRequestForm({
   onSubmit,
   isLoading,
 }: OvertimeRequestFormProps) {
-  const { user_id } = useCurrentUser()
+  const { user_id, isAdmin } = useCurrentUser()
+  const { data: employeeChoices = [] } = useEmployeeChoices({
+    includeInPayroll: true,
+  })
 
   const form = useForm<OvertimeRequestFormData>({
     resolver: zodResolver(overtimeRequestSchema),
@@ -69,8 +80,16 @@ export function OvertimeRequestForm({
         time_end: new Date(overtimeRequest.time_end),
         reason: overtimeRequest.reason,
       })
+      return
     }
-  }, [overtimeRequest, form])
+
+    if (isAdmin && employeeChoices.length > 0) {
+      const selectedEmployee = form.getValues("employee")
+      if (!selectedEmployee) {
+        form.setValue("employee", employeeChoices[0].id)
+      }
+    }
+  }, [overtimeRequest, form, isAdmin, employeeChoices])
 
   return (
     <Form {...form}>
@@ -78,6 +97,41 @@ export function OvertimeRequestForm({
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-6"
       >
+        {isAdmin && (
+          <FormField
+            control={form.control}
+            name="employee"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Employee *</FormLabel>
+                <Select
+                  value={field.value ? String(field.value) : ""}
+                  onValueChange={(value) =>
+                    field.onChange(Number.parseInt(value, 10))
+                  }
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select employee" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {employeeChoices.map((employee) => (
+                      <SelectItem
+                        key={employee.id}
+                        value={String(employee.id)}
+                      >
+                        {employee.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
         {/* Date */}
         <FormField
           control={form.control}

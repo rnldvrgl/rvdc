@@ -17,16 +17,18 @@ import {
 import type { OvertimeRequest } from "@/lib/queries/useOvertimeRequests"
 
 export type OvertimeRequestsColumnsProps = {
+  onEdit?: (id: number) => void
   onApprove?: (id: number) => void
   onReject?: (id: number) => void
-  onDelete?: (id: number) => void
+  onCancel?: (id: number) => void
   isAdmin?: boolean
 }
 
 export const getOvertimeRequestsColumns = ({
+  onEdit,
   onApprove,
   onReject,
-  onDelete,
+  onCancel,
   isAdmin,
 }: OvertimeRequestsColumnsProps): ColumnDef<OvertimeRequest>[] => [
   {
@@ -135,6 +137,11 @@ export const getOvertimeRequestsColumns = ({
             {isAdmin && !overtimeRequest.approved && (
               <>
                 <DropdownMenuItem
+                  onClick={() => onEdit?.(overtimeRequest.id)}
+                >
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={() => onApprove?.(overtimeRequest.id)}
                   className="text-success"
                 >
@@ -152,10 +159,10 @@ export const getOvertimeRequestsColumns = ({
               </>
             )}
             <DropdownMenuItem
-              onClick={() => onDelete?.(overtimeRequest.id)}
+              onClick={() => onCancel?.(overtimeRequest.id)}
               className="text-destructive"
             >
-              Delete
+              Cancel Request
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

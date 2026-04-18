@@ -245,7 +245,7 @@ export default function AttendanceForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-6"
+        className="mx-auto w-full max-w-5xl space-y-6"
       >
         <Alert className="border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-100">
           <Sparkles className="h-4 w-4" />
@@ -256,177 +256,182 @@ export default function AttendanceForm({
           </AlertDescription>
         </Alert>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="employee"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel required>Employee</FormLabel>
-                <Select
-                  onValueChange={(value) =>
-                    field.onChange(Number.parseInt(value, 10))
-                  }
-                  value={field.value ? String(field.value) : ""}
-                  disabled={!!attendance}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select employee" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {employeeChoices.map((employee) => (
-                      <SelectItem
-                        key={employee.id}
-                        value={String(employee.id)}
-                      >
-                        {employee.full_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <div className="space-y-4 rounded-xl border border-border/60 bg-card p-4 md:p-5">
+          <div className="space-y-1">
+            <h3 className="text-sm font-semibold">Record Details</h3>
+            <p className="text-xs text-muted-foreground">
+              Select employee/date first, then assign timing and status.
+            </p>
+          </div>
 
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormControl>
+          <div className="grid gap-4 lg:grid-cols-12">
+            <FormField
+              control={form.control}
+              name="employee"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-7">
+                  <FormLabel required>Employee</FormLabel>
+                  <Select
+                    onValueChange={(value) =>
+                      field.onChange(Number.parseInt(value, 10))
+                    }
+                    value={field.value ? String(field.value) : ""}
+                    disabled={!!attendance}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select employee" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {employeeChoices.map((employee) => (
+                        <SelectItem
+                          key={employee.id}
+                          value={String(employee.id)}
+                        >
+                          {employee.full_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <div className="lg:col-span-5">
                   <DatePicker
                     label="Attendance Date"
                     required
                     field={field}
-                    withoutLabel
                     withMessage
                     captionLayout="dropdown-months"
                   />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-        </div>
+                </div>
+              )}
+            />
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="clock_in"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Clock In</FormLabel>
-                <FormControl>
-                  <DateTimePicker
-                    value={field.value ?? undefined}
-                    onChange={(date) => field.onChange(date ?? null)}
-                    disablePastDates={false}
-                    disabled={requiresNoClock}
-                    placeholder="Select clock-in time"
-                  />
-                </FormControl>
-                <FormDescription>
-                  Leave blank for absences, leave, or shop-closed entries.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="clock_out"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Clock Out</FormLabel>
-                <FormControl>
-                  <DateTimePicker
-                    value={field.value ?? undefined}
-                    onChange={(date) => field.onChange(date ?? null)}
-                    disablePastDates={false}
-                    disabled={requiresNoClock}
-                    placeholder="Select clock-out time"
-                  />
-                </FormControl>
-                <FormDescription>
-                  Optional for incomplete records. The admin can save a clock-in
-                  first and finish the record later.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="attendance_type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Attendance Type</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                >
+            <FormField
+              control={form.control}
+              name="clock_in"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-6">
+                  <FormLabel>Clock In</FormLabel>
                   <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <DateTimePicker
+                      value={field.value ?? undefined}
+                      onChange={(date) => field.onChange(date ?? null)}
+                      disablePastDates={false}
+                      disabled={requiresNoClock}
+                      placeholder="Select clock-in time"
+                    />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="AUTO">
-                      Auto-calculate from times
-                    </SelectItem>
-                    <SelectItem value="ABSENT">Absent</SelectItem>
-                    <SelectItem value="LEAVE">Leave</SelectItem>
-                    <SelectItem value="SHOP_CLOSED">Shop Closed</SelectItem>
-                    <SelectItem value="PENDING">Pending</SelectItem>
-                    <SelectItem value="FULL_DAY">Full Day</SelectItem>
-                    <SelectItem value="HALF_DAY">Half Day</SelectItem>
-                    <SelectItem value="PARTIAL">Partial</SelectItem>
-                    <SelectItem value="INVALID">Invalid</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormDescription>
-                  Use manual values only when you intentionally want a
-                  non-clocked record.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormDescription className="min-h-10">
+                    Leave blank for absences, leave, or shop-closed entries.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="status"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  value={field.value}
-                >
+            <FormField
+              control={form.control}
+              name="clock_out"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-6">
+                  <FormLabel>Clock Out</FormLabel>
                   <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
+                    <DateTimePicker
+                      value={field.value ?? undefined}
+                      onChange={(date) => field.onChange(date ?? null)}
+                      disablePastDates={false}
+                      disabled={requiresNoClock}
+                      placeholder="Select clock-out time"
+                    />
                   </FormControl>
-                  <SelectContent>
-                    <SelectItem value="PENDING">Pending</SelectItem>
-                    <SelectItem value="APPROVED">Approved</SelectItem>
-                    <SelectItem value="REJECTED">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <FormDescription className="min-h-10">
+                    Optional for incomplete records. Save clock-in first, then
+                    finalize later.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="attendance_type"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-6">
+                  <FormLabel>Attendance Type</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="AUTO">
+                        Auto-calculate from times
+                      </SelectItem>
+                      <SelectItem value="ABSENT">Absent</SelectItem>
+                      <SelectItem value="LEAVE">Leave</SelectItem>
+                      <SelectItem value="SHOP_CLOSED">Shop Closed</SelectItem>
+                      <SelectItem value="PENDING">Pending</SelectItem>
+                      <SelectItem value="FULL_DAY">Full Day</SelectItem>
+                      <SelectItem value="HALF_DAY">Half Day</SelectItem>
+                      <SelectItem value="PARTIAL">Partial</SelectItem>
+                      <SelectItem value="INVALID">Invalid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription className="min-h-10">
+                    Set manual values only when intentionally overriding
+                    computed attendance.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem className="lg:col-span-6">
+                  <FormLabel>Status</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="PENDING">Pending</SelectItem>
+                      <SelectItem value="APPROVED">Approved</SelectItem>
+                      <SelectItem value="REJECTED">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription className="min-h-10">
+                    Use pending when record needs review before final approval.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
-        <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
+        <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:p-5">
           <div className="mb-3 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             <p className="text-sm font-medium">Uniform penalties</p>
