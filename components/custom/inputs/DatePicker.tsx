@@ -208,7 +208,7 @@ const DatePicker = ({
           className={cn("w-auto p-0", mode === "time" && "min-w-[260px]")}
           align="start"
         >
-          <div className={cn(mode === "datetime" && "md:flex")}> 
+          <div className={cn(mode === "datetime" && "md:flex")}>
             {mode !== "time" && (
               <Calendar
                 mode="single"
