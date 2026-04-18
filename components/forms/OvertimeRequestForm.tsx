@@ -1,10 +1,11 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { CheckCircle2, Clock3, Sparkles, UserCircle2 } from "lucide-react"
+import { Clock3, Sparkles } from "lucide-react"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 
+import { EmployeeCardSelect } from "@/components/custom/inputs/EmployeeCardSelect"
 import DatePicker from "@/components/custom/inputs/DatePicker"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -116,40 +117,17 @@ export function OvertimeRequestForm({
               <FormItem>
                 <FormLabel>Employee *</FormLabel>
                 <FormControl>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {employeeChoices.map((employee) => {
-                      const isSelected = field.value === employee.id
-                      return (
-                        <button
-                          key={employee.id}
-                          type="button"
-                          onClick={() => field.onChange(employee.id)}
-                          className={
-                            "group rounded-xl border p-3 text-left transition-all " +
-                            (isSelected
-                              ? "border-primary bg-primary/5 shadow-sm"
-                              : "border-border bg-background hover:border-primary/50 hover:bg-muted/30")
-                          }
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <div className="rounded-lg bg-muted p-2 text-muted-foreground group-hover:text-foreground">
-                                <UserCircle2 className="h-4 w-4" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium leading-tight">
-                                  {employee.full_name}
-                                </p>
-                              </div>
-                            </div>
-                            {isSelected && (
-                              <CheckCircle2 className="h-4 w-4 text-primary" />
-                            )}
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
+                  <EmployeeCardSelect
+                    employees={employeeChoices}
+                    selected={field.value ? [field.value] : []}
+                    onChange={(selectedEmployees) => {
+                      const selectedEmployee = selectedEmployees[0]
+                      if (selectedEmployee) {
+                        field.onChange(selectedEmployee)
+                      }
+                    }}
+                    singleSelect
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

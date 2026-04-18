@@ -15,6 +15,7 @@ interface EmployeeCardSelectProps {
   selected: number[]
   onChange: (selected: number[]) => void
   disabled?: boolean
+  singleSelect?: boolean
 }
 
 export function EmployeeCardSelect({
@@ -22,8 +23,14 @@ export function EmployeeCardSelect({
   selected,
   onChange,
   disabled = false,
+  singleSelect = false,
 }: EmployeeCardSelectProps) {
   const toggle = (id: number) => {
+    if (singleSelect) {
+      onChange([id])
+      return
+    }
+
     if (selected.includes(id)) {
       onChange(selected.filter((employeeId) => employeeId !== id))
       return

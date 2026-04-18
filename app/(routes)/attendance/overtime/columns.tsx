@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { Check, Clock, MoreHorizontal, X } from "lucide-react"
+import { CheckCircle2, Clock, MoreHorizontal, X } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { OvertimeRequest } from "@/lib/queries/useOvertimeRequests"
+
+const getBadgeStatus = (approved: boolean) => {
+  if (approved) {
+    return {
+      icon: CheckCircle2,
+      label: "Approved",
+      variant: "success" as const,
+      className: "",
+    }
+  }
+
+  return {
+    icon: Clock,
+    label: "Pending",
+    variant: "secondary" as const,
+    className: "",
+  }
+}
 
 export type OvertimeRequestsColumnsProps = {
   onEdit?: (id: number) => void
@@ -84,23 +102,15 @@ export const getOvertimeRequestsColumns = ({
     accessorKey: "approved",
     header: "Status",
     cell: ({ row }) => {
-      const approved = row.original.approved
+      const status = getBadgeStatus(row.original.approved)
+      const Icon = status.icon
       return (
         <Badge
-          variant={approved ? "default" : "secondary"}
-          className={approved ? "bg-green-100 text-success" : ""}
+          variant={status.variant}
+          className="gap-1.5 text-xs font-semibold"
         >
-          {approved ? (
-            <>
-              <Check className="mr-1 h-3 w-3" />
-              Approved
-            </>
-          ) : (
-            <>
-              <Clock className="mr-1 h-3 w-3" />
-              Pending
-            </>
-          )}
+          <Icon className="h-3 w-3" />
+          {status.label}
         </Badge>
       )
     },
@@ -145,7 +155,7 @@ export const getOvertimeRequestsColumns = ({
                   onClick={() => onApprove?.(overtimeRequest.id)}
                   className="text-success"
                 >
-                  <Check className="mr-2 h-4 w-4" />
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
                   Approve
                 </DropdownMenuItem>
                 <DropdownMenuItem
