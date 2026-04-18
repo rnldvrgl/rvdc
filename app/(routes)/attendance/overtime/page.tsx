@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, Plus, X } from "lucide-react"
+import { Clock, Plus } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
@@ -242,7 +242,6 @@ export default function OvertimePage() {
               ? [
                   {
                     label: "Cancel Selected",
-                    icon: X,
                     variant: "destructive",
                     onClick: handleBulkCancel,
                   },

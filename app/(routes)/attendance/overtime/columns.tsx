@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { format } from "date-fns"
-import { CheckCircle2, Clock, MoreHorizontal, X } from "lucide-react"
+import { CheckCircle2, Clock, MoreHorizontal } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
@@ -126,7 +125,7 @@ export const getOvertimeRequestsColumns = ({
   },
   {
     id: "actions",
-    header: "Actions",
+    header: "",
     cell: ({ row }) => {
       const overtimeRequest = row.original
 
@@ -142,8 +141,6 @@ export const getOvertimeRequestsColumns = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuSeparator />
             {isAdmin && !overtimeRequest.approved && (
               <>
                 <DropdownMenuItem
@@ -153,16 +150,12 @@ export const getOvertimeRequestsColumns = ({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onApprove?.(overtimeRequest.id)}
-                  className="text-success"
                 >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
                   Approve
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => onReject?.(overtimeRequest.id)}
-                  className="text-orange-600"
                 >
-                  <X className="mr-2 h-4 w-4" />
                   Reject
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -170,7 +163,6 @@ export const getOvertimeRequestsColumns = ({
             )}
             <DropdownMenuItem
               onClick={() => onCancel?.(overtimeRequest.id)}
-              className="text-destructive"
             >
               Cancel Request
             </DropdownMenuItem>
