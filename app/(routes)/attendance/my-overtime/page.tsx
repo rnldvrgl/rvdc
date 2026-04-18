@@ -58,7 +58,7 @@ export default function MyOvertimePage() {
   }
 
   const columns = getOvertimeRequestsColumns({
-    onDelete: handleDelete,
+    onCancel: handleDelete,
     isAdmin: false,
   })
 
