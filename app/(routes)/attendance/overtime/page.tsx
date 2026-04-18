@@ -318,7 +318,6 @@ export default function OvertimePage() {
                       onChange: setBulkDate,
                     }}
                     mode="date"
-                    withMessage
                     captionLayout="dropdown-months"
                   />
 
@@ -330,7 +329,6 @@ export default function OvertimePage() {
                       onChange: setBulkStartTime,
                     }}
                     mode="time"
-                    withMessage
                     minuteStep={5}
                     placeholder="Set start"
                   />
@@ -343,7 +341,6 @@ export default function OvertimePage() {
                       onChange: setBulkEndTime,
                     }}
                     mode="time"
-                    withMessage
                     minuteStep={5}
                     placeholder="Set end"
                   />

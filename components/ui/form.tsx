@@ -24,8 +24,8 @@ type FormFieldContextValue<
 	name: TName;
 };
 
-const FormFieldContext = React.createContext<FormFieldContextValue>(
-	{} as FormFieldContextValue,
+const FormFieldContext = React.createContext<FormFieldContextValue | null>(
+	null,
 );
 
 interface FormLabelProps extends React.ComponentProps<
@@ -50,19 +50,28 @@ const FormField = <
 const useFormField = () => {
 	const fieldContext = React.useContext(FormFieldContext);
 	const itemContext = React.useContext(FormItemContext);
-	const { getFieldState } = useFormContext();
-	const formState = useFormState({ name: fieldContext.name });
-	const fieldState = getFieldState(fieldContext.name, formState);
+	const formContext = useFormContext();
+	const fieldName = fieldContext?.name;
+	const formState = useFormState({
+		control: formContext?.control,
+		name: fieldName,
+	});
+	const fieldState =
+		formContext && fieldName
+			? formContext.getFieldState(fieldName, formState)
+			: {
+				invalid: false,
+				isDirty: false,
+				isTouched: false,
+				isValidating: false,
+				error: undefined,
+			};
 
-	if (!fieldContext) {
-		throw new Error("useFormField should be used within <FormField>");
-	}
-
-	const { id } = itemContext;
+	const id = itemContext?.id ?? "form-item";
 
 	return {
 		id,
-		name: fieldContext.name,
+		name: fieldName,
 		formItemId: `${id}-form-item`,
 		formDescriptionId: `${id}-form-item-description`,
 		formMessageId: `${id}-form-item-message`,
@@ -74,8 +83,8 @@ type FormItemContextValue = {
 	id: string;
 };
 
-const FormItemContext = React.createContext<FormItemContextValue>(
-	{} as FormItemContextValue,
+const FormItemContext = React.createContext<FormItemContextValue | null>(
+	null,
 );
 
 function FormItem({ className, ...props }: React.ComponentProps<"div">) {
