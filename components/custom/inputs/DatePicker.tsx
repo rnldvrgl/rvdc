@@ -41,6 +41,7 @@ type DatePickerProps = {
   captionLayout?: "dropdown" | "dropdown-months"
   mode?: DatePickerMode
   minuteStep?: number
+  standalone?: boolean
 }
 
 const QUICK_TIME_PRESETS = [
@@ -92,6 +93,7 @@ const DatePicker = ({
   withMessage,
   mode = "date",
   minuteStep = 5,
+  standalone = false,
 }: DatePickerProps) => {
   const [open, setOpen] = useState(false)
   const displayFormat =
@@ -142,37 +144,32 @@ const DatePicker = ({
 
   const selectedTimeValue = field.value ? formatTimeValue(field.value) : ""
 
-  return (
-    <FormItem className={cn("flex flex-col", className)}>
-      {!withoutLabel && label && (
-        <FormLabel required={required}>{label}</FormLabel>
-      )}
+  const picker = (
+    <>
       <Popover
         open={open}
         onOpenChange={setOpen}
       >
         <PopoverTrigger asChild>
-          <FormControl>
-            <Button
-              disabled={disabled}
-              variant="outline"
-              className={cn(
-                "w-full pl-3 text-left font-normal",
-                !field.value && "text-muted-foreground",
-              )}
-            >
-              {field.value ? (
-                format(field.value, displayFormat)
-              ) : (
-                <span>{placeholder}</span>
-              )}
-              {mode === "time" ? (
-                <Clock3 className="ml-auto h-4 w-4 opacity-50" />
-              ) : (
-                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-              )}
-            </Button>
-          </FormControl>
+          <Button
+            disabled={disabled}
+            variant="outline"
+            className={cn(
+              "w-full pl-3 text-left font-normal",
+              !field.value && "text-muted-foreground",
+            )}
+          >
+            {field.value ? (
+              format(field.value, displayFormat)
+            ) : (
+              <span>{placeholder}</span>
+            )}
+            {mode === "time" ? (
+              <Clock3 className="ml-auto h-4 w-4 opacity-50" />
+            ) : (
+              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+            )}
+          </Button>
         </PopoverTrigger>
         <PopoverContent
           className={cn("w-auto p-0", mode === "time" && "min-w-[260px]")}
@@ -271,6 +268,32 @@ const DatePicker = ({
           </div>
         </PopoverContent>
       </Popover>
+    </>
+  )
+
+  if (standalone) {
+    return (
+      <div className={cn("flex flex-col gap-1.5", className)}>
+        {!withoutLabel && label && (
+          <label className="text-xs font-semibold uppercase tracking-wide sm:text-sm">
+            {label}
+            {required && <span className="ml-0.5 text-destructive">*</span>}
+          </label>
+        )}
+        {picker}
+        {description && (
+          <p className="text-xs text-muted-foreground sm:text-sm">{description}</p>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <FormItem className={cn("flex flex-col", className)}>
+      {!withoutLabel && label && (
+        <FormLabel required={required}>{label}</FormLabel>
+      )}
+      <FormControl>{picker}</FormControl>
       {description && <FormDescription>{description}</FormDescription>}
       {withMessage && <FormMessage />}
     </FormItem>
