@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
+import { Input } from "@/components/ui/input"
 import {
   FormControl,
   FormDescription,
@@ -12,13 +13,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { cn } from "@/lib/utils/helpers"
 import { format } from "date-fns"
 import { CalendarIcon, Clock3 } from "lucide-react"
@@ -49,25 +43,25 @@ type DatePickerProps = {
   minuteStep?: number
 }
 
-const TIME_HOURS = Array.from({ length: 12 }, (_, i) => i + 1)
+const QUICK_TIME_PRESETS = [
+  { label: "8:00 AM", value: "08:00" },
+  { label: "9:00 AM", value: "09:00" },
+  { label: "12:00 PM", value: "12:00" },
+  { label: "1:00 PM", value: "13:00" },
+  { label: "5:00 PM", value: "17:00" },
+  { label: "6:00 PM", value: "18:00" },
+] as const
 
 const clampMinuteStep = (step: number) => {
   if (step <= 0 || step > 60) return 5
   return step
 }
 
-const minuteOptions = (step: number) => {
-  const safeStep = clampMinuteStep(step)
-  return Array.from({ length: Math.ceil(60 / safeStep) }, (_, i) => i * safeStep)
-    .filter((minute) => minute < 60)
+const formatTimeValue = (date: Date) => {
+  const hour = String(date.getHours()).padStart(2, "0")
+  const minute = String(date.getMinutes()).padStart(2, "0")
+  return `${hour}:${minute}`
 }
-
-const hour12FromDate = (date: Date) => {
-  const hours = date.getHours()
-  return hours % 12 === 0 ? 12 : hours % 12
-}
-
-const ampmFromDate = (date: Date) => (date.getHours() >= 12 ? "PM" : "AM")
 
 const mergeDateAndTime = (baseDate: Date, timeDate: Date) => {
   const merged = new Date(baseDate)
@@ -102,6 +96,7 @@ const DatePicker = ({
   const [open, setOpen] = useState(false)
   const displayFormat =
     mode === "datetime" ? "PPP p" : mode === "time" ? "hh:mm aa" : "PPP"
+  const safeMinuteStep = clampMinuteStep(minuteStep)
 
   const getOrCreateValue = () => {
     if (field.value) return new Date(field.value)
@@ -110,36 +105,17 @@ const DatePicker = ({
     return fallback
   }
 
-  const setTimePart = (
-    type: "hour" | "minute" | "ampm",
-    rawValue: string,
-  ) => {
+  const setTimeFromString = (timeValue: string) => {
+    const [hoursText, minutesText] = timeValue.split(":")
+    const parsedHours = Number.parseInt(hoursText, 10)
+    const parsedMinutes = Number.parseInt(minutesText, 10)
+
+    if (Number.isNaN(parsedHours) || Number.isNaN(parsedMinutes)) {
+      return
+    }
+
     const next = getOrCreateValue()
-
-    if (type === "hour") {
-      const nextHour12 = Number.parseInt(rawValue, 10)
-      const isPm = ampmFromDate(next) === "PM"
-      if (isPm) {
-        next.setHours(nextHour12 === 12 ? 12 : nextHour12 + 12)
-      } else {
-        next.setHours(nextHour12 === 12 ? 0 : nextHour12)
-      }
-    }
-
-    if (type === "minute") {
-      next.setMinutes(Number.parseInt(rawValue, 10))
-    }
-
-    if (type === "ampm") {
-      const currentHours = next.getHours()
-      const isCurrentlyPm = currentHours >= 12
-      if (rawValue === "PM" && !isCurrentlyPm) {
-        next.setHours(currentHours + 12)
-      } else if (rawValue === "AM" && isCurrentlyPm) {
-        next.setHours(currentHours - 12)
-      }
-    }
-
+    next.setHours(parsedHours, parsedMinutes, 0, 0)
     field.onChange(next)
   }
 
@@ -164,13 +140,7 @@ const DatePicker = ({
     field.onChange(merged)
   }
 
-  const selectedHour12 = field.value ? hour12FromDate(field.value) : 8
-  const selectedMinute = field.value ? field.value.getMinutes() : 0
-  const selectedAmPm = field.value ? ampmFromDate(field.value) : "AM"
-  const minuteValues = minuteOptions(minuteStep)
-  const selectedMinuteForList = minuteValues.includes(selectedMinute)
-    ? selectedMinute
-    : minuteValues[0]
+  const selectedTimeValue = field.value ? formatTimeValue(field.value) : ""
 
   return (
     <FormItem className={cn("flex flex-col", className)}>
@@ -254,7 +224,7 @@ const DatePicker = ({
             {mode !== "date" && (
               <div
                 className={cn(
-                  "space-y-2 p-3",
+                  "space-y-3 p-3",
                   mode === "datetime" &&
                     "border-t md:w-[230px] md:border-l md:border-t-0",
                 )}
@@ -262,60 +232,30 @@ const DatePicker = ({
                 <p className="text-xs font-medium text-muted-foreground">
                   Select time
                 </p>
-                <div className="grid grid-cols-3 gap-2">
-                  <Select
-                    value={String(selectedHour12)}
-                    onValueChange={(value) => setTimePart("hour", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIME_HOURS.map((hour) => (
-                        <SelectItem
-                          key={hour}
-                          value={String(hour)}
-                        >
-                          {hour}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Input
+                  type="time"
+                  step={safeMinuteStep * 60}
+                  value={selectedTimeValue}
+                  onChange={(event) => setTimeFromString(event.target.value)}
+                  className="h-10"
+                />
 
-                  <Select
-                    value={String(selectedMinuteForList)}
-                    onValueChange={(value) => setTimePart("minute", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {minuteValues.map((minute) => (
-                        <SelectItem
-                          key={minute}
-                          value={String(minute)}
-                        >
-                          {String(minute).padStart(2, "0")}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select
-                    value={selectedAmPm}
-                    onValueChange={(value) => setTimePart("ampm", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="AM">AM</SelectItem>
-                      <SelectItem value="PM">PM</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-2">
+                  {QUICK_TIME_PRESETS.map((preset) => (
+                    <Button
+                      key={preset.value}
+                      type="button"
+                      variant={selectedTimeValue === preset.value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setTimeFromString(preset.value)}
+                      className="justify-start"
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
                 </div>
 
-                {mode === "time" && (
+                {(mode === "time" || mode === "datetime") && (
                   <div className="flex justify-end">
                     <Button
                       type="button"

@@ -4,6 +4,8 @@ import { Clock, Plus, X } from "lucide-react"
 import { useMemo, useState } from "react"
 import { toast } from "sonner"
 
+import DatePicker from "@/components/custom/inputs/DatePicker"
+import { EmployeeCardSelect } from "@/components/custom/inputs/EmployeeCardSelect"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
@@ -16,15 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import {
@@ -37,42 +31,19 @@ import {
 import { useEmployeeChoices } from "@/lib/queries/useChoices"
 import { useOvertimeRequests } from "@/lib/queries/useOvertimeRequests"
 import type { OvertimeRequestFormData } from "@/lib/schemas/overtimeRequestSchema"
-import { formatDateToYMD } from "@/lib/utils/helpers"
+import { cn, formatDateToYMD } from "@/lib/utils/helpers"
 import { getOvertimeRequestsColumns } from "./columns"
 
-type BulkOvertimeRow = {
-  id: number
-  employee: number
-  date: string
-  time_start: string
-  time_end: string
-  reason: string
+const buildBulkTime = (hour: number, minute: number) => {
+  const value = new Date()
+  value.setHours(hour, minute, 0, 0)
+  return value
 }
 
-const toDateTimeLocal = (value: Date) => {
-  const year = value.getFullYear()
-  const month = String(value.getMonth() + 1).padStart(2, "0")
-  const day = String(value.getDate()).padStart(2, "0")
-  const hours = String(value.getHours()).padStart(2, "0")
-  const minutes = String(value.getMinutes()).padStart(2, "0")
-  return `${year}-${month}-${day}T${hours}:${minutes}`
-}
-
-const buildBulkRow = (id: number, employeeId: number): BulkOvertimeRow => {
-  const now = new Date()
-  const start = new Date(now)
-  start.setHours(18, 0, 0, 0)
-  const end = new Date(now)
-  end.setHours(20, 0, 0, 0)
-
-  return {
-    id,
-    employee: employeeId,
-    date: formatDateToYMD(now),
-    time_start: toDateTimeLocal(start),
-    time_end: toDateTimeLocal(end),
-    reason: "",
-  }
+const combineDateAndTime = (date: Date, time: Date) => {
+  const merged = new Date(date)
+  merged.setHours(time.getHours(), time.getMinutes(), 0, 0)
+  return merged
 }
 
 export default function OvertimePage() {
@@ -81,8 +52,15 @@ export default function OvertimePage() {
   const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingRequestId, setEditingRequestId] = useState<number | null>(null)
-  const [bulkRows, setBulkRows] = useState<BulkOvertimeRow[]>([])
-  const [nextBulkRowId, setNextBulkRowId] = useState(1)
+  const [bulkEmployeeIds, setBulkEmployeeIds] = useState<number[]>([])
+  const [bulkDate, setBulkDate] = useState<Date | undefined>(new Date())
+  const [bulkStartTime, setBulkStartTime] = useState<Date | undefined>(
+    buildBulkTime(18, 0),
+  )
+  const [bulkEndTime, setBulkEndTime] = useState<Date | undefined>(
+    buildBulkTime(20, 0),
+  )
+  const [bulkReason, setBulkReason] = useState("")
 
   const { data: overtimeRequests, isLoading } = useOvertimeRequests()
   const { data: employeeChoices = [] } = useEmployeeChoices({
@@ -149,79 +127,49 @@ export default function OvertimePage() {
   }
 
   const openBulkDialog = () => {
-    const defaultEmployee = employeeChoices[0]?.id ?? user_id
-    setBulkRows([buildBulkRow(nextBulkRowId, defaultEmployee)])
-    setNextBulkRowId((current) => current + 1)
+    const defaultEmployee = employeeChoices[0]?.id ?? user_id ?? 0
+    setBulkEmployeeIds(defaultEmployee ? [defaultEmployee] : [])
+    setBulkDate(new Date())
+    setBulkStartTime(buildBulkTime(18, 0))
+    setBulkEndTime(buildBulkTime(20, 0))
+    setBulkReason("")
     setIsBulkDialogOpen(true)
   }
 
-  const addBulkRow = () => {
-    const defaultEmployee = employeeChoices[0]?.id ?? user_id
-    setBulkRows((current) => [
-      ...current,
-      buildBulkRow(nextBulkRowId, defaultEmployee),
-    ])
-    setNextBulkRowId((current) => current + 1)
-  }
-
-  const removeBulkRow = (id: number) => {
-    setBulkRows((current) => current.filter((row) => row.id !== id))
-  }
-
-  const updateBulkRow = (
-    id: number,
-    field: keyof Omit<BulkOvertimeRow, "id">,
-    value: string | number,
-  ) => {
-    setBulkRows((current) =>
-      current.map((row) =>
-        row.id === id
-          ? {
-              ...row,
-              [field]: value,
-            }
-          : row,
-      ),
-    )
-  }
-
   const handleBulkCreate = async () => {
-    if (bulkRows.length === 0) return
+    if (bulkEmployeeIds.length === 0) {
+      toast.error("Select at least one employee for bulk overtime.")
+      return
+    }
 
-    for (const row of bulkRows) {
-      if (!row.employee || !row.date || !row.time_start || !row.time_end) {
-        toast.error("Each bulk overtime row must include employee, date, start, and end time.")
-        return
-      }
+    if (!bulkDate || !bulkStartTime || !bulkEndTime) {
+      toast.error("Date, start time, and end time are required.")
+      return
+    }
 
-      const start = new Date(row.time_start)
-      const end = new Date(row.time_end)
-      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-        toast.error("One or more overtime rows has an invalid date/time value.")
-        return
-      }
+    const start = combineDateAndTime(bulkDate, bulkStartTime)
+    const end = combineDateAndTime(bulkDate, bulkEndTime)
 
-      if (end <= start) {
-        toast.error("End time must be later than start time for every row.")
-        return
-      }
+    if (end <= start) {
+      toast.error("End time must be later than start time.")
+      return
     }
 
     await Promise.all(
-      bulkRows.map((row) =>
+      bulkEmployeeIds.map((employeeId) =>
         createMutation.mutateAsync({
-          employee: row.employee,
-          date: row.date,
-          time_start: new Date(row.time_start).toISOString(),
-          time_end: new Date(row.time_end).toISOString(),
-          reason: row.reason.trim(),
+          employee: employeeId,
+          date: formatDateToYMD(bulkDate),
+          time_start: start.toISOString(),
+          time_end: end.toISOString(),
+          reason: bulkReason.trim(),
         }),
       ),
     )
 
-    toast.success(`${bulkRows.length} overtime request(s) created.`)
+    toast.success(`${bulkEmployeeIds.length} overtime request(s) created.`)
     setIsBulkDialogOpen(false)
-    setBulkRows([])
+    setBulkEmployeeIds([])
   }
 
   const handleBulkCancel = async (
@@ -307,7 +255,7 @@ export default function OvertimePage() {
           open={isCreateDialogOpen}
           onOpenChange={setIsCreateDialogOpen}
         >
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create Overtime Request</DialogTitle>
               <DialogDescription>
@@ -329,7 +277,7 @@ export default function OvertimePage() {
             if (!open) setEditingRequestId(null)
           }}
         >
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Overtime Request</DialogTitle>
               <DialogDescription>
@@ -350,123 +298,110 @@ export default function OvertimePage() {
           open={isBulkDialogOpen}
           onOpenChange={setIsBulkDialogOpen}
         >
-          <DialogContent className="max-w-5xl">
+          <DialogContent className="max-h-[92vh] max-w-6xl overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Bulk Add Overtime Requests</DialogTitle>
+              <DialogTitle>Bulk Add Overtime</DialogTitle>
               <DialogDescription>
-                Add multiple overtime entries in one submission. This is available
-                to admin only.
+                Pick one schedule, then select employees. All selected employees
+                will receive the same overtime date, start/end time, and reason.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
-              {bulkRows.map((row, index) => (
-                <div
-                  key={row.id}
-                  className="rounded-lg border p-3"
-                >
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-medium">Entry {index + 1}</p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      disabled={bulkRows.length === 1}
-                      onClick={() => removeBulkRow(row.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
+            <div className="space-y-5">
+              <div className="rounded-xl border border-border/60 bg-card p-4 md:p-5">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <DatePicker
+                    label="Overtime Date"
+                    required
+                    field={{
+                      value: bulkDate,
+                      onChange: setBulkDate,
+                    }}
+                    mode="date"
+                    withMessage
+                    captionLayout="dropdown-months"
+                  />
 
-                  <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-5">
-                    <div className="space-y-1 lg:col-span-2">
-                      <Label>Employee</Label>
-                      <Select
-                        value={String(row.employee)}
-                        onValueChange={(value) =>
-                          updateBulkRow(row.id, "employee", Number.parseInt(value, 10))
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select employee" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {employeeChoices.map((employee) => (
-                            <SelectItem
-                              key={employee.id}
-                              value={String(employee.id)}
-                            >
-                              {employee.full_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <DatePicker
+                    label="Start Time"
+                    required
+                    field={{
+                      value: bulkStartTime,
+                      onChange: setBulkStartTime,
+                    }}
+                    mode="time"
+                    withMessage
+                    minuteStep={5}
+                    placeholder="Set start"
+                  />
 
-                    <div className="space-y-1">
-                      <Label>Date</Label>
-                      <Input
-                        type="date"
-                        value={row.date}
-                        onChange={(event) =>
-                          updateBulkRow(row.id, "date", event.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label>Start</Label>
-                      <Input
-                        type="datetime-local"
-                        value={row.time_start}
-                        onChange={(event) =>
-                          updateBulkRow(row.id, "time_start", event.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <Label>End</Label>
-                      <Input
-                        type="datetime-local"
-                        value={row.time_end}
-                        onChange={(event) =>
-                          updateBulkRow(row.id, "time_end", event.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-3 space-y-1">
-                    <Label>Reason (Optional)</Label>
-                    <Textarea
-                      rows={2}
-                      value={row.reason}
-                      onChange={(event) =>
-                        updateBulkRow(row.id, "reason", event.target.value)
-                      }
-                      placeholder="Reason for overtime"
-                    />
-                  </div>
+                  <DatePicker
+                    label="End Time"
+                    required
+                    field={{
+                      value: bulkEndTime,
+                      onChange: setBulkEndTime,
+                    }}
+                    mode="time"
+                    withMessage
+                    minuteStep={5}
+                    placeholder="Set end"
+                  />
                 </div>
-              ))}
-            </div>
 
-            <div className="flex items-center justify-between gap-2">
-              <Button
-                variant="outline"
-                onClick={addBulkRow}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Another Row
-              </Button>
+                <div className="mt-4 space-y-2">
+                  <Label>Reason (Optional)</Label>
+                  <Textarea
+                    rows={3}
+                    value={bulkReason}
+                    onChange={(event) => setBulkReason(event.target.value)}
+                    placeholder="Explain why this bulk overtime is needed"
+                  />
+                </div>
+              </div>
 
-              <Button
-                onClick={handleBulkCreate}
-                disabled={createMutation.isPending || bulkRows.length === 0}
-              >
-                {createMutation.isPending ? "Submitting..." : "Submit Bulk Overtime"}
-              </Button>
+              <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:p-5">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold">Select Employees</p>
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-xs font-medium",
+                      bulkEmployeeIds.length > 0
+                        ? "bg-primary/10 text-primary"
+                        : "bg-muted text-muted-foreground",
+                    )}
+                  >
+                    {bulkEmployeeIds.length} selected
+                  </span>
+                </div>
+
+                <div className="max-h-[36vh] overflow-y-auto pr-1">
+                  <EmployeeCardSelect
+                    employees={employeeChoices}
+                    selected={bulkEmployeeIds}
+                    onChange={setBulkEmployeeIds}
+                    disabled={createMutation.isPending}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsBulkDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleBulkCreate}
+                  disabled={createMutation.isPending || bulkEmployeeIds.length === 0}
+                >
+                  {createMutation.isPending
+                    ? "Submitting..."
+                    : "Create Bulk Overtime"}
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
