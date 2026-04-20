@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
+import api from "@/lib/utils/api"
 import { useOperationsSettingsMutations } from "@/lib/mutations/useOperationsSettingsMutations"
 import { SystemSettings } from "@/lib/queries/useSystemSettings"
-import { BellRing, PackageCheck, Sheet, Trash2, Upload, Volume2, Wrench } from "lucide-react"
+import { BellRing, PackageCheck, RefreshCcw, Sheet, Trash2, Upload, Volume2, Wrench } from "lucide-react"
+import { toast } from "sonner"
 
 interface Props {
   settings: SystemSettings
@@ -27,6 +29,12 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     settings.google_sheets_sub_stall_type || "sub"
   )
   const [googleServiceAccountJson, setGoogleServiceAccountJson] = useState("")
+  const [syncStatusMessage, setSyncStatusMessage] = useState("")
+  const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
+  const [isTestingConnection, setIsTestingConnection] = useState(false)
+  const [isSyncingHistorical, setIsSyncingHistorical] = useState(false)
+  const [syncStartDate, setSyncStartDate] = useState("")
+  const [syncEndDate, setSyncEndDate] = useState("")
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -98,6 +106,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     updateOperationsSettings.mutate(payload, {
       onSuccess: () => {
         setGoogleServiceAccountJson("")
+        void fetchGoogleSyncStatus(true)
       },
     })
   }
@@ -108,9 +117,91 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       {
         onSuccess: () => {
           setGoogleServiceAccountJson("")
+          void fetchGoogleSyncStatus(true)
         },
       }
     )
+  }
+
+  const fetchGoogleSyncStatus = async (silent = false) => {
+    try {
+      setIsTestingConnection(true)
+      const { data } = await api.get("/users/settings/google-sheets-sync/")
+      setConnectionOk(Boolean(data?.connection_ok))
+      setSyncStatusMessage(data?.message || "Status checked")
+      if (!silent) {
+        if (data?.connection_ok) {
+          toast.success("Google Sheets connection is healthy.")
+        } else {
+          toast.error(data?.message || "Google Sheets is not connected.")
+        }
+      }
+    } catch {
+      setConnectionOk(false)
+      setSyncStatusMessage("Unable to check Google Sheets status")
+      if (!silent) {
+        toast.error("Unable to check Google Sheets status")
+      }
+    } finally {
+      setIsTestingConnection(false)
+    }
+  }
+
+  const testGoogleConnection = async () => {
+    try {
+      setIsTestingConnection(true)
+      const { data } = await api.post("/users/settings/google-sheets-sync/", {
+        action: "test_connection",
+      })
+      setConnectionOk(Boolean(data?.connection_ok))
+      setSyncStatusMessage(data?.message || "Connection checked")
+      if (data?.connection_ok) {
+        toast.success("Google Sheets connected successfully")
+      } else {
+        toast.error(data?.message || "Google Sheets connection failed")
+      }
+    } catch {
+      setConnectionOk(false)
+      setSyncStatusMessage("Google Sheets connection failed")
+      toast.error("Google Sheets connection failed")
+    } finally {
+      setIsTestingConnection(false)
+    }
+  }
+
+  const syncHistoricalSales = async () => {
+    try {
+      setIsSyncingHistorical(true)
+      const payload: {
+        action: string
+        start_date?: string
+        end_date?: string
+      } = {
+        action: "sync_historical",
+      }
+      if (syncStartDate) {
+        payload.start_date = syncStartDate
+      }
+      if (syncEndDate) {
+        payload.end_date = syncEndDate
+      }
+      const { data } = await api.post("/users/settings/google-sheets-sync/", {
+        ...payload,
+      })
+      const message = `${data?.message || "Historical sync completed"} (Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0})`
+      setSyncStatusMessage(message)
+      if ((data?.failed ?? 0) > 0) {
+        toast.error(message)
+      } else {
+        toast.success(message)
+      }
+      await fetchGoogleSyncStatus(true)
+    } catch {
+      setSyncStatusMessage("Historical sync failed")
+      toast.error("Historical sync failed")
+    } finally {
+      setIsSyncingHistorical(false)
+    }
   }
 
   const hasGoogleConfigChanged =
@@ -119,6 +210,10 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       (settings.google_sheets_worksheet_name || "Sub Stall Sales").trim() ||
     googleStallType.trim() !== (settings.google_sheets_sub_stall_type || "sub").trim() ||
     Boolean(googleServiceAccountJson.trim())
+
+  useEffect(() => {
+    void fetchGoogleSyncStatus(true)
+  }, [])
 
   return (
     <div className="space-y-3">
@@ -311,10 +406,62 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             <p className="text-xs text-muted-foreground">
               Current credential status: {settings.google_service_account_configured ? "Configured" : "Not configured"}
             </p>
+            {syncStatusMessage && (
+              <p
+                className={`text-xs ${
+                  connectionOk === true
+                    ? "text-emerald-600"
+                    : connectionOk === false
+                      ? "text-destructive"
+                      : "text-muted-foreground"
+                }`}
+              >
+                Connection status: {syncStatusMessage}
+              </p>
+            )}
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label className="text-xs text-muted-foreground">Sync Start Date (optional)</Label>
+              <Input
+                type="date"
+                value={syncStartDate}
+                disabled={updateOperationsSettings.isPending || isSyncingHistorical}
+                onChange={(e) => setSyncStartDate(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-xs text-muted-foreground">Sync End Date (optional)</Label>
+              <Input
+                type="date"
+                value={syncEndDate}
+                disabled={updateOperationsSettings.isPending || isSyncingHistorical}
+                onChange={(e) => setSyncEndDate(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end">
             <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={updateOperationsSettings.isPending || isTestingConnection}
+                onClick={testGoogleConnection}
+                className="gap-2"
+              >
+                <RefreshCcw className="size-4" />
+                Test Connection
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={updateOperationsSettings.isPending || isSyncingHistorical}
+                onClick={syncHistoricalSales}
+              >
+                Sync Previous Sales
+              </Button>
               <Button
                 type="button"
                 variant="outline"
