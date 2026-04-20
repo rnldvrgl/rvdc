@@ -381,80 +381,31 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
         )}
       </div>
 
-        <div className="rounded-lg border bg-background/70 p-3 sm:p-4 space-y-3">
-          <div className="flex items-start justify-between gap-3">
+        <div className="rounded-2xl border border-slate-200/70 bg-linear-to-br from-slate-50 via-background to-cyan-50/20 p-4 sm:p-5 shadow-sm space-y-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 rounded-md border bg-muted/40 p-1.5">
-                <Sheet className="size-4 shrink-0 text-muted-foreground" />
+              <div className="mt-0.5 rounded-xl border border-slate-200/80 bg-white/80 p-2 shadow-sm">
+                <Sheet className="size-4 shrink-0 text-slate-600" />
               </div>
-              <div className="space-y-0.5">
-                <Label className="text-sm font-medium">Google Sheets Sales Sync</Label>
-                <p className="text-xs text-muted-foreground">
-                  Configure service account credentials and destination sheet for parts or services sales sync.
+              <div className="space-y-1">
+                <Label className="text-base font-semibold tracking-tight">Google Sheets Sales Sync</Label>
+                <p className="max-w-2xl text-sm text-muted-foreground">
+                  Configure service account credentials and destination sheets for parts or services sales sync.
                 </p>
               </div>
             </div>
-            <Switch
-              checked={settings.google_sheets_sync_enabled}
-              disabled={updateOperationsSettings.isPending}
-              onCheckedChange={(checked) =>
-                updateOperationsSettings.mutate({ google_sheets_sync_enabled: checked })
-              }
-            />
-          </div>
 
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-xs text-muted-foreground">Sub Stall Monthly Spreadsheet ID</Label>
-              <Input
-                value={googleSubSpreadsheetId}
-                disabled={updateOperationsSettings.isPending}
-                onChange={(e) => setGoogleSubSpreadsheetId(e.target.value)}
-                placeholder="1AbCDefGhIJkLmNoPqRstUvWxyz..."
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-xs text-muted-foreground">Main Stall Monthly Spreadsheet ID</Label>
-              <Input
-                value={googleMainSpreadsheetId}
-                disabled={updateOperationsSettings.isPending}
-                onChange={(e) => setGoogleMainSpreadsheetId(e.target.value)}
-                placeholder="1AbCDefGhIJkLmNoPqRstUvWxyz..."
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-1">
-            <div className="grid gap-2">
-              <Label className="text-xs text-muted-foreground">Sync Scope</Label>
-              <Select
-                value={googleStallType}
-                onValueChange={setGoogleStallType}
-                disabled={updateOperationsSettings.isPending}
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                variant="outline"
+                className={settings.google_sheets_sync_enabled
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "border-muted-foreground/30 text-muted-foreground"
+                }
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose sync scope" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sub">Sub Stall (Parts)</SelectItem>
-                  <SelectItem value="main">Main Stall (Services)</SelectItem>
-                  <SelectItem value="both">Both Stalls</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-2">
-            <Label className="text-xs text-muted-foreground">Service Account JSON</Label>
-            <Textarea
-              value={googleServiceAccountJson}
-              disabled={updateOperationsSettings.isPending}
-              onChange={(e) => setGoogleServiceAccountJson(e.target.value)}
-              placeholder='Paste JSON (starts with { "type": "service_account", ... })'
-              className="min-h-32 font-mono text-xs"
-            />
-
-            <div className="flex flex-wrap items-center gap-2 pt-1">
+                <BadgeCheck className="mr-1.5 size-3.5" />
+                Sync: {settings.google_sheets_sync_enabled ? "Enabled" : "Disabled"}
+              </Badge>
               <Badge
                 variant="outline"
                 className={settings.google_service_account_configured
@@ -465,7 +416,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 <KeyRound className="mr-1.5 size-3.5" />
                 Credential: {settings.google_service_account_configured ? "Configured" : "Not configured"}
               </Badge>
-
               <Badge
                 variant="outline"
                 className={connectionOk === true
@@ -479,6 +429,65 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 Connection: {connectionOk === null ? "Not checked" : connectionOk ? "Connected" : "Not connected"}
               </Badge>
             </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Sub Stall Monthly Spreadsheet ID</Label>
+              <Input
+                value={googleSubSpreadsheetId}
+                disabled={updateOperationsSettings.isPending}
+                onChange={(e) => setGoogleSubSpreadsheetId(e.target.value)}
+                placeholder="1AbCDefGhIJkLmNoPqRstUvWxyz..."
+                className="bg-white/80"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Main Stall Monthly Spreadsheet ID</Label>
+              <Input
+                value={googleMainSpreadsheetId}
+                disabled={updateOperationsSettings.isPending}
+                onChange={(e) => setGoogleMainSpreadsheetId(e.target.value)}
+                placeholder="1AbCDefGhIJkLmNoPqRstUvWxyz..."
+                className="bg-white/80"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
+            <div className="grid gap-2">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Sync Scope</Label>
+              <Select
+                value={googleStallType}
+                onValueChange={setGoogleStallType}
+                disabled={updateOperationsSettings.isPending}
+              >
+                <SelectTrigger className="bg-white/80">
+                  <SelectValue placeholder="Choose sync scope" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sub">Sub Stall (Parts)</SelectItem>
+                  <SelectItem value="main">Main Stall (Services)</SelectItem>
+                  <SelectItem value="both">Both Stalls</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="rounded-xl border bg-white/70 px-3 py-2 text-xs text-muted-foreground">
+              The sheet tab is generated automatically per day.
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Service Account JSON</Label>
+            </div>
+            <Textarea
+              value={googleServiceAccountJson}
+              disabled={updateOperationsSettings.isPending}
+              onChange={(e) => setGoogleServiceAccountJson(e.target.value)}
+              placeholder='Paste JSON (starts with { "type": "service_account", ... })'
+              className="min-h-32 border-slate-200 bg-white/80 font-mono text-xs"
+            />
 
             {syncStatusMessage && (
               <p className="text-xs text-muted-foreground">Status detail: {syncStatusMessage}</p>
@@ -502,7 +511,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             />
           </div>
 
-          <div className="rounded-lg border bg-muted/20 p-2 sm:p-3">
+          <div className="rounded-xl border border-slate-200 bg-white/70 p-3 shadow-sm">
             <div className="flex flex-wrap items-center justify-end gap-2">
               <Button
                 type="button"
