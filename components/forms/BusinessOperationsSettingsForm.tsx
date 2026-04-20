@@ -50,9 +50,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const [googleMainSpreadsheetId, setGoogleMainSpreadsheetId] = useState(
     settings.google_sheets_main_spreadsheet_id || ""
   )
-  const [googleWorksheetName, setGoogleWorksheetName] = useState(
-    settings.google_sheets_worksheet_name || "Sub Stall Sales"
-  )
   const [googleStallType, setGoogleStallType] = useState(settings.google_sheets_sub_stall_type || "sub")
   const [googleServiceAccountJson, setGoogleServiceAccountJson] = useState("")
   const [syncStatusMessage, setSyncStatusMessage] = useState("")
@@ -70,12 +67,10 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   useEffect(() => {
     setGoogleSubSpreadsheetId(settings.google_sheets_spreadsheet_id || "")
     setGoogleMainSpreadsheetId(settings.google_sheets_main_spreadsheet_id || "")
-    setGoogleWorksheetName(settings.google_sheets_worksheet_name || "Sub Stall Sales")
     setGoogleStallType(settings.google_sheets_sub_stall_type || "sub")
   }, [
     settings.google_sheets_spreadsheet_id,
     settings.google_sheets_main_spreadsheet_id,
-    settings.google_sheets_worksheet_name,
     settings.google_sheets_sub_stall_type,
   ])
 
@@ -119,13 +114,11 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     const payload: {
       google_sheets_spreadsheet_id: string
       google_sheets_main_spreadsheet_id: string
-      google_sheets_worksheet_name: string
       google_sheets_sub_stall_type: string
       google_service_account_json?: string
     } = {
       google_sheets_spreadsheet_id: googleSubSpreadsheetId.trim(),
       google_sheets_main_spreadsheet_id: googleMainSpreadsheetId.trim(),
-      google_sheets_worksheet_name: googleWorksheetName.trim() || "Sub Stall Sales",
       google_sheets_sub_stall_type: googleStallType.trim() || "sub",
     }
 
@@ -247,8 +240,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const hasGoogleConfigChanged =
     googleSubSpreadsheetId.trim() !== (settings.google_sheets_spreadsheet_id || "").trim() ||
     googleMainSpreadsheetId.trim() !== (settings.google_sheets_main_spreadsheet_id || "").trim() ||
-    googleWorksheetName.trim() !==
-      (settings.google_sheets_worksheet_name || "Sub Stall Sales").trim() ||
     googleStallType.trim() !== (settings.google_sheets_sub_stall_type || "sub").trim() ||
     Boolean(googleServiceAccountJson.trim())
 
@@ -425,18 +416,9 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             </div>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-1">
             <div className="grid gap-2">
-              <Label className="text-xs text-muted-foreground">Worksheet Name</Label>
-              <Input
-                value={googleWorksheetName}
-                disabled={updateOperationsSettings.isPending}
-                onChange={(e) => setGoogleWorksheetName(e.target.value)}
-                placeholder="APRIL 06"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-xs text-muted-foreground">Manual Sync Scope</Label>
+              <Label className="text-xs text-muted-foreground">Sync Scope</Label>
               <Select
                 value={googleStallType}
                 onValueChange={setGoogleStallType}
