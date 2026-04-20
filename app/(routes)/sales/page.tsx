@@ -30,6 +30,7 @@ import {
   useSalesTransactions,
   useVoidedSalesTransactions,
 } from "@/lib/queries/sales/useSalesTransactions"
+import { useSystemSettings } from "@/lib/queries/useSystemSettings"
 import {
   getHeldSales,
   removeHeldSale,
@@ -40,6 +41,7 @@ import { formatCurrency } from "@/lib/utils/helpers"
 import {
   Archive,
   Ban,
+  ExternalLink,
   List,
   Pause,
   Play,
@@ -61,6 +63,7 @@ const emptyData = {
 
 export default function SalesTransactionsPage() {
   const { role, assigned_stall } = useCurrentUser()
+  const { data: systemSettings } = useSystemSettings()
   const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
   const { page, limit, search, ordering, filter } = searchParams
   const [activeTab, setActiveTab] = useState<TabValue>("active")
@@ -218,6 +221,22 @@ export default function SalesTransactionsPage() {
         ? voidedQuery.isLoading
         : isLoading
 
+  const primarySheetId =
+    assigned_stall?.stall_type === "main"
+      ? (systemSettings?.google_sheets_main_spreadsheet_id ||
+        systemSettings?.google_sheets_spreadsheet_id ||
+        "")
+      : (systemSettings?.google_sheets_spreadsheet_id ||
+        systemSettings?.google_sheets_main_spreadsheet_id ||
+        "")
+
+  const googleSheetUrl = primarySheetId
+    ? `https://docs.google.com/spreadsheets/d/${primarySheetId}/edit`
+    : ""
+
+  const canCreateSale =
+    !(role === "manager" && assigned_stall?.stall_type === "main")
+
   return (
     <Wrapper>
       {/* Hidden print component */}
@@ -237,10 +256,25 @@ export default function SalesTransactionsPage() {
         description="Track sales transactions, manage customer orders, and monitor revenue performance across all stalls."
         breadcrumbs={["Dashboard", "Sales", "Transactions"]}
         actionButton={
-          activeTab === "active" &&
-          !(role === "manager" && assigned_stall?.stall_type === "main") ? (
+          activeTab === "active" ? (
             <div className="flex items-center gap-2">
-              {heldSales.length > 0 && (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                disabled={!googleSheetUrl}
+              >
+                <a
+                  href={googleSheetUrl || "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="size-3.5 mr-1.5" />
+                  Open Sheet
+                </a>
+              </Button>
+
+              {canCreateSale && heldSales.length > 0 && (
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -321,10 +355,13 @@ export default function SalesTransactionsPage() {
                   </PopoverContent>
                 </Popover>
               )}
-              <Button onClick={() => openCreate()}>
-                <Plus className="size-4 mr-2" />
-                New Sale
-              </Button>
+
+              {canCreateSale && (
+                <Button onClick={() => openCreate()}>
+                  <Plus className="size-4 mr-2" />
+                  New Sale
+                </Button>
+              )}
             </div>
           ) : undefined
         }

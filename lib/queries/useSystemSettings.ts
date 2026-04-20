@@ -17,6 +17,7 @@ export interface SystemSettings {
   notification_sound: string
   google_sheets_sync_enabled: boolean
   google_sheets_spreadsheet_id: string
+  google_sheets_main_spreadsheet_id: string
   google_sheets_worksheet_name: string
   google_sheets_sub_stall_type: string
   google_service_account_configured: boolean
