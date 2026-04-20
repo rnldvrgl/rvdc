@@ -223,11 +223,19 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     } catch (error) {
       let message = "Historical sync failed"
       if (isAxiosError(error)) {
-        const apiMessage =
-          (error.response?.data as { message?: string; detail?: string } | undefined)?.message ||
-          (error.response?.data as { message?: string; detail?: string } | undefined)?.detail
+        const responseData = error.response?.data as {
+          message?: string
+          detail?: string
+          errors?: string[]
+        } | undefined
+        const firstError = Array.isArray(responseData?.errors) && responseData?.errors.length > 0
+          ? ` | First error: ${responseData.errors[0]}`
+          : ""
+        const apiMessage = responseData?.message || responseData?.detail
         if (apiMessage) {
-          message = apiMessage
+          message = `${apiMessage}${firstError}`
+        } else if (firstError) {
+          message = `Historical sync failed${firstError}`
         }
       }
       setSyncStatusMessage(message)
