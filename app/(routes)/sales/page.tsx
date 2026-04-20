@@ -38,10 +38,13 @@ import {
   type HeldSale,
 } from "@/lib/utils/heldSales"
 import { formatCurrency } from "@/lib/utils/helpers"
+import api from "@/lib/utils/api"
 import {
   Archive,
+  BadgeCheck,
   Ban,
   ExternalLink,
+  KeyRound,
   List,
   Pause,
   Play,
@@ -64,6 +67,7 @@ const emptyData = {
 export default function SalesTransactionsPage() {
   const { role, assigned_stall } = useCurrentUser()
   const { data: systemSettings } = useSystemSettings()
+  const [googleSyncStatus, setGoogleSyncStatus] = useState<{ connection_ok?: boolean; credential_configured?: boolean } | null>(null)
   const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
   const { page, limit, search, ordering, filter } = searchParams
   const [activeTab, setActiveTab] = useState<TabValue>("active")
@@ -164,6 +168,21 @@ export default function SalesTransactionsPage() {
     }
   }, [viewId])
 
+  // Fetch Google Sheets connection status on mount and when sync settings change
+  useEffect(() => {
+    if (!systemSettings?.google_sheets_sync_enabled) return
+
+    const fetchStatus = async () => {
+      try {
+        const { data } = await api.get("/users/settings/google-sheets-sync/")
+        setGoogleSyncStatus(data)
+      } catch {
+        setGoogleSyncStatus(null)
+      }
+    }
+    fetchStatus()
+  }, [systemSettings?.google_sheets_sync_enabled])
+
   const handleRestore = (tx: SalesTransaction) => {
     if (tx?.id) restoreItem.mutate(tx.id)
   }
@@ -258,9 +277,35 @@ export default function SalesTransactionsPage() {
         actionButton={
           activeTab === "active" ? (
             <div className="flex items-center gap-2">
+              {systemSettings?.google_sheets_sync_enabled && (
+                <>
+                  <Badge
+                    variant="outline"
+                    className={googleSyncStatus?.credential_configured
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                      : "border-muted-foreground/30 text-muted-foreground"
+                    }
+                  >
+                    <KeyRound className="mr-1.5 size-3" />
+                    {googleSyncStatus?.credential_configured ? "Ready" : "Not configured"}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className={googleSyncStatus?.connection_ok === true
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                      : googleSyncStatus?.connection_ok === false
+                        ? "border-destructive/40 bg-destructive/10 text-destructive"
+                        : "border-muted-foreground/30 text-muted-foreground"
+                    }
+                  >
+                    <BadgeCheck className="mr-1.5 size-3" />
+                    {googleSyncStatus?.connection_ok === null ? "Checking..." : googleSyncStatus?.connection_ok ? "Connected" : "Not connected"}
+                  </Badge>
+                </>
+              )}
               <Button
                 asChild
-                variant="outline"
+                variant="default"
                 size="sm"
                 disabled={!googleSheetUrl}
               >

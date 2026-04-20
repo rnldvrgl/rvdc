@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import DatePicker from "@/components/custom/inputs/DatePicker"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,12 +15,27 @@ import {
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import api from "@/lib/utils/api"
 import { useOperationsSettingsMutations } from "@/lib/mutations/useOperationsSettingsMutations"
 import { SystemSettings } from "@/lib/queries/useSystemSettings"
-import { BellRing, PackageCheck, RefreshCcw, Sheet, Trash2, Upload, Volume2, Wrench } from "lucide-react"
-import { toast } from "sonner"
+import api from "@/lib/utils/api"
+import { format } from "date-fns"
+import {
+  BadgeCheck,
+  BellRing,
+  CalendarClock,
+  KeyRound,
+  PackageCheck,
+  RefreshCcw,
+  Save,
+  Sheet,
+  ShieldOff,
+  Trash2,
+  Upload,
+  Volume2,
+  Wrench,
+} from "lucide-react"
 import { isAxiosError } from "axios"
+import { toast } from "sonner"
 
 interface Props {
   settings: SystemSettings
@@ -42,8 +59,8 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
   const [isTestingConnection, setIsTestingConnection] = useState(false)
   const [isSyncingHistorical, setIsSyncingHistorical] = useState(false)
-  const [syncStartDate, setSyncStartDate] = useState("")
-  const [syncEndDate, setSyncEndDate] = useState("")
+  const [syncStartDate, setSyncStartDate] = useState<Date | undefined>(undefined)
+  const [syncEndDate, setSyncEndDate] = useState<Date | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -193,10 +210,10 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
         action: "sync_historical",
       }
       if (syncStartDate) {
-        payload.start_date = syncStartDate
+        payload.start_date = format(syncStartDate, "yyyy-MM-dd")
       }
       if (syncEndDate) {
-        payload.end_date = syncEndDate
+        payload.end_date = format(syncEndDate, "yyyy-MM-dd")
       }
       const { data } = await api.post("/users/settings/google-sheets-sync/", {
         ...payload,
@@ -446,47 +463,57 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               placeholder='Paste JSON (starts with { "type": "service_account", ... })'
               className="min-h-32 font-mono text-xs"
             />
-            <p className="text-xs text-muted-foreground">
-              Current credential status: {settings.google_service_account_configured ? "Configured" : "Not configured"}
-            </p>
-            {syncStatusMessage && (
-              <p
-                className={`text-xs ${
-                  connectionOk === true
-                    ? "text-emerald-600"
-                    : connectionOk === false
-                      ? "text-destructive"
-                      : "text-muted-foreground"
-                }`}
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Badge
+                variant="outline"
+                className={settings.google_service_account_configured
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : "border-muted-foreground/30 text-muted-foreground"
+                }
               >
-                Connection status: {syncStatusMessage}
-              </p>
+                <KeyRound className="mr-1.5 size-3.5" />
+                Credential: {settings.google_service_account_configured ? "Configured" : "Not configured"}
+              </Badge>
+
+              <Badge
+                variant="outline"
+                className={connectionOk === true
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+                  : connectionOk === false
+                    ? "border-destructive/40 bg-destructive/10 text-destructive"
+                    : "border-muted-foreground/30 text-muted-foreground"
+                }
+              >
+                <BadgeCheck className="mr-1.5 size-3.5" />
+                Connection: {connectionOk === null ? "Not checked" : connectionOk ? "Connected" : "Not connected"}
+              </Badge>
+            </div>
+
+            {syncStatusMessage && (
+              <p className="text-xs text-muted-foreground">Status detail: {syncStatusMessage}</p>
             )}
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-xs text-muted-foreground">Sync Start Date (optional)</Label>
-              <Input
-                type="date"
-                value={syncStartDate}
-                disabled={updateOperationsSettings.isPending || isSyncingHistorical}
-                onChange={(e) => setSyncStartDate(e.target.value)}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-xs text-muted-foreground">Sync End Date (optional)</Label>
-              <Input
-                type="date"
-                value={syncEndDate}
-                disabled={updateOperationsSettings.isPending || isSyncingHistorical}
-                onChange={(e) => setSyncEndDate(e.target.value)}
-              />
-            </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <DatePicker
+              standalone
+              label="Sync Start Date (optional)"
+              placeholder="Select start date"
+              disabled={updateOperationsSettings.isPending || isSyncingHistorical}
+              field={{ value: syncStartDate, onChange: setSyncStartDate }}
+            />
+            <DatePicker
+              standalone
+              label="Sync End Date (optional)"
+              placeholder="Select end date"
+              disabled={updateOperationsSettings.isPending || isSyncingHistorical}
+              field={{ value: syncEndDate, onChange: setSyncEndDate }}
+            />
           </div>
 
-          <div className="flex justify-end">
-            <div className="flex items-center gap-2">
+          <div className="rounded-lg border bg-muted/20 p-2 sm:p-3">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="secondary"
@@ -502,7 +529,9 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 variant="secondary"
                 disabled={updateOperationsSettings.isPending || isSyncingHistorical}
                 onClick={syncHistoricalSales}
+                className="gap-2"
               >
+                <CalendarClock className="size-4" />
                 Sync Previous Sales
               </Button>
               <Button
@@ -513,15 +542,19 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                   !settings.google_service_account_configured
                 }
                 onClick={clearGoogleCredential}
+                className="gap-2"
               >
+                <ShieldOff className="size-4" />
                 Clear Credential
               </Button>
               <Button
                 type="button"
-                variant="outline"
+                variant="default"
                 disabled={updateOperationsSettings.isPending || !hasGoogleConfigChanged}
                 onClick={saveGoogleSheetsSettings}
+                className="gap-2"
               >
+                <Save className="size-4" />
                 Save Google Sync Settings
               </Button>
             </div>
