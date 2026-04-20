@@ -211,8 +211,18 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       const { data } = await api.post("/users/settings/google-sheets-sync/", {
         ...payload,
       })
-      const firstError = Array.isArray(data?.errors) && data.errors.length > 0 ? ` | First error: ${data.errors[0]}` : ""
-      const message = `${data?.message || "Historical sync completed"} (Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0})${firstError}`
+      
+      // Parse stall-specific status from errors
+      const errors = Array.isArray(data?.errors) ? data.errors : []
+      const subStallErrors = errors.filter((e: string) => e.includes("stall=2"))
+      const mainStallErrors = errors.filter((e: string) => e.includes("stall=1"))
+      
+      const subStatus = subStallErrors.length === 0 ? "ok" : "failed"
+      const mainStatus = mainStallErrors.length === 0 ? "ok" : "failed"
+      const statusDetail = `sub: ${subStatus} | main: ${mainStatus}`
+      const syncSummary = `Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0}`
+      
+      const message = `${statusDetail} — ${syncSummary}`
       setSyncStatusMessage(message)
       if ((data?.failed ?? 0) > 0) {
         toast.error(message)
@@ -381,7 +391,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
         )}
       </div>
 
-        <div className="rounded-2xl border border-slate-200/70 bg-linear-to-br from-slate-50 via-background to-cyan-50/20 p-4 sm:p-5 shadow-sm space-y-4">
+        <div className="rounded-2xl border border-slate-200/70 bg-white p-4 sm:p-5 shadow-sm space-y-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 rounded-xl border border-slate-200/80 bg-white/80 p-2 shadow-sm">
@@ -490,7 +500,10 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             />
 
             {syncStatusMessage && (
-              <p className="text-xs text-muted-foreground">Status detail: {syncStatusMessage}</p>
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200/50 bg-slate-50/50 px-3 py-2">
+                <span className="text-xs font-medium text-slate-600">Status:</span>
+                <span className="text-xs text-slate-700">{syncStatusMessage}</span>
+              </div>
             )}
           </div>
 
