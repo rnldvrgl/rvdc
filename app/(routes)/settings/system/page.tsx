@@ -18,7 +18,7 @@ import { Cake, Settings2, Sparkles } from "lucide-react"
 
 export default function SystemSettingsPage() {
   const { data: settings, isLoading } = useSystemSettings()
-  const { isSuperAdmin } = useCurrentUser()
+  const { isSuperAdmin, isAdmin } = useCurrentUser()
 
   return (
     <Wrapper>
@@ -31,7 +31,7 @@ export default function SystemSettingsPage() {
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-4">
         {/* Business Operations */}
-        {isSuperAdmin && (
+        {(isSuperAdmin || isAdmin) && (
         <Card className="border-primary/20 bg-linear-to-b from-primary/5 to-background">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">

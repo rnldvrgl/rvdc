@@ -6,6 +6,11 @@ export interface UpdateOperationsSettingsPayload {
   check_stock_on_sale?: boolean
   notification_sound?: string
   remove_notification_sound?: boolean
+  google_sheets_sync_enabled?: boolean
+  google_sheets_spreadsheet_id?: string
+  google_sheets_worksheet_name?: string
+  google_sheets_sub_stall_type?: string
+  google_service_account_json?: string
 }
 
 export function useOperationsSettingsMutations() {
