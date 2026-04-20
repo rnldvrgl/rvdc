@@ -4,6 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import api from "@/lib/utils/api"
@@ -11,6 +18,7 @@ import { useOperationsSettingsMutations } from "@/lib/mutations/useOperationsSet
 import { SystemSettings } from "@/lib/queries/useSystemSettings"
 import { BellRing, PackageCheck, RefreshCcw, Sheet, Trash2, Upload, Volume2, Wrench } from "lucide-react"
 import { toast } from "sonner"
+import { isAxiosError } from "axios"
 
 interface Props {
   settings: SystemSettings
@@ -25,9 +33,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const [googleWorksheetName, setGoogleWorksheetName] = useState(
     settings.google_sheets_worksheet_name || "Sub Stall Sales"
   )
-  const [googleStallType, setGoogleStallType] = useState(
-    settings.google_sheets_sub_stall_type || "sub"
-  )
+  const [googleStallType, setGoogleStallType] = useState(settings.google_sheets_sub_stall_type || "sub")
   const [googleServiceAccountJson, setGoogleServiceAccountJson] = useState("")
   const [syncStatusMessage, setSyncStatusMessage] = useState("")
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
@@ -188,7 +194,8 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       const { data } = await api.post("/users/settings/google-sheets-sync/", {
         ...payload,
       })
-      const message = `${data?.message || "Historical sync completed"} (Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0})`
+      const firstError = Array.isArray(data?.errors) && data.errors.length > 0 ? ` | First error: ${data.errors[0]}` : ""
+      const message = `${data?.message || "Historical sync completed"} (Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0})${firstError}`
       setSyncStatusMessage(message)
       if ((data?.failed ?? 0) > 0) {
         toast.error(message)
@@ -196,9 +203,18 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
         toast.success(message)
       }
       await fetchGoogleSyncStatus(true)
-    } catch {
-      setSyncStatusMessage("Historical sync failed")
-      toast.error("Historical sync failed")
+    } catch (error) {
+      let message = "Historical sync failed"
+      if (isAxiosError(error)) {
+        const apiMessage =
+          (error.response?.data as { message?: string; detail?: string } | undefined)?.message ||
+          (error.response?.data as { message?: string; detail?: string } | undefined)?.detail
+        if (apiMessage) {
+          message = apiMessage
+        }
+      }
+      setSyncStatusMessage(message)
+      toast.error(message)
     } finally {
       setIsSyncingHistorical(false)
     }
@@ -350,7 +366,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               <div className="space-y-0.5">
                 <Label className="text-sm font-medium">Google Sheets Sales Sync</Label>
                 <p className="text-xs text-muted-foreground">
-                  Configure service account credentials and destination sheet for sub-stall sales sync.
+                  Configure service account credentials and destination sheet for parts or services sales sync.
                 </p>
               </div>
             </div>
@@ -380,17 +396,24 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 value={googleWorksheetName}
                 disabled={updateOperationsSettings.isPending}
                 onChange={(e) => setGoogleWorksheetName(e.target.value)}
-                placeholder="Sub Stall Sales"
+                placeholder="APRIL 06"
               />
             </div>
             <div className="grid gap-2">
-              <Label className="text-xs text-muted-foreground">Stall Type Filter</Label>
-              <Input
+              <Label className="text-xs text-muted-foreground">Sync Stall Type</Label>
+              <Select
                 value={googleStallType}
+                onValueChange={setGoogleStallType}
                 disabled={updateOperationsSettings.isPending}
-                onChange={(e) => setGoogleStallType(e.target.value)}
-                placeholder="sub"
-              />
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose stall type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sub">Sub Stall (Parts)</SelectItem>
+                  <SelectItem value="main">Main Stall (Services)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
