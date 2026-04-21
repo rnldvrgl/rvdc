@@ -34,7 +34,6 @@ import {
   Volume2,
   Wrench,
 } from "lucide-react"
-import { isAxiosError } from "axios"
 import { toast } from "sonner"
 
 interface Props {
@@ -55,7 +54,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const [syncStatusMessage, setSyncStatusMessage] = useState("")
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
   const [isTestingConnection, setIsTestingConnection] = useState(false)
-  const [isSyncingHistorical, setIsSyncingHistorical] = useState(false)
+  const [isSyncInProgress, setIsSyncInProgress] = useState(false)
   const [syncStartDate, setSyncStartDate] = useState<Date | undefined>(undefined)
   const [syncEndDate, setSyncEndDate] = useState<Date | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -194,7 +193,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
 
   const syncHistoricalSales = async () => {
     try {
-      setIsSyncingHistorical(true)
       const payload: {
         action: string
         start_date?: string
@@ -208,50 +206,65 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       if (syncEndDate) {
         payload.end_date = format(syncEndDate, "yyyy-MM-dd")
       }
-      const { data } = await api.post("/users/settings/google-sheets-sync/", {
-        ...payload,
+
+      // Use toast promise for better UX
+      const promise = api.post("/users/settings/google-sheets-sync/", payload)
+
+      toast.promise(promise, {
+        loading: "Syncing historical sales to Google Sheets...",
+        success: (response) => {
+          const data = response.data
+
+          // Parse stall-specific status from errors
+          const errors = Array.isArray(data?.errors) ? data.errors : []
+          const subStallErrors = errors.filter((e: string) => e.includes("stall=2"))
+          const mainStallErrors = errors.filter((e: string) => e.includes("stall=1"))
+
+          const subStatus = subStallErrors.length === 0 ? "ok" : "failed"
+          const mainStatus = mainStallErrors.length === 0 ? "ok" : "failed"
+          const statusDetail = `sub: ${subStatus} | main: ${mainStatus}`
+          const syncSummary = `Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0}`
+
+          const message = `${statusDetail} — ${syncSummary}`
+          setSyncStatusMessage(message)
+
+          if ((data?.failed ?? 0) > 0) {
+            // Show first error if available
+            const firstError = Array.isArray(data?.errors) && data.errors.length > 0
+              ? `\n${data.errors[0]}`
+              : ""
+            return `${statusDetail} — ${syncSummary}${firstError}`
+          }
+
+          return `${statusDetail} — ${syncSummary}`
+        },
+        error: (error) => {
+          let errorMessage = "Historical sync failed"
+          let errorDetail = ""
+
+          if (error.response?.data) {
+            const data = error.response.data
+            errorMessage = data.message || data.detail || errorMessage
+            errorDetail = data.detail || (Array.isArray(data.errors) && data.errors[0]) || ""
+          } else if (error.message) {
+            errorMessage = error.message
+          }
+
+          const fullMessage = errorDetail ? `${errorMessage}\n${errorDetail}` : errorMessage
+          setSyncStatusMessage(`Error: ${errorMessage}`)
+
+          return fullMessage
+        },
       })
-      
-      // Parse stall-specific status from errors
-      const errors = Array.isArray(data?.errors) ? data.errors : []
-      const subStallErrors = errors.filter((e: string) => e.includes("stall=2"))
-      const mainStallErrors = errors.filter((e: string) => e.includes("stall=1"))
-      
-      const subStatus = subStallErrors.length === 0 ? "ok" : "failed"
-      const mainStatus = mainStallErrors.length === 0 ? "ok" : "failed"
-      const statusDetail = `sub: ${subStatus} | main: ${mainStatus}`
-      const syncSummary = `Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0}`
-      
-      const message = `${statusDetail} — ${syncSummary}`
-      setSyncStatusMessage(message)
-      if ((data?.failed ?? 0) > 0) {
-        toast.error(message)
-      } else {
-        toast.success(message)
-      }
+
+      // Wait for the request and update status after completion
+      await promise
       await fetchGoogleSyncStatus(true)
     } catch (error) {
-      let message = "Historical sync failed"
-      if (isAxiosError(error)) {
-        const responseData = error.response?.data as {
-          message?: string
-          detail?: string
-          errors?: string[]
-        } | undefined
-        const firstError = Array.isArray(responseData?.errors) && responseData?.errors.length > 0
-          ? ` | First error: ${responseData.errors[0]}`
-          : ""
-        const apiMessage = responseData?.message || responseData?.detail
-        if (apiMessage) {
-          message = `${apiMessage}${firstError}`
-        } else if (firstError) {
-          message = `Historical sync failed${firstError}`
-        }
-      }
-      setSyncStatusMessage(message)
-      toast.error(message)
+      // Error already handled by toast.promise
+      console.error("Sync error:", error)
     } finally {
-      setIsSyncingHistorical(false)
+      setIsSyncInProgress(false)
     }
   }
 
@@ -512,14 +525,14 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               standalone
               label="Sync Start Date (optional)"
               placeholder="Select start date"
-              disabled={updateOperationsSettings.isPending || isSyncingHistorical}
+              disabled={updateOperationsSettings.isPending || isSyncInProgress}
               field={{ value: syncStartDate, onChange: setSyncStartDate }}
             />
             <DatePicker
               standalone
               label="Sync End Date (optional)"
               placeholder="Select end date"
-              disabled={updateOperationsSettings.isPending || isSyncingHistorical}
+              disabled={updateOperationsSettings.isPending || isSyncInProgress}
               field={{ value: syncEndDate, onChange: setSyncEndDate }}
             />
           </div>
@@ -539,12 +552,12 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               <Button
                 type="button"
                 variant="secondary"
-                disabled={updateOperationsSettings.isPending || isSyncingHistorical}
+                disabled={updateOperationsSettings.isPending || isSyncInProgress}
                 onClick={syncHistoricalSales}
                 className="gap-2"
               >
                 <CalendarClock className="size-4" />
-                Sync Previous Sales
+                {isSyncInProgress ? "Syncing..." : "Sync Previous Sales"}
               </Button>
               <Button
                 type="button"
