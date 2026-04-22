@@ -41,10 +41,8 @@ import { formatCurrency } from "@/lib/utils/helpers"
 import api from "@/lib/utils/api"
 import {
   Archive,
-  BadgeCheck,
   Ban,
   ExternalLink,
-  KeyRound,
   List,
   Pause,
   Play,
@@ -67,7 +65,7 @@ const emptyData = {
 export default function SalesTransactionsPage() {
   const { role, assigned_stall } = useCurrentUser()
   const { data: systemSettings } = useSystemSettings()
-  const [googleSyncStatus, setGoogleSyncStatus] = useState<{ connection_ok?: boolean; credential_configured?: boolean } | null>(null)
+  const [googleSheetMeta, setGoogleSheetMeta] = useState<{ sub_latest_gid?: number | null; main_latest_gid?: number | null } | null>(null)
   const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
   const { page, limit, search, ordering, filter } = searchParams
   const [activeTab, setActiveTab] = useState<TabValue>("active")
@@ -168,21 +166,6 @@ export default function SalesTransactionsPage() {
     }
   }, [viewId])
 
-  // Fetch Google Sheets connection status on mount and when sync settings change
-  useEffect(() => {
-    if (!systemSettings?.google_sheets_sync_enabled) return
-
-    const fetchStatus = async () => {
-      try {
-        const { data } = await api.get("/users/settings/google-sheets-sync/")
-        setGoogleSyncStatus(data)
-      } catch {
-        setGoogleSyncStatus(null)
-      }
-    }
-    fetchStatus()
-  }, [systemSettings?.google_sheets_sync_enabled])
-
   const handleRestore = (tx: SalesTransaction) => {
     if (tx?.id) restoreItem.mutate(tx.id)
   }
@@ -240,18 +223,44 @@ export default function SalesTransactionsPage() {
         ? voidedQuery.isLoading
         : isLoading
 
-  const primarySheetId =
-    assigned_stall?.stall_type === "main"
-      ? (systemSettings?.google_sheets_main_spreadsheet_id ||
-        systemSettings?.google_sheets_spreadsheet_id ||
-        "")
-      : (systemSettings?.google_sheets_spreadsheet_id ||
-        systemSettings?.google_sheets_main_spreadsheet_id ||
-        "")
+  useEffect(() => {
+    if (!systemSettings?.google_sheets_sync_enabled) return
 
-  const googleSheetUrl = primarySheetId
-    ? `https://docs.google.com/spreadsheets/d/${primarySheetId}/edit`
+    const fetchSheetMeta = async () => {
+      try {
+        const { data } = await api.get("/users/settings/google-sheets-sync/")
+        setGoogleSheetMeta({
+          sub_latest_gid: data?.sub_latest_gid ?? null,
+          main_latest_gid: data?.main_latest_gid ?? null,
+        })
+      } catch {
+        setGoogleSheetMeta(null)
+      }
+    }
+
+    void fetchSheetMeta()
+  }, [systemSettings?.google_sheets_sync_enabled])
+
+  const subSheetId = systemSettings?.google_sheets_spreadsheet_id || ""
+  const mainSheetId = systemSettings?.google_sheets_main_spreadsheet_id || ""
+
+  const subSheetUrl = subSheetId
+    ? `https://docs.google.com/spreadsheets/d/${subSheetId}/edit${typeof googleSheetMeta?.sub_latest_gid === "number" ? `#gid=${googleSheetMeta.sub_latest_gid}` : ""}`
     : ""
+  const mainSheetUrl = mainSheetId
+    ? `https://docs.google.com/spreadsheets/d/${mainSheetId}/edit${typeof googleSheetMeta?.main_latest_gid === "number" ? `#gid=${googleSheetMeta.main_latest_gid}` : ""}`
+    : ""
+
+  const isAdmin = role === "admin"
+  const isManagerOrClerk = role === "manager" || role === "clerk"
+
+  const designatedIsMain = assigned_stall?.stall_type === "main"
+  const designatedSheetUrl = designatedIsMain
+    ? (mainSheetUrl || subSheetUrl)
+    : (subSheetUrl || mainSheetUrl)
+  const designatedSheetLabel = designatedIsMain
+    ? "Open Main Stall Sheet"
+    : "Open Sub Stall Sheet"
 
   const canCreateSale =
     !(role === "manager" && assigned_stall?.stall_type === "main")
@@ -279,45 +288,59 @@ export default function SalesTransactionsPage() {
             <div className="flex items-center gap-2">
               {systemSettings?.google_sheets_sync_enabled && (
                 <>
-                  <Badge
-                    variant="outline"
-                    className={googleSyncStatus?.credential_configured
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                      : "border-muted-foreground/30 text-muted-foreground"
-                    }
-                  >
-                    <KeyRound className="mr-1.5 size-3" />
-                    {googleSyncStatus?.credential_configured ? "Ready" : "Not configured"}
-                  </Badge>
-                  <Badge
-                    variant="outline"
-                    className={googleSyncStatus?.connection_ok === true
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-700"
-                      : googleSyncStatus?.connection_ok === false
-                        ? "border-destructive/40 bg-destructive/10 text-destructive"
-                        : "border-muted-foreground/30 text-muted-foreground"
-                    }
-                  >
-                    <BadgeCheck className="mr-1.5 size-3" />
-                    {googleSyncStatus?.connection_ok === null ? "Checking..." : googleSyncStatus?.connection_ok ? "Connected" : "Not connected"}
-                  </Badge>
+                  {isAdmin && (
+                    <>
+                      <Button
+                        asChild
+                        variant="default"
+                        size="sm"
+                        disabled={!mainSheetUrl}
+                      >
+                        <a
+                          href={mainSheetUrl || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="size-3.5 mr-1.5" />
+                          Open Main Stall Sheet
+                        </a>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="default"
+                        size="sm"
+                        disabled={!subSheetUrl}
+                      >
+                        <a
+                          href={subSheetUrl || "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <ExternalLink className="size-3.5 mr-1.5" />
+                          Open Sub Stall Sheet
+                        </a>
+                      </Button>
+                    </>
+                  )}
+                  {isManagerOrClerk && (
+                    <Button
+                      asChild
+                      variant="default"
+                      size="sm"
+                      disabled={!designatedSheetUrl}
+                    >
+                      <a
+                        href={designatedSheetUrl || "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <ExternalLink className="size-3.5 mr-1.5" />
+                        {designatedSheetLabel}
+                      </a>
+                    </Button>
+                  )}
                 </>
               )}
-              <Button
-                asChild
-                variant="default"
-                size="sm"
-                disabled={!googleSheetUrl}
-              >
-                <a
-                  href={googleSheetUrl || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink className="size-3.5 mr-1.5" />
-                  Open Sheet
-                </a>
-              </Button>
 
               {canCreateSale && heldSales.length > 0 && (
                 <Popover>

@@ -193,6 +193,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
 
   const syncHistoricalSales = async () => {
     try {
+      setIsSyncInProgress(true)
       const payload: {
         action: string
         start_date?: string
@@ -208,7 +209,11 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       }
 
       // Use toast promise for better UX
-      const promise = api.post("/users/settings/google-sheets-sync/", payload)
+      const promise = api.post(
+        "/users/settings/google-sheets-sync/",
+        payload,
+        { timeout: 300000 }
+      )
 
       toast.promise(promise, {
         loading: "Syncing historical sales to Google Sheets...",
@@ -404,11 +409,11 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
         )}
       </div>
 
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-4 sm:p-5 shadow-sm space-y-4">
+        <div className="rounded-lg border bg-background/70 p-3 sm:p-4 space-y-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex items-start gap-3">
-              <div className="mt-0.5 rounded-xl border border-slate-200/80 bg-white/80 p-2 shadow-sm">
-                <Sheet className="size-4 shrink-0 text-slate-600" />
+              <div className="mt-0.5 rounded-md border bg-muted/40 p-1.5">
+                <Sheet className="size-4 shrink-0 text-muted-foreground" />
               </div>
               <div className="space-y-1">
                 <Label className="text-base font-semibold tracking-tight">Google Sheets Sales Sync</Label>
@@ -462,7 +467,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 disabled={updateOperationsSettings.isPending}
                 onChange={(e) => setGoogleSubSpreadsheetId(e.target.value)}
                 placeholder="1AbCDefGhIJkLmNoPqRstUvWxyz..."
-                className="bg-white/80"
+                className="bg-background"
               />
             </div>
             <div className="grid gap-2">
@@ -472,7 +477,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 disabled={updateOperationsSettings.isPending}
                 onChange={(e) => setGoogleMainSpreadsheetId(e.target.value)}
                 placeholder="1AbCDefGhIJkLmNoPqRstUvWxyz..."
-                className="bg-white/80"
+                className="bg-background"
               />
             </div>
           </div>
@@ -485,7 +490,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 onValueChange={setGoogleStallType}
                 disabled={updateOperationsSettings.isPending}
               >
-                <SelectTrigger className="bg-white/80">
+                <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Choose sync scope" />
                 </SelectTrigger>
                 <SelectContent>
@@ -495,7 +500,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="rounded-xl border bg-white/70 px-3 py-2 text-xs text-muted-foreground">
+            <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
               The sheet tab is generated automatically per day.
             </div>
           </div>
@@ -509,13 +514,13 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               disabled={updateOperationsSettings.isPending}
               onChange={(e) => setGoogleServiceAccountJson(e.target.value)}
               placeholder='Paste JSON (starts with { "type": "service_account", ... })'
-              className="min-h-32 border-slate-200 bg-white/80 font-mono text-xs"
+              className="min-h-32 bg-background font-mono text-xs"
             />
 
             {syncStatusMessage && (
-              <div className="flex items-center gap-2 rounded-lg border border-slate-200/50 bg-slate-50/50 px-3 py-2">
-                <span className="text-xs font-medium text-slate-600">Status:</span>
-                <span className="text-xs text-slate-700">{syncStatusMessage}</span>
+              <div className="flex items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
+                <span className="text-xs font-medium text-muted-foreground">Status:</span>
+                <span className="text-xs text-foreground">{syncStatusMessage}</span>
               </div>
             )}
           </div>
@@ -537,7 +542,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             />
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white/70 p-3 shadow-sm">
+          <div className="rounded-md border bg-background/70 p-3">
             <div className="flex flex-wrap items-center justify-end gap-2">
               <Button
                 type="button"
