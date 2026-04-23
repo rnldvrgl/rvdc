@@ -191,6 +191,31 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     }
   }
 
+  const wait = (ms: number) =>
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, ms)
+    })
+
+  const pollHistoricalSyncJob = async (jobId: string) => {
+    const maxAttempts = 120
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const { data } = await api.get("/users/settings/google-sheets-sync/", {
+        params: { job_id: jobId },
+        timeout: 30000,
+      })
+
+      const state = String(data?.state || "")
+      if (state === "completed" || state === "failed") {
+        return data
+      }
+
+      await wait(2500)
+    }
+
+    throw new Error("Historical sync is still running. Please check status again in a moment.")
+  }
+
   const syncHistoricalSales = async () => {
     try {
       setIsSyncInProgress(true)
@@ -208,65 +233,77 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
         payload.end_date = format(syncEndDate, "yyyy-MM-dd")
       }
 
-      // Use toast promise for better UX
-      const promise = api.post(
+      const startResponse = await api.post(
         "/users/settings/google-sheets-sync/",
         payload,
-        { timeout: 300000 }
+        { timeout: 30000 }
       )
 
-      toast.promise(promise, {
-        loading: "Syncing historical sales to Google Sheets...",
-        success: (response) => {
-          const data = response.data
+      if (startResponse.status === 202 && startResponse.data?.job_id) {
+        const jobId = String(startResponse.data.job_id)
+        const loadingToastId = "google-sheets-sync-progress"
+        toast.loading("Syncing historical sales to Google Sheets...", {
+          id: loadingToastId,
+        })
 
-          // Parse stall-specific status from errors
-          const errors = Array.isArray(data?.errors) ? data.errors : []
-          const subStallErrors = errors.filter((e: string) => e.includes("stall=2"))
-          const mainStallErrors = errors.filter((e: string) => e.includes("stall=1"))
+        const data = await pollHistoricalSyncJob(jobId)
+        const errors = Array.isArray(data?.errors) ? data.errors : []
+        const subStallErrors = errors.filter((e: string) => e.includes("stall=2"))
+        const mainStallErrors = errors.filter((e: string) => e.includes("stall=1"))
 
-          const subStatus = subStallErrors.length === 0 ? "ok" : "failed"
-          const mainStatus = mainStallErrors.length === 0 ? "ok" : "failed"
-          const statusDetail = `sub: ${subStatus} | main: ${mainStatus}`
-          const syncSummary = `Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0}`
+        const subStatus = subStallErrors.length === 0 ? "ok" : "failed"
+        const mainStatus = mainStallErrors.length === 0 ? "ok" : "failed"
+        const statusDetail = `sub: ${subStatus} | main: ${mainStatus}`
+        const syncSummary = `Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0}`
+        const message = `${statusDetail} — ${syncSummary}`
 
-          const message = `${statusDetail} — ${syncSummary}`
-          setSyncStatusMessage(message)
+        setSyncStatusMessage(message)
 
-          if ((data?.failed ?? 0) > 0) {
-            // Show first error if available
-            const firstError = Array.isArray(data?.errors) && data.errors.length > 0
-              ? `\n${data.errors[0]}`
-              : ""
-            return `${statusDetail} — ${syncSummary}${firstError}`
-          }
+        if (String(data?.state) === "failed" || !data?.ok) {
+          const firstError = errors.length > 0 ? `\n${errors[0]}` : ""
+          toast.error(`${message}${firstError}`, { id: loadingToastId })
+        } else {
+          toast.success(message, { id: loadingToastId })
+        }
+      } else {
+        const data = startResponse.data
+        const errors = Array.isArray(data?.errors) ? data.errors : []
+        const subStallErrors = errors.filter((e: string) => e.includes("stall=2"))
+        const mainStallErrors = errors.filter((e: string) => e.includes("stall=1"))
 
-          return `${statusDetail} — ${syncSummary}`
-        },
-        error: (error) => {
-          let errorMessage = "Historical sync failed"
-          let errorDetail = ""
+        const subStatus = subStallErrors.length === 0 ? "ok" : "failed"
+        const mainStatus = mainStallErrors.length === 0 ? "ok" : "failed"
+        const statusDetail = `sub: ${subStatus} | main: ${mainStatus}`
+        const syncSummary = `Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0}`
+        const message = `${statusDetail} — ${syncSummary}`
+        setSyncStatusMessage(message)
 
-          if (error.response?.data) {
-            const data = error.response.data
-            errorMessage = data.message || data.detail || errorMessage
-            errorDetail = data.detail || (Array.isArray(data.errors) && data.errors[0]) || ""
-          } else if (error.message) {
-            errorMessage = error.message
-          }
+        if ((data?.failed ?? 0) > 0) {
+          const firstError = errors.length > 0 ? `\n${errors[0]}` : ""
+          toast.error(`${message}${firstError}`)
+        } else {
+          toast.success(message)
+        }
+      }
 
-          const fullMessage = errorDetail ? `${errorMessage}\n${errorDetail}` : errorMessage
-          setSyncStatusMessage(`Error: ${errorMessage}`)
-
-          return fullMessage
-        },
-      })
-
-      // Wait for the request and update status after completion
-      await promise
       await fetchGoogleSyncStatus(true)
     } catch (error) {
-      // Error already handled by toast.promise
+      let errorMessage = "Historical sync failed"
+      let errorDetail = ""
+
+      if ((error as { response?: { data?: Record<string, unknown> } })?.response?.data) {
+        const data = (error as { response: { data: Record<string, unknown> } }).response.data
+        errorMessage = String(data.message || data.detail || errorMessage)
+        errorDetail = String(
+          data.detail || (Array.isArray(data.errors) && data.errors[0]) || ""
+        )
+      } else if ((error as { message?: string })?.message) {
+        errorMessage = String((error as { message: string }).message)
+      }
+
+      const fullMessage = errorDetail ? `${errorMessage}\n${errorDetail}` : errorMessage
+      setSyncStatusMessage(`Error: ${errorMessage}`)
+      toast.error(fullMessage)
       console.error("Sync error:", error)
     } finally {
       setIsSyncInProgress(false)
