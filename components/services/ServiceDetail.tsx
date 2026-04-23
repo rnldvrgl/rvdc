@@ -284,6 +284,22 @@ export default function ServiceDetail({
       return
     }
 
+    // Validate that installation services have parts added
+    if (service.service_type === "installation") {
+      const hasAnyParts = (service.appliances || []).some(
+        (appliance) => appliance.items_used && appliance.items_used.length > 0,
+      )
+      const hasServiceLevelParts = service.service_items && service.service_items.length > 0
+
+      if (!hasAnyParts && !hasServiceLevelParts && service.installation_units && service.installation_units.length > 0) {
+        toast.error(
+          "Cannot complete installation service. At minimum, aircon units must be properly registered with parts allocation. Please add parts or confirm unit details.",
+        )
+        setCompleteDialogOpen(false)
+        return
+      }
+    }
+
     completeService.mutate(service.id, {
       onSuccess: (response) => {
         const data = response.data

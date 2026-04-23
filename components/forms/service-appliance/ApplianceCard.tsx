@@ -323,19 +323,43 @@ export function ApplianceCard({
         <div className="flex items-center gap-1.5 flex-wrap px-4 pb-3">
           {availableActions.map((action) => {
             const Icon = action.icon
+
+            // Check if trying to mark installation appliance completed without parts
+            const isMarkCompletingInstallation =
+              isInstallation &&
+              action.to === "completed" &&
+              appliance.status === "pending"
+
+            const isBlockedByMissingParts =
+              isMarkCompletingInstallation &&
+              appliance.parts_needed_notes &&
+              (!appliance.items_used || appliance.items_used.length === 0)
+
+            const blockReason = isBlockedByMissingParts
+              ? "Parts are needed for this installation but none have been added yet"
+              : undefined
+
             return (
-              <Button
-                key={`${action.from}-${action.to}`}
-                type="button"
-                variant={action.variant}
-                size="sm"
-                disabled={statusLoading}
-                onClick={() => handleStatusChange(action.to)}
-                className="h-6 text-xs px-2"
-              >
-                <Icon className="mr-1 h-3 w-3" />
-                {action.label}
-              </Button>
+              <Tooltip key={`${action.from}-${action.to}`}>
+                <TooltipTrigger asChild>
+                  <Button
+                    type="button"
+                    variant={action.variant}
+                    size="sm"
+                    disabled={statusLoading || isBlockedByMissingParts}
+                    onClick={() => handleStatusChange(action.to)}
+                    className="h-6 text-xs px-2"
+                  >
+                    <Icon className="mr-1 h-3 w-3" />
+                    {action.label}
+                  </Button>
+                </TooltipTrigger>
+                {blockReason && (
+                  <TooltipContent className="max-w-xs">
+                    <p>{blockReason}</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
             )
           })}
         </div>
