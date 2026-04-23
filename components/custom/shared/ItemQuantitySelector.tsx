@@ -12,7 +12,7 @@ import {
 import { Item, ItemEntry } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/currency"
 import { AlertTriangle, Info, Minus, PackagePlus, Pencil, Plus, Star, X } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 const RECENT_ITEMS_KEY = "rvdc_recent_sale_items"
 const MAX_RECENT_ITEMS = 8
@@ -57,15 +57,23 @@ export default function ItemQuantitySelector({
   /** Called when the user wants to add stall stock for an item (item_id) */
   onAddStock?: (itemId: number) => void
 }) {
+  const trackedItems = useMemo(
+    () =>
+      allItems.filter(
+        (item) => item.is_tracked && !(untrackedItemIds?.has(item.id) ?? false),
+      ),
+    [allItems, untrackedItemIds],
+  )
+
   const handleAdd = () => {
-    if (allItems.length === 0) return
+    if (trackedItems.length === 0) return
     const newItem: ItemEntry = {
-      item: allItems[0],
+      item: trackedItems[0],
       quantity: 1,
       ...(allowPriceChange
         ? {
-            final_price_per_unit: Number(allItems[0].retail_price),
-            print_price_per_unit: Number(allItems[0].retail_price),
+            final_price_per_unit: Number(trackedItems[0].retail_price),
+            print_price_per_unit: Number(trackedItems[0].retail_price),
           }
         : {}),
     }
@@ -154,7 +162,7 @@ export default function ItemQuantitySelector({
   }, [])
 
   const recentItems = recentIds
-    .map((id) => allItems.find((item) => item.id === id))
+    .map((id) => trackedItems.find((item) => item.id === id))
     .filter((item): item is Item => !!item)
 
   const handleQuickAdd = useCallback(
@@ -264,12 +272,7 @@ export default function ItemQuantitySelector({
                             }
                           }}
                           value=""
-                          options={allItems
-                            .filter(
-                              (c) =>
-                                !c.is_tracked ||
-                                (untrackedItemIds?.has(c.id) ?? false),
-                            )
+                          options={trackedItems
                             .map((c) => ({
                               label: `${c.name} — ${formatCurrency(c.retail_price)}`,
                               value: c.id.toString(),
@@ -433,6 +436,7 @@ export default function ItemQuantitySelector({
                             [idx]: e.target.value,
                           }))
                         }}
+                        onWheel={(e) => e.preventDefault()}
                         onBlur={() => {
                           const raw = editingQty[idx]
                           if (raw !== undefined) {
@@ -515,6 +519,7 @@ export default function ItemQuantitySelector({
                               parseFloat(e.target.value) || 0,
                             )
                           }
+                          onWheel={(e) => e.preventDefault()}
                           disabled={disabled}
                           className="h-8"
                         />
@@ -550,6 +555,7 @@ export default function ItemQuantitySelector({
                               parseFloat(e.target.value) || 0,
                             )
                           }
+                          onWheel={(e) => e.preventDefault()}
                           disabled={disabled}
                           className="h-8"
                         />

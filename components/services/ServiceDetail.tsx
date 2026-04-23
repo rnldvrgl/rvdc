@@ -3387,6 +3387,7 @@ export default function ServiceDetail({
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
                 placeholder="0.00"
+                onWheel={(e) => e.preventDefault()}
                 disabled={paymentType === "cheque" && !!selectedCheque}
               />
               {paymentType === "cheque" && selectedCheque && (
@@ -3492,6 +3493,7 @@ export default function ServiceDetail({
                 value={editPaymentAmount}
                 onChange={(e) => setEditPaymentAmount(e.target.value)}
                 placeholder="0.00"
+                onWheel={(e) => e.preventDefault()}
               />
             </div>
             <div className="space-y-2">

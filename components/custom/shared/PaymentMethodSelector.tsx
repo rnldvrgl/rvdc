@@ -167,6 +167,7 @@ export default function PaymentMethodSelector({
                                 val === "" ? null : parseFloat(val),
                               )
                             }}
+                            onWheel={(e) => e.preventDefault()}
                             disabled={disabled || isChequeSelected}
                             className="h-8 flex-1"
                             placeholder="Amount"

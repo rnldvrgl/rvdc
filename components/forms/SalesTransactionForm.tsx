@@ -1071,6 +1071,7 @@ export default function SalesTransactionForm({
                           const val = parseFloat(e.target.value)
                           field.onChange(isNaN(val) ? 0 : val)
                         }}
+                        onWheel={(e) => e.preventDefault()}
                       />
                     </div>
                   </FormControl>

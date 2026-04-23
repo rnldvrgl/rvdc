@@ -31,6 +31,7 @@ export function ComboBox({
   autoOpen,
 }: ComboBoxProps & { autoOpen?: boolean }) {
   const [open, setOpen] = React.useState(false)
+  const [searchValue, setSearchValue] = React.useState("")
 
   // Auto-open the popover once on mount when autoOpen is true
   const autoOpenedRef = React.useRef(false)
@@ -46,11 +47,23 @@ export function ComboBox({
   const triggerRef = React.useRef<HTMLButtonElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
 
+  const scrollToTop = React.useCallback(() => {
+    if (listRef.current) {
+      listRef.current.scrollTop = 0
+    }
+  }, [])
+
   React.useEffect(() => {
     if (triggerRef.current) {
       setTriggerWidth(triggerRef.current.offsetWidth)
     }
   }, [open, options.length])
+
+  React.useEffect(() => {
+    if (open) {
+      scrollToTop()
+    }
+  }, [open, searchValue, scrollToTop])
 
   function handleScrollWheel(e: React.WheelEvent) {
     if (listRef.current) {
@@ -97,6 +110,10 @@ export function ComboBox({
           <CommandInput
             placeholder={searchPlaceholder}
             className="border-b"
+            onValueChange={(value) => {
+              setSearchValue(value)
+              requestAnimationFrame(scrollToTop)
+            }}
           />
           <CommandList ref={listRef}>
             <CommandEmpty>No results found.</CommandEmpty>
