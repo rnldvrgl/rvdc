@@ -21,7 +21,11 @@ export function useSalesTransactionMutations() {
 
   const commonInvalidations = [
     { queryKey: ["sales-transactions"] },
+    { queryKey: ["sales-daily-summary"] },
     { queryKey: ["stall-stocks"] },
+    { queryKey: ["remittances"] },
+    { queryKey: ["remittance-preview"] },
+    { queryKey: ["sub-stall-payable"] },
     ...analyticsKeys.map((key) => ({ queryKey: key })),
   ]
 
