@@ -1259,6 +1259,7 @@ export interface Service {
   forfeiture_notes?: string
   acquisition_price?: string | null
   appliances?: ServiceAppliance[]
+  service_items?: ServiceItemUsed[]
   installation_units?: AirconUnits[]
   technician_assignments?: TechnicianAssignment[]
   payments?: ServicePayment[]

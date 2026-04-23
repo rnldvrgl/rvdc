@@ -332,7 +332,7 @@ export function ApplianceCard({
 
             const isBlockedByMissingParts =
               isMarkCompletingInstallation &&
-              appliance.parts_needed_notes &&
+              Boolean(appliance.parts_needed_notes) &&
               (!appliance.items_used || appliance.items_used.length === 0)
 
             const blockReason = isBlockedByMissingParts
