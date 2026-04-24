@@ -55,7 +55,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
   const [isTestingConnection, setIsTestingConnection] = useState(false)
   const [isSyncInProgress, setIsSyncInProgress] = useState(false)
-  const [isSyncMonitoringStopped, setIsSyncMonitoringStopped] = useState(false)
   const [syncStartDate, setSyncStartDate] = useState<Date | undefined>(undefined)
   const [syncEndDate, setSyncEndDate] = useState<Date | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -248,7 +247,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const stopSyncMonitoring = () => {
     syncJobCancelledRef.current = true
     setIsSyncInProgress(false)
-    setIsSyncMonitoringStopped(true)
     const message = "Sync monitoring stopped. The historical sync can continue in the background."
     setSyncStatusMessage(message)
     if (syncToastIdRef.current) {
@@ -306,7 +304,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const syncHistoricalSales = async () => {
     try {
       setIsSyncInProgress(true)
-      setIsSyncMonitoringStopped(false)
       syncJobCancelledRef.current = false
       const payload: {
         action: string
