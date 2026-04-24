@@ -196,14 +196,54 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       setTimeout(resolve, ms)
     })
 
-  const pollHistoricalSyncJob = async (jobId: string) => {
+  const formatHistoricalSyncProgress = (data: {
+    state?: string
+    processed_targets?: number
+    total_targets?: number
+    synced?: number
+    failed?: number
+    progress_pct?: number
+    current_stall_id?: number | null
+    current_date?: string | null
+  }) => {
+    const state = String(data.state || "")
+    const processed = Number(data.processed_targets || 0)
+    const total = Number(data.total_targets || 0)
+    const synced = Number(data.synced || 0)
+    const failed = Number(data.failed || 0)
+    const pct = Number(data.progress_pct || 0)
+    const location = data.current_stall_id && data.current_date
+      ? ` · stall ${data.current_stall_id} @ ${data.current_date}`
+      : ""
+
+    if (state === "queued") {
+      return "Historical sync queued..."
+    }
+
+    if (total > 0) {
+      return `Syncing historical sales... ${processed}/${total} (${pct}%) · synced ${synced}, failed ${failed}${location}`
+    }
+
+    return `Syncing historical sales... synced ${synced}, failed ${failed}${location}`
+  }
+
+  const pollHistoricalSyncJob = async (
+    jobId: string,
+    onProgress?: (data: Record<string, unknown>) => void,
+  ) => {
     const maxAttempts = 120
+    let lastData: Record<string, unknown> | null = null
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const { data } = await api.get("/users/settings/google-sheets-sync/", {
         params: { job_id: jobId },
         timeout: 30000,
       })
+      lastData = data
+
+      if (onProgress) {
+        onProgress(data)
+      }
 
       const state = String(data?.state || "")
       if (state === "completed" || state === "failed") {
@@ -213,7 +253,11 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       await wait(2500)
     }
 
-    throw new Error("Historical sync is still running. Please check status again in a moment.")
+    return {
+      ...(lastData || {}),
+      state: "running_timeout",
+      message: "Historical sync is still running in the background.",
+    }
   }
 
   const syncHistoricalSales = async () => {
@@ -242,11 +286,29 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       if (startResponse.status === 202 && startResponse.data?.job_id) {
         const jobId = String(startResponse.data.job_id)
         const loadingToastId = "google-sheets-sync-progress"
-        toast.loading("Syncing historical sales to Google Sheets...", {
+        const initialProgressMessage = formatHistoricalSyncProgress({
+          state: "queued",
+        })
+        setSyncStatusMessage(initialProgressMessage)
+        toast.loading(initialProgressMessage, {
           id: loadingToastId,
         })
 
-        const data = await pollHistoricalSyncJob(jobId)
+        const data = await pollHistoricalSyncJob(jobId, (progressData) => {
+          const progressMessage = formatHistoricalSyncProgress(progressData)
+          setSyncStatusMessage(progressMessage)
+          toast.loading(progressMessage, { id: loadingToastId })
+        })
+
+        if (String(data?.state) === "running_timeout") {
+          const timeoutMessage = String(
+            data?.message || "Historical sync is still running in the background.",
+          )
+          setSyncStatusMessage(timeoutMessage)
+          toast.message(timeoutMessage, { id: loadingToastId })
+          return
+        }
+
         const errors = Array.isArray(data?.errors) ? data.errors : []
         const subStallErrors = errors.filter((e: string) => e.includes("stall=2"))
         const mainStallErrors = errors.filter((e: string) => e.includes("stall=1"))
@@ -288,6 +350,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
 
       await fetchGoogleSyncStatus(true)
     } catch (error) {
+      toast.dismiss("google-sheets-sync-progress")
       let errorMessage = "Historical sync failed"
       let errorDetail = ""
 
