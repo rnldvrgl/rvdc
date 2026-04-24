@@ -14,6 +14,7 @@ export interface SystemSettings {
   birthday_greeting_variant: string
   maintenance_mode: boolean
   check_stock_on_sale: boolean
+  sub_stall_unit_revenue_additional: string
   notification_sound: string
   google_sheets_sync_enabled: boolean
   google_sheets_spreadsheet_id: string

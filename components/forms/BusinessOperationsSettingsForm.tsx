@@ -55,6 +55,9 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
   const [isTestingConnection, setIsTestingConnection] = useState(false)
   const [isSyncInProgress, setIsSyncInProgress] = useState(false)
+  const [subStallUnitRevenueAdditional, setSubStallUnitRevenueAdditional] = useState(
+    settings.sub_stall_unit_revenue_additional || "0",
+  )
   const [syncStartDate, setSyncStartDate] = useState<Date | undefined>(undefined)
   const [syncEndDate, setSyncEndDate] = useState<Date | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
@@ -69,11 +72,31 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     setGoogleSubSpreadsheetId(settings.google_sheets_spreadsheet_id || "")
     setGoogleMainSpreadsheetId(settings.google_sheets_main_spreadsheet_id || "")
     setGoogleStallType(settings.google_sheets_sub_stall_type || "sub")
+    setSubStallUnitRevenueAdditional(settings.sub_stall_unit_revenue_additional || "0")
   }, [
     settings.google_sheets_spreadsheet_id,
     settings.google_sheets_main_spreadsheet_id,
     settings.google_sheets_sub_stall_type,
+    settings.sub_stall_unit_revenue_additional,
   ])
+
+  const saveSubStallUnitRevenueAdditional = () => {
+    const normalized = subStallUnitRevenueAdditional.trim() || "0"
+    const parsed = Number(normalized)
+
+    if (Number.isNaN(parsed) || parsed < 0) {
+      toast.error("Sub stall additional revenue must be a valid non-negative amount.")
+      return
+    }
+
+    updateOperationsSettings.mutate({
+      sub_stall_unit_revenue_additional: normalized,
+    })
+  }
+
+  const hasSubStallUnitRevenueAdditionalChanged =
+    subStallUnitRevenueAdditional.trim() !==
+    String(settings.sub_stall_unit_revenue_additional || "0").trim()
 
   const saveNotificationSound = () => {
     updateOperationsSettings.mutate({ notification_sound: notificationSound.trim() })
@@ -464,6 +487,40 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               updateOperationsSettings.mutate({ maintenance_mode: checked })
             }
           />
+        </div>
+      </div>
+
+      <div className="rounded-lg border bg-background/70 p-3 sm:p-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 rounded-md border bg-muted/40 p-1.5">
+            <PackageCheck className="size-4 shrink-0 text-muted-foreground" />
+          </div>
+          <div className="space-y-0.5">
+            <Label className="text-sm font-medium">Sub Stall Unit Revenue Additional</Label>
+            <p className="text-xs text-muted-foreground">
+              Extra amount per installation unit shifted from main stall unit margin to sub stall revenue.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={subStallUnitRevenueAdditional}
+            disabled={updateOperationsSettings.isPending}
+            onChange={(e) => setSubStallUnitRevenueAdditional(e.target.value)}
+            placeholder="0.00"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            disabled={updateOperationsSettings.isPending || !hasSubStallUnitRevenueAdditionalChanged}
+            onClick={saveSubStallUnitRevenueAdditional}
+          >
+            Save
+          </Button>
         </div>
       </div>
 

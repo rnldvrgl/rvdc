@@ -4,6 +4,7 @@ import api from "@/lib/utils/api"
 export interface UpdateOperationsSettingsPayload {
   maintenance_mode?: boolean
   check_stock_on_sale?: boolean
+  sub_stall_unit_revenue_additional?: string | number
   notification_sound?: string
   remove_notification_sound?: boolean
   google_sheets_sync_enabled?: boolean
