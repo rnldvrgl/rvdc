@@ -112,10 +112,14 @@ function getLaborItems(appliances: ServiceAppliance[]) {
     .filter(
       (a) =>
         !a.labor_is_free &&
-        parseFloat(a.discounted_labor_fee ?? a.labor_fee ?? "0") > 0,
+        parseFloat(
+          a.installation_labor_fee ?? a.discounted_labor_fee ?? a.labor_fee ?? "0",
+        ) > 0,
     )
     .map((a) => {
-      const fee = parseFloat(a.discounted_labor_fee ?? a.labor_fee ?? "0")
+      const fee = parseFloat(
+        a.installation_labor_fee ?? a.discounted_labor_fee ?? a.labor_fee ?? "0",
+      )
       const typeName = a.appliance_type?.name ?? "Service"
       return {
         qty: 1,
@@ -131,11 +135,11 @@ function getAirconUnitItems(units: AirconUnits[]) {
     .filter(
       (u) =>
         u.model &&
-        parseFloat(String(u.sale_price ?? u.model?.selling_price ?? "0")) > 0,
+        parseFloat(String(u.installation_unit_fee ?? u.sale_price ?? u.model?.selling_price ?? "0")) > 0,
     )
     .map((u) => {
       const price = parseFloat(
-        String(u.sale_price ?? u.model?.selling_price ?? "0"),
+        String(u.installation_unit_fee ?? u.sale_price ?? u.model?.selling_price ?? "0"),
       )
       const brand = u.model?.brand?.name ?? ""
       const model = u.model?.name ?? ""

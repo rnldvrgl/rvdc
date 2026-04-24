@@ -1115,7 +1115,8 @@ export default function ServiceDetail({
                 {currentAppliances.map((appliance) => {
                   const laborFee = parseFloat(appliance.labor_fee || "0")
                   const discountedLaborFee = parseFloat(
-                    appliance.discounted_labor_fee ||
+                    appliance.installation_labor_fee ||
+                      appliance.discounted_labor_fee ||
                       appliance.labor_fee ||
                       "0",
                   )
@@ -1150,7 +1151,8 @@ export default function ServiceDetail({
                     ? appliance.unit_price
                       ? parseFloat(appliance.unit_price)
                       : parseFloat(
-                          linkedUnit.sale_price ||
+                          appliance.installation_unit_fee ||
+                            linkedUnit.sale_price ||
                             linkedUnit.model?.selling_price ||
                             linkedUnit.model?.retail_price ||
                             "0",
