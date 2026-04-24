@@ -1148,15 +1148,13 @@ export default function ServiceDetail({
                         )
                       : null
                   const applianceUnitPrice = linkedUnit
-                    ? appliance.unit_price
-                      ? parseFloat(appliance.unit_price)
-                      : parseFloat(
-                          appliance.installation_unit_fee ||
-                            linkedUnit.sale_price ||
-                            linkedUnit.model?.selling_price ||
-                            linkedUnit.model?.retail_price ||
-                            "0",
-                        )
+                    ? parseFloat(
+                        appliance.installation_unit_fee ||
+                          linkedUnit.sale_price ||
+                          linkedUnit.model?.selling_price ||
+                          linkedUnit.model?.retail_price ||
+                          "0",
+                      )
                     : appliance.unit_price
                       ? parseFloat(appliance.unit_price)
                       : 0
@@ -1494,14 +1492,13 @@ export default function ServiceDetail({
                                     )
                                   : null
                               const unitPrice = linkedUnit
-                                ? appliance.unit_price
-                                  ? parseFloat(appliance.unit_price)
-                                  : parseFloat(
+                                ? parseFloat(
+                                    appliance.installation_unit_fee ||
                                       linkedUnit.sale_price ||
-                                        linkedUnit.model?.selling_price ||
-                                        linkedUnit.model?.retail_price ||
-                                        "0",
-                                    )
+                                      linkedUnit.model?.selling_price ||
+                                      linkedUnit.model?.retail_price ||
+                                      "0",
+                                  )
                                 : appliance.unit_price
                                   ? parseFloat(appliance.unit_price)
                                   : 0
