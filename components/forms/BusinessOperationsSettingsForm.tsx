@@ -55,9 +55,12 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
   const [isTestingConnection, setIsTestingConnection] = useState(false)
   const [isSyncInProgress, setIsSyncInProgress] = useState(false)
+  const [isSyncMonitoringStopped, setIsSyncMonitoringStopped] = useState(false)
   const [syncStartDate, setSyncStartDate] = useState<Date | undefined>(undefined)
   const [syncEndDate, setSyncEndDate] = useState<Date | undefined>(undefined)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const syncJobCancelledRef = useRef(false)
+  const syncToastIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     setNotificationSound(settings.notification_sound)
@@ -232,6 +235,33 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     return `Syncing historical sales... synced ${synced}, failed ${failed}${location}${errorHint}`
   }
 
+  const showSyncPendingToast = (message: string) => {
+    const toastId = syncToastIdRef.current || "google-sheets-sync-progress"
+    syncToastIdRef.current = toastId
+    toast.warning(message, {
+      id: toastId,
+      description: "Monitoring the historical sync job in the background.",
+      duration: Infinity,
+    })
+  }
+
+  const stopSyncMonitoring = () => {
+    syncJobCancelledRef.current = true
+    setIsSyncInProgress(false)
+    setIsSyncMonitoringStopped(true)
+    const message = "Sync monitoring stopped. The historical sync can continue in the background."
+    setSyncStatusMessage(message)
+    if (syncToastIdRef.current) {
+      toast.warning(message, {
+        id: syncToastIdRef.current,
+        description: "You can start the sync again to resume monitoring.",
+        duration: 6000,
+      })
+    } else {
+      toast.warning(message)
+    }
+  }
+
   const pollHistoricalSyncJob = async (
     jobId: string,
     onProgress?: (data: Record<string, unknown>) => void,
@@ -240,6 +270,14 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     let lastData: Record<string, unknown> | null = null
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (syncJobCancelledRef.current) {
+        return {
+          ...(lastData || {}),
+          state: "cancelled",
+          message: "Sync monitoring stopped by user.",
+        }
+      }
+
       const { data } = await api.get("/users/settings/google-sheets-sync/", {
         params: { job_id: jobId },
         timeout: 30000,
@@ -268,6 +306,8 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const syncHistoricalSales = async () => {
     try {
       setIsSyncInProgress(true)
+      setIsSyncMonitoringStopped(false)
+      syncJobCancelledRef.current = false
       const payload: {
         action: string
         start_date?: string
@@ -291,26 +331,42 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       if (startResponse.status === 202 && startResponse.data?.job_id) {
         const jobId = String(startResponse.data.job_id)
         const loadingToastId = "google-sheets-sync-progress"
+        syncToastIdRef.current = loadingToastId
         const initialProgressMessage = formatHistoricalSyncProgress({
           state: "queued",
         })
         setSyncStatusMessage(initialProgressMessage)
-        toast.loading(initialProgressMessage, {
-          id: loadingToastId,
-        })
+        showSyncPendingToast(initialProgressMessage)
 
         const data = await pollHistoricalSyncJob(jobId, (progressData) => {
           const progressMessage = formatHistoricalSyncProgress(progressData)
           setSyncStatusMessage(progressMessage)
-          toast.loading(progressMessage, { id: loadingToastId })
+          showSyncPendingToast(progressMessage)
         })
+
+        if (String(data?.state) === "cancelled") {
+          const cancelledMessage = String(
+            data?.message || "Sync monitoring stopped by user.",
+          )
+          setSyncStatusMessage(cancelledMessage)
+          toast.warning(cancelledMessage, {
+            id: loadingToastId,
+            description: "The background sync may still continue.",
+            duration: 6000,
+          })
+          return
+        }
 
         if (String(data?.state) === "running_timeout") {
           const timeoutMessage = String(
             data?.message || "Historical sync is still running in the background.",
           )
           setSyncStatusMessage(timeoutMessage)
-          toast.message(timeoutMessage, { id: loadingToastId })
+          toast.warning(timeoutMessage, {
+            id: loadingToastId,
+            description: "You can re-run the sync to resume monitoring.",
+            duration: 6000,
+          })
           return
         }
 
@@ -355,7 +411,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
 
       await fetchGoogleSyncStatus(true)
     } catch (error) {
-      toast.dismiss("google-sheets-sync-progress")
+      toast.dismiss(syncToastIdRef.current || "google-sheets-sync-progress")
       let errorMessage = "Historical sync failed"
       let errorDetail = ""
 
@@ -375,6 +431,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       console.error("Sync error:", error)
     } finally {
       setIsSyncInProgress(false)
+      syncToastIdRef.current = null
     }
   }
 
@@ -669,6 +726,18 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 <CalendarClock className="size-4" />
                 {isSyncInProgress ? "Syncing..." : "Sync Previous Sales"}
               </Button>
+              {isSyncInProgress && (
+                <Button
+                  type="button"
+                  variant="warning"
+                  disabled={updateOperationsSettings.isPending}
+                  onClick={stopSyncMonitoring}
+                  className="gap-2"
+                >
+                  <ShieldOff className="size-4" />
+                  Stop Monitoring
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="outline"
