@@ -205,6 +205,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     progress_pct?: number
     current_stall_id?: number | null
     current_date?: string | null
+    latest_error?: string | null
   }) => {
     const state = String(data.state || "")
     const processed = Number(data.processed_targets || 0)
@@ -212,8 +213,12 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     const synced = Number(data.synced || 0)
     const failed = Number(data.failed || 0)
     const pct = Number(data.progress_pct || 0)
+    const latestError = String(data.latest_error || "").trim()
     const location = data.current_stall_id && data.current_date
       ? ` · stall ${data.current_stall_id} @ ${data.current_date}`
+      : ""
+    const errorHint = failed > 0 && latestError
+      ? ` · last error: ${latestError}`
       : ""
 
     if (state === "queued") {
@@ -221,10 +226,10 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     }
 
     if (total > 0) {
-      return `Syncing historical sales... ${processed}/${total} (${pct}%) · synced ${synced}, failed ${failed}${location}`
+      return `Syncing historical sales... ${processed}/${total} (${pct}%) · synced ${synced}, failed ${failed}${location}${errorHint}`
     }
 
-    return `Syncing historical sales... synced ${synced}, failed ${failed}${location}`
+    return `Syncing historical sales... synced ${synced}, failed ${failed}${location}${errorHint}`
   }
 
   const pollHistoricalSyncJob = async (
