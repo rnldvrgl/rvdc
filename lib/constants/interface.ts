@@ -818,6 +818,7 @@ export interface AirconUnits {
   is_deleted?: boolean
   deleted_at?: string | null
   created_at?: string
+  installation_unit_fee?: string
 }
 
 // Request type
@@ -887,6 +888,8 @@ export interface ServiceAppliance {
   is_labor_warranty_active?: boolean
   is_unit_warranty_active?: boolean
   discounted_labor_fee?: string
+  installation_labor_fee?: string
+  installation_unit_fee?: string
   items_used?: ApplianceItemUsed[]
   technician_assignments?: TechnicianAssignment[]
   total_parts_cost?: string
