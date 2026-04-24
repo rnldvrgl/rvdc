@@ -60,7 +60,14 @@ export function UnitPriceInline({
     appliance.installation_unit_fee != null
       ? parseFloat(appliance.installation_unit_fee)
       : null
-  const displayPrice = splitUnitPrice ?? currentPrice
+  const splitFallbackFromLabor =
+    matchingUnit && appliance.installation_labor_fee != null
+      ? Math.max(
+          defaultPrice - parseFloat(appliance.installation_labor_fee),
+          0,
+        )
+      : null
+  const displayPrice = splitUnitPrice ?? splitFallbackFromLabor ?? currentPrice
 
   const hasOverride =
     appliance.unit_price != null &&

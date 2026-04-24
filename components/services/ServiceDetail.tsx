@@ -1150,6 +1150,19 @@ export default function ServiceDetail({
                   const applianceUnitPrice = linkedUnit
                     ? parseFloat(
                         appliance.installation_unit_fee ||
+                          (appliance.installation_labor_fee
+                            ? (
+                                Math.max(
+                                  parseFloat(
+                                    linkedUnit.sale_price ||
+                                      linkedUnit.model?.selling_price ||
+                                      linkedUnit.model?.retail_price ||
+                                      "0",
+                                  ) - parseFloat(appliance.installation_labor_fee),
+                                  0,
+                                )
+                              ).toString()
+                            : "") ||
                           linkedUnit.sale_price ||
                           linkedUnit.model?.selling_price ||
                           linkedUnit.model?.retail_price ||
@@ -1494,6 +1507,19 @@ export default function ServiceDetail({
                               const unitPrice = linkedUnit
                                 ? parseFloat(
                                     appliance.installation_unit_fee ||
+                                      (appliance.installation_labor_fee
+                                        ? (
+                                            Math.max(
+                                              parseFloat(
+                                                linkedUnit.sale_price ||
+                                                  linkedUnit.model?.selling_price ||
+                                                  linkedUnit.model?.retail_price ||
+                                                  "0",
+                                              ) - parseFloat(appliance.installation_labor_fee),
+                                              0,
+                                            )
+                                          ).toString()
+                                        : "") ||
                                       linkedUnit.sale_price ||
                                       linkedUnit.model?.selling_price ||
                                       linkedUnit.model?.retail_price ||
