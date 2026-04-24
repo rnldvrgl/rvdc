@@ -56,6 +56,12 @@ export function UnitPriceInline({
     ? parseFloat(appliance.unit_price)
     : defaultPrice
 
+  const splitUnitPrice =
+    appliance.installation_unit_fee != null
+      ? parseFloat(appliance.installation_unit_fee)
+      : null
+  const displayPrice = splitUnitPrice ?? currentPrice
+
   const hasOverride =
     appliance.unit_price != null &&
     parseFloat(appliance.unit_price) !== defaultPrice
@@ -184,12 +190,12 @@ export function UnitPriceInline({
             </Button>
           </div>
         </div>
-      ) : currentPrice > 0 ? (
+      ) : displayPrice > 0 ? (
         <div className="flex items-baseline gap-1.5">
           <span className="font-semibold text-primary">
-            {formatCurrency(currentPrice)}
+            {formatCurrency(displayPrice)}
           </span>
-          {hasOverride && (
+          {splitUnitPrice == null && hasOverride && (
             <span
               className={`text-xs ${currentPrice < defaultPrice ? "text-success" : "text-orange-600"}`}
             >
