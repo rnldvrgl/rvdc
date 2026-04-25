@@ -958,94 +958,102 @@ export default function ServiceApplianceManager({
                 <span className="text-sm font-medium">Pricing</span>
               </div>
               <div className="p-4 space-y-3">
-                {/* Labor fee row with inline free toggle */}
-                <div className="flex items-end gap-3">
-                  <div className="flex-1 space-y-1.5">
-                    <Label className="text-xs font-medium text-muted-foreground">
-                      {isInstallation ? "Installation Fee (₱)" : "Labor Fee (₱)"}
-                    </Label>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={laborFee || 0}
-                      onChange={(e) =>
-                        setField("labor_fee", parseFloat(e.target.value) || 0)
-                      }
-                      disabled={autoAdjustLabor}
-                    />
-                    {autoAdjustLabor && (
-                      <p className="text-[11px] text-muted-foreground">
-                        Auto-computed: Total Fee − Parts Cost
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 pb-2.5">
-                    <Checkbox
-                      id="labor_is_free"
-                      checked={laborIsFree || false}
-                      onCheckedChange={(checked) =>
-                        setField("labor_is_free", checked === true)
-                      }
-                      className="cursor-pointer"
-                    />
-                    <Label
-                      htmlFor="labor_is_free"
-                      className="text-xs font-medium cursor-pointer whitespace-nowrap"
-                    >
-                      Free {isInstallation ? "Installation" : "Labor"}
-                    </Label>
-                  </div>
-                </div>
-
-                <Separator />
-
-                {/* Auto-adjust Labor */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="auto_adjust_labor"
-                      checked={autoAdjustLabor || false}
-                      onCheckedChange={(checked) => {
-                        const enabled = checked === true
-                        setField("auto_adjust_labor", enabled)
-                        if (enabled && !totalServiceFee) {
-                          setField("total_service_fee", laborFee || 0)
-                        }
-                      }}
-                      className="cursor-pointer"
-                    />
-                    <Label
-                      htmlFor="auto_adjust_labor"
-                      className="text-xs font-medium cursor-pointer"
-                    >
-                      Auto-adjust labor fee (total includes parts)
-                    </Label>
-                  </div>
-                  {autoAdjustLabor && (
-                    <div className="space-y-1.5 pl-6">
-                      <Label className="text-xs font-medium text-muted-foreground">
-                        Total Service Fee (₱)
-                      </Label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={totalServiceFee ?? 0}
-                        onChange={(e) =>
-                          setField(
-                            "total_service_fee",
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
-                        placeholder="Total quoted to client (labor + parts)"
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        Labor will auto-adjust as parts are added so Labor + Parts = Total.
-                      </p>
+                {isInstallation && unitType === "brand_new" ? (
+                  <p className="text-xs text-muted-foreground">
+                    Installation labor split is auto-computed from the unit sold price and configured revenue split settings.
+                  </p>
+                ) : (
+                  <>
+                    {/* Labor fee row with inline free toggle */}
+                    <div className="flex items-end gap-3">
+                      <div className="flex-1 space-y-1.5">
+                        <Label className="text-xs font-medium text-muted-foreground">
+                          {isInstallation ? "Installation Fee (₱)" : "Labor Fee (₱)"}
+                        </Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={laborFee || 0}
+                          onChange={(e) =>
+                            setField("labor_fee", parseFloat(e.target.value) || 0)
+                          }
+                          disabled={autoAdjustLabor}
+                        />
+                        {autoAdjustLabor && (
+                          <p className="text-[11px] text-muted-foreground">
+                            Auto-computed: Total Fee − Parts Cost
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 pb-2.5">
+                        <Checkbox
+                          id="labor_is_free"
+                          checked={laborIsFree || false}
+                          onCheckedChange={(checked) =>
+                            setField("labor_is_free", checked === true)
+                          }
+                          className="cursor-pointer"
+                        />
+                        <Label
+                          htmlFor="labor_is_free"
+                          className="text-xs font-medium cursor-pointer whitespace-nowrap"
+                        >
+                          Free {isInstallation ? "Installation" : "Labor"}
+                        </Label>
+                      </div>
                     </div>
-                  )}
-                </div>
+
+                    <Separator />
+
+                    {/* Auto-adjust Labor */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="auto_adjust_labor"
+                          checked={autoAdjustLabor || false}
+                          onCheckedChange={(checked) => {
+                            const enabled = checked === true
+                            setField("auto_adjust_labor", enabled)
+                            if (enabled && !totalServiceFee) {
+                              setField("total_service_fee", laborFee || 0)
+                            }
+                          }}
+                          className="cursor-pointer"
+                        />
+                        <Label
+                          htmlFor="auto_adjust_labor"
+                          className="text-xs font-medium cursor-pointer"
+                        >
+                          Auto-adjust labor fee (total includes parts)
+                        </Label>
+                      </div>
+                      {autoAdjustLabor && (
+                        <div className="space-y-1.5 pl-6">
+                          <Label className="text-xs font-medium text-muted-foreground">
+                            Total Service Fee (₱)
+                          </Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={totalServiceFee ?? 0}
+                            onChange={(e) =>
+                              setField(
+                                "total_service_fee",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            placeholder="Total quoted to client (labor + parts)"
+                          />
+                          <p className="text-[11px] text-muted-foreground">
+                            Labor will auto-adjust as parts are added so Labor + Parts = Total.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 

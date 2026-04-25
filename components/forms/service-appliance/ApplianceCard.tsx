@@ -174,9 +174,9 @@ export function ApplianceCard({
     (a) => a.from === appliance.status,
   )
 
-  const baseLaborFee = parseFloat(appliance.labor_fee || "0")
-  const laborDiscountAmount = parseFloat(appliance.labor_discount_amount || "0")
-  const installationLaborDisplay = Math.max(baseLaborFee - laborDiscountAmount, 0)
+  const installationLaborDisplay = parseFloat(
+    appliance.installation_labor_fee || "0",
+  )
   const laborDisplayAmount = isInstallation
     ? installationLaborDisplay
     : parseFloat(appliance.discounted_labor_fee || appliance.labor_fee)

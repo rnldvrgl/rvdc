@@ -53,9 +53,16 @@ export function UnitPriceInline({
       )
     : 0
 
-  const currentPrice = appliance.unit_price
+  const soldPrice = appliance.unit_price
     ? parseFloat(appliance.unit_price)
     : defaultPrice
+
+  const splitUnitPrice =
+    appliance.installation_unit_fee != null
+      ? parseFloat(appliance.installation_unit_fee)
+      : null
+
+  const currentPrice = splitUnitPrice ?? soldPrice
 
   const displayPrice = currentPrice
 
@@ -64,7 +71,7 @@ export function UnitPriceInline({
     parseFloat(appliance.unit_price) !== defaultPrice
 
   const handleStartEdit = () => {
-    setEditPrice(currentPrice > 0 ? currentPrice.toString() : "")
+    setEditPrice(soldPrice > 0 ? soldPrice.toString() : "")
     setIsEditingPrice(true)
   }
 
@@ -194,11 +201,11 @@ export function UnitPriceInline({
           </span>
           {hasOverride && (
             <span
-              className={`text-xs ${currentPrice < defaultPrice ? "text-success" : "text-orange-600"}`}
+              className={`text-xs ${soldPrice < defaultPrice ? "text-success" : "text-orange-600"}`}
             >
-              {currentPrice < defaultPrice
-                ? `${formatCurrency(defaultPrice - currentPrice)} off`
-                : `+${formatCurrency(currentPrice - defaultPrice)}`}
+              {soldPrice < defaultPrice
+                ? `${formatCurrency(defaultPrice - soldPrice)} off`
+                : `+${formatCurrency(soldPrice - defaultPrice)}`}
             </span>
           )}
         </div>
