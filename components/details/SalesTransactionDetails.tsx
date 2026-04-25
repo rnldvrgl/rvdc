@@ -287,7 +287,7 @@ export function SalesTransactionDetails({
                     >
                       <TableCell>
                         <div className="font-semibold">
-                          {item.description || item.item?.name || "Unnamed"}
+                          {item.description?.trim() || item.item?.name || "Custom Item"}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           SKU: {item.item?.sku ?? "N/A"}
