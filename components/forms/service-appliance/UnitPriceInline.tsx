@@ -44,10 +44,11 @@ export function UnitPriceInline({
       )
     : null
 
-  const defaultPrice = matchingUnit?.model
+  const defaultPrice = matchingUnit
     ? parseFloat(
-        matchingUnit.model.selling_price ||
-          matchingUnit.model.retail_price ||
+        matchingUnit.sale_price ||
+          matchingUnit.model?.selling_price ||
+          matchingUnit.model?.retail_price ||
           "0",
       )
     : 0
@@ -56,18 +57,7 @@ export function UnitPriceInline({
     ? parseFloat(appliance.unit_price)
     : defaultPrice
 
-  const splitUnitPrice =
-    appliance.installation_unit_fee != null
-      ? parseFloat(appliance.installation_unit_fee)
-      : null
-  const splitFallbackFromLabor =
-    matchingUnit && appliance.installation_labor_fee != null
-      ? Math.max(
-          defaultPrice - parseFloat(appliance.installation_labor_fee),
-          0,
-        )
-      : null
-  const displayPrice = splitUnitPrice ?? splitFallbackFromLabor ?? currentPrice
+  const displayPrice = currentPrice
 
   const hasOverride =
     appliance.unit_price != null &&
@@ -202,7 +192,7 @@ export function UnitPriceInline({
           <span className="font-semibold text-primary">
             {formatCurrency(displayPrice)}
           </span>
-          {splitUnitPrice == null && hasOverride && (
+          {hasOverride && (
             <span
               className={`text-xs ${currentPrice < defaultPrice ? "text-success" : "text-orange-600"}`}
             >

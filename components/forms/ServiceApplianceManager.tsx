@@ -718,68 +718,31 @@ export default function ServiceApplianceManager({
                       </div>
                     </div>
                     <Separator />
-                    <div className="flex items-end justify-between gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-baseline gap-2 mb-1">
-                          {selectedUnit.model?.has_discount ? (
-                            <>
-                              <span className="text-lg font-bold text-primary">
-                                ₱
-                                {parseFloat(
-                                  selectedUnit.model.selling_price || "0",
-                                ).toLocaleString("en-PH", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </span>
-                              <span className="text-sm line-through text-muted-foreground">
-                                ₱
-                                {parseFloat(
-                                  selectedUnit.model.retail_price || "0",
-                                ).toLocaleString("en-PH", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="text-lg font-bold text-primary">
-                              {selectedUnit.model?.retail_price
-                                ? `₱${parseFloat(selectedUnit.model.retail_price).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                                : "N/A"}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {selectedUnit.model?.has_discount
-                            ? "Selling price"
-                            : "Retail price"}
-                        </p>
-                      </div>
-                      <div className="flex-1">
-                        <Label className="text-xs font-medium">
-                          Price Override
-                          <span className="text-muted-foreground ml-1">
-                            (optional)
-                          </span>
-                        </Label>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={unitPrice ?? ""}
-                          onChange={(e) =>
-                            setField(
-                              "unit_price",
-                              e.target.value
-                                ? parseFloat(e.target.value)
-                                : undefined,
-                            )
-                          }
-                          placeholder={`₱${parseFloat(selectedUnit.model?.selling_price || selectedUnit.model?.retail_price || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                          className="mt-1"
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-medium">
+                        Unit Sold Price Override
+                        <span className="text-muted-foreground ml-1">
+                          (optional)
+                        </span>
+                      </Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={unitPrice ?? ""}
+                        onChange={(e) =>
+                          setField(
+                            "unit_price",
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined,
+                          )
+                        }
+                        placeholder={`₱${parseFloat(selectedUnit.sale_price || selectedUnit.model?.selling_price || selectedUnit.model?.retail_price || "0").toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Brand-new unit pricing is auto-computed from inventory. Use override only when the sold unit price is different for this service.
+                      </p>
                     </div>
                   </div>
                 )}

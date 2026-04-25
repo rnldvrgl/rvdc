@@ -174,6 +174,13 @@ export function ApplianceCard({
     (a) => a.from === appliance.status,
   )
 
+  const baseLaborFee = parseFloat(appliance.labor_fee || "0")
+  const laborDiscountAmount = parseFloat(appliance.labor_discount_amount || "0")
+  const installationLaborDisplay = Math.max(baseLaborFee - laborDiscountAmount, 0)
+  const laborDisplayAmount = isInstallation
+    ? installationLaborDisplay
+    : parseFloat(appliance.discounted_labor_fee || appliance.labor_fee)
+
   const handleStatusChange = async (newStatus: ApplianceStatus) => {
     setStatusLoading(true)
     try {
@@ -511,11 +518,7 @@ export function ApplianceCard({
             ) : (
               <div className="flex items-baseline gap-1.5">
                 <span className="font-semibold text-primary">
-                  {formatCurrency(
-                    parseFloat(
-                      appliance.discounted_labor_fee || appliance.labor_fee,
-                    ),
-                  )}
+                  {formatCurrency(laborDisplayAmount)}
                 </span>
                 {appliance.labor_discount_amount &&
                   parseFloat(appliance.labor_discount_amount) > 0 && (
