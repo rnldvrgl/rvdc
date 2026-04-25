@@ -1563,6 +1563,23 @@ export default function ServiceDetail({
                   {formatCurrency(parseFloat(service.total_revenue || "0"))}
                 </p>
               </div>
+              {(() => {
+                const extraCharges =
+                  freshService?.extra_charges ?? service.extra_charges ?? []
+                const extraChargesTotal = extraCharges.reduce(
+                  (sum, charge) => sum + parseFloat(String(charge.amount ?? "0")),
+                  0,
+                )
+
+                if (extraChargesTotal <= 0) return null
+
+                return (
+                  <div className="flex items-center justify-between text-sm">
+                    <p className="text-muted-foreground">Extra Charges (Main)</p>
+                    <p>{formatCurrency(extraChargesTotal)}</p>
+                  </div>
+                )
+              })()}
               <Separator />
               <div className="flex items-center justify-between text-sm">
                 <p className="text-muted-foreground">Main Stall</p>
