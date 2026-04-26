@@ -15,6 +15,12 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useOperationsSettingsMutations } from "@/lib/mutations/useOperationsSettingsMutations"
 import { useStallChoices } from "@/lib/queries/useChoices"
 import { SystemSettings } from "@/lib/queries/useSystemSettings"
@@ -37,6 +43,7 @@ import {
   Wifi,
   WifiOff,
   Loader2,
+  MoreHorizontal,
   AlertCircle,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -149,6 +156,9 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     settings.sub_stall_unit_revenue_additional || "0",
   )
   const [syncingMonthlySheetId, setSyncingMonthlySheetId] = useState<number | null>(null)
+  const [activeMonthlyTab, setActiveMonthlyTab] = useState<"main" | "sub">("main")
+  const [mainPage, setMainPage] = useState(1)
+  const [subPage, setSubPage] = useState(1)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const syncJobCancelledRef = useRef(false)
   const syncToastIdRef = useRef<string | null>(null)
@@ -500,6 +510,104 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     [monthlySheets, stallTypeById],
   )
 
+  const rowsPerPage = 8
+
+  const mainTotalPages = Math.max(1, Math.ceil(mainMonthlySheets.length / rowsPerPage))
+  const subTotalPages = Math.max(1, Math.ceil(subMonthlySheets.length / rowsPerPage))
+
+  useEffect(() => {
+    if (mainPage > mainTotalPages) setMainPage(mainTotalPages)
+  }, [mainPage, mainTotalPages])
+
+  useEffect(() => {
+    if (subPage > subTotalPages) setSubPage(subTotalPages)
+  }, [subPage, subTotalPages])
+
+  const pagedMainMonthlySheets = useMemo(() => {
+    const start = (mainPage - 1) * rowsPerPage
+    return mainMonthlySheets.slice(start, start + rowsPerPage)
+  }, [mainMonthlySheets, mainPage])
+
+  const pagedSubMonthlySheets = useMemo(() => {
+    const start = (subPage - 1) * rowsPerPage
+    return subMonthlySheets.slice(start, start + rowsPerPage)
+  }, [subMonthlySheets, subPage])
+
+  const editMonthlySheet = (sheet: MonthlySheetRecord) => {
+    const parsed = parse(sheet.month_key, "yyyy-MM", new Date())
+    setMonthPickerDate(parsed)
+    setMonthlySheetForm({
+      stall: String(sheet.stall),
+      spreadsheet_input: sheet.spreadsheet_url || sheet.spreadsheet_id,
+      is_active: sheet.is_active,
+    })
+  }
+
+  const openMonthlySheet = (sheet: MonthlySheetRecord) => {
+    const targetUrl = sheet.spreadsheet_url?.trim()
+    if (!targetUrl) return
+    window.open(targetUrl, "_blank", "noopener,noreferrer")
+  }
+
+  const renderMonthlySheetActions = (sheet: MonthlySheetRecord) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="ghost" size="icon" className="h-7 w-7">
+          <MoreHorizontal className="size-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuItem onClick={() => void syncMonthlySheet(sheet)} disabled={isSyncInProgress}>
+          <RefreshCcw className="mr-2 size-3.5" />
+          Sync Month
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => editMonthlySheet(sheet)}>
+          <Save className="mr-2 size-3.5" />
+          Edit Link
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => openMonthlySheet(sheet)} disabled={!sheet.spreadsheet_url}>
+          <ExternalLink className="mr-2 size-3.5" />
+          Open Sheet
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
+  const renderPaginationControls = (
+    currentPage: number,
+    totalPages: number,
+    onPageChange: (page: number) => void,
+    totalRows: number,
+  ) => (
+    <div className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-background px-3 py-2 text-xs">
+      <p className="text-muted-foreground">
+        {totalRows} total {totalRows === 1 ? "row" : "rows"} · Page {currentPage} of {totalPages}
+      </p>
+      <div className="flex items-center gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-[11px]"
+          disabled={currentPage <= 1}
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+        >
+          Previous
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-7 px-2 text-[11px]"
+          disabled={currentPage >= totalPages}
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  )
+
   const renderMonthlyRows = (rows: MonthlySheetRecord[]) => (
     <>
       {rows.length === 0 && (
@@ -572,39 +680,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             </Badge>
           </td>
           <td className="px-3 py-2.5">
-            <div className="flex items-center gap-1">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isSyncInProgress}
-                onClick={() => void syncMonthlySheet(sheet)}
-                className="h-7 gap-1 px-2 text-[11px]"
-              >
-                {syncingMonthlySheetId === sheet.id ? (
-                  <><Loader2 className="size-3 animate-spin" /> Syncing...</>
-                ) : (
-                  <><RefreshCcw className="size-3" /> Sync</>
-                )}
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2 text-[11px]"
-                onClick={() => {
-                  const parsed = parse(sheet.month_key, "yyyy-MM", new Date())
-                  setMonthPickerDate(parsed)
-                  setMonthlySheetForm({
-                    stall: String(sheet.stall),
-                    spreadsheet_input: sheet.spreadsheet_url || sheet.spreadsheet_id,
-                    is_active: sheet.is_active,
-                  })
-                }}
-              >
-                Edit
-              </Button>
-            </div>
+            {renderMonthlySheetActions(sheet)}
           </td>
         </tr>
       ))}
@@ -626,6 +702,13 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
 
   return (
     <div className="space-y-2">
+      <Tabs defaultValue="general" className="space-y-3">
+        <TabsList className="grid h-auto w-full grid-cols-1 gap-1 sm:grid-cols-2 sm:w-auto">
+          <TabsTrigger value="general">General Settings</TabsTrigger>
+          <TabsTrigger value="google">Google Sheets Settings</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="general" className="space-y-2">
 
       {/* ── SYSTEM ─────────────────────────────────────────── */}
       <SectionLabel>System</SectionLabel>
@@ -771,6 +854,10 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
         )}
       </SettingCard>
 
+      </TabsContent>
+
+      <TabsContent value="google" className="space-y-2">
+
       {/* ── GOOGLE SHEETS ──────────────────────────────────── */}
       <SectionLabel className="pt-2">Google Sheets Sync</SectionLabel>
 
@@ -832,13 +919,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             />
           </div>
 
-          {/* Status message */}
-          {syncStatusMessage && (
-            <div className="flex items-start gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5">
-              <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-              <p className="whitespace-pre-line break-words text-xs leading-relaxed text-foreground/80">{syncStatusMessage}</p>
-            </div>
-          )}
+          <p className="sr-only" aria-live="polite">{syncStatusMessage}</p>
 
           {/* Action row */}
           <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/40 pt-3">
@@ -856,18 +937,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               }
               Test Connection
             </Button>
-            {isSyncInProgress && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={stopSyncMonitoring}
-                className="gap-1.5 text-xs"
-              >
-                <ShieldOff className="size-3.5" />
-                Stop Monitoring
-              </Button>
-            )}
             <Button
               type="button"
               variant="outline"
@@ -987,7 +1056,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             </div>
           </div>
 
-          <Tabs defaultValue="main" className="space-y-3">
+          <Tabs value={activeMonthlyTab} onValueChange={(v) => setActiveMonthlyTab(v as "main" | "sub")} className="space-y-3">
             <TabsList className="grid w-full grid-cols-2 sm:w-auto">
               <TabsTrigger value="main">Main Stall</TabsTrigger>
               <TabsTrigger value="sub">Sub Stall</TabsTrigger>
@@ -995,12 +1064,12 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
 
             <TabsContent value="main" className="space-y-2">
               <div className="space-y-2 md:hidden">
-                {mainMonthlySheets.length === 0 ? (
+                {pagedMainMonthlySheets.length === 0 ? (
                   <div className="rounded-lg border border-border/60 bg-background p-3 text-xs text-muted-foreground">
                     {isMonthlySheetsLoading ? "Loading monthly links..." : "No main-stall monthly links yet."}
                   </div>
                 ) : (
-                  mainMonthlySheets.map((sheet) => (
+                  pagedMainMonthlySheets.map((sheet) => (
                     <div key={sheet.id} className="rounded-lg border border-border/60 bg-background p-3 space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-sm font-semibold">{sheet.stall_name}</p>
@@ -1009,28 +1078,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{formatDate(new Date(`${sheet.month_key}-01`), "MMMM yyyy")}</p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button type="button" variant="outline" size="sm" onClick={() => void syncMonthlySheet(sheet)} disabled={isSyncInProgress} className="h-7 text-[11px]">
-                          Sync
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-[11px]"
-                          onClick={() => {
-                            const parsed = parse(sheet.month_key, "yyyy-MM", new Date())
-                            setMonthPickerDate(parsed)
-                            setMonthlySheetForm({
-                              stall: String(sheet.stall),
-                              spreadsheet_input: sheet.spreadsheet_url || sheet.spreadsheet_id,
-                              is_active: sheet.is_active,
-                            })
-                          }}
-                        >
-                          Edit
-                        </Button>
-                      </div>
+                      <div className="flex items-center justify-end">{renderMonthlySheetActions(sheet)}</div>
                     </div>
                   ))
                 )}
@@ -1047,19 +1095,20 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                       ))}
                     </tr>
                   </thead>
-                  <tbody>{renderMonthlyRows(mainMonthlySheets)}</tbody>
+                  <tbody>{renderMonthlyRows(pagedMainMonthlySheets)}</tbody>
                 </table>
               </div>
+              {renderPaginationControls(mainPage, mainTotalPages, setMainPage, mainMonthlySheets.length)}
             </TabsContent>
 
             <TabsContent value="sub" className="space-y-2">
               <div className="space-y-2 md:hidden">
-                {subMonthlySheets.length === 0 ? (
+                {pagedSubMonthlySheets.length === 0 ? (
                   <div className="rounded-lg border border-border/60 bg-background p-3 text-xs text-muted-foreground">
                     {isMonthlySheetsLoading ? "Loading monthly links..." : "No sub-stall monthly links yet."}
                   </div>
                 ) : (
-                  subMonthlySheets.map((sheet) => (
+                  pagedSubMonthlySheets.map((sheet) => (
                     <div key={sheet.id} className="rounded-lg border border-border/60 bg-background p-3 space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-sm font-semibold">{sheet.stall_name}</p>
@@ -1068,28 +1117,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{formatDate(new Date(`${sheet.month_key}-01`), "MMMM yyyy")}</p>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Button type="button" variant="outline" size="sm" onClick={() => void syncMonthlySheet(sheet)} disabled={isSyncInProgress} className="h-7 text-[11px]">
-                          Sync
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-[11px]"
-                          onClick={() => {
-                            const parsed = parse(sheet.month_key, "yyyy-MM", new Date())
-                            setMonthPickerDate(parsed)
-                            setMonthlySheetForm({
-                              stall: String(sheet.stall),
-                              spreadsheet_input: sheet.spreadsheet_url || sheet.spreadsheet_id,
-                              is_active: sheet.is_active,
-                            })
-                          }}
-                        >
-                          Edit
-                        </Button>
-                      </div>
+                      <div className="flex items-center justify-end">{renderMonthlySheetActions(sheet)}</div>
                     </div>
                   ))
                 )}
@@ -1106,13 +1134,17 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                       ))}
                     </tr>
                   </thead>
-                  <tbody>{renderMonthlyRows(subMonthlySheets)}</tbody>
+                  <tbody>{renderMonthlyRows(pagedSubMonthlySheets)}</tbody>
                 </table>
               </div>
+              {renderPaginationControls(subPage, subTotalPages, setSubPage, subMonthlySheets.length)}
             </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      </TabsContent>
+      </Tabs>
     </div>
   )
 }
