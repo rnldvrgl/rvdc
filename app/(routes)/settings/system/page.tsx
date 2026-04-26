@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useSystemSettings } from "@/lib/queries/useSystemSettings"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { Cake, Settings2, Sparkles } from "lucide-react"
@@ -29,65 +30,72 @@ export default function SystemSettingsPage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-        <div className="space-y-4">
-        {/* Business Operations */}
-        {(isSuperAdmin || isAdmin) && (
-        <Card className="border-primary/20 bg-linear-to-b from-primary/5 to-background">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Settings2 className="h-5 w-5 text-primary" />
-              <CardTitle>Business Operations</CardTitle>
-            </div>
-            <CardDescription>
-              Critical runtime controls and notification behavior
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-0">
-            {isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-28 w-full" />
-              </div>
-            ) : settings ? (
-              <BusinessOperationsSettingsForm settings={settings} />
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Failed to load system settings
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        )}
+        <Tabs defaultValue={(isSuperAdmin || isAdmin) ? "operations" : "birthday"} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2">
+            {(isSuperAdmin || isAdmin) && <TabsTrigger value="operations">Business Operations</TabsTrigger>}
+            <TabsTrigger value="birthday">Birthday Settings</TabsTrigger>
+          </TabsList>
 
-        {/* Birthday Greeting Settings Card */}
-        <Card className="border-pink-200/60">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Cake className="h-5 w-5 text-pink-500" />
-              <CardTitle>Birthday Greeting Settings</CardTitle>
-            </div>
-            <CardDescription>
-              Configure birthday greeting modal behavior and message
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-24 w-full" />
-              </div>
-            ) : settings ? (
-              <BirthdayGreetingSettingsForm settings={settings} />
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                Failed to load system settings
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        </div>
+          {(isSuperAdmin || isAdmin) && (
+            <TabsContent value="operations" className="space-y-4">
+              <Card className="border-primary/20 bg-linear-to-b from-primary/5 to-background">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-2">
+                    <Settings2 className="h-5 w-5 text-primary" />
+                    <CardTitle>Business Operations</CardTitle>
+                  </div>
+                  <CardDescription>
+                    Critical runtime controls and notification behavior
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  {isLoading ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-20 w-full" />
+                      <Skeleton className="h-20 w-full" />
+                      <Skeleton className="h-28 w-full" />
+                    </div>
+                  ) : settings ? (
+                    <BusinessOperationsSettingsForm settings={settings} />
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Failed to load system settings
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+
+          <TabsContent value="birthday" className="space-y-4">
+            <Card className="border-pink-200/60">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                  <Cake className="h-5 w-5 text-pink-500" />
+                  <CardTitle>Birthday Greeting Settings</CardTitle>
+                </div>
+                <CardDescription>
+                  Configure birthday greeting modal behavior and message
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                  </div>
+                ) : settings ? (
+                  <BirthdayGreetingSettingsForm settings={settings} />
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Failed to load system settings
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         <Card className="h-fit lg:sticky lg:top-4">
           <CardHeader className="pb-3">

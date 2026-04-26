@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import DatePicker from "@/components/custom/inputs/DatePicker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,7 +22,6 @@ import { format } from "date-fns"
 import {
   BadgeCheck,
   BellRing,
-  CalendarClock,
   ExternalLink,
   KeyRound,
   PackageCheck,
@@ -97,8 +95,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const [subStallUnitRevenueAdditional, setSubStallUnitRevenueAdditional] = useState(
     settings.sub_stall_unit_revenue_additional || "0",
   )
-  const [syncStartDate, setSyncStartDate] = useState<Date | undefined>(undefined)
-  const [syncEndDate, setSyncEndDate] = useState<Date | undefined>(undefined)
+  const [syncingMonthlySheetId, setSyncingMonthlySheetId] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const syncJobCancelledRef = useRef(false)
   const syncToastIdRef = useRef<string | null>(null)
@@ -423,22 +420,37 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     }
   }
 
-  const syncHistoricalSales = async () => {
+  const syncMonthlySheet = async (sheet: MonthlySheetRecord) => {
+    const monthParts = sheet.month_key.split("-")
+    if (monthParts.length !== 2) {
+      toast.error("Invalid month key format. Expected YYYY-MM.")
+      return
+    }
+
+    const year = Number(monthParts[0])
+    const month = Number(monthParts[1])
+    if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) {
+      toast.error("Invalid month key format. Expected YYYY-MM.")
+      return
+    }
+
+    const startDate = new Date(year, month - 1, 1)
+    const endDate = new Date(year, month, 0)
+
     try {
       setIsSyncInProgress(true)
+      setSyncingMonthlySheetId(sheet.id)
       syncJobCancelledRef.current = false
       const payload: {
         action: string
         start_date?: string
         end_date?: string
+        stall_id?: number
       } = {
         action: "sync_historical",
-      }
-      if (syncStartDate) {
-        payload.start_date = format(syncStartDate, "yyyy-MM-dd")
-      }
-      if (syncEndDate) {
-        payload.end_date = format(syncEndDate, "yyyy-MM-dd")
+        start_date: format(startDate, "yyyy-MM-dd"),
+        end_date: format(endDate, "yyyy-MM-dd"),
+        stall_id: sheet.stall,
       }
 
       const startResponse = await api.post(
@@ -529,9 +541,10 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       }
 
       await fetchGoogleSyncStatus(true)
+      await fetchMonthlySheets(true)
     } catch (error) {
       toast.dismiss(syncToastIdRef.current || "google-sheets-sync-progress")
-      let errorMessage = "Historical sync failed"
+      let errorMessage = `Monthly sync failed for ${sheet.stall_name} ${sheet.month_key}`
       let errorDetail = ""
 
       if ((error as { response?: { data?: Record<string, unknown> } })?.response?.data) {
@@ -550,6 +563,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       console.error("Sync error:", error)
     } finally {
       setIsSyncInProgress(false)
+      setSyncingMonthlySheetId(null)
       syncToastIdRef.current = null
     }
   }
@@ -810,23 +824,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             )}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <DatePicker
-              standalone
-              label="Sync Start Date (optional)"
-              placeholder="Select start date"
-              disabled={updateOperationsSettings.isPending || isSyncInProgress}
-              field={{ value: syncStartDate, onChange: setSyncStartDate }}
-            />
-            <DatePicker
-              standalone
-              label="Sync End Date (optional)"
-              placeholder="Select end date"
-              disabled={updateOperationsSettings.isPending || isSyncInProgress}
-              field={{ value: syncEndDate, onChange: setSyncEndDate }}
-            />
-          </div>
-
           <div className="rounded-md border bg-background/70 p-3">
             <div className="flex flex-wrap items-center justify-end gap-2">
               <Button
@@ -838,16 +835,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               >
                 <RefreshCcw className="size-4" />
                 Test Connection
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={updateOperationsSettings.isPending || isSyncInProgress}
-                onClick={syncHistoricalSales}
-                className="gap-2"
-              >
-                <CalendarClock className="size-4" />
-                {isSyncInProgress ? "Syncing..." : "Sync Previous Sales"}
               </Button>
               {isSyncInProgress && (
                 <Button
@@ -1018,21 +1005,32 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                       </td>
                       <td className="px-2 py-2">{sheet.is_active ? "Active" : "Inactive"}</td>
                       <td className="px-2 py-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setMonthlySheetForm({
-                              stall: String(sheet.stall),
-                              month_key: sheet.month_key,
-                              spreadsheet_input: sheet.spreadsheet_url || sheet.spreadsheet_id,
-                              is_active: sheet.is_active,
-                            })
-                          }}
-                        >
-                          Edit
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={isSyncInProgress}
+                            onClick={() => void syncMonthlySheet(sheet)}
+                          >
+                            {syncingMonthlySheetId === sheet.id ? "Syncing..." : "Sync Month"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setMonthlySheetForm({
+                                stall: String(sheet.stall),
+                                month_key: sheet.month_key,
+                                spreadsheet_input: sheet.spreadsheet_url || sheet.spreadsheet_id,
+                                is_active: sheet.is_active,
+                              })
+                            }}
+                          >
+                            Edit
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
