@@ -80,13 +80,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const { updateOperationsSettings } = useOperationsSettingsMutations()
   const { data: stallChoices = [] } = useStallChoices({})
   const [notificationSound, setNotificationSound] = useState(settings.notification_sound)
-  const [googleSubSpreadsheetId, setGoogleSubSpreadsheetId] = useState(
-    settings.google_sheets_spreadsheet_id || ""
-  )
-  const [googleMainSpreadsheetId, setGoogleMainSpreadsheetId] = useState(
-    settings.google_sheets_main_spreadsheet_id || ""
-  )
-  const [googleStallType, setGoogleStallType] = useState(settings.google_sheets_sub_stall_type || "sub")
   const [googleShareEmail, setGoogleShareEmail] = useState(settings.google_sheets_share_email || "")
   const [googleServiceAccountJson, setGoogleServiceAccountJson] = useState("")
   const [syncStatusMessage, setSyncStatusMessage] = useState("")
@@ -115,15 +108,9 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   }, [settings.notification_sound])
 
   useEffect(() => {
-    setGoogleSubSpreadsheetId(settings.google_sheets_spreadsheet_id || "")
-    setGoogleMainSpreadsheetId(settings.google_sheets_main_spreadsheet_id || "")
-    setGoogleStallType(settings.google_sheets_sub_stall_type || "sub")
     setGoogleShareEmail(settings.google_sheets_share_email || "")
     setSubStallUnitRevenueAdditional(settings.sub_stall_unit_revenue_additional || "0")
   }, [
-    settings.google_sheets_spreadsheet_id,
-    settings.google_sheets_main_spreadsheet_id,
-    settings.google_sheets_sub_stall_type,
     settings.google_sheets_share_email,
     settings.sub_stall_unit_revenue_additional,
   ])
@@ -252,15 +239,9 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
 
   const saveGoogleSheetsSettings = () => {
     const payload: {
-      google_sheets_spreadsheet_id: string
-      google_sheets_main_spreadsheet_id: string
-      google_sheets_sub_stall_type: string
       google_sheets_share_email: string
       google_service_account_json?: string
     } = {
-      google_sheets_spreadsheet_id: googleSubSpreadsheetId.trim(),
-      google_sheets_main_spreadsheet_id: googleMainSpreadsheetId.trim(),
-      google_sheets_sub_stall_type: googleStallType.trim() || "sub",
       google_sheets_share_email: googleShareEmail.trim(),
     }
 
@@ -795,29 +776,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             </div>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-2">
-            <div className="grid gap-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Sub Stall Monthly Spreadsheet ID</Label>
-              <Input
-                value={googleSubSpreadsheetId}
-                disabled={updateOperationsSettings.isPending}
-                onChange={(e) => setGoogleSubSpreadsheetId(e.target.value)}
-                placeholder="1AbCDefGhIJkLmNoPqRstUvWxyz..."
-                className="bg-background"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Main Stall Monthly Spreadsheet ID</Label>
-              <Input
-                value={googleMainSpreadsheetId}
-                disabled={updateOperationsSettings.isPending}
-                onChange={(e) => setGoogleMainSpreadsheetId(e.target.value)}
-                placeholder="1AbCDefGhIJkLmNoPqRstUvWxyz..."
-                className="bg-background"
-              />
-            </div>
-          </div>
-
           <div className="grid gap-2">
             <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Global Share Email (All Monthly Sheets)</Label>
             <Input
@@ -833,28 +791,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             </p>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
-            <div className="grid gap-2">
-              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Sync Scope</Label>
-              <Select
-                value={googleStallType}
-                onValueChange={setGoogleStallType}
-                disabled={updateOperationsSettings.isPending}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Choose sync scope" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sub">Sub Stall (Parts)</SelectItem>
-                  <SelectItem value="main">Main Stall (Services)</SelectItem>
-                  <SelectItem value="both">Both Stalls</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-              The sheet tab is generated automatically per day.
-            </div>
-          </div>
+
 
           <div className="grid gap-2">
             <div className="flex items-center justify-between gap-2">

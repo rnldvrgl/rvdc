@@ -26,10 +26,12 @@ import { SalesTransaction } from "@/lib/constants/interface"
 import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
 import { formatCurrency, getBadgeVariant } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
+import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import {
   Ban,
   Calendar,
   CreditCard,
+  ExternalLink,
   Hash,
   Package,
   Receipt,
@@ -38,7 +40,13 @@ import {
   Undo2,
   User,
 } from "lucide-react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+
+interface MonthlySheet {
+  id: number
+  spreadsheet_url: string
+  month_key: string
+}
 
 export function SalesTransactionDetails({
   entity,
@@ -48,6 +56,20 @@ export function SalesTransactionDetails({
   onClose: () => void
 }) {
   const [voidOpen, setVoidOpen] = useState(false)
+  const [latestMonthlySheetUrl, setLatestMonthlySheetUrl] = useState<string | null>(null)
+  
+  // Fetch latest monthly sheet for this stall
+  const { data: monthlySheets } = useApiQuery<{ results: MonthlySheet[] }>(
+    entity.stall?.id
+      ? `/sales/monthly-sheets/?stall=${entity.stall.id}&is_active=true&ordering=-month_key`
+      : null,
+  )
+
+  useEffect(() => {
+    if (monthlySheets?.results?.[0]?.spreadsheet_url) {
+      setLatestMonthlySheetUrl(monthlySheets.results[0].spreadsheet_url)
+    }
+  }, [monthlySheets])
   const [voidReason, setVoidReason] = useState("")
   const { voidTransaction, unvoidTransaction } = useSalesTransactionMutations()
 
@@ -92,6 +114,22 @@ export function SalesTransactionDetails({
 
         {/* Action buttons */}
         <div className="flex items-center gap-2">
+          {latestMonthlySheetUrl && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+            >
+              <a
+                href={latestMonthlySheetUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <ExternalLink className="size-4 mr-1.5" />
+                Open Latest Monthly Sheet
+              </a>
+            </Button>
+          )}
           {entity.voided ? (
             <Button
               variant="outline"
