@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { useOperationsSettingsMutations } from "@/lib/mutations/useOperationsSettingsMutations"
 import { useStallChoices } from "@/lib/queries/useChoices"
@@ -128,7 +129,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const { data: stallChoices = [] } = useStallChoices({})
 
   const [notificationSound, setNotificationSound] = useState(settings.notification_sound)
-  const [googleShareEmail, setGoogleShareEmail] = useState(settings.google_sheets_share_email || "")
   const [googleServiceAccountJson, setGoogleServiceAccountJson] = useState("")
   const [syncStatusMessage, setSyncStatusMessage] = useState("")
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
@@ -158,9 +158,8 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   }, [settings.notification_sound])
 
   useEffect(() => {
-    setGoogleShareEmail(settings.google_sheets_share_email || "")
     setSubStallUnitRevenueAdditional(settings.sub_stall_unit_revenue_additional || "0")
-  }, [settings.google_sheets_share_email, settings.sub_stall_unit_revenue_additional])
+  }, [settings.sub_stall_unit_revenue_additional])
 
   useEffect(() => {
     if (!monthlySheetForm.stall && stallChoices.length > 0) {
@@ -242,9 +241,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     updateOperationsSettings.mutate({ remove_notification_sound: true })
 
   const saveGoogleSheetsSettings = () => {
-    const payload: { google_sheets_share_email: string; google_service_account_json?: string } = {
-      google_sheets_share_email: googleShareEmail.trim(),
-    }
+    const payload: { google_service_account_json?: string } = {}
     if (googleServiceAccountJson.trim()) payload.google_service_account_json = googleServiceAccountJson.trim()
     updateOperationsSettings.mutate(payload, {
       onSuccess: () => {
@@ -431,8 +428,126 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   }
 
   const hasGoogleConfigChanged =
-    googleShareEmail.trim() !== (settings.google_sheets_share_email || "").trim() ||
     Boolean(googleServiceAccountJson.trim())
+
+  const stallTypeById = useMemo(() => {
+    return new Map(stallChoices.map((stall) => [stall.id, stall.stall_type]))
+  }, [stallChoices])
+
+  const mainMonthlySheets = useMemo(
+    () => monthlySheets.filter((sheet) => stallTypeById.get(sheet.stall) === "main"),
+    [monthlySheets, stallTypeById],
+  )
+
+  const subMonthlySheets = useMemo(
+    () => monthlySheets.filter((sheet) => stallTypeById.get(sheet.stall) === "sub"),
+    [monthlySheets, stallTypeById],
+  )
+
+  const renderMonthlyRows = (rows: MonthlySheetRecord[]) => (
+    <>
+      {rows.length === 0 && (
+        <tr>
+          <td colSpan={6} className="px-3 py-6 text-center text-xs text-muted-foreground">
+            {isMonthlySheetsLoading ? (
+              <span className="inline-flex items-center gap-2">
+                <Loader2 className="size-3.5 animate-spin" />
+                Loading monthly links...
+              </span>
+            ) : (
+              "No monthly sheet links yet."
+            )}
+          </td>
+        </tr>
+      )}
+      {rows.map((sheet, i) => (
+        <tr
+          key={sheet.id}
+          className={cn(
+            "border-b border-border/40 transition-colors hover:bg-muted/30",
+            i % 2 === 0 ? "bg-background" : "bg-muted/10",
+          )}
+        >
+          <td className="px-3 py-2.5 font-medium">{sheet.stall_name}</td>
+          <td className="px-3 py-2.5 font-mono">{formatDate(new Date(`${sheet.month_key}-01`), "MMMM yyyy")}</td>
+          <td className="px-3 py-2.5">
+            {sheet.spreadsheet_url ? (
+              <a
+                href={sheet.spreadsheet_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+              >
+                Open <ExternalLink className="size-3" />
+              </a>
+            ) : (
+              <span className="font-mono text-muted-foreground">
+                {sheet.spreadsheet_id.slice(0, 12)}...
+              </span>
+            )}
+          </td>
+          <td className="px-3 py-2.5">
+            <div className="flex flex-col gap-0.5">
+              {sheet.shared_ok ? (
+                <Badge variant="success">Shared</Badge>
+              ) : (
+                <Badge variant="warning">
+                  {(sheet.share_error || "").toLowerCase().includes("service account has no access")
+                    ? "Needs Service Account Access"
+                    : "Pending"}
+                </Badge>
+              )}
+              {sheet.share_error && (
+                <p className="max-w-[220px] truncate text-[10px] text-destructive">
+                  {sheet.share_error}
+                </p>
+              )}
+            </div>
+          </td>
+          <td className="px-3 py-2.5">
+            <Badge variant={sheet.is_active ? "default" : "secondary"}>
+              {sheet.is_active ? "Active" : "Inactive"}
+            </Badge>
+          </td>
+          <td className="px-3 py-2.5">
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isSyncInProgress}
+                onClick={() => void syncMonthlySheet(sheet)}
+                className="h-7 gap-1 px-2 text-[11px]"
+              >
+                {syncingMonthlySheetId === sheet.id ? (
+                  <><Loader2 className="size-3 animate-spin" /> Syncing...</>
+                ) : (
+                  <><RefreshCcw className="size-3" /> Sync</>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-[11px]"
+                onClick={() => {
+                  const parsed = parse(sheet.month_key, "yyyy-MM", new Date())
+                  setMonthPickerDate(parsed)
+                  setMonthlySheetForm({
+                    stall: String(sheet.stall),
+                    spreadsheet_input: sheet.spreadsheet_url || sheet.spreadsheet_id,
+                    is_active: sheet.is_active,
+                  })
+                }}
+              >
+                Edit
+              </Button>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </>
+  )
 
   useEffect(() => {
     void fetchGoogleSyncStatus(true)
@@ -637,26 +752,9 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
 
         <div className="border-t border-border/40 px-4 py-4 space-y-4">
 
-          {/* Share email */}
-          <div className="space-y-1.5">
-            <Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              Global Share Email
-            </Label>
-            <Input
-              type="email"
-              value={googleShareEmail}
-              disabled={isPending}
-              onChange={(e) => setGoogleShareEmail(e.target.value)}
-              placeholder="sheets-owner@company.com"
-              className="bg-background"
-            />
-            <p className="text-xs text-muted-foreground">
-              All monthly sheets are automatically shared to this email during sync.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Note: this only works after each sheet is shared with your Service Account first.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Note: monthly sheets must be shared with your Service Account email first.
+          </p>
 
           {/* Service account JSON */}
           <div className="space-y-1.5">
@@ -782,10 +880,16 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               {/* Month — DatePicker in standalone mode, no form wrapper needed */}
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Month</Label>
-<DatePicker mode="month" standalone withoutLabel placeholder="Pick month"    field={{
+                <DatePicker
+                  mode="month"
+                  standalone
+                  withoutLabel
+                  placeholder="Pick month"
+                  field={{
                     value: monthPickerDate,
                     onChange: (d) => setMonthPickerDate(d),
-                  }}/>
+                  }}
+                />
               </div>
 
               {/* Spreadsheet URL */}
@@ -821,109 +925,38 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             </div>
           </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto rounded-lg border border-border/60">
-            <table className="w-full min-w-[640px] text-xs">
-              <thead>
-                <tr className="border-b border-border/60 bg-muted/40">
-                  {["Stall", "Month", "Sheet", "Share", "Status", "Actions"].map((h) => (
-                    <th
-                      key={h}
-                      className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {monthlySheets.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-6 text-center text-xs text-muted-foreground">
-                      {isMonthlySheetsLoading ? (
-                        <span className="inline-flex items-center gap-2">
-                          <Loader2 className="size-3.5 animate-spin" />
-                          Loading monthly links…
-                        </span>
-                      ) : (
-                        "No monthly sheet links yet."
-                      )}
-                    </td>
-                  </tr>
-                )}
-                {monthlySheets.map((sheet, i) => (
-                  <tr
-                    key={sheet.id}
-                    className={cn(
-                      "border-b border-border/40 transition-colors hover:bg-muted/30",
-                      i % 2 === 0 ? "bg-background" : "bg-muted/10",
-                    )}
-                  >
-                    <td className="px-3 py-2.5 font-medium">{sheet.stall_name}</td>
-                    <td className="px-3 py-2.5 font-mono">{formatDate(new Date(sheet.month_key), "MMMM yyyy")}</td>
-                    <td className="px-3 py-2.5">
-                      {sheet.spreadsheet_url ? (
-                        <a
-                          href={sheet.spreadsheet_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-                        >
-                          Open <ExternalLink className="size-3" />
-                        </a>
-                      ) : (
-                        <span className="font-mono text-muted-foreground">
-                          {sheet.spreadsheet_id.slice(0, 12)}…
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex flex-col gap-0.5">
-                        {sheet.shared_ok ? (
-                          <Badge variant="success">Shared</Badge>
-                        ) : (
-                          <Badge variant="warning">
-                            {(sheet.share_error || "").toLowerCase().includes("service account has no access")
-                              ? "Needs Service Account Access"
-                              : "Pending"}
-                          </Badge>
-                        )}
-                        {sheet.share_error && (
-                          <p className="max-w-[200px] truncate text-[10px] text-destructive">
-                            {sheet.share_error}
-                          </p>
-                        )}
+          <Tabs defaultValue="main" className="space-y-3">
+            <TabsList className="grid w-full grid-cols-2 sm:w-auto">
+              <TabsTrigger value="main">Main Stall</TabsTrigger>
+              <TabsTrigger value="sub">Sub Stall</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="main" className="space-y-2">
+              <div className="space-y-2 md:hidden">
+                {mainMonthlySheets.length === 0 ? (
+                  <div className="rounded-lg border border-border/60 bg-background p-3 text-xs text-muted-foreground">
+                    {isMonthlySheetsLoading ? "Loading monthly links..." : "No main-stall monthly links yet."}
+                  </div>
+                ) : (
+                  mainMonthlySheets.map((sheet) => (
+                    <div key={sheet.id} className="rounded-lg border border-border/60 bg-background p-3 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold">{sheet.stall_name}</p>
+                        <Badge variant={sheet.is_active ? "default" : "secondary"}>
+                          {sheet.is_active ? "Active" : "Inactive"}
+                        </Badge>
                       </div>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      {/* "default" (primary) for active, "secondary" for inactive */}
-                      <Badge variant={sheet.is_active ? "default" : "secondary"}>
-                        {sheet.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={isSyncInProgress}
-                          onClick={() => void syncMonthlySheet(sheet)}
-                          className="h-7 gap-1 px-2 text-[11px]"
-                        >
-                          {syncingMonthlySheetId === sheet.id ? (
-                            <><Loader2 className="size-3 animate-spin" /> Syncing…</>
-                          ) : (
-                            <><RefreshCcw className="size-3" /> Sync</>
-                          )}
+                      <p className="text-xs text-muted-foreground">{formatDate(new Date(`${sheet.month_key}-01`), "MMMM yyyy")}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={() => void syncMonthlySheet(sheet)} disabled={isSyncInProgress} className="h-7 text-[11px]">
+                          Sync
                         </Button>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-7 px-2 text-[11px]"
+                          className="h-7 text-[11px]"
                           onClick={() => {
-                            // Parse "yyyy-MM" back into a Date for the picker
                             const parsed = parse(sheet.month_key, "yyyy-MM", new Date())
                             setMonthPickerDate(parsed)
                             setMonthlySheetForm({
@@ -936,12 +969,86 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                           Edit
                         </Button>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="hidden md:block overflow-x-auto rounded-lg border border-border/60">
+                <table className="w-full min-w-[640px] text-xs">
+                  <thead>
+                    <tr className="border-b border-border/60 bg-muted/40">
+                      {["Stall", "Month", "Sheet", "Share", "Status", "Actions"].map((h) => (
+                        <th key={h} className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>{renderMonthlyRows(mainMonthlySheets)}</tbody>
+                </table>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="sub" className="space-y-2">
+              <div className="space-y-2 md:hidden">
+                {subMonthlySheets.length === 0 ? (
+                  <div className="rounded-lg border border-border/60 bg-background p-3 text-xs text-muted-foreground">
+                    {isMonthlySheetsLoading ? "Loading monthly links..." : "No sub-stall monthly links yet."}
+                  </div>
+                ) : (
+                  subMonthlySheets.map((sheet) => (
+                    <div key={sheet.id} className="rounded-lg border border-border/60 bg-background p-3 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold">{sheet.stall_name}</p>
+                        <Badge variant={sheet.is_active ? "default" : "secondary"}>
+                          {sheet.is_active ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{formatDate(new Date(`${sheet.month_key}-01`), "MMMM yyyy")}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={() => void syncMonthlySheet(sheet)} disabled={isSyncInProgress} className="h-7 text-[11px]">
+                          Sync
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-[11px]"
+                          onClick={() => {
+                            const parsed = parse(sheet.month_key, "yyyy-MM", new Date())
+                            setMonthPickerDate(parsed)
+                            setMonthlySheetForm({
+                              stall: String(sheet.stall),
+                              spreadsheet_input: sheet.spreadsheet_url || sheet.spreadsheet_id,
+                              is_active: sheet.is_active,
+                            })
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="hidden md:block overflow-x-auto rounded-lg border border-border/60">
+                <table className="w-full min-w-[640px] text-xs">
+                  <thead>
+                    <tr className="border-b border-border/60 bg-muted/40">
+                      {["Stall", "Month", "Sheet", "Share", "Status", "Actions"].map((h) => (
+                        <th key={h} className="px-3 py-2.5 text-left text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>{renderMonthlyRows(subMonthlySheets)}</tbody>
+                </table>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

@@ -29,11 +29,11 @@ export default function SystemSettingsPage() {
         breadcrumbs={["Settings", "System Settings"]}
       />
 
-      <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+      <div className="grid gap-4 xl:grid-cols-[2fr_1fr]">
         <Tabs defaultValue={(isSuperAdmin || isAdmin) ? "operations" : "birthday"} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
-            {(isSuperAdmin || isAdmin) && <TabsTrigger value="operations">Business Operations</TabsTrigger>}
-            <TabsTrigger value="birthday">Birthday Settings</TabsTrigger>
+          <TabsList className="grid h-auto w-full gap-1 grid-cols-1 sm:grid-cols-2">
+            {(isSuperAdmin || isAdmin) && <TabsTrigger value="operations" className="w-full">Business Operations</TabsTrigger>}
+            <TabsTrigger value="birthday" className="w-full">Birthday Settings</TabsTrigger>
           </TabsList>
 
           {(isSuperAdmin || isAdmin) && (
@@ -97,7 +97,7 @@ export default function SystemSettingsPage() {
           </TabsContent>
         </Tabs>
 
-        <Card className="h-fit lg:sticky lg:top-4">
+        <Card className="h-fit xl:sticky xl:top-4">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500" />
