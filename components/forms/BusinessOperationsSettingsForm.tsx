@@ -317,6 +317,13 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     return text.split("\n", 1)[0].slice(0, 180)
   }
 
+  const formatSyncDate = (value?: string | null) => {
+    if (!value) return "-"
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return value
+    return format(parsed, "MMM dd, yyyy")
+  }
+
   const formatHistoricalSyncProgress = (data: {
     state?: string; processed_targets?: number; total_targets?: number
     synced?: number; failed?: number; progress_pct?: number
@@ -329,17 +336,37 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     const failed = Number(data.failed || 0)
     const pct = Number(data.progress_pct || 0)
     const latestError = summarizeSyncError(String(data.latest_error || "").trim())
-    const location = data.current_stall_id && data.current_date ? ` · stall ${data.current_stall_id} @ ${data.current_date}` : ""
-    const errorHint = failed > 0 && latestError ? ` · last error: ${latestError}` : ""
-    if (state === "queued") return "Historical sync queued…"
-    if (total > 0) return `Syncing… ${processed}/${total} (${pct}%) · ✓${synced} ✗${failed}${location}${errorHint}`
-    return `Syncing… ✓${synced} ✗${failed}${location}${errorHint}`
+    const lines: string[] = []
+
+    if (state === "queued") {
+      lines.push("Historical sync queued")
+      lines.push("Preparing targets...")
+      return lines.join("\n")
+    }
+
+    lines.push("Historical sync in progress")
+    lines.push(`Progress: ${processed}/${total || "-"} (${pct}%)`)
+    lines.push(`Results: ${synced} synced, ${failed} failed`)
+
+    if (data.current_stall_id || data.current_date) {
+      lines.push(`Current target: stall ${data.current_stall_id || "-"} on ${formatSyncDate(data.current_date)}`)
+    }
+
+    if (failed > 0 && latestError) {
+      lines.push(`Last issue: ${latestError}`)
+    }
+
+    return lines.join("\n")
   }
 
   const showSyncPendingToast = (message: string) => {
     const toastId = syncToastIdRef.current || "google-sheets-sync-progress"
     syncToastIdRef.current = toastId
-    toast.warning(message, { id: toastId, description: "Monitoring the historical sync job.", duration: Infinity })
+    toast.warning("Google Sheets sync in progress", {
+      id: toastId,
+      description: message,
+      duration: Infinity,
+    })
   }
 
   const stopSyncMonitoring = () => {
@@ -521,14 +548,20 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 <Badge variant="success">Shared</Badge>
               ) : (
                 <Badge variant="warning">
-                  {(sheet.share_error || "").toLowerCase().includes("service account has no access")
+                  {(() => {
+                    const normalizedShareError = summarizeSyncError(sheet.share_error || "").toLowerCase()
+                    return (
+                      normalizedShareError.includes("service account has no spreadsheet access") ||
+                      normalizedShareError.includes("permission denied")
+                    )
+                  })()
                     ? "Needs Service Account Access"
                     : "Pending"}
                 </Badge>
               )}
               {sheet.share_error && (
                 <p className="max-w-[220px] truncate text-[10px] text-destructive">
-                  {sheet.share_error}
+                  {summarizeSyncError(sheet.share_error)}
                 </p>
               )}
             </div>
@@ -803,7 +836,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
           {syncStatusMessage && (
             <div className="flex items-start gap-2 rounded-lg border border-border/50 bg-muted/30 px-3 py-2.5">
               <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-              <p className="text-xs leading-relaxed text-foreground/80">{syncStatusMessage}</p>
+              <p className="whitespace-pre-line break-words text-xs leading-relaxed text-foreground/80">{syncStatusMessage}</p>
             </div>
           )}
 
