@@ -57,7 +57,7 @@ export function SalesTransactionDetails({
 }) {
   const [voidOpen, setVoidOpen] = useState(false)
   const [latestMonthlySheetUrl, setLatestMonthlySheetUrl] = useState<string | null>(null)
-  
+
   // Fetch latest monthly sheet for this stall
   const { data: monthlySheets } = useApiQuery<{ results: MonthlySheet[] }>({
     queryKey: ["monthly-sheets", entity.stall?.id],
