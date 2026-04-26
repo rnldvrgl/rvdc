@@ -16,6 +16,7 @@ import {
 import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { useOperationsSettingsMutations } from "@/lib/mutations/useOperationsSettingsMutations"
+import { useStallChoices } from "@/lib/queries/useChoices"
 import { SystemSettings } from "@/lib/queries/useSystemSettings"
 import api from "@/lib/utils/api"
 import { format } from "date-fns"
@@ -23,6 +24,7 @@ import {
   BadgeCheck,
   BellRing,
   CalendarClock,
+  ExternalLink,
   KeyRound,
   PackageCheck,
   RefreshCcw,
@@ -40,8 +42,43 @@ interface Props {
   settings: SystemSettings
 }
 
+interface MonthlySheetRecord {
+  id: number
+  stall: number
+  stall_name: string
+  month_key: string
+  spreadsheet_id: string
+  spreadsheet_url: string
+  is_active: boolean
+  shared_ok: boolean
+  shared_to_email: string
+  shared_at: string | null
+  share_error: string
+  updated_at: string
+}
+
+const parseSpreadsheetId = (rawInput: string) => {
+  const raw = (rawInput || "").trim()
+  if (!raw) return ""
+
+  if (/^https?:\/\//i.test(raw)) {
+    const fromPath = raw.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)
+    if (fromPath?.[1]) {
+      return fromPath[1]
+    }
+
+    const fromQuery = raw.match(/[?&]id=([a-zA-Z0-9-_]+)/)
+    if (fromQuery?.[1]) {
+      return fromQuery[1]
+    }
+  }
+
+  return raw
+}
+
 export function BusinessOperationsSettingsForm({ settings }: Props) {
   const { updateOperationsSettings } = useOperationsSettingsMutations()
+  const { data: stallChoices = [] } = useStallChoices({})
   const [notificationSound, setNotificationSound] = useState(settings.notification_sound)
   const [googleSubSpreadsheetId, setGoogleSubSpreadsheetId] = useState(
     settings.google_sheets_spreadsheet_id || ""
@@ -50,11 +87,20 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     settings.google_sheets_main_spreadsheet_id || ""
   )
   const [googleStallType, setGoogleStallType] = useState(settings.google_sheets_sub_stall_type || "sub")
+  const [googleShareEmail, setGoogleShareEmail] = useState(settings.google_sheets_share_email || "")
   const [googleServiceAccountJson, setGoogleServiceAccountJson] = useState("")
   const [syncStatusMessage, setSyncStatusMessage] = useState("")
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
   const [isTestingConnection, setIsTestingConnection] = useState(false)
   const [isSyncInProgress, setIsSyncInProgress] = useState(false)
+  const [monthlySheets, setMonthlySheets] = useState<MonthlySheetRecord[]>([])
+  const [isMonthlySheetsLoading, setIsMonthlySheetsLoading] = useState(false)
+  const [monthlySheetForm, setMonthlySheetForm] = useState({
+    stall: "",
+    month_key: format(new Date(), "yyyy-MM"),
+    spreadsheet_input: "",
+    is_active: true,
+  })
   const [subStallUnitRevenueAdditional, setSubStallUnitRevenueAdditional] = useState(
     settings.sub_stall_unit_revenue_additional || "0",
   )
@@ -72,13 +118,83 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     setGoogleSubSpreadsheetId(settings.google_sheets_spreadsheet_id || "")
     setGoogleMainSpreadsheetId(settings.google_sheets_main_spreadsheet_id || "")
     setGoogleStallType(settings.google_sheets_sub_stall_type || "sub")
+    setGoogleShareEmail(settings.google_sheets_share_email || "")
     setSubStallUnitRevenueAdditional(settings.sub_stall_unit_revenue_additional || "0")
   }, [
     settings.google_sheets_spreadsheet_id,
     settings.google_sheets_main_spreadsheet_id,
     settings.google_sheets_sub_stall_type,
+    settings.google_sheets_share_email,
     settings.sub_stall_unit_revenue_additional,
   ])
+
+  useEffect(() => {
+    if (!monthlySheetForm.stall && stallChoices.length > 0) {
+      setMonthlySheetForm((prev) => ({ ...prev, stall: String(stallChoices[0].id) }))
+    }
+  }, [stallChoices, monthlySheetForm.stall])
+
+  const fetchMonthlySheets = async (silent = false) => {
+    try {
+      if (!silent) {
+        setIsMonthlySheetsLoading(true)
+      }
+      const { data } = await api.get("/sales/monthly-sheets/", {
+        params: {
+          ordering: "-month_key",
+        },
+      })
+      const rows = Array.isArray(data?.results) ? data.results : (Array.isArray(data) ? data : [])
+      setMonthlySheets(rows)
+    } catch {
+      if (!silent) {
+        toast.error("Unable to load monthly sheets")
+      }
+    } finally {
+      if (!silent) {
+        setIsMonthlySheetsLoading(false)
+      }
+    }
+  }
+
+  const upsertMonthlySheet = async () => {
+    const stallId = Number(monthlySheetForm.stall)
+    if (!stallId) {
+      toast.error("Please select a stall.")
+      return
+    }
+
+    const monthKey = monthlySheetForm.month_key.trim()
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(monthKey)) {
+      toast.error("Month must use YYYY-MM format.")
+      return
+    }
+
+    const spreadsheetId = parseSpreadsheetId(monthlySheetForm.spreadsheet_input)
+    if (!spreadsheetId) {
+      toast.error("Spreadsheet ID or URL is required.")
+      return
+    }
+
+    try {
+      setIsMonthlySheetsLoading(true)
+      await api.post("/sales/monthly-sheets/", {
+        stall: stallId,
+        month_key: monthKey,
+        spreadsheet_id: spreadsheetId,
+        spreadsheet_url: `https://docs.google.com/spreadsheets/d/${spreadsheetId}`,
+        is_active: Boolean(monthlySheetForm.is_active),
+      })
+      toast.success("Monthly sheet link saved.")
+      setMonthlySheetForm((prev) => ({ ...prev, spreadsheet_input: "" }))
+      await fetchMonthlySheets(true)
+      void fetchGoogleSyncStatus(true)
+    } catch {
+      toast.error("Failed to save monthly sheet link")
+    } finally {
+      setIsMonthlySheetsLoading(false)
+    }
+  }
 
   const saveSubStallUnitRevenueAdditional = () => {
     const normalized = subStallUnitRevenueAdditional.trim() || "0"
@@ -139,11 +255,13 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       google_sheets_spreadsheet_id: string
       google_sheets_main_spreadsheet_id: string
       google_sheets_sub_stall_type: string
+      google_sheets_share_email: string
       google_service_account_json?: string
     } = {
       google_sheets_spreadsheet_id: googleSubSpreadsheetId.trim(),
       google_sheets_main_spreadsheet_id: googleMainSpreadsheetId.trim(),
       google_sheets_sub_stall_type: googleStallType.trim() || "sub",
+      google_sheets_share_email: googleShareEmail.trim(),
     }
 
     if (googleServiceAccountJson.trim()) {
@@ -459,10 +577,12 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     googleSubSpreadsheetId.trim() !== (settings.google_sheets_spreadsheet_id || "").trim() ||
     googleMainSpreadsheetId.trim() !== (settings.google_sheets_main_spreadsheet_id || "").trim() ||
     googleStallType.trim() !== (settings.google_sheets_sub_stall_type || "sub").trim() ||
+    googleShareEmail.trim() !== (settings.google_sheets_share_email || "").trim() ||
     Boolean(googleServiceAccountJson.trim())
 
   useEffect(() => {
     void fetchGoogleSyncStatus(true)
+    void fetchMonthlySheets(true)
   }, [])
 
   return (
@@ -698,6 +818,21 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             </div>
           </div>
 
+          <div className="grid gap-2">
+            <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Global Share Email (All Monthly Sheets)</Label>
+            <Input
+              type="email"
+              value={googleShareEmail}
+              disabled={updateOperationsSettings.isPending}
+              onChange={(e) => setGoogleShareEmail(e.target.value)}
+              placeholder="sheets-owner@company.com"
+              className="bg-background"
+            />
+            <p className="text-xs text-muted-foreground">
+              Every configured monthly sheet is automatically shared to this single email during sync.
+            </p>
+          </div>
+
           <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
             <div className="grid gap-2">
               <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Sync Scope</Label>
@@ -815,6 +950,160 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                 <Save className="size-4" />
                 Save Google Sync Settings
               </Button>
+            </div>
+          </div>
+
+          <div className="rounded-md border bg-background/70 p-3 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <Label className="text-sm font-semibold">Monthly Sheet Links</Label>
+                <p className="text-xs text-muted-foreground">
+                  One Google Sheet per stall per month. Used as first priority during daily sync.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isMonthlySheetsLoading}
+                onClick={() => void fetchMonthlySheets()}
+                className="gap-2"
+              >
+                <RefreshCcw className="size-4" />
+                Refresh
+              </Button>
+            </div>
+
+            <div className="grid gap-2 md:grid-cols-4">
+              <div className="grid gap-1">
+                <Label className="text-xs text-muted-foreground">Stall</Label>
+                <Select
+                  value={monthlySheetForm.stall}
+                  onValueChange={(value) => setMonthlySheetForm((prev) => ({ ...prev, stall: value }))}
+                >
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Choose stall" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stallChoices.map((stall) => (
+                      <SelectItem key={stall.id} value={String(stall.id)}>
+                        {stall.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid gap-1">
+                <Label className="text-xs text-muted-foreground">Month</Label>
+                <Input
+                  type="month"
+                  value={monthlySheetForm.month_key}
+                  onChange={(e) => setMonthlySheetForm((prev) => ({ ...prev, month_key: e.target.value }))}
+                />
+              </div>
+
+              <div className="grid gap-1 md:col-span-2">
+                <Label className="text-xs text-muted-foreground">Spreadsheet URL or ID</Label>
+                <Input
+                  value={monthlySheetForm.spreadsheet_input}
+                  onChange={(e) => setMonthlySheetForm((prev) => ({ ...prev, spreadsheet_input: e.target.value }))}
+                  placeholder="https://docs.google.com/spreadsheets/d/..."
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={monthlySheetForm.is_active}
+                  onCheckedChange={(checked) => setMonthlySheetForm((prev) => ({ ...prev, is_active: checked }))}
+                />
+                <span className="text-xs text-muted-foreground">Active link</span>
+              </div>
+              <Button
+                type="button"
+                disabled={isMonthlySheetsLoading}
+                onClick={upsertMonthlySheet}
+                className="gap-2"
+              >
+                <Save className="size-4" />
+                Save Monthly Link
+              </Button>
+            </div>
+
+            <div className="overflow-x-auto rounded-md border">
+              <table className="w-full min-w-[720px] text-xs">
+                <thead className="bg-muted/50 text-left">
+                  <tr>
+                    <th className="px-2 py-2 font-medium">Stall</th>
+                    <th className="px-2 py-2 font-medium">Month</th>
+                    <th className="px-2 py-2 font-medium">Sheet</th>
+                    <th className="px-2 py-2 font-medium">Share</th>
+                    <th className="px-2 py-2 font-medium">Status</th>
+                    <th className="px-2 py-2 font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {monthlySheets.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-2 py-3 text-center text-muted-foreground">
+                        {isMonthlySheetsLoading ? "Loading monthly links..." : "No monthly links yet."}
+                      </td>
+                    </tr>
+                  )}
+                  {monthlySheets.map((sheet) => (
+                    <tr key={sheet.id} className="border-t">
+                      <td className="px-2 py-2">{sheet.stall_name}</td>
+                      <td className="px-2 py-2">{sheet.month_key}</td>
+                      <td className="px-2 py-2">
+                        {sheet.spreadsheet_url ? (
+                          <a
+                            href={sheet.spreadsheet_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-primary hover:underline"
+                          >
+                            Open
+                            <ExternalLink className="size-3" />
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">{sheet.spreadsheet_id.slice(0, 14)}...</span>
+                        )}
+                      </td>
+                      <td className="px-2 py-2">
+                        {sheet.shared_ok ? (
+                          <span className="text-emerald-600">Shared</span>
+                        ) : (
+                          <span className="text-amber-600">Pending</span>
+                        )}
+                        {sheet.share_error && (
+                          <p className="max-w-[260px] truncate text-[11px] text-destructive">
+                            {sheet.share_error}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-2 py-2">{sheet.is_active ? "Active" : "Inactive"}</td>
+                      <td className="px-2 py-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setMonthlySheetForm({
+                              stall: String(sheet.stall),
+                              month_key: sheet.month_key,
+                              spreadsheet_input: sheet.spreadsheet_url || sheet.spreadsheet_id,
+                              is_active: sheet.is_active,
+                            })
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
