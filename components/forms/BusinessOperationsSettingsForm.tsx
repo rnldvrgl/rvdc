@@ -1,5 +1,5 @@
 "use client"
-
+import { formatDate } from "@/lib/utils"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -857,7 +857,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                     )}
                   >
                     <td className="px-3 py-2.5 font-medium">{sheet.stall_name}</td>
-                    <td className="px-3 py-2.5 font-mono">{sheet.month_key}</td>
+                    <td className="px-3 py-2.5 font-mono">{formatDate(new Date(sheet.month_key), "MMMM yyyy")}</td>
                     <td className="px-3 py-2.5">
                       {sheet.spreadsheet_url ? (
                         <a
