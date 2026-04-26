@@ -653,6 +653,9 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
             <p className="text-xs text-muted-foreground">
               All monthly sheets are automatically shared to this email during sync.
             </p>
+            <p className="text-xs text-muted-foreground">
+              Note: this only works after each sheet is shared with your Service Account first.
+            </p>
           </div>
 
           {/* Service account JSON */}
@@ -876,10 +879,15 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex flex-col gap-0.5">
-                        {/* "success" / "warning" from provided Badge variants */}
-                        <Badge variant={sheet.shared_ok ? "success" : "warning"}>
-                          {sheet.shared_ok ? "Shared" : "Pending"}
-                        </Badge>
+                        {sheet.shared_ok ? (
+                          <Badge variant="success">Shared</Badge>
+                        ) : (
+                          <Badge variant="warning">
+                            {(sheet.share_error || "").toLowerCase().includes("service account has no access")
+                              ? "Needs Service Account Access"
+                              : "Pending"}
+                          </Badge>
+                        )}
                         {sheet.share_error && (
                           <p className="max-w-[200px] truncate text-[10px] text-destructive">
                             {sheet.share_error}
