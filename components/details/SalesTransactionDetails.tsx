@@ -59,11 +59,16 @@ export function SalesTransactionDetails({
   const [latestMonthlySheetUrl, setLatestMonthlySheetUrl] = useState<string | null>(null)
   
   // Fetch latest monthly sheet for this stall
-  const { data: monthlySheets } = useApiQuery<{ results: MonthlySheet[] }>(
-    entity.stall?.id
-      ? `/sales/monthly-sheets/?stall=${entity.stall.id}&is_active=true&ordering=-month_key`
-      : null,
-  )
+  const { data: monthlySheets } = useApiQuery<{ results: MonthlySheet[] }>({
+    queryKey: ["monthly-sheets", entity.stall?.id],
+    url: "/sales/monthly-sheets/",
+    params: {
+      stall: entity.stall?.id,
+      is_active: true,
+      ordering: "-month_key",
+    },
+    enabled: !!entity.stall?.id,
+  })
 
   useEffect(() => {
     if (monthlySheets?.results?.[0]?.spreadsheet_url) {
