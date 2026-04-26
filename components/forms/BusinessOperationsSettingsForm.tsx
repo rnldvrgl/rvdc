@@ -298,6 +298,25 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
 
   const wait = (ms: number) => new Promise<void>((resolve) => { setTimeout(resolve, ms) })
 
+  const summarizeSyncError = (raw: string) => {
+    const text = String(raw || "").trim()
+    const lower = text.toLowerCase()
+
+    if (
+      lower.includes("rate_limit_exceeded") ||
+      lower.includes("quota exceeded") ||
+      lower.includes("write requests per minute")
+    ) {
+      return "Google Sheets quota limit reached. Please wait 1-2 minutes then retry."
+    }
+
+    if (lower.includes("service account has no access") || lower.includes("does not have permission")) {
+      return "Service account has no spreadsheet access. Share the sheet with the service account first."
+    }
+
+    return text.split("\n", 1)[0].slice(0, 180)
+  }
+
   const formatHistoricalSyncProgress = (data: {
     state?: string; processed_targets?: number; total_targets?: number
     synced?: number; failed?: number; progress_pct?: number
@@ -309,7 +328,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     const synced = Number(data.synced || 0)
     const failed = Number(data.failed || 0)
     const pct = Number(data.progress_pct || 0)
-    const latestError = String(data.latest_error || "").trim()
+    const latestError = summarizeSyncError(String(data.latest_error || "").trim())
     const location = data.current_stall_id && data.current_date ? ` · stall ${data.current_stall_id} @ ${data.current_date}` : ""
     const errorHint = failed > 0 && latestError ? ` · last error: ${latestError}` : ""
     if (state === "queued") return "Historical sync queued…"
@@ -395,7 +414,11 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
         const summary = `Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0}`
         setSyncStatusMessage(summary)
         if (String(data?.state) === "failed" || !data?.ok) {
-          toast.error(`${summary}${errors.length > 0 ? `\n${errors[0]}` : ""}`, { id: loadingToastId })
+          const firstError = errors.length > 0 ? summarizeSyncError(String(errors[0])) : ""
+          toast.error(summary, {
+            id: loadingToastId,
+            description: firstError || "Please check Google Sheets settings and try again.",
+          })
         } else {
           toast.success(summary, { id: loadingToastId })
         }
@@ -404,7 +427,12 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
         const errors = Array.isArray(data?.errors) ? data.errors : []
         const summary = `Synced: ${data?.synced ?? 0}, Failed: ${data?.failed ?? 0}`
         setSyncStatusMessage(summary)
-        if ((data?.failed ?? 0) > 0) toast.error(`${summary}${errors.length > 0 ? `\n${errors[0]}` : ""}`)
+        if ((data?.failed ?? 0) > 0) {
+          const firstError = errors.length > 0 ? summarizeSyncError(String(errors[0])) : ""
+          toast.error(summary, {
+            description: firstError || "Please check Google Sheets settings and try again.",
+          })
+        }
         else toast.success(summary)
       }
       await fetchGoogleSyncStatus(true)
@@ -418,8 +446,9 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       } else if ((error as { message?: string })?.message) {
         errorMessage = String((error as { message: string }).message)
       }
-      setSyncStatusMessage(`Error: ${errorMessage}`)
-      toast.error(errorMessage)
+      const shortError = summarizeSyncError(errorMessage)
+      setSyncStatusMessage(`Error: ${shortError}`)
+      toast.error("Monthly sync failed", { description: shortError })
     } finally {
       setIsSyncInProgress(false)
       setSyncingMonthlySheetId(null)
