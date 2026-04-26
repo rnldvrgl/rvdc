@@ -555,9 +555,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   }
 
   const hasGoogleConfigChanged =
-    googleSubSpreadsheetId.trim() !== (settings.google_sheets_spreadsheet_id || "").trim() ||
-    googleMainSpreadsheetId.trim() !== (settings.google_sheets_main_spreadsheet_id || "").trim() ||
-    googleStallType.trim() !== (settings.google_sheets_sub_stall_type || "sub").trim() ||
     googleShareEmail.trim() !== (settings.google_sheets_share_email || "").trim() ||
     Boolean(googleServiceAccountJson.trim())
 
