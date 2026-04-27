@@ -238,10 +238,10 @@ const QuotationPrintContent = React.forwardRef<
             className="object-contain"
           />
           <div>
-            <h1 className="text-lg font-bold leading-tight">
+            <h1 className="text-[16px] font-bold leading-tight max-w-lg">
               {receiptDetails.shop_name}
             </h1>
-            <p className="text-[11px] text-gray-600 leading-snug">
+            <p className="text-[11px] text-gray-600 leading-snug max-w-md">
               {receiptDetails.address}
             </p>
             <p className="text-[11px] text-gray-600">Phone: 0936-667-8269</p>
