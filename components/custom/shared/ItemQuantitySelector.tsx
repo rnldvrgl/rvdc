@@ -65,6 +65,14 @@ export default function ItemQuantitySelector({
     [allItems, untrackedItemIds],
   )
 
+  const customItems = useMemo(
+    () =>
+      allItems.filter(
+        (item) => !item.is_tracked || (untrackedItemIds?.has(item.id) ?? false),
+      ),
+    [allItems, untrackedItemIds],
+  )
+
   const handleAdd = () => {
     if (trackedItems.length === 0) return
     const newItem: ItemEntry = {
@@ -143,7 +151,7 @@ export default function ItemQuantitySelector({
           : itm,
       ),
     )
-  }
+                          options={customItems
 
   const handleRemove = (idx: number) => {
     onChange(items.filter((_, i) => i !== idx))
