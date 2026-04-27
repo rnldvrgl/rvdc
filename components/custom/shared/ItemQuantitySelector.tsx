@@ -65,6 +65,14 @@ export default function ItemQuantitySelector({
     [allItems, untrackedItemIds],
   )
 
+  const customItems = useMemo(
+    () =>
+      allItems.filter(
+        (item) => !item.is_tracked || (untrackedItemIds?.has(item.id) ?? false),
+      ),
+    [allItems, untrackedItemIds],
+  )
+
   const handleAdd = () => {
     if (trackedItems.length === 0) return
     const newItem: ItemEntry = {
@@ -272,7 +280,7 @@ export default function ItemQuantitySelector({
                             }
                           }}
                           value=""
-                          options={trackedItems
+                          options={customItems
                             .map((c) => ({
                               label: `${c.name} — ${formatCurrency(c.retail_price)}`,
                               value: c.id.toString(),
