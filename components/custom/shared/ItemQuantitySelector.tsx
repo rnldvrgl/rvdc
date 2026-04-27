@@ -151,7 +151,7 @@ export default function ItemQuantitySelector({
           : itm,
       ),
     )
-                          options={customItems
+  }
 
   const handleRemove = (idx: number) => {
     onChange(items.filter((_, i) => i !== idx))
