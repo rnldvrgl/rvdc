@@ -169,6 +169,8 @@ export type QuotationPayment = {
 }
 
 export type Quotation = BaseEntity & {
+  stall?: string | number | null
+  stall_data?: Stall | null
   client?: number | null
   client_data?: Client | null
   client_name: string
@@ -200,6 +202,7 @@ export type Quotation = BaseEntity & {
 }
 
 export type QuotationPayload = {
+  stall?: string | number | null
   client?: number | null
   client_name: string
   client_address: string

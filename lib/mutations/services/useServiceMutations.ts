@@ -133,6 +133,7 @@ export function useServiceMutations() {
         amount: string | number
         notes?: string
         cheque_collection?: number | null
+        payment_date?: string
       }
     }) => api.post(`${url}${id}/payments/`, data),
     successMessage: "Payment recorded successfully.",

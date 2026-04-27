@@ -174,7 +174,9 @@ export default function ServiceDetail({
   const [editPaymentType, setEditPaymentType] = useState("cash")
   const [editPaymentAmount, setEditPaymentAmount] = useState("")
   const [editPaymentNotes, setEditPaymentNotes] = useState("")
+  const [editPaymentDate, setEditPaymentDate] = useState<Date | undefined>(undefined)
   const [editPaymentDialogOpen, setEditPaymentDialogOpen] = useState(false)
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(undefined)
   const [claimingApplianceId, setClaimingApplianceId] = useState<number | null>(null)
   const [forfeitingApplianceId, setForfeitingApplianceId] = useState<number | null>(null)
   const [forfeitingApplianceNotes, setForfeitingApplianceNotes] = useState("")
@@ -341,6 +343,7 @@ export default function ServiceDetail({
     setPaymentType("cash")
     setPaymentNotes("")
     setSelectedCheque(null)
+    setPaymentDate(undefined)
     setPaymentDialogOpen(true)
   }
 
@@ -612,6 +615,7 @@ export default function ServiceDetail({
           notes: paymentNotes || undefined,
           cheque_collection:
             paymentType === "cheque" ? selectedCheque : undefined,
+          payment_date: paymentDate ? paymentDate.toISOString() : undefined,
         },
       },
       {
@@ -2644,7 +2648,7 @@ export default function ServiceDetail({
                     type: "payment",
                     id: p.id,
                     amount: parseFloat(p.amount.toString()),
-                    date: p.created_at,
+                    date: p.payment_date || p.created_at,
                     method: p.payment_type,
                     notes: p.notes,
                     chequeNumber: p.cheque_number ?? undefined,
@@ -2770,6 +2774,15 @@ export default function ServiceDetail({
                                   setEditPaymentType(tx.method)
                                   setEditPaymentAmount(tx.amount.toString())
                                   setEditPaymentNotes(tx.notes ?? "")
+                                  setEditPaymentDate(
+                                    tx.id
+                                      ? new Date(
+                                          service.payments?.find((p) => p.id === tx.id)?.payment_date ||
+                                            service.payments?.find((p) => p.id === tx.id)?.created_at ||
+                                            new Date(),
+                                        )
+                                      : undefined,
+                                  )
                                   setEditPaymentDialogOpen(true)
                                 }}
                               >
@@ -3448,6 +3461,15 @@ export default function ServiceDetail({
                 placeholder="e.g., Partial payment, advance payment"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="payment_date">Payment Date</Label>
+              <DateTimePicker
+                value={paymentDate}
+                onChange={setPaymentDate}
+                disablePastDates={false}
+                placeholder="Select payment date and time"
+              />
+            </div>
             <div className="rounded-md bg-muted p-3 space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Total</span>
@@ -3547,6 +3569,15 @@ export default function ServiceDetail({
                 placeholder="e.g., Corrected payment method"
               />
             </div>
+            <div className="space-y-2">
+              <Label>Payment Date</Label>
+              <DateTimePicker
+                value={editPaymentDate}
+                onChange={setEditPaymentDate}
+                disablePastDates={false}
+                placeholder="Select payment date and time"
+              />
+            </div>
           </div>
           <div className="flex gap-2 justify-end">
             <Button
@@ -3565,6 +3596,7 @@ export default function ServiceDetail({
                     payment_type: editPaymentType,
                     amount: editPaymentAmount,
                     notes: editPaymentNotes,
+                    payment_date: editPaymentDate?.toISOString(),
                   },
                   { onSuccess: () => setEditPaymentDialogOpen(false) },
                 )

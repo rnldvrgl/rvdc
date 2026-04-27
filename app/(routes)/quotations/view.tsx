@@ -9,6 +9,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import type { Quotation, QuotationStatus } from "@/lib/constants/types"
+import useGetReceiptDetails from "@/lib/hooks/useGetReceiptDetails"
 import { useQuotationMutations } from "@/lib/mutations/useQuotationMutations"
 import { useQuotation } from "@/lib/queries/useQuotations"
 import { formatCurrency } from "@/lib/utils/currency"
@@ -216,6 +217,10 @@ const QuotationPrintContent = React.forwardRef<
   HTMLDivElement,
   { quotation: Quotation }
 >(function QuotationPrintContent({ quotation: q }, ref) {
+  const receiptDetails = useGetReceiptDetails(
+    q.stall_data?.stall_type ?? q.stall_data?.name ?? "",
+  )
+
   return (
     <div
       ref={ref}
@@ -234,12 +239,10 @@ const QuotationPrintContent = React.forwardRef<
           />
           <div>
             <h1 className="text-lg font-bold leading-tight">
-              RVDC Ref & Aircon Repair Shop
+              {receiptDetails.shop_name}
             </h1>
             <p className="text-[11px] text-gray-600 leading-snug">
-              A-02 MRL Building, Mc. Arthur Hiway,
-              <br />
-              Mabiga, Mabalacat City, Pampanga, 2010
+              {receiptDetails.address}
             </p>
             <p className="text-[11px] text-gray-600">Phone: 0936-667-8269</p>
           </div>

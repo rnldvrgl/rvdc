@@ -33,9 +33,10 @@ import type {
 } from "@/lib/constants/types"
 import { useQuotationMutations } from "@/lib/mutations/useQuotationMutations"
 import { useAirconModels, useAirconUnits } from "@/lib/queries/useAircons"
-import { useClientChoices } from "@/lib/queries/useChoices"
+import { useClientChoices, useStallChoices } from "@/lib/queries/useChoices"
 import { useEmployees } from "@/lib/queries/useEmployees"
 import { useQuotationTemplates } from "@/lib/queries/useQuotationTemplates"
+import useGetReceiptDetails from "@/lib/hooks/useGetReceiptDetails"
 import { formatCurrency } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
 import { addDays, format } from "date-fns"
@@ -271,6 +272,10 @@ export default function QuotationForm({
     quotation?.client ?? null,
   )
 
+  const [selectedStallId, setSelectedStallId] = useState<number | null>(
+    quotation?.stall == null ? null : Number(quotation.stall),
+  )
+
   // ── Aircon Units (Available Inventory + client's units) ──
   const { data: airconUnitsData } = useAirconUnits({
     limit: 500,
@@ -323,6 +328,28 @@ export default function QuotationForm({
   const { data: clientsData } = useClientChoices()
   const clients = useMemo(() => clientsData ?? [], [clientsData])
 
+  // ── Stall choices ──
+  const { data: stallsData } = useStallChoices({})
+  const stalls = useMemo(
+    () => stallsData ?? [],
+    [stallsData],
+  )
+  const stallOptions = useMemo(
+    () =>
+      stalls.map((stall) => ({
+        value: stall.id,
+        label: `${stall.name}${stall.location ? ` - ${stall.location}` : ""}`,
+      })),
+    [stalls],
+  )
+  const selectedStall = useMemo(
+    () => stalls.find((stall) => stall.id === selectedStallId) ?? null,
+    [stalls, selectedStallId],
+  )
+  const receiptDetails = useGetReceiptDetails(
+    selectedStall?.stall_type ?? selectedStall?.name ?? "",
+  )
+
   // ── Authorized Representatives (admin & managers) ──
   const { data: employeesData } = useEmployees({
     limit: 100,
@@ -366,6 +393,10 @@ export default function QuotationForm({
         [c.address, c.barangay, c.city, c.province].filter(Boolean).join(", "),
       )
     }
+  }
+
+  const handleStallChange = (stallId: number | null) => {
+    setSelectedStallId(stallId)
   }
 
   // ── Templates ──
@@ -732,6 +763,7 @@ export default function QuotationForm({
     // ── Validation ──
     const errors: string[] = []
     if (!selectedClientId) errors.push("Please select a client.")
+    if (!selectedStallId) errors.push("Please select a stall.")
     const validItems = items.filter((i) => i.description.trim())
     if (validItems.length === 0)
       errors.push("Add at least one line item with a description.")
@@ -746,6 +778,7 @@ export default function QuotationForm({
     }
 
     const payload: QuotationPayload = {
+      stall: selectedStallId,
       client: selectedClientId,
       client_name: clientNameOverride,
       client_address: clientAddressOverride,
@@ -812,6 +845,21 @@ export default function QuotationForm({
           Client Information
         </h3>
         <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">Stall</Label>
+            <ComboBox
+              options={stallOptions}
+              value={selectedStallId}
+              onChange={(v) => handleStallChange(v == null ? null : Number(v))}
+              placeholder="Select stall..."
+              searchPlaceholder="Search stall..."
+            />
+          </div>
+          <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            <div className="font-medium text-foreground">Quotation Header</div>
+            <div>{receiptDetails.shop_name}</div>
+            <div>{receiptDetails.address}</div>
+          </div>
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Client</Label>
             <ComboBox
