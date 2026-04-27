@@ -145,7 +145,7 @@ function getAirconUnitItems(units: AirconUnits[]) {
       const model = u.model?.name ?? ""
       return {
         qty: 1,
-        description: `Aircon Unit: ${brand} ${model} (SN: ${u.serial_number})`,
+        description: `Installation Fee - Aircon Unit: ${brand} ${model} (SN: ${u.serial_number})`,
         unitPrice: price,
         total: price,
       }
