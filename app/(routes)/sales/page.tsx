@@ -65,7 +65,17 @@ const emptyData = {
 export default function SalesTransactionsPage() {
   const { role, assigned_stall } = useCurrentUser()
   const { data: systemSettings } = useSystemSettings()
-  const [googleSheetMeta, setGoogleSheetMeta] = useState<{ sub_latest_gid?: number | null; main_latest_gid?: number | null } | null>(null)
+  const [googleSheetMeta, setGoogleSheetMeta] = useState<{
+    sub_latest_gid?: number | null
+    main_latest_gid?: number | null
+    current_month_sheets?: {
+      [key: string]: {
+        spreadsheet_id: string
+        latest_gid: number | null
+        stall_name: string
+      }
+    }
+  } | null>(null)
   const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
   const { page, limit, search, ordering, filter } = searchParams
   const [activeTab, setActiveTab] = useState<TabValue>("active")
@@ -232,6 +242,7 @@ export default function SalesTransactionsPage() {
         setGoogleSheetMeta({
           sub_latest_gid: data?.sub_latest_gid ?? null,
           main_latest_gid: data?.main_latest_gid ?? null,
+          current_month_sheets: data?.current_month_sheets ?? {},
         })
       } catch {
         setGoogleSheetMeta(null)
@@ -244,11 +255,23 @@ export default function SalesTransactionsPage() {
   const subSheetId = systemSettings?.google_sheets_spreadsheet_id || ""
   const mainSheetId = systemSettings?.google_sheets_main_spreadsheet_id || ""
 
-  const subSheetUrl = subSheetId
-    ? `https://docs.google.com/spreadsheets/d/${subSheetId}/edit${typeof googleSheetMeta?.sub_latest_gid === "number" ? `#gid=${googleSheetMeta.sub_latest_gid}` : ""}`
+  // Use monthly sheets if available, otherwise fallback to default sheets
+  const monthlySheets = googleSheetMeta?.current_month_sheets ?? {}
+
+  const subMonthlySheet = monthlySheets["sub"]
+  const mainMonthlySheet = monthlySheets["main"]
+
+  const subSheetId_Final = subMonthlySheet?.spreadsheet_id || subSheetId
+  const mainSheetId_Final = mainMonthlySheet?.spreadsheet_id || mainSheetId
+
+  const subLatestGid = subMonthlySheet?.latest_gid ?? googleSheetMeta?.sub_latest_gid
+  const mainLatestGid = mainMonthlySheet?.latest_gid ?? googleSheetMeta?.main_latest_gid
+
+  const subSheetUrl = subSheetId_Final
+    ? `https://docs.google.com/spreadsheets/d/${subSheetId_Final}/edit${typeof subLatestGid === "number" ? `#gid=${subLatestGid}` : ""}`
     : ""
-  const mainSheetUrl = mainSheetId
-    ? `https://docs.google.com/spreadsheets/d/${mainSheetId}/edit${typeof googleSheetMeta?.main_latest_gid === "number" ? `#gid=${googleSheetMeta.main_latest_gid}` : ""}`
+  const mainSheetUrl = mainSheetId_Final
+    ? `https://docs.google.com/spreadsheets/d/${mainSheetId_Final}/edit${typeof mainLatestGid === "number" ? `#gid=${mainLatestGid}` : ""}`
     : ""
 
   const isAdmin = role === "admin"

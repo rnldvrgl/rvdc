@@ -44,7 +44,6 @@ import {
   WifiOff,
   Loader2,
   MoreHorizontal,
-  AlertCircle,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils/helpers"
@@ -138,6 +137,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const [notificationSound, setNotificationSound] = useState(settings.notification_sound)
   const [googleServiceAccountJson, setGoogleServiceAccountJson] = useState("")
   const [syncStatusMessage, setSyncStatusMessage] = useState("")
+  const [connectionDetails, setConnectionDetails] = useState<{[key: string]: {status: string; message: string}} | null>(null)
   const [connectionOk, setConnectionOk] = useState<boolean | null>(null)
   const [isTestingConnection, setIsTestingConnection] = useState(false)
   const [isSyncInProgress, setIsSyncInProgress] = useState(false)
@@ -155,7 +155,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const [subStallUnitRevenueAdditional, setSubStallUnitRevenueAdditional] = useState(
     settings.sub_stall_unit_revenue_additional || "0",
   )
-  const [syncingMonthlySheetId, setSyncingMonthlySheetId] = useState<number | null>(null)
   const [activeMonthlyTab, setActiveMonthlyTab] = useState<"main" | "sub">("main")
   const [mainPage, setMainPage] = useState(1)
   const [subPage, setSubPage] = useState(1)
@@ -276,6 +275,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       const { data } = await api.get("/users/settings/google-sheets-sync/")
       setConnectionOk(Boolean(data?.connection_ok))
       setSyncStatusMessage(data?.message || "Status checked")
+      setConnectionDetails(data?.connection_details || null)
       if (!silent) {
         if (data?.connection_ok) toast.success("Google Sheets connection is healthy.")
         else toast.error(data?.message || "Google Sheets is not connected.")
@@ -283,6 +283,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     } catch {
       setConnectionOk(false)
       setSyncStatusMessage("Unable to check Google Sheets status")
+      setConnectionDetails(null)
       if (!silent) toast.error("Unable to check Google Sheets status")
     } finally {
       setIsTestingConnection(false)
@@ -295,11 +296,13 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       const { data } = await api.post("/users/settings/google-sheets-sync/", { action: "test_connection" })
       setConnectionOk(Boolean(data?.connection_ok))
       setSyncStatusMessage(data?.message || "Connection checked")
+      setConnectionDetails(data?.connection_details || null)
       if (data?.connection_ok) toast.success("Google Sheets connected successfully")
       else toast.error(data?.message || "Google Sheets connection failed")
     } catch {
       setConnectionOk(false)
       setSyncStatusMessage("Google Sheets connection failed")
+      setConnectionDetails(null)
       toast.error("Google Sheets connection failed")
     } finally {
       setIsTestingConnection(false)
@@ -379,7 +382,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     })
   }
 
-  const stopSyncMonitoring = () => {
+  const handleStopSyncMonitoring = () => {
     syncJobCancelledRef.current = true
     setIsSyncInProgress(false)
     const message = "Sync monitoring stopped. The historical sync may continue in the background."
@@ -414,7 +417,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     const endDate = new Date(year, month, 0)
     try {
       setIsSyncInProgress(true)
-      setSyncingMonthlySheetId(sheet.id)
       syncJobCancelledRef.current = false
       const payload = {
         action: "sync_historical",
@@ -488,7 +490,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
       toast.error("Monthly sync failed", { description: shortError })
     } finally {
       setIsSyncInProgress(false)
-      setSyncingMonthlySheetId(null)
       syncToastIdRef.current = null
     }
   }
@@ -897,6 +898,23 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               {connectionLabel}
             </Badge>
           </div>
+
+          {/* Status message below badges */}
+          {syncStatusMessage && (
+            <div className="flex flex-col gap-1 rounded-md border border-border/60 bg-muted/30 p-2.5">
+              <p className="text-xs text-foreground/80">{syncStatusMessage}</p>
+              {connectionDetails && Object.entries(connectionDetails).length > 0 && (
+                <div className="space-y-1 ml-1">
+                  {Object.entries(connectionDetails).map(([stall, detail]) => (
+                    <div key={stall} className="flex items-start gap-2">
+                      <span className="text-[10px] font-medium text-muted-foreground min-w-max">{stall}:</span>
+                      <span className="text-[10px] text-muted-foreground">{detail.message}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="border-t border-border/40 px-4 py-4 space-y-4">
@@ -918,8 +936,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
               className="min-h-28 resize-y bg-background font-mono text-xs"
             />
           </div>
-
-          <p className="sr-only" aria-live="polite">{syncStatusMessage}</p>
 
           {/* Action row */}
           <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border/40 pt-3">
