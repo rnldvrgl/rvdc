@@ -382,16 +382,6 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     })
   }
 
-  const handleStopSyncMonitoring = () => {
-    syncJobCancelledRef.current = true
-    setIsSyncInProgress(false)
-    const message = "Sync monitoring stopped. The historical sync may continue in the background."
-    setSyncStatusMessage(message)
-    if (syncToastIdRef.current) {
-      toast.warning(message, { id: syncToastIdRef.current, description: "Restart to resume monitoring.", duration: 6000 })
-    } else { toast.warning(message) }
-  }
-
   const pollHistoricalSyncJob = async (jobId: string, onProgress?: (data: Record<string, unknown>) => void) => {
     const maxAttempts = 120
     let lastData: Record<string, unknown> | null = null
