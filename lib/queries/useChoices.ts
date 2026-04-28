@@ -158,6 +158,8 @@ export const useChequeChoices = (clientId?: number) => {
       cheque_number: string
       cheque_amount: string
       billing_amount: string
+      allocated_amount: string
+      remaining_amount: string
       client_name: string
     }[]
   >({
@@ -171,7 +173,7 @@ export const useChequeChoices = (clientId?: number) => {
   // Transform data to ComboboxOption format
   const transformedData: ComboboxOption[] = (data || []).map((cheque) => ({
     value: cheque.id,
-    label: `${cheque.cheque_number} - ₱${parseFloat(cheque.billing_amount).toLocaleString()}`,
+    label: `${cheque.cheque_number} - Remaining ₱${parseFloat(cheque.remaining_amount).toLocaleString()}`,
   }))
 
   return {

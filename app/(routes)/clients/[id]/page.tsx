@@ -13,11 +13,23 @@ import { DataTable } from "@/components/custom/table/DataTable"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import type { AirconUnits, SalesTransaction, Service } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
+import { useClientMutations } from "@/lib/mutations/useClientMutations"
+import { useClientFundDeposits } from "@/lib/queries/clients/useClients"
 import { useService } from "@/lib/queries/services/useServices"
 import { formatCurrency } from "@/lib/utils/currency"
 import {
@@ -40,8 +52,11 @@ import {
 } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
+import { toast } from "sonner"
 import {
   formatDate,
+  fundDepositColumns,
+  fundDepositFilterFn,
   getArchivedServiceColumns,
   getSalesColumns,
   getServiceColumns,
@@ -65,6 +80,7 @@ export default function ClientDetailPage() {
   const router = useRouter()
   const clientId = params.id as string
   const { canManage } = useCurrentUser()
+  const { addClientFundDeposit } = useClientMutations()
 
   // ── Data ─────────────────────────────────────────────────────────────────
   const {
@@ -87,6 +103,15 @@ export default function ClientDetailPage() {
     deleteService,
     stats,
   } = useClientDetailData(clientId)
+  const { data: fundDeposits = [], isLoading: fundDepositsLoading } =
+    useClientFundDeposits(clientId)
+
+  const [fundDialogOpen, setFundDialogOpen] = useState(false)
+  const [fundAmount, setFundAmount] = useState("")
+  const [fundPaymentMethod, setFundPaymentMethod] = useState<
+    "cash" | "gcash" | "debit" | "credit" | "cheque"
+  >("cash")
+  const [fundNotes, setFundNotes] = useState("")
 
   // ── Service detail sheet ─────────────────────────────────────────────────
   const [selectedService, setSelectedService] = useState<Service | null>(null)
@@ -125,6 +150,34 @@ export default function ClientDetailPage() {
   const handleCloseDetails = () => {
     setDetailsOpen(false)
     setSelectedService(null)
+  }
+
+  const handleAddFundDeposit = () => {
+    const amount = parseFloat(fundAmount)
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Please enter a valid fund amount.")
+      return
+    }
+
+    addClientFundDeposit.mutate(
+      {
+        id: Number(clientId),
+        data: {
+          amount,
+          payment_method: fundPaymentMethod,
+          notes: fundNotes || undefined,
+          deposit_date: new Date().toISOString(),
+        },
+      },
+      {
+        onSuccess: () => {
+          setFundDialogOpen(false)
+          setFundAmount("")
+          setFundPaymentMethod("cash")
+          setFundNotes("")
+        },
+      },
+    )
   }
 
   // ── Column definitions ────────────────────────────────────────────────────
@@ -241,6 +294,49 @@ export default function ClientDetailPage() {
                   </div>
                 </div>
               )}
+              <div className="flex items-start gap-2.5">
+                <Wallet className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Client Fund Balance</p>
+                  <p className="font-semibold text-emerald-600">
+                    {formatCurrency(parseFloat(client.fund_balance || "0"))}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {canManage && (
+              <Button className="w-full" size="sm" onClick={() => setFundDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Client Fund
+              </Button>
+            )}
+
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">Recent Fund Deposits</p>
+              <div className="max-h-48 overflow-auto space-y-2 pr-1">
+                {fundDepositsLoading ? (
+                  <p className="text-xs text-muted-foreground">Loading deposits...</p>
+                ) : fundDeposits.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No fund deposits yet.</p>
+                ) : (
+                  fundDeposits.slice(0, 5).map((deposit) => (
+                    <div key={deposit.id} className="rounded-md border p-2">
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className="font-medium">
+                          {formatCurrency(parseFloat(deposit.amount || "0"))}
+                        </span>
+                        <Badge variant="outline" className="text-[10px] capitalize">
+                          {deposit.payment_method_display || deposit.payment_method}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        {new Date(deposit.deposit_date).toLocaleString("en-PH")}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -279,6 +375,11 @@ export default function ClientDetailPage() {
             <CreditCard className="h-4 w-4" />
             Payments
             <Badge variant="outline" className="text-xs ml-1">{allPayments.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="funds" className="gap-2">
+            <Wallet className="h-4 w-4" />
+            Client Funds
+            <Badge variant="outline" className="text-xs ml-1">{fundDeposits.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="units" className="gap-2">
             <Wind className="h-4 w-4" />
@@ -358,6 +459,19 @@ export default function ClientDetailPage() {
             />
         </TabsContent>
 
+        {/* ════ Client Funds Tab ════ */}
+        <TabsContent value="funds">
+          <DataTable
+            title="Client Fund Deposits"
+            localData={fundDeposits}
+            columns={fundDepositColumns}
+            isLoading={fundDepositsLoading}
+            filterFn={fundDepositFilterFn}
+            searchPlaceholder="Search method, notes, recorded by..."
+            emptyTitle="No fund deposits found for this client."
+          />
+        </TabsContent>
+
         {/* ════ Units Tab ════ */}
         <TabsContent value="units">
           <DataTable
@@ -388,6 +502,68 @@ export default function ClientDetailPage() {
           </TabsContent>
         )}
       </Tabs>
+
+      <Dialog open={fundDialogOpen} onOpenChange={setFundDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Client Fund</DialogTitle>
+            <DialogDescription>
+              Record a deposit to this client&apos;s fund balance.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="fund-amount">Amount</Label>
+              <Input
+                id="fund-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={fundAmount}
+                onChange={(e) => setFundAmount(e.target.value)}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fund-method">Payment Method</Label>
+              <select
+                id="fund-method"
+                aria-label="Fund payment method"
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                value={fundPaymentMethod}
+                onChange={(e) =>
+                  setFundPaymentMethod(
+                    e.target.value as "cash" | "gcash" | "debit" | "credit" | "cheque",
+                  )
+                }
+              >
+                <option value="cash">Cash</option>
+                <option value="gcash">GCash</option>
+                <option value="debit">Debit</option>
+                <option value="credit">Credit</option>
+                <option value="cheque">Cheque</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="fund-notes">Notes (optional)</Label>
+              <Input
+                id="fund-notes"
+                value={fundNotes}
+                onChange={(e) => setFundNotes(e.target.value)}
+                placeholder="e.g., Downpayment for future service"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFundDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddFundDeposit}>
+              Save Fund Deposit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Sheets & Dialogs ── */}
 

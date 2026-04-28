@@ -242,17 +242,10 @@ export default function ServiceDetail({
     setDiscountReason(service.discount_reason || "")
   }, [service.id, service.service_discount_amount, service.discount_reason])
 
-  // Auto-fill payment amount with billing amount when cheque is selected
-  useEffect(() => {
-    if (selectedCheque && chequeRawData.length > 0) {
-      const selectedChequeData = chequeRawData.find(
-        (c) => c.id === selectedCheque,
-      )
-      if (selectedChequeData) {
-        setPaymentAmount(selectedChequeData.billing_amount)
-      }
-    }
-  }, [selectedCheque, chequeRawData])
+  const selectedChequeData =
+    selectedCheque && chequeRawData.length > 0
+      ? chequeRawData.find((c) => c.id === selectedCheque)
+      : undefined
 
   // Calculate discount amount
   const calculateDiscount = () => {
@@ -605,6 +598,26 @@ export default function ServiceDetail({
     }
 
     const roundedAmount = Math.round(parseFloat(paymentAmount) * 100) / 100
+
+    if (paymentType === "fund") {
+      const availableFund = parseFloat(service.client?.fund_balance || "0")
+      if (roundedAmount > availableFund) {
+        toast.error(
+          `Insufficient client fund. Available: ${formatCurrency(availableFund)}`,
+        )
+        return
+      }
+    }
+
+    if (paymentType === "cheque") {
+      const remaining = parseFloat(selectedChequeData?.remaining_amount || "0")
+      if (roundedAmount > remaining) {
+        toast.error(
+          `Amount exceeds cheque remaining balance (${formatCurrency(remaining)})`,
+        )
+        return
+      }
+    }
 
     recordPayment.mutate(
       {
@@ -3413,6 +3426,7 @@ export default function ServiceDetail({
                   <SelectItem value="credit">Credit Card</SelectItem>
                   <SelectItem value="debit">Debit Card</SelectItem>
                   <SelectItem value="cheque">Cheque</SelectItem>
+                  <SelectItem value="fund">Client Fund</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -3431,6 +3445,24 @@ export default function ServiceDetail({
                 <p className="text-xs text-muted-foreground">
                   Only pending and deposited cheques are shown
                 </p>
+                {selectedChequeData && (
+                  <div className="rounded-md bg-muted p-2 text-xs text-muted-foreground space-y-0.5">
+                    <p>
+                      Total cheque amount: {formatCurrency(parseFloat(selectedChequeData.cheque_amount || "0"))}
+                    </p>
+                    <p>
+                      Already allocated: {formatCurrency(parseFloat(selectedChequeData.allocated_amount || "0"))}
+                    </p>
+                    <p className="font-medium text-foreground">
+                      Remaining: {formatCurrency(parseFloat(selectedChequeData.remaining_amount || "0"))}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+            {paymentType === "fund" && (
+              <div className="rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                Available client fund: {formatCurrency(parseFloat(service.client?.fund_balance || "0"))}
               </div>
             )}
             <div className="space-y-2">
@@ -3443,11 +3475,10 @@ export default function ServiceDetail({
                 onChange={(e) => setPaymentAmount(e.target.value)}
                 placeholder="0.00"
                 onWheel={(e) => e.preventDefault()}
-                disabled={paymentType === "cheque" && !!selectedCheque}
               />
-              {paymentType === "cheque" && selectedCheque && (
+              {paymentType === "cheque" && selectedChequeData && (
                 <p className="text-xs text-muted-foreground">
-                  Amount is set to the cheque&apos;s billing amount
+                  Enter any amount up to the cheque&apos;s remaining balance.
                 </p>
               )}
             </div>

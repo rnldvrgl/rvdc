@@ -106,6 +106,27 @@ export type Client = BaseEntity & {
   city: string
   barangay?: string | null
   is_blocklisted: boolean
+  fund_balance?: string
+  total_fund_received?: string
+}
+
+export type ClientFundDeposit = BaseEntity & {
+  client: number
+  client_name?: string
+  amount: string
+  deposit_date: string
+  payment_method: "cash" | "gcash" | "debit" | "credit" | "cheque"
+  payment_method_display?: string
+  notes?: string
+  recorded_by?: number | null
+  recorded_by_name?: string | null
+}
+
+export type ClientFundDepositPayload = {
+  amount: number
+  deposit_date: string
+  payment_method: "cash" | "gcash" | "debit" | "credit" | "cheque"
+  notes?: string
 }
 
 export type ClientPayload = Omit<Client, keyof BaseEntity>

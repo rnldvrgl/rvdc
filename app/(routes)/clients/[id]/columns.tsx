@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import type { AirconUnits, SalesTransaction, Service, ServicePayment } from "@/lib/constants/interface"
+import type { ClientFundDeposit } from "@/lib/constants/types"
 import { formatCurrency } from "@/lib/utils/currency"
 import { getBadgeVariant } from "@/lib/utils/helpers"
 import { paymentStatusLabels } from "@/lib/constants/enumMappings"
@@ -35,6 +36,7 @@ export const paymentTypeLabels: Record<string, string> = {
   credit: "Credit Card",
   debit: "Debit Card",
   cheque: "Cheque",
+  fund: "Client Fund",
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -79,6 +81,69 @@ export const unitFilterFn = (u: AirconUnits, q: string) =>
   (u.model?.brand?.name ?? "").toLowerCase().includes(q) ||
   (u.model?.name ?? "").toLowerCase().includes(q) ||
   (u.unit_status ?? "").toLowerCase().includes(q)
+
+export const fundDepositFilterFn = (d: ClientFundDeposit, q: string) =>
+  (d.payment_method_display ?? d.payment_method).toLowerCase().includes(q) ||
+  (d.notes ?? "").toLowerCase().includes(q) ||
+  (d.recorded_by_name ?? "").toLowerCase().includes(q)
+
+export const fundDepositColumns: ColumnDef<ClientFundDeposit>[] = [
+  {
+    id: "deposit_date",
+    accessorFn: (row) => row.deposit_date,
+    header: "Date",
+    enableSorting: true,
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {formatDateTime(row.original.deposit_date)}
+      </span>
+    ),
+  },
+  {
+    id: "amount",
+    accessorFn: (row) => parseFloat(row.amount || "0"),
+    header: "Amount",
+    enableSorting: true,
+    cell: ({ row }) => (
+      <span className="font-semibold text-emerald-600">
+        {formatCurrency(row.original.amount)}
+      </span>
+    ),
+  },
+  {
+    id: "payment_method",
+    accessorFn: (row) => row.payment_method,
+    header: "Method",
+    enableSorting: true,
+    cell: ({ row }) => (
+      <Badge variant="outline" className="text-xs">
+        {row.original.payment_method_display ?? row.original.payment_method}
+      </Badge>
+    ),
+  },
+  {
+    id: "recorded_by",
+    accessorFn: (row) => row.recorded_by_name ?? "",
+    header: "Recorded By",
+    enableSorting: true,
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {row.original.recorded_by_name || "\u2014"}
+      </span>
+    ),
+  },
+  {
+    id: "notes",
+    accessorFn: (row) => row.notes ?? "",
+    header: "Notes",
+    enableSorting: false,
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground line-clamp-1 max-w-[280px]">
+        {row.original.notes || "\u2014"}
+      </span>
+    ),
+  },
+]
 
 // ── Service columns ─────────────────────────────────────────────────────────
 

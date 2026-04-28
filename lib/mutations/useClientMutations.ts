@@ -1,6 +1,6 @@
 "use client"
 
-import { ClientPayload } from "@/lib/constants/types"
+import { ClientFundDepositPayload, ClientPayload } from "@/lib/constants/types"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
 import { useQueryClient } from "@tanstack/react-query"
@@ -78,5 +78,30 @@ export function useClientMutations() {
     ],
   })
 
-  return { addClient, updateClient, deleteClient, bulkPreview, bulkUpdate, mergeClient }
+  const addClientFundDeposit = useApiMutation<
+    { id: number; data: ClientFundDepositPayload },
+    unknown
+  >({
+    mutationFn: ({ id, data }) => api.post(`${url}${id}/fund-deposits/`, data),
+    successMessage: "Client fund deposit recorded successfully.",
+    invalidateQueries: [
+      { queryKey: ["clients"] },
+      { queryKey: ["client"] },
+      { queryKey: ["client-fund-deposits"] },
+    ],
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["client", `${variables.id}`] })
+      queryClient.invalidateQueries({ queryKey: ["client-fund-deposits", `${variables.id}`] })
+    },
+  })
+
+  return {
+    addClient,
+    updateClient,
+    deleteClient,
+    bulkPreview,
+    bulkUpdate,
+    mergeClient,
+    addClientFundDeposit,
+  }
 }

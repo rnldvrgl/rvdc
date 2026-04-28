@@ -1,4 +1,8 @@
-import type { Client, PaginatedFilterProps } from "@/lib/constants/types"
+import type {
+  Client,
+  ClientFundDeposit,
+  PaginatedFilterProps,
+} from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useFilters } from "@/lib/hooks/useFilters"
 import { usePaginatedQuery } from "@/lib/hooks/usePaginatedQuery"
@@ -17,6 +21,16 @@ export function useClient(id: number | string | undefined) {
   return useApiQuery<Client>({
     queryKey: ["client", id],
     url: `${url}${id}/`,
+    options: {
+      enabled: !!id,
+    },
+  })
+}
+
+export function useClientFundDeposits(id: number | string | undefined) {
+  return useApiQuery<ClientFundDeposit[]>({
+    queryKey: ["client-fund-deposits", id],
+    url: `${url}${id}/fund-deposits/`,
     options: {
       enabled: !!id,
     },

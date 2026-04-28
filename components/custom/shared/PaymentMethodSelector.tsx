@@ -85,7 +85,6 @@ export default function PaymentMethodSelector({
 
   const handleFillRemaining = (
     idx: number,
-    currentAmount: number,
     onChange: (val: number) => void,
   ) => {
     const otherPayments = (watchedPayments ?? []).reduce(
@@ -103,6 +102,10 @@ export default function PaymentMethodSelector({
           {fields.map((field, idx) => {
             const currentPaymentType = watchedPayments?.[idx]?.payment_type
             const isChequePayment = currentPaymentType === "cheque"
+            const currentCheque = watchedPayments?.[idx]?.cheque_collection
+            const selectedCheque = chequeRawData.find(
+              (c) => c.id === currentCheque,
+            )
 
             return (
               <div
@@ -149,11 +152,6 @@ export default function PaymentMethodSelector({
                     control={control}
                     name={`payments.${idx}.amount`}
                     render={({ field: amountField }) => {
-                      const currentCheque =
-                        watchedPayments?.[idx]?.cheque_collection
-                      const isChequeSelected =
-                        isChequePayment && !!currentCheque
-
                       return (
                         <div className="flex items-center gap-1 flex-1 min-w-0">
                           <Input
@@ -168,13 +166,13 @@ export default function PaymentMethodSelector({
                               )
                             }}
                             onWheel={(e) => e.preventDefault()}
-                            disabled={disabled || isChequeSelected}
+                            disabled={disabled}
                             className="h-8 flex-1"
                             placeholder="Amount"
                           />
                           {remainingBalance > 0 &&
                             !disabled &&
-                            !isChequeSelected && (
+                            !(isChequePayment && !!currentCheque) && (
                               <TooltipProvider>
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -186,7 +184,6 @@ export default function PaymentMethodSelector({
                                       onClick={() =>
                                         handleFillRemaining(
                                           idx,
-                                          Number(amountField.value) || 0,
                                           amountField.onChange,
                                         )
                                       }
@@ -245,16 +242,15 @@ export default function PaymentMethodSelector({
                           value={chequeField.value ?? null}
                           onChange={(value) => {
                             chequeField.onChange(value)
-                            // Auto-fill amount when cheque is selected
+                            // Set amount to the remaining cheque amount by default.
                             if (value && chequeRawData.length > 0) {
                               const selectedCheque = chequeRawData.find(
                                 (c) => c.id === value,
                               )
                               if (selectedCheque) {
-                                // Auto-fill amount from billing amount (withholding tax absorbed)
                                 setValue(
                                   `payments.${idx}.amount` as const,
-                                  parseFloat(selectedCheque.billing_amount),
+                                  parseFloat(selectedCheque.remaining_amount),
                                 )
                               }
                             }
@@ -266,8 +262,13 @@ export default function PaymentMethodSelector({
                       )}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Amount will be set to the cheque&apos;s billing amount
+                      Enter any amount up to the cheque&apos;s remaining balance.
                     </p>
+                    {selectedCheque && (
+                      <p className="text-xs text-muted-foreground">
+                        Remaining balance: {formatCurrency(parseFloat(selectedCheque.remaining_amount || "0"))}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
