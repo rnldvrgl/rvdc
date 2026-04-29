@@ -66,11 +66,14 @@ export default function SalesTransactionsPage() {
   const { role, assigned_stall } = useCurrentUser()
   const { data: systemSettings } = useSystemSettings()
   const [googleSheetMeta, setGoogleSheetMeta] = useState<{
+    sub_current_gid?: number | null
     sub_latest_gid?: number | null
+    main_current_gid?: number | null
     main_latest_gid?: number | null
     current_month_sheets?: {
       [key: string]: {
         spreadsheet_id: string
+        current_gid: number | null
         latest_gid: number | null
         stall_name: string
       }
@@ -240,7 +243,9 @@ export default function SalesTransactionsPage() {
       try {
         const { data } = await api.get("/users/settings/google-sheets-sync/")
         setGoogleSheetMeta({
+          sub_current_gid: data?.sub_current_gid ?? null,
           sub_latest_gid: data?.sub_latest_gid ?? null,
+          main_current_gid: data?.main_current_gid ?? null,
           main_latest_gid: data?.main_latest_gid ?? null,
           current_month_sheets: data?.current_month_sheets ?? {},
         })
@@ -264,14 +269,17 @@ export default function SalesTransactionsPage() {
   const subSheetId_Final = subMonthlySheet?.spreadsheet_id || subSheetId
   const mainSheetId_Final = mainMonthlySheet?.spreadsheet_id || mainSheetId
 
+  const subCurrentGid = subMonthlySheet?.current_gid ?? googleSheetMeta?.sub_current_gid
+  const mainCurrentGid = mainMonthlySheet?.current_gid ?? googleSheetMeta?.main_current_gid
+
   const subLatestGid = subMonthlySheet?.latest_gid ?? googleSheetMeta?.sub_latest_gid
   const mainLatestGid = mainMonthlySheet?.latest_gid ?? googleSheetMeta?.main_latest_gid
 
   const subSheetUrl = subSheetId_Final
-    ? `https://docs.google.com/spreadsheets/d/${subSheetId_Final}/edit${typeof subLatestGid === "number" ? `#gid=${subLatestGid}` : ""}`
+    ? `https://docs.google.com/spreadsheets/d/${subSheetId_Final}/edit${typeof subCurrentGid === "number" ? `#gid=${subCurrentGid}` : typeof subLatestGid === "number" ? `#gid=${subLatestGid}` : ""}`
     : ""
   const mainSheetUrl = mainSheetId_Final
-    ? `https://docs.google.com/spreadsheets/d/${mainSheetId_Final}/edit${typeof mainLatestGid === "number" ? `#gid=${mainLatestGid}` : ""}`
+    ? `https://docs.google.com/spreadsheets/d/${mainSheetId_Final}/edit${typeof mainCurrentGid === "number" ? `#gid=${mainCurrentGid}` : typeof mainLatestGid === "number" ? `#gid=${mainLatestGid}` : ""}`
     : ""
 
   const isAdmin = role === "admin"

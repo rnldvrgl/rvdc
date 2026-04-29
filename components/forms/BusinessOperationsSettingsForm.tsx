@@ -60,6 +60,8 @@ interface MonthlySheetRecord {
   month_key: string
   spreadsheet_id: string
   spreadsheet_url: string
+  current_gid?: number | null
+  latest_gid?: number | null
   is_active: boolean
   shared_ok: boolean
   shared_to_email: string
@@ -537,7 +539,12 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
   const openMonthlySheet = (sheet: MonthlySheetRecord) => {
     const targetUrl = sheet.spreadsheet_url?.trim()
     if (!targetUrl) return
-    window.open(targetUrl, "_blank", "noopener,noreferrer")
+    const normalizedBase = targetUrl.replace(/\/edit.*$/, "")
+    const sheetUrl =
+      typeof sheet.current_gid === "number"
+        ? `${normalizedBase}/edit#gid=${sheet.current_gid}`
+        : `${normalizedBase}/edit${typeof sheet.latest_gid === "number" ? `#gid=${sheet.latest_gid}` : ""}`
+    window.open(sheetUrl, "_blank", "noopener,noreferrer")
   }
 
   const renderMonthlySheetActions = (sheet: MonthlySheetRecord) => (
