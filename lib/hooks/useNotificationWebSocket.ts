@@ -65,6 +65,17 @@ let sharedSocket: WebSocket | null = null
 let reconnectTimer: ReturnType<typeof setTimeout> | undefined
 let reconnectAttempt = 0
 let shouldReconnect = true
+let reconnectPauseUntil = 0
+
+const MAX_RETRY_BEFORE_COOLDOWN = 3
+const RETRY_COOLDOWN_MS = 120000
+
+function canAttemptConnection() {
+  if (typeof window === "undefined") return false
+  if (!navigator.onLine) return false
+  if (document.visibilityState === "hidden") return false
+  return Date.now() >= reconnectPauseUntil
+}
 
 function hasListeners() {
   return listeners.size > 0
@@ -107,6 +118,13 @@ async function connectSocket() {
     return
   }
 
+  if (!canAttemptConnection()) {
+    clearReconnectTimer()
+    const retryIn = Math.max(5000, reconnectPauseUntil - Date.now())
+    reconnectTimer = setTimeout(connectSocket, retryIn)
+    return
+  }
+
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
   const wsProtocol = baseUrl.startsWith("https") ? "wss" : "ws"
   const host = baseUrl.replace(/^https?:\/\//, "")
@@ -125,6 +143,7 @@ async function connectSocket() {
       usePendingActionsStore.getState().clearByType("maintenance")
     }
     reconnectAttempt = 0
+    reconnectPauseUntil = 0
   }
 
   ws.onmessage = (event) => {
@@ -162,6 +181,13 @@ async function connectSocket() {
       60000,
     )
     reconnectAttempt += 1
+
+    if (reconnectAttempt >= MAX_RETRY_BEFORE_COOLDOWN) {
+      reconnectPauseUntil = Date.now() + RETRY_COOLDOWN_MS
+      reconnectTimer = setTimeout(connectSocket, RETRY_COOLDOWN_MS)
+      return
+    }
+
     reconnectTimer = setTimeout(connectSocket, delay)
   }
 
@@ -184,6 +210,7 @@ function registerListener(listener: Listener) {
         sharedSocket = null
       }
       reconnectAttempt = 0
+      reconnectPauseUntil = 0
       shouldReconnect = true
     }
   }

@@ -51,11 +51,14 @@ type UseChatOptions = {
 }
 
 const HISTORY_REQUEST_TIMEOUT_MS = 10000
+const MAX_RETRY_BEFORE_COOLDOWN = 3
+const RETRY_COOLDOWN_MS = 120000
 
 export function useChat({ onMessage }: UseChatOptions = {}) {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const reconnectAttemptRef = useRef(0)
+  const reconnectPauseUntilRef = useRef(0)
   const heartbeatRef = useRef<ReturnType<typeof setInterval>>(undefined)
   const historyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const callbackRef = useRef(onMessage)
@@ -87,6 +90,18 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
     }, HISTORY_REQUEST_TIMEOUT_MS)
   }, [])
 
+  const scheduleReconnect = useCallback((delayMs: number) => {
+    clearTimeout(reconnectTimer.current)
+    reconnectTimer.current = setTimeout(connect, delayMs)
+  }, [])
+
+  const canAttemptConnection = useCallback(() => {
+    if (typeof window === "undefined") return false
+    if (!navigator.onLine) return false
+    if (document.visibilityState === "hidden") return false
+    return Date.now() >= reconnectPauseUntilRef.current
+  }, [])
+
   // Fetch chat users via REST
   const fetchUsers = useCallback(async () => {
     try {
@@ -107,12 +122,24 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
   }, [])
 
   const connect = useCallback(async () => {
+    if (!canAttemptConnection()) {
+      const retryIn = Math.max(
+        5000,
+        reconnectPauseUntilRef.current - Date.now(),
+      )
+      scheduleReconnect(retryIn)
+      return
+    }
+
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"
     const wsProtocol = baseUrl.startsWith("https") ? "wss" : "ws"
     const host = baseUrl.replace(/^https?:\/\//, "")
     const token = await getValidAccessToken()
 
-    if (!token) return
+    if (!token) {
+      scheduleReconnect(5000)
+      return
+    }
 
     if (wsRef.current) {
       wsRef.current.close()
@@ -124,6 +151,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
     ws.onopen = () => {
       setConnected(true)
       reconnectAttemptRef.current = 0
+      reconnectPauseUntilRef.current = 0
       // Request presence on connect
       ws.send(JSON.stringify({ action: "presence" }))
       // Start heartbeat (every 30s) to keep presence alive
@@ -236,24 +264,43 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
         refreshAccessToken().then((ok) => {
           if (ok) {
             reconnectAttemptRef.current = 0
-            reconnectTimer.current = setTimeout(connect, 1000)
+            reconnectPauseUntilRef.current = 0
+            scheduleReconnect(1000)
           }
         })
         return
       }
+
+      if (!canAttemptConnection()) {
+        scheduleReconnect(5000)
+        return
+      }
+
       const delay = Math.min(
         5000 * Math.pow(2, reconnectAttemptRef.current),
         60000,
       )
       reconnectAttemptRef.current += 1
-      reconnectTimer.current = setTimeout(connect, delay)
+
+      if (reconnectAttemptRef.current >= MAX_RETRY_BEFORE_COOLDOWN) {
+        reconnectPauseUntilRef.current = Date.now() + RETRY_COOLDOWN_MS
+        scheduleReconnect(RETRY_COOLDOWN_MS)
+        return
+      }
+
+      scheduleReconnect(delay)
     }
 
     ws.onerror = () => {
       stopHistoryLoading()
       ws.close()
     }
-  }, [startHistoryLoading, stopHistoryLoading])
+  }, [
+    canAttemptConnection,
+    scheduleReconnect,
+    startHistoryLoading,
+    stopHistoryLoading,
+  ])
 
   // Send a message
   const sendMessage = useCallback(
