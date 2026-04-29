@@ -490,12 +490,12 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         {/* Expected Remittance Preview */}
         {!isEditing && preview && !previewLoading && (
           <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-medium">
                 Expected for{" "}
                 {format(new Date(preview.date + "T00:00:00"), "MMM dd, yyyy")}
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {preview.already_exists && (
                   <Badge
                     variant="destructive"
@@ -623,7 +623,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
             )}
 
             <Separator />
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm font-semibold">Expected to Remit</span>
               <span className="text-lg font-bold tabular-nums text-primary">
                 {adjustSales
@@ -642,7 +642,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         )}
 
         {/* Live Summary Cards */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="rounded-lg border bg-card p-3 text-center space-y-1">
             <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
               <Wallet className="size-3.5" />
@@ -695,7 +695,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         )}
 
         {/* Remit All Toggle */}
-        <div className="flex items-center justify-between rounded-lg border bg-muted/40 px-4 py-3">
+        <div className="flex flex-col gap-3 rounded-lg border bg-muted/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-0.5">
             <p className="text-sm font-medium">Remit all cash</p>
             <p className="text-xs text-muted-foreground">
@@ -787,7 +787,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         />
 
         {/* Submit */}
-        <div className="flex justify-end gap-3 pt-2">
+        <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
           <Button
             type="button"
             variant="outline"
@@ -889,7 +889,10 @@ function DenominationRow({
 
       {/* Bottom: Stepper controls */}
       <div
-        className={cn("grid gap-3", remitAll ? "grid-cols-1" : "grid-cols-2")}
+        className={cn(
+          "grid gap-3",
+          remitAll ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2",
+        )}
       >
         {/* Declared Count */}
         <div className="space-y-1">

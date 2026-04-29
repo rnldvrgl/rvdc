@@ -503,6 +503,34 @@ export function ServerMaintenanceCard() {
     return "bg-emerald-500/10"
   }
 
+  const getBarWidthClass = (percent: number) => {
+    const widths = [
+      "w-0",
+      "w-[5%]",
+      "w-[10%]",
+      "w-[15%]",
+      "w-[20%]",
+      "w-[25%]",
+      "w-[30%]",
+      "w-[35%]",
+      "w-[40%]",
+      "w-[45%]",
+      "w-[50%]",
+      "w-[55%]",
+      "w-[60%]",
+      "w-[65%]",
+      "w-[70%]",
+      "w-[75%]",
+      "w-[80%]",
+      "w-[85%]",
+      "w-[90%]",
+      "w-[95%]",
+      "w-full",
+    ] as const
+    const index = Math.min(widths.length - 1, Math.max(0, Math.round(percent / 5)))
+    return widths[index]
+  }
+
   const getStateColor = (state: string) => {
     if (state === "running") return "bg-emerald-500"
     if (state === "restarting") return "bg-yellow-500"
@@ -548,8 +576,7 @@ export function ServerMaintenanceCard() {
       </div>
       <div className="h-2 w-full rounded-full bg-muted/50 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${getBarColor(percent)}`}
-          style={{ width: `${Math.min(percent, 100)}%` }}
+          className={`h-full rounded-full transition-all duration-500 ${getBarColor(percent)} ${getBarWidthClass(percent)}`}
         />
       </div>
       <div className="flex justify-between text-xs text-muted-foreground">
@@ -609,21 +636,21 @@ export function ServerMaintenanceCard() {
               defaultValue="overview"
               className="w-full"
             >
-              <TabsList className="w-full grid grid-cols-5 mb-6">
+              <TabsList className="group-data-[orientation=horizontal]/tabs:h-auto! mb-1 grid w-full grid-cols-2 items-stretch gap-1 p-1 max-[420px]:grid-cols-1 sm:grid-cols-5">
                 <TabsTrigger value="overview">
-                  <HardDrive className="size-3.5 mr-1.5" />
+                  <HardDrive className="hidden size-3.5 mr-1.5 sm:block" />
                   Overview
                 </TabsTrigger>
                 <TabsTrigger value="containers">
-                  <Server className="size-3.5 mr-1.5" />
+                  <Server className="hidden size-3.5 mr-1.5 sm:block" />
                   Containers
                 </TabsTrigger>
                 <TabsTrigger value="scheduled">
-                  <Calendar className="size-3.5 mr-1.5" />
+                  <Calendar className="hidden size-3.5 mr-1.5 sm:block" />
                   Scheduled
                 </TabsTrigger>
                 <TabsTrigger value="actions">
-                  <Zap className="size-3.5 mr-1.5" />
+                  <Zap className="hidden size-3.5 mr-1.5 sm:block" />
                   Actions
                   {hasHighUsage && (
                     <span className="ml-1.5 size-2 rounded-full bg-yellow-500 animate-pulse" />
@@ -635,7 +662,7 @@ export function ServerMaintenanceCard() {
                     if (backups.length === 0 && !backupsLoading) loadBackups()
                   }}
                 >
-                  <Database className="size-3.5 mr-1.5" />
+                  <Database className="hidden size-3.5 mr-1.5 sm:block" />
                   Backups
                 </TabsTrigger>
               </TabsList>
