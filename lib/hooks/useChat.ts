@@ -50,11 +50,14 @@ type UseChatOptions = {
   onMessage?: (msg: ChatMessage) => void
 }
 
+const HISTORY_REQUEST_TIMEOUT_MS = 10000
+
 export function useChat({ onMessage }: UseChatOptions = {}) {
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const reconnectAttemptRef = useRef(0)
   const heartbeatRef = useRef<ReturnType<typeof setInterval>>(undefined)
+  const historyTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const callbackRef = useRef(onMessage)
   callbackRef.current = onMessage
 
@@ -70,6 +73,19 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
   const [loadingHistory, setLoadingHistory] = useState(false)
   // Queue history requests when WS isn't ready yet
   const pendingHistoryRef = useRef<number | null>(null)
+
+  const stopHistoryLoading = useCallback(() => {
+    clearTimeout(historyTimerRef.current)
+    setLoadingHistory(false)
+  }, [])
+
+  const startHistoryLoading = useCallback(() => {
+    clearTimeout(historyTimerRef.current)
+    setLoadingHistory(true)
+    historyTimerRef.current = setTimeout(() => {
+      setLoadingHistory(false)
+    }, HISTORY_REQUEST_TIMEOUT_MS)
+  }, [])
 
   // Fetch chat users via REST
   const fetchUsers = useCallback(async () => {
@@ -119,7 +135,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
       }, 30_000)
       // Flush any pending history request (e.g., user opened a chat before WS was ready)
       if (pendingHistoryRef.current !== null) {
-        setLoadingHistory(true)
+        startHistoryLoading()
         ws.send(
           JSON.stringify({
             action: "history",
@@ -175,7 +191,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
           setSeenBy((prev) => new Set(prev).add(data.from))
         } else if (data.type === "history") {
           setMessages((prev) => ({ ...prev, [data.with]: data.messages }))
-          setLoadingHistory(false)
+          stopHistoryLoading()
         } else if (data.type === "reaction") {
           // Update reactions on the specific message
           const msgId = data.msg_id
@@ -215,6 +231,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
     ws.onclose = (event) => {
       setConnected(false)
       clearInterval(heartbeatRef.current)
+      stopHistoryLoading()
       if (event.code === 4001) {
         refreshAccessToken().then((ok) => {
           if (ok) {
@@ -233,9 +250,10 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
     }
 
     ws.onerror = () => {
+      stopHistoryLoading()
       ws.close()
     }
-  }, [])
+  }, [startHistoryLoading, stopHistoryLoading])
 
   // Send a message
   const sendMessage = useCallback(
@@ -271,7 +289,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
 
   // Request history for a user
   const loadHistory = useCallback((withUserId: number) => {
-    setLoadingHistory(true)
+    startHistoryLoading()
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(
         JSON.stringify({ action: "history", with: withUserId }),
@@ -280,7 +298,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
       // Queue for when WS connects
       pendingHistoryRef.current = withUserId
     }
-  }, [])
+  }, [startHistoryLoading])
 
   // Send typing indicator
   const sendTyping = useCallback((to: number) => {
@@ -316,6 +334,7 @@ export function useChat({ onMessage }: UseChatOptions = {}) {
     fetchUsers()
     connect()
     return () => {
+      clearTimeout(historyTimerRef.current)
       clearTimeout(reconnectTimer.current)
       clearInterval(heartbeatRef.current)
       if (wsRef.current) {
