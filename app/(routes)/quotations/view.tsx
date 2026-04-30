@@ -349,44 +349,55 @@ const QuotationPrintContent = React.forwardRef<
         <table className="w-full text-[12px] border-collapse table-fixed border border-gray-300">
           <thead>
             <tr className="bg-gray-800 text-white">
-              <th className="text-left py-2 px-3 font-semibold w-[50%] border-r border-gray-600">
+              <th className="text-left py-2 px-3 font-semibold w-[45%] border-r border-gray-600">
                 Description
               </th>
-              <th className="text-center py-2 px-3 font-semibold w-[10%] border-r border-gray-600">
+              <th className="text-center py-2 px-3 font-semibold w-[8%] border-r border-gray-600">
                 Qty
               </th>
-              <th className="text-right py-2 px-3 font-semibold w-[20%] border-r border-gray-600">
+              <th className="text-right py-2 px-3 font-semibold w-[15%] border-r border-gray-600">
                 Unit Price
               </th>
-              <th className="text-right py-2 px-3 font-semibold w-[20%]">
+              <th className="text-right py-2 px-3 font-semibold w-[15%] border-r border-gray-600">
+                Discount
+              </th>
+              <th className="text-right py-2 px-3 font-semibold w-[17%]">
                 Total
               </th>
             </tr>
           </thead>
           <tbody>
-            {(q.items ?? []).map((item, idx) => (
-              <tr
-                key={item.id ?? idx}
-                className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
-              >
-                <td className="py-2 px-3 border-b border-r border-gray-300 wrap-break-word whitespace-pre-line">
-                  {renderFormattedText(item.description)}
-                </td>
-                <td className="py-2 px-3 text-center border-b border-r border-gray-300">
-                  {item.quantity}
-                </td>
-                <td className="py-2 px-3 text-right border-b border-r border-gray-300">
-                  {formatCurrency(Number(item.unit_price))}
-                </td>
-                <td className="py-2 px-3 text-right border-b border-gray-300">
-                  {formatCurrency(item.quantity * Number(item.unit_price))}
-                </td>
-              </tr>
-            ))}
+            {(q.items ?? []).map((item, idx) => {
+              const itemTotal = item.quantity * Number(item.unit_price)
+              const itemDiscount = Number(item.discount_amount || 0)
+              const discountedTotal = Math.max(0, itemTotal - itemDiscount)
+              return (
+                <tr
+                  key={item.id ?? idx}
+                  className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}
+                >
+                  <td className="py-2 px-3 border-b border-r border-gray-300 wrap-break-word whitespace-pre-line">
+                    {renderFormattedText(item.description)}
+                  </td>
+                  <td className="py-2 px-3 text-center border-b border-r border-gray-300">
+                    {item.quantity}
+                  </td>
+                  <td className="py-2 px-3 text-right border-b border-r border-gray-300">
+                    {formatCurrency(Number(item.unit_price))}
+                  </td>
+                  <td className="py-2 px-3 text-right border-b border-r border-gray-300 text-destructive font-medium">
+                    {itemDiscount > 0 ? formatCurrency(itemDiscount) : "—"}
+                  </td>
+                  <td className="py-2 px-3 text-right border-b border-gray-300">
+                    {formatCurrency(discountedTotal)}
+                  </td>
+                </tr>
+              )
+            })}
             {(q.items ?? []).length === 0 && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="py-4 text-center text-gray-400 italic border-b border-gray-300"
                 >
                   No items
@@ -414,10 +425,25 @@ const QuotationPrintContent = React.forwardRef<
               {formatCurrency(Number(q.subtotal))}
             </span>
           </div>
+          {(() => {
+            const totalItemDiscounts = (q.items ?? []).reduce(
+              (sum, item) => sum + Number(item.discount_amount || 0),
+              0
+            )
+            return totalItemDiscounts > 0 ? (
+              <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[12px] text-destructive bg-white">
+                <span></span>
+                <span className="text-right">Item Discounts</span>
+                <span className="text-right">
+                  -{formatCurrency(totalItemDiscounts)}
+                </span>
+              </div>
+            ) : null
+          })()}
           {Number(q.discount_amount) > 0 && (
             <div className="grid grid-cols-[60%_20%_20%] py-2 px-3 border-b border-gray-300 text-[12px] text-destructive bg-white">
               <span></span>
-              <span className="text-right">Discount</span>
+              <span className="text-right">Overall Discount</span>
               <span className="text-right">
                 -{formatCurrency(Number(q.discount_amount))}
               </span>

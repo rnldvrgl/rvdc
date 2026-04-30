@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils/helpers"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
 import { Calendar as CalendarIcon, Loader2 } from "lucide-react"
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { useRef } from "react"
 import z from "zod"
@@ -97,7 +98,7 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
         ? typeof expense.paid_amount === "number"
           ? expense.paid_amount
           : parseFloat(String(expense.paid_amount))
-        : 0,
+        : undefined,
       is_reimbursable: expense?.is_reimbursable ?? false,
     },
   })
@@ -111,6 +112,18 @@ export default function ExpenseForm({ expense, onClose }: ExpenseFormProps) {
   // Watch fields for conditional rendering
   const watchPaidAmount = form.watch("paid_amount")
   const watchTotalPrice = form.watch("total_price")
+
+  // Auto-populate paid_amount when total_price changes (if paid_amount is not set)
+  useEffect(() => {
+    if (
+      watchTotalPrice > 0 &&
+      (!watchPaidAmount || watchPaidAmount === 0) &&
+      !expense?.id
+    ) {
+      // Only auto-populate for new expenses
+      form.setValue("paid_amount", watchTotalPrice)
+    }
+  }, [watchTotalPrice, watchPaidAmount, form, expense?.id])
 
   // Auto-calculate payment status
   const calculatePaymentStatus = (

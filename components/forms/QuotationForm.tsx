@@ -69,6 +69,7 @@ interface FormItem {
   qty: number
   price: number
   promoPrice: number | null
+  discount: number
 }
 
 function generateId() {
@@ -537,6 +538,7 @@ export default function QuotationForm({
           qty: i.quantity,
           price: Number(i.unit_price),
           promoPrice: i.promo_price != null ? Number(i.promo_price) : null,
+          discount: i.discount_amount ? Number(i.discount_amount) : 0,
         }))
       : [
           {
@@ -547,6 +549,7 @@ export default function QuotationForm({
             qty: 1,
             price: 0,
             promoPrice: null,
+            discount: 0,
           },
         ],
   )
@@ -595,6 +598,7 @@ export default function QuotationForm({
       {
         id: generateId(),
         airconUnitId: null,
+        discount: 0,
         airconModelId: null,
         description: "",
         qty: 1,
@@ -806,6 +810,7 @@ export default function QuotationForm({
           quantity: isPriceList ? 1 : i.qty,
           unit_price: i.price,
           promo_price: isPriceList ? i.promoPrice || null : null,
+          discount_amount: i.discount || 0,
         })),
       payments: isPriceList
         ? []
@@ -1165,8 +1170,8 @@ export default function QuotationForm({
                   isPriceList
                     ? "grid-cols-1 sm:grid-cols-[1fr_150px_150px]"
                     : item.airconUnitId
-                      ? "grid-cols-1 md:grid-cols-[1fr_180px] lg:grid-cols-[1fr_200px]"
-                      : "grid-cols-1 sm:grid-cols-[1fr_90px] md:grid-cols-[1fr_90px_180px] lg:grid-cols-[1fr_90px_200px]",
+                      ? "grid-cols-1 md:grid-cols-[1fr_180px_120px] lg:grid-cols-[1fr_200px_120px]"
+                      : "grid-cols-1 sm:grid-cols-[1fr_90px_120px] md:grid-cols-[1fr_90px_180px_120px] lg:grid-cols-[1fr_90px_200px_120px]",
                 )}
               >
                 <DescriptionField
@@ -1213,6 +1218,28 @@ export default function QuotationForm({
                     className="h-9"
                   />
                 </div>
+                {!isPriceList && (
+                  <div className="space-y-1">
+                    <Label className="text-[11px] text-muted-foreground">
+                      Discount
+                    </Label>
+                    <Input
+                      type="number"
+                      min={0}
+                      step="0.01"
+                      value={item.discount || ""}
+                      onChange={(e) =>
+                        updateItem(
+                          item.id,
+                          "discount",
+                          Math.max(0, parseFloat(e.target.value) || 0),
+                        )
+                      }
+                      placeholder="0.00"
+                      className="h-9"
+                    />
+                  </div>
+                )}
                 {isPriceList && (
                   <div className="space-y-1">
                     <Label className="text-[11px] text-muted-foreground">

@@ -175,6 +175,7 @@ export type QuotationItem = {
   unit_price: number
   promo_price?: number | null
   total_price?: number
+  discount_amount?: number
 }
 
 export type QuotationPaymentMethod = "cash" | "gcash" | "bank_transfer"
@@ -192,6 +193,7 @@ export type QuotationPayment = {
 export type Quotation = BaseEntity & {
   stall?: string | number | null
   stall_data?: Stall | null
+  price_list_template?: number | null
   client?: number | null
   client_data?: Client | null
   client_name: string
@@ -224,6 +226,7 @@ export type Quotation = BaseEntity & {
 
 export type QuotationPayload = {
   stall?: string | number | null
+  price_list_template?: number | null
   client?: number | null
   client_name: string
   client_address: string
@@ -258,6 +261,18 @@ export type QuotationTermsTemplate = {
   lines: string[]
   is_default: boolean
   is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type QuotationPriceListTemplate = {
+  id: number
+  name: string
+  description?: string
+  aircon_models?: number[]
+  aircon_model_count?: number
+  is_active: boolean
+  is_default: boolean
   created_at: string
   updated_at: string
 }
