@@ -32,6 +32,7 @@ import type {
   QuotationType,
 } from "@/lib/constants/types"
 import { useQuotationMutations } from "@/lib/mutations/useQuotationMutations"
+import { useQuotationPriceListTemplates } from "@/lib/queries/useQuotationPriceListTemplates"
 import { useAirconModels, useAirconUnits } from "@/lib/queries/useAircons"
 import { useClientChoices, useStallChoices } from "@/lib/queries/useChoices"
 import { useEmployees } from "@/lib/queries/useEmployees"
@@ -53,7 +54,7 @@ import {
   Trash2,
   X,
 } from "lucide-react"
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
 
 interface QuotationFormProps {
@@ -400,8 +401,17 @@ export default function QuotationForm({
     setSelectedStallId(stallId)
   }
 
+  // ── Quotation Type ──
+  const [quotationType, setQuotationType] = useState<QuotationType>(
+    quotation?.quotation_type ?? "standard",
+  )
+  const isPriceList = quotationType === "price_list"
+  const [selectedPriceListTemplateId, setSelectedPriceListTemplateId] =
+    useState<number | null>(quotation?.price_list_template ?? null)
+
   // ── Templates ──
   const { data: allTemplates } = useQuotationTemplates()
+  const { data: priceListTemplatesData } = useQuotationPriceListTemplates()
   const termsTemplates = useMemo(
     () => (allTemplates ?? []).filter((t) => t.category === "terms_conditions"),
     [allTemplates],
@@ -410,6 +420,37 @@ export default function QuotationForm({
     () => (allTemplates ?? []).filter((t) => t.category === "payment_terms"),
     [allTemplates],
   )
+  const priceListTemplates = useMemo(
+    () => (priceListTemplatesData ?? []).filter((template) => template.is_active),
+    [priceListTemplatesData],
+  )
+  const selectedPriceListTemplate = useMemo(
+    () =>
+      priceListTemplates.find(
+        (template) => template.id === selectedPriceListTemplateId,
+      ) ?? null,
+    [priceListTemplates, selectedPriceListTemplateId],
+  )
+  const filteredAirconModelOptions = useMemo(() => {
+    const selectedIds = selectedPriceListTemplate?.aircon_models ?? []
+    if (selectedIds.length === 0) return airconModelOptions
+
+    const allowed = new Set(selectedIds)
+    return airconModelOptions.filter((option) => allowed.has(option.value))
+  }, [airconModelOptions, selectedPriceListTemplate])
+
+  useEffect(() => {
+    if (!isPriceList || selectedPriceListTemplateId) return
+
+    const defaultTemplate =
+      priceListTemplates.find((template) => template.is_default) ??
+      priceListTemplates[0] ??
+      null
+
+    if (defaultTemplate) {
+      setSelectedPriceListTemplateId(defaultTemplate.id)
+    }
+  }, [isPriceList, priceListTemplates, selectedPriceListTemplateId])
 
   // ── Form state ──
   const [quoteDate, setQuoteDate] = useState<Date>(
@@ -423,12 +464,6 @@ export default function QuotationForm({
   const [projectDescription, setProjectDescription] = useState(
     quotation?.project_description ?? "",
   )
-
-  // ── Quotation Type ──
-  const [quotationType, setQuotationType] = useState<QuotationType>(
-    quotation?.quotation_type ?? "standard",
-  )
-  const isPriceList = quotationType === "price_list"
 
   const [discountAmount, setDiscountAmount] = useState<number>(
     quotation?.discount_amount ?? 0,
@@ -758,7 +793,12 @@ export default function QuotationForm({
 
   // ── Calculations ──
   const subtotal = items.reduce((sum, item) => sum + item.qty * item.price, 0)
-  const total = Math.max(0, subtotal - discountAmount)
+  const itemDiscountTotal = items.reduce(
+    (sum, item) => sum + (item.discount || 0),
+    0,
+  )
+  const totalDiscount = itemDiscountTotal + discountAmount
+  const total = Math.max(0, subtotal - totalDiscount)
 
   // ── Mutations ──
   const { addQuotation, updateQuotation } = useQuotationMutations()
@@ -792,6 +832,7 @@ export default function QuotationForm({
       project_description: projectDescription,
       quotation_type: quotationType,
       discount_amount: isPriceList ? 0 : discountAmount,
+      price_list_template: isPriceList ? selectedPriceListTemplateId : null,
       terms_conditions: arrayToLines(termsLines),
       payment_terms: arrayToLines(paymentLines),
       notes,
@@ -937,6 +978,34 @@ export default function QuotationForm({
               </SelectContent>
             </Select>
           </div>
+          {isPriceList && (
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">
+                Price List Template
+              </Label>
+              <Select
+                value={selectedPriceListTemplateId?.toString() ?? ""}
+                onValueChange={(v) =>
+                  setSelectedPriceListTemplateId(v ? Number(v) : null)
+                }
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select template..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {priceListTemplates.map((template) => (
+                    <SelectItem key={template.id} value={template.id.toString()}>
+                      {template.name}
+                      {template.is_default ? " (default)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Limits the models and brands available in the price list.
+              </p>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="text-xs text-muted-foreground">Quote Date</Label>
             <Popover>
@@ -1098,7 +1167,7 @@ export default function QuotationForm({
                   <div className="flex items-center gap-1.5">
                     <div className="flex-1">
                       <ComboBox
-                        options={airconModelOptions}
+                        options={filteredAirconModelOptions}
                         value={item.airconModelId}
                         onChange={(v) =>
                           handleAirconModelSelect(item.id, v as number | null)
@@ -1324,8 +1393,12 @@ export default function QuotationForm({
               <span>Subtotal</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Item Discounts</span>
+              <span>-{formatCurrency(itemDiscountTotal)}</span>
+            </div>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-muted-foreground">Discount</span>
+              <span className="text-muted-foreground">Overall Discount</span>
               <Input
                 type="number"
                 min={0}
@@ -1337,6 +1410,10 @@ export default function QuotationForm({
                 placeholder="0.00"
                 className="w-32 sm:w-40 md:w-44 h-8 text-right text-sm"
               />
+            </div>
+            <div className="flex justify-between text-muted-foreground">
+              <span>Total Discount</span>
+              <span>-{formatCurrency(totalDiscount)}</span>
             </div>
             <Separator />
             <div className="flex justify-between font-semibold text-base text-success">

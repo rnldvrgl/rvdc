@@ -194,6 +194,7 @@ export type Quotation = BaseEntity & {
   stall?: string | number | null
   stall_data?: Stall | null
   price_list_template?: number | null
+  price_list_template_data?: QuotationPriceListTemplate | null
   client?: number | null
   client_data?: Client | null
   client_name: string
