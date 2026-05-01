@@ -1,7 +1,7 @@
 "use client"
 
 import api from "@/lib/utils/api"
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 /**
  * Registers the service worker, requests Notification permission,
@@ -14,13 +14,30 @@ import { useCallback, useEffect, useRef } from "react"
  */
 export function usePushNotifications() {
   const subscribedRef = useRef(false)
+  const [permission, setPermission] = useState<NotificationPermission | "unsupported">(
+    "default",
+  )
+  const [subscribed, setSubscribed] = useState(false)
 
-  const subscribe = useCallback(async () => {
+  const subscribe = useCallback(async (promptForPermission = false) => {
     if (subscribedRef.current) return
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) return
     if (!("PushManager" in window)) return
 
     try {
+      const currentPermission = Notification.permission
+      setPermission(currentPermission)
+
+      if (currentPermission === "denied") return
+
+      const nextPermission =
+        currentPermission === "default" && promptForPermission
+          ? await Notification.requestPermission()
+          : currentPermission
+
+      setPermission(nextPermission)
+      if (nextPermission !== "granted") return
+
       // 1. Register service worker
       const registration = await navigator.serviceWorker.register("/sw.js")
       console.log("[Push] Service worker registered")
@@ -40,12 +57,7 @@ export function usePushNotifications() {
         console.log("[Push] Service worker activated")
       }
 
-      // 2. Request permission (no-op if already granted/denied)
-      const permission = await Notification.requestPermission()
-      console.log("[Push] Permission:", permission)
-      if (permission !== "granted") return
-
-      // 3. Fetch VAPID public key from backend
+      // 2. Fetch VAPID public key from backend
       const { data } = await api.get("/notifications/push/vapid-key/")
       const vapidPublicKey: string = data.public_key
       if (!vapidPublicKey) {
@@ -55,7 +67,7 @@ export function usePushNotifications() {
 
       const newKeyBytes = urlBase64ToUint8Array(vapidPublicKey)
 
-      // 4. Check existing subscription — if the VAPID key changed, unsubscribe first
+      // 3. Check existing subscription — if the VAPID key changed, unsubscribe first
       const existing = await registration.pushManager.getSubscription()
       if (existing) {
         const existingKey = existing.options?.applicationServerKey
@@ -67,14 +79,14 @@ export function usePushNotifications() {
         }
       }
 
-      // 5. Subscribe to push
+      // 4. Subscribe to push
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: newKeyBytes,
       })
       console.log("[Push] PushManager subscribed:", subscription.endpoint)
 
-      // 6. Send subscription to backend
+      // 5. Send subscription to backend
       const sub = subscription.toJSON()
       await api.post("/notifications/push/subscribe/", {
         endpoint: sub.endpoint,
@@ -83,14 +95,33 @@ export function usePushNotifications() {
 
       console.log("[Push] Subscription sent to backend ✓")
       subscribedRef.current = true
+      setSubscribed(true)
     } catch (err) {
       console.error("[Push] Failed to set up push notifications:", err)
     }
   }, [])
 
   useEffect(() => {
-    subscribe()
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setPermission("unsupported")
+      return
+    }
+
+    setPermission(Notification.permission)
+    if (Notification.permission === "granted") {
+      void subscribe(false)
+    }
   }, [subscribe])
+
+  const enablePushNotifications = useCallback(async () => {
+    await subscribe(true)
+  }, [subscribe])
+
+  return {
+    enablePushNotifications,
+    permission,
+    subscribed,
+  }
 }
 
 /** Compare two ArrayBuffer-like keys for equality. */

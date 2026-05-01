@@ -40,7 +40,11 @@ export default function MainLayout({
   const inMaintenance = systemSettings?.maintenance_mode === true && !isAdmin
 
   useDashboardWebSocket()
-  usePushNotifications()
+  const {
+    enablePushNotifications,
+    permission: pushPermission,
+    subscribed: pushSubscribed,
+  } = usePushNotifications()
 
   // Listen for service worker messages (push notification chat clicks)
   useEffect(() => {
@@ -57,6 +61,24 @@ export default function MainLayout({
   return (
     <div className="min-h-screen">
       <Background />
+
+      {pushPermission === "default" && !pushSubscribed && (
+        <div className="mx-4 mt-3 rounded-xl border border-border/60 bg-muted/60 px-4 py-3 text-sm flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-medium text-foreground">Enable push notifications</p>
+            <p className="text-xs text-muted-foreground">
+              Click once to let the browser ask for notification permission.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void enablePushNotifications()}
+            className="shrink-0 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
+          >
+            Enable
+          </button>
+        </div>
+      )}
 
       {/* Maintenance screen for non-admin users */}
       {inMaintenance && (
