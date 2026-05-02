@@ -276,10 +276,10 @@ export default function SalesTransactionsPage() {
   const mainLatestGid = mainMonthlySheet?.latest_gid ?? googleSheetMeta?.main_latest_gid
 
   const subSheetUrl = subSheetId_Final
-    ? `https://docs.google.com/spreadsheets/d/${subSheetId_Final}/edit${typeof subCurrentGid === "number" ? `#gid=${subCurrentGid}` : typeof subLatestGid === "number" ? `#gid=${subLatestGid}` : ""}`
+    ? `https://docs.google.com/spreadsheets/d/${subSheetId_Final}/edit${typeof subLatestGid === "number" ? `#gid=${subLatestGid}` : ""}`
     : ""
   const mainSheetUrl = mainSheetId_Final
-    ? `https://docs.google.com/spreadsheets/d/${mainSheetId_Final}/edit${typeof mainCurrentGid === "number" ? `#gid=${mainCurrentGid}` : typeof mainLatestGid === "number" ? `#gid=${mainLatestGid}` : ""}`
+    ? `https://docs.google.com/spreadsheets/d/${mainSheetId_Final}/edit${typeof mainLatestGid === "number" ? `#gid=${mainLatestGid}` : ""}`
     : ""
 
   const isAdmin = role === "admin"

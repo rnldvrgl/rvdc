@@ -541,9 +541,7 @@ export function BusinessOperationsSettingsForm({ settings }: Props) {
     if (!targetUrl) return
     const normalizedBase = targetUrl.replace(/\/edit.*$/, "")
     const sheetUrl =
-      typeof sheet.current_gid === "number"
-        ? `${normalizedBase}/edit#gid=${sheet.current_gid}`
-        : `${normalizedBase}/edit${typeof sheet.latest_gid === "number" ? `#gid=${sheet.latest_gid}` : ""}`
+      `${normalizedBase}/edit${typeof sheet.latest_gid === "number" ? `#gid=${sheet.latest_gid}` : ""}`
     window.open(sheetUrl, "_blank", "noopener,noreferrer")
   }
 
