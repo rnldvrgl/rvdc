@@ -269,9 +269,6 @@ export default function SalesTransactionsPage() {
   const subSheetId_Final = subMonthlySheet?.spreadsheet_id || subSheetId
   const mainSheetId_Final = mainMonthlySheet?.spreadsheet_id || mainSheetId
 
-  const subCurrentGid = subMonthlySheet?.current_gid ?? googleSheetMeta?.sub_current_gid
-  const mainCurrentGid = mainMonthlySheet?.current_gid ?? googleSheetMeta?.main_current_gid
-
   const subLatestGid = subMonthlySheet?.latest_gid ?? googleSheetMeta?.sub_latest_gid
   const mainLatestGid = mainMonthlySheet?.latest_gid ?? googleSheetMeta?.main_latest_gid
 
