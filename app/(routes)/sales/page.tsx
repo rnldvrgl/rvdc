@@ -79,6 +79,7 @@ export default function SalesTransactionsPage() {
       }
     }
   } | null>(null)
+  const [googleSheetMetaLoading, setGoogleSheetMetaLoading] = useState(false)
   const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
   const { page, limit, search, ordering, filter } = searchParams
   const [activeTab, setActiveTab] = useState<TabValue>("active")
@@ -237,9 +238,14 @@ export default function SalesTransactionsPage() {
         : isLoading
 
   useEffect(() => {
-    if (!systemSettings?.google_sheets_sync_enabled) return
+    if (!systemSettings?.google_sheets_sync_enabled) {
+      setGoogleSheetMeta(null)
+      setGoogleSheetMetaLoading(false)
+      return
+    }
 
     const fetchSheetMeta = async () => {
+      setGoogleSheetMetaLoading(true)
       try {
         const { data } = await api.get("/users/settings/google-sheets-sync/")
         setGoogleSheetMeta({
@@ -251,6 +257,8 @@ export default function SalesTransactionsPage() {
         })
       } catch {
         setGoogleSheetMeta(null)
+      } finally {
+        setGoogleSheetMetaLoading(false)
       }
     }
 
@@ -266,8 +274,12 @@ export default function SalesTransactionsPage() {
   const subMonthlySheet = monthlySheets["sub"]
   const mainMonthlySheet = monthlySheets["main"]
 
-  const subSheetId_Final = subMonthlySheet?.spreadsheet_id || subSheetId
-  const mainSheetId_Final = mainMonthlySheet?.spreadsheet_id || mainSheetId
+  const subSheetId_Final = googleSheetMetaLoading
+    ? ""
+    : (subMonthlySheet?.spreadsheet_id || subSheetId)
+  const mainSheetId_Final = googleSheetMetaLoading
+    ? ""
+    : (mainMonthlySheet?.spreadsheet_id || mainSheetId)
 
   const subLatestGid = subMonthlySheet?.latest_gid ?? googleSheetMeta?.sub_latest_gid
   const mainLatestGid = mainMonthlySheet?.latest_gid ?? googleSheetMeta?.main_latest_gid
@@ -289,6 +301,9 @@ export default function SalesTransactionsPage() {
   const designatedSheetLabel = designatedIsMain
     ? "Open Main Stall Sheet"
     : "Open Sub Stall Sheet"
+
+  const googleSheetsLinksLoading =
+    systemSettings?.google_sheets_sync_enabled && googleSheetMetaLoading
 
   const canCreateSale =
     !(role === "manager" && assigned_stall?.stall_type === "main")
@@ -322,30 +337,30 @@ export default function SalesTransactionsPage() {
                         asChild
                         variant="default"
                         size="sm"
-                        disabled={!mainSheetUrl}
+                        disabled={!mainSheetUrl || googleSheetsLinksLoading}
                       >
                         <a
                           href={mainSheetUrl || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <ExternalLink className="size-3.5 mr-1.5" />
-                          Open Main Stall Sheet
+                          <ExternalLink className={`size-3.5 mr-1.5 ${googleSheetsLinksLoading ? "animate-spin" : ""}`} />
+                          {googleSheetsLinksLoading ? "Loading Main Sheet..." : "Open Main Stall Sheet"}
                         </a>
                       </Button>
                       <Button
                         asChild
                         variant="default"
                         size="sm"
-                        disabled={!subSheetUrl}
+                        disabled={!subSheetUrl || googleSheetsLinksLoading}
                       >
                         <a
                           href={subSheetUrl || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <ExternalLink className="size-3.5 mr-1.5" />
-                          Open Sub Stall Sheet
+                          <ExternalLink className={`size-3.5 mr-1.5 ${googleSheetsLinksLoading ? "animate-spin" : ""}`} />
+                          {googleSheetsLinksLoading ? "Loading Sub Sheet..." : "Open Sub Stall Sheet"}
                         </a>
                       </Button>
                     </>
@@ -355,15 +370,15 @@ export default function SalesTransactionsPage() {
                       asChild
                       variant="default"
                       size="sm"
-                      disabled={!designatedSheetUrl}
+                      disabled={!designatedSheetUrl || googleSheetsLinksLoading}
                     >
                       <a
                         href={designatedSheetUrl || "#"}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <ExternalLink className="size-3.5 mr-1.5" />
-                        {designatedSheetLabel}
+                        <ExternalLink className={`size-3.5 mr-1.5 ${googleSheetsLinksLoading ? "animate-spin" : ""}`} />
+                        {googleSheetsLinksLoading ? "Loading Sheet..." : designatedSheetLabel}
                       </a>
                     </Button>
                   )}
