@@ -87,6 +87,18 @@ type ServicePartsComposerForm = {
   parts: PendingPartEntry[]
 }
 
+interface ApiErrorResponse {
+  response?: {
+    status?: number
+    data?: {
+      detail?: string
+      error?: string
+      message?: string
+    }
+  }
+  message?: string
+}
+
 interface PartsManagerProps {
   entityType: "service" | "appliance"
   entityId: number
@@ -626,24 +638,25 @@ export default function PartsManager({
       if (onUpdate) {
         await onUpdate()
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Enhanced error handling - extract meaningful error message
-      const errorMessage = error?.response?.data?.detail ||
-                          error?.response?.data?.error ||
-                          error?.response?.data?.message ||
-                          error?.message ||
+      const apiError = error as ApiErrorResponse
+      const errorMessage = apiError?.response?.data?.detail ||
+                          apiError?.response?.data?.error ||
+                          apiError?.response?.data?.message ||
+                          apiError?.message ||
                           "Failed to save part. Please check your connection and try again."
 
       // Check if it's a network/connection error
-      if (!error?.response) {
+      if (!apiError?.response) {
         toast.error("Network error: Please check your connection and try again.")
-      } else if (error?.response?.status === 400) {
+      } else if (apiError?.response?.status === 400) {
         // Validation error - show detailed message
         toast.error(`Validation error: ${errorMessage}`)
-      } else if (error?.response?.status === 409) {
+      } else if (apiError?.response?.status === 409) {
         // Conflict/inventory mismatch
         toast.error(`Inventory issue: ${errorMessage}. The system has reverted any changes to prevent inconsistency.`)
-      } else if (error?.response?.status >= 500) {
+      } else if (apiError?.response?.status && apiError.response.status >= 500) {
         // Server error
         toast.error(`Server error: ${errorMessage}. Please try again later.`)
       } else {
