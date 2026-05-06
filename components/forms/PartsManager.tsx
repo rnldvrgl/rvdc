@@ -626,8 +626,32 @@ export default function PartsManager({
       if (onUpdate) {
         await onUpdate()
       }
-    } catch {
-      // error is handled by mutation
+    } catch (error: any) {
+      // Enhanced error handling - extract meaningful error message
+      const errorMessage = error?.response?.data?.detail ||
+                          error?.response?.data?.error ||
+                          error?.response?.data?.message ||
+                          error?.message ||
+                          "Failed to save part. Please check your connection and try again."
+
+      // Check if it's a network/connection error
+      if (!error?.response) {
+        toast.error("Network error: Please check your connection and try again.")
+      } else if (error?.response?.status === 400) {
+        // Validation error - show detailed message
+        toast.error(`Validation error: ${errorMessage}`)
+      } else if (error?.response?.status === 409) {
+        // Conflict/inventory mismatch
+        toast.error(`Inventory issue: ${errorMessage}. The system has reverted any changes to prevent inconsistency.`)
+      } else if (error?.response?.status >= 500) {
+        // Server error
+        toast.error(`Server error: ${errorMessage}. Please try again later.`)
+      } else {
+        toast.error(errorMessage)
+      }
+
+      // Log the full error for debugging
+      console.error("Error saving part:", error)
     } finally {
       savePartLockRef.current = false
     }
