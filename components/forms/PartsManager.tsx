@@ -426,6 +426,18 @@ export default function PartsManager({
         : !!(serviceDraft.itemId && serviceDraft.quantity)
     )
 
+  const canSaveEditingPart =
+    !isDialogBusy &&
+    (
+      isCustom
+        ? !!(
+            (selectedUntrackedItemId || customDescription.trim()) &&
+            customPrice &&
+            quantity
+          )
+        : !!(selectedItemId && quantity)
+    )
+
   const canClearDraftInput =
     !isDialogBusy &&
     (
@@ -2262,12 +2274,7 @@ export default function PartsManager({
                 </Button>
                 <Button
                   onClick={handleSavePart}
-                  disabled={
-                    isDialogBusy ||
-                    (isCustom
-                      ? !selectedUntrackedItemId || !quantity
-                      : !selectedItemId || !quantity)
-                  }
+                  disabled={!canSaveEditingPart}
                 >
                   {isMutatingPart && (
                     <Loader2 className="mr-2 size-4 animate-spin" />
