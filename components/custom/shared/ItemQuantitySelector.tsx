@@ -192,14 +192,7 @@ export default function ItemQuantitySelector({
     [items, onChange, allowPriceChange],
   )
 
-  const allowsDecimal = (item: Item | null) =>
-    !!item && ["kg", "ft"].includes(item.unit_of_measure)
-  const stepAmount = (item: Item | null) => {
-    if (!item) return 1
-    if (item.unit_of_measure === "kg") return 0.25
-    if (item.unit_of_measure === "ft") return 0.5
-    return 1
-  }
+
 
   const getPrices = (itm: ItemEntry) => {
     if (!itm.item) {
