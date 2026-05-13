@@ -436,7 +436,7 @@ export default function ItemQuantitySelector({
                               ? 0.01
                               : 1
                         }
-                        step={allowsDecimal(itm.item) ? "any" : "1"}
+                        step={"any"}
                         value={editingQty[idx] ?? itm.quantity}
                         onChange={(e) => {
                           setEditingQty((prev) => ({
@@ -449,13 +449,7 @@ export default function ItemQuantitySelector({
                           const raw = editingQty[idx]
                           if (raw !== undefined) {
                             const parsed = parseFloat(raw)
-                            const rounded = allowsDecimal(itm.item)
-                              ? parsed > 0
-                                ? Math.round(parsed * 100) / 100
-                                : 0.01
-                              : parsed > 0
-                                ? Math.round(parsed) || 1
-                                : 1
+                            const rounded = parsed > 0 ? Math.round(parsed * 100) / 100 : 0.01
                             handleUpdate(idx, "quantity", rounded)
                             setEditingQty((prev) => {
                               const next = { ...prev }

@@ -49,6 +49,7 @@ import {
   Zap,
 } from "lucide-react"
 import { useEffect, useMemo } from "react"
+import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useForm, useWatch } from "react-hook-form"
 import * as z from "zod"
 
@@ -104,6 +105,7 @@ const serviceSchema = z.object({
   override_contact_person: z.string().optional(),
   override_contact_number: z.string().optional(),
   appointment_datetime: z.date().nullable().optional(),
+  transaction_date: z.date().nullable().optional(),
   pickup_date: z.date().nullable().optional(),
   delivery_date: z.date().nullable().optional(),
   received_at: z.date().nullable().optional(),
@@ -167,6 +169,9 @@ export default function ServiceForm({
         : initialData
           ? null
           : new Date(),
+      transaction_date: initialData?.transaction_date
+        ? new Date(initialData.transaction_date + "T00:00:00")
+        : null,
       technicians:
         initialData?.technician_assignments
           ?.map((ta) => ta.technician)
@@ -177,6 +182,7 @@ export default function ServiceForm({
 
   const { clients } = useClients()
   const { data: activeTechnicians = [] } = useTechnicianChoices()
+  const { isAdmin } = useCurrentUser()
 
   // Merge active technicians with any inactive ones already assigned to this service
   const technicians = useMemo(() => {
@@ -310,6 +316,11 @@ export default function ServiceForm({
       appointment_datetime: data.appointment_datetime
         ? formatDateForBackend(data.appointment_datetime)
         : undefined,
+      transaction_date: data.transaction_date
+        ? `${data.transaction_date.getFullYear()}-${String(
+            data.transaction_date.getMonth() + 1,
+          ).padStart(2, "0")}-${String(data.transaction_date.getDate()).padStart(2, "0")}`
+        : undefined,
       technician_assignments: data.technicians?.map((techId) => ({
         technician: techId,
         assignment_type: getAssignmentType(),
@@ -381,6 +392,29 @@ export default function ServiceForm({
             </FormItem>
           )}
         />
+
+        {/* Transaction Date (Backdate) - Admin only */}
+        {isAdmin && (
+        <FormField
+          name="transaction_date"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Transaction Date (backdate)</FormLabel>
+              <FormControl>
+                <DateTimePicker
+                  value={field.value ?? undefined}
+                  onChange={(d) => field.onChange(d ? new Date(d.setHours(8,0,0,0)) : undefined)}
+                  disabled={isSubmitting}
+                  placeholder="Set transaction date (admin only)"
+                  disablePastDates={!isAdmin}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        )}
 
         {/* Service Purpose */}
         <FormField
@@ -524,7 +558,7 @@ export default function ServiceForm({
                       onChange={field.onChange}
                       disabled={isSubmitting}
                       placeholder="Select appointment date and time"
-                      disablePastDates={!initialData}
+                      disablePastDates={!isAdmin}
                     />
                   </FormControl>
                   <FormMessage />
