@@ -113,6 +113,11 @@ interface ManagementCommand {
   args?: string[]
 }
 
+interface MaintenanceCommandPayload {
+  service_id?: string
+  dry_run?: boolean
+}
+
 interface MaintenanceData {
   disk: DiskUsage
   memory: MemoryUsage | null
@@ -211,6 +216,12 @@ export function ServerMaintenanceCard() {
   const [backups, setBackups] = useState<BackupFile[]>([])
   const [backupsLoading, setBackupsLoading] = useState(false)
   const [deletingBackup, setDeletingBackup] = useState<string | null>(null)
+  const [fixDialog, setFixDialog] = useState<{
+    open: boolean
+    serviceId: string
+    dryRun: boolean
+    cmd?: ManagementCommand | null
+  }>({ open: false, serviceId: "", dryRun: true, cmd: null })
 
   const { data, isLoading, refetch } = useQuery<MaintenanceData>({
     queryKey: ["server-maintenance"],
@@ -390,6 +401,32 @@ export function ServerMaintenanceCard() {
       toast.error(
         message || `Failed to start ${command.label}. Check server logs.`,
       )
+      setRunningAction(null)
+    }
+  }
+
+  const runCommandWithPayload = async (
+    command: ManagementCommand,
+    payload: MaintenanceCommandPayload = {},
+  ) => {
+    setRunningAction(`cmd_${command.id}`)
+    try {
+      await api.post("/users/maintenance/", {
+        action: "run_command",
+        command: command.id,
+        ...payload,
+      })
+      toast.info(`${command.label} started`, {
+        description: "You'll be notified when it completes.",
+      })
+      setFixDialog({ open: false, serviceId: "", dryRun: true, cmd: null })
+    } catch (err) {
+      const message =
+        err instanceof Error && "response" in err
+          ? (err as { response?: { data?: { error?: string } } }).response?.data
+              ?.error
+          : undefined
+      toast.error(message || `Failed to start ${command.label}. Check server logs.`)
       setRunningAction(null)
     }
   }
@@ -1168,6 +1205,11 @@ export function ServerMaintenanceCard() {
                                 className="shrink-0 gap-1.5"
                                 disabled={runningAction !== null}
                                 onClick={() => {
+                                  if (cmd.id === "fix_service_payment_sync") {
+                                    // Open dialog to allow optional service-id and dry-run
+                                    setFixDialog({ open: true, serviceId: "", dryRun: true, cmd })
+                                    return
+                                  }
                                   if (cmd.destructive) {
                                     setPendingAuthAction({
                                       type: "command",
@@ -1595,6 +1637,68 @@ export function ServerMaintenanceCard() {
                   : "This will overwrite all cron scripts and update the host crontab entries. Enter admin credentials to proceed."
         }
       />
+
+      {/* Fix Service Payment Sync Dialog */}
+      <Dialog
+        open={fixDialog.open}
+        onOpenChange={(open) => setFixDialog((prev) => ({ ...prev, open }))}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Fix Service Payment Sync</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Optionally provide a single Service ID to fix, or leave empty to
+              run across all services (use with caution). Enable dry-run to
+              preview changes.
+            </p>
+
+            <div className="grid gap-2">
+              <input
+                type="text"
+                value={fixDialog.serviceId}
+                onChange={(e) => setFixDialog((prev) => ({ ...prev, serviceId: e.target.value }))}
+                placeholder="Service ID (optional)"
+                className="w-full rounded-md border px-3 py-2"
+                aria-label="Service ID"
+              />
+
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={fixDialog.dryRun}
+                  onChange={(e) => setFixDialog((prev) => ({ ...prev, dryRun: e.target.checked }))}
+                />
+                Dry run (do not apply changes)
+              </label>
+
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFixDialog({ open: false, serviceId: "", dryRun: true, cmd: null })}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (!fixDialog.cmd) return
+                    const payload: MaintenanceCommandPayload = {}
+                    if (fixDialog.serviceId) payload.service_id = fixDialog.serviceId
+                    if (fixDialog.dryRun) payload.dry_run = true
+                    runCommandWithPayload(fixDialog.cmd, payload)
+                  }}
+                >
+                  Run
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Container Logs Dialog */}
       <Dialog
