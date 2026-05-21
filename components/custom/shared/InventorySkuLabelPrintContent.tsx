@@ -4,10 +4,11 @@ import { Item } from "@/lib/constants/interface"
 
 interface InventorySkuLabelPrintContentProps {
   items: Item[]
+  labelsPerPage: number
   showPreviewMargins?: boolean
 }
 
-function chunkItems(items: Item[], size = 10): Item[][] {
+function chunkItems(items: Item[], size = 8): Item[][] {
   const pages: Item[][] = []
 
   for (let index = 0; index < items.length; index += size) {
@@ -21,16 +22,68 @@ function normalizeLabelText(text: string) {
   return text.trim() || "Unnamed item"
 }
 
-function SkuLabel({ item }: { item: Item }) {
+function getLabelTypography(labelsPerPage: number) {
+  if (labelsPerPage <= 2) {
+    return {
+      sku: "text-4xl",
+      name: "text-xl",
+      padding: "px-4 py-5",
+    }
+  }
+
+  if (labelsPerPage <= 4) {
+    return {
+      sku: "text-[34px]",
+      name: "text-[18px]",
+      padding: "px-4 py-4",
+    }
+  }
+
+  if (labelsPerPage <= 8) {
+    return {
+      sku: "text-3xl",
+      name: "text-lg",
+      padding: "px-3 py-4",
+    }
+  }
+
+  return {
+    sku: "text-2xl",
+    name: "text-base",
+    padding: "px-3 py-3",
+  }
+}
+
+const LABEL_GRID_CLASSES: Record<number, string> = {
+  1: "grid-cols-1 grid-rows-1",
+  2: "grid-cols-2 grid-rows-1",
+  3: "grid-cols-2 grid-rows-2",
+  4: "grid-cols-2 grid-rows-2",
+  5: "grid-cols-2 grid-rows-3",
+  6: "grid-cols-2 grid-rows-3",
+  7: "grid-cols-2 grid-rows-4",
+  8: "grid-cols-2 grid-rows-4",
+  9: "grid-cols-2 grid-rows-5",
+  10: "grid-cols-2 grid-rows-5",
+  11: "grid-cols-2 grid-rows-6",
+  12: "grid-cols-2 grid-rows-6",
+  13: "grid-cols-2 grid-rows-7",
+  14: "grid-cols-2 grid-rows-7",
+  15: "grid-cols-2 grid-rows-8",
+  16: "grid-cols-2 grid-rows-8",
+}
+
+function SkuLabel({ item, labelsPerPage }: { item: Item; labelsPerPage: number }) {
   const sku = normalizeLabelText(item.sku || "NO SKU")
   const name = normalizeLabelText(item.name)
+  const typography = getLabelTypography(labelsPerPage)
 
   return (
-    <div className="sku-label flex h-full w-full flex-col items-center justify-center border-2 border-gray-800 bg-white px-2 py-1 text-center text-black overflow-hidden">
-      <p className="w-full text-[20px] font-black leading-none tracking-[0.14em] text-gray-950 break-all">
+    <div className={`sku-label flex h-full w-full flex-col items-center justify-center border-2 border-gray-800 bg-white text-center text-black overflow-hidden ${typography.padding}`}>
+      <p className={`w-full font-black leading-none tracking-widest text-gray-950 break-all ${typography.sku}`}>
         {sku}
       </p>
-      <p className="mt-1 w-full text-[11px] font-medium leading-tight text-gray-900 truncate">
+      <p className={`mt-1.5 w-full font-medium leading-tight text-gray-900 truncate ${typography.name}`}>
         {name}
       </p>
     </div>
@@ -40,35 +93,38 @@ function SkuLabel({ item }: { item: Item }) {
 export const InventorySkuLabelPrintContent = React.forwardRef<
   HTMLDivElement,
   InventorySkuLabelPrintContentProps
->(function InventorySkuLabelPrintContent({ items, showPreviewMargins }, ref) {
-  const pages = chunkItems(items)
+>(function InventorySkuLabelPrintContent({ items, labelsPerPage, showPreviewMargins }, ref) {
+  const clampedLabelsPerPage = Math.min(16, Math.max(1, Math.floor(labelsPerPage || 1)))
+  const pages = chunkItems(items, clampedLabelsPerPage)
+  const gridClassName = `sku-page grid h-full gap-0 ${LABEL_GRID_CLASSES[clampedLabelsPerPage]}`
 
   return (
-    <div ref={ref} className="inventory-sku-print bg-white text-black">
+    <div ref={ref} className="inventory-sku-print bg-white text-black font-sans">
       {pages.map((pageItems, pageIndex) => (
         <div
           key={pageIndex}
           className={`sku-page-wrapper ${
             showPreviewMargins
-              ? "mb-4 rounded-lg border border-gray-300 bg-white p-4 shadow-sm"
+              ? "mb-4 h-[11in] w-[8.5in] rounded-lg border border-gray-300 bg-white p-4 shadow-sm"
               : ""
           }`}
+          data-labels-per-page={clampedLabelsPerPage}
         >
-          <div className="sku-page grid grid-cols-2 gap-[0.12in]">
+          <div className={gridClassName}>
             {pageItems.map((item) => (
               <div
                 key={item.id}
-                className="sku-page-item h-48 w-72"
+                className="sku-page-item h-full w-full"
               >
-                <SkuLabel item={item} />
+                <SkuLabel item={item} labelsPerPage={clampedLabelsPerPage} />
               </div>
             ))}
-            {Array.from({ length: Math.max(0, 10 - pageItems.length) }).map((_, index) => (
+            {Array.from({ length: Math.max(0, clampedLabelsPerPage - pageItems.length) }).map((_, index) => (
               <div
                 key={`empty-${pageIndex}-${index}`}
-                className="sku-page-item h-48 w-72"
+                className="sku-page-item h-full w-full"
               >
-                <div className="h-full w-full rounded-md border-2 border-dashed border-gray-200 bg-white" />
+                <div className="h-full w-full bg-white" />
               </div>
             ))}
           </div>

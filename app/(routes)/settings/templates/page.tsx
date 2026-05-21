@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/sheet"
 
 import { InventorySkuLabelPrintContent } from "@/components/custom/shared/InventorySkuLabelPrintContent"
+import { Item } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useJobOrderTemplatePrintMutations } from "@/lib/mutations/useJobOrderTemplatePrintMutations"
 import { useItems } from "@/lib/queries/inventory/useItems"
@@ -63,7 +64,9 @@ function formatJobOrderNumber(num: number): string {
 
 const MAX_TEMPLATE_COUNT = 200
 const HISTORY_PAGE_SIZE = 10
-const SKU_ITEMS_LIMIT = 1000
+const SKU_ITEMS_PAGE_SIZE = 20
+const MIN_SKU_LABELS_PER_PAGE = 1
+const MAX_SKU_LABELS_PER_PAGE = 16
 
 export default function TemplatesSettingsPage() {
   const { canManage } = useCurrentUser()
@@ -75,8 +78,10 @@ export default function TemplatesSettingsPage() {
   const [showConfirmPrint, setShowConfirmPrint] = useState(false)
   const [hasAppliedSuggestion, setHasAppliedSuggestion] = useState(false)
   const [historyPage, setHistoryPage] = useState(1)
+  const [skuPage, setSkuPage] = useState(1)
+  const [labelsPerPage, setLabelsPerPage] = useState(8)
   const [skuSearch, setSkuSearch] = useState("")
-  const [selectedSkuIds, setSelectedSkuIds] = useState<Set<number>>(() => new Set())
+  const [selectedSkuItems, setSelectedSkuItems] = useState<Item[]>([])
   const [hasAppliedSkuSelection, setHasAppliedSkuSelection] = useState(false)
   const [skuPreviewOpen, setSkuPreviewOpen] = useState(false)
   const [isSkuPrinting, setIsSkuPrinting] = useState(false)
@@ -94,8 +99,9 @@ export default function TemplatesSettingsPage() {
     limit: HISTORY_PAGE_SIZE,
   })
   const { data: itemsData, isLoading: isLoadingItems } = useItems({
-    page: 1,
-    limit: SKU_ITEMS_LIMIT,
+    page: skuPage,
+    limit: SKU_ITEMS_PAGE_SIZE,
+    search: skuSearch.trim() || undefined,
     ordering: "name",
   })
 
@@ -104,27 +110,8 @@ export default function TemplatesSettingsPage() {
 
   const totalHistoryPages = printHistory ? Math.ceil(printHistory.count / HISTORY_PAGE_SIZE) : 0
   const skuItems = useMemo(() => itemsData?.results ?? [], [itemsData])
-
-  const filteredSkuItems = useMemo(() => {
-    const search = skuSearch.trim().toLowerCase()
-
-    if (!search) {
-      return skuItems
-    }
-
-    return skuItems.filter((item) => {
-      const haystack = [item.name, item.sku, item.category?.name ?? ""]
-        .join(" ")
-        .toLowerCase()
-
-      return haystack.includes(search)
-    })
-  }, [skuItems, skuSearch])
-
-  const selectedSkuItems = useMemo(
-    () => skuItems.filter((item) => selectedSkuIds.has(item.id)),
-    [selectedSkuIds, skuItems],
-  )
+  const totalSkuPages = itemsData ? Math.ceil(itemsData.count / SKU_ITEMS_PAGE_SIZE) : 0
+  const selectedSkuItemIds = useMemo(() => new Set(selectedSkuItems.map((item) => item.id)), [selectedSkuItems])
 
   // Auto-fill suggested starting number on first load
   useEffect(() => {
@@ -138,10 +125,20 @@ export default function TemplatesSettingsPage() {
 
   useEffect(() => {
     if (!hasAppliedSkuSelection && skuItems.length > 0) {
-      setSelectedSkuIds(new Set(skuItems.map((item) => item.id)))
+      setSelectedSkuItems(skuItems)
       setHasAppliedSkuSelection(true)
     }
   }, [hasAppliedSkuSelection, skuItems])
+
+  useEffect(() => {
+    setSkuPage(1)
+  }, [skuSearch])
+
+  useEffect(() => {
+    setLabelsPerPage((current) =>
+      Math.min(MAX_SKU_LABELS_PER_PAGE, Math.max(MIN_SKU_LABELS_PER_PAGE, current)),
+    )
+  }, [])
 
   const handleAfterPrint = useCallback(() => {
     setIsPrinting(false)
@@ -234,29 +231,44 @@ export default function TemplatesSettingsPage() {
   }, [end, start, validationMessage])
 
   const toggleSkuItem = useCallback((itemId: number) => {
-    setSelectedSkuIds((current) => {
-      const next = new Set(current)
+    setSelectedSkuItems((current) => {
+      const existingIndex = current.findIndex((item) => item.id === itemId)
 
-      if (next.has(itemId)) {
-        next.delete(itemId)
-      } else {
-        next.add(itemId)
+      if (existingIndex >= 0) {
+        return current.filter((item) => item.id !== itemId)
       }
 
-      return next
+      const nextItem = skuItems.find((item) => item.id === itemId)
+      return nextItem ? [...current, nextItem] : current
     })
-  }, [])
+  }, [skuItems])
 
   const selectVisibleSkuItems = useCallback(() => {
-    setSelectedSkuIds(new Set(filteredSkuItems.map((item) => item.id)))
-  }, [filteredSkuItems])
+    setSelectedSkuItems((current) => {
+      const map = new Map(current.map((item) => [item.id, item]))
+
+      skuItems.forEach((item) => {
+        map.set(item.id, item)
+      })
+
+      return Array.from(map.values())
+    })
+  }, [skuItems])
 
   const selectAllSkuItems = useCallback(() => {
-    setSelectedSkuIds(new Set(skuItems.map((item) => item.id)))
+    setSelectedSkuItems((current) => {
+      const map = new Map(current.map((item) => [item.id, item]))
+
+      skuItems.forEach((item) => {
+        map.set(item.id, item)
+      })
+
+      return Array.from(map.values())
+    })
   }, [skuItems])
 
   const clearSkuSelection = useCallback(() => {
-    setSelectedSkuIds(new Set())
+    setSelectedSkuItems([])
   }, [])
 
   if (!canManage) {
@@ -541,11 +553,11 @@ export default function TemplatesSettingsPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={selectVisibleSkuItems} disabled={filteredSkuItems.length === 0}>
-                    Select visible
+                  <Button variant="outline" size="sm" onClick={selectVisibleSkuItems} disabled={skuItems.length === 0}>
+                    Select page
                   </Button>
                   <Button variant="outline" size="sm" onClick={selectAllSkuItems} disabled={skuItems.length === 0}>
-                    Select all
+                    Add page
                   </Button>
                   <Button variant="ghost" size="sm" onClick={clearSkuSelection} disabled={selectedSkuItems.length === 0}>
                     Clear
@@ -559,8 +571,41 @@ export default function TemplatesSettingsPage() {
                   </div>
                   <div className="h-8 w-px bg-border" />
                   <div>
-                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Loaded</p>
-                    <p className="font-semibold">{skuItems.length} item{skuItems.length === 1 ? "" : "s"}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Page</p>
+                    <p className="font-semibold">{skuPage} of {Math.max(totalSkuPages, 1)}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="labels-per-page">Labels per page</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      id="labels-per-page"
+                      type="number"
+                      min={MIN_SKU_LABELS_PER_PAGE}
+                      max={MAX_SKU_LABELS_PER_PAGE}
+                      step={1}
+                      value={labelsPerPage}
+                      onChange={(event) => {
+                        const nextValue = Number(event.target.value)
+
+                        if (Number.isNaN(nextValue)) {
+                          setLabelsPerPage(MIN_SKU_LABELS_PER_PAGE)
+                          return
+                        }
+
+                        setLabelsPerPage(
+                          Math.min(
+                            MAX_SKU_LABELS_PER_PAGE,
+                            Math.max(MIN_SKU_LABELS_PER_PAGE, Math.floor(nextValue)),
+                          ),
+                        )
+                      }}
+                      className="w-28"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Min {MIN_SKU_LABELS_PER_PAGE}, max {MAX_SKU_LABELS_PER_PAGE}
+                    </p>
                   </div>
                 </div>
 
@@ -569,7 +614,7 @@ export default function TemplatesSettingsPage() {
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Loading inventory items...
                   </div>
-                ) : !filteredSkuItems.length ? (
+                ) : !skuItems.length ? (
                   <Alert variant="warning">
                     <ShieldAlert className="h-4 w-4" />
                     <AlertTitle>No items found</AlertTitle>
@@ -580,11 +625,11 @@ export default function TemplatesSettingsPage() {
                 ) : (
                   <div className="max-h-120 overflow-auto rounded-lg border bg-background">
                     <div className="sticky top-0 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
-                      {filteredSkuItems.length} matching item{filteredSkuItems.length === 1 ? "" : "s"}
+                      {itemsData?.count ?? 0} total item{(itemsData?.count ?? 0) === 1 ? "" : "s"}
                     </div>
                     <div className="divide-y">
-                      {filteredSkuItems.map((item) => {
-                        const isChecked = selectedSkuIds.has(item.id)
+                      {skuItems.map((item) => {
+                        const isChecked = selectedSkuItemIds.has(item.id)
 
                         return (
                           <label
@@ -608,6 +653,34 @@ export default function TemplatesSettingsPage() {
                           </label>
                         )
                       })}
+                    </div>
+                  </div>
+                )}
+
+                {totalSkuPages > 1 && (
+                  <div className="flex items-center justify-between border-t px-3 py-3">
+                    <p className="text-xs text-muted-foreground">
+                      Page {skuPage} of {totalSkuPages}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={skuPage <= 1}
+                        onClick={() => setSkuPage((p) => p - 1)}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        disabled={skuPage >= totalSkuPages}
+                        onClick={() => setSkuPage((p) => p + 1)}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -673,12 +746,12 @@ export default function TemplatesSettingsPage() {
                   <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-4 py-3 text-sm">
                     <div>
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Labels per page</p>
-                      <p className="font-semibold">10 labels</p>
+                      <p className="font-semibold">{labelsPerPage} label{labelsPerPage === 1 ? "" : "s"}</p>
                     </div>
                     <div className="h-8 w-px bg-border" />
                     <div>
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Pages</p>
-                      <p className="font-semibold">{Math.max(1, Math.ceil(selectedSkuItems.length / 10))}</p>
+                      <p className="font-semibold">{Math.max(1, Math.ceil(selectedSkuItems.length / labelsPerPage))}</p>
                     </div>
                   </div>
 
@@ -751,7 +824,7 @@ export default function TemplatesSettingsPage() {
                   SKU Labels Preview
                 </SheetTitle>
                 <SheetDescription>
-                  {selectedSkuItems.length} label{selectedSkuItems.length === 1 ? "" : "s"} · {Math.ceil(selectedSkuItems.length / 10)} page{Math.ceil(selectedSkuItems.length / 10) === 1 ? "" : "s"}
+                  {selectedSkuItems.length} label{selectedSkuItems.length === 1 ? "" : "s"} · {Math.ceil(selectedSkuItems.length / labelsPerPage)} page{Math.ceil(selectedSkuItems.length / labelsPerPage) === 1 ? "" : "s"}
                 </SheetDescription>
               </div>
               <Button
@@ -779,6 +852,7 @@ export default function TemplatesSettingsPage() {
               <InventorySkuLabelPrintContent
                 ref={skuPrintRef}
                 items={selectedSkuItems}
+                labelsPerPage={labelsPerPage}
                 showPreviewMargins
               />
             </div>

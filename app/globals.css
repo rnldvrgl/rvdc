@@ -201,7 +201,7 @@
   }
 
   /* Hide everything except print content */
-  body > *:not(.quotation-print):not(.thermal-receipt-print):not(.job-order-print) {
+  body > *:not(.quotation-print):not(.thermal-receipt-print):not(.job-order-print):not(.inventory-sku-print) {
     display: none !important;
   }
 
@@ -346,6 +346,68 @@
   .thermal-receipt-print * {
     visibility: visible !important;
   }
+
+  /* ── Inventory SKU Labels (Letter Portrait, manual up to 16) ── */
+  .inventory-sku-print {
+    page: inventory-sku-page;
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .inventory-sku-print * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    visibility: visible !important;
+  }
+
+  .inventory-sku-print .sku-page-wrapper {
+    width: 8.5in !important;
+    height: 11in !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+
+  .inventory-sku-print .sku-page-wrapper + .sku-page-wrapper {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .inventory-sku-print .sku-page {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin: 0 !important;
+    gap: 0 !important;
+  }
+
+  .inventory-sku-print .sku-page-item {
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }
 
 @page quotation-page {
@@ -355,6 +417,12 @@
 
 @page thermal-page {
   size: 58mm auto;
+  margin: 0;
+}
+
+
+@page inventory-sku-page {
+  size: letter portrait;
   margin: 0;
 }
 
