@@ -17,8 +17,10 @@ import {
     Card,
     CardContent,
 } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
     Sheet,
     SheetContent,
@@ -27,8 +29,10 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet"
 
+import { InventorySkuLabelPrintContent } from "@/components/custom/shared/InventorySkuLabelPrintContent"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useJobOrderTemplatePrintMutations } from "@/lib/mutations/useJobOrderTemplatePrintMutations"
+import { useItems } from "@/lib/queries/inventory/useItems"
 import {
     useJobOrderTemplatePrints,
     useNextJobOrderNumber,
@@ -45,6 +49,8 @@ import {
     Printer,
     ShieldAlert,
     Sparkles,
+    Search,
+    Tag,
     User,
     XCircle,
 } from "lucide-react"
@@ -57,9 +63,11 @@ function formatJobOrderNumber(num: number): string {
 
 const MAX_TEMPLATE_COUNT = 200
 const HISTORY_PAGE_SIZE = 10
+const SKU_ITEMS_LIMIT = 1000
 
 export default function TemplatesSettingsPage() {
   const { canManage } = useCurrentUser()
+  const [activeTab, setActiveTab] = useState<"job-order" | "sku-labels">("job-order")
   const [startNumber, setStartNumber] = useState("")
   const [endNumber, setEndNumber] = useState("")
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -67,11 +75,17 @@ export default function TemplatesSettingsPage() {
   const [showConfirmPrint, setShowConfirmPrint] = useState(false)
   const [hasAppliedSuggestion, setHasAppliedSuggestion] = useState(false)
   const [historyPage, setHistoryPage] = useState(1)
+  const [skuSearch, setSkuSearch] = useState("")
+  const [selectedSkuIds, setSelectedSkuIds] = useState<Set<number>>(() => new Set())
+  const [hasAppliedSkuSelection, setHasAppliedSkuSelection] = useState(false)
+  const [skuPreviewOpen, setSkuPreviewOpen] = useState(false)
+  const [isSkuPrinting, setIsSkuPrinting] = useState(false)
 
   const start = Number(startNumber)
   const end = Number(endNumber)
 
   const printRef = useRef<HTMLDivElement>(null)
+  const skuPrintRef = useRef<HTMLDivElement>(null)
 
   // Queries
   const { data: nextNumberData, isLoading: isLoadingNext } = useNextJobOrderNumber()
@@ -79,11 +93,38 @@ export default function TemplatesSettingsPage() {
     page: historyPage,
     limit: HISTORY_PAGE_SIZE,
   })
+  const { data: itemsData, isLoading: isLoadingItems } = useItems({
+    page: 1,
+    limit: SKU_ITEMS_LIMIT,
+    ordering: "name",
+  })
 
   // Mutations
   const { recordPrint } = useJobOrderTemplatePrintMutations()
 
   const totalHistoryPages = printHistory ? Math.ceil(printHistory.count / HISTORY_PAGE_SIZE) : 0
+  const skuItems = useMemo(() => itemsData?.results ?? [], [itemsData])
+
+  const filteredSkuItems = useMemo(() => {
+    const search = skuSearch.trim().toLowerCase()
+
+    if (!search) {
+      return skuItems
+    }
+
+    return skuItems.filter((item) => {
+      const haystack = [item.name, item.sku, item.category?.name ?? ""]
+        .join(" ")
+        .toLowerCase()
+
+      return haystack.includes(search)
+    })
+  }, [skuItems, skuSearch])
+
+  const selectedSkuItems = useMemo(
+    () => skuItems.filter((item) => selectedSkuIds.has(item.id)),
+    [selectedSkuIds, skuItems],
+  )
 
   // Auto-fill suggested starting number on first load
   useEffect(() => {
@@ -95,9 +136,21 @@ export default function TemplatesSettingsPage() {
     }
   }, [nextNumberData, hasAppliedSuggestion, startNumber])
 
+  useEffect(() => {
+    if (!hasAppliedSkuSelection && skuItems.length > 0) {
+      setSelectedSkuIds(new Set(skuItems.map((item) => item.id)))
+      setHasAppliedSkuSelection(true)
+    }
+  }, [hasAppliedSkuSelection, skuItems])
+
   const handleAfterPrint = useCallback(() => {
     setIsPrinting(false)
     setShowConfirmPrint(true)
+  }, [])
+
+  const handleSkuAfterPrint = useCallback(() => {
+    setIsSkuPrinting(false)
+    setSkuPreviewOpen(false)
   }, [])
 
   const handleConfirmPrint = useCallback(() => {
@@ -129,6 +182,24 @@ export default function TemplatesSettingsPage() {
     setIsPrinting(true)
     handlePrint()
   }, [handlePrint])
+
+  const handleSkuPrint = useReactToPrint({
+    contentRef: skuPrintRef,
+    documentTitle:
+      selectedSkuItems.length > 0
+        ? `inventory-sku-labels-${selectedSkuItems.length}`
+        : "inventory-sku-labels",
+    onAfterPrint: handleSkuAfterPrint,
+  })
+
+  const onSkuPrintClick = useCallback(() => {
+    if (selectedSkuItems.length === 0) {
+      return
+    }
+
+    setIsSkuPrinting(true)
+    handleSkuPrint()
+  }, [handleSkuPrint, selectedSkuItems.length])
 
   const validationMessage = useMemo(() => {
     if (!startNumber || !endNumber) {
@@ -162,6 +233,32 @@ export default function TemplatesSettingsPage() {
     return Array.from({ length: end - start + 1 }, (_, index) => start + index)
   }, [end, start, validationMessage])
 
+  const toggleSkuItem = useCallback((itemId: number) => {
+    setSelectedSkuIds((current) => {
+      const next = new Set(current)
+
+      if (next.has(itemId)) {
+        next.delete(itemId)
+      } else {
+        next.add(itemId)
+      }
+
+      return next
+    })
+  }, [])
+
+  const selectVisibleSkuItems = useCallback(() => {
+    setSelectedSkuIds(new Set(filteredSkuItems.map((item) => item.id)))
+  }, [filteredSkuItems])
+
+  const selectAllSkuItems = useCallback(() => {
+    setSelectedSkuIds(new Set(skuItems.map((item) => item.id)))
+  }, [skuItems])
+
+  const clearSkuSelection = useCallback(() => {
+    setSelectedSkuIds(new Set())
+  }, [])
+
   if (!canManage) {
     return (
       <Wrapper maxWidth="narrow">
@@ -190,6 +287,23 @@ export default function TemplatesSettingsPage() {
         breadcrumbs={["Settings", "Templates"]}
       />
 
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as "job-order" | "sku-labels")}
+        className="space-y-6"
+      >
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="job-order" className="gap-1.5">
+            <ClipboardList className="size-3.5" />
+            Job Order Templates
+          </TabsTrigger>
+          <TabsTrigger value="sku-labels" className="gap-1.5">
+            <Tag className="size-3.5" />
+            SKU Templates
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="job-order" className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-5">
         {/* ── Left: Generate ── */}
         <Card className="lg:col-span-2">
@@ -394,6 +508,195 @@ export default function TemplatesSettingsPage() {
         </Card>
       </div>
 
+        </TabsContent>
+
+        <TabsContent value="sku-labels" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-5">
+            <Card className="lg:col-span-2">
+              <CardContent className="p-5 space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <Tag className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm leading-tight">SKU Templates</p>
+                    <p className="text-xs text-muted-foreground">3 in &times; 2 in labels for storage boxes</p>
+                  </div>
+                </div>
+
+                <div className="h-px bg-border" />
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="sku-search">Search inventory items</Label>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="sku-search"
+                      value={skuSearch}
+                      onChange={(event) => setSkuSearch(event.target.value)}
+                      placeholder="Search by item name, SKU, or category"
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={selectVisibleSkuItems} disabled={filteredSkuItems.length === 0}>
+                    Select visible
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={selectAllSkuItems} disabled={skuItems.length === 0}>
+                    Select all
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={clearSkuSelection} disabled={selectedSkuItems.length === 0}>
+                    Clear
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-4 py-3 text-sm">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Selected</p>
+                    <p className="font-semibold">{selectedSkuItems.length} item{selectedSkuItems.length === 1 ? "" : "s"}</p>
+                  </div>
+                  <div className="h-8 w-px bg-border" />
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Loaded</p>
+                    <p className="font-semibold">{skuItems.length} item{skuItems.length === 1 ? "" : "s"}</p>
+                  </div>
+                </div>
+
+                {isLoadingItems ? (
+                  <div className="flex items-center justify-center py-12 text-muted-foreground">
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Loading inventory items...
+                  </div>
+                ) : !filteredSkuItems.length ? (
+                  <Alert variant="warning">
+                    <ShieldAlert className="h-4 w-4" />
+                    <AlertTitle>No items found</AlertTitle>
+                    <AlertDescription>
+                      Try a different search term or clear the search box to view all inventory items.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="max-h-120 overflow-auto rounded-lg border bg-background">
+                    <div className="sticky top-0 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+                      {filteredSkuItems.length} matching item{filteredSkuItems.length === 1 ? "" : "s"}
+                    </div>
+                    <div className="divide-y">
+                      {filteredSkuItems.map((item) => {
+                        const isChecked = selectedSkuIds.has(item.id)
+
+                        return (
+                          <label
+                            key={item.id}
+                            className="flex cursor-pointer items-start gap-3 px-3 py-3 transition-colors hover:bg-muted/40"
+                          >
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={() => toggleSkuItem(item.id)}
+                              className="mt-0.5"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-medium leading-tight">{item.name}</p>
+                              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                <span className="font-mono">{item.sku || "NO SKU"}</span>
+                                {item.category?.name ? (
+                                  <span className="rounded-full bg-muted px-2 py-0.5">{item.category.name}</span>
+                                ) : null}
+                              </div>
+                            </div>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => setSkuPreviewOpen(true)}
+                  disabled={selectedSkuItems.length === 0}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview &amp; Print Labels
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="lg:col-span-3">
+              <CardContent className="p-0">
+                <div className="flex items-center gap-2 px-4 py-3 border-b">
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm font-semibold">Label Summary</p>
+                  <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium leading-none">
+                    {selectedSkuItems.length} selected
+                  </span>
+                </div>
+
+                <div className="space-y-4 p-4">
+                  <Alert>
+                    <ShieldAlert className="h-4 w-4" />
+                    <AlertTitle>Print size</AlertTitle>
+                    <AlertDescription>
+                      Each label prints at 3 inches wide by 2 inches high for storage boxes.
+                    </AlertDescription>
+                  </Alert>
+
+                  {selectedSkuItems.length === 0 ? (
+                    <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                      Select inventory items on the left to build your label sheet.
+                    </div>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {selectedSkuItems.slice(0, 6).map((item) => (
+                        <div
+                          key={item.id}
+                          className="rounded-lg border bg-background p-3 shadow-sm"
+                        >
+                          <p className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {item.name}
+                          </p>
+                          <p className="mt-2 break-all text-lg font-black tracking-[0.18em] text-foreground">
+                            {item.sku || "NO SKU"}
+                          </p>
+                        </div>
+                      ))}
+                      {selectedSkuItems.length > 6 ? (
+                        <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                          + {selectedSkuItems.length - 6} more selected item{selectedSkuItems.length - 6 === 1 ? "" : "s"}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3 rounded-lg bg-muted/40 px-4 py-3 text-sm">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Labels per page</p>
+                      <p className="font-semibold">10 labels</p>
+                    </div>
+                    <div className="h-8 w-px bg-border" />
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Pages</p>
+                      <p className="font-semibold">{Math.max(1, Math.ceil(selectedSkuItems.length / 10))}</p>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={() => setSkuPreviewOpen(true)}
+                    disabled={selectedSkuItems.length === 0}
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    Open Print Preview
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
       {/* Preview Sheet */}
       <Sheet open={previewOpen} onOpenChange={(next) => !next && setPreviewOpen(false)}>
         <SheetContent side="right" className="max-w-5xl! w-full px-6 sm:px-8 py-8 overflow-y-auto">
@@ -428,10 +731,54 @@ export default function TemplatesSettingsPage() {
           </SheetHeader>
 
           <div className="overflow-auto max-h-[calc(100vh-14rem)] rounded-lg bg-gray-100 dark:bg-gray-900 p-6 flex flex-col items-center gap-6">
-            <div style={{ zoom: 0.75 }}>
+            <div className="origin-top scale-[0.75]">
               <JobOrderTemplatePrintContent
                 ref={printRef}
                 jobOrderNumbers={jobOrderNumbers}
+                showPreviewMargins
+              />
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={skuPreviewOpen} onOpenChange={(next) => !next && setSkuPreviewOpen(false)}>
+        <SheetContent side="right" className="max-w-5xl! w-full px-6 sm:px-8 py-8 overflow-y-auto">
+          <SheetHeader className="mb-5 pb-5 border-b border-border">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <SheetTitle className="text-xl font-semibold">
+                  SKU Labels Preview
+                </SheetTitle>
+                <SheetDescription>
+                  {selectedSkuItems.length} label{selectedSkuItems.length === 1 ? "" : "s"} · {Math.ceil(selectedSkuItems.length / 10)} page{Math.ceil(selectedSkuItems.length / 10) === 1 ? "" : "s"}
+                </SheetDescription>
+              </div>
+              <Button
+                onClick={onSkuPrintClick}
+                disabled={isSkuPrinting || selectedSkuItems.length === 0}
+                className="bg-blue-600 text-white hover:bg-blue-700"
+              >
+                {isSkuPrinting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Printing...
+                  </>
+                ) : (
+                  <>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print
+                  </>
+                )}
+              </Button>
+            </div>
+          </SheetHeader>
+
+          <div className="overflow-auto max-h-[calc(100vh-14rem)] rounded-lg bg-gray-100 dark:bg-gray-900 p-6 flex flex-col items-center gap-6">
+            <div className="origin-top scale-[0.78]">
+              <InventorySkuLabelPrintContent
+                ref={skuPrintRef}
+                items={selectedSkuItems}
                 showPreviewMargins
               />
             </div>
@@ -487,6 +834,7 @@ export default function TemplatesSettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </Tabs>
     </Wrapper>
   )
 }
