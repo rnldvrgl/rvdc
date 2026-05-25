@@ -107,23 +107,35 @@ const LR = ({
 )
 
 // ─── Helper: extract line items from service ─────────────────
+function getLaborAmount(appliance: ServiceAppliance) {
+  const values = [
+    appliance.installation_labor_fee,
+    appliance.discounted_labor_fee,
+    appliance.labor_fee,
+  ]
+
+  for (const value of values) {
+    const amount = parseFloat(value ?? "0")
+    if (!Number.isNaN(amount) && amount > 0) {
+      return amount
+    }
+  }
+
+  return 0
+}
+
 function getLaborItems(appliances: ServiceAppliance[]) {
   return appliances
-    .filter(
-      (a) =>
-        !a.labor_is_free &&
-        parseFloat(
-          a.installation_labor_fee ?? a.discounted_labor_fee ?? a.labor_fee ?? "0",
-        ) > 0,
-    )
     .map((a) => {
-      const fee = parseFloat(
-        a.installation_labor_fee ?? a.discounted_labor_fee ?? a.labor_fee ?? "0",
-      )
-      const typeName = a.appliance_type?.name ?? "Service"
+      const fee = getLaborAmount(a)
+      return { appliance: a, fee }
+    })
+    .filter(({ appliance, fee }) => !appliance.labor_is_free && fee > 0)
+    .map(({ appliance, fee }) => {
+      const typeName = appliance.appliance_type?.name ?? "Service"
       return {
         qty: 1,
-        description: `Labor: ${typeName}${a.brand ? ` (${a.brand})` : ""}`,
+        description: `Labor: ${typeName}${appliance.brand ? ` (${appliance.brand})` : ""}`,
         unitPrice: fee,
         total: fee,
       }
