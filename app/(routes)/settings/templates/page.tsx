@@ -64,9 +64,9 @@ function formatJobOrderNumber(num: number): string {
 
 const MAX_TEMPLATE_COUNT = 200
 const HISTORY_PAGE_SIZE = 10
-const SKU_ITEMS_PAGE_SIZE = 20
-const MIN_SKU_LABELS_PER_PAGE = 20
-const MAX_SKU_LABELS_PER_PAGE = 20
+const SKU_ITEMS_PAGE_SIZE = 64
+const MIN_SKU_LABELS_PER_PAGE = 64
+const MAX_SKU_LABELS_PER_PAGE = 64
 
 export default function TemplatesSettingsPage() {
   const { canManage } = useCurrentUser()
@@ -79,7 +79,7 @@ export default function TemplatesSettingsPage() {
   const [hasAppliedSuggestion, setHasAppliedSuggestion] = useState(false)
   const [historyPage, setHistoryPage] = useState(1)
   const [skuPage, setSkuPage] = useState(1)
-  const [labelsPerPage, setLabelsPerPage] = useState(20)
+  const [labelsPerPage, setLabelsPerPage] = useState(64)
   const [skuSearch, setSkuSearch] = useState("")
   const [selectedSkuItems, setSelectedSkuItems] = useState<Item[]>([])
   const [hasAppliedSkuSelection, setHasAppliedSkuSelection] = useState(false)
@@ -687,7 +687,7 @@ export default function TemplatesSettingsPage() {
                     <ShieldAlert className="h-4 w-4" />
                     <AlertTitle>Print size</AlertTitle>
                     <AlertDescription>
-                      Each label prints at 3 inches wide by 2 inches high for storage boxes.
+                      Each label prints at approximately 2.125 inches wide by 0.6875 inches high on letter paper (4 columns × 16 rows).
                     </AlertDescription>
                   </Alert>
 
