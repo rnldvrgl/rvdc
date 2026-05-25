@@ -8,7 +8,7 @@ interface InventorySkuLabelPrintContentProps {
   showPreviewMargins?: boolean
 }
 
-function chunkItems(items: Item[], size = 8): Item[][] {
+function chunkItems(items: Item[], size = 20): Item[][] {
   const pages: Item[][] = []
 
   for (let index = 0; index < items.length; index += size) {
@@ -47,10 +47,18 @@ function getLabelTypography(labelsPerPage: number) {
     }
   }
 
+  if (labelsPerPage <= 16) {
+    return {
+      sku: "text-2xl",
+      name: "text-base",
+      padding: "px-3 py-3",
+    }
+  }
+
   return {
-    sku: "text-2xl",
-    name: "text-base",
-    padding: "px-3 py-3",
+    sku: "text-lg",
+    name: "text-sm",
+    padding: "px-2 py-2",
   }
 }
 
@@ -71,6 +79,10 @@ const LABEL_GRID_CLASSES: Record<number, string> = {
   14: "grid-cols-2 grid-rows-7",
   15: "grid-cols-2 grid-rows-8",
   16: "grid-cols-2 grid-rows-8",
+  17: "grid-cols-4 grid-rows-5",
+  18: "grid-cols-4 grid-rows-5",
+  19: "grid-cols-4 grid-rows-5",
+  20: "grid-cols-4 grid-rows-5",
 }
 
 function SkuLabel({ item, labelsPerPage }: { item: Item; labelsPerPage: number }) {
@@ -93,8 +105,8 @@ function SkuLabel({ item, labelsPerPage }: { item: Item; labelsPerPage: number }
 export const InventorySkuLabelPrintContent = React.forwardRef<
   HTMLDivElement,
   InventorySkuLabelPrintContentProps
->(function InventorySkuLabelPrintContent({ items, labelsPerPage, showPreviewMargins }, ref) {
-  const clampedLabelsPerPage = Math.min(16, Math.max(1, Math.floor(labelsPerPage || 1)))
+>(function InventorySkuLabelPrintContent({ items, showPreviewMargins }, ref) {
+  const clampedLabelsPerPage = 20
   const pages = chunkItems(items, clampedLabelsPerPage)
   const gridClassName = `sku-page grid h-full gap-0 ${LABEL_GRID_CLASSES[clampedLabelsPerPage]}`
 

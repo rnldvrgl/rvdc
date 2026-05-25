@@ -347,7 +347,7 @@
     visibility: visible !important;
   }
 
-  /* ── Inventory SKU Labels (Letter Portrait, manual up to 16) ── */
+  /* ── Inventory SKU Labels (Letter Portrait, manual up to 20) ── */
   .inventory-sku-print {
     page: inventory-sku-page;
     display: block !important;

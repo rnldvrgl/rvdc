@@ -65,8 +65,8 @@ function formatJobOrderNumber(num: number): string {
 const MAX_TEMPLATE_COUNT = 200
 const HISTORY_PAGE_SIZE = 10
 const SKU_ITEMS_PAGE_SIZE = 20
-const MIN_SKU_LABELS_PER_PAGE = 1
-const MAX_SKU_LABELS_PER_PAGE = 16
+const MIN_SKU_LABELS_PER_PAGE = 20
+const MAX_SKU_LABELS_PER_PAGE = 20
 
 export default function TemplatesSettingsPage() {
   const { canManage } = useCurrentUser()
@@ -79,7 +79,7 @@ export default function TemplatesSettingsPage() {
   const [hasAppliedSuggestion, setHasAppliedSuggestion] = useState(false)
   const [historyPage, setHistoryPage] = useState(1)
   const [skuPage, setSkuPage] = useState(1)
-  const [labelsPerPage, setLabelsPerPage] = useState(8)
+  const [labelsPerPage, setLabelsPerPage] = useState(20)
   const [skuSearch, setSkuSearch] = useState("")
   const [selectedSkuItems, setSelectedSkuItems] = useState<Item[]>([])
   const [hasAppliedSkuSelection, setHasAppliedSkuSelection] = useState(false)
@@ -576,38 +576,13 @@ export default function TemplatesSettingsPage() {
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="labels-per-page">Labels per page</Label>
-                  <div className="flex items-center gap-3">
-                    <Input
-                      id="labels-per-page"
-                      type="number"
-                      min={MIN_SKU_LABELS_PER_PAGE}
-                      max={MAX_SKU_LABELS_PER_PAGE}
-                      step={1}
-                      value={labelsPerPage}
-                      onChange={(event) => {
-                        const nextValue = Number(event.target.value)
-
-                        if (Number.isNaN(nextValue)) {
-                          setLabelsPerPage(MIN_SKU_LABELS_PER_PAGE)
-                          return
-                        }
-
-                        setLabelsPerPage(
-                          Math.min(
-                            MAX_SKU_LABELS_PER_PAGE,
-                            Math.max(MIN_SKU_LABELS_PER_PAGE, Math.floor(nextValue)),
-                          ),
-                        )
-                      }}
-                      className="w-28"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Min {MIN_SKU_LABELS_PER_PAGE}, max {MAX_SKU_LABELS_PER_PAGE}
-                    </p>
-                  </div>
-                </div>
+                <Alert>
+                  <ShieldAlert className="h-4 w-4" />
+                  <AlertTitle>Labels per page fixed</AlertTitle>
+                  <AlertDescription>
+                    SKU label printing is fixed at {MIN_SKU_LABELS_PER_PAGE} labels per page for consistent output.
+                  </AlertDescription>
+                </Alert>
 
                 {isLoadingItems ? (
                   <div className="flex items-center justify-center py-12 text-muted-foreground">
