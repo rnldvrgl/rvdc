@@ -106,7 +106,7 @@ const DashboardPage = () => {
                     )}
 
                     {/* Sub Stall Settlement for Manager */}
-                    {role === "manager" && (
+                    {role === "manager" || role === "clerk" && (
                       <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
                         <SubStallSettlement />
                       </WidgetErrorBoundary>
