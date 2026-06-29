@@ -4,9 +4,11 @@ import { ModeToggle } from "@/components/custom/theme/ModeToggle";
 
 export default function AuthPage() {
 	return (
-		<div className="min-h-screen flex items-center justify-center p-4 relative">
+		<div className="relative flex min-h-dvh items-center justify-center p-4">
 			<Background />
-			<ModeToggle className="absolute right-10 top-8" />
+			<div className="absolute inset-x-0 top-0 flex justify-end p-4 sm:p-6">
+				<ModeToggle />
+			</div>
 			<div className="relative z-10 w-full max-w-md">
 				<LoginForm />
 			</div>

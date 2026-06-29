@@ -1,10 +1,17 @@
 "use client"
 
+import { BrandLockup } from "@/components/custom/shared/BrandLockup"
 import { PasswordField } from "@/components/custom/inputs/PasswordInput"
 import { DeveloperCredit } from "@/components/custom/shared/DeveloperCredit"
 import { Spinner } from "@/components/custom/shared/Spinner"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Form,
@@ -43,31 +50,19 @@ export function LoginForm() {
 
   return (
     <div className="w-full space-y-6">
-      {/* Brand Header */}
-      <div className="text-center space-y-4">
-        <div className="mx-auto w-20 h-20 bg-linear-to-br from-purple-700 via-violet-700 to-purple-800 dark:from-purple-500 dark:via-violet-500 dark:to-purple-600 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/25 relative overflow-hidden">
-          <div className="absolute inset-2 bg-white/5 rounded-xl flex items-center justify-center backdrop-blur-sm">
-            <Snowflake className="w-6 h-6 text-white" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold bg-linear-to-r from-purple-700 via-violet-700 to-purple-800 dark:from-purple-500 dark:via-violet-500 dark:to-purple-600 bg-clip-text text-transparent">
-            RVDC
-          </h1>
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            Refrigeration & Air Conditioning Services
-          </p>
-        </div>
-      </div>
+      <BrandLockup
+        title="RVDC"
+        description="Refrigeration & Air Conditioning Services"
+        icon={Snowflake}
+      />
 
-      {/* Main Login Card */}
-      <Card className="shadow-lg border-slate-200 dark:border-slate-800">
+      <Card className="border-border/60 shadow-lg">
         <CardHeader className="text-center">
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-foreground">Sign In</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+          <div className="space-y-1">
+            <CardTitle className="text-lg">Sign In</CardTitle>
+            <CardDescription className="text-xs">
               Access your dashboard
-            </p>
+            </CardDescription>
           </div>
         </CardHeader>
 
@@ -102,14 +97,12 @@ export function LoginForm() {
                 )}
               />
 
-              <div className="space-y-2">
-                <PasswordField
-                  name="password"
-                  placeholder="Enter your password"
-                  disabled={isSubmitting}
-                  label="Password"
-                />
-              </div>
+              <PasswordField
+                name="password"
+                placeholder="Enter your password"
+                disabled={isSubmitting}
+                label="Password"
+              />
 
               <FormField
                 control={control}
@@ -136,7 +129,7 @@ export function LoginForm() {
 
               <Button
                 type="submit"
-                className="w-full bg-linear-to-r from-purple-700 via-violet-700 to-purple-800 dark:from-purple-500 dark:via-violet-500 dark:to-purple-600 text-white font-medium py-2.5 transition-all duration-200 shadow-md hover:shadow-lg"
+                className="w-full font-medium"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -155,7 +148,7 @@ export function LoginForm() {
           </Form>
 
           {/* Security Footer */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="border-t border-border/60 pt-4">
             <div className="flex items-center justify-center gap-2">
               <Shield className="w-4 h-4 text-success" />
               <span className="text-xs text-muted-foreground">

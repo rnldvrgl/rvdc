@@ -4,6 +4,8 @@ import { ChangelogBanner } from "@/components/custom/changelog/ChangelogBanner"
 import { Navbar } from "@/components/custom/navigation/Navbar"
 import { Sidebar } from "@/components/custom/navigation/Sidebar"
 import { Background } from "@/components/custom/shared/Background"
+import { MaintenanceState } from "@/components/layout/maintenance-state"
+import { PushNotificationBanner } from "@/components/layout/push-notification-banner"
 import { PendingActions } from "@/components/custom/shared/PendingActions"
 import { ScrollToTop } from "@/components/custom/shared/ScrollToTop"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -15,8 +17,6 @@ import { useUserProfile } from "@/lib/queries/useUserProfile"
 // import useChatStore from "@/lib/store/useChatStore"
 import useUserProfileStore from "@/lib/store/useUserProfileStore"
 import { cn } from "@/lib/utils/helpers"
-import { SHOP_INFO } from "@/lib/constants/meta"
-import { Wrench } from "lucide-react"
 import React, { useEffect } from "react"
 
 export default function MainLayout({
@@ -63,43 +63,12 @@ export default function MainLayout({
             <Background />
 
             {pushPermission === "default" && !pushSubscribed && (
-                <div className="mx-4 mt-3 rounded-xl border border-border/60 bg-muted/60 px-4 py-3 text-sm flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                        <p className="font-medium text-foreground">Enable push notifications</p>
-                        <p className="text-xs text-muted-foreground">
-                            Click once to let the browser ask for notification permission.
-                        </p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => void enablePushNotifications()}
-                        className="shrink-0 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15 transition-colors"
-                    >
-                        Enable
-                    </button>
-                </div>
+                <PushNotificationBanner onEnable={() => void enablePushNotifications()} />
             )}
 
             {/* Maintenance screen for non-admin users */}
             {inMaintenance && (
-                <div className="min-h-screen flex items-center justify-center p-6">
-                    <div className="max-w-sm w-full flex flex-col items-center text-center gap-5">
-                        <div className="size-18 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center">
-                            <Wrench className="size-8 text-primary" strokeWidth={1.5} />
-                        </div>
-                        <div className="space-y-2">
-                            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                                Under Maintenance
-                            </h1>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                                We&rsquo;re making improvements to the system. We&rsquo;ll be
-                                back up shortly. Thank you for your patience.
-                            </p>
-                        </div>
-                        <div className="w-full border-t border-border/40" />
-                        <p className="text-xs text-muted-foreground/50">{SHOP_INFO.name}</p>
-                    </div>
-                </div>
+                <MaintenanceState />
             )}
 
             {/* Normal layout — hidden during maintenance */}
