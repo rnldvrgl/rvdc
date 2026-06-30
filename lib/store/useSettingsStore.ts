@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
+import { AppThemeId, DEFAULT_APP_THEME } from "@/lib/constants/theme"
 
 export const DEFAULT_SOUND_VOLUME = 0.5 // 50% by default
 export const DEFAULT_LANDING_PAGE = "/dashboard"
@@ -9,6 +10,7 @@ type UserSettings = {
   soundVolume: number // 0–1
   landingPage: string
   showChangelogBanner: boolean
+  theme: AppThemeId
 }
 
 export interface SettingsStore {
@@ -19,6 +21,8 @@ export interface SettingsStore {
   getLandingPage: (userId: number) => string
   setShowChangelogBanner: (userId: number, show: boolean) => void
   getShowChangelogBanner: (userId: number) => boolean
+  setTheme: (userId: number, theme: AppThemeId) => void
+  getTheme: (userId: number) => AppThemeId
 }
 
 const useSettingsStore = create<SettingsStore>()(
@@ -64,6 +68,18 @@ const useSettingsStore = create<SettingsStore>()(
         })),
       getShowChangelogBanner: (userId) =>
         get().byUser[userId]?.showChangelogBanner ?? DEFAULT_SHOW_CHANGELOG_BANNER,
+
+      setTheme: (userId, theme) =>
+        set((state) => ({
+          byUser: {
+            ...state.byUser,
+            [userId]: {
+              ...(state.byUser[userId] ?? {}),
+              theme,
+            },
+          },
+        })),
+      getTheme: (userId) => get().byUser[userId]?.theme ?? DEFAULT_APP_THEME,
     }),
     {
       name: "user-settings-storage",

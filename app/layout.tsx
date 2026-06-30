@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@/lib/providers/theme-provider"
+import { AppThemeApplier } from "@/lib/providers/app-theme-applier"
 
 import { ResponsiveToaster } from "@/components/layout/responsive-toaster"
 import { SHOP_INFO } from "@/lib/constants/meta"
@@ -73,6 +74,7 @@ export default function RootLayout({
                         defaultTheme="dark"
                         disableTransitionOnChange
                     >
+                            <AppThemeApplier />
                         {children}
                         <ResponsiveToaster closeButton />
                     </ThemeProvider>
