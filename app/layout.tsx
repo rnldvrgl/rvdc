@@ -76,7 +76,7 @@ export default function RootLayout({
                     >
                         <AppThemeApplier />
                         {children}
-                        <ResponsiveToaster closeButton />
+                        <ResponsiveToaster desktopPosition="bottom-right" closeButton />
                     </ThemeProvider>
                 </QueryClientContextProvider>
             </body>
