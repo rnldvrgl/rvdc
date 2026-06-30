@@ -21,7 +21,7 @@ import { ConfirmAlert } from "@/components/custom/shared/ConfirmAlert"
 import { Button } from "@/components/ui/button"
 import { User } from "@/lib/constants/interface"
 import { userProfileSchema } from "@/lib/constants/schema"
-import { APP_THEME_IDS, APP_THEMES, DEFAULT_APP_THEME } from "@/lib/constants/theme"
+import { APP_THEME_OPTIONS, DEFAULT_APP_THEME } from "@/lib/constants/theme"
 import { TUserProfile, UserProfilePayload } from "@/lib/constants/types"
 import useFileUpload from "@/lib/hooks/useFileUpload"
 import { useProfileSettingMutations } from "@/lib/mutations/useProfileSettingMutations"
@@ -574,15 +574,14 @@ export default function SettingsPage() {
                                 <span className="text-sm font-medium">Theme</span>
                             </div>
                             <div className="grid grid-cols-1 gap-2">
-                                {APP_THEME_IDS.map((themeId) => {
-                                    const theme = APP_THEMES[themeId]
-                                    const isSelected = selectedTheme === themeId
+                                {APP_THEME_OPTIONS.map((theme) => {
+                                    const isSelected = selectedTheme === theme.id
 
                                     return (
                                         <button
-                                            key={themeId}
+                                            key={theme.id}
                                             type="button"
-                                            onClick={() => userId && setTheme(userId, themeId)}
+                                            onClick={() => userId && setTheme(userId, theme.id)}
                                             className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-left transition-colors cursor-pointer ${isSelected
                                                     ? "border-primary bg-primary/10 text-primary"
                                                     : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"

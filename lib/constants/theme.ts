@@ -16,6 +16,13 @@ export type AppThemeDefinition = {
   previewClassName: string
 }
 
+export type AppThemeOption = {
+  id: AppThemeId
+  label: string
+  description: string
+  previewClassName: string
+}
+
 const SHARED_LIGHT_TOKENS: AppThemeVariables = {
   "--success": "oklch(0.5363 0.1304 150.0674)",
   "--success-foreground": "oklch(1.0000 0 0)",
@@ -406,6 +413,121 @@ export const APP_THEMES: Record<AppThemeId, AppThemeDefinition> = {
     },
     previewClassName: "bg-[oklch(0.6420_0.1691_38.5815)]",
   },
+  cappuccino: {
+    label: "Cappuccino",
+    description: "Warm coffee tones with a soft, clean contrast.",
+    light: {
+      "--background": "oklch(0.9902 0.0039 106.4713)",
+      "--foreground": "oklch(0.2931 0 0)",
+      "--card": "oklch(1.0000 0 0)",
+      "--card-foreground": "oklch(0.2931 0 0)",
+      "--popover": "oklch(1.0000 0 0)",
+      "--popover-foreground": "oklch(0.2931 0 0)",
+      "--primary": "oklch(0.4620 0.0713 255.5442)",
+      "--primary-foreground": "oklch(1.0000 0 0)",
+      "--secondary": "oklch(0.6835 0.1676 34.7009)",
+      "--secondary-foreground": "oklch(1.0000 0 0)",
+      "--muted": "oklch(0.9579 0.0029 264.5418)",
+      "--muted-foreground": "oklch(0.5103 0 0)",
+      "--accent": "oklch(0.9476 0.0190 192.8095)",
+      "--accent-foreground": "oklch(0.3755 0.0700 176.3952)",
+      "--destructive": "oklch(0.5849 0.1598 23.4268)",
+      "--destructive-foreground": "oklch(1.0000 0 0)",
+      "--border": "oklch(0.9128 0 0)",
+      "--input": "oklch(1.0000 0 0)",
+      "--ring": "oklch(0.4620 0.0713 255.5442)",
+      "--chart-1": "oklch(0.4620 0.0713 255.5442)",
+      "--chart-2": "oklch(0.6835 0.1676 34.7009)",
+      "--chart-3": "oklch(0.6304 0.1013 183.0314)",
+      "--chart-4": "oklch(0.8342 0.1170 87.4275)",
+      "--chart-5": "oklch(0.7806 0.1269 57.8557)",
+      "--sidebar": "oklch(0.9816 0.0017 247.8390)",
+      "--sidebar-foreground": "oklch(0.3211 0 0)",
+      "--sidebar-primary": "oklch(0.4620 0.0713 255.5442)",
+      "--sidebar-primary-foreground": "oklch(1.0000 0 0)",
+      "--sidebar-accent": "oklch(0.9417 0.0052 247.8790)",
+      "--sidebar-accent-foreground": "oklch(0.4620 0.0713 255.5442)",
+      "--sidebar-border": "oklch(0.9109 0.0070 247.9014)",
+      "--sidebar-ring": "oklch(0.4620 0.0713 255.5442)",
+      "--font-sans": "'Inter', 'Source Sans Pro', system-ui, sans-serif",
+      "--font-serif": "'Merriweather', 'Georgia', serif",
+      "--font-mono": "'JetBrains Mono', monospace",
+      "--radius": "0.5rem",
+      "--shadow-x": "0px",
+      "--shadow-y": "4px",
+      "--shadow-blur": "10px",
+      "--shadow-spread": "0px",
+      "--shadow-opacity": "0.05",
+      "--shadow-color": "#000000",
+      "--shadow-2xs": "0px 4px 10px 0px hsl(0 0% 0% / 0.03)",
+      "--shadow-xs": "0px 4px 10px 0px hsl(0 0% 0% / 0.03)",
+      "--shadow-sm": "0px 4px 10px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05)",
+      "--shadow": "0px 4px 10px 0px hsl(0 0% 0% / 0.05), 0px 1px 2px -1px hsl(0 0% 0% / 0.05)",
+      "--shadow-md": "0px 4px 10px 0px hsl(0 0% 0% / 0.05), 0px 2px 4px -1px hsl(0 0% 0% / 0.05)",
+      "--shadow-lg": "0px 4px 10px 0px hsl(0 0% 0% / 0.05), 0px 4px 6px -1px hsl(0 0% 0% / 0.05)",
+      "--shadow-xl": "0px 4px 10px 0px hsl(0 0% 0% / 0.05), 0px 8px 10px -1px hsl(0 0% 0% / 0.05)",
+      "--shadow-2xl": "0px 4px 10px 0px hsl(0 0% 0% / 0.13)",
+      "--tracking-normal": "0.01em",
+      "--spacing": "0.25rem",
+      ...SHARED_LIGHT_TOKENS,
+    },
+    dark: {
+      "--background": "oklch(0.2223 0.0060 271.1393)",
+      "--foreground": "oklch(0.8945 0 0)",
+      "--card": "oklch(0.2696 0.0093 276.7573)",
+      "--card-foreground": "oklch(0.8945 0 0)",
+      "--popover": "oklch(0.2696 0.0093 276.7573)",
+      "--popover-foreground": "oklch(0.8945 0 0)",
+      "--primary": "oklch(0.7473 0.1296 272.2661)",
+      "--primary-foreground": "oklch(0.2223 0.0060 271.1393)",
+      "--secondary": "oklch(0.8169 0.1032 19.5306)",
+      "--secondary-foreground": "oklch(0.2223 0.0060 271.1393)",
+      "--muted": "oklch(0.3012 0.0094 268.3558)",
+      "--muted-foreground": "oklch(0.6595 0.0063 264.5196)",
+      "--accent": "oklch(0.3479 0.0112 264.4193)",
+      "--accent-foreground": "oklch(0.8945 0 0)",
+      "--destructive": "oklch(0.6324 0.2144 25.8414)",
+      "--destructive-foreground": "oklch(1.0000 0 0)",
+      "--border": "oklch(0.3479 0.0112 264.4193)",
+      "--input": "oklch(0.2696 0.0093 276.7573)",
+      "--ring": "oklch(0.7473 0.1296 272.2661)",
+      "--chart-1": "oklch(0.7180 0.1422 246.0609)",
+      "--chart-2": "oklch(0.8408 0.1298 170.1062)",
+      "--chart-3": "oklch(0.7616 0.1686 57.8012)",
+      "--chart-4": "oklch(0.6239 0.2251 318.9092)",
+      "--chart-5": "oklch(0.8069 0.1674 78.1210)",
+      "--sidebar": "oklch(0.1955 0.0043 264.4688)",
+      "--sidebar-foreground": "oklch(0.8142 0.0043 271.3597)",
+      "--sidebar-primary": "oklch(0.7473 0.1296 272.2661)",
+      "--sidebar-primary-foreground": "oklch(0.2223 0.0060 271.1393)",
+      "--sidebar-accent": "oklch(0.3012 0.0094 268.3558)",
+      "--sidebar-accent-foreground": "oklch(1.0000 0 0)",
+      "--sidebar-border": "oklch(0.3479 0.0112 264.4193)",
+      "--sidebar-ring": "oklch(0.7473 0.1296 272.2661)",
+      "--font-sans": "'Inter', 'Source Sans Pro', system-ui, sans-serif",
+      "--font-serif": "'Merriweather', 'Georgia', serif",
+      "--font-mono": "'JetBrains Mono', monospace",
+      "--radius": "0.5rem",
+      "--shadow-x": "0px",
+      "--shadow-y": "8px",
+      "--shadow-blur": "15px",
+      "--shadow-spread": "0px",
+      "--shadow-opacity": "0.3",
+      "--shadow-color": "#000000",
+      "--shadow-2xs": "0px 8px 15px 0px hsl(0 0% 0% / 0.15)",
+      "--shadow-xs": "0px 8px 15px 0px hsl(0 0% 0% / 0.15)",
+      "--shadow-sm": "0px 8px 15px 0px hsl(0 0% 0% / 0.30), 0px 1px 2px -1px hsl(0 0% 0% / 0.30)",
+      "--shadow": "0px 8px 15px 0px hsl(0 0% 0% / 0.30), 0px 1px 2px -1px hsl(0 0% 0% / 0.30)",
+      "--shadow-md": "0px 8px 15px 0px hsl(0 0% 0% / 0.30), 0px 2px 4px -1px hsl(0 0% 0% / 0.30)",
+      "--shadow-lg": "0px 8px 15px 0px hsl(0 0% 0% / 0.30), 0px 4px 6px -1px hsl(0 0% 0% / 0.30)",
+      "--shadow-xl": "0px 8px 15px 0px hsl(0 0% 0% / 0.30), 0px 8px 10px -1px hsl(0 0% 0% / 0.30)",
+      "--shadow-2xl": "0px 8px 15px 0px hsl(0 0% 0% / 0.75)",
+      "--tracking-normal": "0.01em",
+      "--spacing": "0.25rem",
+      ...SHARED_DARK_TOKENS,
+    },
+    previewClassName: "bg-[oklch(0.4620_0.0713_255.5442)]",
+  },
   "astro-vista": {
     label: "Astro Vista",
     description: "Sharp contrast with a vivid editorial feel.",
@@ -518,6 +640,17 @@ export const APP_THEMES: Record<AppThemeId, AppThemeDefinition> = {
 } as const
 
 export const APP_THEME_IDS = Object.keys(APP_THEMES) as AppThemeId[]
+
+export const APP_THEME_OPTIONS: AppThemeOption[] = APP_THEME_IDS.map((id) => {
+  const theme = APP_THEMES[id]
+
+  return {
+    id,
+    label: theme.label,
+    description: theme.description,
+    previewClassName: theme.previewClassName,
+  }
+})
 
 export const CHART_PALETTE = [
   "var(--chart-1)",
