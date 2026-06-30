@@ -74,7 +74,7 @@ export default function RootLayout({
                         defaultTheme="dark"
                         disableTransitionOnChange
                     >
-                            <AppThemeApplier />
+                        <AppThemeApplier />
                         {children}
                         <ResponsiveToaster closeButton />
                     </ThemeProvider>
