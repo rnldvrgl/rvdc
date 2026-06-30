@@ -526,8 +526,8 @@ export default function SettingsPage() {
                                             type="button"
                                             onClick={() => setSidebarCollapsed(value)}
                                             className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer ${sidebarCollapsed === value
-                                                    ? "border-primary bg-primary/10 text-primary"
-                                                    : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                ? "border-primary bg-primary/10 text-primary"
+                                                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                                 }`}
                                         >
                                             {label}
@@ -556,8 +556,8 @@ export default function SettingsPage() {
                                         type="button"
                                         onClick={() => userId && setLandingPage(userId, value)}
                                         className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer text-left ${landingPage === value
-                                                ? "border-primary bg-primary/10 text-primary"
-                                                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            ? "border-primary bg-primary/10 text-primary"
+                                            : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                             }`}
                                     >
                                         {label}
@@ -583,8 +583,8 @@ export default function SettingsPage() {
                                             type="button"
                                             onClick={() => userId && setTheme(userId, theme.id)}
                                             className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-left transition-colors cursor-pointer ${isSelected
-                                                    ? "border-primary bg-primary/10 text-primary"
-                                                    : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                ? "border-primary bg-primary/10 text-primary"
+                                                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                                 }`}
                                         >
                                             <span
@@ -627,8 +627,8 @@ export default function SettingsPage() {
                                         onClick={handleEnablePush}
                                         disabled={pushLoading || (pushPermission === "granted" && pushSubscribed)}
                                         className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${pushSubscribed
-                                                ? "border-primary bg-primary/10 text-primary"
-                                                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            ? "border-primary bg-primary/10 text-primary"
+                                            : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                             }`}
                                     >
                                         {pushLoading && !pushSubscribed ? "Enabling…" : "Enabled"}
@@ -638,8 +638,8 @@ export default function SettingsPage() {
                                         onClick={handleDisablePush}
                                         disabled={pushLoading || !pushSubscribed}
                                         className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${!pushSubscribed
-                                                ? "border-primary bg-primary/10 text-primary"
-                                                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            ? "border-primary bg-primary/10 text-primary"
+                                            : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                             }`}
                                     >
                                         {pushLoading && pushSubscribed ? "Disabling…" : "Disabled"}
@@ -663,8 +663,8 @@ export default function SettingsPage() {
                                             type="button"
                                             onClick={() => userId && setShowChangelogBanner(userId, value)}
                                             className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer ${showChangelogBanner === value
-                                                    ? "border-primary bg-primary/10 text-primary"
-                                                    : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                ? "border-primary bg-primary/10 text-primary"
+                                                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                                 }`}
                                         >
                                             {label}
@@ -690,8 +690,8 @@ export default function SettingsPage() {
                                                 type="button"
                                                 onClick={() => setWeekStartsOn(value)}
                                                 className={`flex-1 rounded-lg border px-2 py-1.5 text-xs font-medium transition-colors cursor-pointer ${calendarPrefs.weekStartsOn === value
-                                                        ? "border-primary bg-primary/10 text-primary"
-                                                        : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                    ? "border-primary bg-primary/10 text-primary"
+                                                    : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
                                                     }`}
                                             >
                                                 {label}
