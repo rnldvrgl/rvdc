@@ -422,7 +422,7 @@ export const sectionedNavigation: NavigationSection[] = [
       baseNavigation.templates,
       baseNavigation.applianceTypes,
       baseNavigation.bulkUpdate,
-      baseNavigation.surveillance,
+    //   baseNavigation.surveillance,
       baseNavigation.system,
     ],
   },

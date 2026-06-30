@@ -1,3 +1,5 @@
+import { EventType } from "@/components/custom/shared/calendar/DashboardCalendar"
+import { Roles } from "@/lib/constants/types"
 import { makeFormattedRange } from "@/lib/utils/helpers/date"
 
 export const ROLES = [
@@ -75,3 +77,23 @@ export const STALE_TIME = {
   /** Infinity — immutable reference data (PSGC geodata) */
   IMMUTABLE: Infinity,
 } as const
+
+export const ROLE_DESCRIPTIONS: Record<Roles, string> = {
+    admin: "Monitor your business performance with real-time analytics, sales metrics, and operational insights.",
+    manager: "View key performance indicators and metrics to help manage your team's productivity and efficiency.",
+    technician: "Access your personal performance metrics and stay updated with your tasks and schedules.",
+    clerk: "Access essential business metrics and reports to assist in daily operations and record-keeping.",
+    guest: "Welcome to the dashboard. Please contact your administrator for access.",
+}
+
+export const NON_ADMIN_CALENDAR_EVENTS: EventType[] = [
+    "birthday",
+    "custom_event",
+    "holiday",
+    "half_day",
+    "shop_closed",
+    "leave",
+]
+
+export const RECENT_ITEMS_KEY = "rvdc_recent_sale_items"
+export const MAX_RECENT_ITEMS = 8

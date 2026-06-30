@@ -7,12 +7,75 @@ import { useUserProfile } from "@/lib/queries/useUserProfile"
 import { Cake, Gift, PartyPopper, X } from "lucide-react"
 import { useEffect, useState } from "react"
 
+const confettiLeftClasses = [
+    "left-[2%]",
+    "left-[8%]",
+    "left-[14%]",
+    "left-[20%]",
+    "left-[26%]",
+    "left-[32%]",
+    "left-[38%]",
+    "left-[44%]",
+    "left-[50%]",
+    "left-[56%]",
+    "left-[62%]",
+    "left-[68%]",
+    "left-[74%]",
+    "left-[80%]",
+    "left-[86%]",
+    "left-[92%]",
+] as const
+
+const confettiDelayClasses = [
+    "[animation-delay:0s]",
+    "[animation-delay:0.15s]",
+    "[animation-delay:0.3s]",
+    "[animation-delay:0.45s]",
+    "[animation-delay:0.6s]",
+    "[animation-delay:0.75s]",
+    "[animation-delay:0.9s]",
+    "[animation-delay:1.05s]",
+] as const
+
+const confettiDurationClasses = [
+    "animation-duration-[2.4s]",
+    "animation-duration-[2.8s]",
+    "animation-duration-[3.2s]",
+] as const
+
+const emojiDelayClasses = [
+    "[animation-delay:0s]",
+    "[animation-delay:0.15s]",
+    "[animation-delay:0.3s]",
+    "[animation-delay:0.45s]",
+    "[animation-delay:0.6s]",
+] as const
+
+const celebrationBalloonDelayClass = "[animation-delay:0.2s]"
+
+const celebrationSpinDelayClasses = [
+    "[animation-delay:0s]",
+    "[animation-delay:0.2s]",
+    "[animation-delay:0.4s]",
+    "[animation-delay:0.6s]",
+] as const
+
+const confettiColors = CHART_PALETTE.map((color) => `bg-[${color}]`)
+
+type ConfettiPiece = {
+    id: number
+    leftClass: string
+    delayClass: string
+    durationClass: string
+    colorClass: string
+}
+
 export function BirthdayGreeting() {
     const { data: profile } = useUserProfile()
     const { data: settings } = useSystemSettings()
     const [showGreeting, setShowGreeting] = useState(false)
     const [confetti, setConfetti] = useState<
-        Array<{ id: number; left: number; delay: number; duration: number }>
+        ConfettiPiece[]
     >([])
 
     useEffect(() => {
@@ -37,9 +100,16 @@ export function BirthdayGreeting() {
             // Generate confetti
             const confettiArray = Array.from({ length: 50 }, (_, i) => ({
                 id: i,
-                left: Math.random() * 100,
-                delay: Math.random() * 2,
-                duration: 3 + Math.random() * 2,
+                leftClass:
+                    confettiLeftClasses[Math.floor(Math.random() * confettiLeftClasses.length)],
+                delayClass:
+                    confettiDelayClasses[Math.floor(Math.random() * confettiDelayClasses.length)],
+                durationClass:
+                    confettiDurationClasses[
+                    Math.floor(Math.random() * confettiDurationClasses.length)
+                    ],
+                colorClass:
+                    confettiColors[Math.floor(Math.random() * confettiColors.length)],
             }))
             setConfetti(confettiArray)
         }
@@ -148,8 +218,7 @@ export function BirthdayGreeting() {
                         <Cake className="size-10 sm:size-12 md:size-16 text-pink-500 animate-bounce" />
                         <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2">
                             <PartyPopper
-                                className="size-5 sm:size-6 md:size-8 text-yellow-500 animate-spin"
-                                style={{ animationDuration: "3s" }}
+                                className="size-5 sm:size-6 md:size-8 text-yellow-500 animate-spin animation-duration-[3s]"
                             />
                         </div>
                     </div>
@@ -186,8 +255,7 @@ export function BirthdayGreeting() {
                         {emojiList.map((emoji, index) => (
                             <span
                                 key={index}
-                                className="animate-bounce"
-                                style={{ animationDelay: `${index * 0.1}s` }}
+                                className={`animate-bounce [animation-delay:${index * 0.1}s]`}
                             >
                                 {emoji}
                             </span>
@@ -290,8 +358,7 @@ export function BirthdayGreeting() {
                         <Cake className="size-12 sm:size-16 md:size-20 text-yellow-400 animate-bounce drop-shadow-lg" />
                         <Gift className="size-12 sm:size-16 md:size-20 text-pink-400 animate-pulse drop-shadow-lg" />
                         <PartyPopper
-                            className="size-12 sm:size-16 md:size-20 text-purple-400 animate-bounce drop-shadow-lg"
-                            style={{ animationDelay: "0.2s" }}
+                            className={`size-12 sm:size-16 md:size-20 text-purple-400 animate-bounce drop-shadow-lg ${celebrationBalloonDelayClass}`}
                         />
                     </div>
 
@@ -321,11 +388,7 @@ export function BirthdayGreeting() {
                             {emojiList.map((emoji, index) => (
                                 <span
                                     key={index}
-                                    className="animate-bounce drop-shadow-lg"
-                                    style={{
-                                        animationDelay: `${index * 0.15}s`,
-                                        animationDuration: "1s",
-                                    }}
+                                    className={`animate-bounce drop-shadow-lg ${emojiDelayClasses[index % emojiDelayClasses.length]} animation-duration-[1s]`}
                                 >
                                     {emoji}
                                 </span>
@@ -442,11 +505,7 @@ export function BirthdayGreeting() {
                         {[...Array(5)].map((_, i) => (
                             <div
                                 key={i}
-                                className="text-2xl sm:text-3xl md:text-4xl animate-bounce"
-                                style={{
-                                    animationDelay: `${i * 0.1}s`,
-                                    animationDuration: "0.6s",
-                                }}
+                                className={`text-2xl sm:text-3xl md:text-4xl animate-bounce ${celebrationBalloonDelayClass} animation-duration-[0.6s]`}
                             >
                                 🎈
                             </div>
@@ -469,8 +528,7 @@ export function BirthdayGreeting() {
                             </div>
                         )}
                         <h1
-                            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg transform -rotate-1 px-2 sm:px-0"
-                            style={{ fontFamily: "Comic Sans MS, cursive" }}
+                            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white drop-shadow-lg transform -rotate-1 px-2 sm:px-0 font-[Comic_Sans_MS,cursive]"
                         >
                             {settings?.birthday_greeting_title || "Happy Birthday!"}
                         </h1>
@@ -491,13 +549,7 @@ export function BirthdayGreeting() {
                             {emojiList.map((emoji, index) => (
                                 <div
                                     key={index}
-                                    className="text-3xl sm:text-4xl md:text-5xl animate-spin"
-                                    style={{
-                                        animationDelay: `${index * 0.2}s`,
-                                        animationDuration: "3s",
-                                        animationIterationCount: "infinite",
-                                        animationDirection: index % 2 === 0 ? "normal" : "reverse",
-                                    }}
+                                    className={`text-3xl sm:text-4xl md:text-5xl animate-spin ${celebrationSpinDelayClasses[index % celebrationSpinDelayClasses.length]} animation-duration-[3s]`}
                                 >
                                     {emoji}
                                 </div>
@@ -542,14 +594,7 @@ export function BirthdayGreeting() {
                     {confetti.map((conf) => (
                         <div
                             key={conf.id}
-                            className="absolute top-0 w-2 h-2 rounded-full animate-fall"
-                            style={{
-                                left: `${conf.left}%`,
-                                animationDelay: `${conf.delay}s`,
-                                animationDuration: `${conf.duration}s`,
-                                backgroundColor:
-                                    CHART_PALETTE[Math.floor(Math.random() * CHART_PALETTE.length)],
-                            }}
+                            className={`absolute top-0 size-2 rounded-full animate-fall ${conf.leftClass} ${conf.delayClass} ${conf.durationClass} ${conf.colorClass}`}
                         />
                     ))}
                 </div>

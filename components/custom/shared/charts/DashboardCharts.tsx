@@ -38,7 +38,7 @@ const ChartCard = ({
         whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
     >
         <Card className="overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow duration-300 bg-card h-full">
-            <CardHeader className="pb-4 border-b border-border px-4 sm:px-6">
+            <CardHeader className="border-b border-border ">
                 <CardTitle className="text-sm sm:text-base font-semibold flex items-center gap-3">
                     {Icon && (
                         <div className="p-2 rounded-lg bg-primary/10">
@@ -55,7 +55,7 @@ const ChartCard = ({
                     </div>
                 </CardTitle>
             </CardHeader>
-            <CardContent className="h-80 p-5">
+            <CardContent className="h-80">
                 <AnimatePresence mode="wait">
                     {isLoading ? (
                         <motion.div
@@ -119,7 +119,7 @@ export default function DashboardCharts() {
                 <motion.div
                     whileHover={{ y: -4, transition: { duration: 0.2, ease: "easeOut" } }}
                 >
-                    <Card className="overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow duration-300 bg-card h-full">
+                    <Card className="overflow-hidden border border-border shadow-sm hover:shadow-md transition-shadow duration-300 h-full">
                         <CardHeader className="pb-4 border-b border-border px-4 sm:px-6">
                             <CardTitle className="text-sm sm:text-base font-semibold flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                                 <div className="flex items-center gap-3 min-w-0">

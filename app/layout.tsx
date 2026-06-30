@@ -4,23 +4,19 @@ import { ResponsiveToaster } from "@/components/layout/responsive-toaster"
 import { SHOP_INFO } from "@/lib/constants/meta"
 import { APP_THEME } from "@/lib/constants/theme"
 import { QueryClientContextProvider } from "@/lib/providers/client-query-provider"
-import { Poppins, Roboto_Mono } from "next/font/google"
 import NextTopLoader from "nextjs-toploader"
+import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css"
 
-const poppins = Poppins({
+const fontSans = Plus_Jakarta_Sans({
     subsets: ["latin"],
-    weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-    display: "swap",
-    variable: "--font-poppins",
-})
+    variable: "--font-sans",
+});
 
-const roboto = Roboto_Mono({
+const fontMono = Geist_Mono({
     subsets: ["latin"],
-    weight: ["100", "200", "300", "400", "500", "600", "700"],
-    display: "swap",
-    variable: "--font-roboto",
-})
+    variable: "--font-mono",
+});
 
 export const metadata = {
     title: SHOP_INFO.name,
@@ -59,7 +55,7 @@ export default function RootLayout({
                 />
             </head>
             <body
-                className={`${poppins.variable} ${roboto.variable} font-poppins antialiased`}
+                className={`${fontSans.variable} ${fontMono.variable} font-mono antialiased`}
             >
                 <NextTopLoader
                     color={APP_THEME.loaderColor}
