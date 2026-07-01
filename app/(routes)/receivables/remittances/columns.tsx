@@ -40,11 +40,9 @@ export function getRemittanceColumns({
             accessorKey: "created_at",
             header: withTooltipHeader("Date", "Remittance date"),
             cell: ({ getValue }) =>
-                safeCell(
-                    getValue()
-                        ? formatDate(getValue() as Date, "EEE, MMM dd yyyy")
-                        : null,
-                ),
+                getValue()
+                    ? <span className="font-mono tabular-nums">{formatDate(getValue() as Date, "EEE, MMM dd yyyy")}</span>
+                    : "—",
             enableSorting: true,
         },
 
@@ -157,11 +155,11 @@ export function getRemittanceColumns({
             cell: ({ row }) => {
                 const balance = Number(row.original.balance)
                 if (balance > 0) {
-                    return <Badge variant="warning">Over {formatCurrency(balance)}</Badge>
+                    return <Badge variant="warning" className="font-mono tabular-nums">Over {formatCurrency(balance)}</Badge>
                 }
                 if (balance < 0) {
                     return (
-                        <Badge variant="destructive">
+                        <Badge variant="destructive" className="font-mono tabular-nums">
                             Short {formatCurrency(Math.abs(balance))}
                         </Badge>
                     )
