@@ -33,7 +33,7 @@ import { useSidebarCollapse } from "@/lib/hooks/useSidebarCollapse"
 import { normalizeProfileImage } from "@/lib/utils/helpers"
 import api from "@/lib/utils/api"
 import { formatDate } from "@/lib/utils/helpers/date"
-import { RefreshCw, RotateCcw } from "lucide-react"
+import {  RotateCcw } from "lucide-react"
 import useSettingsStore, { DEFAULT_SOUND_VOLUME, SettingsStore } from "@/lib/store/useSettingsStore"
 import { Badge } from "@/components/ui/badge"
 

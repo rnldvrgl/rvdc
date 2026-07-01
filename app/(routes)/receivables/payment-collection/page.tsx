@@ -35,10 +35,11 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import React from "react"
+import { Format } from "@number-flow/react"
 
 // ── Shared helpers ──────────────────────────────────────────────────────
 
-const PESO_FORMAT: Intl.NumberFormatOptions = {
+const PESO_FORMAT: Format = {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
 }

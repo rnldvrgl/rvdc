@@ -52,7 +52,7 @@ function SettlementDetails({ subStallPayable }: { subStallPayable: SubStallPayab
                             Cash to pay
                         </p>
                         <AnimatedNumber
-                            value={subStallPayable.cash_payable}
+                            value={Number(subStallPayable.cash_payable)}
                             className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
                             format={{
                                 style: "currency",
@@ -75,7 +75,7 @@ function SettlementDetails({ subStallPayable }: { subStallPayable: SubStallPayab
                 <div className="flex items-center justify-between gap-3 rounded-lg bg-background/80 px-3 py-2 text-sm">
                     <span className="text-muted-foreground">Cash (Service Parts)</span>
                     <AnimatedNumber
-                        value={subStallPayable.sales_cash}
+                        value={Number(subStallPayable.sales_cash)}
                         className="text-sm font-semibold text-foreground"
                         format={{
                             style: "currency",
@@ -93,10 +93,10 @@ function SettlementDetails({ subStallPayable }: { subStallPayable: SubStallPayab
                         E-Payments
                     </p>
                     <div className="grid gap-2">
-                        <PaymentRow label="GCash" value={subStallPayable.sales_gcash} />
-                        <PaymentRow label="Credit" value={subStallPayable.sales_credit} />
-                        <PaymentRow label="Debit" value={subStallPayable.sales_debit} />
-                        <PaymentRow label="Cheque" value={subStallPayable.sales_cheque} />
+                        <PaymentRow label="GCash" value={Number(subStallPayable.sales_gcash)} />
+                        <PaymentRow label="Credit" value={Number(subStallPayable.sales_credit)} />
+                        <PaymentRow label="Debit" value={Number(subStallPayable.sales_debit)} />
+                        <PaymentRow label="Cheque" value={Number(subStallPayable.sales_cheque)} />
                     </div>
                 </div>
             )}
@@ -235,7 +235,7 @@ export function SubStallSettlement({
                                 </p>
                                 {hasSettlement ? (
                                     <AnimatedNumber
-                                        value={subStallPayable!.cash_payable}
+                                        value={Number(subStallPayable!.cash_payable)}
                                         className="text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]"
                                         format={{
                                             style: "currency",

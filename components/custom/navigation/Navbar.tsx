@@ -32,7 +32,6 @@ import {
 } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 
 function SidebarToggle() {
     const { collapsed, toggle } = useSidebarCollapse()

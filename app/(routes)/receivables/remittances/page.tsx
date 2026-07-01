@@ -150,7 +150,7 @@ export default function RemittancesPage() {
                 title="New Remittance"
                 description="Record a new cash remittance from a stall location."
                 withCloseConfirmation
-                renderForm={({ forceClose }) => <RemittanceForm onCloseAction={forceClose} />}
+                renderForm={({ forceClose }) => <RemittanceForm onClose={forceClose} />}
             />
 
             {/* Edit Remittance Sheet */}
@@ -169,7 +169,7 @@ export default function RemittancesPage() {
                                 ...entity,
                                 stall: entity.stall,
                             }}
-                            onCloseAction={forceClose}
+                            onClose={forceClose}
                         />
                     ) : null
                 }

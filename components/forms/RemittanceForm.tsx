@@ -42,11 +42,12 @@ import { useRemittancePreview } from "@/lib/queries/useRemittancesRecords"
 import { cn } from "@/lib/utils/helpers"
 import { format, startOfDay } from "date-fns"
 import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
+import { Format } from "@number-flow/react"
 
 const DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5, 1] as const
 type Denom = (typeof DENOMINATIONS)[number]
 
-const currencyFormat: Intl.NumberFormatOptions = {
+const currencyFormat: Format = {
     style: "currency",
     currency: "PHP",
     minimumFractionDigits: 2,
@@ -69,10 +70,10 @@ const DENOM_CONFIG: Record<Denom, { label: string; type: "bill" | "coin" }> = {
 
 interface Props {
     initialData?: RemittanceRecordPayload
-    onCloseAction: () => void
+    onClose: () => void
 }
 
-export default function RemittanceForm({ initialData, onCloseAction }: Props) {
+export default function RemittanceForm({ initialData, onClose }: Props) {
     const { role, isAdmin } = useCurrentUser()
     const userProfile = useUserProfileStore((s) => s.userProfile)
     const { data: stalls } = useStallChoices({})
@@ -306,10 +307,10 @@ export default function RemittanceForm({ initialData, onCloseAction }: Props) {
         if (isEditing) {
             updateRemittance.mutate(
                 { id: initialData.id!, data: payload },
-                { onSuccess: onCloseAction },
+                { onSuccess: onClose },
             )
         } else {
-            addRemittance.mutate(payload, { onSuccess: onCloseAction })
+            addRemittance.mutate(payload, { onSuccess: onClose })
         }
     }
 
@@ -810,7 +811,7 @@ export default function RemittanceForm({ initialData, onCloseAction }: Props) {
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={onCloseAction}
+                        onClick={onClose}
                         className="w-full sm:w-auto"
                     >
                         Cancel

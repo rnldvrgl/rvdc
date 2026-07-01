@@ -7,7 +7,6 @@ import {
 } from "@/components/ui/tooltip"
 import { GetColumnsProps, Service } from "@/lib/constants/interface"
 import {
-    formatCurrency,
     formatTimeTo12Hour,
     getBadgeVariant,
     safeCell,

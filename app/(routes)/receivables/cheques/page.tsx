@@ -89,7 +89,7 @@ export default function ChequeCollectionsPage() {
                 className={formSheetClassName}
                 withCloseConfirmation
                 renderForm={({ forceClose }) => (
-                    <ChequeCollectionForm onCloseAction={forceClose} />
+                    <ChequeCollectionForm onClose={forceClose} />
                 )}
             />
 
@@ -106,7 +106,7 @@ export default function ChequeCollectionsPage() {
                     entity ? (
                         <ChequeCollectionForm
                             initialData={entity}
-                            onCloseAction={forceClose}
+                            onClose={forceClose}
                         />
                     ) : null
                 }
@@ -124,7 +124,7 @@ export default function ChequeCollectionsPage() {
                     entity ? (
                         <ChequeCollectionDetails
                             entity={entity}
-                            onCloseAction={onClose}
+                            onClose={onClose}
                         />
                     ) : null
                 }
