@@ -21,7 +21,6 @@ import { ConfirmAlert } from "@/components/custom/shared/ConfirmAlert"
 import { Button } from "@/components/ui/button"
 import { User } from "@/lib/constants/interface"
 import { userProfileSchema } from "@/lib/constants/schema"
-import { APP_THEME_OPTIONS, DEFAULT_APP_THEME } from "@/lib/constants/theme"
 import { TUserProfile, UserProfilePayload } from "@/lib/constants/types"
 import useFileUpload from "@/lib/hooks/useFileUpload"
 import { useProfileSettingMutations } from "@/lib/mutations/useProfileSettingMutations"
@@ -180,11 +179,6 @@ export default function SettingsPage() {
     // Calendar preference (admin/manager only)
     const { canManage } = useCurrentUser()
     const { preferences: calendarPrefs, setWeekStartsOn } = useCalendarPreferences()
-    const setTheme = useSettingsStore((s: SettingsStore) => s.setTheme)
-    const selectedTheme = useSettingsStore((s: SettingsStore) =>
-        userId ? s.byUser[userId]?.theme ?? DEFAULT_APP_THEME : DEFAULT_APP_THEME,
-    )
-
     // Landing page preference
     const getLandingPage = useSettingsStore((s: SettingsStore) => s.getLandingPage)
     const setLandingPage = useSettingsStore((s: SettingsStore) => s.setLandingPage)
@@ -567,42 +561,13 @@ export default function SettingsPage() {
                             <p className="text-xs text-muted-foreground">Page shown after login</p>
                         </div>
 
-                        {/* Theme */}
-                        <div className="flex flex-col gap-3 sm:col-span-2 xl:col-span-1">
+                        <div className="flex flex-col gap-3 rounded-xl border border-dashed border-border/70 bg-muted/20 p-4 sm:col-span-2 xl:col-span-1">
                             <div className="flex items-center gap-2">
-                                <LayoutDashboard className="size-4 text-muted-foreground shrink-0" />
+                                <Settings className="size-4 text-muted-foreground shrink-0" />
                                 <span className="text-sm font-medium">Theme</span>
                             </div>
-                            <div className="grid grid-cols-1 gap-2">
-                                {APP_THEME_OPTIONS.map((theme) => {
-                                    const isSelected = selectedTheme === theme.id
-
-                                    return (
-                                        <button
-                                            key={theme.id}
-                                            type="button"
-                                            onClick={() => userId && setTheme(userId, theme.id)}
-                                            className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-left transition-colors cursor-pointer ${isSelected
-                                                ? "border-primary bg-primary/10 text-primary"
-                                                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
-                                                }`}
-                                        >
-                                            <span
-                                                className={`mt-0.5 size-3.5 rounded-full border border-border shrink-0 ${theme.previewClassName}`}
-                                                aria-hidden="true"
-                                            />
-                                            <span className="flex min-w-0 flex-col">
-                                                <span className="text-xs font-semibold">{theme.label}</span>
-                                                <span className="text-[11px] leading-4 opacity-80">
-                                                    {theme.description}
-                                                </span>
-                                            </span>
-                                        </button>
-                                    )
-                                })}
-                            </div>
                             <p className="text-xs text-muted-foreground">
-                                Changes are applied globally through CSS variables.
+                                Theme selection now lives in the navbar profile menu so it applies earlier during page reloads.
                             </p>
                         </div>
 

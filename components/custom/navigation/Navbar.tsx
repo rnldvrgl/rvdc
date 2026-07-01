@@ -137,7 +137,7 @@ function UserMenu({ user }: { user: User | null }) {
                     </div>
                 </div>
                 <div className="p-1">
-                    <DropdownModeToggle />
+                    <DropdownModeToggle userId={user?.id} />
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                         <DropdownMenuItem asChild>
@@ -169,7 +169,7 @@ function UserMenu({ user }: { user: User | null }) {
 export function Navbar({ user }: { user: User | null }) {
     return (
         <header className="hidden lg:block sticky top-0 z-30 px-4 pt-4">
-            <nav className="flex items-center justify-between gap-4 h-14 px-2 rounded-2xl border border-sidebar-border dark:border-sidebar-border/10  bg-sidebar/50 backdrop-blur-md shadow-sm supports-backdrop-blur:bg-sidebar/20">
+            <nav className="flex items-center justify-between gap-4 h-14 px-2 rounded-2xl border border-sidebar-border dark:border-sidebar-border/70  bg-sidebar/50 backdrop-blur-md shadow-sm supports-backdrop-blur:bg-sidebar/20">
                 {/* Left: Toggle + Search */}
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                     <SidebarToggle />

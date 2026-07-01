@@ -167,12 +167,12 @@ export default function SidebarNav({
                 transition={{ type: "spring", stiffness: 320, damping: 32, mass: 0.7 }}
                 className="hidden lg:flex lg:inset-y-0 lg:z-50 lg:flex-col h-full relative shrink-0"
             >
-                <div className="flex flex-col h-full bg-sidebar/50 backdrop-blur-md supports-backdrop-blur:bg-sidebar/20 border-r  border-sidebar-border dark:border-sidebar-border/10  overflow-hidden">
+                <div className="flex flex-col h-full bg-sidebar/50 backdrop-blur-md supports-backdrop-blur:bg-sidebar/20 border-r  border-sidebar-border dark:border-sidebar-border/70  overflow-hidden">
 
                     {/* Brand */}
                     <div
                         className={cn(
-                            "flex items-center shrink-0 h-16 border-b border-sidebar-border dark:border-sidebar-border/20",
+                            "flex items-center shrink-0 h-16 border-b border-sidebar-border dark:border-sidebar-border/70",
                             collapsed ? "justify-center px-3" : "gap-3 px-4",
                         )}
                     >
@@ -238,7 +238,7 @@ export default function SidebarNav({
                     </div>
 
                     {/* Bottom strip — always outside scroll area */}
-                    <div className="shrink-0 border-t border-sidebar-border dark:border-sidebar-border/20">
+                    <div className="shrink-0 border-t border-sidebar-border dark:border-sidebar-border/70">
                         {collapsed ? (
                             <div className="flex flex-col items-center gap-1 py-3 px-2">
                                 <Tooltip>
@@ -279,7 +279,7 @@ export default function SidebarNav({
             </motion.aside>
 
             {/* ── Mobile top bar ── */}
-            <div className="lg:hidden flex h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] items-center justify-between bg-sidebar/50 backdrop-blur-md supports-backdrop-blur:bg-sidebar/20  border-sidebar-border dark:border-sidebar-border/10 border-b px-4">
+            <div className="lg:hidden flex h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] items-center justify-between bg-sidebar/50 backdrop-blur-md supports-backdrop-blur:bg-sidebar/20  border-sidebar-border dark:border-sidebar-border/70 border-b px-4">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                     <Avatar className="size-8 ring-1 ring-border shrink-0">
                         <AvatarImage

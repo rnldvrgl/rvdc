@@ -85,7 +85,7 @@ const SHARED_DARK_TOKENS: AppThemeVariables = {
   "--stall-badge-8-foreground": "var(--secondary-foreground)",
 }
 
-export const DEFAULT_APP_THEME: AppThemeId = "clean-green"
+export const DEFAULT_APP_THEME: AppThemeId = "cappuccino"
 
 export const APP_THEMES: Record<AppThemeId, AppThemeDefinition> = {
   "clean-green": {

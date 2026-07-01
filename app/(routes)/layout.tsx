@@ -36,6 +36,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         enablePushNotifications,
         permission: pushPermission,
         subscribed: pushSubscribed,
+        ready: pushReady,
     } = usePushNotifications()
 
     return (
@@ -58,7 +59,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                             collapsed ? "lg:ml-[76px]" : "lg:ml-[264px]",
                         )}
                     >
-                        {pushPermission === "default" && !pushSubscribed && (
+                        {pushReady && pushPermission === "default" && !pushSubscribed && (
                             <PushNotificationBanner action={() => void enablePushNotifications()} />
                         )}
                         <Navbar user={userProfile} />

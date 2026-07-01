@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useLayoutEffect } from "react"
 import { useTheme } from "next-themes"
 
 import { APP_THEMES, DEFAULT_APP_THEME, AppThemeId, AppThemeMode } from "@/lib/constants/theme"
@@ -16,7 +16,7 @@ export function AppThemeApplier() {
     )
     const themeMode: AppThemeMode = resolvedTheme === "dark" ? "dark" : "light"
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         const root = document.documentElement
         const theme = APP_THEMES[themeId] ?? APP_THEMES[DEFAULT_APP_THEME]
         const nextVariables = theme[themeMode]
@@ -26,14 +26,6 @@ export function AppThemeApplier() {
 
         for (const [variableName, variableValue] of Object.entries(nextVariables)) {
             root.style.setProperty(variableName, variableValue)
-        }
-
-        return () => {
-            for (const variableName of Object.keys(nextVariables)) {
-                root.style.removeProperty(variableName)
-            }
-            delete root.dataset.appTheme
-            delete root.dataset.appThemeMode
         }
     }, [themeId, themeMode])
 

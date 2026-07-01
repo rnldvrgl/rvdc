@@ -3,9 +3,10 @@ import { AppThemeApplier } from "@/lib/providers/app-theme-applier"
 
 import { ResponsiveToaster } from "@/components/layout/responsive-toaster"
 import { SHOP_INFO } from "@/lib/constants/meta"
-import { APP_THEME } from "@/lib/constants/theme"
+import { APP_THEME, APP_THEMES, DEFAULT_APP_THEME } from "@/lib/constants/theme"
 import { QueryClientContextProvider } from "@/lib/providers/client-query-provider"
 import NextTopLoader from "nextjs-toploader"
+import Script from "next/script"
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css"
 
@@ -18,6 +19,15 @@ const fontMono = Geist_Mono({
     subsets: ["latin"],
     variable: "--font-mono",
 });
+
+const appThemeBootstrap = JSON.stringify(
+    Object.fromEntries(
+        Object.entries(APP_THEMES).map(([themeId, theme]) => [themeId, {
+            light: theme.light,
+            dark: theme.dark,
+        }]),
+    ),
+).replace(/</g, "\\u003c")
 
 export const metadata = {
     title: SHOP_INFO.name,
@@ -49,14 +59,8 @@ export default function RootLayout({
             lang="en"
             suppressHydrationWarning
         >
-            <head>
-                <meta
-                    name="facebook-domain-verification"
-                    content="6i8iw9vw884am0u3vkmd9vnjkv3w4a"
-                />
-            </head>
             <body
-                className={`${fontSans.variable} ${fontMono.variable} font-mono antialiased`}
+                className={`${fontSans.variable} ${fontMono.variable} antialiased`}
             >
                 <NextTopLoader
                     color={APP_THEME.loaderColor}
@@ -67,6 +71,50 @@ export default function RootLayout({
                     shadow={APP_THEME.loaderShadow}
                     crawlSpeed={300}
                     initialPosition={0.08}
+                />
+                <Script
+                    id="app-theme-bootstrap"
+                    strategy="beforeInteractive"
+                    dangerouslySetInnerHTML={{
+                        __html: `(() => {
+                            try {
+                                const themes = ${appThemeBootstrap};
+                                const defaultTheme = ${JSON.stringify(DEFAULT_APP_THEME)};
+                                const root = document.documentElement;
+
+                                const readStore = (key) => {
+                                    try {
+                                        const raw = localStorage.getItem(key);
+                                        if (!raw) return null;
+                                        const parsed = JSON.parse(raw);
+                                        return parsed?.state ?? parsed;
+                                    } catch {
+                                        return null;
+                                    }
+                                };
+
+                                const userProfileStore = readStore("user-profile-storage");
+                                const settingsStore = readStore("user-settings-storage");
+                                const userId = userProfileStore?.userProfile?.id;
+                                const themeId = userId ? settingsStore?.byUser?.[userId]?.theme ?? defaultTheme : defaultTheme;
+                                const theme = themes[themeId] ?? themes[defaultTheme];
+                                const mode = localStorage.getItem("theme") === "dark" ||
+                                    (localStorage.getItem("theme") !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+                                    ? "dark"
+                                    : "light";
+                                const variables = theme[mode];
+
+                                root.dataset.appTheme = themeId;
+                                root.dataset.appThemeMode = mode;
+
+                                for (const [variableName, variableValue] of Object.entries(variables)) {
+                                    root.style.setProperty(variableName, variableValue);
+                                }
+                            } catch {
+                                // Fallback to the client applier after hydration.
+                            }
+                        })();`,
+                    }}
                 />
                 <QueryClientContextProvider>
                     <ThemeProvider
