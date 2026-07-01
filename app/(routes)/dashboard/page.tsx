@@ -8,8 +8,7 @@ import { LeaveBalanceSummary } from "@/components/custom/dashboard/LeaveBalanceS
 import { PendingItemsAlert } from "@/components/custom/dashboard/PendingItemsAlert"
 import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
 import { RemindersAlerts } from "@/components/custom/dashboard/RemindersAlerts"
-import { SubStallSettlement } from "@/components/custom/dashboard/SubStallSettlement"
-import { SubStallSettlementStatCard } from "@/components/custom/dashboard/SubStallSettlementStatCard"
+import { SubStallSettlement } from "../../../components/custom/dashboard/SubStallSettlement"
 import { UnclaimedApplianceAlerts } from "@/components/custom/dashboard/UnclaimedApplianceAlerts"
 import DateRangePicker from "@/components/custom/inputs/DateRangePicker"
 import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
@@ -43,7 +42,7 @@ function AdminDashboard() {
             <SectionReveal delay={0.1}>
                 <GradientMetricCards>
                     <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
-                        <SubStallSettlementStatCard />
+                        <SubStallSettlement variant="summary" />
                     </WidgetErrorBoundary>
                 </GradientMetricCards>
             </SectionReveal>
@@ -114,7 +113,7 @@ function EmployeeDashboard({
 
                         {(isManager || isClerk) && (
                             <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
-                                <SubStallSettlement />
+                                <SubStallSettlement enableShortcut={isManager} />
                             </WidgetErrorBoundary>
                         )}
 
