@@ -729,7 +729,7 @@ const DashboardCalendar = ({
                             {timeSlots.map((hour) => (
                                 <div key={hour} className="grid grid-cols-8 divide-x min-h-10">
                                     <div className="p-1 text-[10px] flex items-center justify-center text-muted-foreground bg-muted/20">
-                                                <span className="font-mono tabular-nums">{format(new Date().setHours(hour, 0, 0, 0), "h:mm a")}</span>
+                                        <span className="font-mono tabular-nums">{format(new Date().setHours(hour, 0, 0, 0), "h:mm a")}</span>
                                     </div>
                                     {days.map((day) => {
                                         const slotEvents = (eventsByDate[day.toDateString()] ?? []).filter(e =>
