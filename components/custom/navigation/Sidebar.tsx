@@ -22,223 +22,234 @@ import { useSidebarNavigation } from "@/lib/hooks/useSidebarNavigation"
 
 // Define supported entities and metadata
 const ENTITY_CONFIG = {
-  sale: {
-    title: "Add Sale",
-    description: "Fill out the form below to add a new sale.",
-    Form: SalesTransactionForm,
-    className: "sm:max-w-3xl md:max-w-4xl lg:max-w-5xl",
-  },
-  client: {
-    title: "Add Client",
-    description: "Fill out the form below to add a new client.",
-    Form: ClientForm,
-  },
-  expense: {
-    title: "Add Expense",
-    description: "Fill out the form below to add a new expense.",
-    Form: ExpenseForm,
-  },
-  remittance: {
-    title: "Add Remittance",
-    description: "Fill out the form below to add a new remittance.",
-    Form: RemittanceForm,
-  },
-  service: {
-    title: "Create New Service",
-    description: "Create a new service request",
-    Form: ServiceFormWizard,
-    className: "sm:min-w-2xl md:min-w-3xl xl:min-w-4xl",
-  },
-  chequeCollection: {
-    title: "Add Cheque Collection",
-    description: "Fill out the form below to record a cheque collection.",
-    Form: ChequeCollectionForm,
-  },
-  restockStall: {
-    title: "Restock Stall",
-    description: "Add quantity to stall stock.",
-    Form: ({ onClose }: { onClose: () => void }) => (
-      <StockOperationDialog
-        operation="restock"
-        type="stall"
-        onClose={onClose}
-      />
-    ),
-  },
-  auditStall: {
-    title: "Audit Stall Stock",
-    description: "Reconcile and adjust stall stock quantities.",
-    Form: ({ onClose }: { onClose: () => void }) => (
-      <StockOperationDialog
-        operation="audit"
-        type="stall"
-        onClose={onClose}
-      />
-    ),
-  },
-  pullOutStall: {
-    title: "Pull Out from Stall",
-    description: "Remove stock from stall location.",
-    Form: ({ onClose }: { onClose: () => void }) => (
-      <StockOperationDialog
-        operation="pullout"
-        type="stall"
-        onClose={onClose}
-      />
-    ),
-  },
-  addStockroom: {
-    title: "Add to Stockroom",
-    description: "Add quantity to stockroom inventory.",
-    Form: ({ onClose }: { onClose: () => void }) => (
-      <StockOperationDialog
-        operation="restock"
-        type="stock_room"
-        onClose={onClose}
-      />
-    ),
-  },
-  auditStockroom: {
-    title: "Audit Stockroom",
-    description: "Reconcile and adjust stockroom quantities.",
-    Form: ({ onClose }: { onClose: () => void }) => (
-      <StockOperationDialog
-        operation="audit"
-        type="stock_room"
-        onClose={onClose}
-      />
-    ),
-  },
+    sale: {
+        title: "Add Sale",
+        description: "Fill out the form below to add a new sale.",
+        Form: SalesTransactionForm,
+        className: "sm:max-w-3xl md:max-w-4xl lg:max-w-5xl",
+    },
+    client: {
+        title: "Add Client",
+        description: "Fill out the form below to add a new client.",
+        Form: ClientForm,
+    },
+    expense: {
+        title: "Add Expense",
+        description: "Fill out the form below to add a new expense.",
+        Form: ExpenseForm,
+    },
+    remittance: {
+        title: "Add Remittance",
+        description: "Fill out the form below to add a new remittance.",
+        Form: RemittanceForm,
+    },
+    service: {
+        title: "Create New Service",
+        description: "Create a new service request",
+        Form: ServiceFormWizard,
+        className: "sm:min-w-2xl md:min-w-3xl xl:min-w-4xl",
+    },
+    chequeCollection: {
+        title: "Add Cheque Collection",
+        description: "Fill out the form below to record a cheque collection.",
+        Form: ChequeCollectionForm,
+    },
+    restockStall: {
+        title: "Restock Stall",
+        description: "Add quantity to stall stock.",
+        Form: ({ onClose }: { onClose: () => void }) => (
+            <StockOperationDialog
+                operation="restock"
+                type="stall"
+                onClose={onClose}
+            />
+        ),
+    },
+    auditStall: {
+        title: "Audit Stall Stock",
+        description: "Reconcile and adjust stall stock quantities.",
+        Form: ({ onClose }: { onClose: () => void }) => (
+            <StockOperationDialog
+                operation="audit"
+                type="stall"
+                onClose={onClose}
+            />
+        ),
+    },
+    pullOutStall: {
+        title: "Pull Out from Stall",
+        description: "Remove stock from stall location.",
+        Form: ({ onClose }: { onClose: () => void }) => (
+            <StockOperationDialog
+                operation="pullout"
+                type="stall"
+                onClose={onClose}
+            />
+        ),
+    },
+    addStockroom: {
+        title: "Add to Stockroom",
+        description: "Add quantity to stockroom inventory.",
+        Form: ({ onClose }: { onClose: () => void }) => (
+            <StockOperationDialog
+                operation="restock"
+                type="stock_room"
+                onClose={onClose}
+            />
+        ),
+    },
+    auditStockroom: {
+        title: "Audit Stockroom",
+        description: "Reconcile and adjust stockroom quantities.",
+        Form: ({ onClose }: { onClose: () => void }) => (
+            <StockOperationDialog
+                operation="audit"
+                type="stock_room"
+                onClose={onClose}
+            />
+        ),
+    },
 } as const
 
 type EntityType = keyof typeof ENTITY_CONFIG
 
 export function Sidebar() {
-  const { userProfile, role, payrollIncluded, isSuperAdmin } = useCurrentUser()
-  const pathname = usePathname()
-  const isActive = useActivePath()
-  const activePath = isActive ? pathname : ""
+    const { userProfile, role, payrollIncluded, isSuperAdmin } = useCurrentUser()
+    const pathname = usePathname()
+    const isActive = useActivePath()
+    const activePath = isActive ? pathname : ""
 
-  const userPermissions = useGetPermissions(role || "guest", payrollIncluded)
+    const userPermissions = useGetPermissions(role || "guest", payrollIncluded)
 
-  const { sections } = useSidebarNavigation({
-    permissions: userPermissions,
-    isSuperAdmin,
-  })
+    const { sections } = useSidebarNavigation({
+        permissions: userPermissions,
+        isSuperAdmin,
+    })
 
-  const {
-    entityState: { open },
-    openEntity,
-    closeEntity,
-  } = useEntitySheet()
+    const {
+        entityState: { open },
+        openEntity,
+        closeEntity,
+    } = useEntitySheet()
 
-  const [currentEntity, setCurrentEntity] = useState<EntityType | null>(null)
+    const [currentEntity, setCurrentEntity] = useState<EntityType | null>(null)
 
-  const handleOpenEntity = (entity: EntityType) => {
-    setCurrentEntity(entity)
-    openEntity()
-  }
+    const handleOpenEntity = (entity: EntityType) => {
+        setCurrentEntity(entity)
+        openEntity()
+    }
 
-  const entityConfig = currentEntity ? ENTITY_CONFIG[currentEntity] : null
-  const FormComponent = entityConfig?.Form
+    const entityConfig = currentEntity ? ENTITY_CONFIG[currentEntity] : null
+    const FormComponent = entityConfig?.Form
+    const FormComponentAny = FormComponent
+        ? (FormComponent as unknown as React.ComponentType<{
+            onClose?: () => void
+            onCloseAction?: () => void
+        }>)
+        : undefined
 
-  return (
-    <>
-      <CommandPalette
-        permissions={userPermissions}
-        onAction={(action) => {
-          switch (action) {
-            case "addSale":
-              handleOpenEntity("sale")
-              break
-            case "addClient":
-              handleOpenEntity("client")
-              break
-            case "addExpense":
-              handleOpenEntity("expense")
-              break
-            case "addRemittance":
-              handleOpenEntity("remittance")
-              break
-            case "addService":
-              handleOpenEntity("service")
-              break
-            case "addChequeCollection":
-              handleOpenEntity("chequeCollection")
-              break
-            case "restockStall":
-              handleOpenEntity("restockStall")
-              break
-            case "auditStall":
-              handleOpenEntity("auditStall")
-              break
-            case "pullOutStall":
-              handleOpenEntity("pullOutStall")
-              break
-            case "addStockroom":
-              handleOpenEntity("addStockroom")
-              break
-            case "auditStockroom":
-              handleOpenEntity("auditStockroom")
-              break
-          }
-        }}
-      />
+    return (
+        <>
+            <CommandPalette
+                permissions={userPermissions}
+                onAction={(action) => {
+                    switch (action) {
+                        case "addSale":
+                            handleOpenEntity("sale")
+                            break
+                        case "addClient":
+                            handleOpenEntity("client")
+                            break
+                        case "addExpense":
+                            handleOpenEntity("expense")
+                            break
+                        case "addRemittance":
+                            handleOpenEntity("remittance")
+                            break
+                        case "addService":
+                            handleOpenEntity("service")
+                            break
+                        case "addChequeCollection":
+                            handleOpenEntity("chequeCollection")
+                            break
+                        case "restockStall":
+                            handleOpenEntity("restockStall")
+                            break
+                        case "auditStall":
+                            handleOpenEntity("auditStall")
+                            break
+                        case "pullOutStall":
+                            handleOpenEntity("pullOutStall")
+                            break
+                        case "addStockroom":
+                            handleOpenEntity("addStockroom")
+                            break
+                        case "auditStockroom":
+                            handleOpenEntity("auditStockroom")
+                            break
+                    }
+                }}
+            />
 
-      <EntitySheet
-        className={(entityConfig as { className?: string })?.className}
-        open={open}
-        onClose={closeEntity}
-        withCloseConfirmation
-        title={entityConfig?.title || ""}
-        description={entityConfig?.description || ""}
-        renderForm={({ forceClose }) =>
-          FormComponent ? <FormComponent onClose={forceClose} /> : null
-        }
-      />
+            <EntitySheet
+                className={(entityConfig as { className?: string })?.className}
+                open={open}
+                onClose={closeEntity}
+                withCloseConfirmation
+                title={entityConfig?.title || ""}
+                description={entityConfig?.description || ""}
+                renderForm={({ forceClose }) =>
+                    FormComponentAny ? (
+                        <FormComponentAny
+                            onClose={forceClose}
+                            onCloseAction={forceClose}
+                        />
+                    ) : null
+                }
+            />
 
-      <SidebarNav
-        sections={sections}
-        activePath={activePath}
-        onAction={(action) => {
-          switch (action) {
-            case "addSale":
-              handleOpenEntity("sale")
-              break
-            case "addClient":
-              handleOpenEntity("client")
-              break
-            case "addExpense":
-              handleOpenEntity("expense")
-              break
-            case "addRemittance":
-              handleOpenEntity("remittance")
-              break
-            case "addService":
-              handleOpenEntity("service")
-              break
-            case "addChequeCollection":
-              handleOpenEntity("chequeCollection")
-              break
-            case "restockStall":
-              handleOpenEntity("restockStall")
-              break
-            case "auditStall":
-              handleOpenEntity("auditStall")
-              break
-            case "pullOutStall":
-              handleOpenEntity("pullOutStall")
-              break
-            case "addStockroom":
-              handleOpenEntity("addStockroom")
-              break
-            case "auditStockroom":
-              handleOpenEntity("auditStockroom")
-              break
-          }
-        }}
-        user={userProfile}
-      />
-    </>
-  )
+            <SidebarNav
+                sections={sections}
+                activePath={activePath}
+                onAction={(action) => {
+                    switch (action) {
+                        case "addSale":
+                            handleOpenEntity("sale")
+                            break
+                        case "addClient":
+                            handleOpenEntity("client")
+                            break
+                        case "addExpense":
+                            handleOpenEntity("expense")
+                            break
+                        case "addRemittance":
+                            handleOpenEntity("remittance")
+                            break
+                        case "addService":
+                            handleOpenEntity("service")
+                            break
+                        case "addChequeCollection":
+                            handleOpenEntity("chequeCollection")
+                            break
+                        case "restockStall":
+                            handleOpenEntity("restockStall")
+                            break
+                        case "auditStall":
+                            handleOpenEntity("auditStall")
+                            break
+                        case "pullOutStall":
+                            handleOpenEntity("pullOutStall")
+                            break
+                        case "addStockroom":
+                            handleOpenEntity("addStockroom")
+                            break
+                        case "auditStockroom":
+                            handleOpenEntity("auditStockroom")
+                            break
+                    }
+                }}
+                user={userProfile}
+            />
+        </>
+    )
 }

@@ -99,7 +99,7 @@ import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 
 interface SalesTransactionFormProps {
     initialData?: SalesTransaction
-    onClose: () => void
+    onCloseAction: () => void
     onNewSale?: (opts?: { clientId?: number | null }) => void
     defaultClientId?: number | null
     heldSale?: HeldSale | null

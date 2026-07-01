@@ -12,7 +12,7 @@ import {
 import { APP_THEME_OPTIONS, AppThemeId, DEFAULT_APP_THEME } from "@/lib/constants/theme"
 import useSettingsStore from "@/lib/store/useSettingsStore"
 import useUserProfileStore from "@/lib/store/useUserProfileStore"
-import { ChevronRight, Moon, Palette, Sun } from "lucide-react"
+import { Moon, Palette, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
 
 type DropdownModeToggleProps = {

@@ -70,10 +70,10 @@ const DENOM_CONFIG: Record<Denom, { label: string; type: "bill" | "coin" }> = {
 
 interface Props {
     initialData?: RemittanceRecordPayload
-    onClose: () => void
+    onCloseAction: () => void
 }
 
-export default function RemittanceForm({ initialData, onClose }: Props) {
+export default function RemittanceForm({ initialData, onCloseAction }: Props) {
     const { role, isAdmin } = useCurrentUser()
     const userProfile = useUserProfileStore((s) => s.userProfile)
     const { data: stalls } = useStallChoices({})
@@ -307,10 +307,10 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         if (isEditing) {
             updateRemittance.mutate(
                 { id: initialData.id!, data: payload },
-                { onSuccess: onClose },
+                { onSuccess: onCloseAction },
             )
         } else {
-            addRemittance.mutate(payload, { onSuccess: onClose })
+            addRemittance.mutate(payload, { onSuccess: onCloseAction })
         }
     }
 
@@ -811,7 +811,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={onClose}
+                        onClick={onCloseAction}
                         className="w-full sm:w-auto"
                     >
                         Cancel

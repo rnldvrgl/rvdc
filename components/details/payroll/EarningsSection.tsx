@@ -2,7 +2,6 @@ import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { formatCurrency, toNumber } from "@/lib/utils/currency"
 import { format, parseISO } from "date-fns"
 import { Plus, X } from "lucide-react"
 
@@ -221,7 +220,7 @@ function AdditionalEarningItem({
     canManage,
     onDelete,
 }: AdditionalEarningItemProps) {
-    const earningAmount = toNumber(earning.amount)
+    const earningAmount = Number(earning.amount)
 
     return (
         <div className="flex justify-between items-start text-xs sm:text-sm gap-2 group">

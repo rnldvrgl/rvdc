@@ -2,7 +2,6 @@ import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { formatCurrency, toNumber } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
 import { Minus, X } from "lucide-react"
 
@@ -62,7 +61,7 @@ export function DeductionsSection({
             {totalDeductions > 0 ? (
                 <div className="space-y-1">
                     {sortedDeductions.map(([key, value]) => {
-                        const amount = toNumber(value)
+                        const amount = Number(value)
                         if (amount <= 0) return null
 
                         const metadata = deductionMetadata?.[key]

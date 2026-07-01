@@ -148,7 +148,7 @@ export default function QuotationsPage() {
                         withCloseConfirmation
                         className="w-full max-w-[95vw] md:max-w-[85vw] lg:max-w-4xl xl:max-w-5xl"
                         renderForm={({ forceClose }) => (
-                            <QuotationForm onClose={forceClose} />
+                            <QuotationForm onCloseAction={forceClose} />
                         )}
                     />
                 )}
@@ -223,7 +223,7 @@ function EditQuotationSheet({
                     </div>
                 ) : (
                     <QuotationForm
-                        onClose={forceClose}
+                        onCloseAction={forceClose}
                         quotation={entity}
                     />
                 )
