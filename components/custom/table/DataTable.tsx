@@ -39,6 +39,7 @@ import { useNavigation } from "@/lib/hooks/useNavigation"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { cn } from "@/lib/utils/helpers"
 import { formatBackDate } from "@/lib/utils/helpers/date"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import {
     ArrowUpDown,
     Database,
@@ -646,7 +647,7 @@ export function DataTable<TData, TValue>({
                     {isLocal ? (
                         activeTotalCount > 0 ? (
                             <span>
-                                <span className="font-semibold text-foreground">{activeTotalCount.toLocaleString()}</span>{" "}
+                                <span className="font-semibold text-foreground"><AnimatedNumber value={activeTotalCount} /></span>{" "}
                                 result{activeTotalCount !== 1 ? "s" : ""}
                             </span>
                         ) : (
@@ -656,7 +657,7 @@ export function DataTable<TData, TValue>({
                         <span>
                             Showing {startIndex} to {endIndex} of{" "}
                             <span className="font-semibold text-foreground">
-                                {totalCount.toLocaleString()}
+                                <AnimatedNumber value={totalCount} />
                             </span>{" "}
                             results
                         </span>
@@ -667,7 +668,7 @@ export function DataTable<TData, TValue>({
                 {!isLocal && totalCount > 0 && (
                     <div className="flex items-center gap-2 text-xs">
                         <Database className="size-3.5" />
-                        <span className="font-semibold">{totalCount.toLocaleString()}</span>
+                        <span className="font-semibold"><AnimatedNumber value={totalCount} /></span>
                         <span>total</span>
                     </div>
                 )}

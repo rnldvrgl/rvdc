@@ -1,5 +1,6 @@
 "use client"
 
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { Badge, BadgeVariant } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +9,7 @@ import { RemittanceRecord } from "@/lib/constants/interface"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
+import type { ReactNode } from "react"
 import {
     AlertTriangle,
     ArrowRightLeft,
@@ -25,74 +27,19 @@ import {
 } from "lucide-react"
 
 const DENOMINATIONS = [
-    {
-        key: "count_1000",
-        declaredKey: "declared_count_1000",
-        label: "₱1,000",
-        value: 1000,
-        type: "bill",
-    },
-    {
-        key: "count_500",
-        declaredKey: "declared_count_500",
-        label: "₱500",
-        value: 500,
-        type: "bill",
-    },
-    {
-        key: "count_200",
-        declaredKey: "declared_count_200",
-        label: "₱200",
-        value: 200,
-        type: "bill",
-    },
-    {
-        key: "count_100",
-        declaredKey: "declared_count_100",
-        label: "₱100",
-        value: 100,
-        type: "bill",
-    },
-    {
-        key: "count_50",
-        declaredKey: "declared_count_50",
-        label: "₱50",
-        value: 50,
-        type: "bill",
-    },
-    {
-        key: "count_20",
-        declaredKey: "declared_count_20",
-        label: "₱20",
-        value: 20,
-        type: "bill",
-    },
-    {
-        key: "count_10",
-        declaredKey: "declared_count_10",
-        label: "₱10",
-        value: 10,
-        type: "coin",
-    },
-    {
-        key: "count_5",
-        declaredKey: "declared_count_5",
-        label: "₱5",
-        value: 5,
-        type: "coin",
-    },
-    {
-        key: "count_1",
-        declaredKey: "declared_count_1",
-        label: "₱1",
-        value: 1,
-        type: "coin",
-    },
+    { key: "count_1000", declaredKey: "declared_count_1000", label: "₱1,000", value: 1000, type: "bill" },
+    { key: "count_500", declaredKey: "declared_count_500", label: "₱500", value: 500, type: "bill" },
+    { key: "count_200", declaredKey: "declared_count_200", label: "₱200", value: 200, type: "bill" },
+    { key: "count_100", declaredKey: "declared_count_100", label: "₱100", value: 100, type: "bill" },
+    { key: "count_50", declaredKey: "declared_count_50", label: "₱50", value: 50, type: "bill" },
+    { key: "count_20", declaredKey: "declared_count_20", label: "₱20", value: 20, type: "bill" },
+    { key: "count_10", declaredKey: "declared_count_10", label: "₱10", value: 10, type: "coin" },
+    { key: "count_5", declaredKey: "declared_count_5", label: "₱5", value: 5, type: "coin" },
+    { key: "count_1", declaredKey: "declared_count_1", label: "₱1", value: 1, type: "coin" },
 ] as const
 
 export function RemittanceDetails({
     entity,
-    onClose,
     onMarkAsRemitted,
     onRecalculate,
     recalculatePending,
@@ -107,24 +54,25 @@ export function RemittanceDetails({
 }) {
     const { role } = useCurrentUser()
 
-    const remitStatus = (): {
-        variant: BadgeVariant
-        value: string
-        icon: React.ReactNode
-    } => {
-        const balance = Number(entity?.balance || 0)
-        if (balance > 0)
+    const remitStatus = (): { variant: BadgeVariant; value: string; icon: ReactNode } => {
+        const balance = Number(entity.balance || 0)
+
+        if (balance > 0) {
             return {
                 variant: "warning",
                 value: `Over by ${formatCurrency(balance)}`,
                 icon: <TrendingUp className="size-3.5" />,
             }
-        if (balance < 0)
+        }
+
+        if (balance < 0) {
             return {
                 variant: "destructive",
                 value: `Short by ${formatCurrency(-balance)}`,
                 icon: <TrendingDown className="size-3.5" />,
             }
+        }
+
         return {
             variant: "success",
             value: "Balanced",
@@ -134,7 +82,6 @@ export function RemittanceDetails({
 
     const status = remitStatus()
 
-    // Compute denomination totals
     const denomTotals = entity.cash_breakdown
         ? {
             declared: DENOMINATIONS.reduce(
@@ -143,8 +90,7 @@ export function RemittanceDetails({
                 0,
             ),
             remitted: DENOMINATIONS.reduce(
-                (sum, { key, value }) =>
-                    sum + (entity.cash_breakdown?.[key] ?? 0) * value,
+                (sum, { key, value }) => sum + (entity.cash_breakdown?.[key] ?? 0) * value,
                 0,
             ),
         }
@@ -152,13 +98,9 @@ export function RemittanceDetails({
 
     return (
         <div className="space-y-5 sm:space-y-6">
-            {/* Header: Status + Date */}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex flex-wrap items-center gap-2">
-                    <Badge
-                        variant={entity.is_remitted ? "success" : "secondary"}
-                        className="gap-1"
-                    >
+                    <Badge variant={entity.is_remitted ? "success" : "secondary"}>
                         {entity.is_remitted ? (
                             <ShieldCheck className="size-3" />
                         ) : (
@@ -176,35 +118,32 @@ export function RemittanceDetails({
                 </span>
             </div>
 
-            {/* Summary Cards - Key Numbers */}
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                 <SummaryCard
                     label="In Drawer (Declared)"
-                    value={formatCurrency(entity.declared_amount)}
+                    value={<AnimatedNumber value={Number(entity.declared_amount || 0)} prefix="₱" />}
                     icon={<Wallet className="size-4" />}
+                    highlight
                 />
                 <SummaryCard
                     label="Remitted"
-                    value={formatCurrency(entity.remitted_amount)}
+                    value={<AnimatedNumber value={Number(entity.remitted_amount || 0)} prefix="₱" />}
                     icon={<Banknote className="size-4" />}
                     highlight
                 />
                 <SummaryCard
                     label="Expected"
-                    value={formatCurrency(entity.expected_remittance)}
+                    value={<AnimatedNumber value={Number(entity.expected_remittance || 0)} prefix="₱" />}
                     icon={<Receipt className="size-4" />}
                 />
                 <SummaryCard
                     label="COD → Next Day"
-                    value={formatCurrency(entity.cod_for_next_day || 0)}
+                    value={<AnimatedNumber value={Number(entity.cod_for_next_day || 0)} prefix="₱" />}
                     icon={<ArrowRightLeft className="size-4" />}
-                    className={
-                        Number(entity.cod_for_next_day || 0) > 0 ? "text-warning" : ""
-                    }
+                    className={Number(entity.cod_for_next_day || 0) > 0 ? "text-warning" : ""}
                 />
             </div>
 
-            {/* General Info */}
             <Card>
                 <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-sm font-medium">
@@ -217,18 +156,20 @@ export function RemittanceDetails({
                         <InfoRow label="Stall" value={entity.stall_data?.name || "—"} />
                         <InfoRow
                             label="Date"
-                            value={formatDate(
-                                new Date(entity.created_at),
-                                "EEE, MMM dd yyyy",
-                            )}
+                            value={formatDate(new Date(entity.created_at), "EEE, MMM dd yyyy")}
                         />
                         <InfoRow
                             label="COD (Today)"
-                            value={formatCurrency(
-                                entity.cash_breakdown?.cod_amount ||
-                                entity.cod_for_today?.cod_amount ||
-                                0,
-                            )}
+                            value={
+                                <AnimatedNumber
+                                    value={Number(
+                                        entity.cash_breakdown?.cod_amount ||
+                                        entity.cod_for_today?.cod_amount ||
+                                        0,
+                                    )}
+                                    prefix="₱"
+                                />
+                            }
                         />
                         <InfoRow
                             label="Remitted By"
@@ -247,7 +188,6 @@ export function RemittanceDetails({
                 </CardContent>
             </Card>
 
-            {/* Sales Breakdown */}
             <Card>
                 <CardHeader className="pb-3">
                     <CardTitle className="flex items-center gap-2 text-sm font-medium">
@@ -258,26 +198,10 @@ export function RemittanceDetails({
                 <CardContent>
                     <div className="space-y-2">
                         <PaymentRow label="Cash" value={entity.total_sales_cash} icon="💵" />
-                        <PaymentRow
-                            label="GCash"
-                            value={entity.total_sales_gcash}
-                            icon="📱"
-                        />
-                        <PaymentRow
-                            label="Credit"
-                            value={entity.total_sales_credit}
-                            icon="💳"
-                        />
-                        <PaymentRow
-                            label="Debit"
-                            value={entity.total_sales_debit}
-                            icon="💳"
-                        />
-                        <PaymentRow
-                            label="Cheque"
-                            value={entity.total_sales_cheque}
-                            icon="📝"
-                        />
+                        <PaymentRow label="GCash" value={entity.total_sales_gcash} icon="📱" />
+                        <PaymentRow label="Credit" value={entity.total_sales_credit} icon="💳" />
+                        <PaymentRow label="Debit" value={entity.total_sales_debit} icon="💳" />
+                        <PaymentRow label="Cheque" value={entity.total_sales_cheque} icon="📝" />
                         <Separator />
                         <div className="flex items-center justify-between text-sm font-semibold gap-3">
                             <span>Total Collected</span>
@@ -295,7 +219,6 @@ export function RemittanceDetails({
                 </CardContent>
             </Card>
 
-            {/* Cash Denomination Breakdown */}
             {entity.cash_breakdown && (
                 <Card>
                     <CardHeader className="pb-3">
@@ -306,7 +229,6 @@ export function RemittanceDetails({
                     </CardHeader>
                     <CardContent className="px-2 sm:px-6">
                         <div className="space-y-1.5">
-                            {/* Header — hidden on mobile, rows become labeled stacks instead */}
                             <div className="hidden sm:grid grid-cols-4 gap-2 text-[10px] uppercase tracking-wider text-muted-foreground font-medium px-3 pb-1">
                                 <span>Denomination</span>
                                 <span className="text-right">Declared</span>
@@ -314,7 +236,6 @@ export function RemittanceDetails({
                                 <span className="text-right">COD</span>
                             </div>
 
-                            {/* Rows */}
                             {DENOMINATIONS.map(({ key, declaredKey, label, value, type }) => {
                                 const declared = entity.cash_breakdown?.[declaredKey] ?? 0
                                 const remitted = entity.cash_breakdown?.[key] ?? 0
@@ -378,7 +299,6 @@ export function RemittanceDetails({
                                 )
                             })}
 
-                            {/* Totals */}
                             {denomTotals && (
                                 <>
                                     <Separator className="my-2" />
@@ -406,9 +326,7 @@ export function RemittanceDetails({
                                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium sm:hidden block">
                                                 COD
                                             </span>
-                                            {formatCurrency(
-                                                denomTotals.declared - denomTotals.remitted,
-                                            )}
+                                            {formatCurrency(denomTotals.declared - denomTotals.remitted)}
                                         </span>
                                     </div>
                                 </>
@@ -418,7 +336,6 @@ export function RemittanceDetails({
                 </Card>
             )}
 
-            {/* Footer */}
             <div className="grid lg:grid-cols-2 gap-2 sm:flex-row sm:justify-end sm:gap-3 border-t pt-4">
                 {!entity.is_remitted && onRecalculate && (
                     <Button
@@ -451,10 +368,6 @@ export function RemittanceDetails({
     )
 }
 
-/* ────────────────────────────────────────────
-   Sub-components
-   ──────────────────────────────────────────── */
-
 function SummaryCard({
     label,
     value,
@@ -463,8 +376,8 @@ function SummaryCard({
     className,
 }: {
     label: string
-    value: string
-    icon: React.ReactNode
+    value: ReactNode
+    icon: ReactNode
     highlight?: boolean
     className?: string
 }) {
@@ -481,7 +394,7 @@ function SummaryCard({
             </div>
             <p
                 className={cn(
-                    "text-base sm:text-xl font-bold tabular-nums break-words",
+                    "text-base sm:text-xl font-bold tabular-nums wrap-break-word",
                     className,
                 )}
             >
@@ -497,8 +410,8 @@ function InfoRow({
     icon,
 }: {
     label: string
-    value: string
-    icon?: React.ReactNode
+    value: ReactNode
+    icon?: ReactNode
 }) {
     return (
         <div className="space-y-0.5 min-w-0">
@@ -506,7 +419,7 @@ function InfoRow({
                 {icon}
                 {label}
             </div>
-            <p className="font-medium break-words">{value || "—"}</p>
+            <p className="font-medium wrap-break-word">{value || "—"}</p>
         </div>
     )
 }
@@ -523,6 +436,7 @@ function PaymentRow({
     destructive?: boolean
 }) {
     const amount = Number(value || 0)
+
     return (
         <div className="flex items-center justify-between gap-3 text-sm py-1">
             <div className="flex items-center gap-2 min-w-0">

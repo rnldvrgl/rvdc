@@ -22,6 +22,7 @@ import { CalendarEventItem } from "./CalendarEventItem"
 import CalendarSettings from "./CalendarSettings"
 import { DayViewEventItem } from "./DayViewEventItem"
 import { EventIcon } from "./EventIcon"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -354,7 +355,6 @@ function EventDetailModal({ event, isOpen, onClose }: {
                 >
                     <div
                         className="size-11 rounded-full flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: `color-mix(in srgb, ${colors.bg} 18%, transparent)` }}
                     >
                         <EventIcon event={event} size="md" />
                     </div>
@@ -401,8 +401,10 @@ function DayEventsModal({ date, events, isOpen, onClose, onEventClick }: {
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
-                    <DialogTitle>{format(date, "EEEE, MMMM dd, yyyy")}</DialogTitle>
-                    <DialogDescription>{events.length} event{events.length !== 1 ? "s" : ""} on this day</DialogDescription>
+                    <DialogTitle className="font-mono">{format(date, "EEEE, MMMM dd, yyyy")}</DialogTitle>
+                    <DialogDescription className="font-mono tabular-nums">
+                        <AnimatedNumber value={events.length} /> event{events.length !== 1 ? "s" : ""} on this day
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                     {events.length === 0
@@ -613,19 +615,15 @@ const DashboardCalendar = ({
                                     >
                                         {/* Date number */}
                                         <div className="flex items-center justify-between mb-1 shrink-0">
-                                            <span
-                                                className={cn(
-                                                    "flex items-center justify-center size-6 rounded-full text-[10px] sm:text-xs font-medium leading-none transition-colors",
-                                                    today && "bg-primary text-primary-foreground font-semibold shadow-sm",
-                                                    !today && !inMonth && "text-muted-foreground/50",
-                                                )}
-                                            >
-                                                {format(day, "d")}
-                                            </span>
+                                            <AnimatedNumber value={Number(format(day, "d"))} className={cn(
+                                                "flex items-center justify-center size-6 rounded-full text-[10px] sm:text-xs font-mono tabular-nums font-medium leading-none transition-colors",
+                                                today && "bg-primary text-primary-foreground font-semibold shadow-sm",
+                                                !today && !inMonth && "text-muted-foreground/50",
+                                            )} />
                                             {/* Count badge for sm/md where there's no room for a full list */}
                                             {hasEvents && (
-                                                <span className="hidden sm:inline lg:hidden text-[10px] font-medium text-muted-foreground bg-muted rounded-full px-1.5 py-0.5 leading-none tabular-nums">
-                                                    {dayEvents.length}
+                                                <span className="hidden sm:inline lg:hidden text-[10px] font-mono font-medium text-muted-foreground bg-muted rounded-full px-1.5 py-0.5 leading-none tabular-nums">
+                                                    <AnimatedNumber value={dayEvents.length} />
                                                 </span>
                                             )}
                                         </div>
@@ -639,7 +637,9 @@ const DashboardCalendar = ({
                                                 />
                                             ))}
                                             {extraCount > 0 && (
-                                                <span className="text-[9px] leading-none font-medium text-muted-foreground">+{extraCount}</span>
+                                                <span className="text-[9px] leading-none font-mono font-medium text-muted-foreground tabular-nums">
+                                                    <AnimatedNumber value={extraCount} prefix="+" />
+                                                </span>
                                             )}
                                         </div>
 
@@ -656,8 +656,8 @@ const DashboardCalendar = ({
                                                 <CalendarEventItem key={i} event={e} variant="compact" onClick={handleEventClick} />
                                             ))}
                                             {dayEvents.length > 3 && (
-                                                <span className="text-[10px] sm:text-[11px] font-medium text-center text-muted-foreground hover:text-foreground transition-colors px-1.5 pt-0.5">
-                                                    +{dayEvents.length - 3} more
+                                                <span className="text-[10px] sm:text-[11px] font-mono font-medium text-center text-muted-foreground hover:text-foreground transition-colors px-1.5 pt-0.5 tabular-nums">
+                                                    +<AnimatedNumber value={dayEvents.length - 3} /> more
                                                 </span>
                                             )}
                                         </div>
@@ -693,14 +693,20 @@ const DashboardCalendar = ({
                                 className={cn("p-3 cursor-pointer hover:bg-muted/50", today && "bg-primary/10")}
                             >
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className={cn("text-sm font-semibold", today && "text-primary")}>{format(day, "EEE, MMM d")}</span>
-                                    <span className="text-sm text-muted-foreground">{dayEvents.length} event{dayEvents.length > 1 ? "s" : ""}</span>
+                                    <span className={cn("text-sm font-mono font-semibold tabular-nums", today && "text-primary")}>{format(day, "EEE, MMM d")}</span>
+                                    <span className="text-sm font-mono text-muted-foreground tabular-nums">
+                                        <AnimatedNumber value={dayEvents.length} /> event{dayEvents.length > 1 ? "s" : ""}
+                                    </span>
                                 </div>
                                 <div className="space-y-2">
                                     {dayEvents.slice(0, 3).map((e, i) => (
                                         <CalendarEventItem key={i} event={e} variant="compact" onClick={handleEventClick} />
                                     ))}
-                                    {dayEvents.length > 3 && <p className="text-sm text-muted-foreground text-center">+{dayEvents.length - 3} more</p>}
+                                    {dayEvents.length > 3 && (
+                                        <p className="text-sm font-mono text-muted-foreground text-center tabular-nums">
+                                            <AnimatedNumber value={dayEvents.length - 3} prefix="+" /> more
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         )
@@ -714,8 +720,8 @@ const DashboardCalendar = ({
                             <div className="p-2" />
                             {days.map((day) => (
                                 <div key={day.toDateString()} className="p-2 text-center min-w-20">
-                                    <p className="text-[10px] text-muted-foreground">{format(day, "EEE")}</p>
-                                    <p className={cn("text-sm font-medium", isToday(day) && "text-primary")}>{format(day, "d")}</p>
+                                    <p className="text-[10px] font-mono text-muted-foreground tabular-nums">{format(day, "EEE")}</p>
+                                    <p className={cn("text-sm font-mono font-medium tabular-nums", isToday(day) && "text-primary")}>{format(day, "d")}</p>
                                 </div>
                             ))}
                         </div>
@@ -723,7 +729,7 @@ const DashboardCalendar = ({
                             {timeSlots.map((hour) => (
                                 <div key={hour} className="grid grid-cols-8 divide-x min-h-10">
                                     <div className="p-1 text-[10px] flex items-center justify-center text-muted-foreground bg-muted/20">
-                                        {format(new Date().setHours(hour, 0, 0, 0), "h:mm a")}
+                                                <span className="font-mono tabular-nums">{format(new Date().setHours(hour, 0, 0, 0), "h:mm a")}</span>
                                     </div>
                                     {days.map((day) => {
                                         const slotEvents = (eventsByDate[day.toDateString()] ?? []).filter(e =>
@@ -884,7 +890,7 @@ const DashboardCalendar = ({
                 <CardContent className="space-y-3 pt-0">
                     {/* Mobile controls */}
                     <div className="flex flex-col space-y-2 sm:hidden">
-                        <h2 className="text-sm font-semibold text-center">{dateTitle}</h2>
+                        <h2 className="text-sm font-mono font-semibold text-center tabular-nums">{dateTitle}</h2>
                         <div className="flex items-center justify-center gap-1.5">
                             <ViewToggle view={view} onChange={setView} size="sm" />
                         </div>
@@ -906,7 +912,7 @@ const DashboardCalendar = ({
                                 Today
                             </Button>
                         </div>
-                        <h2 className="text-sm font-semibold flex-1 text-center">{dateTitle}</h2>
+                        <h2 className="text-sm font-mono font-semibold flex-1 text-center tabular-nums">{dateTitle}</h2>
                         <div className="flex items-center gap-1">
                             <ViewToggle view={view} onChange={setView} />
                         </div>

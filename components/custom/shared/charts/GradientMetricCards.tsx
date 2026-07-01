@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { AnalyticsSummary } from "@/lib/constants/interface"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import { useGetSummary } from "@/lib/queries/analytics/useGetAnalytics"
-import { formatCurrency, formatNumber } from "@/lib/utils/helpers"
 import { motion } from "framer-motion"
 import {
     AlertCircle,
@@ -19,11 +18,12 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { type ReactNode, useMemo } from "react"
-import { FadeUpItem, StaggerGrid } from "./MotionWrappers"
+import { AnimatedNumber, FadeUpItem, StaggerGrid } from "./MotionWrappers"
+import { Badge } from "@/components/ui/badge"
 
 interface MetricCard {
     title: string
-    value: string
+    value: ReactNode
     icon: LucideIcon
     href?: string
     trend?: { value: number; label: string }
@@ -99,7 +99,7 @@ function buildMetricCards(
     return [
         {
             title: "Outstanding",
-            value: formatCurrency(data.total_outstanding),
+            value: <AnimatedNumber value={data.total_outstanding} prefix="₱" />,
             icon: AlertCircle,
             href: "/receivables/payment-collection",
             trend: trend(data.total_outstanding, prev?.total_outstanding),
@@ -107,7 +107,7 @@ function buildMetricCards(
         },
         {
             title: "Expenses",
-            value: formatCurrency(data.total_expense),
+            value: <AnimatedNumber value={data.total_expense} prefix="₱" />,
             icon: Receipt,
             href: "/expenses/manage",
             trend: trend(data.total_expense, prev?.total_expense),
@@ -115,7 +115,7 @@ function buildMetricCards(
         },
         {
             title: "Active Services",
-            value: formatNumber(data.active_services),
+            value: <AnimatedNumber value={data.active_services} />,
             icon: Clock,
             href: "/services",
             trend: trend(data.active_services, prev?.active_services),
@@ -123,7 +123,7 @@ function buildMetricCards(
         },
         {
             title: "Completion Rate",
-            value: `${data.service_completion_rate}%`,
+            value: <AnimatedNumber value={data.service_completion_rate} suffix="%" />,
             icon: CheckCircle2,
             href: "/services",
             trend: trend(data.service_completion_rate, prev?.service_completion_rate),
@@ -131,7 +131,7 @@ function buildMetricCards(
         },
         {
             title: "Payment Collection",
-            value: `${data.payment_collection_rate}%`,
+            value: <AnimatedNumber value={data.payment_collection_rate} suffix="%" />,
             icon: DollarSign,
             href: "/receivables/payment-collection",
             trend: trend(data.payment_collection_rate, prev?.payment_collection_rate),
@@ -153,7 +153,7 @@ function buildMetricCards(
             : []),
         {
             title: "New Clients",
-            value: formatNumber(data.new_clients),
+            value: <AnimatedNumber value={data.new_clients} />,
             icon: UserPlus,
             href: "/clients",
             trend: trend(data.new_clients, prev?.new_clients),
@@ -216,15 +216,11 @@ function MetricCardItem({ card }: { card: MetricCard }) {
                             <card.icon className={`size-5 ${card.accent.iconColor}`} />
                         </div>
                         {card.trend && (
-                            <span
-                                className={`text-xs font-semibold px-2 py-0.5 rounded-full ${card.trend.value >= 0
-                                        ? "bg-muted text-foreground"
-                                        : "bg-destructive/10 text-destructive"
-                                    }`}
+                            <Badge
+                                variant={card.trend.value > 0 ? "success" : card.trend.value < 0 ? "destructive" : "secondary"}
                             >
-                                {card.trend.value > 0 ? "+" : ""}
-                                {card.trend.value}%
-                            </span>
+                                <AnimatedNumber value={card.trend.value} suffix="%" prefix={card.trend.value > 0 ? "+" : ""} />
+                            </Badge>
                         )}
                     </div>
 
