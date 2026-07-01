@@ -17,6 +17,7 @@ import {
     CardTitle,
 } from "@/components/ui/card"
 
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { ConfirmAlert } from "@/components/custom/shared/ConfirmAlert"
 import { Button } from "@/components/ui/button"
 import { User } from "@/lib/constants/interface"
@@ -34,6 +35,7 @@ import api from "@/lib/utils/api"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { RefreshCw, RotateCcw } from "lucide-react"
 import useSettingsStore, { DEFAULT_SOUND_VOLUME, SettingsStore } from "@/lib/store/useSettingsStore"
+import { Badge } from "@/components/ui/badge"
 
 /* -------------------------------- helpers -------------------------------- */
 
@@ -371,19 +373,11 @@ export default function SettingsPage() {
         <Wrapper>
             <PageHeader
                 icon={Settings}
+                onRefresh={handleRefresh}
                 title="Account Settings"
                 description="Manage your personal information, security settings, and account preferences."
                 breadcrumbs={["Dashboard", "Settings"]}
-            />
-
-            {/* Action Bar */}
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    {lastSaveTime && (
-                        <span>Last saved: {lastSaveTime.toLocaleTimeString()}</span>
-                    )}
-                </div>
-                <div className="flex gap-2">
+                actionButton={
                     <Button
                         variant="destructive"
                         size="sm"
@@ -393,21 +387,13 @@ export default function SettingsPage() {
                         <RotateCcw className="size-4 mr-2" />
                         Reset Changes
                     </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleRefresh}
-                        disabled={isLoading}
-                    >
-                        <RefreshCw
-                            className={`size-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-                        />
-                        Refresh
-                    </Button>
-                </div>
-            </div>
+                }
+            />
 
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden relative">
+                {lastSaveTime && (
+                    <Badge className="absolute top-m3 right-3 text-xs font-mono">Last saved: {lastSaveTime.toLocaleTimeString()}</Badge>
+                )}
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <UserIcon className="size-5" />
@@ -432,7 +418,7 @@ export default function SettingsPage() {
                             </Info>
                             <Info label="Role">
                                 {userProfile.role ? (
-                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-info/10 text-info">
                                         <Shield className="size-3" />
                                         {userProfile.role[0].toUpperCase() +
                                             userProfile.role.slice(1)}
@@ -448,8 +434,12 @@ export default function SettingsPage() {
                             </Info>
                             <Info label="Cash Ban Balance">
                                 <span className="inline-flex items-center gap-1.5 font-semibold text-success">
-                                    <Wallet className="size-3" />₱
-                                    {Number(userProfile.cash_ban_balance || 0).toLocaleString()}
+                                    <Wallet className="size-3" />
+                                    <AnimatedNumber
+                                        value={Number(userProfile.cash_ban_balance || 0)}
+                                        prefix="₱"
+                                        format={{ minimumFractionDigits: 0, maximumFractionDigits: 0 }}
+                                    />
                                 </span>
                             </Info>
                         </div>
@@ -472,12 +462,12 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         {/* Sound */}
                         <div className="flex flex-col gap-3">
-                            <div className="flex items-center gap-2">
-                                <Volume2 className="size-4 text-muted-foreground shrink-0" />
-                                <span className="text-sm font-medium">Sound Volume</span>
-                                <span className="ml-auto text-xs tabular-nums text-muted-foreground">
-                                    {Math.round(soundVolume * 100)}%
-                                </span>
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                    <Volume2 className="size-4 text-muted-foreground shrink-0" />
+                                    <span className="text-sm font-medium">Sound Volume</span>
+                                </div>
+                                <AnimatedNumber value={soundVolume * 100} suffix="%" format={{ minimumFractionDigits: 0, maximumFractionDigits: 0 }} className="text-sm text-muted-foreground" />
                             </div>
                             <input
                                 type="range"
