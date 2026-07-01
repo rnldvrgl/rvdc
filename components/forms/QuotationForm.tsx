@@ -42,6 +42,7 @@ import { useQuotationTemplates } from "@/lib/queries/useQuotationTemplates"
 import useGetReceiptDetails from "@/lib/hooks/useGetReceiptDetails"
 import { cn } from "@/lib/utils/helpers"
 import { addDays, format } from "date-fns"
+import { AnimatePresence, motion } from "framer-motion"
 import {
     Bold,
     CalendarIcon,
@@ -143,34 +144,41 @@ function EditableLines({
 
     return (
         <div className="space-y-1.5">
-            {lines.map((line, idx) => (
-                <div
-                    key={idx}
-                    className="group flex items-center gap-1.5"
-                >
-                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
-                    <Input
-                        value={line}
-                        onChange={(e) => updateLine(idx, e.target.value)}
-                        placeholder={placeholder || `Line ${idx + 1}...`}
-                        className="h-8 text-sm flex-1"
-                    />
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
-                                onClick={() => removeLine(idx)}
-                            >
-                                <X className="h-3.5 w-3.5" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Remove this line</TooltipContent>
-                    </Tooltip>
-                </div>
-            ))}
+            <AnimatePresence initial={false}>
+                {lines.map((line, idx) => (
+                    <motion.div
+                        key={idx}
+                        layout
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.15 } }}
+                        transition={{ duration: 0.18, ease: "easeOut" }}
+                        className="group flex items-center gap-1.5"
+                    >
+                        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                        <Input
+                            value={line}
+                            onChange={(e) => updateLine(idx, e.target.value)}
+                            placeholder={placeholder || `Line ${idx + 1}...`}
+                            className="h-8 text-sm flex-1"
+                        />
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity"
+                                    onClick={() => removeLine(idx)}
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove this line</TooltipContent>
+                        </Tooltip>
+                    </motion.div>
+                ))}
+            </AnimatePresence>
             <Button
                 type="button"
                 variant="outline"
@@ -925,34 +933,43 @@ export default function QuotationForm({
                             </SelectContent>
                         </Select>
                     </div>
-                    {isPriceList && (
-                        <div className="space-y-1.5 col-span-2">
-                            <Label className="text-xs text-muted-foreground">
-                                Price List Template
-                            </Label>
-                            <Select
-                                value={selectedPriceListTemplateId?.toString() ?? ""}
-                                onValueChange={(v) =>
-                                    setSelectedPriceListTemplateId(v ? Number(v) : null)
-                                }
+                    <AnimatePresence>
+                        {isPriceList && (
+                            <motion.div
+                                className="space-y-1.5 col-span-2"
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.2, ease: "easeInOut" }}
+                                style={{ overflow: "hidden" }}
                             >
-                                <SelectTrigger className="h-9">
-                                    <SelectValue placeholder="Select template..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {priceListTemplates.map((template) => (
-                                        <SelectItem key={template.id} value={template.id.toString()}>
-                                            {template.name}
-                                            {template.is_default ? " (default)" : ""}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <p className="text-[11px] text-muted-foreground">
-                                Limits the models and brands available in the price list.
-                            </p>
-                        </div>
-                    )}
+                                <Label className="text-xs text-muted-foreground">
+                                    Price List Template
+                                </Label>
+                                <Select
+                                    value={selectedPriceListTemplateId?.toString() ?? ""}
+                                    onValueChange={(v) =>
+                                        setSelectedPriceListTemplateId(v ? Number(v) : null)
+                                    }
+                                >
+                                    <SelectTrigger className="h-9">
+                                        <SelectValue placeholder="Select template..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {priceListTemplates.map((template) => (
+                                            <SelectItem key={template.id} value={template.id.toString()}>
+                                                {template.name}
+                                                {template.is_default ? " (default)" : ""}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-[11px] text-muted-foreground">
+                                    Limits the models and brands available in the price list.
+                                </p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                     <div className="space-y-1.5">
                         <Label className="text-xs text-muted-foreground">Quote Date</Label>
                         <Popover>
@@ -1065,7 +1082,7 @@ export default function QuotationForm({
                                 value={clientContactOverride}
                                 onChange={(e) => setClientContactOverride(e.target.value)}
                                 placeholder="Contact number..."
-                                className="h-9"
+                                className="h-9 font-mono"
                             />
                         </div>
                     </div>
@@ -1093,244 +1110,264 @@ export default function QuotationForm({
                 </div>
 
                 <div className="space-y-3">
-                    {items.map((item, idx) => (
-                        <div
-                            key={item.id}
-                            className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-2"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1">
-                                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
-                                    <span className="text-xs font-medium text-muted-foreground">
-                                        Item {idx + 1}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-0.5">
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-muted-foreground"
-                                                onClick={() => moveItem(item.id, "up")}
-                                                disabled={idx === 0}
-                                            >
-                                                <ChevronUp className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Move up</TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-muted-foreground"
-                                                onClick={() => moveItem(item.id, "down")}
-                                                disabled={idx === items.length - 1}
-                                            >
-                                                <ChevronDown className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Move down</TooltipContent>
-                                    </Tooltip>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                                onClick={() => removeItem(item.id)}
-                                                disabled={items.length === 1}
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Remove item</TooltipContent>
-                                    </Tooltip>
-                                </div>
-                            </div>
-                            {isPriceList ? (
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">
-                                        Aircon Model{" "}
-                                        <span className="text-[10px]">
-                                            (optional — auto-fills description & price)
-                                        </span>
-                                    </Label>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="flex-1">
-                                            <ComboBox
-                                                options={filteredAirconModelOptions}
-                                                value={item.airconModelId}
-                                                onChange={(v) =>
-                                                    handleAirconModelSelect(item.id, v as number | null)
-                                                }
-                                                placeholder="Select aircon model..."
-                                                searchPlaceholder="Search brand, model, HP..."
-                                            />
-                                        </div>
-                                        {item.airconModelId && (
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
-                                                        onClick={() => handleAirconModelClear(item.id)}
-                                                    >
-                                                        <X className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>Remove selected model</TooltipContent>
-                                            </Tooltip>
-                                        )}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">
-                                        Aircon Unit{" "}
-                                        <span className="text-[10px]">
-                                            (optional — auto-fills description & price)
-                                        </span>
-                                    </Label>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="flex-1">
-                                            <ComboBox
-                                                options={getUnitOptionsForItem(item.id)}
-                                                value={item.airconUnitId}
-                                                onChange={(v) =>
-                                                    handleAirconUnitSelect(item.id, v as number | null)
-                                                }
-                                                placeholder="Select aircon unit..."
-                                                searchPlaceholder="Search serial, brand, model..."
-                                            />
-                                        </div>
-                                        {item.airconUnitId && (
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
-                                                        onClick={() => handleAirconUnitClear(item.id)}
-                                                    >
-                                                        <X className="h-3.5 w-3.5" />
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                <TooltipContent>Remove selected unit</TooltipContent>
-                                            </Tooltip>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                            <div
-                                className={cn(
-                                    "grid gap-2",
-                                    isPriceList
-                                        ? "grid-cols-1 md:grid-cols-[1fr_150px_150px]"
-                                        : "grid-cols-1 md:grid-cols-[1fr_90px_140px_120px] lg:grid-cols-[1fr_90px_160px_120px]",
-                                )}
+                    <AnimatePresence initial={false}>
+                        {items.map((item, idx) => (
+                            <motion.div
+                                key={item.id}
+                                layout
+                                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.15 } }}
+                                transition={{ duration: 0.2, ease: "easeOut" }}
+                                className="rounded-md border border-border/60 bg-muted/30 p-3 space-y-2"
                             >
-                                <DescriptionField
-                                    value={item.description}
-                                    onChange={(v) => updateItem(item.id, "description", v)}
-                                />
-                                {!isPriceList && (
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-1">
+                                        <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
+                                        <span className="text-xs font-medium text-muted-foreground">
+                                            Item {idx + 1}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-0.5">
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-muted-foreground"
+                                                    onClick={() => moveItem(item.id, "up")}
+                                                    disabled={idx === 0}
+                                                >
+                                                    <ChevronUp className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Move up</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-muted-foreground"
+                                                    onClick={() => moveItem(item.id, "down")}
+                                                    disabled={idx === items.length - 1}
+                                                >
+                                                    <ChevronDown className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Move down</TooltipContent>
+                                        </Tooltip>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                                    onClick={() => removeItem(item.id)}
+                                                    disabled={items.length === 1}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Remove item</TooltipContent>
+                                        </Tooltip>
+                                    </div>
+                                </div>
+                                {isPriceList ? (
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-muted-foreground">
+                                            Aircon Model{" "}
+                                            <span className="text-[10px]">
+                                                (optional — auto-fills description & price)
+                                            </span>
+                                        </Label>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="flex-1">
+                                                <ComboBox
+                                                    options={filteredAirconModelOptions}
+                                                    value={item.airconModelId}
+                                                    onChange={(v) =>
+                                                        handleAirconModelSelect(item.id, v as number | null)
+                                                    }
+                                                    placeholder="Select aircon model..."
+                                                    searchPlaceholder="Search brand, model, HP..."
+                                                />
+                                            </div>
+                                            {item.airconModelId && (
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                                                            onClick={() => handleAirconModelClear(item.id)}
+                                                        >
+                                                            <X className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Remove selected model</TooltipContent>
+                                                </Tooltip>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs text-muted-foreground">
+                                            Aircon Unit{" "}
+                                            <span className="text-[10px]">
+                                                (optional — auto-fills description & price)
+                                            </span>
+                                        </Label>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="flex-1">
+                                                <ComboBox
+                                                    options={getUnitOptionsForItem(item.id)}
+                                                    value={item.airconUnitId}
+                                                    onChange={(v) =>
+                                                        handleAirconUnitSelect(item.id, v as number | null)
+                                                    }
+                                                    placeholder="Select aircon unit..."
+                                                    searchPlaceholder="Search serial, brand, model..."
+                                                />
+                                            </div>
+                                            {item.airconUnitId && (
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                                                            onClick={() => handleAirconUnitClear(item.id)}
+                                                        >
+                                                            <X className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>Remove selected unit</TooltipContent>
+                                                </Tooltip>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                <div
+                                    className={cn(
+                                        "grid gap-2",
+                                        isPriceList
+                                            ? "grid-cols-1 md:grid-cols-[1fr_150px_150px]"
+                                            : "grid-cols-1 md:grid-cols-[1fr_90px_140px_120px] lg:grid-cols-[1fr_90px_160px_120px]",
+                                    )}
+                                >
+                                    <DescriptionField
+                                        value={item.description}
+                                        onChange={(v) => updateItem(item.id, "description", v)}
+                                    />
+                                    {!isPriceList && (
+                                        <div className="space-y-1">
+                                            <Label className="text-[11px] text-muted-foreground">
+                                                Qty
+                                            </Label>
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                value={item.qty}
+                                                onChange={(e) =>
+                                                    updateItem(
+                                                        item.id,
+                                                        "qty",
+                                                        Math.max(1, parseInt(e.target.value) || 1),
+                                                    )
+                                                }
+                                                className="h-9"
+                                            />
+                                        </div>
+                                    )}
                                     <div className="space-y-1">
                                         <Label className="text-[11px] text-muted-foreground">
-                                            Qty
+                                            {isPriceList ? "Retail Price" : "Price"}
                                         </Label>
                                         <Input
                                             type="number"
-                                            min={1}
-                                            value={item.qty}
+                                            min={0}
+                                            step="0.01"
+                                            value={item.price || ""}
                                             onChange={(e) =>
                                                 updateItem(
                                                     item.id,
-                                                    "qty",
-                                                    Math.max(1, parseInt(e.target.value) || 1),
+                                                    "price",
+                                                    parseFloat(e.target.value) || 0,
                                                 )
                                             }
+                                            placeholder="0.00"
                                             className="h-9"
                                         />
                                     </div>
-                                )}
-                                <div className="space-y-1">
-                                    <Label className="text-[11px] text-muted-foreground">
-                                        {isPriceList ? "Retail Price" : "Price"}
-                                    </Label>
-                                    <Input
-                                        type="number"
-                                        min={0}
-                                        step="0.01"
-                                        value={item.price || ""}
-                                        onChange={(e) =>
-                                            updateItem(
-                                                item.id,
-                                                "price",
-                                                parseFloat(e.target.value) || 0,
-                                            )
-                                        }
-                                        placeholder="0.00"
-                                        className="h-9"
-                                    />
+                                    {!isPriceList && (
+                                        <div className="space-y-1">
+                                            <Label className="text-[11px] text-muted-foreground">
+                                                Discount / unit
+                                            </Label>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                step="0.01"
+                                                value={item.discount || ""}
+                                                onChange={(e) =>
+                                                    updateItem(
+                                                        item.id,
+                                                        "discount",
+                                                        Math.max(0, parseFloat(e.target.value) || 0),
+                                                    )
+                                                }
+                                                placeholder="0.00"
+                                                className="h-9"
+                                            />
+                                            <p className="text-[10px] text-muted-foreground">
+                                                Applies to each unit in this line item.
+                                            </p>
+                                        </div>
+                                    )}
+                                    {isPriceList && (
+                                        <div className="space-y-1">
+                                            <Label className="text-[11px] text-muted-foreground">
+                                                Promo Price
+                                            </Label>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                step="0.01"
+                                                value={item.promoPrice ?? ""}
+                                                onChange={(e) =>
+                                                    updateItem(
+                                                        item.id,
+                                                        "promoPrice",
+                                                        e.target.value === ""
+                                                            ? 0
+                                                            : parseFloat(e.target.value) || 0,
+                                                    )
+                                                }
+                                                placeholder="0.00"
+                                                className="h-9"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                                 {!isPriceList && (
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] text-muted-foreground">
-                                            Discount / unit
-                                        </Label>
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            step="0.01"
-                                            value={item.discount || ""}
-                                            onChange={(e) =>
-                                                updateItem(
-                                                    item.id,
-                                                    "discount",
-                                                    Math.max(0, parseFloat(e.target.value) || 0),
-                                                )
+                                    <div className="flex justify-end pt-1 text-xs text-muted-foreground">
+                                        <span className="mr-2">Line total</span>
+                                        <AnimatedNumber
+                                            value={
+                                                item.qty * item.price -
+                                                item.qty * (item.discount || 0)
                                             }
-                                            placeholder="0.00"
-                                            className="h-9"
-                                        />
-                                        <p className="text-[10px] text-muted-foreground">
-                                            Applies to each unit in this line item.
-                                        </p>
-                                    </div>
-                                )}
-                                {isPriceList && (
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] text-muted-foreground">
-                                            Promo Price
-                                        </Label>
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            step="0.01"
-                                            value={item.promoPrice ?? ""}
-                                            onChange={(e) =>
-                                                updateItem(
-                                                    item.id,
-                                                    "promoPrice",
-                                                    e.target.value === ""
-                                                        ? 0
-                                                        : parseFloat(e.target.value) || 0,
-                                                )
-                                            }
-                                            placeholder="0.00"
-                                            className="h-9"
+                                            prefix="₱"
+                                            className="font-medium text-foreground"
                                         />
                                     </div>
                                 )}
-                            </div>
-                        </div>
-                    ))}
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
                 </div>
 
                 <Tooltip>
@@ -1339,7 +1376,7 @@ export default function QuotationForm({
                             type="button"
                             variant="ghost"
                             onClick={addItem}
-                            className="h-11 w-full border border-dashed border-border/70 bg-muted/20 text-sm font-medium text-primary hover:bg-primary/5"
+                            className="h-11 mt-3 w-full border border-dashed border-border/70 bg-muted/20 text-sm font-medium text-primary hover:bg-primary/5"
                         >
                             <Plus className="mr-2 h-4 w-4" />
                             Add another item
@@ -1397,256 +1434,288 @@ export default function QuotationForm({
                 </div>
 
                 {/* Totals */}
-                {!isPriceList && (
-                    <div className="mt-4 w-full space-y-1.5 text-sm">
-                        <div className="flex justify-between text-muted-foreground">
-                            <span>Subtotal</span>
-                            <AnimatedNumber value={subtotal} prefix="₱" />
-                        </div>
-                        <div className="flex justify-between text-muted-foreground">
-                            <span>Item Discounts</span>
-                            <AnimatedNumber value={itemDiscountTotal} prefix="-₱" />
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                            <span className="text-muted-foreground">Overall Discount</span>
-                            <Input
-                                type="number"
-                                min={0}
-                                step="0.01"
-                                value={discountAmount || ""}
-                                onChange={(e) =>
-                                    setDiscountAmount(parseFloat(e.target.value) || 0)
-                                }
-                                placeholder="0.00"
-                                className="w-32 sm:w-40 md:w-44 h-8 text-right text-sm"
-                            />
-                        </div>
-                        <div className="flex justify-between text-muted-foreground">
-                            <span>Total Discount</span>
-                            <AnimatedNumber value={totalDiscount} prefix="-₱" />
-                        </div>
-                        <Separator />
-                        <div className="flex justify-between font-semibold text-base text-success">
-                            <span>Total</span>
-                            <AnimatedNumber value={total} prefix="₱" />
-                        </div>
-                    </div>
-                )}
+                <AnimatePresence>
+                    {!isPriceList && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                            style={{ overflow: "hidden" }}
+                            className="mt-4 w-full space-y-1.5 text-sm"
+                        >
+                            <div className="flex justify-between text-muted-foreground">
+                                <span>Subtotal</span>
+                                <AnimatedNumber value={subtotal} prefix="₱" />
+                            </div>
+                            <div className="flex justify-between text-muted-foreground">
+                                <span>Item Discounts</span>
+                                <AnimatedNumber value={itemDiscountTotal} prefix="-₱" />
+                            </div>
+                            <div className="flex items-center justify-between gap-2">
+                                <span className="text-muted-foreground">Overall Discount</span>
+                                <Input
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    value={discountAmount || ""}
+                                    onChange={(e) =>
+                                        setDiscountAmount(parseFloat(e.target.value) || 0)
+                                    }
+                                    placeholder="0.00"
+                                    className="w-32 sm:w-40 md:w-44 h-8 text-right text-sm"
+                                />
+                            </div>
+                            <div className="flex justify-between text-muted-foreground">
+                                <span>Total Discount</span>
+                                <AnimatedNumber value={totalDiscount} prefix="-₱" />
+                            </div>
+                            <Separator />
+                            <div className="flex justify-between font-semibold text-base text-success">
+                                <span>Total</span>
+                                <AnimatedNumber value={total} prefix="₱" />
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </section>
 
             <Separator />
 
             {/* ── Section: Payment Schedule ─────────────────────── */}
-            {!isPriceList && (
-                <section>
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-foreground">
-                            Payment Schedule
-                        </h3>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-7 border-dashed text-xs text-primary border-primary/30 hover:bg-primary/5"
-                            onClick={addPayment}
-                        >
-                            <Plus className="mr-1 h-3 w-3" />
-                            Add Payment
-                        </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3">
-                        Track downpayment, completion payment, etc. These will appear on the
-                        printed quotation.
-                    </p>
-                    <div className="space-y-3">
-                        {paymentRecords.length === 0 && (
-                            <div className="text-xs text-muted-foreground border border-dashed rounded-md p-4 text-center">
-                                No payment schedule yet.
-                                <div className="mt-2">
-                                    Click <span className="font-medium">Add Payment</span> to
-                                    create one.
-                                </div>
-                            </div>
-                        )}
-                        {paymentRecords.map((rec) => (
-                            <div
-                                key={rec.id}
-                                className="group border rounded-md p-3 bg-muted/30 space-y-2"
+            <AnimatePresence>
+                {!isPriceList && (
+                    <motion.section
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25, ease: "easeInOut" }}
+                        style={{ overflow: "hidden" }}
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-semibold text-foreground">
+                                Payment Schedule
+                            </h3>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 border-dashed text-xs text-primary border-primary/30 hover:bg-primary/5"
+                                onClick={addPayment}
                             >
-                                {/* Row 1: Label + Amount + Delete */}
-                                <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_32px] md:grid-cols-[1fr_180px_32px] lg:grid-cols-[1fr_200px_32px] gap-2 items-end">
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] text-muted-foreground">
-                                            Label
-                                        </Label>
-                                        <Input
-                                            value={rec.label}
-                                            onChange={(e) =>
-                                                setPaymentRecords((prev) =>
-                                                    prev.map((r) =>
-                                                        r.id === rec.id
-                                                            ? { ...r, label: e.target.value }
-                                                            : r,
-                                                    ),
-                                                )
-                                            }
-                                            placeholder="e.g. Down payment, Full payment"
-                                            className="h-8 text-sm"
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] text-muted-foreground">
-                                            Amount (₱)
-                                        </Label>
-                                        <Input
-                                            type="number"
-                                            min={0}
-                                            step="0.01"
-                                            value={rec.amount || ""}
-                                            onChange={(e) =>
-                                                setPaymentRecords((prev) =>
-                                                    prev.map((r) =>
-                                                        r.id === rec.id
-                                                            ? {
-                                                                ...r,
-                                                                amount: parseFloat(e.target.value) || 0,
-                                                            }
-                                                            : r,
-                                                    ),
-                                                )
-                                            }
-                                            placeholder="0.00"
-                                            className="h-8 text-sm"
-                                        />
-                                    </div>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-muted-foreground hover:text-destructive self-end"
-                                                onClick={() =>
-                                                    setPaymentRecords((prev) =>
-                                                        prev.filter((r) => r.id !== rec.id),
-                                                    )
-                                                }
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Remove payment</TooltipContent>
-                                    </Tooltip>
-                                </div>
-                                {/* Row 2: Payment Method + Date + Ref No. + S.I. No. */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] text-muted-foreground">
-                                            Payment Method
-                                        </Label>
-                                        <Select
-                                            value={rec.payment_method}
-                                            onValueChange={(v) =>
-                                                setPaymentRecords((prev) =>
-                                                    prev.map((r) =>
-                                                        r.id === rec.id ? { ...r, payment_method: v } : r,
-                                                    ),
-                                                )
-                                            }
-                                        >
-                                            <SelectTrigger className="h-8 text-sm">
-                                                <SelectValue placeholder="Select..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="cash">Cash</SelectItem>
-                                                <SelectItem value="gcash">GCash</SelectItem>
-                                                <SelectItem value="bank_transfer">
-                                                    Bank Transfer
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] text-muted-foreground">
-                                            Date
-                                        </Label>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    className={cn(
-                                                        "w-full justify-start text-left font-normal h-8 text-sm",
-                                                        !rec.payment_date && "text-muted-foreground",
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                                                    {rec.payment_date
-                                                        ? format(rec.payment_date, "MM/dd/yyyy")
-                                                        : "Pick date"}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent
-                                                className="w-auto p-0"
-                                                align="start"
-                                            >
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={rec.payment_date}
-                                                    onSelect={(d) =>
+                                <Plus className="mr-1 h-3 w-3" />
+                                Add Payment
+                            </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-3">
+                            Track downpayment, completion payment, etc. These will appear on the
+                            printed quotation.
+                        </p>
+                        <div className="space-y-3">
+                            <AnimatePresence initial={false}>
+                                {paymentRecords.length === 0 && (
+                                    <motion.div
+                                        key="empty-payments"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        transition={{ duration: 0.15 }}
+                                        className="text-xs text-muted-foreground border border-dashed rounded-md p-4 text-center"
+                                    >
+                                        No payment schedule yet.
+                                        <div className="mt-2">
+                                            Click <span className="font-medium">Add Payment</span> to
+                                            create one.
+                                        </div>
+                                    </motion.div>
+                                )}
+                                {paymentRecords.map((rec) => (
+                                    <motion.div
+                                        key={rec.id}
+                                        layout
+                                        initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.15 } }}
+                                        transition={{ duration: 0.2, ease: "easeOut" }}
+                                        className="group border rounded-md p-3 bg-muted/30 space-y-2"
+                                    >
+                                        {/* Row 1: Label + Amount + Delete */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_32px] md:grid-cols-[1fr_180px_32px] lg:grid-cols-[1fr_200px_32px] gap-2 items-end">
+                                            <div className="space-y-1">
+                                                <Label className="text-[11px] text-muted-foreground">
+                                                    Label
+                                                </Label>
+                                                <Input
+                                                    value={rec.label}
+                                                    onChange={(e) =>
                                                         setPaymentRecords((prev) =>
                                                             prev.map((r) =>
-                                                                r.id === rec.id ? { ...r, payment_date: d } : r,
+                                                                r.id === rec.id
+                                                                    ? { ...r, label: e.target.value }
+                                                                    : r,
                                                             ),
                                                         )
                                                     }
+                                                    placeholder="e.g. Down payment, Full payment"
+                                                    className="h-8 text-sm"
                                                 />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] text-muted-foreground">
-                                            Ref No.
-                                        </Label>
-                                        <Input
-                                            value={rec.reference_number}
-                                            onChange={(e) =>
-                                                setPaymentRecords((prev) =>
-                                                    prev.map((r) =>
-                                                        r.id === rec.id
-                                                            ? { ...r, reference_number: e.target.value }
-                                                            : r,
-                                                    ),
-                                                )
-                                            }
-                                            placeholder="Reference #"
-                                            className="h-8 text-sm"
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label className="text-[11px] text-muted-foreground">
-                                            S.I. No.
-                                        </Label>
-                                        <Input
-                                            value={rec.si_number}
-                                            onChange={(e) =>
-                                                setPaymentRecords((prev) =>
-                                                    prev.map((r) =>
-                                                        r.id === rec.id
-                                                            ? { ...r, si_number: e.target.value }
-                                                            : r,
-                                                    ),
-                                                )
-                                            }
-                                            placeholder="Sales Invoice #"
-                                            className="h-8 text-sm"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            )}
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[11px] text-muted-foreground">
+                                                    Amount (₱)
+                                                </Label>
+                                                <Input
+                                                    type="number"
+                                                    min={0}
+                                                    step="0.01"
+                                                    value={rec.amount || ""}
+                                                    onChange={(e) =>
+                                                        setPaymentRecords((prev) =>
+                                                            prev.map((r) =>
+                                                                r.id === rec.id
+                                                                    ? {
+                                                                        ...r,
+                                                                        amount: parseFloat(e.target.value) || 0,
+                                                                    }
+                                                                    : r,
+                                                            ),
+                                                        )
+                                                    }
+                                                    placeholder="0.00"
+                                                    className="h-8 text-sm"
+                                                />
+                                            </div>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-muted-foreground hover:text-destructive self-end"
+                                                        onClick={() =>
+                                                            setPaymentRecords((prev) =>
+                                                                prev.filter((r) => r.id !== rec.id),
+                                                            )
+                                                        }
+                                                    >
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Remove payment</TooltipContent>
+                                            </Tooltip>
+                                        </div>
+                                        {/* Row 2: Payment Method + Date + Ref No. + S.I. No. */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+                                            <div className="space-y-1">
+                                                <Label className="text-[11px] text-muted-foreground">
+                                                    Payment Method
+                                                </Label>
+                                                <Select
+                                                    value={rec.payment_method}
+                                                    onValueChange={(v) =>
+                                                        setPaymentRecords((prev) =>
+                                                            prev.map((r) =>
+                                                                r.id === rec.id ? { ...r, payment_method: v } : r,
+                                                            ),
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger className="h-8 text-sm">
+                                                        <SelectValue placeholder="Select..." />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="cash">Cash</SelectItem>
+                                                        <SelectItem value="gcash">GCash</SelectItem>
+                                                        <SelectItem value="bank_transfer">
+                                                            Bank Transfer
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[11px] text-muted-foreground">
+                                                    Date
+                                                </Label>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            className={cn(
+                                                                "w-full justify-start text-left font-normal h-8 text-sm font-mono",
+                                                                !rec.payment_date && "text-muted-foreground",
+                                                            )}
+                                                        >
+                                                            <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                                                            {rec.payment_date
+                                                                ? format(rec.payment_date, "MM/dd/yyyy")
+                                                                : "Pick date"}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent
+                                                        className="w-auto p-0"
+                                                        align="start"
+                                                    >
+                                                        <Calendar
+                                                            className="font-mono"
+                                                            mode="single"
+                                                            selected={rec.payment_date}
+                                                            onSelect={(d) =>
+                                                                setPaymentRecords((prev) =>
+                                                                    prev.map((r) =>
+                                                                        r.id === rec.id ? { ...r, payment_date: d } : r,
+                                                                    ),
+                                                                )
+                                                            }
+                                                        />
+                                                    </PopoverContent>
+                                                </Popover>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[11px] text-muted-foreground">
+                                                    Ref No.
+                                                </Label>
+                                                <Input
+                                                    value={rec.reference_number}
+                                                    onChange={(e) =>
+                                                        setPaymentRecords((prev) =>
+                                                            prev.map((r) =>
+                                                                r.id === rec.id
+                                                                    ? { ...r, reference_number: e.target.value }
+                                                                    : r,
+                                                            ),
+                                                        )
+                                                    }
+                                                    placeholder="Reference #"
+                                                    className="h-8 text-sm"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label className="text-[11px] text-muted-foreground">
+                                                    S.I. No.
+                                                </Label>
+                                                <Input
+                                                    value={rec.si_number}
+                                                    onChange={(e) =>
+                                                        setPaymentRecords((prev) =>
+                                                            prev.map((r) =>
+                                                                r.id === rec.id
+                                                                    ? { ...r, si_number: e.target.value }
+                                                                    : r,
+                                                            ),
+                                                        )
+                                                    }
+                                                    placeholder="Sales Invoice #"
+                                                    className="h-8 text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </div>
+                    </motion.section>
+                )}
+            </AnimatePresence>
 
             <Separator />
 
