@@ -26,6 +26,7 @@ import {
     isSameDay,
     format
 } from "date-fns"
+import { Format } from "@number-flow/react"
 
 function pctChange(current: number, previous: number): number {
     if (previous === 0) return current > 0 ? 100 : 0
@@ -77,7 +78,7 @@ function TrendBadge({ value }: { value: number | null }) {
     const positive = value >= 0
     return (
         <span
-            className="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2 py-0.5"
+            className="inline-flex items-center gap-1 text-xs font-semibold rounded-full px-2 py-0.5 font-mono"
             style={{
                 color: positive ? "var(--success)" : "var(--destructive)",
                 backgroundColor: positive
@@ -104,13 +105,13 @@ function MiniStat({
     label: string
     value: number
     loading: boolean
-    format?: Intl.NumberFormatOptions
+    format?: Format
     suffix?: string
 }) {
     return (
-        <div className="flex items-center gap-3 rounded-xl bg-muted/50 px-3.5 py-3 min-w-0">
+        <div className="flex items-center gap-3 rounded-xl bg-muted/50 px-3.5 py-3 min-w-0 border">
             <div className="flex items-center justify-center size-9 rounded-lg bg-background shrink-0 shadow-sm">
-                <Icon className="size-4 text-muted-foreground" />
+                <Icon className="size-4 text-primary" />
             </div>
             <div className="min-w-0">
                 <p className="text-[11px] font-medium text-muted-foreground leading-none mb-1">{label}</p>
@@ -226,7 +227,7 @@ export default function HeroStatsSection() {
                                                 />
                                                 <TrendBadge value={revenueTrend} />
                                             </div>
-                                            <p className="text-xs text-muted-foreground">vs {prev_start && prev_end ? `${formatDate(prev_start, 'MMM dd, yyyy')} - ${formatDate(prev_end, 'MMM dd, yyyy')}` : "previous period"}</p>
+                                            <p className="text-xs text-muted-foreground font-mono">vs {prev_start && prev_end ? `${formatDate(prev_start, 'MMM dd, yyyy')} - ${formatDate(prev_end, 'MMM dd, yyyy')}` : "previous period"}</p>
                                         </div>
                                         <div className="flex items-center gap-3 shrink-0">
                                             <StallTabs value={stallTab} onChange={setStallTab} />
@@ -242,27 +243,27 @@ export default function HeroStatsSection() {
                                     <div className="mb-5">
                                         <AnimatedNumberGroup>
                                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                                            <MiniStat
-                                                icon={Wallet}
-                                                label="Net Income"
-                                                value={summary?.net_income ?? 0}
-                                                loading={summaryLoading}
-                                                format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
-                                            />
-                                            <MiniStat
-                                                icon={ReceiptText}
-                                                label="Total Sales"
-                                                value={summary?.total_sales ?? 0}
-                                                loading={summaryLoading}
-                                                format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
-                                            />
-                                            <MiniStat
-                                                icon={DollarSign}
-                                                label="Avg. / Day"
-                                                value={salesOvertime?.length ? (summary?.total_sales ?? 0) / salesOvertime.length : 0}
-                                                loading={summaryLoading || salesLoading}
-                                                format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
-                                            />
+                                                <MiniStat
+                                                    icon={Wallet}
+                                                    label="Net Income"
+                                                    value={summary?.net_income ?? 0}
+                                                    loading={summaryLoading}
+                                                    format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                                                />
+                                                <MiniStat
+                                                    icon={ReceiptText}
+                                                    label="Total Sales"
+                                                    value={summary?.total_sales ?? 0}
+                                                    loading={summaryLoading}
+                                                    format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                                                />
+                                                <MiniStat
+                                                    icon={DollarSign}
+                                                    label="Avg. / Day"
+                                                    value={salesOvertime?.length ? (summary?.total_sales ?? 0) / salesOvertime.length : 0}
+                                                    loading={summaryLoading || salesLoading}
+                                                    format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                                                />
                                             </div>
                                         </AnimatedNumberGroup>
                                     </div>

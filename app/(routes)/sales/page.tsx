@@ -384,15 +384,16 @@ export default function SalesTransactionsPage() {
             )}
 
             <PageHeader
+                variant="compact"
                 icon={ShoppingCart}
                 title="Sales Management"
                 description="Track sales transactions, manage customer orders, and monitor revenue performance across all stalls."
                 breadcrumbs={["Dashboard", "Sales", "Transactions"]}
                 actionButton={
                     activeTab === "active" ? (
-                        <div className="grid gap-2">
+                        <>
                             {/* Google Sheets links */}
-                            {systemSettings?.google_sheets_sync_enabled && (
+                            {(
                                 <>
                                     {isAdmin && (
                                         <>
@@ -452,7 +453,7 @@ export default function SalesTransactionsPage() {
                                     New Sale
                                 </Button>
                             )}
-                        </div>
+                        </>
                     ) : undefined
                 }
                 onRefresh={currentRefetch}

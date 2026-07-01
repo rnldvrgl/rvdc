@@ -96,6 +96,7 @@ export default function OffensesPage() {
     <Wrapper>
       <div className="space-y-4 md:space-y-6">
         <PageHeader
+                variant="compact"
           title="Offense Management"
           description="Track and manage employee policy violations with automatic 3-strike system."
           icon={UserX}

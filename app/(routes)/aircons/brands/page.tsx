@@ -64,6 +64,7 @@ export default function AirconBrandsPage() {
   return (
     <Wrapper>
       <PageHeader
+        variant="compact"
         icon={Wind}
         title="Aircon Brands"
         description="Manage air conditioning equipment brands and manufacturer information for installation and service operations."

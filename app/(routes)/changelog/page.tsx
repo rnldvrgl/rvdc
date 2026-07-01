@@ -145,6 +145,7 @@ export default function ChangelogPage() {
   return (
     <Wrapper maxWidth="narrow">
       <PageHeader
+                variant="compact"
         icon={BookOpen}
         title="Changelog"
         description="New features, improvements, and fixes — filtered to what's relevant for your role."

@@ -80,7 +80,6 @@ export const DataTableDateRangePicker = ({
         >
             <PopoverTrigger asChild>
                 <Button
-                    variant="outline"
                     className={cn(
                         "max-w-[350px] justify-start text-left font-mono tabular-nums",
                         className,

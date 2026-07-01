@@ -50,6 +50,7 @@ import {
     Search,
     X,
 } from "lucide-react"
+import { EmptyState } from "@/components/custom/EmptyState"
 
 // Module augmentation for responsive column hiding via meta.thClass / meta.tdClass
 declare module "@tanstack/react-table" {
@@ -655,7 +656,7 @@ export function DataTable<TData, TValue>({
                         )
                     ) : totalCount > 0 ? (
                         <span>
-                            Showing {startIndex} to {endIndex} of{" "}
+                            Showing <AnimatedNumber value={startIndex} /> to <AnimatedNumber value={endIndex} /> of{" "}
                             <span className="font-semibold text-foreground">
                                 <AnimatedNumber value={totalCount} />
                             </span>{" "}
@@ -750,35 +751,16 @@ export function DataTable<TData, TValue>({
                                         colSpan={allColumns.length}
                                         className="h-56 text-center p-6"
                                     >
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="flex items-center justify-center size-16 rounded-2xl bg-muted/50 text-muted-foreground">
-                                                {EmptyIcon ? (
-                                                    <EmptyIcon className="size-8" />
-                                                ) : (
-                                                    <Database className="size-8" />
-                                                )}
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <p className="text-base font-semibold text-foreground">
-                                                    {emptyTitle ?? "No data found"}
-                                                </p>
-                                                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                                                    {hasActiveFilters
-                                                        ? "Try adjusting your search or filters"
-                                                        : (emptyDescription ?? "No records to display")}
-                                                </p>
-                                            </div>
-                                            {hasActiveFilters && (
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={clearFilters}
-                                                    className="mt-2"
-                                                >
-                                                    Clear filters
-                                                </Button>
-                                            )}
-                                        </div>
+                                        <EmptyState
+                                            action={
+                                                hasActiveFilters
+                                                    ? { label: "Clear filters", onClick: clearFilters }
+                                                    : undefined
+                                            }
+                                            icon={EmptyIcon ?? Database}
+                                            title={emptyTitle ?? "No data found"}
+                                            description={emptyDescription ?? "No records to display"}
+                                        />
                                     </TableCell>
                                 </TableRow>
                             )}

@@ -44,6 +44,13 @@ interface PageHeaderProps {
     className?: string
     onRefresh?: () => void
     isLoading?: boolean
+    /**
+     * Any number of action elements (Buttons, Popovers, etc). Rendered as a
+     * single wrapping row aligned to the end of the header — NOT stacked.
+     * Pass an array/fragment of buttons directly rather than wrapping them
+     * in your own <div className="grid ..."> so they share the row with
+     * Refresh and wrap together.
+     */
     actionButton?: React.ReactNode
     children?: React.ReactNode
 }
@@ -54,7 +61,7 @@ const PageHeader = ({
     description,
     isAdminOnly,
     breadcrumbs,
-    variant = "default",
+    variant = "compact",
     theme = "default",
     className,
     actionButton,
@@ -101,6 +108,7 @@ const PageHeader = ({
             iconSize: "size-6 sm:size-7",
             iconPadding: "p-2.5",
             gap: "gap-4",
+            actionSize: "sm" as const,
         },
         default: {
             padding: "p-4 sm:p-6 md:p-8",
@@ -108,6 +116,7 @@ const PageHeader = ({
             iconSize: "size-7 sm:size-8 lg:size-9",
             iconPadding: "p-3 sm:p-3.5",
             gap: "gap-4 sm:gap-6",
+            actionSize: "default" as const,
         },
         hero: {
             padding: "p-6 sm:p-8 md:p-12 lg:p-16",
@@ -115,6 +124,7 @@ const PageHeader = ({
             iconSize: "size-8 sm:size-10 lg:size-12",
             iconPadding: "p-4 sm:p-5",
             gap: "gap-6 sm:gap-8",
+            actionSize: "default" as const,
         },
     }
 
@@ -195,100 +205,106 @@ const PageHeader = ({
                     </nav>
                 )}
 
-                <div className={cn("flex flex-col", currentVariant.gap)}>
+                <div
+                    className={cn(
+                        "flex flex-col xl:flex-row md:items-start md:justify-between flex-wrap",
+                        currentVariant.gap,
+                    )}
+                >
                     {/* Main content */}
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 md:gap-6">
-                        {children ? (
-                            <div className="min-w-0 flex-1">{children}</div>
-                        ) : (
-                            /* Title and icon section */
-                            <div className="flex flex-col md:flex-row items-center md:items-start gap-4 min-w-0 flex-1">
-                                <div className="flex flex-col items-center justify-center space-y-3">
-                                    {/* Icon */}
-                                    {Icon && (
-                                        <div className="shrink-0 group w-full">
-                                            <div
+                    {children ? (
+                        <div className="min-w-0 flex-1">{children}</div>
+                    ) : (
+                        /* Title and icon section */
+                        <div className="flex flex-col md:flex-row items-center md:items-start gap-4 min-w-0 flex-1 ">
+                            <div className="flex flex-col items-center justify-center space-y-3">
+                                {/* Icon */}
+                                {Icon && (
+                                    <div className="shrink-0 group w-full">
+                                        <div
+                                            className={cn(
+                                                "rounded-xl transition-all duration-300 ease-out group-hover:scale-105 w-full",
+                                                currentTheme.accent,
+                                                currentVariant.iconPadding,
+                                            )}
+                                        >
+                                            <Icon
                                                 className={cn(
-                                                    "rounded-xl transition-all duration-300 ease-out group-hover:scale-105 w-full",
-                                                    currentTheme.accent,
-                                                    currentVariant.iconPadding,
+                                                    "transition-transform duration-300 ease-out group-hover:scale-110 mx-auto",
+                                                    currentVariant.iconSize,
                                                 )}
-                                            >
-                                                <Icon
-                                                    className={cn(
-                                                        "transition-transform duration-300 ease-out group-hover:scale-110 mx-auto",
-                                                        currentVariant.iconSize,
-                                                    )}
-                                                />
-                                            </div>
+                                            />
                                         </div>
-                                    )}
-                                    {/* Admin badge */}
-                                    {isAdminOnly && (
-                                        <Badge
-                                            variant="destructive"
-                                            className="shadow-sm w-full xl:w-auto"
-                                        >
-                                            Admin Only
-                                        </Badge>
-                                    )}
-                                </div>
-
-                                {/* Text content */}
-                                <div className="min-w-0 flex-1 space-y-2 text-center md:text-start">
-                                    {title && (
-                                        <h1
-                                            className={cn(
-                                                "font-bold tracking-tight leading-tight",
-                                                currentVariant.titleSize,
-                                                currentTheme.text,
-                                            )}
-                                        >
-                                            {title}
-                                        </h1>
-                                    )}
-                                    {description && (
-                                        <p
-                                            className={cn(
-                                                "text-sm sm:text-base leading-relaxed max-w-3xl",
-                                                currentTheme.description,
-                                            )}
-                                        >
-                                            {description}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Actions and badges */}
-                        <div className="flex flex-col xl:flex-row items-stretch sm:items-start xl:items-center gap-3 w-full md:w-auto">
-                            <div className="grid gap-2 w-full">
-                                {onRefresh && (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => {
-                                            try {
-                                                onRefresh()
-                                                toast.success("Data refreshed successfully.")
-                                            } catch {
-                                                toast.error("Failed to refresh")
-                                            }
-                                        }}
-                                        disabled={isLoading}
-                                    >
-                                        <RefreshCw
-                                            className={`size-4 mr-2 ${isLoading ? "animate-spin" : ""}`}
-                                        />
-                                        Refresh
-                                    </Button>
+                                    </div>
                                 )}
-                                {/* Custom actions */}
-                                {actionButton && actionButton}
+                                {/* Admin badge */}
+                                {isAdminOnly && (
+                                    <Badge
+                                        variant="destructive"
+                                        className="shadow-sm w-full xl:w-auto"
+                                    >
+                                        Admin Only
+                                    </Badge>
+                                )}
+                            </div>
+
+                            {/* Text content */}
+                            <div className="min-w-0 flex-1 space-y-2 text-center md:text-start">
+                                {title && (
+                                    <h1
+                                        className={cn(
+                                            "font-bold tracking-tight leading-tight",
+                                            currentVariant.titleSize,
+                                            currentTheme.text,
+                                        )}
+                                    >
+                                        {title}
+                                    </h1>
+                                )}
+                                {description && (
+                                    <p
+                                        className={cn(
+                                            "text-sm sm:text-base leading-relaxed max-w-3xl",
+                                            currentTheme.description,
+                                        )}
+                                    >
+                                        {description}
+                                    </p>
+                                )}
                             </div>
                         </div>
-                    </div>
+                    )}
+
+                    {(onRefresh || actionButton) && (
+                        <div
+                            className="flex flex-wrap items-center justify-center md:justify-end gap-2 shrink-0 *:shrink-0"
+                        >
+                            {actionButton}
+                            {onRefresh && (
+                                <Button
+                                    variant="outline"
+                                    size={currentVariant.actionSize}
+                                    onClick={() => {
+                                        try {
+                                            onRefresh()
+                                            toast.success("Data refreshed successfully.")
+                                        } catch {
+                                            toast.error("Failed to refresh")
+                                        }
+                                    }}
+                                    disabled={isLoading}
+                                >
+                                    <RefreshCw
+                                        className={cn(
+                                            "size-4 mr-2",
+                                            isLoading && "animate-spin",
+                                        )}
+                                    />
+                                    Refresh
+                                </Button>
+                            )}
+                        </div>
+                    )}
                 </div>
             </CardContent>
         </Card>

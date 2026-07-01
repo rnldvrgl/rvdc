@@ -241,6 +241,7 @@ export default function ClientDetailPage() {
     return (
         <Wrapper>
             <PageHeader
+                variant="compact"
                 icon={User}
                 title={client.full_name}
                 breadcrumbs={["Clients", { label: client.full_name }]}

@@ -274,6 +274,7 @@ export default function AttendanceRecordsPage() {
             <div className="space-y-3">
                 {/* ── Header ── */}
                 <PageHeader
+                    variant="compact"
                     icon={Users}
                     title="Attendance"
                     description="View, filter, and manage attendance records."

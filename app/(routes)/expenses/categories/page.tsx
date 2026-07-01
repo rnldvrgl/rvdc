@@ -138,6 +138,7 @@ export default function ExpenseCategoriesPage() {
   return (
     <Wrapper>
       <PageHeader
+                variant="compact"
         icon={Layers}
         title="Expense Categories"
         description="Organize expenses into categories for better tracking and budget management."

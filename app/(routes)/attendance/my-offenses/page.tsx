@@ -7,18 +7,18 @@ import { useMyOffenses } from "@/lib/queries/useAttendance"
 import { AlertTriangle } from "lucide-react"
 
 export default function MyOffensesPage() {
-  const { refetch } = useMyOffenses()
+    const { refetch } = useMyOffenses()
 
-  return (
-    <Wrapper>
-      <PageHeader
-        icon={AlertTriangle}
-        title="My Offenses"
-        description="View your policy violation records and maintain compliance"
-        variant="default"
-        onRefresh={refetch}
-      />
-      <MyOffenses />
-    </Wrapper>
-  )
+    return (
+        <Wrapper>
+            <PageHeader
+                variant="compact"
+                icon={AlertTriangle}
+                title="My Offenses"
+                description="View your policy violation records and maintain compliance"
+                onRefresh={refetch}
+            />
+            <MyOffenses />
+        </Wrapper>
+    )
 }

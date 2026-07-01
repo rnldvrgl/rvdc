@@ -22,172 +22,173 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 const emptyData = {
-  count: 0,
-  next: null,
-  previous: null,
-  results: [] as Client[],
+    count: 0,
+    next: null,
+    previous: null,
+    results: [] as Client[],
 }
 
 export default function ClientsPage() {
-  const router = useRouter()
-  const { isAdmin } = useCurrentUser()
-  const searchParams = useSearchParameters()
-  const { page, limit, search, ordering, filter } = searchParams
-  const [isArchived, setIsArchived] = useState(false)
-  const [mergeTarget, setMergeTarget] = useState<Client | null>(null)
+    const router = useRouter()
+    const { isAdmin } = useCurrentUser()
+    const searchParams = useSearchParameters()
+    const { page, limit, search, ordering, filter } = searchParams
+    const [isArchived, setIsArchived] = useState(false)
+    const [mergeTarget, setMergeTarget] = useState<Client | null>(null)
 
-  const { deleteClient, updateClient } = useClientMutations()
-  const { data, isLoading, refetch } = useClients({
-    page,
-    limit,
-    search,
-    ordering,
-    filter,
-  })
-  const { filters, orderingOptions } = useClientFilters()
+    const { deleteClient, updateClient } = useClientMutations()
+    const { data, isLoading, refetch } = useClients({
+        page,
+        limit,
+        search,
+        ordering,
+        filter,
+    })
+    const { filters, orderingOptions } = useClientFilters()
 
-  const { archivedQuery, restoreItem } = useArchive<Client>(
-    "/clients/",
-    "clients",
-    searchParams,
-    isArchived,
-  )
+    const { archivedQuery, restoreItem } = useArchive<Client>(
+        "/clients/",
+        "clients",
+        searchParams,
+        isArchived,
+    )
 
-  // Separate sheets
-  const {
-    entityState: { open: editOpen, entity },
-    openEntity: openEditSheet,
-    closeEntity: closeEditSheet,
-  } = useEntitySheet<Client>()
+    // Separate sheets
+    const {
+        entityState: { open: editOpen, entity },
+        openEntity: openEditSheet,
+        closeEntity: closeEditSheet,
+    } = useEntitySheet<Client>()
 
-  const {
-    entityState: { open: addOpen },
-    openEntity: openAddSheet,
-    closeEntity: closeAddSheet,
-  } = useEntitySheet<Client>()
+    const {
+        entityState: { open: addOpen },
+        openEntity: openAddSheet,
+        closeEntity: closeAddSheet,
+    } = useEntitySheet<Client>()
 
-  const handleDelete = (client: Client) => {
-    if (client.id !== undefined) {
-      deleteClient.mutate(client.id)
-    }
-  }
-
-  const handleToggleBlocklisted = (client: Client) => {
-    if (client.id !== undefined) {
-      updateClient.mutate({
-        id: client.id,
-        data: {
-          ...client,
-          is_blocklisted: !client.is_blocklisted,
-        },
-      })
-    }
-  }
-
-  const handleRestore = (client: Client) => {
-    if (client.id !== undefined) restoreItem.mutate(client.id)
-  }
-
-  const columns = isArchived
-    ? getClientColumns({
-        onEdit: () => {},
-        onDelete: () => {},
-        onRestore: handleRestore,
-      })
-    : getClientColumns({
-        onEdit: openEditSheet,
-        onDelete: handleDelete,
-        onCustomAction: handleToggleBlocklisted,
-        onView: (client) => router.push(`/clients/${client.id}`),
-        onMerge: isAdmin ? (client) => setMergeTarget(client) : undefined,
-      })
-
-  const tableData = isArchived
-    ? archivedQuery.data || emptyData
-    : data || emptyData
-
-  return (
-    <Wrapper>
-      <PageHeader
-        icon={Users}
-        title="Client Management"
-        description="Manage customer information, contact details, and account status for all your clients."
-        breadcrumbs={["Dashboard", "Clients"]}
-        onRefresh={isArchived ? archivedQuery.refetch : refetch}
-        actionButton={
-          !isArchived ? (
-            <Button onClick={() => openAddSheet()}>
-              <Plus className="size-4 mr-2" />
-              Add Client
-            </Button>
-          ) : undefined
+    const handleDelete = (client: Client) => {
+        if (client.id !== undefined) {
+            deleteClient.mutate(client.id)
         }
-      />
+    }
 
-      {/* Edit Client Sheet */}
-      {!isArchived && (
-        <EntitySheet<Client>
-          open={editOpen}
-          onClose={closeEditSheet}
-          entity={entity}
-          title="Edit Client"
-          description="Update the client details below."
-          withCloseConfirmation
-          renderForm={({ forceClose, entity }) => (
-            <ClientForm
-              onClose={forceClose}
-              client={entity}
+    const handleToggleBlocklisted = (client: Client) => {
+        if (client.id !== undefined) {
+            updateClient.mutate({
+                id: client.id,
+                data: {
+                    ...client,
+                    is_blocklisted: !client.is_blocklisted,
+                },
+            })
+        }
+    }
+
+    const handleRestore = (client: Client) => {
+        if (client.id !== undefined) restoreItem.mutate(client.id)
+    }
+
+    const columns = isArchived
+        ? getClientColumns({
+            onEdit: () => { },
+            onDelete: () => { },
+            onRestore: handleRestore,
+        })
+        : getClientColumns({
+            onEdit: openEditSheet,
+            onDelete: handleDelete,
+            onCustomAction: handleToggleBlocklisted,
+            onView: (client) => router.push(`/clients/${client.id}`),
+            onMerge: isAdmin ? (client) => setMergeTarget(client) : undefined,
+        })
+
+    const tableData = isArchived
+        ? archivedQuery.data || emptyData
+        : data || emptyData
+
+    return (
+        <Wrapper>
+            <PageHeader
+                variant="compact"
+                icon={Users}
+                title="Client Management"
+                description="Manage customer information, contact details, and account status for all your clients."
+                breadcrumbs={["Dashboard", "Clients"]}
+                onRefresh={isArchived ? archivedQuery.refetch : refetch}
+                actionButton={
+                    !isArchived ? (
+                        <Button onClick={() => openAddSheet()}>
+                            <Plus className="size-4 mr-2" />
+                            Add Client
+                        </Button>
+                    ) : undefined
+                }
             />
-          )}
-        />
-      )}
 
-      {/* Add Client Sheet */}
-      {!isArchived && (
-        <EntitySheet<Client>
-          open={addOpen}
-          onClose={closeAddSheet}
-          title="Add Client"
-          description="Fill out the form below to add a new client."
-          withCloseConfirmation
-          renderForm={({ forceClose }) => <ClientForm onClose={forceClose} />}
-        />
-      )}
+            {/* Edit Client Sheet */}
+            {!isArchived && (
+                <EntitySheet<Client>
+                    open={editOpen}
+                    onClose={closeEditSheet}
+                    entity={entity}
+                    title="Edit Client"
+                    description="Update the client details below."
+                    withCloseConfirmation
+                    renderForm={({ forceClose, entity }) => (
+                        <ClientForm
+                            onClose={forceClose}
+                            client={entity}
+                        />
+                    )}
+                />
+            )}
 
-      <ArchiveToggle
-        isArchived={isArchived}
-        onToggle={setIsArchived}
-        archivedCount={archivedQuery.data?.count}
-      />
+            {/* Add Client Sheet */}
+            {!isArchived && (
+                <EntitySheet<Client>
+                    open={addOpen}
+                    onClose={closeAddSheet}
+                    title="Add Client"
+                    description="Fill out the form below to add a new client."
+                    withCloseConfirmation
+                    renderForm={({ forceClose }) => <ClientForm onClose={forceClose} />}
+                />
+            )}
 
-      {/* Main Content */}
-      <DataTable
-        enableVirtualization
-        title={isArchived ? "Archived Clients" : "Clients"}
-        description={
-          isArchived
-            ? "Restore or permanently delete archived clients"
-            : "Manage your client database"
-        }
-        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
-        columns={columns}
-        data={tableData}
-        filters={filters}
-        orderingOptions={orderingOptions}
-        emptyIcon={Users}
-        emptyTitle={isArchived ? "No archived clients" : "No clients found"}
-        emptyDescription={
-          isArchived
-            ? "Deleted clients will appear here"
-            : "Add your first client to build your customer database"
-        }
-      />
+            <ArchiveToggle
+                isArchived={isArchived}
+                onToggle={setIsArchived}
+                archivedCount={archivedQuery.data?.count}
+            />
 
-      <MergeClientDialog
-        open={!!mergeTarget}
-        targetClient={mergeTarget}
-        onClose={() => setMergeTarget(null)}
-      />
-    </Wrapper>
-  )
+            {/* Main Content */}
+            <DataTable
+                enableVirtualization
+                title={isArchived ? "Archived Clients" : "Clients"}
+                description={
+                    isArchived
+                        ? "Restore or permanently delete archived clients"
+                        : "Manage your client database"
+                }
+                isLoading={isArchived ? archivedQuery.isLoading : isLoading}
+                columns={columns}
+                data={tableData}
+                filters={filters}
+                orderingOptions={orderingOptions}
+                emptyIcon={Users}
+                emptyTitle={isArchived ? "No archived clients" : "No clients found"}
+                emptyDescription={
+                    isArchived
+                        ? "Deleted clients will appear here"
+                        : "Add your first client to build your customer database"
+                }
+            />
+
+            <MergeClientDialog
+                open={!!mergeTarget}
+                targetClient={mergeTarget}
+                onClose={() => setMergeTarget(null)}
+            />
+        </Wrapper>
+    )
 }
