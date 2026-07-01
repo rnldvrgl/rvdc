@@ -62,7 +62,7 @@ import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 
 interface QuotationFormProps {
     quotation?: Quotation
-    onCloseAction: () => void
+    onClose: () => void
 }
 
 interface FormItem {
@@ -275,7 +275,7 @@ function DescriptionField({
 
 export default function QuotationForm({
     quotation,
-    onCloseAction,
+    onClose,
 }: QuotationFormProps) {
     const isEdit = !!quotation
 
@@ -881,10 +881,10 @@ export default function QuotationForm({
         if (isEdit && quotation) {
             updateQuotation.mutate(
                 { id: quotation.id, data: payload },
-                { onSuccess: onCloseAction },
+                { onSuccess: onClose },
             )
         } else {
-            addQuotation.mutate(payload, { onSuccess: onCloseAction })
+            addQuotation.mutate(payload, { onSuccess: onClose })
         }
     }
 
@@ -1999,7 +1999,7 @@ export default function QuotationForm({
                     <TooltipTrigger asChild>
                         <Button
                             variant="destructive"
-                            onClick={onCloseAction}
+                            onClick={onClose}
                             disabled={isSubmitting}
                         >
                             <X className="mr-1.5 h-4 w-4" />

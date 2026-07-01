@@ -130,10 +130,10 @@ function InfoRow({
 
 export function ChequeCollectionDetails({
     entity,
-    onCloseAction,
+    onClose,
 }: {
     entity: ChequeCollection
-    onCloseAction: () => void
+    onClose: () => void
 }) {
     const status = statusConfig[entity.status] ?? statusConfig.pending
     const difference =
@@ -356,7 +356,7 @@ export function ChequeCollectionDetails({
             <div className="flex justify-end border-t pt-4">
                 <Button
                     variant="outline"
-                    onClick={onCloseAction}
+                    onClick={onClose}
                 >
                     Close
                 </Button>

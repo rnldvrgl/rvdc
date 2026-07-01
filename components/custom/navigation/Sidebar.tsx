@@ -144,7 +144,6 @@ export function Sidebar() {
     const FormComponentAny = FormComponent
         ? (FormComponent as unknown as React.ComponentType<{
             onClose?: () => void
-            onCloseAction?: () => void
         }>)
         : undefined
 
@@ -202,7 +201,6 @@ export function Sidebar() {
                     FormComponentAny ? (
                         <FormComponentAny
                             onClose={forceClose}
-                            onCloseAction={forceClose}
                         />
                     ) : null
                 }

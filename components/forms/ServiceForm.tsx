@@ -2,51 +2,51 @@
 
 import { CardSelect } from "@/components/custom/inputs/CardSelect"
 import {
-  ClientComboBox,
-  useClients,
+    ClientComboBox,
+    useClients,
 } from "@/components/custom/inputs/ClientComboBox"
 import { DateTimePicker } from "@/components/custom/inputs/DateTimePicker"
 import { TechnicianCardSelect } from "@/components/custom/inputs/TechnicianCardSelect"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  AssignmentType,
-  Service,
-  ServiceMode,
-  ServicePayload,
-  ServiceStatus,
-  ServiceType,
+    AssignmentType,
+    Service,
+    ServiceMode,
+    ServicePayload,
+    ServiceStatus,
+    ServiceType,
 } from "@/lib/constants/interface"
 import { useServiceMutations } from "@/lib/mutations/services/useServiceMutations"
 import { useTechnicianChoices } from "@/lib/queries/useChoices"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
-  ArrowDownUp,
-  Ban,
-  CheckCircle2,
-  ClipboardList,
-  Home,
-  Info,
-  Loader2,
-  Save,
-  Search,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  SprayCan,
-  Truck,
-  Wrench,
-  Zap,
+    ArrowDownUp,
+    Ban,
+    CheckCircle2,
+    ClipboardList,
+    Home,
+    Info,
+    Loader2,
+    Save,
+    Search,
+    Settings,
+    ShieldCheck,
+    Sparkles,
+    SprayCan,
+    Truck,
+    Wrench,
+    Zap,
 } from "lucide-react"
 import { useEffect, useMemo } from "react"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -54,705 +54,705 @@ import { useForm, useWatch } from "react-hook-form"
 import * as z from "zod"
 
 const serviceTypeOptions = [
-  { label: "Repair", value: "repair", icon: Wrench },
-  { label: "Dismantle", value: "dismantle", icon: Settings },
-  { label: "Inspection", value: "inspection", icon: Search },
-  { label: "Cleaning", value: "cleaning", icon: Sparkles },
-  { label: "Motor Rewind", value: "motor_rewind", icon: Zap },
-  { label: "Installation", value: "installation", icon: ArrowDownUp },
+    { label: "Repair", value: "repair", icon: Wrench },
+    { label: "Dismantle", value: "dismantle", icon: Settings },
+    { label: "Inspection", value: "inspection", icon: Search },
+    { label: "Cleaning", value: "cleaning", icon: Sparkles },
+    { label: "Motor Rewind", value: "motor_rewind", icon: Zap },
+    { label: "Installation", value: "installation", icon: ArrowDownUp },
 ]
 
 const serviceModeOptions = [
-  { label: "Carry-In", value: "carry_in", icon: Wrench },
-  { label: "Home Service", value: "home_service", icon: Home },
-  { label: "Pull-Out", value: "pull_out", icon: Truck },
+    { label: "Carry-In", value: "carry_in", icon: Wrench },
+    { label: "Home Service", value: "home_service", icon: Home },
+    { label: "Pull-Out", value: "pull_out", icon: Truck },
 ]
 
 const servicePurposeOptions = [
-  { label: "Standard", value: "standard", icon: ClipboardList, description: "Regular paid service" },
-  { label: "Warranty Claim", value: "warranty_claim", icon: ShieldCheck, description: "Complementary warranty service" },
-  { label: "Free Cleaning", value: "free_cleaning", icon: SprayCan, description: "Complementary cleaning service" },
+    { label: "Standard", value: "standard", icon: ClipboardList, description: "Regular paid service" },
+    { label: "Warranty Claim", value: "warranty_claim", icon: ShieldCheck, description: "Complementary warranty service" },
+    { label: "Free Cleaning", value: "free_cleaning", icon: SprayCan, description: "Complementary cleaning service" },
 ]
 
 const serviceStatusOptions = [
-  { label: "In Progress", value: "in_progress", icon: Loader2 },
-  { label: "Completed", value: "completed", icon: CheckCircle2 },
-  { label: "Cancelled", value: "cancelled", icon: Ban },
+    { label: "In Progress", value: "in_progress", icon: Loader2 },
+    { label: "Completed", value: "completed", icon: CheckCircle2 },
+    { label: "Cancelled", value: "cancelled", icon: Ban },
 ]
 
 const serviceSchema = z.object({
-  client: z.number({ required_error: "Client is required" }),
-  service_purpose: z.enum(["standard", "warranty_claim", "free_cleaning"]),
-  service_type: z.enum(
-    [
-      "repair",
-      "dismantle",
-      "inspection",
-      "cleaning",
-      "motor_rewind",
-      "installation",
-    ],
-    {
-      required_error: "Service type is required",
-    },
-  ),
-  service_mode: z.enum(["carry_in", "home_service", "pull_out"], {
-    required_error: "Service mode is required",
-  }),
-  status: z.enum(["in_progress", "completed", "cancelled"]).optional(),
-  related_transaction: z.number().nullable().optional(),
-  override_address: z.string().optional(),
-  override_contact_person: z.string().optional(),
-  override_contact_number: z.string().optional(),
-  appointment_datetime: z.date().nullable().optional(),
-  transaction_date: z.date().nullable().optional(),
-  pickup_date: z.date().nullable().optional(),
-  delivery_date: z.date().nullable().optional(),
-  received_at: z.date().nullable().optional(),
-  technicians: z.array(z.number()).optional(),
+    client: z.number({ required_error: "Client is required" }),
+    service_purpose: z.enum(["standard", "warranty_claim", "free_cleaning"]),
+    service_type: z.enum(
+        [
+            "repair",
+            "dismantle",
+            "inspection",
+            "cleaning",
+            "motor_rewind",
+            "installation",
+        ],
+        {
+            required_error: "Service type is required",
+        },
+    ),
+    service_mode: z.enum(["carry_in", "home_service", "pull_out"], {
+        required_error: "Service mode is required",
+    }),
+    status: z.enum(["in_progress", "completed", "cancelled"]).optional(),
+    related_transaction: z.number().nullable().optional(),
+    override_address: z.string().optional(),
+    override_contact_person: z.string().optional(),
+    override_contact_number: z.string().optional(),
+    appointment_datetime: z.date().nullable().optional(),
+    transaction_date: z.date().nullable().optional(),
+    pickup_date: z.date().nullable().optional(),
+    delivery_date: z.date().nullable().optional(),
+    received_at: z.date().nullable().optional(),
+    technicians: z.array(z.number()).optional(),
 })
 
 type FormValues = z.infer<typeof serviceSchema>
 
 interface ServiceFormProps {
-  initialData?: Service
-  onClose: () => void
-  forceClose?: () => void
+    initialData?: Service
+    onClose: () => void
+    forceClose?: () => void
 }
 
 export default function ServiceForm({
-  initialData,
-  onClose,
-  forceClose,
+    initialData,
+    onClose,
+    forceClose,
 }: ServiceFormProps) {
-  const { addService, updateService } = useServiceMutations()
+    const { addService, updateService } = useServiceMutations()
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(serviceSchema),
-    defaultValues: {
-      client: initialData?.client?.id ?? undefined,
-      service_purpose: initialData?.is_complementary
-        ? initialData?.complementary_reason === "Warranty Claim"
-          ? "warranty_claim"
-          : "free_cleaning"
-        : "standard",
-      service_type: (initialData?.service_type as ServiceType) ?? undefined,
-      service_mode: (initialData?.service_mode as ServiceMode) ?? "carry_in",
-      status: (initialData?.status as ServiceStatus) ?? "in_progress",
-      related_transaction: initialData?.related_transaction ?? null,
-      override_address: initialData?.override_address ?? "",
-      override_contact_person: initialData?.override_contact_person ?? "",
-      override_contact_number: initialData?.override_contact_number ?? "",
-      appointment_datetime: initialData?.appointment_datetime
-        ? new Date(initialData.appointment_datetime)
-        : initialData?.next_schedule?.scheduled_date
-          ? (() => {
-              const d = new Date(
-                initialData.next_schedule.scheduled_date + "T00:00:00",
-              )
-              if (initialData.next_schedule.scheduled_time) {
-                const [h, m] =
-                  initialData.next_schedule.scheduled_time.split(":")
-                d.setHours(parseInt(h), parseInt(m), 0, 0)
-              }
-              return d
-            })()
-          : null,
-      pickup_date: initialData?.pickup_date
-        ? new Date(initialData.pickup_date)
-        : null,
-      delivery_date: initialData?.delivery_date
-        ? new Date(initialData.delivery_date)
-        : null,
-      received_at: initialData?.received_at
-        ? new Date(initialData.received_at)
-        : initialData
-          ? null
-          : new Date(),
-      transaction_date: initialData?.transaction_date
-        ? new Date(initialData.transaction_date + "T00:00:00")
-        : null,
-      technicians:
-        initialData?.technician_assignments
-          ?.map((ta) => ta.technician)
-          .filter((id): id is number => id !== undefined && id !== null) ?? [],
-    },
-    mode: "onChange",
-  })
-
-  const { clients } = useClients()
-  const { data: activeTechnicians = [] } = useTechnicianChoices()
-  const { isAdmin } = useCurrentUser()
-
-  // Merge active technicians with any inactive ones already assigned to this service
-  const technicians = useMemo(() => {
-    const activeIds = new Set(activeTechnicians.map((t) => t.id))
-    const inactiveTechs: typeof activeTechnicians = []
-    if (initialData?.technician_assignments) {
-      for (const ta of initialData.technician_assignments) {
-        if (ta.technician && !activeIds.has(ta.technician)) {
-          inactiveTechs.push({
-            id: ta.technician,
-            full_name: ta.technician_name || `Technician #${ta.technician}`,
-            inactive: true,
-          } as (typeof activeTechnicians)[number] & { inactive: boolean })
-        }
-      }
-    }
-    return [...activeTechnicians, ...inactiveTechs]
-  }, [activeTechnicians, initialData?.technician_assignments])
-
-  const selectedMode = useWatch({
-    control: form.control,
-    name: "service_mode",
-  })
-
-  const selectedServiceType = useWatch({
-    control: form.control,
-    name: "service_type",
-  })
-
-  const selectedClient = useWatch({
-    control: form.control,
-    name: "client",
-  })
-
-  // Filter service modes based on service type
-  const availableServiceModes =
-    selectedServiceType === "motor_rewind"
-      ? serviceModeOptions.filter((mode) => mode.value === "carry_in")
-      : selectedServiceType === "installation" ||
-          selectedServiceType === "dismantle"
-        ? serviceModeOptions.filter((mode) => mode.value === "home_service")
-        : serviceModeOptions
-
-  const availableStatusOptions = serviceStatusOptions
-
-  // Set default mode for installation / dismantle
-  useEffect(() => {
-    if (
-      (selectedServiceType === "installation" ||
-        selectedServiceType === "dismantle") &&
-      selectedMode !== "home_service"
-    ) {
-      form.setValue("service_mode", "home_service")
-    }
-  }, [selectedServiceType, selectedMode, form])
-
-  // Auto-fill client address and contact when client is selected
-  useEffect(() => {
-    if (selectedClient && !initialData) {
-      const client = clients.find((c) => c.id === selectedClient)
-      if (client) {
-        // Only auto-fill if fields are empty
-        if (!form.getValues("override_address")) {
-          form.setValue("override_address", client.address || "")
-        }
-        if (!form.getValues("override_contact_person")) {
-          form.setValue("override_contact_person", client.full_name || "")
-        }
-        if (!form.getValues("override_contact_number")) {
-          form.setValue("override_contact_number", client.contact_number || "")
-        }
-      }
-    }
-  }, [selectedClient, clients, initialData, form])
-
-  // Auto-set carry_in mode for motor_rewind
-  useEffect(() => {
-    if (selectedServiceType === "motor_rewind" && selectedMode !== "carry_in") {
-      form.setValue("service_mode", "carry_in")
-    }
-  }, [selectedServiceType, selectedMode, form])
-
-  const onSubmit = (data: FormValues) => {
-    // Determine assignment type based on service mode
-    const getAssignmentType = (): AssignmentType => {
-      switch (data.service_mode) {
-        case "pull_out":
-          return "pickup"
-        default:
-          return "repair"
-      }
-    }
-
-    // Helper function to format date in local timezone (YYYY-MM-DDTHH:mm:ss)
-    const formatDateForBackend = (date: Date): string => {
-      const year = date.getFullYear()
-      const month = String(date.getMonth() + 1).padStart(2, "0")
-      const day = String(date.getDate()).padStart(2, "0")
-      const hours = String(date.getHours()).padStart(2, "0")
-      const minutes = String(date.getMinutes()).padStart(2, "0")
-      const seconds = String(date.getSeconds()).padStart(2, "0")
-      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
-    }
-
-    const payload: ServicePayload = {
-      client: data.client,
-      service_type: data.service_type,
-      service_mode: data.service_mode,
-      status: data.status,
-      is_complementary: data.service_purpose !== "standard",
-      complementary_reason:
-        data.service_purpose === "warranty_claim"
-          ? "Warranty Claim"
-          : data.service_purpose === "free_cleaning"
-            ? "Free Cleaning"
-            : undefined,
-      related_transaction: data.related_transaction ?? undefined,
-      override_address: data.override_address,
-      override_contact_person: data.override_contact_person,
-      override_contact_number: data.override_contact_number,
-      pickup_date: data.pickup_date
-        ? formatDateForBackend(data.pickup_date)
-        : undefined,
-      delivery_date: data.delivery_date
-        ? formatDateForBackend(data.delivery_date)
-        : undefined,
-      received_at:
-        data.service_mode === "carry_in" && data.received_at
-          ? formatDateForBackend(data.received_at)
-          : undefined,
-      appointment_datetime: data.appointment_datetime
-        ? formatDateForBackend(data.appointment_datetime)
-        : undefined,
-      transaction_date: data.transaction_date
-        ? `${data.transaction_date.getFullYear()}-${String(
-            data.transaction_date.getMonth() + 1,
-          ).padStart(2, "0")}-${String(data.transaction_date.getDate()).padStart(2, "0")}`
-        : undefined,
-      technician_assignments: data.technicians?.map((techId) => ({
-        technician: techId,
-        assignment_type: getAssignmentType(),
-        appliance: null,
-      })),
-    }
-
-    if (initialData) {
-      updateService.mutate(
-        { id: initialData.id, data: payload },
-        {
-          onSuccess: () => {
-            if (forceClose) {
-              forceClose()
-            } else {
-              onClose()
-            }
-          },
+    const form = useForm<FormValues>({
+        resolver: zodResolver(serviceSchema),
+        defaultValues: {
+            client: initialData?.client?.id ?? undefined,
+            service_purpose: initialData?.is_complementary
+                ? initialData?.complementary_reason === "Warranty Claim"
+                    ? "warranty_claim"
+                    : "free_cleaning"
+                : "standard",
+            service_type: (initialData?.service_type as ServiceType) ?? undefined,
+            service_mode: (initialData?.service_mode as ServiceMode) ?? "carry_in",
+            status: (initialData?.status as ServiceStatus) ?? "in_progress",
+            related_transaction: initialData?.related_transaction ?? null,
+            override_address: initialData?.override_address ?? "",
+            override_contact_person: initialData?.override_contact_person ?? "",
+            override_contact_number: initialData?.override_contact_number ?? "",
+            appointment_datetime: initialData?.appointment_datetime
+                ? new Date(initialData.appointment_datetime)
+                : initialData?.next_schedule?.scheduled_date
+                    ? (() => {
+                        const d = new Date(
+                            initialData.next_schedule.scheduled_date + "T00:00:00",
+                        )
+                        if (initialData.next_schedule.scheduled_time) {
+                            const [h, m] =
+                                initialData.next_schedule.scheduled_time.split(":")
+                            d.setHours(parseInt(h), parseInt(m), 0, 0)
+                        }
+                        return d
+                    })()
+                    : null,
+            pickup_date: initialData?.pickup_date
+                ? new Date(initialData.pickup_date)
+                : null,
+            delivery_date: initialData?.delivery_date
+                ? new Date(initialData.delivery_date)
+                : null,
+            received_at: initialData?.received_at
+                ? new Date(initialData.received_at)
+                : initialData
+                    ? null
+                    : new Date(),
+            transaction_date: initialData?.transaction_date
+                ? new Date(initialData.transaction_date + "T00:00:00")
+                : null,
+            technicians:
+                initialData?.technician_assignments
+                    ?.map((ta) => ta.technician)
+                    .filter((id): id is number => id !== undefined && id !== null) ?? [],
         },
-      )
-    } else {
-      addService.mutate(payload, {
-        onSuccess: () => {
-          if (forceClose) {
-            forceClose()
-          } else {
-            onClose()
-          }
-        },
-      })
-    }
-  }
+        mode: "onChange",
+    })
 
-  const isSubmitting =
-    addService.status === "pending" || updateService.status === "pending"
+    const { clients } = useClients()
+    const { data: activeTechnicians = [] } = useTechnicianChoices()
+    const { isAdmin } = useCurrentUser()
 
-  return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-4"
-      >
-        {/* Info Alert for New Services */}
-        {!initialData && (
-          <Alert variant="info">
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Note:</strong> After creating this service, you&apos;ll
-              need to add appliances and items to generate sales when completing
-              the service. You can do this by editing the service or viewing its
-              details.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Client */}
-        <FormField
-          name="client"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel required>Client</FormLabel>
-              <ClientComboBox
-                value={field.value ?? null}
-                onChange={field.onChange}
-                disabled={isSubmitting}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Transaction Date (Backdate) - Admin only */}
-        {isAdmin && (
-        <FormField
-          name="transaction_date"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Transaction Date (backdate)</FormLabel>
-              <FormControl>
-                <DateTimePicker
-                  value={field.value ?? undefined}
-                  onChange={(d) => field.onChange(d ? new Date(d.setHours(8,0,0,0)) : undefined)}
-                  disabled={isSubmitting}
-                  placeholder="Set transaction date (admin only)"
-                  disablePastDates={!isAdmin}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        )}
-
-        {/* Service Purpose */}
-        <FormField
-          name="service_purpose"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel required>Service Purpose</FormLabel>
-              <CardSelect
-                options={servicePurposeOptions}
-                value={field.value ?? null}
-                onChange={field.onChange}
-                disabled={isSubmitting}
-                columns={3}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Service Type */}
-        <FormField
-          name="service_type"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel required>Service Type</FormLabel>
-              <CardSelect
-                options={serviceTypeOptions}
-                value={field.value ?? null}
-                onChange={field.onChange}
-                disabled={isSubmitting}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Service Mode */}
-        <FormField
-          name="service_mode"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel required>Service Mode</FormLabel>
-              <CardSelect
-                options={availableServiceModes}
-                value={field.value ?? null}
-                onChange={field.onChange}
-                disabled={isSubmitting}
-                columns={2}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {/* Status - Show only when editing */}
-        {initialData && (
-          <FormField
-            name="status"
-            control={form.control}
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Status</FormLabel>
-                <CardSelect
-                  options={availableStatusOptions}
-                  value={field.value ?? null}
-                  onChange={field.onChange}
-                  disabled={isSubmitting}
-                  columns={3}
-                />
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        )}
-
-        {/* Technicians */}
-        <FormField
-          name="technicians"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Assign Technicians</FormLabel>
-              <TechnicianCardSelect
-                technicians={technicians}
-                selected={
-                  field.value?.filter(
-                    (id) => id !== undefined && id !== null,
-                  ) ?? []
+    // Merge active technicians with any inactive ones already assigned to this service
+    const technicians = useMemo(() => {
+        const activeIds = new Set(activeTechnicians.map((t) => t.id))
+        const inactiveTechs: typeof activeTechnicians = []
+        if (initialData?.technician_assignments) {
+            for (const ta of initialData.technician_assignments) {
+                if (ta.technician && !activeIds.has(ta.technician)) {
+                    inactiveTechs.push({
+                        id: ta.technician,
+                        full_name: ta.technician_name || `Technician #${ta.technician}`,
+                        inactive: true,
+                    } as (typeof activeTechnicians)[number] & { inactive: boolean })
                 }
-                onChange={field.onChange}
-                disabled={isSubmitting}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            }
+        }
+        return [...activeTechnicians, ...inactiveTechs]
+    }, [activeTechnicians, initialData?.technician_assignments])
 
-        {/* Carry-In Fields */}
-        {selectedMode === "carry_in" && (
-          <div className="space-y-4 rounded-lg border p-4">
-            <h3 className="font-medium text-sm">Carry-In Service Details</h3>
-            <FormField
-              name="received_at"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Received At</FormLabel>
-                  <FormControl>
-                    <DateTimePicker
-                      value={field.value ?? undefined}
-                      onChange={field.onChange}
-                      disabled={isSubmitting}
-                      placeholder="When customer dropped off unit"
-                      disablePastDates={false}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
+    const selectedMode = useWatch({
+        control: form.control,
+        name: "service_mode",
+    })
 
-        {/* Home Service Fields */}
-        {selectedMode === "home_service" && (
-          <div className="space-y-4 rounded-lg border p-4">
-            <h3 className="font-medium text-sm">Home Service Details</h3>
+    const selectedServiceType = useWatch({
+        control: form.control,
+        name: "service_type",
+    })
 
-            <FormField
-              name="appointment_datetime"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required>Appointment Date & Time</FormLabel>
-                  <FormControl>
-                    <DateTimePicker
-                      value={field.value ?? undefined}
-                      onChange={field.onChange}
-                      disabled={isSubmitting}
-                      placeholder="Select appointment date and time"
-                      disablePastDates={!isAdmin}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    const selectedClient = useWatch({
+        control: form.control,
+        name: "client",
+    })
 
-            <FormField
-              name="override_address"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Service Address</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Auto-filled from client or enter custom address"
-                      disabled={isSubmitting}
-                      rows={2}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    // Filter service modes based on service type
+    const availableServiceModes =
+        selectedServiceType === "motor_rewind"
+            ? serviceModeOptions.filter((mode) => mode.value === "carry_in")
+            : selectedServiceType === "installation" ||
+                selectedServiceType === "dismantle"
+                ? serviceModeOptions.filter((mode) => mode.value === "home_service")
+                : serviceModeOptions
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                name="override_contact_person"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Person</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Auto-filled from client"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    const availableStatusOptions = serviceStatusOptions
 
-              <FormField
-                name="override_contact_number"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Number</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Auto-filled from client"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        )}
+    // Set default mode for installation / dismantle
+    useEffect(() => {
+        if (
+            (selectedServiceType === "installation" ||
+                selectedServiceType === "dismantle") &&
+            selectedMode !== "home_service"
+        ) {
+            form.setValue("service_mode", "home_service")
+        }
+    }, [selectedServiceType, selectedMode, form])
 
-        {/* Pull-Out Fields */}
-        {selectedMode === "pull_out" && (
-          <div className="space-y-4 rounded-lg border p-4">
-            <h3 className="font-medium text-sm">Pull-Out Service Details</h3>
+    // Auto-fill client address and contact when client is selected
+    useEffect(() => {
+        if (selectedClient && !initialData) {
+            const client = clients.find((c) => c.id === selectedClient)
+            if (client) {
+                // Only auto-fill if fields are empty
+                if (!form.getValues("override_address")) {
+                    form.setValue("override_address", client.address || "")
+                }
+                if (!form.getValues("override_contact_person")) {
+                    form.setValue("override_contact_person", client.full_name || "")
+                }
+                if (!form.getValues("override_contact_number")) {
+                    form.setValue("override_contact_number", client.contact_number || "")
+                }
+            }
+        }
+    }, [selectedClient, clients, initialData, form])
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                name="pickup_date"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Pickup Date & Time</FormLabel>
-                    <FormControl>
-                      <DateTimePicker
-                        value={field.value ?? undefined}
-                        onChange={field.onChange}
-                        disabled={isSubmitting}
-                        placeholder="Select pickup date and time"
-                        disablePastDates={true}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    // Auto-set carry_in mode for motor_rewind
+    useEffect(() => {
+        if (selectedServiceType === "motor_rewind" && selectedMode !== "carry_in") {
+            form.setValue("service_mode", "carry_in")
+        }
+    }, [selectedServiceType, selectedMode, form])
 
-              <FormField
-                name="delivery_date"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Delivery Date & Time</FormLabel>
-                    <FormControl>
-                      <DateTimePicker
-                        value={field.value ?? undefined}
-                        onChange={field.onChange}
-                        disabled={isSubmitting}
-                        placeholder="Select delivery date and time"
-                        disablePastDates={false}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+    const onSubmit = (data: FormValues) => {
+        // Determine assignment type based on service mode
+        const getAssignmentType = (): AssignmentType => {
+            switch (data.service_mode) {
+                case "pull_out":
+                    return "pickup"
+                default:
+                    return "repair"
+            }
+        }
 
-            <FormField
-              name="override_address"
-              control={form.control}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Pickup Address</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Auto-filled from client or enter custom address"
-                      disabled={isSubmitting}
-                      rows={2}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        // Helper function to format date in local timezone (YYYY-MM-DDTHH:mm:ss)
+        const formatDateForBackend = (date: Date): string => {
+            const year = date.getFullYear()
+            const month = String(date.getMonth() + 1).padStart(2, "0")
+            const day = String(date.getDate()).padStart(2, "0")
+            const hours = String(date.getHours()).padStart(2, "0")
+            const minutes = String(date.getMinutes()).padStart(2, "0")
+            const seconds = String(date.getSeconds()).padStart(2, "0")
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+        }
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField
-                name="override_contact_person"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Person</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Auto-filled from client"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+        const payload: ServicePayload = {
+            client: data.client,
+            service_type: data.service_type,
+            service_mode: data.service_mode,
+            status: data.status,
+            is_complementary: data.service_purpose !== "standard",
+            complementary_reason:
+                data.service_purpose === "warranty_claim"
+                    ? "Warranty Claim"
+                    : data.service_purpose === "free_cleaning"
+                        ? "Free Cleaning"
+                        : undefined,
+            related_transaction: data.related_transaction ?? undefined,
+            override_address: data.override_address,
+            override_contact_person: data.override_contact_person,
+            override_contact_number: data.override_contact_number,
+            pickup_date: data.pickup_date
+                ? formatDateForBackend(data.pickup_date)
+                : undefined,
+            delivery_date: data.delivery_date
+                ? formatDateForBackend(data.delivery_date)
+                : undefined,
+            received_at:
+                data.service_mode === "carry_in" && data.received_at
+                    ? formatDateForBackend(data.received_at)
+                    : undefined,
+            appointment_datetime: data.appointment_datetime
+                ? formatDateForBackend(data.appointment_datetime)
+                : undefined,
+            transaction_date: data.transaction_date
+                ? `${data.transaction_date.getFullYear()}-${String(
+                    data.transaction_date.getMonth() + 1,
+                ).padStart(2, "0")}-${String(data.transaction_date.getDate()).padStart(2, "0")}`
+                : undefined,
+            technician_assignments: data.technicians?.map((techId) => ({
+                technician: techId,
+                assignment_type: getAssignmentType(),
+                appliance: null,
+            })),
+        }
 
-              <FormField
-                name="override_contact_number"
-                control={form.control}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contact Number</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Auto-filled from client"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-        )}
+        if (initialData) {
+            updateService.mutate(
+                { id: initialData.id, data: payload },
+                {
+                    onSuccess: () => {
+                        if (forceClose) {
+                            forceClose()
+                        } else {
+                            onClose()
+                        }
+                    },
+                },
+            )
+        } else {
+            addService.mutate(payload, {
+                onSuccess: () => {
+                    if (forceClose) {
+                        forceClose()
+                    } else {
+                        onClose()
+                    }
+                },
+            })
+        }
+    }
 
-        <div className="sticky bottom-0 z-10 -mx-1 mt-4 border-t bg-background/95 px-1 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
+    const isSubmitting =
+        addService.status === "pending" || updateService.status === "pending"
+
+    return (
+        <Form {...form}>
+            <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-4"
             >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!form.formState.isDirty || isSubmitting}
-              className="w-full sm:w-auto sm:min-w-40"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {initialData ? "Update Service" : "Create Service"}
-            </Button>
-          </div>
-        </div>
-      </form>
-    </Form>
-  )
+                {/* Info Alert for New Services */}
+                {!initialData && (
+                    <Alert variant="info">
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                            <strong>Note:</strong> After creating this service, you&apos;ll
+                            need to add appliances and items to generate sales when completing
+                            the service. You can do this by editing the service or viewing its
+                            details.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {/* Client */}
+                <FormField
+                    name="client"
+                    control={form.control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel required>Client</FormLabel>
+                            <ClientComboBox
+                                value={field.value ?? null}
+                                onChange={field.onChange}
+                                disabled={isSubmitting}
+                            />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* Transaction Date (Backdate) - Admin only */}
+                {isAdmin && (
+                    <FormField
+                        name="transaction_date"
+                        control={form.control}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Transaction Date (backdate)</FormLabel>
+                                <FormControl>
+                                    <DateTimePicker
+                                        value={field.value ?? undefined}
+                                        onChange={(d) => field.onChange(d ? new Date(d.setHours(8, 0, 0, 0)) : undefined)}
+                                        disabled={isSubmitting}
+                                        placeholder="Set transaction date (admin only)"
+                                        disablePastDates={!isAdmin}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+
+                {/* Service Purpose */}
+                <FormField
+                    name="service_purpose"
+                    control={form.control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel required>Service Purpose</FormLabel>
+                            <CardSelect
+                                options={servicePurposeOptions}
+                                value={field.value ?? null}
+                                onChange={field.onChange}
+                                disabled={isSubmitting}
+                                columns={3}
+                            />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* Service Type */}
+                <FormField
+                    name="service_type"
+                    control={form.control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel required>Service Type</FormLabel>
+                            <CardSelect
+                                options={serviceTypeOptions}
+                                value={field.value ?? null}
+                                onChange={field.onChange}
+                                disabled={isSubmitting}
+                            />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* Service Mode */}
+                <FormField
+                    name="service_mode"
+                    control={form.control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel required>Service Mode</FormLabel>
+                            <CardSelect
+                                options={availableServiceModes}
+                                value={field.value ?? null}
+                                onChange={field.onChange}
+                                disabled={isSubmitting}
+                                columns={2}
+                            />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* Status - Show only when editing */}
+                {initialData && (
+                    <FormField
+                        name="status"
+                        control={form.control}
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Status</FormLabel>
+                                <CardSelect
+                                    options={availableStatusOptions}
+                                    value={field.value ?? null}
+                                    onChange={field.onChange}
+                                    disabled={isSubmitting}
+                                    columns={3}
+                                />
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                )}
+
+                {/* Technicians */}
+                <FormField
+                    name="technicians"
+                    control={form.control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Assign Technicians</FormLabel>
+                            <TechnicianCardSelect
+                                technicians={technicians}
+                                selected={
+                                    field.value?.filter(
+                                        (id) => id !== undefined && id !== null,
+                                    ) ?? []
+                                }
+                                onChange={field.onChange}
+                                disabled={isSubmitting}
+                            />
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                {/* Carry-In Fields */}
+                {selectedMode === "carry_in" && (
+                    <div className="space-y-4 rounded-lg border p-4">
+                        <h3 className="font-medium text-sm">Carry-In Service Details</h3>
+                        <FormField
+                            name="received_at"
+                            control={form.control}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Received At</FormLabel>
+                                    <FormControl>
+                                        <DateTimePicker
+                                            value={field.value ?? undefined}
+                                            onChange={field.onChange}
+                                            disabled={isSubmitting}
+                                            placeholder="When customer dropped off unit"
+                                            disablePastDates={false}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                )}
+
+                {/* Home Service Fields */}
+                {selectedMode === "home_service" && (
+                    <div className="space-y-4 rounded-lg border p-4">
+                        <h3 className="font-medium text-sm">Home Service Details</h3>
+
+                        <FormField
+                            name="appointment_datetime"
+                            control={form.control}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel required>Appointment Date & Time</FormLabel>
+                                    <FormControl>
+                                        <DateTimePicker
+                                            value={field.value ?? undefined}
+                                            onChange={field.onChange}
+                                            disabled={isSubmitting}
+                                            placeholder="Select appointment date and time"
+                                            disablePastDates={!isAdmin}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <FormField
+                            name="override_address"
+                            control={form.control}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Service Address</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            {...field}
+                                            placeholder="Auto-filled from client or enter custom address"
+                                            disabled={isSubmitting}
+                                            rows={2}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                                name="override_contact_person"
+                                control={form.control}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Contact Person</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                placeholder="Auto-filled from client"
+                                                disabled={isSubmitting}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                name="override_contact_number"
+                                control={form.control}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Contact Number</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                placeholder="Auto-filled from client"
+                                                disabled={isSubmitting}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Pull-Out Fields */}
+                {selectedMode === "pull_out" && (
+                    <div className="space-y-4 rounded-lg border p-4">
+                        <h3 className="font-medium text-sm">Pull-Out Service Details</h3>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                                name="pickup_date"
+                                control={form.control}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel required>Pickup Date & Time</FormLabel>
+                                        <FormControl>
+                                            <DateTimePicker
+                                                value={field.value ?? undefined}
+                                                onChange={field.onChange}
+                                                disabled={isSubmitting}
+                                                placeholder="Select pickup date and time"
+                                                disablePastDates={true}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                name="delivery_date"
+                                control={form.control}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Delivery Date & Time</FormLabel>
+                                        <FormControl>
+                                            <DateTimePicker
+                                                value={field.value ?? undefined}
+                                                onChange={field.onChange}
+                                                disabled={isSubmitting}
+                                                placeholder="Select delivery date and time"
+                                                disablePastDates={false}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        <FormField
+                            name="override_address"
+                            control={form.control}
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Pickup Address</FormLabel>
+                                    <FormControl>
+                                        <Textarea
+                                            {...field}
+                                            placeholder="Auto-filled from client or enter custom address"
+                                            disabled={isSubmitting}
+                                            rows={2}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <FormField
+                                name="override_contact_person"
+                                control={form.control}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Contact Person</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                placeholder="Auto-filled from client"
+                                                disabled={isSubmitting}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                name="override_contact_number"
+                                control={form.control}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Contact Number</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                placeholder="Auto-filled from client"
+                                                disabled={isSubmitting}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                <div className="sticky bottom-0 z-10 -mx-1 mt-4 border-t bg-background/95 px-1 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onClose}
+                            disabled={isSubmitting}
+                            className="w-full sm:w-auto"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={!form.formState.isDirty || isSubmitting}
+                            className="w-full sm:w-auto sm:min-w-40"
+                        >
+                            <Save className="mr-2 h-4 w-4" />
+                            {initialData ? "Update Service" : "Create Service"}
+                        </Button>
+                    </div>
+                </div>
+            </form>
+        </Form>
+    )
 }

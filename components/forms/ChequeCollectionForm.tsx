@@ -159,10 +159,10 @@ function StatusSelector({
 
 interface Props {
     initialData?: ChequeCollection
-    onCloseAction: () => void
+    onClose: () => void
 }
 
-export default function ChequeCollectionForm({ initialData, onCloseAction }: Props) {
+export default function ChequeCollectionForm({ initialData, onClose }: Props) {
     const submitLockRef = useRef(false)
     const [sameAsClient, setSameAsClient] = useState(true)
     const { addChequeCollection, updateChequeCollection } =
@@ -253,7 +253,7 @@ export default function ChequeCollectionForm({ initialData, onCloseAction }: Pro
                 await addChequeCollection.mutateAsync(payload)
             }
 
-            onCloseAction()
+            onClose()
         } finally {
             submitLockRef.current = false
         }
@@ -657,7 +657,7 @@ export default function ChequeCollectionForm({ initialData, onCloseAction }: Pro
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={onCloseAction}
+                            onClick={onClose}
                             disabled={mutationLoading}
                             className="w-full sm:min-w-[100px] sm:w-auto"
                         >

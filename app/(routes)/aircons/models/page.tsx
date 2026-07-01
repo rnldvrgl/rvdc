@@ -332,12 +332,12 @@ export default function AirconModelsPage() {
                                                         {/* dot */}
                                                         <div
                                                             className={`absolute -left-[15px] top-1.5 z-10 size-2 rounded-full ring-4 ring-white shadow-md dark:ring-slate-800 ${isInitial
-                                                                    ? "bg-sky-500"
-                                                                    : isUp
-                                                                        ? "bg-rose-500"
-                                                                        : isDown
-                                                                            ? "bg-emerald-500"
-                                                                            : "bg-amber-500"
+                                                                ? "bg-sky-500"
+                                                                : isUp
+                                                                    ? "bg-rose-500"
+                                                                    : isDown
+                                                                        ? "bg-emerald-500"
+                                                                        : "bg-amber-500"
                                                                 }`}
                                                         />
                                                         <div className="flex-1 min-w-0">
@@ -358,8 +358,8 @@ export default function AirconModelsPage() {
                                                                 {changeAmount !== null && !isInitial && (
                                                                     <span
                                                                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-bold shadow-sm ${isUp
-                                                                                ? "bg-rose-100 text-rose-700 ring-1 ring-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:ring-rose-800"
-                                                                                : "bg-emerald-100 text-success ring-1 ring-emerald-200 dark:bg-emerald-900/40 dark:ring-emerald-800"
+                                                                            ? "bg-rose-100 text-rose-700 ring-1 ring-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:ring-rose-800"
+                                                                            : "bg-emerald-100 text-success ring-1 ring-emerald-200 dark:bg-emerald-900/40 dark:ring-emerald-800"
                                                                             }`}
                                                                     >
                                                                         {isUp ? (
