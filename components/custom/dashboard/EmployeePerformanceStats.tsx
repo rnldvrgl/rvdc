@@ -1,5 +1,7 @@
 "use client"
 
+import { EmptyState } from "@/components/custom/EmptyState"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { ListCardSkeleton } from "@/components/custom/shared/skeletons"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,346 +10,400 @@ import { useEmployeePerformance } from "@/lib/queries/analytics/useGetAnalytics"
 import { formatCurrency } from "@/lib/utils/helpers"
 import { getServiceTypeLabel } from "@/lib/utils/helpers/service"
 import {
-  Award,
-  Clock,
-  Crown,
-  Medal,
-  Timer,
-  TrendingUp,
-  Trophy,
-  Users,
-  Wrench,
+    Award,
+    CheckCircle,
+    Clock,
+    Crown,
+    Medal,
+    Timer,
+    TrendingUp,
+    Trophy,
+    Users,
+    Wrench,
 } from "lucide-react"
 
+// ── Theme helpers ────────────────────────────────────────────────────────────
+// All colors resolve through CSS custom properties so the component follows
+// the active theme (light/dark/brand) instead of baking in fixed Tailwind hues.
+
+const tint = (cssVar: string, pct = 12) =>
+    `color-mix(in srgb, var(${cssVar}) ${pct}%, transparent)`
+
+const rankColorVars = ["--chart-4", "--muted-foreground", "--chart-5"] // gold/silver/bronze-ish via theme chart slots
+const rankIcons = [Crown, Medal, Award]
+
+function rankIconStyle(index: number) {
+    const v = rankColorVars[index] ?? "--muted-foreground"
+    return { color: `var(${v})` }
+}
+
+function rankBadgeBgStyle(index: number) {
+    const v = rankColorVars[index] ?? "--muted-foreground"
+    return { backgroundColor: tint(v, 14) }
+}
+
 export function EmployeePerformanceStats() {
-  const { start_date, end_date } = useDateParamsFromForm()
+    const { start_date, end_date } = useDateParamsFromForm()
 
-  const { data, isLoading } = useEmployeePerformance({
-    start_date,
-    end_date,
-    enabled: !!start_date && !!end_date,
-  })
+    const { data, isLoading } = useEmployeePerformance({
+        start_date,
+        end_date,
+        enabled: !!start_date && !!end_date,
+    })
 
-  if (isLoading) {
+    if (isLoading) {
+        return (
+            <div className="grid lg:grid-cols-2 gap-6">
+                <ListCardSkeleton rows={4} />
+                <ListCardSkeleton rows={4} />
+                <ListCardSkeleton rows={4} />
+                <ListCardSkeleton rows={4} />
+            </div>
+        )
+    }
+
+    if (!data) return null
+
     return (
-      <div className="grid lg:grid-cols-2 gap-6">
-        <ListCardSkeleton rows={4} />
-        <ListCardSkeleton rows={4} />
-        <ListCardSkeleton rows={4} />
-        <ListCardSkeleton rows={4} />
-      </div>
-    )
-  }
+        <div className="grid lg:grid-cols-2 gap-6">
 
-  if (!data) return null
-
-  const rankColors = ["text-yellow-500", "text-slate-400", "text-amber-600"]
-
-  const rankIcons = [Crown, Medal, Award]
-
-  return (
-    <div className="grid lg:grid-cols-2 gap-6">
-
-
-      {/* Top Technicians */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
-            <div className="p-2 rounded-lg bg-yellow-100 dark:bg-yellow-950 shrink-0">
-              <Trophy className="size-4 text-warning" />
-            </div>
-            <span className="truncate">Top Technicians</span>
-            <Badge
-              variant="secondary"
-              className="ml-auto text-xs shrink-0"
-            >
-              By Assignments
-            </Badge>
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Technicians with the most service assignments
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {data.top_technicians.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No technician assignments in this period
-            </p>
-          ) : (
-            data.top_technicians.map((tech, index) => {
-              const RankIcon = rankIcons[index] || Users
-              const rankColor = rankColors[index] || "text-muted-foreground"
-              return (
-                <div
-                  key={tech.employee_id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
-                    <RankIcon className={`size-4 ${rankColor}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {tech.employee_name}
-                    </p>
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground flex-wrap">
-                      <span>{tech.total_assignments} assigned</span>
-                      <span>·</span>
-                      <span>{tech.completed} done</span>
-                      <span className="hidden sm:inline">·</span>
-                      <span className="hidden sm:inline">
-                        {formatCurrency(tech.total_revenue)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge
-                      variant={
-                        tech.completion_rate >= 80
-                          ? "default"
-                          : tech.completion_rate >= 50
-                            ? "secondary"
-                            : "outline"
-                      }
-                      className={`text-xs tabular-nums ${
-                        tech.completion_rate >= 80
-                          ? "bg-green-500/10 text-success border-green-500/20"
-                          : ""
-                      }`}
-                    >
-                      {tech.completion_rate}%
-                    </Badge>
-                  </div>
-                </div>
-              )
-            })
-          )}
-        </CardContent>
-      </Card>
-
-   {/* Most Punctual */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
-            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-950 shrink-0">
-              <TrendingUp className="size-4 text-success" />
-            </div>
-            <span className="truncate">Most Punctual</span>
-            <Badge
-              variant="outline"
-              className="ml-auto text-xs shrink-0 border-green-200 text-success dark:border-green-800"
-            >
-              On-Time
-            </Badge>
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Employees with the best on-time attendance
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {data.most_punctual.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No attendance records in this period
-            </p>
-          ) : (
-            data.most_punctual.map((emp, index) => {
-              const RankIcon = rankIcons[index] || Users
-              const rankColor = rankColors[index] || "text-muted-foreground"
-              return (
-                <div
-                  key={emp.employee_id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-100 dark:bg-green-950/50">
-                    <RankIcon className={`size-4 ${rankColor}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {emp.employee_name}
-                    </p>
-                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground flex-wrap">
-                      <span>{emp.on_time_days} on-time</span>
-                      <span>·</span>
-                      <span>{emp.total_days} total</span>
-                      <span className="hidden sm:inline">·</span>
-                      <span className="hidden sm:inline">
-                        {emp.total_paid_hours.toFixed(1)}h paid
-                      </span>
-                    </div>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs tabular-nums ${
-                      emp.punctuality_rate >= 90
-                        ? "border-green-200 text-success dark:border-green-800"
-                        : emp.punctuality_rate >= 70
-                          ? "border-yellow-200 text-yellow-600 dark:border-yellow-800 dark:text-yellow-400"
-                          : "border-red-200 text-destructive dark:border-red-800"
-                    }`}
-                  >
-                    {emp.punctuality_rate}%
-                  </Badge>
-                </div>
-              )
-            })
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Most Late */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
-            <div className="p-2 rounded-lg bg-red-100 dark:bg-red-950 shrink-0">
-              <Timer className="size-4 text-destructive" />
-            </div>
-            <span className="truncate">Most Late Arrivals</span>
-            <Badge
-              variant="outline"
-              className="ml-auto text-xs shrink-0 border-red-200 text-destructive dark:border-red-800"
-            >
-              Attendance
-            </Badge>
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Employees with the most late check-ins
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {data.most_late.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No late arrivals recorded — great job everyone! 🎉
-            </p>
-          ) : (
-            data.most_late.map((emp) => {
-              const hours = Math.floor(emp.total_late_minutes / 60)
-              const mins = emp.total_late_minutes % 60
-              const lateTime = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
-              return (
-                <div
-                  key={emp.employee_id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-950/50">
-                    <Clock className="size-4 text-destructive" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
-                      {emp.employee_name}
-                    </p>
+            {/* Top Technicians */}
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+                        <div
+                            className="p-2 rounded-lg shrink-0"
+                            style={{ backgroundColor: tint("--warning") }}
+                        >
+                            <Trophy className="size-4" style={{ color: "var(--warning)" }} />
+                        </div>
+                        <span className="truncate">Top Technicians</span>
+                        <Badge
+                            variant="outline"
+                            className="ml-auto text-xs shrink-0"
+                            style={{ borderColor: tint("--warning", 30), color: "var(--warning)" }}
+                        >
+                            By Assignments
+                        </Badge>
+                    </CardTitle>
                     <p className="text-xs text-muted-foreground">
-                      Total late: {lateTime}
+                        Technicians with the most service assignments
                     </p>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className="text-xs tabular-nums border-red-200 text-destructive dark:border-red-800"
-                  >
-                    {emp.late_count} {emp.late_count === 1 ? "day" : "days"}
-                  </Badge>
-                </div>
-              )
-            })
-          )}
-        </CardContent>
-      </Card>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    {data.top_technicians.length === 0 ? (
+                        <EmptyState
+                            title="No technicians found"
+                            description="No service assignments recorded in this period"
+                            icon={Users}
+                        />
+                    ) : (
+                        data.top_technicians.map((tech, index) => {
+                            const RankIcon = rankIcons[index] || Users
+                            return (
+                                <div
+                                    key={tech.employee_id}
+                                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                                >
+                                    <div
+                                        className="flex items-center justify-center w-8 h-8 rounded-full"
+                                        style={index < 3 ? rankBadgeBgStyle(index) : { backgroundColor: "var(--muted)" }}
+                                    >
+                                        <RankIcon
+                                            className="size-4"
+                                            style={index < 3 ? rankIconStyle(index) : { color: "var(--muted-foreground)" }}
+                                        />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium truncate">
+                                            {tech.employee_name}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground flex-wrap">
+                                            <span>{tech.total_assignments} assigned</span>
+                                            <span>·</span>
+                                            <span>{tech.completed} done</span>
+                                            <span className="hidden sm:inline">·</span>
+                                            <AnimatedNumber
+                                                value={tech.total_revenue}
+                                                className="hidden text-xs font-medium text-muted-foreground sm:inline"
+                                                format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <Badge
+                                            variant={tech.completion_rate >= 80 ? "default" : tech.completion_rate >= 50 ? "secondary" : "outline"}
+                                            className="text-xs tabular-nums"
+                                            style={
+                                                tech.completion_rate >= 80
+                                                    ? {
+                                                        backgroundColor: tint("--success", 12),
+                                                        color: "var(--success)",
+                                                        borderColor: tint("--success", 25),
+                                                    }
+                                                    : undefined
+                                            }
+                                        >
+                                            <AnimatedNumber
+                                                value={tech.completion_rate}
+                                                className="text-xs font-semibold"
+                                                suffix="%"
+                                            />
+                                        </Badge>
+                                    </div>
+                                </div>
+                            )
+                        })
+                    )}
+                </CardContent>
+            </Card>
 
-      {/* Top Service Types */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
-            <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-950 shrink-0">
-              <Wrench className="size-4 text-purple-600 dark:text-purple-400" />
-            </div>
-            <span className="truncate">Top Service Types</span>
-            <Badge
-              variant="secondary"
-              className="ml-auto text-xs shrink-0"
-            >
-              Completed
-            </Badge>
-          </CardTitle>
-          <p className="text-xs text-muted-foreground">
-            Most completed service types in this period
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {data.top_service_types.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
-              No completed services in this period
-            </p>
-          ) : (
-            data.top_service_types.map((type, index) => {
-              const maxCount = data.top_service_types[0]?.count || 1
-              return (
-                <div
-                  key={type.service_type}
-                  className="space-y-1.5"
-                >
-                  <div className="flex items-center justify-between text-sm gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">
-                        #{index + 1}
-                      </span>
-                      <span className="font-medium truncate">
-                        {getServiceTypeLabel(type.service_type)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                      <span className="text-xs text-muted-foreground hidden sm:inline">
-                        {formatCurrency(type.revenue)}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className="text-xs tabular-nums"
-                      >
-                        {type.count} jobs
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                    <svg
-                      viewBox="0 0 100 6"
-                      className="h-1.5 w-full"
-                      preserveAspectRatio="none"
-                      aria-hidden="true"
-                    >
-                      <rect
-                        x="0"
-                        y="0"
-                        width="100"
-                        height="6"
-                        rx="3"
-                        fill="currentColor"
-                        className="text-muted"
-                      />
-                      <rect
-                        x="0"
-                        y="0"
-                        width={`${(type.count / maxCount) * 100}`}
-                        height="6"
-                        rx="3"
-                        fill="currentColor"
-                        className="text-purple-500"
-                      />
-                    </svg>
-                  </div>
-                  {type.top_technician && (
-                    <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                      <span className="truncate">
-                        Top tech: {type.top_technician.employee_name}
-                      </span>
-                      <span className="shrink-0 tabular-nums">
-                        {type.top_technician.completed_count} completed
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )
-            })
-          )}
-        </CardContent>
-      </Card>
+            {/* Most Punctual */}
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+                        <div
+                            className="p-2 rounded-lg shrink-0"
+                            style={{ backgroundColor: tint("--success") }}
+                        >
+                            <TrendingUp className="size-4" style={{ color: "var(--success)" }} />
+                        </div>
+                        <span className="truncate">Most Punctual</span>
+                        <Badge
+                            variant="outline"
+                            className="ml-auto text-xs shrink-0"
+                            style={{ borderColor: tint("--success", 30), color: "var(--success)" }}
+                        >
+                            On-Time
+                        </Badge>
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                        Employees with the best on-time attendance
+                    </p>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    {data.most_punctual.length === 0 ? (
+                        <EmptyState
+                            title="No punctuality data"
+                            description="No attendance records found in this period"
+                            icon={Users}
+                        />
+                    ) : (
+                        data.most_punctual.map((emp, index) => {
+                            const RankIcon = rankIcons[index] || Users
+                            const badgeStyle =
+                                emp.punctuality_rate >= 90
+                                    ? { borderColor: tint("--success", 30), color: "var(--success)" }
+                                    : emp.punctuality_rate >= 70
+                                        ? { borderColor: tint("--warning", 30), color: "var(--warning)" }
+                                        : { borderColor: tint("--destructive", 30), color: "var(--destructive)" }
+                            return (
+                                <div
+                                    key={emp.employee_id}
+                                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                                >
+                                    <div
+                                        className="flex items-center justify-center w-8 h-8 rounded-full"
+                                        style={{ backgroundColor: tint("--success", 14) }}
+                                    >
+                                        <RankIcon
+                                            className="size-4"
+                                            style={index < 3 ? rankIconStyle(index) : { color: "var(--success)" }}
+                                        />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium truncate">
+                                            {emp.employee_name}
+                                        </p>
+                                        <div className="flex items-center gap-1.5 sm:gap-2 text-xs text-muted-foreground flex-wrap">
+                                            <span>{emp.on_time_days} on-time</span>
+                                            <span>·</span>
+                                            <span>{emp.total_days} total</span>
+                                            <span className="hidden sm:inline">·</span>
+                                            <AnimatedNumber
+                                                value={emp.total_paid_hours}
+                                                className="hidden text-xs font-medium text-muted-foreground sm:inline"
+                                                suffix="h paid"
+                                            />
+                                        </div>
+                                    </div>
+                                    <Badge variant="outline" className="text-xs tabular-nums" style={badgeStyle}>
+                                        <AnimatedNumber
+                                            value={emp.punctuality_rate}
+                                            className="text-xs font-semibold"
+                                            suffix="%"
+                                        />
+                                    </Badge>
+                                </div>
+                            )
+                        })
+                    )}
+                </CardContent>
+            </Card>
 
-    </div>
-  )
+            {/* Most Late */}
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+                        <div
+                            className="p-2 rounded-lg shrink-0"
+                            style={{ backgroundColor: tint("--destructive") }}
+                        >
+                            <Timer className="size-4" style={{ color: "var(--destructive)" }} />
+                        </div>
+                        <span className="truncate">Most Late Arrivals</span>
+                        <Badge
+                            variant="outline"
+                            className="ml-auto text-xs shrink-0"
+                            style={{ borderColor: tint("--destructive", 30), color: "var(--destructive)" }}
+                        >
+                            Attendance
+                        </Badge>
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                        Employees with the most late check-ins
+                    </p>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    {data.most_late.length === 0 ? (
+                        <EmptyState
+                            title="No late arrivals"
+                            description="No employees have been recorded as late."
+                            icon={Clock}
+                        />
+                    ) : (
+                        data.most_late.map((emp) => {
+                            const hours = Math.floor(emp.total_late_minutes / 60)
+                            const mins = emp.total_late_minutes % 60
+                            const lateTime = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`
+                            return (
+                                <div
+                                    key={emp.employee_id}
+                                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                                >
+                                    <div
+                                        className="flex items-center justify-center w-8 h-8 rounded-full"
+                                        style={{ backgroundColor: tint("--destructive", 14) }}
+                                    >
+                                        <Clock className="size-4" style={{ color: "var(--destructive)" }} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium truncate">
+                                            {emp.employee_name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Total late: {lateTime}
+                                        </p>
+                                    </div>
+                                    <Badge
+                                        variant="outline"
+                                        className="text-xs tabular-nums"
+                                        style={{ borderColor: tint("--destructive", 30), color: "var(--destructive)" }}
+                                    >
+                                        {emp.late_count} {emp.late_count === 1 ? "day" : "days"}
+                                    </Badge>
+                                </div>
+                            )
+                        })
+                    )}
+                </CardContent>
+            </Card>
+
+            {/* Top Service Types */}
+            <Card>
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-sm sm:text-base flex items-center gap-2 flex-wrap">
+                        <div
+                            className="p-2 rounded-lg shrink-0"
+                            style={{ backgroundColor: tint("--chart-2") }}
+                        >
+                            <Wrench className="size-4" style={{ color: "var(--chart-2)" }} />
+                        </div>
+                        <span className="truncate">Top Service Types</span>
+                        <Badge
+                            variant="outline"
+                            className="ml-auto text-xs shrink-0"
+                            style={{ borderColor: tint("--chart-2", 30), color: "var(--chart-2)" }}
+                        >
+                            Completed
+                        </Badge>
+                    </CardTitle>
+                    <p className="text-xs text-muted-foreground">
+                        Most completed service types in this period
+                    </p>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {data.top_service_types.length === 0 ? (
+                        <EmptyState
+                            title="No completed services"
+                            description="No services have been completed in this period."
+                            icon={CheckCircle}
+                        />
+                    ) : (
+                        data.top_service_types.map((type, index) => {
+                            const maxCount = data.top_service_types[0]?.count || 1
+                            return (
+                                <div
+                                    key={type.service_type}
+                                    className="space-y-1.5"
+                                >
+                                    <div className="flex items-center justify-between text-sm gap-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">
+                                                #{index + 1}
+                                            </span>
+                                            <span className="font-medium truncate">
+                                                {getServiceTypeLabel(type.service_type)}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                                            <span className="text-xs text-muted-foreground hidden sm:inline">
+                                                {formatCurrency(type.revenue)}
+                                            </span>
+                                            <Badge
+                                                variant="outline"
+                                                className="text-xs tabular-nums"
+                                                style={{ borderColor: "var(--chart-2)", color: "var(--chart-2)" }}
+                                            >
+                                                <AnimatedNumber
+                                                    value={type.count}
+                                                    className="text-xs font-semibold tabular-nums"
+                                                    suffix=" jobs"
+                                                />
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                    <div
+                                        className="h-1.5 w-full rounded-full overflow-hidden"
+                                        style={{ backgroundColor: "var(--muted)" }}
+                                    >
+                                        <div
+                                            className="h-full rounded-full transition-all"
+                                            style={{
+                                                width: `${(type.count / maxCount) * 100}%`,
+                                                backgroundColor: "var(--chart-2)",
+                                            }}
+                                        />
+                                    </div>
+                                    {type.top_technician && (
+                                        <div className="flex items-center justify-between gap-2 rounded-md border border-dashed border-border/70 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                                            <span className="truncate">
+                                                Top tech: {type.top_technician.employee_name}
+                                            </span>
+                                            <AnimatedNumber
+                                                value={type.top_technician.completed_count}
+                                                className="shrink-0 text-xs font-medium"
+                                                suffix=" completed"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )
+                        })
+                    )}
+                </CardContent>
+            </Card>
+
+        </div>
+    )
 }

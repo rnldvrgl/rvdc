@@ -45,372 +45,372 @@ import { useEffect, useRef, useState } from "react"
 type ViewMode = "table" | "kanban"
 
 export default function ServicesPage() {
-  const { role } = useCurrentUser()
-  const canAddService = role === "admin" || role === "manager"
-  const [viewMode, setViewMode] = useState<ViewMode>("table")
-  const [isArchived, setIsArchived] = useState(false)
+    const { role } = useCurrentUser()
+    const canAddService = role === "admin" || role === "manager"
+    const [viewMode, setViewMode] = useState<ViewMode>("table")
+    const [isArchived, setIsArchived] = useState(false)
 
-  // Search params
-  const searchParams = useSearchParameters()
-  const { filter, ordering, search, page, limit } = searchParams
+    // Search params
+    const searchParams = useSearchParameters()
+    const { filter, ordering, search, page, limit } = searchParams
 
-  // Next.js router and URL params for handling view parameter from Command Palette
-  const router = useRouter()
-  const urlSearchParams = useSearchParams()
+    // Next.js router and URL params for handling view parameter from Command Palette
+    const router = useRouter()
+    const urlSearchParams = useSearchParams()
 
-  // Handle opening detail sheet from Command Palette search
-  const viewId = urlSearchParams?.get("view") || null
-  const { data: viewService } = useService(viewId ? Number(viewId) : undefined)
+    // Handle opening detail sheet from Command Palette search
+    const viewId = urlSearchParams?.get("view") || null
+    const { data: viewService } = useService(viewId ? Number(viewId) : undefined)
 
-  // Data fetching
-  const {
-    data: services,
-    isLoading,
-    refetch,
-  } = useServices({
-    page: viewMode === "kanban" ? 1 : page,
-    limit: viewMode === "kanban" ? 1000 : limit,
-    search,
-    filter,
-    ordering,
-  })
+    // Data fetching
+    const {
+        data: services,
+        isLoading,
+        refetch,
+    } = useServices({
+        page: viewMode === "kanban" ? 1 : page,
+        limit: viewMode === "kanban" ? 1000 : limit,
+        search,
+        filter,
+        ordering,
+    })
 
-  const { filters: filterDefs, orderingOptions } = useServiceFilters()
+    const { filters: filterDefs, orderingOptions } = useServiceFilters()
 
-  const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Service>(
-    "services/services/",
-    "services",
-    searchParams,
-    isArchived,
-  )
+    const { archivedQuery, restoreItem, hardDeleteItem } = useArchive<Service>(
+        "services/services/",
+        "services",
+        searchParams,
+        isArchived,
+    )
 
-  // All dialog/detail state extracted to hook
-  const state = useServicePageState(refetch)
+    // All dialog/detail state extracted to hook
+    const state = useServicePageState(refetch)
 
-  // Entity sheet for create/edit
-  const { entityState, openEntity, closeEntity } = useEntitySheet<Service>()
+    // Entity sheet for create/edit
+    const { entityState, openEntity, closeEntity } = useEntitySheet<Service>()
 
-  // Track if we've already opened the view to avoid re-opening
-  const hasOpenedView = useRef(false)
+    // Track if we've already opened the view to avoid re-opening
+    const hasOpenedView = useRef(false)
 
-  useEffect(() => {
-    if (viewId && viewService && !hasOpenedView.current) {
-      // Open the detail sheet with the fetched service
-      state.handleView(viewService)
-      hasOpenedView.current = true
+    useEffect(() => {
+        if (viewId && viewService && !hasOpenedView.current) {
+            // Open the detail sheet with the fetched service
+            state.handleView(viewService)
+            hasOpenedView.current = true
 
-      // Clear the view parameter from URL
-      const newUrl = new URL(window.location.href)
-      newUrl.searchParams.delete("view")
-      router.replace(newUrl.pathname + newUrl.search, { scroll: false })
+            // Clear the view parameter from URL
+            const newUrl = new URL(window.location.href)
+            newUrl.searchParams.delete("view")
+            router.replace(newUrl.pathname + newUrl.search, { scroll: false })
+        }
+    }, [viewId, viewService, router, state])
+
+    // Reset the flag when viewId changes or is cleared
+    useEffect(() => {
+        if (!viewId) {
+            hasOpenedView.current = false
+        }
+    }, [viewId])
+
+    const handleEdit = (service: Service) => {
+        openEntity(service)
     }
-  }, [viewId, viewService, router, state])
 
-  // Reset the flag when viewId changes or is cleared
-  useEffect(() => {
-    if (!viewId) {
-      hasOpenedView.current = false
+    // Fetch fresh service data when viewing details
+    const { data: detailService, refetch: refetchService } = useService(
+        state.selectedService?.id,
+    )
+
+    const handleRestore = (service: Service) => {
+        if (service?.id) restoreItem.mutate(service.id)
     }
-  }, [viewId])
 
-  const handleEdit = (service: Service) => {
-    openEntity(service)
-  }
+    const handleHardDelete = (service: Service) => {
+        if (service?.id) hardDeleteItem.mutate(service.id)
+    }
 
-  // Fetch fresh service data when viewing details
-  const { data: detailService, refetch: refetchService } = useService(
-    state.selectedService?.id,
-  )
+    const columns = isArchived
+        ? getServiceColumns({
+            role,
+            onEdit: () => { },
+            onDelete: () => { },
+            onRestore: handleRestore,
+            onHardDelete: handleHardDelete,
+        })
+        : getServiceColumns({
+            role,
+            onView: state.handleView,
+            onEdit: handleEdit,
+            onDelete: state.handleDelete,
+            onComplete: state.handleComplete,
+            onStatusChange: state.handleStatusChange,
+        })
 
-  const handleRestore = (service: Service) => {
-    if (service?.id) restoreItem.mutate(service.id)
-  }
+    const emptyServices = {
+        count: 0,
+        next: null,
+        previous: null,
+        results: [],
+    } as PaginatedResult<Service>
 
-  const handleHardDelete = (service: Service) => {
-    if (service?.id) hardDeleteItem.mutate(service.id)
-  }
+    const tableData = isArchived
+        ? archivedQuery.data || emptyServices
+        : (services ?? emptyServices)
 
-  const columns = isArchived
-    ? getServiceColumns({
-        role,
-        onEdit: () => {},
-        onDelete: () => {},
-        onRestore: handleRestore,
-        onHardDelete: handleHardDelete,
-      })
-    : getServiceColumns({
-        role,
-        onView: state.handleView,
-        onEdit: handleEdit,
-        onDelete: state.handleDelete,
-        onComplete: state.handleComplete,
-        onStatusChange: state.handleStatusChange,
-      })
+    return (
+        <Wrapper>
+            <PageHeader
+                icon={Wrench}
+                title="Services"
+                description="Manage repair, installation, and maintenance services"
+                actionButton={
+                    canAddService &&
+                    !isArchived && (
+                        <div className="flex items-center gap-2">
+                            {/* View toggle */}
+                            <div className="flex items-center rounded-lg border bg-muted p-0.5">
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant={viewMode === "table" ? "default" : "ghost"}
+                                            aria-label="Table view"
+                                            onClick={() => setViewMode("table")}
+                                        >
+                                            <List className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Table view</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant={viewMode === "kanban" ? "default" : "ghost"}
+                                            aria-label="Kanban board view"
+                                            onClick={() => setViewMode("kanban")}
+                                        >
+                                            <Kanban className="h-4 w-4" />
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Kanban board</TooltipContent>
+                                </Tooltip>
+                            </div>
 
-  const emptyServices = {
-    count: 0,
-    next: null,
-    previous: null,
-    results: [],
-  } as PaginatedResult<Service>
-
-  const tableData = isArchived
-    ? archivedQuery.data || emptyServices
-    : (services ?? emptyServices)
-
-  return (
-    <Wrapper>
-      <PageHeader
-        icon={Wrench}
-        title="Services"
-        description="Manage repair, installation, and maintenance services"
-        actionButton={
-          canAddService &&
-          !isArchived && (
-            <div className="flex items-center gap-2">
-              {/* View toggle */}
-              <div className="flex items-center rounded-lg border bg-muted p-0.5">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={viewMode === "table" ? "default" : "ghost"}
-                      aria-label="Table view"
-                      onClick={() => setViewMode("table")}
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Table view</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={viewMode === "kanban" ? "default" : "ghost"}
-                      aria-label="Kanban board view"
-                      onClick={() => setViewMode("kanban")}
-                    >
-                      <Kanban className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Kanban board</TooltipContent>
-                </Tooltip>
-              </div>
-
-              <Button
-                onClick={() => openEntity()}
-                size="sm"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                New Service
-              </Button>
-            </div>
-          )
-        }
-        onRefresh={isArchived ? archivedQuery.refetch : refetch}
-      />
-
-      <ArchiveToggle
-        isArchived={isArchived}
-        onToggle={setIsArchived}
-        archivedCount={archivedQuery.data?.count}
-      />
-
-      {/* Conditional view rendering */}
-      {isArchived ? (
-        <DataTable<Service, unknown>
-          enableVirtualization
-          columns={columns}
-          data={tableData}
-          isLoading={archivedQuery.isLoading}
-          filters={filterDefs ?? []}
-          orderingOptions={orderingOptions ?? []}
-          emptyIcon={Wrench}
-          emptyTitle="No archived services"
-          emptyDescription="Deleted services will appear here"
-        />
-      ) : viewMode === "table" ? (
-        <DataTable<Service, unknown>
-          enableVirtualization
-          columns={columns}
-          data={tableData}
-          isLoading={isLoading}
-          filters={filterDefs ?? []}
-          orderingOptions={orderingOptions ?? []}
-          emptyIcon={Wrench}
-          emptyTitle="No services found"
-          emptyDescription="Create your first service request to get started"
-          searchPlaceholder="Search by client, phone, type, brand, model..."
-        />
-      ) : (
-        <ServiceKanbanBoard
-          services={services?.results ?? []}
-          onView={state.handleView}
-          onStatusChange={state.handleStatusChange}
-        />
-      )}
-
-      {/* Create/Edit Sheet */}
-      <EntitySheet
-        className="w-full sm:w-[92vw] lg:w-[82vw] xl:w-[74vw] 2xl:w-[68vw] sm:max-w-[1400px]"
-        open={entityState.open}
-        onClose={closeEntity}
-        title={entityState.entity ? "Edit Service" : "Create New Service"}
-        description={
-          entityState.entity
-            ? "Update service information"
-            : "Create a new service request"
-        }
-        entity={entityState.entity}
-        renderForm={({ onClose, entity, forceClose }) =>
-          entity ? (
-            <ServiceForm
-              initialData={entity as Service}
-              onClose={onClose}
-              forceClose={forceClose}
+                            <Button
+                                onClick={() => openEntity()}
+                                size="sm"
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                New Service
+                            </Button>
+                        </div>
+                    )
+                }
+                onRefresh={isArchived ? archivedQuery.refetch : refetch}
             />
-          ) : (
-            <ServiceFormWizard
-              onClose={onClose}
-              forceClose={forceClose}
+
+            <ArchiveToggle
+                isArchived={isArchived}
+                onToggle={setIsArchived}
+                archivedCount={archivedQuery.data?.count}
             />
-          )
-        }
-        withCloseConfirmation
-      />
 
-      {/* Details Sheet */}
-      {state.detailsOpen && state.selectedService && (
-        <EntitySheet
-          withCloseConfirmation
-          className="w-full sm:w-[95vw] lg:w-[90vw] xl:w-[84vw] 2xl:w-[78vw] sm:max-w-[1700px]"
-          open={state.detailsOpen}
-          onClose={state.closeDetails}
-          title={`Service #${String(state.selectedService.id).padStart(4, "0")}`}
-          description={`Created ${new Date(state.selectedService.created_at).toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`}
-          entity={detailService}
-          renderForm={() => (
-            <ServiceDetail
-              service={detailService || state.selectedService!}
-              onEdit={() => {
-                state.closeDetails()
-                handleEdit(detailService || state.selectedService!)
-              }}
-              onRefresh={async () => {
-                await refetchService()
-              }}
+            {/* Conditional view rendering */}
+            {isArchived ? (
+                <DataTable<Service, unknown>
+                    enableVirtualization
+                    columns={columns}
+                    data={tableData}
+                    isLoading={archivedQuery.isLoading}
+                    filters={filterDefs ?? []}
+                    orderingOptions={orderingOptions ?? []}
+                    emptyIcon={Wrench}
+                    emptyTitle="No archived services"
+                    emptyDescription="Deleted services will appear here"
+                />
+            ) : viewMode === "table" ? (
+                <DataTable<Service, unknown>
+                    enableVirtualization
+                    columns={columns}
+                    data={tableData}
+                    isLoading={isLoading}
+                    filters={filterDefs ?? []}
+                    orderingOptions={orderingOptions ?? []}
+                    emptyIcon={Wrench}
+                    emptyTitle="No services found"
+                    emptyDescription="Create your first service request to get started"
+                    searchPlaceholder="Search by client, phone, type, brand, model..."
+                />
+            ) : (
+                <ServiceKanbanBoard
+                    services={services?.results ?? []}
+                    onView={state.handleView}
+                    onStatusChange={state.handleStatusChange}
+                />
+            )}
+
+            {/* Create/Edit Sheet */}
+            <EntitySheet
+                className="w-full sm:w-[92vw] lg:w-[82vw] xl:w-[74vw] 2xl:w-[68vw] sm:max-w-[1400px]"
+                open={entityState.open}
+                onClose={closeEntity}
+                title={entityState.entity ? "Edit Service" : "Create New Service"}
+                description={
+                    entityState.entity
+                        ? "Update service information"
+                        : "Create a new service request"
+                }
+                entity={entityState.entity}
+                renderForm={({ onClose, entity, forceClose }) =>
+                    entity ? (
+                        <ServiceForm
+                            initialData={entity as Service}
+                            onClose={onClose}
+                            forceClose={forceClose}
+                        />
+                    ) : (
+                        <ServiceFormWizard
+                            onClose={onClose}
+                            forceClose={forceClose}
+                        />
+                    )
+                }
+                withCloseConfirmation
             />
-          )}
-        />
-      )}
 
-      {/* Archive Confirmation Dialog */}
-      <ConfirmDialog
-        open={state.deleteDialog.isOpen}
-        onCancel={state.deleteDialog.close}
-        title="Archive Service"
-        description={
-          state.deleteDialog.target
-            ? `Are you sure you want to archive service #${state.deleteDialog.target.id}? You can restore it from the Archived tab.`
-            : ""
-        }
-        onConfirm={state.confirmDelete}
-        confirmText="Archive"
-        variant="warning"
-      />
+            {/* Details Sheet */}
+            {state.detailsOpen && state.selectedService && (
+                <EntitySheet
+                    withCloseConfirmation
+                    className="w-full sm:w-[95vw] lg:w-[90vw] xl:w-[84vw] 2xl:w-[78vw] sm:max-w-[1700px]"
+                    open={state.detailsOpen}
+                    onClose={state.closeDetails}
+                    title={`Service #${String(state.selectedService.id).padStart(4, "0")}`}
+                    description={`Created ${new Date(state.selectedService.created_at).toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`}
+                    entity={detailService}
+                    renderForm={() => (
+                        <ServiceDetail
+                            service={detailService || state.selectedService!}
+                            onEdit={() => {
+                                state.closeDetails()
+                                handleEdit(detailService || state.selectedService!)
+                            }}
+                            onRefresh={async () => {
+                                await refetchService()
+                            }}
+                        />
+                    )}
+                />
+            )}
 
-      {/* Complete Confirmation Dialog */}
-      <ConfirmDialog
-        open={state.completeDialog.isOpen}
-        onCancel={state.completeDialog.close}
-        title="Complete Service"
-        description={
-          state.completeDialog.target
-            ? `Complete service #${state.completeDialog.target.id}? This will finalize stock consumption and create transactions.`
-            : ""
-        }
-        onConfirm={state.confirmComplete}
-        confirmText="Complete"
-        variant="success"
-      />
+            {/* Archive Confirmation Dialog */}
+            <ConfirmDialog
+                open={state.deleteDialog.isOpen}
+                onCancel={state.deleteDialog.close}
+                title="Archive Service"
+                description={
+                    state.deleteDialog.target
+                        ? `Are you sure you want to archive service #${state.deleteDialog.target.id}? You can restore it from the Archived tab.`
+                        : ""
+                }
+                onConfirm={state.confirmDelete}
+                confirmText="Archive"
+                variant="warning"
+            />
 
-      {/* Status Change Confirmation Dialog */}
-      <ConfirmDialog
-        open={state.statusChangeDialog.isOpen}
-        onCancel={state.statusChangeDialog.close}
-        title="Start Service"
-        description={
-          state.statusChangeDialog.target
-            ? `Move service #${state.statusChangeDialog.target.service.id} to "In Progress"? This indicates work has started.`
-            : ""
-        }
-        onConfirm={state.confirmStatusChange}
-        confirmText="Start Progress"
-        variant="info"
-      />
+            {/* Complete Confirmation Dialog */}
+            <ConfirmDialog
+                open={state.completeDialog.isOpen}
+                onCancel={state.completeDialog.close}
+                title="Complete Service"
+                description={
+                    state.completeDialog.target
+                        ? `Complete service #${state.completeDialog.target.id}? This will finalize stock consumption and create transactions.`
+                        : ""
+                }
+                onConfirm={state.confirmComplete}
+                confirmText="Complete"
+                variant="success"
+            />
 
-      {/* Cancel Service Dialog (with reason) */}
-      <Dialog
-        open={state.cancelDialog.isOpen}
-        onOpenChange={(open) => {
-          if (!open) state.cancelDialog.close()
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancel Service</DialogTitle>
-            <DialogDescription>
-              {state.cancelDialog.target
-                ? `Cancel service #${state.cancelDialog.target.id}? Please provide a reason.`
-                : ""}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            {state.cancelDialog.target &&
-              parseFloat(state.cancelDialog.target.total_paid || "0") > 0 && (
-                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-700 dark:bg-amber-950">
-                  <p className="font-medium text-amber-800 dark:text-amber-200">
-                    This service has ₱
-                    {parseFloat(
-                      state.cancelDialog.target.total_paid || "0",
-                    ).toLocaleString("en-PH", {
-                      minimumFractionDigits: 2,
-                    })}{" "}
-                    in recorded payments.
-                  </p>
-                  <p className="text-amber-700 dark:text-amber-300 mt-1">
-                    Cancelling will void related transactions. A refund may need
-                    to be issued separately.
-                  </p>
-                </div>
-              )}
-            <div className="space-y-2">
-              <Label htmlFor="cancel-reason">Cancellation Reason</Label>
-              <Textarea
-                id="cancel-reason"
-                placeholder="Enter the reason for cancellation..."
-                value={state.cancelReason}
-                onChange={(e) => state.setCancelReason(e.target.value)}
-                rows={3}
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={state.cancelDialog.close}
-              >
-                Keep Service
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={state.confirmCancel}
-                disabled={!state.cancelReason.trim()}
-              >
-                Cancel Service
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </Wrapper>
-  )
+            {/* Status Change Confirmation Dialog */}
+            <ConfirmDialog
+                open={state.statusChangeDialog.isOpen}
+                onCancel={state.statusChangeDialog.close}
+                title="Start Service"
+                description={
+                    state.statusChangeDialog.target
+                        ? `Move service #${state.statusChangeDialog.target.service.id} to "In Progress"? This indicates work has started.`
+                        : ""
+                }
+                onConfirm={state.confirmStatusChange}
+                confirmText="Start Progress"
+                variant="info"
+            />
+
+            {/* Cancel Service Dialog (with reason) */}
+            <Dialog
+                open={state.cancelDialog.isOpen}
+                onOpenChange={(open) => {
+                    if (!open) state.cancelDialog.close()
+                }}
+            >
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Cancel Service</DialogTitle>
+                        <DialogDescription>
+                            {state.cancelDialog.target
+                                ? `Cancel service #${state.cancelDialog.target.id}? Please provide a reason.`
+                                : ""}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 pt-2">
+                        {state.cancelDialog.target &&
+                            parseFloat(state.cancelDialog.target.total_paid || "0") > 0 && (
+                                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-700 dark:bg-amber-950">
+                                    <p className="font-medium text-amber-800 dark:text-amber-200">
+                                        This service has ₱
+                                        {parseFloat(
+                                            state.cancelDialog.target.total_paid || "0",
+                                        ).toLocaleString("en-PH", {
+                                            minimumFractionDigits: 2,
+                                        })}{" "}
+                                        in recorded payments.
+                                    </p>
+                                    <p className="text-amber-700 dark:text-amber-300 mt-1">
+                                        Cancelling will void related transactions. A refund may need
+                                        to be issued separately.
+                                    </p>
+                                </div>
+                            )}
+                        <div className="space-y-2">
+                            <Label htmlFor="cancel-reason">Cancellation Reason</Label>
+                            <Textarea
+                                id="cancel-reason"
+                                placeholder="Enter the reason for cancellation..."
+                                value={state.cancelReason}
+                                onChange={(e) => state.setCancelReason(e.target.value)}
+                                rows={3}
+                            />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button
+                                variant="outline"
+                                onClick={state.cancelDialog.close}
+                            >
+                                Keep Service
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                onClick={state.confirmCancel}
+                                disabled={!state.cancelReason.trim()}
+                            >
+                                Cancel Service
+                            </Button>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </Wrapper>
+    )
 }

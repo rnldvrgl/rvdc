@@ -3,17 +3,9 @@
 import api from "@/lib/utils/api"
 import { useCallback, useEffect, useRef, useState } from "react"
 
-/**
- * Registers the service worker, requests Notification permission,
- * subscribes to Web Push, and sends the subscription to the backend.
- *
- * Handles VAPID key rotation: if the server key changes, the old
- * subscription is unsubscribed and a fresh one is created.
- *
- * Call this hook once in the authenticated layout.
- */
 export function usePushNotifications() {
   const subscribedRef = useRef(false)
+  const [ready, setReady] = useState(false)
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">(
     "default",
   )
@@ -104,6 +96,7 @@ export function usePushNotifications() {
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window)) {
       setPermission("unsupported")
+      setReady(true)
       return
     }
 
@@ -111,6 +104,7 @@ export function usePushNotifications() {
     if (Notification.permission === "granted") {
       void subscribe(false)
     }
+    setReady(true)
   }, [subscribe])
 
   const enablePushNotifications = useCallback(async () => {
@@ -121,6 +115,7 @@ export function usePushNotifications() {
     enablePushNotifications,
     permission,
     subscribed,
+    ready,
   }
 }
 

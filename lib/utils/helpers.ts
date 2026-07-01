@@ -252,23 +252,23 @@ export function getBoolBadgeVariant({
   status,
   reverse = false,
 }: {
-  status: boolean
+  status?: boolean
   reverse?: boolean
-}): "success" | "destructive" {
-  if (reverse) return status ? "destructive" : "success"
-  return status ? "success" : "destructive"
+}): badgeVariants {
+  const isPositive = reverse ? !status : !!status
+  return isPositive ? "success" : "destructive"
 }
 
 export const getHashedStallBadgeClass = (stallName: string) => {
   const colors = [
-    "border-transparent bg-emerald-600 text-white dark:bg-emerald-500 dark:text-white",
-    "border-transparent bg-yellow-400 text-black dark:bg-yellow-300 dark:text-black",
-    "border-transparent bg-blue-500 text-white dark:bg-blue-400 dark:text-white",
-    "border-transparent bg-pink-500 text-white dark:bg-pink-400 dark:text-white",
-    "border-transparent bg-purple-500 text-white dark:bg-purple-400 dark:text-white",
-    "border-transparent bg-teal-500 text-white dark:bg-teal-400 dark:text-white",
-    "border-transparent bg-rose-500 text-white dark:bg-rose-400 dark:text-white",
-    "border-transparent bg-orange-500 text-white dark:bg-orange-400 dark:text-white",
+    "border-transparent bg-[var(--stall-badge-1)] text-[var(--stall-badge-1-foreground)]",
+    "border-transparent bg-[var(--stall-badge-2)] text-[var(--stall-badge-2-foreground)]",
+    "border-transparent bg-[var(--stall-badge-3)] text-[var(--stall-badge-3-foreground)]",
+    "border-transparent bg-[var(--stall-badge-4)] text-[var(--stall-badge-4-foreground)]",
+    "border-transparent bg-[var(--stall-badge-5)] text-[var(--stall-badge-5-foreground)]",
+    "border-transparent bg-[var(--stall-badge-6)] text-[var(--stall-badge-6-foreground)]",
+    "border-transparent bg-[var(--stall-badge-7)] text-[var(--stall-badge-7-foreground)]",
+    "border-transparent bg-[var(--stall-badge-8)] text-[var(--stall-badge-8-foreground)]",
   ]
 
   let hash = 0
@@ -358,3 +358,6 @@ export const formatMinutesToHours = (totalMinutes: number) => {
     "0",
   )} minute${m === 1 ? "" : "s"}`
 }
+
+export const tint = (cssVar: string, pct = 12) =>
+    `color-mix(in srgb, var(${cssVar}) ${pct}%, transparent)`

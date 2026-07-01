@@ -27,31 +27,31 @@ import { SummaryReport } from "./_components/SummaryReport"
 // ── Stall Filter ───────────────────────────────────────
 
 function StallFilter({ stalls }: { stalls: { id: number; name: string }[] }) {
-  const form = useFormContext()
+    const form = useFormContext()
 
-  return (
-    <Select
-      onValueChange={(v) =>
-        form.setValue("stall", v === "all" ? undefined : Number(v))
-      }
-    >
-      <SelectTrigger className="w-full sm:w-[180px]">
-        <Store className="size-4 mr-2 text-muted-foreground" />
-        <SelectValue placeholder="All Stalls" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">All Stalls</SelectItem>
-        {stalls.map((s) => (
-          <SelectItem
-            key={s.id}
-            value={String(s.id)}
-          >
-            {s.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )
+    return (
+        <Select
+            onValueChange={(v) =>
+                form.setValue("stall", v === "all" ? undefined : Number(v))
+            }
+        >
+            <SelectTrigger className="w-full sm:w-[180px]">
+                <Store className="size-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="All Stalls" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all">All Stalls</SelectItem>
+                {stalls.map((s) => (
+                    <SelectItem
+                        key={s.id}
+                        value={String(s.id)}
+                    >
+                        {s.name}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    )
 }
 
 // ── Page ───────────────────────────────────────────────
@@ -60,109 +60,110 @@ function StallFilter({ stalls }: { stalls: { id: number; name: string }[] }) {
 const SERVICES_STALL_NAME = "main"
 
 export default function ReportsPage() {
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  const { data: stallData } = useStalls({ limit: 50 })
-  const stalls = stallData?.results ?? []
+    const { data: stallData } = useStalls({ limit: 50 })
+    const stalls = stallData?.results ?? []
 
-  const form = useForm({
-    defaultValues: {
-      range: { from: thirtyDaysAgo, to: new Date() },
-      stall: undefined as number | undefined,
-    },
-  })
+    const form = useForm({
+        defaultValues: {
+            range: { from: thirtyDaysAgo, to: new Date() },
+            stall: undefined as number | undefined,
+        },
+    })
 
-  const selectedStallId = form.watch("stall")
-  const selectedStallName = stalls.find((s) => s.id === selectedStallId)?.name
-  const showServicesTab =
-    selectedStallId === undefined ||
-    selectedStallName?.toLowerCase() === SERVICES_STALL_NAME
+    const selectedStallId = form.watch("stall")
+    const selectedStallName = stalls.find((s) => s.id === selectedStallId)?.name
+    const showServicesTab =
+        selectedStallId === undefined ||
+        selectedStallName?.toLowerCase() === SERVICES_STALL_NAME
 
-  return (
-    <FormProvider {...form}>
-      <Wrapper>
-        <PageHeader
-          icon={FileSpreadsheet}
-          title="Reports & Export"
-          description="View financial reports, performance analytics, and export data to CSV."
-          breadcrumbs={["Dashboard", "Reports"]}
-          actionButton={
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
-              <StallFilter stalls={stalls} />
-              <DateRangePicker classNames="w-full sm:w-auto" />
-            </div>
-          }
-        />
+    return (
+        <FormProvider {...form}>
+            <Wrapper>
+                <PageHeader
+                    isAdminOnly
+                    icon={FileSpreadsheet}
+                    title="Reports & Export"
+                    description="View financial reports, performance analytics, and export data to CSV."
+                    breadcrumbs={["Dashboard", "Reports"]}
+                    actionButton={
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                            <StallFilter stalls={stalls} />
+                            <DateRangePicker classNames="w-full sm:w-auto" />
+                        </div>
+                    }
+                />
 
-        <Tabs
-          defaultValue="summary"
-          className="space-y-6"
-        >
-          <div className="w-full overflow-x-auto -mx-1 px-1">
-            <TabsList className="w-full sm:w-auto min-w-max">
-              <TabsTrigger
-                value="summary"
-                className="text-xs sm:text-sm"
-              >
-                Summary
-              </TabsTrigger>
-              <TabsTrigger
-                value="sales"
-                className="text-xs sm:text-sm"
-              >
-                Sales
-              </TabsTrigger>
-              <TabsTrigger
-                value="expenses"
-                className="text-xs sm:text-sm"
-              >
-                Expenses
-              </TabsTrigger>
-              {showServicesTab ? (
-                <TabsTrigger
-                  value="services"
-                  className="text-xs sm:text-sm"
+                <Tabs
+                    defaultValue="summary"
+                    className="space-y-6"
                 >
-                  Services
-                </TabsTrigger>
-              ) : null}
-              <TabsTrigger
-                value="inventory"
-                className="text-xs sm:text-sm"
-              >
-                Inventory
-              </TabsTrigger>
-              <TabsTrigger
-                value="export"
-                className="gap-1 sm:gap-1.5 text-xs sm:text-sm"
-              >
-                <Download className="size-3 sm:size-3.5" />
-                Export
-              </TabsTrigger>
-            </TabsList>
-          </div>
+                    <div className="w-full overflow-x-auto -mx-1 px-1">
+                        <TabsList className="w-full sm:w-auto min-w-max">
+                            <TabsTrigger
+                                value="summary"
+                                className="text-xs sm:text-sm"
+                            >
+                                Summary
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="sales"
+                                className="text-xs sm:text-sm"
+                            >
+                                Sales
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="expenses"
+                                className="text-xs sm:text-sm"
+                            >
+                                Expenses
+                            </TabsTrigger>
+                            {showServicesTab ? (
+                                <TabsTrigger
+                                    value="services"
+                                    className="text-xs sm:text-sm"
+                                >
+                                    Services
+                                </TabsTrigger>
+                            ) : null}
+                            <TabsTrigger
+                                value="inventory"
+                                className="text-xs sm:text-sm"
+                            >
+                                Inventory
+                            </TabsTrigger>
+                            <TabsTrigger
+                                value="export"
+                                className="gap-1 sm:gap-1.5 text-xs sm:text-sm"
+                            >
+                                <Download className="size-3 sm:size-3.5" />
+                                Export
+                            </TabsTrigger>
+                        </TabsList>
+                    </div>
 
-          <TabsContent value="summary">
-            <SummaryReport />
-          </TabsContent>
-          <TabsContent value="sales">
-            <SalesReport />
-          </TabsContent>
-          <TabsContent value="expenses">
-            <ExpensesReport />
-          </TabsContent>
-          <TabsContent value="services">
-            <ServicesReport />
-          </TabsContent>
-          <TabsContent value="inventory">
-            <InventoryReport />
-          </TabsContent>
-          <TabsContent value="export">
-            <ExportCenter />
-          </TabsContent>
-        </Tabs>
-      </Wrapper>
-    </FormProvider>
-  )
+                    <TabsContent value="summary">
+                        <SummaryReport />
+                    </TabsContent>
+                    <TabsContent value="sales">
+                        <SalesReport />
+                    </TabsContent>
+                    <TabsContent value="expenses">
+                        <ExpensesReport />
+                    </TabsContent>
+                    <TabsContent value="services">
+                        <ServicesReport />
+                    </TabsContent>
+                    <TabsContent value="inventory">
+                        <InventoryReport />
+                    </TabsContent>
+                    <TabsContent value="export">
+                        <ExportCenter />
+                    </TabsContent>
+                </Tabs>
+            </Wrapper>
+        </FormProvider>
+    )
 }

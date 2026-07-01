@@ -20,161 +20,162 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 const emptyData = {
-  count: 0,
-  next: null,
-  previous: null,
-  results: [] as Employee[],
+    count: 0,
+    next: null,
+    previous: null,
+    results: [] as Employee[],
 }
 
 export default function EmployeesPage() {
-  const router = useRouter()
-  const { isAdmin } = useCurrentUser()
-  const searchParams = useSearchParameters()
-  const { page, limit, search, ordering, filter } = searchParams
-  const [isArchived, setIsArchived] = useState(false)
+    const router = useRouter()
+    const { isAdmin } = useCurrentUser()
+    const searchParams = useSearchParameters()
+    const { page, limit, search, ordering, filter } = searchParams
+    const [isArchived, setIsArchived] = useState(false)
 
-  const { deleteEmployee } = useEmployeeMutations()
-  const { data, isLoading, refetch } = useEmployees({
-    page,
-    limit,
-    search,
-    ordering,
-    filter,
-  })
+    const { deleteEmployee } = useEmployeeMutations()
+    const { data, isLoading, refetch } = useEmployees({
+        page,
+        limit,
+        search,
+        ordering,
+        filter,
+    })
 
-  const { archivedQuery, restoreItem } = useArchive<Employee>(
-    "/users/employees/",
-    "employees",
-    searchParams,
-    isArchived,
-    {
-      restoreMessage: "Employee reactivated successfully.",
-      hardDeleteMessage: "Employee permanently deleted.",
-    },
-  )
+    const { archivedQuery, restoreItem } = useArchive<Employee>(
+        "/users/employees/",
+        "employees",
+        searchParams,
+        isArchived,
+        {
+            restoreMessage: "Employee reactivated successfully.",
+            hardDeleteMessage: "Employee permanently deleted.",
+        },
+    )
 
-  // Separate sheets
-  const {
-    entityState: { open: editOpen, entity },
-    openEntity: openEditSheet,
-    closeEntity: closeEditSheet,
-  } = useEntitySheet<Employee>()
+    // Separate sheets
+    const {
+        entityState: { open: editOpen, entity },
+        openEntity: openEditSheet,
+        closeEntity: closeEditSheet,
+    } = useEntitySheet<Employee>()
 
-  const {
-    entityState: { open: addOpen },
-    openEntity: openAddSheet,
-    closeEntity: closeAddSheet,
-  } = useEntitySheet<Employee>()
+    const {
+        entityState: { open: addOpen },
+        openEntity: openAddSheet,
+        closeEntity: closeAddSheet,
+    } = useEntitySheet<Employee>()
 
-  const handleDelete = (employee: Employee) => {
-    if (employee.id !== undefined) {
-      deleteEmployee.mutate(employee.id)
+    const handleDelete = (employee: Employee) => {
+        if (employee.id !== undefined) {
+            deleteEmployee.mutate(employee.id)
+        }
     }
-  }
 
-  const handleView = (employee: Employee) => {
-    router.push(`/employees/${employee.id}`)
-  }
+    const handleView = (employee: Employee) => {
+        router.push(`/employees/${employee.id}`)
+    }
 
-  const handleRestore = (employee: Employee) => {
-    if (employee.id !== undefined) restoreItem.mutate(employee.id)
-  }
+    const handleRestore = (employee: Employee) => {
+        if (employee.id !== undefined) restoreItem.mutate(employee.id)
+    }
 
-  const columns = isArchived
-    ? getEmployeeColumns({
-        onEdit: () => {},
-        onDelete: () => {},
-        onRestore: handleRestore,
-      })
-    : getEmployeeColumns({
-        onEdit: openEditSheet,
-        onDelete: handleDelete,
-        onView: handleView,
-      })
+    const columns = isArchived
+        ? getEmployeeColumns({
+            onEdit: () => { },
+            onDelete: () => { },
+            onRestore: handleRestore,
+        })
+        : getEmployeeColumns({
+            onEdit: openEditSheet,
+            onDelete: handleDelete,
+            onView: handleView,
+        })
 
-  const tableData = isArchived
-    ? archivedQuery.data || emptyData
-    : data || emptyData
+    const tableData = isArchived
+        ? archivedQuery.data || emptyData
+        : data || emptyData
 
-  return (
-    <Wrapper>
-      <PageHeader
-        icon={Users}
-        title="Employee Management"
-        description="Manage your staff members, assign roles, and track employee information across all departments."
-        breadcrumbs={["Dashboard", "Staff", "Employees"]}
-        isAdminOnly
-        onRefresh={isArchived ? archivedQuery.refetch : refetch}
-        actionButton={
-          isAdmin && !isArchived ? (
-            <Button onClick={() => openAddSheet()}>
-              <Plus className="size-4 mr-2" />
-              Add Employee
-            </Button>
-          ) : undefined
-        }
-      />
-
-      {/* Edit Employee Sheet */}
-      {!isArchived && (
-        <EntitySheet<Employee>
-          className="min-w-xl"
-          open={editOpen}
-          onClose={closeEditSheet}
-          entity={entity}
-          title="Edit Employee"
-          description="Update the employee details below."
-          withCloseConfirmation
-          renderForm={({ forceClose, entity }) => (
-            <EmployeeForm
-              onClose={forceClose}
-              employee={entity}
+    return (
+        <Wrapper>
+            <PageHeader
+                variant="compact"
+                icon={Users}
+                title="Employee Management"
+                description="Manage your staff members, assign roles, and track employee information across all departments."
+                breadcrumbs={["Dashboard", "Staff", "Employees"]}
+                isAdminOnly
+                onRefresh={isArchived ? archivedQuery.refetch : refetch}
+                actionButton={
+                    isAdmin && !isArchived ? (
+                        <Button onClick={() => openAddSheet()}>
+                            <Plus className="size-4 mr-2" />
+                            Add Employee
+                        </Button>
+                    ) : undefined
+                }
             />
-          )}
-        />
-      )}
 
-      {/* Add Employee Sheet */}
-      {!isArchived && (
-        <EntitySheet<Employee>
-          className="min-w-xl"
-          open={addOpen}
-          onClose={closeAddSheet}
-          title="Add Employee"
-          description="Fill out the form below to add a new employee."
-          withCloseConfirmation
-          renderForm={({ forceClose }) => <EmployeeForm onClose={forceClose} />}
-        />
-      )}
+            {/* Edit Employee Sheet */}
+            {!isArchived && (
+                <EntitySheet<Employee>
+                    className="min-w-xl"
+                    open={editOpen}
+                    onClose={closeEditSheet}
+                    entity={entity}
+                    title="Edit Employee"
+                    description="Update the employee details below."
+                    withCloseConfirmation
+                    renderForm={({ forceClose, entity }) => (
+                        <EmployeeForm
+                            onClose={forceClose}
+                            employee={entity}
+                        />
+                    )}
+                />
+            )}
 
-      <ArchiveToggle
-        isArchived={isArchived}
-        onToggle={setIsArchived}
-        archivedCount={archivedQuery.data?.count}
-        archivedLabel="Inactive"
-        archivedIcon={UserX}
-      />
+            {/* Add Employee Sheet */}
+            {!isArchived && (
+                <EntitySheet<Employee>
+                    className="min-w-xl"
+                    open={addOpen}
+                    onClose={closeAddSheet}
+                    title="Add Employee"
+                    description="Fill out the form below to add a new employee."
+                    withCloseConfirmation
+                    renderForm={({ forceClose }) => <EmployeeForm onClose={forceClose} />}
+                />
+            )}
 
-      {/* Main Content */}
-      <DataTable
-        title={isArchived ? "Inactive Employees" : "Employees"}
-        description={
-          isArchived
-            ? "Reactivate or permanently delete inactive employees"
-            : "Manage your staff members and their information"
-        }
-        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
-        columns={columns}
-        data={tableData}
-        withoutDateRangeFilter
-        emptyIcon={Users}
-        emptyTitle={isArchived ? "No inactive employees" : "No employees found"}
-        emptyDescription={
-          isArchived
-            ? "Inactive employees will appear here"
-            : "Add your first employee to manage staff records"
-        }
-      />
-    </Wrapper>
-  )
+            <ArchiveToggle
+                isArchived={isArchived}
+                onToggle={setIsArchived}
+                archivedCount={archivedQuery.data?.count}
+                archivedLabel="Inactive"
+                archivedIcon={UserX}
+            />
+
+            {/* Main Content */}
+            <DataTable
+                title={isArchived ? "Inactive Employees" : "Employees"}
+                description={
+                    isArchived
+                        ? "Reactivate or permanently delete inactive employees"
+                        : "Manage your staff members and their information"
+                }
+                isLoading={isArchived ? archivedQuery.isLoading : isLoading}
+                columns={columns}
+                data={tableData}
+                withoutDateRangeFilter
+                emptyIcon={Users}
+                emptyTitle={isArchived ? "No inactive employees" : "No employees found"}
+                emptyDescription={
+                    isArchived
+                        ? "Inactive employees will appear here"
+                        : "Add your first employee to manage staff records"
+                }
+            />
+        </Wrapper>
+    )
 }

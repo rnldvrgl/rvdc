@@ -13,13 +13,13 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
+    Form,
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -29,830 +29,830 @@ import { useEmployeeMutations } from "@/lib/mutations/useEmployeeMutations"
 import { useStallChoices } from "@/lib/queries/useChoices"
 import { formatDateToYMD } from "@/lib/utils/helpers"
 import {
-  Briefcase,
-  CreditCard,
-  Info,
-  Loader2,
-  MapPin,
-  Phone,
-  User,
-  Users,
+    Briefcase,
+    CreditCard,
+    Info,
+    Loader2,
+    MapPin,
+    Phone,
+    User,
+    Users,
 } from "lucide-react"
 import { useRef } from "react"
 
 // Form-specific type for handling assigned_stall as ID
 type EmployeeFormData = Omit<Employee, "assigned_stall"> & {
-  assigned_stall_id?: number | string
+    assigned_stall_id?: number | string
 }
 
 // Utility function to convert Employee to EmployeeFormData
 const employeeToFormData = (employee?: Employee): Partial<EmployeeFormData> => {
-  if (!employee) return {}
+    if (!employee) return {}
 
-  return {
-    ...employee,
-    assigned_stall_id: employee.assigned_stall?.id,
-  }
+    return {
+        ...employee,
+        assigned_stall_id: employee.assigned_stall?.id,
+    }
 }
 
 // Role options for ComboBox (admin not included - only for employees)
 const roleOptions: ComboboxOption[] = [
-  { value: "manager", label: "Manager" },
-  { value: "clerk", label: "Clerk" },
-  { value: "technician", label: "Technician" },
+    { value: "manager", label: "Manager" },
+    { value: "clerk", label: "Clerk" },
+    { value: "technician", label: "Technician" },
 ]
 
 function LocationField({
-  name,
-  label,
-  value,
-  options,
-  onChange,
-  loading,
-  disabled,
-  placeholder,
-  control,
+    name,
+    label,
+    value,
+    options,
+    onChange,
+    loading,
+    disabled,
+    placeholder,
+    control,
 }: PsgcSelectProps<EmployeeFormData>) {
-  return (
-    <FormField
-      control={control}
-      name={name}
-      rules={{ required: `${label} is required` }}
-      render={() => (
-        <PsgcSelect
-          control={control}
-          name={name}
-          label={label}
-          value={value}
-          options={options}
-          onChange={onChange}
-          placeholder={placeholder}
-          loading={loading}
-          disabled={disabled}
+    return (
+        <FormField
+            control={control}
+            name={name}
+            rules={{ required: `${label} is required` }}
+            render={() => (
+                <PsgcSelect
+                    control={control}
+                    name={name}
+                    label={label}
+                    value={value}
+                    options={options}
+                    onChange={onChange}
+                    placeholder={placeholder}
+                    loading={loading}
+                    disabled={disabled}
+                />
+            )}
         />
-      )}
-    />
-  )
+    )
 }
 
 interface EmployeeProps {
-  employee?: Employee
-  onClose: () => void
+    employee?: Employee
+    onClose: () => void
 }
 
 export default function EmployeeForm({ employee, onClose }: EmployeeProps) {
-  const submitLockRef = useRef(false)
-  const formData = employeeToFormData(employee)
+    const submitLockRef = useRef(false)
+    const formData = employeeToFormData(employee)
 
-  const form = useForm<EmployeeFormData>({
-    defaultValues: {
-      first_name: formData.first_name ?? "",
-      last_name: formData.last_name ?? "",
-      username: formData.username ?? "",
-      contact_number: formData.contact_number ?? "",
-      address: formData.address ?? "",
-      province: "",
-      city: "",
-      barangay: "",
-      sss_number: formData.sss_number ?? "",
-      tin_number: formData.tin_number ?? "",
-      philhealth_number: formData.philhealth_number ?? "",
-      basic_salary: formData.basic_salary ?? 0,
-      include_in_payroll: formData.include_in_payroll ?? true,
-      has_sss: formData.has_sss ?? true,
-      has_philhealth: formData.has_philhealth ?? true,
-      has_pagibig: formData.has_pagibig ?? true,
-      has_bir_tax: formData.has_bir_tax ?? true,
-      has_cash_ban: formData.has_cash_ban ?? true,
-      is_technician: formData.is_technician ?? false,
-      profile_image: "",
-      e_signature: "",
-      role: formData.role ?? "technician",
-      birthday: formData.birthday ?? "",
-      assigned_stall_id: formData.assigned_stall_id?.toString() ?? "none",
-    },
-  })
+    const form = useForm<EmployeeFormData>({
+        defaultValues: {
+            first_name: formData.first_name ?? "",
+            last_name: formData.last_name ?? "",
+            username: formData.username ?? "",
+            contact_number: formData.contact_number ?? "",
+            address: formData.address ?? "",
+            province: "",
+            city: "",
+            barangay: "",
+            sss_number: formData.sss_number ?? "",
+            tin_number: formData.tin_number ?? "",
+            philhealth_number: formData.philhealth_number ?? "",
+            basic_salary: formData.basic_salary ?? 0,
+            include_in_payroll: formData.include_in_payroll ?? true,
+            has_sss: formData.has_sss ?? true,
+            has_philhealth: formData.has_philhealth ?? true,
+            has_pagibig: formData.has_pagibig ?? true,
+            has_bir_tax: formData.has_bir_tax ?? true,
+            has_cash_ban: formData.has_cash_ban ?? true,
+            is_technician: formData.is_technician ?? false,
+            profile_image: "",
+            e_signature: "",
+            role: formData.role ?? "technician",
+            birthday: formData.birthday ?? "",
+            assigned_stall_id: formData.assigned_stall_id?.toString() ?? "none",
+        },
+    })
 
-  const upload = useFileUpload({
-    form,
-    fieldName: "profile_image",
-    initialImage: employee?.profile_image,
-  })
+    const upload = useFileUpload({
+        form,
+        fieldName: "profile_image",
+        initialImage: employee?.profile_image,
+    })
 
-  const eSignatureUpload = useFileUpload({
-    form,
-    fieldName: "e_signature",
-    initialImage: employee?.e_signature ?? "",
-  })
+    const eSignatureUpload = useFileUpload({
+        form,
+        fieldName: "e_signature",
+        initialImage: employee?.e_signature ?? "",
+    })
 
-  const { data: stallsData } = useStallChoices({})
-  const stalls = stallsData ?? []
+    const { data: stallsData } = useStallChoices({})
+    const stalls = stallsData ?? []
 
-  // Watch the role field to conditionally show stall assignment
-  const selectedRole = form.watch("role")
-  const showStallAssignment =
-    selectedRole === "manager" || selectedRole === "clerk" || selectedRole === "technician"
+    // Watch the role field to conditionally show stall assignment
+    const selectedRole = form.watch("role")
+    const showStallAssignment =
+        selectedRole === "manager" || selectedRole === "clerk" || selectedRole === "technician"
 
-  // Create stall options for ComboBox
-  const stallOptions: ComboboxOption[] = [
-    { value: "none", label: "No stall assigned" },
-    ...stalls.map((stall) => ({
-      value: stall.id.toString(),
-      label: stall.name,
-    })),
-  ]
+    // Create stall options for ComboBox
+    const stallOptions: ComboboxOption[] = [
+        { value: "none", label: "No stall assigned" },
+        ...stalls.map((stall) => ({
+            value: stall.id.toString(),
+            label: stall.name,
+        })),
+    ]
 
-  const {
-    selectedProvince,
-    selectedCity,
-    selectedBarangay,
-    sortedProvinces,
-    sortedCities,
-    sortedBarangays,
-    loadingProvinces,
-    loadingCities,
-    loadingBarangays,
-    provinceName,
-    cityName,
-    barangayName,
-    handleProvinceChange,
-    handleCityChange,
-    handleBarangayChange,
-  } = usePsgcForm<EmployeeFormData>({ form, defaultValues: formData })
+    const {
+        selectedProvince,
+        selectedCity,
+        selectedBarangay,
+        sortedProvinces,
+        sortedCities,
+        sortedBarangays,
+        loadingProvinces,
+        loadingCities,
+        loadingBarangays,
+        provinceName,
+        cityName,
+        barangayName,
+        handleProvinceChange,
+        handleCityChange,
+        handleBarangayChange,
+    } = usePsgcForm<EmployeeFormData>({ form, defaultValues: formData })
 
-  const { addEmployee, updateEmployee } = useEmployeeMutations()
-  const isSubmitting = addEmployee.isPending || updateEmployee.isPending
+    const { addEmployee, updateEmployee } = useEmployeeMutations()
+    const isSubmitting = addEmployee.isPending || updateEmployee.isPending
 
-  const handleSubmit: SubmitHandler<EmployeeFormData> = async (data) => {
-    if (submitLockRef.current || isSubmitting) {
-      return
+    const handleSubmit: SubmitHandler<EmployeeFormData> = async (data) => {
+        if (submitLockRef.current || isSubmitting) {
+            return
+        }
+
+        submitLockRef.current = true
+
+        const payload = {
+            ...data,
+            province: provinceName,
+            city: cityName,
+            barangay: barangayName,
+            // Convert stall assignment
+            assigned_stall_id:
+                data.assigned_stall_id === "none" || !data.assigned_stall_id
+                    ? undefined
+                    : typeof data.assigned_stall_id === "string"
+                        ? parseInt(data.assigned_stall_id)
+                        : data.assigned_stall_id,
+        }
+
+        try {
+            if (employee?.id) {
+                await updateEmployee.mutateAsync({ id: employee.id, data: payload })
+            } else {
+                await addEmployee.mutateAsync(payload)
+            }
+
+            onClose()
+        } finally {
+            submitLockRef.current = false
+        }
     }
 
-    submitLockRef.current = true
-
-    const payload = {
-      ...data,
-      province: provinceName,
-      city: cityName,
-      barangay: barangayName,
-      // Convert stall assignment
-      assigned_stall_id:
-        data.assigned_stall_id === "none" || !data.assigned_stall_id
-          ? undefined
-          : typeof data.assigned_stall_id === "string"
-            ? parseInt(data.assigned_stall_id)
-            : data.assigned_stall_id,
-    }
-
-    try {
-      if (employee?.id) {
-        await updateEmployee.mutateAsync({ id: employee.id, data: payload })
-      } else {
-        await addEmployee.mutateAsync(payload)
-      }
-
-      onClose()
-    } finally {
-      submitLockRef.current = false
-    }
-  }
-
-  return (
-    <div className="mx-auto w-full max-w-4xl px-1 sm:px-0">
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="space-y-5 sm:space-y-8"
-        >
-          {/* Info Alert for New Employees */}
-          {!employee && (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                <strong>Note:</strong> Default password will be automatically
-                generated.
-                <br />
-                <span className="text-sm text-muted-foreground">
-                  If you don&apos;t provide a username, it will be created from
-                  name initials (e.g., Ronald Vergel Dela Cruz → rvdc).
-                  <br />
-                  Default password will be:{" "}
-                  <code className="font-mono bg-muted px-1 py-0.5 rounded">
-                    rvdc12
-                  </code>
-                  <br />
-                  Employees can change their username and password later in
-                  their profile settings.
-                </span>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Profile Image Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="size-5" />
-                Profile Image
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="profile_image"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <ImageUpload
-                        fieldName={field.name}
-                        handleFileChange={upload.handleFileChange}
-                        handleFileRemove={upload.handleFileRemove}
-                        image={upload.image}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* E-Signature */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="size-5" />
-                E-Signature
-                <span className="text-xs font-normal text-muted-foreground">
-                  (optional — used for quotations)
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="e_signature"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <ImageUpload
-                        fieldName={field.name}
-                        handleFileChange={eSignatureUpload.handleFileChange}
-                        handleFileRemove={eSignatureUpload.handleFileRemove}
-                        image={eSignatureUpload.image}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Personal Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="size-5" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6 grid">
-              {/* Name Fields */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="first_name"
-                  rules={{
-                    required: "First name is required",
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>First Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Juan"
-                          className="h-11"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="last_name"
-                  rules={{
-                    required: "Last name is required",
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel required>Last Name</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Dela Cruz"
-                          className="h-11"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Username Field (optional for new employees) */}
-              {!employee && (
-                <FormField
-                  control={form.control}
-                  name="username"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Username</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Leave empty to auto-generate from initials"
-                          className="h-11"
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              )}
-
-              {/* Birthday Field */}
-              <FormField
-                control={form.control}
-                name="birthday"
-                rules={{
-                  required: "Birthday is required",
-                }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <DatePicker
-                        field={{
-                          value: field.value
-                            ? new Date(field.value)
-                            : undefined,
-                          onChange: (date: Date | undefined) => {
-                            field.onChange(date ? formatDateToYMD(date) : "")
-                          },
-                        }}
-                        required
-                        label="Birthday"
-                        placeholder="Select birthday"
-                        className="w-full"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Employment Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Briefcase className="size-5" />
-                Employment Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Role and Salary */}
-              <FormField
-                control={form.control}
-                name="role"
-                rules={{ required: "Role is required" }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Role</FormLabel>
-                    <FormControl>
-                      <ComboBox
-                        options={roleOptions}
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Select a role"
-                        searchPlaceholder="Search roles..."
-                        className="h-11"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="is_technician"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                    <FormControl>
-                      <Checkbox
-                        checked={!!field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>Can Do Technician Work</FormLabel>
-                      <FormDescription>
-                        Allow this employee to be assigned as a technician in service jobs, regardless of their role.
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="basic_salary"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Basic Salary</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        placeholder="25000.00"
-                        className="h-11"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              {/* Conditional Stall Assignment */}
-              {showStallAssignment && (
-                <>
-                  <Separator />
-                  <FormField
-                    control={form.control}
-                    name="assigned_stall_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Assigned Stall</FormLabel>
-                        <FormControl>
-                          <ComboBox
-                            options={stallOptions}
-                            value={field.value?.toString() ?? "none"}
-                            onChange={field.onChange}
-                            placeholder="Select a stall (optional)"
-                            searchPlaceholder="Search stalls..."
-                            className="h-11"
-                          />
-                        </FormControl>
-                      </FormItem>
+    return (
+        <div className="mx-auto w-full max-w-4xl px-1 sm:px-0">
+            <Form {...form}>
+                <form
+                    onSubmit={form.handleSubmit(handleSubmit)}
+                    className="space-y-5 sm:space-y-8"
+                >
+                    {/* Info Alert for New Employees */}
+                    {!employee && (
+                        <Alert>
+                            <Info className="h-4 w-4" />
+                            <AlertDescription>
+                                <strong>Note:</strong> Default password will be automatically
+                                generated.
+                                <br />
+                                <span className="text-sm text-muted-foreground">
+                                    If you don&apos;t provide a username, it will be created from
+                                    name initials (e.g., Ronald Vergel Dela Cruz → rvdc).
+                                    <br />
+                                    Default password will be:{" "}
+                                    <code className="font-mono bg-muted px-1 py-0.5 rounded">
+                                        rvdc12
+                                    </code>
+                                    <br />
+                                    Employees can change their username and password later in
+                                    their profile settings.
+                                </span>
+                            </AlertDescription>
+                        </Alert>
                     )}
-                  />
-                </>
-              )}
-            </CardContent>
-          </Card>
 
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Phone className="size-5" />
-                Contact Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid space-y-6">
-              <FormField
-                control={form.control}
-                name="contact_number"
-                rules={{
-                  required: "Contact number is required",
-                }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Contact Number</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="09XX XXX XXXX"
-                        className="h-11"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+                    {/* Profile Image Section */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <User className="size-5" />
+                                Profile Image
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <FormField
+                                control={form.control}
+                                name="profile_image"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <ImageUpload
+                                                fieldName={field.name}
+                                                handleFileChange={upload.handleFileChange}
+                                                handleFileRemove={upload.handleFileRemove}
+                                                image={upload.image}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </CardContent>
+                    </Card>
 
-              <FormField
-                control={form.control}
-                name="address"
-                rules={{
-                  required: "Address is required",
-                }}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Address</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Street, Subdivision, etc."
-                        className="h-11"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+                    {/* E-Signature */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <User className="size-5" />
+                                E-Signature
+                                <span className="text-xs font-normal text-muted-foreground">
+                                    (optional — used for quotations)
+                                </span>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <FormField
+                                control={form.control}
+                                name="e_signature"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <ImageUpload
+                                                fieldName={field.name}
+                                                handleFileChange={eSignatureUpload.handleFileChange}
+                                                handleFileRemove={eSignatureUpload.handleFileRemove}
+                                                image={eSignatureUpload.image}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </CardContent>
+                    </Card>
 
-          {/* Location Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="size-5" />
-                Location Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid">
-                <LocationField
-                  name="province"
-                  label="Province"
-                  value={selectedProvince ?? ""}
-                  options={sortedProvinces}
-                  onChange={handleProvinceChange}
-                  placeholder="Select Province"
-                  loading={loadingProvinces}
-                  control={form.control}
-                />
+                    {/* Personal Information */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Users className="size-5" />
+                                Personal Information
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6 grid">
+                            {/* Name Fields */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <FormField
+                                    control={form.control}
+                                    name="first_name"
+                                    rules={{
+                                        required: "First name is required",
+                                    }}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel required>First Name</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    placeholder="Juan"
+                                                    className="h-11"
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
 
-                <LocationField
-                  name="city"
-                  label="City / Municipality"
-                  value={selectedCity ?? ""}
-                  options={sortedCities}
-                  onChange={handleCityChange}
-                  placeholder="Select City/Municipality"
-                  loading={loadingCities}
-                  disabled={!selectedProvince}
-                  control={form.control}
-                />
+                                <FormField
+                                    control={form.control}
+                                    name="last_name"
+                                    rules={{
+                                        required: "Last name is required",
+                                    }}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel required>Last Name</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    placeholder="Dela Cruz"
+                                                    className="h-11"
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
 
-                <LocationField
-                  name="barangay"
-                  label="Barangay"
-                  value={selectedBarangay ?? ""}
-                  options={sortedBarangays}
-                  onChange={handleBarangayChange}
-                  placeholder="Select Barangay"
-                  loading={loadingBarangays}
-                  disabled={!selectedCity}
-                  control={form.control}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                            {/* Username Field (optional for new employees) */}
+                            {!employee && (
+                                <FormField
+                                    control={form.control}
+                                    name="username"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Username</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    placeholder="Leave empty to auto-generate from initials"
+                                                    className="h-11"
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
 
-          {/* Government IDs */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="size-5" />
-                Government IDs & Benefits
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid">
-                <FormField
-                  control={form.control}
-                  name="sss_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SSS Number</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="XX-XXXXXXX-X"
-                          className="h-11"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                            {/* Birthday Field */}
+                            <FormField
+                                control={form.control}
+                                name="birthday"
+                                rules={{
+                                    required: "Birthday is required",
+                                }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <DatePicker
+                                                field={{
+                                                    value: field.value
+                                                        ? new Date(field.value)
+                                                        : undefined,
+                                                    onChange: (date: Date | undefined) => {
+                                                        field.onChange(date ? formatDateToYMD(date) : "")
+                                                    },
+                                                }}
+                                                required
+                                                label="Birthday"
+                                                placeholder="Select birthday"
+                                                className="w-full"
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        </CardContent>
+                    </Card>
 
-                <FormField
-                  control={form.control}
-                  name="tin_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>TIN Number</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="XXX-XXX-XXX-XXX"
-                          className="h-11"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    {/* Employment Information */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Briefcase className="size-5" />
+                                Employment Information
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            {/* Role and Salary */}
+                            <FormField
+                                control={form.control}
+                                name="role"
+                                rules={{ required: "Role is required" }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel required>Role</FormLabel>
+                                        <FormControl>
+                                            <ComboBox
+                                                options={roleOptions}
+                                                value={field.value}
+                                                onChange={field.onChange}
+                                                placeholder="Select a role"
+                                                searchPlaceholder="Search roles..."
+                                                className="h-11"
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
 
-                <FormField
-                  control={form.control}
-                  name="philhealth_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>PhilHealth Number</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="XX-XXXXXXXXX-X"
-                          className="h-11"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                            <FormField
+                                control={form.control}
+                                name="is_technician"
+                                render={({ field }) => (
+                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={!!field.value}
+                                                onCheckedChange={field.onChange}
+                                            />
+                                        </FormControl>
+                                        <div className="space-y-1 leading-none">
+                                            <FormLabel>Can Do Technician Work</FormLabel>
+                                            <FormDescription>
+                                                Allow this employee to be assigned as a technician in service jobs, regardless of their role.
+                                            </FormDescription>
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
 
-              <Separator className="my-4" />
+                            <FormField
+                                control={form.control}
+                                name="basic_salary"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Basic Salary</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                type="number"
+                                                {...field}
+                                                placeholder="25000.00"
+                                                className="h-11"
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
 
-              {/* Payroll & Benefits Flags */}
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="include_in_payroll"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Include in Payroll Generation</FormLabel>
-                        <FormDescription>
-                          When enabled, this employee will appear in bulk
-                          payroll generation. Uncheck for owners or non-payroll
-                          staff.
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                            {/* Conditional Stall Assignment */}
+                            {showStallAssignment && (
+                                <>
+                                    <Separator />
+                                    <FormField
+                                        control={form.control}
+                                        name="assigned_stall_id"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Assigned Stall</FormLabel>
+                                                <FormControl>
+                                                    <ComboBox
+                                                        options={stallOptions}
+                                                        value={field.value?.toString() ?? "none"}
+                                                        onChange={field.onChange}
+                                                        placeholder="Select a stall (optional)"
+                                                        searchPlaceholder="Search stalls..."
+                                                        className="h-11"
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                <FormField
-                  control={form.control}
-                  name="has_sss"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Apply SSS Deductions</FormLabel>
-                        <FormDescription>
-                          When enabled, Social Security System (SSS)
-                          contributions will be deducted from this
-                          employee&apos;s payroll.
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                    {/* Contact Information */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Phone className="size-5" />
+                                Contact Information
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid space-y-6">
+                            <FormField
+                                control={form.control}
+                                name="contact_number"
+                                rules={{
+                                    required: "Contact number is required",
+                                }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel required>Contact Number</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                placeholder="09XX XXX XXXX"
+                                                className="h-11"
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
 
-                <FormField
-                  control={form.control}
-                  name="has_philhealth"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Apply PhilHealth Deductions</FormLabel>
-                        <FormDescription>
-                          When enabled, Philippine Health Insurance (PhilHealth)
-                          contributions will be deducted from this
-                          employee&apos;s payroll.
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                            <FormField
+                                control={form.control}
+                                name="address"
+                                rules={{
+                                    required: "Address is required",
+                                }}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel required>Address</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                {...field}
+                                                placeholder="Street, Subdivision, etc."
+                                                className="h-11"
+                                            />
+                                        </FormControl>
+                                    </FormItem>
+                                )}
+                            />
+                        </CardContent>
+                    </Card>
 
-                <FormField
-                  control={form.control}
-                  name="has_pagibig"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Apply Pag-IBIG Deductions</FormLabel>
-                        <FormDescription>
-                          When enabled, Home Development Mutual Fund (Pag-IBIG)
-                          contributions will be deducted from this
-                          employee&apos;s payroll.
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                    {/* Location Information */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <MapPin className="size-5" />
+                                Location Information
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid">
+                                <LocationField
+                                    name="province"
+                                    label="Province"
+                                    value={selectedProvince ?? ""}
+                                    options={sortedProvinces}
+                                    onChange={handleProvinceChange}
+                                    placeholder="Select Province"
+                                    loading={loadingProvinces}
+                                    control={form.control}
+                                />
 
-                <FormField
-                  control={form.control}
-                  name="has_bir_tax"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Apply BIR Tax Deductions</FormLabel>
-                        <FormDescription>
-                          When enabled, Bureau of Internal Revenue (BIR)
-                          withholding tax will be deducted from this
-                          employee&apos;s payroll.
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                                <LocationField
+                                    name="city"
+                                    label="City / Municipality"
+                                    value={selectedCity ?? ""}
+                                    options={sortedCities}
+                                    onChange={handleCityChange}
+                                    placeholder="Select City/Municipality"
+                                    loading={loadingCities}
+                                    disabled={!selectedProvince}
+                                    control={form.control}
+                                />
 
-                <FormField
-                  control={form.control}
-                  name="has_cash_ban"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Include in Cash Ban Fund</FormLabel>
-                        <FormDescription>
-                          When enabled, this employee will contribute to and can
-                          access the cash ban fund for advances during payroll
-                          processing.
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                                <LocationField
+                                    name="barangay"
+                                    label="Barangay"
+                                    value={selectedBarangay ?? ""}
+                                    options={sortedBarangays}
+                                    onChange={handleBarangayChange}
+                                    placeholder="Select Barangay"
+                                    loading={loadingBarangays}
+                                    disabled={!selectedCity}
+                                    control={form.control}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
 
-          {/* Form Actions */}
-          <div className="sticky bottom-0 z-10 -mx-1 border-t bg-background/95 px-1 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-4 sm:pt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              size="lg"
-              disabled={isSubmitting}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              size="lg"
-              className="min-w-32 w-full sm:w-auto"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                employee
-                  ? "Update Employee"
-                  : "Create Employee"
-              )}
-            </Button>
-            </div>
-          </div>
-        </form>
-      </Form>
-    </div>
-  )
+                    {/* Government IDs */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <CreditCard className="size-5" />
+                                Government IDs & Benefits
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="grid">
+                                <FormField
+                                    control={form.control}
+                                    name="sss_number"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>SSS Number</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    placeholder="XX-XXXXXXX-X"
+                                                    className="h-11"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="tin_number"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>TIN Number</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    placeholder="XXX-XXX-XXX-XXX"
+                                                    className="h-11"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="philhealth_number"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>PhilHealth Number</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    {...field}
+                                                    placeholder="XX-XXXXXXXXX-X"
+                                                    className="h-11"
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+
+                            <Separator className="my-4" />
+
+                            {/* Payroll & Benefits Flags */}
+                            <div className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="include_in_payroll"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>Include in Payroll Generation</FormLabel>
+                                                <FormDescription>
+                                                    When enabled, this employee will appear in bulk
+                                                    payroll generation. Uncheck for owners or non-payroll
+                                                    staff.
+                                                </FormDescription>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="has_sss"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>Apply SSS Deductions</FormLabel>
+                                                <FormDescription>
+                                                    When enabled, Social Security System (SSS)
+                                                    contributions will be deducted from this
+                                                    employee&apos;s payroll.
+                                                </FormDescription>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="has_philhealth"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>Apply PhilHealth Deductions</FormLabel>
+                                                <FormDescription>
+                                                    When enabled, Philippine Health Insurance (PhilHealth)
+                                                    contributions will be deducted from this
+                                                    employee&apos;s payroll.
+                                                </FormDescription>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="has_pagibig"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>Apply Pag-IBIG Deductions</FormLabel>
+                                                <FormDescription>
+                                                    When enabled, Home Development Mutual Fund (Pag-IBIG)
+                                                    contributions will be deducted from this
+                                                    employee&apos;s payroll.
+                                                </FormDescription>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="has_bir_tax"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>Apply BIR Tax Deductions</FormLabel>
+                                                <FormDescription>
+                                                    When enabled, Bureau of Internal Revenue (BIR)
+                                                    withholding tax will be deducted from this
+                                                    employee&apos;s payroll.
+                                                </FormDescription>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="has_cash_ban"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                                            <FormControl>
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <div className="space-y-1 leading-none">
+                                                <FormLabel>Include in Cash Ban Fund</FormLabel>
+                                                <FormDescription>
+                                                    When enabled, this employee will contribute to and can
+                                                    access the cash ban fund for advances during payroll
+                                                    processing.
+                                                </FormDescription>
+                                            </div>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Form Actions */}
+                    <div className="sticky bottom-0 z-10 -mx-1 border-t bg-background/95 px-1 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+                        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-4 sm:pt-6">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={onClose}
+                                size="lg"
+                                disabled={isSubmitting}
+                                className="w-full sm:w-auto"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                size="lg"
+                                className="min-w-32 w-full sm:w-auto"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    employee
+                                        ? "Update Employee"
+                                        : "Create Employee"
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                </form>
+            </Form>
+        </div>
+    )
 }

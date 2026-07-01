@@ -1,6 +1,7 @@
 "use client"
 
 import { ComboBox } from "@/components/custom/inputs/ComboBox"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -167,7 +168,7 @@ export default function PaymentMethodSelector({
                             }}
                             onWheel={(e) => e.preventDefault()}
                             disabled={disabled}
-                            className="h-8 flex-1"
+                            className="h-8 flex-1 font-mono tabular-nums"
                             placeholder="Amount"
                           />
                           {remainingBalance > 0 &&
@@ -279,18 +280,32 @@ export default function PaymentMethodSelector({
           <div className="px-3 pt-1 space-y-1">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Total</span>
-              <span className="font-medium tabular-nums">
-                {formatCurrency(totalPayments)}
-              </span>
+              <AnimatedNumber
+                value={totalPayments}
+                className="font-medium text-foreground"
+                format={{
+                  style: "currency",
+                  currency: "PHP",
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }}
+              />
             </div>
             {remainingBalance > 0 && (
               <div className="flex justify-between text-sm">
                 <span className="text-warning">
                   Remaining
                 </span>
-                <span className="font-medium text-warning tabular-nums">
-                  {formatCurrency(remainingBalance)}
-                </span>
+                <AnimatedNumber
+                  value={remainingBalance}
+                  className="font-medium text-warning"
+                  format={{
+                    style: "currency",
+                    currency: "PHP",
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }}
+                />
               </div>
             )}
           </div>
@@ -336,7 +351,16 @@ export default function PaymentMethodSelector({
                   disabled={disabled}
                 >
                   <ChevronsRight className="size-3.5 mr-1" />
-                  {formatCurrency(remainingBalance)}
+                  <AnimatedNumber
+                    value={remainingBalance}
+                    className="font-medium"
+                    format={{
+                      style: "currency",
+                      currency: "PHP",
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }}
+                  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>

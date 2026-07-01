@@ -2,207 +2,140 @@
 
 import { CalendarEvent } from "@/lib/queries/calendar/useCalendarEvents"
 import { format } from "date-fns"
-import { Clock, User, UserCog } from "lucide-react"
-import { EventIcon } from "./EventIcon"
+import { Clock, User, UserCog, FileText, LucideIcon } from "lucide-react"
 
 interface EventTooltipContentProps {
-  event: CalendarEvent
+    event: CalendarEvent
+}
+
+const CUSTOM_EVENT_LABELS: Record<string, string> = {
+    meeting: "Meeting",
+    maintenance: "Maintenance",
+    training: "Training",
+    deadline: "Deadline",
+    other: "Other",
+}
+
+function Row({ icon: Icon, label, text }: { icon: LucideIcon; label?: string; text?: string | null }) {
+    if (!text) return null
+    return (
+        <div className="flex items-center gap-1">
+            <Icon className="w-3 h-3 md:w-4 md:h-4 shrink-0" />
+            <span>
+                {label && <span className="font-semibold">{label}: </span>}
+                {text}
+            </span>
+        </div>
+    )
 }
 
 export function EventTooltipContent({ event }: EventTooltipContentProps) {
-  const { type } = event.extendedProps
+    const ep = event.extendedProps
+    const { type } = ep
 
-  const renderAttendanceDetails = () => (
-    <div className="text-xs text-primary-foreground mt-1">
-      Status:{" "}
-      {event.extendedProps.status || event.extendedProps.attendance_status}
-      {event.extendedProps.checkIn && (
-        <div>Check In: {event.extendedProps.checkIn}</div>
-      )}
-      {event.extendedProps.checkOut && (
-        <div>Check Out: {event.extendedProps.checkOut}</div>
-      )}
-      {event.extendedProps.hours && (
-        <div>Hours: {event.extendedProps.hours}</div>
-      )}
-    </div>
-  )
+    const headerLabel = (() => {
+        switch (type) {
+            case "attendance": return (ep.status || ep.attendance_status || "").replace(/^\w/, (c: string) => c.toUpperCase())
+            case "birthday": return "Employee Birthday"
+            case "holiday": return ep.holiday_type === "regular" ? "Regular Holiday" : "Special Holiday"
+            case "schedule": return "Scheduled Service"
+            case "delivery": return "Service Delivery"
+            case "leave": return ep.leave_type_display ?? "Leave"
+            case "custom_event": return CUSTOM_EVENT_LABELS[ep.event_type ?? "other"] ?? "Other"
+            case "half_day": return "Half Day"
+            case "shop_closed": return "Shop Closed"
+            default: return null
+        }
+    })()
 
-  const renderBirthdayDetails = () => (
-    <div className="text-xs text-primary-foreground mt-1">
-      Employee Birthday
-    </div>
-  )
-
-  const renderHolidayDetails = () => (
-    <div className="text-xs text-primary-foreground mt-1 flex items-center">
-      <EventIcon
-        event={event}
-        size="md"
-        className="text-white! dark:text-white!"
-      />
-      <span className="ml-1">
-        {event.extendedProps.holiday_type === "regular"
-          ? "Regular Holiday"
-          : "Special Holiday"}
-      </span>
-    </div>
-  )
-
-  const renderScheduleDetails = () => (
-    <div className="text-xs text-primary-foreground mt-1">
-      <div className="flex items-center">
-        <User className="size-3 md:size-4" />
-        <span className="ml-1">
-          <span className="font-semibold">Client: </span>
-          {event.extendedProps.client_name}
-        </span>
-      </div>
-      <div className="flex items-center">
-        <UserCog className="size-3 md:size-4" />
-        <span className="ml-1">
-          {event.extendedProps.technician_names && (
-            <div>
-              <span className="font-semibold">Technician/s: </span>
-              {event.extendedProps.technician_names?.map(
-                (name: string, index: number) => (
-                  <span key={index}>
-                    {name}
-                    {index < event.extendedProps.technician_names!.length - 1
-                      ? ", "
-                      : ""}
-                  </span>
-                ),
-              )}
-            </div>
-          )}
-        </span>
-      </div>
-    </div>
-  )
-
-  const renderLeaveDetails = () => {
-    const isMultiDay = event.extendedProps.is_multi_day
-    const daysCount = event.extendedProps.days_count
-
-    return (
-      <div className="text-xs text-primary-foreground mt-1">
-        <div>
-          <span className="font-semibold">Type: </span>
-          {event.extendedProps.leave_type_display}
-        </div>
-        <div>
-          <span className="font-semibold">Duration: </span>
-          {isMultiDay
-            ? `${daysCount} Day${daysCount && parseFloat(daysCount) !== 1 ? "s" : ""}`
-            : event.extendedProps.is_half_day
-              ? "Half Day"
-              : "Full Day"}
-        </div>
-        {isMultiDay && event.end && event.start !== event.end && (
-          <div>
-            <span className="font-semibold">Period: </span>
-            {format(new Date(event.start), "MMM dd")} -{" "}
-            {format(new Date(event.end), "MMM dd, yyyy")}
-          </div>
-        )}
-        {event.extendedProps.reason && (
-          <div>
-            <span className="font-semibold">Reason: </span>
-            {event.extendedProps.reason}
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  const renderDeliveryDetails = () => (
-    <div className="text-xs text-primary-foreground mt-1">
-      <div className="flex items-center">
-        <User className="size-3 md:size-4" />
-        <span className="ml-1">
-          <span className="font-semibold">Client: </span>
-          {event.extendedProps.client_name}
-        </span>
-      </div>
-      {event.extendedProps.service_type_display && (
-        <div>
-          <span className="font-semibold">Service: </span>
-          {event.extendedProps.service_type_display}
-        </div>
-      )}
-      {event.extendedProps.technician_names &&
-        event.extendedProps.technician_names.length > 0 && (
-          <div className="flex items-center">
-            <UserCog className="size-3 md:size-4" />
-            <span className="ml-1">
-              <span className="font-semibold">Technician/s: </span>
-              {event.extendedProps.technician_names?.join(", ")}
-            </span>
-          </div>
-        )}
-    </div>
-  )
-
-  const renderCustomEventDetails = () => {
-    const eventTypeLabels: Record<string, string> = {
-      meeting: "Meeting",
-      maintenance: "Maintenance",
-      training: "Training",
-      deadline: "Deadline",
-      other: "Other",
+    const renderBody = () => {
+        switch (type) {
+            case "attendance":
+                return (
+                    <>
+                        <Row icon={Clock} label="Check In" text={ep.checkIn} />
+                        <Row icon={Clock} label="Check Out" text={ep.checkOut} />
+                        {(ep.hours ?? 0) > 0 && <Row icon={Clock} label="Hours" text={String(ep.hours)} />}
+                    </>
+                )
+            case "schedule": {
+                const techs = ep.technician_names ?? []
+                return (
+                    <>
+                        <Row icon={User} label="Client" text={ep.client_name} />
+                        <Row icon={UserCog} label="Technician/s" text={techs.length > 0 ? techs.join(", ") : "Unassigned"} />
+                    </>
+                )
+            }
+            case "delivery": {
+                const techs = ep.technician_names ?? []
+                return (
+                    <>
+                        <Row icon={User} label="Client" text={ep.client_name} />
+                        <Row icon={FileText} label="Service" text={ep.service_type_display} />
+                        {techs.length > 0 && <Row icon={UserCog} label="Technician/s" text={techs.join(", ")} />}
+                    </>
+                )
+            }
+            case "leave": {
+                const isMultiDay = ep.is_multi_day
+                const daysCount = ep.days_count
+                const duration = isMultiDay
+                    ? `${daysCount} Day${daysCount && parseFloat(daysCount) !== 1 ? "s" : ""}`
+                    : ep.is_half_day ? "Half Day" : "Full Day"
+                const period = isMultiDay && event.end && event.start !== event.end
+                    ? `${format(new Date(event.start), "MMM dd")} - ${format(new Date(event.end), "MMM dd, yyyy")}`
+                    : undefined
+                return (
+                    <>
+                        <Row icon={Clock} label="Duration" text={duration} />
+                        <Row icon={Clock} label="Period" text={period} />
+                        <Row icon={FileText} label="Reason" text={ep.reason} />
+                    </>
+                )
+            }
+            case "custom_event":
+                return (
+                    <>
+                        <Row icon={FileText} label="Description" text={ep.description} />
+                        <Row icon={User} label="Created by" text={ep.created_by} />
+                    </>
+                )
+            case "half_day":
+            case "shop_closed":
+                return (
+                    <>
+                        <Row icon={FileText} label="Reason" text={ep.reason} />
+                        <Row icon={User} label="Set by" text={ep.created_by} />
+                    </>
+                )
+            default:
+                return null
+        }
     }
-    const eventType = event.extendedProps.event_type || "other"
 
     return (
-      <div className="text-xs text-primary-foreground mt-1">
-        <div>
-          <span className="font-semibold">Type: </span>
-          {eventTypeLabels[eventType] || "Other"}
-        </div>
-        {event.extendedProps.description && (
-          <div>
-            <span className="font-semibold">Description: </span>
-            {event.extendedProps.description}
-          </div>
-        )}
-        {event.extendedProps.created_by && (
-          <div>
-            <span className="font-semibold">Created by: </span>
-            {event.extendedProps.created_by}
-          </div>
-        )}
-      </div>
-    )
-  }
+        <div className="max-w-xs min-w-[200px] text-xs text-primary-foreground space-y-1.5">
+            <div className="font-bold text-xs uppercase">{event.title}</div>
 
-  return (
-    <div className="max-w-xs">
-      <div className="font-medium">{event.title}</div>
-
-      {type === "attendance" && renderAttendanceDetails()}
-      {type === "birthday" && renderBirthdayDetails()}
-      {type === "holiday" && renderHolidayDetails()}
-      {type === "schedule" && renderScheduleDetails()}
-      {type === "delivery" && renderDeliveryDetails()}
-      {type === "leave" && renderLeaveDetails()}
-      {type === "custom_event" && renderCustomEventDetails()}
-
-      <div className="mt-1 flex items-center ">
-        <Clock className="size-3 md:size-4" />
-        <span className="text-xs text-primary-foreground italic ml-1">
-          {format(new Date(event.start), "MMM dd, yyyy")}
-          {event.end &&
-            event.start !== event.end &&
-            new Date(event.start).toDateString() !==
-              new Date(event.end).toDateString() && (
-              <span> - {format(new Date(event.end), "MMM dd, yyyy")}</span>
+            {(headerLabel && headerLabel !== event.title) && (
+                <div className="text-xs uppercase">{headerLabel}</div>
             )}
-          {!event.allDay && (
-            <span> at {format(new Date(event.start), "h:mm a")}</span>
-          )}
-        </span>
-      </div>
-    </div>
-  )
+
+            <div className="space-y-1">{renderBody()}</div>
+
+            <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3 md:w-4 md:h-4 shrink-0" />
+                <span className="italic">
+                    {format(new Date(event.start), "MMM dd, yyyy")}
+                    {event.end &&
+                        event.start !== event.end &&
+                        new Date(event.start).toDateString() !== new Date(event.end).toDateString() && (
+                            <span> - {format(new Date(event.end), "MMM dd, yyyy")}</span>
+                        )}
+                    {!event.allDay && <span> at {format(new Date(event.start), "h:mm a")}</span>}
+                </span>
+            </div>
+        </div>
+    )
 }

@@ -20,8 +20,8 @@ import { useEntitySheet } from "@/lib/hooks/useEntitySheet"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
 import { useStallStockMutations } from "@/lib/mutations/useStallStockMutations"
 import {
-  useStallStocks,
-  useStockFilters,
+    useStallStocks,
+    useStockFilters,
 } from "@/lib/queries/inventory/useStocks"
 import { Eye, Package, Plus } from "lucide-react"
 import { useMemo, useState } from "react"
@@ -29,373 +29,373 @@ import { useMemo, useState } from "react"
 type TrackTab = "all" | "tracked" | "untracked"
 
 export default function StocksPage() {
-  const { isAdmin, role } = useCurrentUser()
-  const [isArchived, setIsArchived] = useState(false)
-  const [trackTab, setTrackTab] = useState<TrackTab>("all")
-  const searchParams = useSearchParameters()
-  const { page, limit, search, ordering, filter } = searchParams
-  const { softDeleteStallStock } = useStallStockMutations()
-  const { archivedQuery, restoreItem } = useArchive<Stock>(
-    "/inventory/stocks/",
-    "stall-stocks",
-    searchParams,
-    isArchived,
-  )
+    const { isAdmin, role } = useCurrentUser()
+    const [isArchived, setIsArchived] = useState(false)
+    const [trackTab, setTrackTab] = useState<TrackTab>("all")
+    const searchParams = useSearchParameters()
+    const { page, limit, search, ordering, filter } = searchParams
+    const { softDeleteStallStock } = useStallStockMutations()
+    const { archivedQuery, restoreItem } = useArchive<Stock>(
+        "/inventory/stocks/",
+        "stall-stocks",
+        searchParams,
+        isArchived,
+    )
 
-  const trackFilter = useMemo(() => {
-    if (trackTab === "tracked") return { track_stock: "true" }
-    if (trackTab === "untracked") return { track_stock: "false" }
-    return {}
-  }, [trackTab])
+    const trackFilter = useMemo(() => {
+        if (trackTab === "tracked") return { track_stock: "true" }
+        if (trackTab === "untracked") return { track_stock: "false" }
+        return {}
+    }, [trackTab])
 
-  const mergedFilter = useMemo(
-    () => ({ ...filter, ...trackFilter }),
-    [filter, trackFilter],
-  )
+    const mergedFilter = useMemo(
+        () => ({ ...filter, ...trackFilter }),
+        [filter, trackFilter],
+    )
 
-  const { data, isLoading, refetch } = useStallStocks({
-    page,
-    limit,
-    search,
-    ordering,
-    filter: mergedFilter,
-  })
+    const { data, isLoading, refetch } = useStallStocks({
+        page,
+        limit,
+        search,
+        ordering,
+        filter: mergedFilter,
+    })
 
-  const { filters, orderingOptions } = useStockFilters()
+    const { filters, orderingOptions } = useStockFilters()
 
-  const {
-    entityState: { open: editOpen, entity: editEntity },
-    openEntity: openEditSheet,
-    closeEntity: closeEditSheet,
-  } = useEntitySheet<Stock>()
+    const {
+        entityState: { open: editOpen, entity: editEntity },
+        openEntity: openEditSheet,
+        closeEntity: closeEditSheet,
+    } = useEntitySheet<Stock>()
 
-  const {
-    entityState: { open: restockOpen, entity: restockEntity },
-    openEntity: openRestockSheet,
-    closeEntity: closeRestockSheet,
-  } = useEntitySheet<Stock>()
+    const {
+        entityState: { open: restockOpen, entity: restockEntity },
+        openEntity: openRestockSheet,
+        closeEntity: closeRestockSheet,
+    } = useEntitySheet<Stock>()
 
-  const {
-    entityState: { open: addStockOpen, entity: addStockEntity },
-    openEntity: openAddStockSheet,
-    closeEntity: closeAddStockSheet,
-  } = useEntitySheet<Stock>()
+    const {
+        entityState: { open: addStockOpen, entity: addStockEntity },
+        openEntity: openAddStockSheet,
+        closeEntity: closeAddStockSheet,
+    } = useEntitySheet<Stock>()
 
-  const {
-    entityState: { open: viewOpen, entity: viewEntity },
-    openEntity: openViewSheet,
-    closeEntity: closeViewSheet,
-  } = useEntitySheet<Stock>()
+    const {
+        entityState: { open: viewOpen, entity: viewEntity },
+        openEntity: openViewSheet,
+        closeEntity: closeViewSheet,
+    } = useEntitySheet<Stock>()
 
-  const {
-    entityState: { open: pullOutOpen, entity: pullOutEntity },
-    openEntity: openPullOutSheet,
-    closeEntity: closePullOutSheet,
-  } = useEntitySheet<Stock>()
+    const {
+        entityState: { open: pullOutOpen, entity: pullOutEntity },
+        openEntity: openPullOutSheet,
+        closeEntity: closePullOutSheet,
+    } = useEntitySheet<Stock>()
 
-  const [auditStock, setAuditStock] = useState<Stock | null>(null)
-  const [auditOpen, setAuditOpen] = useState(false)
-  const openAudit = (stock: Stock) => {
-    setAuditStock(stock)
-    setAuditOpen(true)
-  }
-  const closeAudit = () => {
-    setAuditOpen(false)
-    setAuditStock(null)
-  }
-
-  const handleDelete = (stock: Stock) => {
-    if (stock.id !== undefined && stock.stall?.id !== undefined) {
-      softDeleteStallStock.mutate(stock.id)
+    const [auditStock, setAuditStock] = useState<Stock | null>(null)
+    const [auditOpen, setAuditOpen] = useState(false)
+    const openAudit = (stock: Stock) => {
+        setAuditStock(stock)
+        setAuditOpen(true)
     }
-  }
+    const closeAudit = () => {
+        setAuditOpen(false)
+        setAuditStock(null)
+    }
 
-  const handleRestore = (stock: Stock) => {
-    if (stock.id !== undefined) restoreItem.mutate(stock.id)
-  }
-
-  const handleView = (stock: Stock) => {
-    openViewSheet(stock)
-  }
-
-  const columns = isArchived
-    ? getStallStockColumns({
-        onEdit: () => {},
-        onDelete: () => {},
-        onRestore: handleRestore,
-        role,
-      })
-    : getStallStockColumns({
-        onEdit: openEditSheet,
-        onDelete: handleDelete,
-        onRestock: openRestockSheet,
-        onAddStock: openAddStockSheet,
-        onView: handleView,
-        onAudit: openAudit,
-        onPullOut: openPullOutSheet,
-        role,
-      })
-
-  return (
-    <Wrapper>
-      <PageHeader
-        icon={Package}
-        title="Stall Stock Management"
-        description="Monitor and manage inventory levels across all stall locations with real-time stock tracking and automated alerts."
-        breadcrumbs={["Dashboard", "Inventory", "Stocks", "Stalls"]}
-        onRefresh={refetch}
-      />
-
-      <ArchiveToggle
-        isArchived={isArchived}
-        onToggle={setIsArchived}
-        archivedCount={archivedQuery.data?.count}
-      />
-
-      {!isArchived && (
-        <Tabs
-          value={trackTab}
-          onValueChange={(v) => setTrackTab(v as TrackTab)}
-          className="w-fit"
-        >
-          <TabsList>
-            <TabsTrigger value="all">All Items</TabsTrigger>
-            <TabsTrigger value="tracked">Tracked</TabsTrigger>
-            <TabsTrigger value="untracked">Untracked</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      )}
-
-      {!isArchived && (
-        <>
-          {/* View Stock Sheet */}
-          <EntitySheet<Stock>
-            open={viewOpen}
-            onClose={closeViewSheet}
-            entity={viewEntity}
-            title="Stock Details"
-            description="View detailed information about this stock item."
-            renderForm={({ onClose, entity }) =>
-              entity ? (
-                <div className="space-y-6 p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Item Name
-                      </label>
-                      <p className="text-base font-medium">
-                        {entity.item?.name || "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Stall Location
-                      </label>
-                      <p className="text-base font-medium">
-                        {entity.stall?.name || "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Current Quantity
-                      </label>
-                      <p className="text-base font-medium">
-                        {entity.quantity || 0}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Minimum Threshold
-                      </label>
-                      <p className="text-base font-medium">
-                        {entity.min_threshold || "Not set"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Maximum Threshold
-                      </label>
-                      <p className="text-base font-medium">
-                        {entity.max_threshold || "Not set"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Stock Tracking
-                      </label>
-                      <p className="text-base font-medium">
-                        {entity.track_stock ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-success dark:bg-green-900/30 ">
-                            <div className="size-1.5 rounded-full bg-current"></div>
-                            Enabled
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
-                            <div className="size-1.5 rounded-full bg-current"></div>
-                            Disabled
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Last Updated
-                      </label>
-                      <p className="text-base font-medium">
-                        {entity.updated_at
-                          ? new Date(entity.updated_at).toLocaleString()
-                          : "Unknown"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      onClick={onClose}
-                    >
-                      Close
-                    </Button>
-                    {isAdmin && (
-                      <>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            onClose()
-                            openRestockSheet(entity)
-                          }}
-                        >
-                          <Plus className="size-4 mr-2" />
-                          Restock
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            onClose()
-                            openEditSheet(entity)
-                          }}
-                        >
-                          <Eye className="size-4 mr-2" />
-                          Edit Thresholds
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ) : null
-            }
-          />
-
-          {/* Edit Stock Sheet */}
-          <EntitySheet<Stock>
-            open={editOpen}
-            onClose={closeEditSheet}
-            entity={editEntity}
-            title="Edit Stall Stock"
-            description="Update the stall stock details below."
-            withCloseConfirmation
-            renderForm={({ forceClose, entity }) =>
-              entity ? (
-                <StockThresholdForm
-                  type="stall"
-                  onClose={forceClose}
-                  stock={entity}
-                />
-              ) : null
-            }
-          />
-
-          {/* Restock Sheet */}
-          <EntitySheet<Stock>
-            open={restockOpen}
-            onClose={closeRestockSheet}
-            entity={restockEntity}
-            title="Restock Stall"
-            description="Add quantity to existing stock."
-            withCloseConfirmation
-            renderForm={({ forceClose, entity }) =>
-              entity ? (
-                <RestockForm
-                  type="stall"
-                  onClose={forceClose}
-                  stock={entity}
-                />
-              ) : null
-            }
-          />
-
-          {/* Add Stock Sheet */}
-          <EntitySheet<Stock>
-            open={addStockOpen}
-            onClose={closeAddStockSheet}
-            entity={addStockEntity}
-            title="Add Stock (Direct)"
-            description="Directly add quantity to stall without stock room."
-            withCloseConfirmation
-            renderForm={({ forceClose, entity }) =>
-              entity ? (
-                <AddStockForm
-                  onClose={forceClose}
-                  stock={entity}
-                />
-              ) : null
-            }
-          />
-
-          {/* Pull Out Sheet */}
-          <EntitySheet<Stock>
-            open={pullOutOpen}
-            onClose={closePullOutSheet}
-            entity={pullOutEntity}
-            title="Pull Out Stock"
-            description="Remove stock from this stall location."
-            withCloseConfirmation
-            renderForm={({ forceClose, entity }) =>
-              entity ? (
-                <PullOutForm
-                  onClose={forceClose}
-                  stock={entity}
-                />
-              ) : null
-            }
-          />
-
-          {/* Stock Audit Dialog */}
-          <StockAuditDialog
-            open={auditOpen}
-            onClose={closeAudit}
-            stock={auditStock}
-          />
-        </>
-      )}
-
-      {/* Main Content */}
-      <DataTable
-        enableVirtualization
-        title="Stall Inventory"
-        description="Real-time inventory levels across all stall locations"
-        isLoading={isArchived ? archivedQuery.isLoading : isLoading}
-        columns={columns}
-        data={
-          (isArchived ? archivedQuery.data : data) || {
-            count: 0,
-            next: null,
-            previous: null,
-            results: [],
-          }
+    const handleDelete = (stock: Stock) => {
+        if (stock.id !== undefined && stock.stall?.id !== undefined) {
+            softDeleteStallStock.mutate(stock.id)
         }
-        filters={isArchived ? undefined : filters}
-        orderingOptions={isArchived ? undefined : orderingOptions}
-        onRefresh={isArchived ? archivedQuery.refetch : refetch}
-        withoutDateRangeFilter
-        emptyIcon={Package}
-        emptyTitle={
-          isArchived ? "No archived stall stock" : "No stall stock found"
-        }
-        emptyDescription={
-          isArchived
-            ? "Archived items will appear here"
-            : "Transfer items from stockroom to populate stall inventory"
-        }
-      />
-    </Wrapper>
-  )
+    }
+
+    const handleRestore = (stock: Stock) => {
+        if (stock.id !== undefined) restoreItem.mutate(stock.id)
+    }
+
+    const handleView = (stock: Stock) => {
+        openViewSheet(stock)
+    }
+
+    const columns = isArchived
+        ? getStallStockColumns({
+            onEdit: () => { },
+            onDelete: () => { },
+            onRestore: handleRestore,
+            role,
+        })
+        : getStallStockColumns({
+            onEdit: openEditSheet,
+            onDelete: handleDelete,
+            onRestock: openRestockSheet,
+            onAddStock: openAddStockSheet,
+            onView: handleView,
+            onAudit: openAudit,
+            onPullOut: openPullOutSheet,
+            role,
+        })
+
+    return (
+        <Wrapper>
+            <PageHeader
+                icon={Package}
+                title="Stall Stock Management"
+                description="Monitor and manage inventory levels across all stall locations with real-time stock tracking and automated alerts."
+                breadcrumbs={["Dashboard", "Inventory", "Stocks", "Stalls"]}
+                onRefresh={refetch}
+            />
+
+            <ArchiveToggle
+                isArchived={isArchived}
+                onToggle={setIsArchived}
+                archivedCount={archivedQuery.data?.count}
+            />
+
+            {!isArchived && (
+                <Tabs
+                    value={trackTab}
+                    onValueChange={(v) => setTrackTab(v as TrackTab)}
+                    className="w-fit"
+                >
+                    <TabsList>
+                        <TabsTrigger value="all">All Items</TabsTrigger>
+                        <TabsTrigger value="tracked">Tracked</TabsTrigger>
+                        <TabsTrigger value="untracked">Untracked</TabsTrigger>
+                    </TabsList>
+                </Tabs>
+            )}
+
+            {!isArchived && (
+                <>
+                    {/* View Stock Sheet */}
+                    <EntitySheet<Stock>
+                        open={viewOpen}
+                        onClose={closeViewSheet}
+                        entity={viewEntity}
+                        title="Stock Details"
+                        description="View detailed information about this stock item."
+                        renderForm={({ onClose, entity }) =>
+                            entity ? (
+                                <div className="space-y-6 p-6">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-sm font-medium text-muted-foreground">
+                                                Item Name
+                                            </label>
+                                            <p className="text-base font-medium">
+                                                {entity.item?.name || "N/A"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-muted-foreground">
+                                                Stall Location
+                                            </label>
+                                            <p className="text-base font-medium">
+                                                {entity.stall?.name || "N/A"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-muted-foreground">
+                                                Current Quantity
+                                            </label>
+                                            <p className="text-base font-medium">
+                                                {entity.quantity || 0}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-muted-foreground">
+                                                Minimum Threshold
+                                            </label>
+                                            <p className="text-base font-medium">
+                                                {entity.min_threshold || "Not set"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-muted-foreground">
+                                                Maximum Threshold
+                                            </label>
+                                            <p className="text-base font-medium">
+                                                {entity.max_threshold || "Not set"}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-muted-foreground">
+                                                Stock Tracking
+                                            </label>
+                                            <p className="text-base font-medium">
+                                                {entity.track_stock ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-success dark:bg-green-900/30 ">
+                                                        <div className="size-1.5 rounded-full bg-current"></div>
+                                                        Enabled
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400">
+                                                        <div className="size-1.5 rounded-full bg-current"></div>
+                                                        Disabled
+                                                    </span>
+                                                )}
+                                            </p>
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                            <label className="text-sm font-medium text-muted-foreground">
+                                                Last Updated
+                                            </label>
+                                            <p className="text-base font-medium">
+                                                {entity.updated_at
+                                                    ? new Date(entity.updated_at).toLocaleString()
+                                                    : "Unknown"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end gap-2 pt-4 border-t">
+                                        <Button
+                                            variant="outline"
+                                            onClick={onClose}
+                                        >
+                                            Close
+                                        </Button>
+                                        {isAdmin && (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        onClose()
+                                                        openRestockSheet(entity)
+                                                    }}
+                                                >
+                                                    <Plus className="size-4 mr-2" />
+                                                    Restock
+                                                </Button>
+                                                <Button
+                                                    onClick={() => {
+                                                        onClose()
+                                                        openEditSheet(entity)
+                                                    }}
+                                                >
+                                                    <Eye className="size-4 mr-2" />
+                                                    Edit Thresholds
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : null
+                        }
+                    />
+
+                    {/* Edit Stock Sheet */}
+                    <EntitySheet<Stock>
+                        open={editOpen}
+                        onClose={closeEditSheet}
+                        entity={editEntity}
+                        title="Edit Stall Stock"
+                        description="Update the stall stock details below."
+                        withCloseConfirmation
+                        renderForm={({ forceClose, entity }) =>
+                            entity ? (
+                                <StockThresholdForm
+                                    type="stall"
+                                    onClose={forceClose}
+                                    stock={entity}
+                                />
+                            ) : null
+                        }
+                    />
+
+                    {/* Restock Sheet */}
+                    <EntitySheet<Stock>
+                        open={restockOpen}
+                        onClose={closeRestockSheet}
+                        entity={restockEntity}
+                        title="Restock Stall"
+                        description="Add quantity to existing stock."
+                        withCloseConfirmation
+                        renderForm={({ forceClose, entity }) =>
+                            entity ? (
+                                <RestockForm
+                                    type="stall"
+                                    onClose={forceClose}
+                                    stock={entity}
+                                />
+                            ) : null
+                        }
+                    />
+
+                    {/* Add Stock Sheet */}
+                    <EntitySheet<Stock>
+                        open={addStockOpen}
+                        onClose={closeAddStockSheet}
+                        entity={addStockEntity}
+                        title="Add Stock (Direct)"
+                        description="Directly add quantity to stall without stock room."
+                        withCloseConfirmation
+                        renderForm={({ forceClose, entity }) =>
+                            entity ? (
+                                <AddStockForm
+                                    onClose={forceClose}
+                                    stock={entity}
+                                />
+                            ) : null
+                        }
+                    />
+
+                    {/* Pull Out Sheet */}
+                    <EntitySheet<Stock>
+                        open={pullOutOpen}
+                        onClose={closePullOutSheet}
+                        entity={pullOutEntity}
+                        title="Pull Out Stock"
+                        description="Remove stock from this stall location."
+                        withCloseConfirmation
+                        renderForm={({ forceClose, entity }) =>
+                            entity ? (
+                                <PullOutForm
+                                    onClose={forceClose}
+                                    stock={entity}
+                                />
+                            ) : null
+                        }
+                    />
+
+                    {/* Stock Audit Dialog */}
+                    <StockAuditDialog
+                        open={auditOpen}
+                        onClose={closeAudit}
+                        stock={auditStock}
+                    />
+                </>
+            )}
+
+            {/* Main Content */}
+            <DataTable
+                enableVirtualization
+                title="Stall Inventory"
+                description="Real-time inventory levels across all stall locations"
+                isLoading={isArchived ? archivedQuery.isLoading : isLoading}
+                columns={columns}
+                data={
+                    (isArchived ? archivedQuery.data : data) || {
+                        count: 0,
+                        next: null,
+                        previous: null,
+                        results: [],
+                    }
+                }
+                filters={isArchived ? undefined : filters}
+                orderingOptions={isArchived ? undefined : orderingOptions}
+                onRefresh={isArchived ? archivedQuery.refetch : refetch}
+                withoutDateRangeFilter
+                emptyIcon={Package}
+                emptyTitle={
+                    isArchived ? "No archived stall stock" : "No stall stock found"
+                }
+                emptyDescription={
+                    isArchived
+                        ? "Archived items will appear here"
+                        : "Transfer items from stockroom to populate stall inventory"
+                }
+            />
+        </Wrapper>
+    )
 }

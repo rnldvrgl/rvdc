@@ -3,230 +3,93 @@
 import { CalendarEvent } from "@/lib/queries/calendar/useCalendarEvents"
 import { cn } from "@/lib/utils/helpers"
 import {
-  AlertTriangle,
-  Briefcase,
-  Brush,
-  Building,
-  Cake,
-  Calendar,
-  CalendarDays,
-  CheckCircle,
-  Clock4,
-  GraduationCap,
-  Package,
-  Plane,
-  Store,
-  Thermometer,
-  Timer,
-  Wrench,
-  XCircle,
+    AlertTriangle, Briefcase, Brush, Building, Cake, Calendar,
+    CalendarDays, CheckCircle, Clock4, GraduationCap, Package,
+    Plane, Store, Thermometer, Timer, Wrench, XCircle, type LucideIcon,
 } from "lucide-react"
 
 interface EventIconProps {
-  event: CalendarEvent
-  size?: "xs" | "sm" | "md" | "lg"
-  className?: string
+    event: CalendarEvent
+    size?: "xs" | "sm" | "md" | "lg"
+    className?: string
+    forceColorClassName?: string
 }
 
 const sizeClasses = {
-  xs: "size-2.5",
-  sm: "size-3",
-  md: "size-4",
-  lg: "size-5",
+    xs: "size-2.5",
+    sm: "size-3",
+    md: "size-4",
+    lg: "size-5",
 }
 
-export function EventIcon({ event, size = "sm", className }: EventIconProps) {
-  const { type, leave_type } = event.extendedProps
-  const baseClasses = cn(sizeClasses[size], "shrink-0", className)
+type IconDef = { Icon: LucideIcon; colorClass: string }
 
-  // If event has a specific icon component, use it
-  if (event.extendedProps.iconComponent) {
-    const IconComponent = event.extendedProps.iconComponent
-    return <IconComponent className={baseClasses} />
-  }
+function resolveIcon(event: CalendarEvent): IconDef | null {
+    const { type, leave_type } = event.extendedProps
 
-  switch (type) {
-    case "attendance": {
-      const status =
-        event.extendedProps.status || event.extendedProps.attendance_status
-      switch (status) {
-        case "present":
-          return (
-            <CheckCircle
-              className={cn(baseClasses, "text-success")}
-            />
-          )
-        case "late":
-          return (
-            <AlertTriangle
-              className={cn(
-                baseClasses,
-                "text-warning",
-              )}
-            />
-          )
-        case "absent":
-          return (
-            <XCircle
-              className={cn(baseClasses, "text-destructive")}
-            />
-          )
-        case "leave":
-          if (leave_type === "SICK") {
-            return (
-              <Thermometer
-                className={cn(baseClasses, "text-blue-600 dark:text-blue-400")}
-              />
-            )
-          } else {
-            return (
-              <AlertTriangle
-                className={cn(
-                  baseClasses,
-                  "text-orange-600 dark:text-orange-400",
-                )}
-              />
-            )
-          }
+    switch (type) {
+        case "attendance": {
+            const status = event.extendedProps.status || event.extendedProps.attendance_status
+            switch (status) {
+                case "present": return { Icon: CheckCircle, colorClass: "text-success" }
+                case "late": return { Icon: AlertTriangle, colorClass: "text-warning" }
+                case "absent": return { Icon: XCircle, colorClass: "text-destructive" }
+                case "leave":
+                    return leave_type === "SICK"
+                        ? { Icon: Thermometer, colorClass: "text-blue-600 dark:text-blue-400" }
+                        : { Icon: AlertTriangle, colorClass: "text-orange-600 dark:text-orange-400" }
+                default: return { Icon: CheckCircle, colorClass: "text-blue-600 dark:text-blue-400" }
+            }
+        }
+        case "birthday":
+            return { Icon: Cake, colorClass: "text-success" }
+        case "holiday":
+            return event.extendedProps.holiday_type === "regular"
+                ? { Icon: Building, colorClass: "text-destructive" }
+                : { Icon: CalendarDays, colorClass: "text-orange-600 dark:text-orange-400" }
+        case "leave": {
+            switch (event.extendedProps.leave_type) {
+                case "SICK": return { Icon: Thermometer, colorClass: "text-purple-600 dark:text-purple-400" }
+                case "EMERGENCY": return { Icon: AlertTriangle, colorClass: "text-warning" }
+                default: return { Icon: Plane, colorClass: "text-indigo-600 dark:text-indigo-400" }
+            }
+        }
+        case "schedule": {
+            const serviceType = event.extendedProps.service_type
+            const Icon = serviceType === "cleaning" ? Brush : serviceType === "on_site" ? Wrench : Store
+            return { Icon, colorClass: "text-cyan-600 dark:text-cyan-400" }
+        }
+        case "delivery":
+            return { Icon: Package, colorClass: "text-teal-600 dark:text-teal-400" }
+        case "custom_event": {
+            switch (event.extendedProps.event_type) {
+                case "meeting": return { Icon: Briefcase, colorClass: "text-blue-600 dark:text-blue-400" }
+                case "maintenance": return { Icon: Wrench, colorClass: "text-warning" }
+                case "training": return { Icon: GraduationCap, colorClass: "text-purple-600 dark:text-purple-400" }
+                case "deadline": return { Icon: Timer, colorClass: "text-orange-600 dark:text-orange-400" }
+                default: return { Icon: Calendar, colorClass: "text-gray-600 dark:text-gray-400" }
+            }
+        }
+        case "half_day":
+            return { Icon: Clock4, colorClass: "text-orange-600 dark:text-orange-400" }
+        case "shop_closed":
+            return { Icon: Store, colorClass: "text-destructive" }
         default:
-          return (
-            <CheckCircle
-              className={cn(baseClasses, "text-blue-600 dark:text-blue-400")}
-            />
-          )
-      }
+            return null
     }
-    case "birthday":
-      return (
-        <Cake
-          className={cn(baseClasses, "text-success")}
-        />
-      )
-    case "holiday": {
-      const isRegular = event.extendedProps.holiday_type === "regular"
-      return isRegular ? (
-        <Building
-          className={cn(baseClasses, "text-destructive")}
-        />
-      ) : (
-        <CalendarDays
-          className={cn(baseClasses, "text-orange-600 dark:text-orange-400")}
-        />
-      )
+}
+
+export function EventIcon({ event, size = "sm", className, forceColorClassName }: EventIconProps) {
+    if (event.extendedProps.iconComponent) {
+        const IconComponent = event.extendedProps.iconComponent
+        return <IconComponent className={cn(sizeClasses[size], "shrink-0", forceColorClassName, className)} />
     }
-    case "leave": {
-      const leaveType = event.extendedProps.leave_type
-      switch (leaveType) {
-        case "SICK":
-          return (
-            <Thermometer
-              className={cn(
-                baseClasses,
-                "text-purple-600 dark:text-purple-400",
-              )}
-            />
-          )
-        case "EMERGENCY":
-          return (
-            <AlertTriangle
-              className={cn(baseClasses, "text-warning")}
-            />
-          )
-        default:
-          return (
-            <Plane
-              className={cn(
-                baseClasses,
-                "text-indigo-600 dark:text-indigo-400",
-              )}
-            />
-          )
-      }
-    }
-    case "schedule": {
-      const serviceType = event.extendedProps.service_type
-      if (serviceType === "cleaning") {
-        return (
-          <Brush
-            className={cn(baseClasses, "text-cyan-600 dark:text-cyan-400")}
-          />
-        )
-      } else if (serviceType === "on_site") {
-        return (
-          <Wrench
-            className={cn(baseClasses, "text-cyan-600 dark:text-cyan-400")}
-          />
-        )
-      } else {
-        return (
-          <Store
-            className={cn(baseClasses, "text-cyan-600 dark:text-cyan-400")}
-          />
-        )
-      }
-    }
-    case "delivery":
-      return (
-        <Package
-          className={cn(baseClasses, "text-teal-600 dark:text-teal-400")}
-        />
-      )
-    case "custom_event": {
-      const eventType = event.extendedProps.event_type
-      switch (eventType) {
-        case "meeting":
-          return (
-            <Briefcase
-              className={cn(baseClasses, "text-blue-600 dark:text-blue-400")}
-            />
-          )
-        case "maintenance":
-          return (
-            <Wrench
-              className={cn(
-                baseClasses,
-                "text-warning",
-              )}
-            />
-          )
-        case "training":
-          return (
-            <GraduationCap
-              className={cn(
-                baseClasses,
-                "text-purple-600 dark:text-purple-400",
-              )}
-            />
-          )
-        case "deadline":
-          return (
-            <Timer
-              className={cn(
-                baseClasses,
-                "text-orange-600 dark:text-orange-400",
-              )}
-            />
-          )
-        case "other":
-        default:
-          return (
-            <Calendar
-              className={cn(baseClasses, "text-gray-600 dark:text-gray-400")}
-            />
-          )
-      }
-    }
-    case "half_day":
-      return (
-        <Clock4
-          className={cn(baseClasses, "text-orange-600 dark:text-orange-400")}
-        />
-      )
-    case "shop_closed":
-      return (
-        <Store className={cn(baseClasses, "text-destructive")} />
-      )
-    default:
-      return null
-  }
+
+    const def = resolveIcon(event)
+    if (!def) return null
+
+    const { Icon } = def
+    return (
+        <Icon className={cn(sizeClasses[size], "shrink-0", forceColorClassName ?? def.colorClass, className)} />
+    )
 }

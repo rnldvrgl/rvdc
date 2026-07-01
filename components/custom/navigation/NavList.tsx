@@ -1,168 +1,159 @@
+
 "use client"
 
-import { Button } from "@/components/ui/button"
 import { NavItem, NavListItem } from "@/lib/constants/types"
-import { getLinkClasses } from "@/lib/utils/helpers"
+import { cn } from "@/lib/utils/helpers"
 import { AnimatePresence, motion } from "framer-motion"
 import { ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
 export default function NavList({
-  items,
-  activePath,
-  close,
-  onAction,
-  title,
-  level = 0,
+    items,
+    activePath,
+    close,
+    onAction,
+    title,
+    level = 0,
 }: NavListItem) {
-  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({})
+    const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({})
 
-  useEffect(() => {
-    const newOpenMenus: Record<string, boolean> = {}
+    useEffect(() => {
+        const newOpenMenus: Record<string, boolean> = {}
 
-    const checkActive = (items: NavItem[]) => {
-      for (const item of items) {
-        if (
-          item.children?.some((child) =>
-            activePath.startsWith(child.href ?? ""),
-          )
-        ) {
-          newOpenMenus[item.name] = true
+        const checkActive = (items: NavItem[]) => {
+            for (const item of items) {
+                if (item.children?.some((child) => activePath.startsWith(child.href ?? ""))) {
+                    newOpenMenus[item.name] = true
+                }
+                if (item.children) checkActive(item.children)
+            }
         }
-        if (item.children) checkActive(item.children)
-      }
+
+        checkActive(items)
+        setOpenMenus(newOpenMenus)
+    }, [items, activePath])
+
+    const toggleMenu = (name: string) => {
+        setOpenMenus((prev) => ({ ...prev, [name]: !prev[name] }))
     }
 
-    checkActive(items)
-    setOpenMenus(newOpenMenus)
-  }, [items, activePath])
+    const isChildActive = (item: NavItem): boolean => {
+        if (!item.children) return false
+        return item.children.some(
+            (child) => (child.href && activePath.startsWith(child.href)) || isChildActive(child),
+        )
+    }
 
-  const toggleMenu = (name: string) => {
-    setOpenMenus((prev) => ({ ...prev, [name]: !prev[name] }))
-  }
+    // Shared row classes
+    const rowBase = "flex items-center w-full gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    const rowInactive = "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+    const rowActive = "bg-primary text-primary-foreground"
+    const rowChildActive = "text-foreground bg-accent"
 
-  const isChildActive = (item: NavItem): boolean => {
-    if (!item.children) return false
-    return item.children.some(
-      (child) =>
-        (child.href && activePath.startsWith(child.href)) ||
-        isChildActive(child),
-    )
-  }
-
-  return (
-    <>
-      {title && level === 0 && (
-        <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">
-          {title}
-        </p>
-      )}
-      <ul className="space-y-0.5">
-        {items.map((item) => {
-          const isOpen = openMenus[item.name]
-          const isParent = !!item.children
-          const isActive =
-            (item.href && activePath.startsWith(item.href)) ||
-            isChildActive(item)
-          const paddingLeft = `${level * 1.25 + 0.75}rem`
-
-          let content
-
-          if (item.href) {
-            content = (
-              <Link
-                href={item.href}
-                onClick={close}
-                style={{ paddingLeft }}
-                className={`${getLinkClasses(
-                  isActive,
-                )} flex items-center w-full focus:outline-none focus:ring-0`}
-              >
-                <item.icon className="size-4" />
-                <span className="ml-2">{item.name}</span>
-              </Link>
-            )
-          } else if (item.action) {
-            content = (
-              <Button
-                onClick={() => {
-                  onAction?.(item.action!)
-                  close?.()
-                }}
-                variant="ghost"
-                style={{ paddingLeft }}
-                className="w-full justify-start rounded-xl hover:bg-muted hover:text-foreground text-muted-foreground transition-all duration-200 focus:outline-none focus:ring-0"
-              >
-                <item.icon className="size-4" />
-                <span className="ml-2">{item.name}</span>
-              </Button>
-            )
-          } else {
-            content = (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => toggleMenu(item.name)}
-                style={{ paddingLeft }}
-                className={`flex items-center w-full justify-between group rounded-xl
-                  text-sm font-medium transition-all duration-200
-                  text-muted-foreground hover:bg-muted hover:text-foreground
-                  ${isActive ? "text-primary bg-primary/10" : ""}
-                  focus:outline-none focus:ring-0
-                `}
-              >
-                <div className="flex items-center gap-x-3">
-                  <item.icon
-                    className={`size-4 transition-colors 
-                      ${isActive ? "text-primary" : "text-muted-foreground"}
-                      group-hover:text-primary`}
-                  />
-                  <span className="ml-2">{item.name}</span>
-                </div>
-                <motion.div
-                  animate={{ rotate: isOpen ? 90 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex items-center"
-                >
-                  <ChevronRight className="size-4" />
-                </motion.div>
-              </Button>
-            )
-          }
-
-          return (
-            <li
-              key={item.name}
-              className="space-y-0.5"
+    return (
+        <div className={cn(level === 0 ? "space-y-0.5" : "")}>
+            {title && level === 0 && (
+                <p className="my-1.5 px-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+                    {title}
+                </p>
+            )}
+            <ul
+                className="space-y-0.5"
+                style={level > 0 ? { paddingLeft: `${level * 1}rem` } : undefined}
             >
-              {content}
+                {items.map((item) => {
+                    const isOpen = openMenus[item.name]
+                    const isParent = !!item.children
+                    const isActive = !!(item.href && activePath.startsWith(item.href))
+                    const hasActiveChild = isChildActive(item)
 
-              {isParent && (
-                <AnimatePresence initial={false}>
-                  {isOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: "easeInOut" }}
-                      className="overflow-hidden"
-                    >
-                      <NavList
-                        items={item.children ?? []}
-                        activePath={activePath}
-                        close={close}
-                        onAction={onAction}
-                        level={level + 1}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-    </>
-  )
+                    let content: React.ReactNode
+
+                    if (item.href) {
+                        content = (
+                            <Link
+                                href={item.href}
+                                onClick={close}
+                                className={cn(
+                                    rowBase,
+                                    isActive ? rowActive : rowInactive,
+                                )}
+                            >
+                                <item.icon className="size-4 shrink-0" />
+                                <span className="truncate">{item.name}</span>
+                            </Link>
+                        )
+                    } else if (item.action) {
+                        content = (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    onAction?.(item.action!)
+                                    close?.()
+                                }}
+                                className={cn(rowBase, rowInactive)}
+                            >
+                                <item.icon className="size-4 shrink-0" />
+                                <span className="truncate">{item.name}</span>
+                            </button>
+                        )
+                    } else {
+                        // Parent with children
+                        content = (
+                            <button
+                                type="button"
+                                onClick={() => toggleMenu(item.name)}
+                                className={cn(
+                                    rowBase,
+                                    hasActiveChild ? rowChildActive : rowInactive,
+                                    "justify-between",
+                                )}
+                            >
+                                <span className="flex items-center gap-2.5 min-w-0">
+                                    <item.icon className="size-4 shrink-0" />
+                                    <span className="truncate">{item.name}</span>
+                                </span>
+                                <motion.span
+                                    animate={{ rotate: isOpen ? 90 : 0 }}
+                                    transition={{ duration: 0.18 }}
+                                    className="shrink-0 text-muted-foreground"
+                                >
+                                    <ChevronRight className="size-3.5" />
+                                </motion.span>
+                            </button>
+                        )
+                    }
+
+                    return (
+                        <li key={item.name} className="space-y-0.5">
+                            {content}
+
+                            {isParent && (
+                                <AnimatePresence initial={false}>
+                                    {isOpen && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2, ease: "easeInOut" }}
+                                            className="overflow-hidden"
+                                        >
+                                            <NavList
+                                                items={item.children ?? []}
+                                                activePath={activePath}
+                                                close={close}
+                                                onAction={onAction}
+                                                level={level + 1}
+                                            />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            )}
+                        </li>
+                    )
+                })}
+            </ul>
+        </div>
+    )
 }

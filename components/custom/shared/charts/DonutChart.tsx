@@ -1,5 +1,6 @@
 "use client"
 
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { ChartWrapper } from "@/components/custom/shared/charts/ChartWrapper"
 import { CustomTooltip } from "@/components/custom/shared/charts/CustomTooltip"
 import { CHART_PALETTE } from "@/lib/constants/theme"
@@ -126,6 +127,8 @@ export default function DonutChart<T>({
     // Calculate total for center display
     const total = chartData.reduce((sum, item) => sum + item.value, 0)
 
+    const centerBoxSize = 120
+
     return (
         <ChartWrapper isEmpty={!data || data.length === 0}>
             <ResponsiveContainer
@@ -202,33 +205,23 @@ export default function DonutChart<T>({
                         ))}
                     </Pie>
 
-                    {/* Center text showing total */}
-                    <text
-                        x="50%"
-                        y="50%"
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        className="fill-foreground"
+                    <foreignObject
+                        x={`calc(50% - ${centerBoxSize / 2}px)`}
+                        y={`calc(50% - ${centerBoxSize / 2}px)`}
+                        width={centerBoxSize}
+                        height={centerBoxSize}
+                        style={{ pointerEvents: "none" }}
                     >
-                        <tspan
-                            x="50%"
-                            dy="-0.5em"
-                            fontSize="24"
-                            fontWeight="700"
-                            className="fill-foreground"
-                        >
-                            {total.toLocaleString()}
-                        </tspan>
-                        <tspan
-                            x="50%"
-                            dy="1.4em"
-                            fontSize="12"
-                            fontWeight="500"
-                            className="fill-muted-foreground"
-                        >
-                            Total
-                        </tspan>
-                    </text>
+                        <div className="flex h-full w-full flex-col items-center justify-center text-center">
+                            <AnimatedNumber
+                                value={total}
+                                className="text-2xl font-bold text-foreground leading-none"
+                            />
+                            <span className="mt-1.5 text-xs font-medium text-muted-foreground">
+                                Total
+                            </span>
+                        </div>
+                    </foreignObject>
                 </PieChartComp>
             </ResponsiveContainer>
         </ChartWrapper>
