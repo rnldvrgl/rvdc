@@ -39,11 +39,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { RemittanceRecordPayload } from "@/lib/constants/infers"
 import { RemittanceRecordSchema } from "@/lib/constants/schema"
 import { useRemittancePreview } from "@/lib/queries/useRemittancesRecords"
-import { cn, formatCurrency } from "@/lib/utils/helpers"
+import { cn } from "@/lib/utils/helpers"
 import { format, startOfDay } from "date-fns"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 
 const DENOMINATIONS = [1000, 500, 200, 100, 50, 20, 10, 5, 1] as const
 type Denom = (typeof DENOMINATIONS)[number]
+
+const currencyFormat: Intl.NumberFormatOptions = {
+    style: "currency",
+    currency: "PHP",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+}
 
 // Visual config for denomination badges — colors come from shadcn theme tokens,
 // not hard-coded Tailwind palette colors, so this respects light/dark themes.
@@ -61,10 +69,10 @@ const DENOM_CONFIG: Record<Denom, { label: string; type: "bill" | "coin" }> = {
 
 interface Props {
     initialData?: RemittanceRecordPayload
-    onClose: () => void
+    onCloseAction: () => void
 }
 
-export default function RemittanceForm({ initialData, onClose }: Props) {
+export default function RemittanceForm({ initialData, onCloseAction }: Props) {
     const { role, isAdmin } = useCurrentUser()
     const userProfile = useUserProfileStore((s) => s.userProfile)
     const { data: stalls } = useStallChoices({})
@@ -298,10 +306,10 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         if (isEditing) {
             updateRemittance.mutate(
                 { id: initialData.id!, data: payload },
-                { onSuccess: onClose },
+                { onSuccess: onCloseAction },
             )
         } else {
-            addRemittance.mutate(payload, { onSuccess: onClose })
+            addRemittance.mutate(payload, { onSuccess: onCloseAction })
         }
     }
 
@@ -563,40 +571,50 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                             <div className="grid grid-cols-1 gap-y-2 text-sm">
                                 <div className="flex justify-between gap-3">
                                     <span className="text-muted-foreground">Cash Sales</span>
-                                    <span className="font-medium tabular-nums">
-                                        {formatCurrency(preview.total_sales_cash)}
-                                    </span>
+                                    <AnimatedNumber
+                                        value={parseFloat(String(preview.total_sales_cash)) || 0}
+                                        className="font-medium tabular-nums"
+                                        format={currencyFormat}
+                                    />
                                 </div>
                                 {Number(preview.total_sales_gcash) > 0 && (
                                     <div className="flex justify-between gap-3">
                                         <span className="text-muted-foreground">GCash Sales</span>
-                                        <span className="font-medium tabular-nums">
-                                            {formatCurrency(preview.total_sales_gcash)}
-                                        </span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.total_sales_gcash)) || 0}
+                                            className="font-medium tabular-nums"
+                                            format={currencyFormat}
+                                        />
                                     </div>
                                 )}
                                 {Number(preview.total_sales_credit) > 0 && (
                                     <div className="flex justify-between gap-3">
                                         <span className="text-muted-foreground">Credit Sales</span>
-                                        <span className="font-medium tabular-nums">
-                                            {formatCurrency(preview.total_sales_credit)}
-                                        </span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.total_sales_credit)) || 0}
+                                            className="font-medium tabular-nums"
+                                            format={currencyFormat}
+                                        />
                                     </div>
                                 )}
                                 {Number(preview.total_sales_debit) > 0 && (
                                     <div className="flex justify-between gap-3">
                                         <span className="text-muted-foreground">Debit Sales</span>
-                                        <span className="font-medium tabular-nums">
-                                            {formatCurrency(preview.total_sales_debit)}
-                                        </span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.total_sales_debit)) || 0}
+                                            className="font-medium tabular-nums"
+                                            format={currencyFormat}
+                                        />
                                     </div>
                                 )}
                                 {Number(preview.total_sales_cheque) > 0 && (
                                     <div className="flex justify-between gap-3">
                                         <span className="text-muted-foreground">Cheque Sales</span>
-                                        <span className="font-medium tabular-nums">
-                                            {formatCurrency(preview.total_sales_cheque)}
-                                        </span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.total_sales_cheque)) || 0}
+                                            className="font-medium tabular-nums"
+                                            format={currencyFormat}
+                                        />
                                     </div>
                                 )}
                                 {Number(preview.cod_from_previous) > 0 && (
@@ -604,17 +622,21 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                                         <span className="text-muted-foreground">
                                             + Previous Day Drawer
                                         </span>
-                                        <span className="font-medium tabular-nums">
-                                            {formatCurrency(preview.cod_from_previous)}
-                                        </span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.cod_from_previous)) || 0}
+                                            className="font-medium tabular-nums"
+                                            format={currencyFormat}
+                                        />
                                     </div>
                                 )}
                                 {Number(preview.total_expenses) > 0 && (
                                     <div className="flex justify-between gap-3">
                                         <span className="text-muted-foreground">− Expenses</span>
-                                        <span className="font-medium tabular-nums text-destructive">
-                                            {formatCurrency(preview.total_expenses)}
-                                        </span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.total_expenses)) || 0}
+                                            className="font-medium tabular-nums text-destructive"
+                                            format={currencyFormat}
+                                        />
                                     </div>
                                 )}
                             </div>
@@ -623,18 +645,18 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                         <Separator />
                         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                             <span className="text-sm font-semibold">Expected to Remit</span>
-                            <span className="text-lg font-bold tabular-nums text-primary">
-                                {adjustSales
-                                    ? formatCurrency(
-                                        Math.max(
-                                            0,
-                                            (parseFloat(salesOverrides.cash) || 0) +
-                                            parseFloat(String(preview.cod_from_previous) || "0") -
-                                            (parseFloat(salesOverrides.expenses) || 0),
-                                        ),
+                            <AnimatedNumber
+                                value={adjustSales
+                                    ? Math.max(
+                                        0,
+                                        (parseFloat(salesOverrides.cash) || 0) +
+                                        parseFloat(String(preview.cod_from_previous) || "0") -
+                                        (parseFloat(salesOverrides.expenses) || 0),
                                     )
-                                    : formatCurrency(preview.expected_remittance)}
-                            </span>
+                                    : parseFloat(String(preview.expected_remittance)) || 0}
+                                className="text-lg font-bold tabular-nums text-primary"
+                                format={currencyFormat}
+                            />
                         </div>
                     </div>
                 )}
@@ -646,32 +668,28 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                             <Wallet className="size-3 sm:size-3.5 shrink-0" />
                             <span className="truncate">In Drawer</span>
                         </div>
-                        <p className="text-sm sm:text-lg font-bold tabular-nums break-words">
-                            {formatCurrency(liveTotals.declared)}
-                        </p>
+                        <AnimatedNumber value={liveTotals.declared} className="text-sm sm:text-lg font-bold tabular-nums wrap-break-word" format={currencyFormat} />
                     </div>
                     <div className="rounded-lg border bg-card p-2.5 sm:p-3 text-center space-y-1">
                         <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
                             <Banknote className="size-3 sm:size-3.5 shrink-0" />
                             <span className="truncate">To Remit</span>
                         </div>
-                        <p className="text-sm sm:text-lg font-bold tabular-nums text-primary break-words">
-                            {formatCurrency(liveTotals.remitted)}
-                        </p>
+                        <AnimatedNumber value={liveTotals.remitted} className="text-sm sm:text-lg font-bold tabular-nums text-primary wrap-break-word" format={currencyFormat} />
                     </div>
                     <div className="rounded-lg border bg-card p-2.5 sm:p-3 text-center space-y-1">
                         <div className="flex items-center justify-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
                             <ArrowRightLeft className="size-3 sm:size-3.5 shrink-0" />
                             <span className="truncate">COD Next Day</span>
                         </div>
-                        <p
+                        <AnimatedNumber
+                            value={liveTotals.cod}
                             className={cn(
-                                "text-sm sm:text-lg font-bold tabular-nums break-words",
+                                "text-sm sm:text-lg font-bold tabular-nums wrap-break-word",
                                 liveTotals.cod > 0 ? "text-warning" : "text-success",
                             )}
-                        >
-                            {formatCurrency(liveTotals.cod)}
-                        </p>
+                            format={currencyFormat}
+                        />
                     </div>
                 </div>
 
@@ -681,10 +699,12 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                             Declared VS Expected
                         </span>
                         {liveBalance > 0 ? (
-                            <Badge variant="warning">Over {formatCurrency(liveBalance)}</Badge>
+                            <Badge variant="warning">
+                                Over <AnimatedNumber value={liveBalance} format={currencyFormat} />
+                            </Badge>
                         ) : liveBalance < 0 ? (
                             <Badge variant="destructive">
-                                Short {formatCurrency(Math.abs(liveBalance))}
+                                Short <AnimatedNumber value={Math.abs(liveBalance)} format={currencyFormat} />
                             </Badge>
                         ) : (
                             <Badge variant="success">Balanced</Badge>
@@ -786,11 +806,11 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                 />
 
                 {/* Submit — sticky on mobile so the primary action is always reachable */}
-                <div className="sticky bottom-0 -mx-1 sm:mx-0 sm:static flex flex-col-reverse gap-2 sm:gap-3 border-t sm:border-t-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 px-1 sm:px-0 py-3 sm:py-0 sm:pt-2 sm:flex-row sm:justify-end">
+                <div className="sticky bottom-0 -mx-1 sm:mx-0 sm:static flex flex-col-reverse gap-2 sm:gap-3 border-t sm:border-t-0 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 px-1 sm:px-0 py-3 sm:py-0 sm:pt-2 sm:flex-row sm:justify-end">
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={onClose}
+                        onClick={onCloseAction}
                         className="w-full sm:w-auto"
                     >
                         Cancel
@@ -863,7 +883,7 @@ function DenominationRow({
                 <Badge
                     variant="outline"
                     className={cn(
-                        "text-xs font-semibold px-2.5 py-0.5 shrink-0",
+                        "text-xs font-semibold px-2.5 py-0.5 shrink-0 font-mono",
                         config.type === "bill"
                             ? "border-success/30 bg-success/10 text-success"
                             : "border-warning/30 bg-warning/10 text-warning",
@@ -873,11 +893,11 @@ function DenominationRow({
                 </Badge>
                 <div className="flex items-center gap-2 sm:gap-3 text-xs text-muted-foreground tabular-nums min-w-0">
                     {declaredValue > 0 && (
-                        <span className="truncate">= {formatCurrency(declaredValue)}</span>
+                        <AnimatedNumber value={declaredValue} prefix="= " className="truncate" format={currencyFormat} />
                     )}
                     {!remitAll && codCount > 0 && (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
-                            COD: {codCount}×
+                            COD: <AnimatedNumber value={codCount} suffix="x" className="tabular-nums" />
                         </Badge>
                     )}
                 </div>

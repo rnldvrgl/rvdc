@@ -1,6 +1,6 @@
 "use client"
-
 import NumberFlow, { NumberFlowGroup, useCanAnimate } from "@number-flow/react"
+import type { Format } from "@number-flow/react"
 import { cn } from "@/lib/utils/helpers"
 import type { ReactNode } from "react"
 
@@ -8,7 +8,7 @@ type AnimatedNumberProps = {
     value: number
     className?: string
     locales?: Intl.LocalesArgument
-    format?: Intl.NumberFormatOptions
+    format?: Format
     prefix?: string
     suffix?: string
     animated?: boolean
@@ -39,7 +39,7 @@ export function AnimatedNumber({
         <NumberFlow
             value={value}
             locales={locales}
-            format={format}
+            format={format as Format}
             prefix={prefix}
             suffix={suffix}
             animated={animated ?? canAnimate}

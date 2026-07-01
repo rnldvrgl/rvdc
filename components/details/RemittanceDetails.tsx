@@ -205,9 +205,7 @@ export function RemittanceDetails({
                         <Separator />
                         <div className="flex items-center justify-between text-sm font-semibold gap-3">
                             <span>Total Collected</span>
-                            <span className="tabular-nums">
-                                {formatCurrency(entity.total_collected)}
-                            </span>
+                            <AnimatedNumber value={Number(entity.total_collected || 0)} prefix="₱" className="font-medium" />
                         </div>
                         <PaymentRow
                             label="Expenses"
@@ -308,13 +306,13 @@ export function RemittanceDetails({
                                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium sm:hidden block">
                                                 Declared
                                             </span>
-                                            {formatCurrency(denomTotals.declared)}
+                                            <AnimatedNumber value={Number(denomTotals.declared || 0)} prefix="₱" className="font-medium" />
                                         </span>
                                         <span className="text-left sm:text-right tabular-nums">
                                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium sm:hidden block">
                                                 Remitted
                                             </span>
-                                            {formatCurrency(denomTotals.remitted)}
+                                            <AnimatedNumber value={Number(denomTotals.remitted || 0)} prefix="₱" className="font-medium" />
                                         </span>
                                         <span
                                             className={cn(
@@ -326,7 +324,7 @@ export function RemittanceDetails({
                                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium sm:hidden block">
                                                 COD
                                             </span>
-                                            {formatCurrency(denomTotals.declared - denomTotals.remitted)}
+                                            <AnimatedNumber value={Number(denomTotals.declared - denomTotals.remitted || 0)} prefix="₱" className={cn("font-medium", denomTotals.declared - denomTotals.remitted > 0 && "text-warning")} />
                                         </span>
                                     </div>
                                 </>
@@ -445,16 +443,7 @@ function PaymentRow({
                     {label}
                 </span>
             </div>
-            <span
-                className={cn(
-                    "tabular-nums font-medium shrink-0",
-                    destructive && amount > 0 && "text-destructive",
-                )}
-            >
-                {destructive && amount > 0
-                    ? `−${formatCurrency(amount)}`
-                    : formatCurrency(amount)}
-            </span>
+            <AnimatedNumber value={amount} prefix="₱" className={cn("font-medium shrink-0", destructive && amount > 0 && "text-destructive")} />
         </div>
     )
 }

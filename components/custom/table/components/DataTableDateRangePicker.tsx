@@ -82,7 +82,7 @@ export const DataTableDateRangePicker = ({
                 <Button
                     variant="outline"
                     className={cn(
-                        "max-w-[350px] justify-start text-left",
+                        "max-w-[350px] justify-start text-left font-mono tabular-nums",
                         className,
                     )}
                 >
@@ -103,13 +103,14 @@ export const DataTableDateRangePicker = ({
             >
                 <div className="flex gap-4">
                     <Calendar
+                        className="font-mono"
                         mode="range"
                         numberOfMonths={2}
                         selected={date}
                         onSelect={handleSelect}
                     />
 
-                    <div className="flex w-[150px] flex-col justify-between">
+                    <div className="flex w-[150px] flex-col justify-between font-mono">
                         <div className="space-y-2">
                             <p className="text-sm font-semibold text-muted-foreground">
                                 Presets

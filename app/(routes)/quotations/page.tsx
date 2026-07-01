@@ -101,7 +101,6 @@ export default function QuotationsPage() {
                     !isArchived ? (
                         <Button
                             onClick={() => openAddSheet()}
-                            className="bg-linear-to-r from-emerald-600 to-emerald-700 text-white hover:from-emerald-700 hover:to-emerald-800 shadow-md hover:shadow-lg transition-all duration-200"
                             size="default"
                         >
                             <Plus className="size-5 mr-2" />

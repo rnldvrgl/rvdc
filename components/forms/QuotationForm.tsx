@@ -40,7 +40,6 @@ import { useClientChoices, useStallChoices } from "@/lib/queries/useChoices"
 import { useEmployees } from "@/lib/queries/useEmployees"
 import { useQuotationTemplates } from "@/lib/queries/useQuotationTemplates"
 import useGetReceiptDetails from "@/lib/hooks/useGetReceiptDetails"
-import { formatCurrency } from "@/lib/utils/currency"
 import { cn } from "@/lib/utils/helpers"
 import { addDays, format } from "date-fns"
 import {
@@ -58,6 +57,7 @@ import {
 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "sonner"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 
 interface QuotationFormProps {
     quotation?: Quotation
@@ -797,7 +797,7 @@ export default function QuotationForm({
         0,
     )
     const totalDiscount = itemDiscountTotal + discountAmount
-    const total = Math.max(0, subtotal - totalDiscount)
+    const total = Number(subtotal - totalDiscount)
 
     // ── Mutations ──
     const { addQuotation, updateQuotation } = useQuotationMutations()
@@ -960,7 +960,7 @@ export default function QuotationForm({
                                 <Button
                                     variant="outline"
                                     className={cn(
-                                        "w-full justify-start text-left font-normal h-9",
+                                        "w-full justify-start text-left font-normal h-9 font-mono",
                                         !quoteDate && "text-muted-foreground",
                                     )}
                                 >
@@ -973,6 +973,7 @@ export default function QuotationForm({
                                 align="start"
                             >
                                 <Calendar
+                                    className="font-mono"
                                     mode="single"
                                     selected={quoteDate}
                                     onSelect={(d) => d && setQuoteDate(d)}
@@ -987,7 +988,7 @@ export default function QuotationForm({
                                 <Button
                                     variant="outline"
                                     className={cn(
-                                        "w-full justify-start text-left font-normal h-9",
+                                        "w-full justify-start text-left font-normal h-9 font-mono",
                                         !validUntil && "text-muted-foreground",
                                     )}
                                 >
@@ -996,10 +997,12 @@ export default function QuotationForm({
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent
+
                                 className="w-auto p-0"
                                 align="start"
                             >
                                 <Calendar
+                                    className="font-mono"
                                     mode="single"
                                     selected={validUntil}
                                     onSelect={(d) => d && setValidUntil(d)}
@@ -1398,11 +1401,11 @@ export default function QuotationForm({
                     <div className="mt-4 w-full space-y-1.5 text-sm">
                         <div className="flex justify-between text-muted-foreground">
                             <span>Subtotal</span>
-                            <span>{formatCurrency(subtotal)}</span>
+                            <AnimatedNumber value={subtotal} prefix="₱" />
                         </div>
                         <div className="flex justify-between text-muted-foreground">
                             <span>Item Discounts</span>
-                            <span>-{formatCurrency(itemDiscountTotal)}</span>
+                            <AnimatedNumber value={itemDiscountTotal} prefix="-₱" />
                         </div>
                         <div className="flex items-center justify-between gap-2">
                             <span className="text-muted-foreground">Overall Discount</span>
@@ -1420,12 +1423,12 @@ export default function QuotationForm({
                         </div>
                         <div className="flex justify-between text-muted-foreground">
                             <span>Total Discount</span>
-                            <span>-{formatCurrency(totalDiscount)}</span>
+                            <AnimatedNumber value={totalDiscount} prefix="-₱" />
                         </div>
                         <Separator />
                         <div className="flex justify-between font-semibold text-base text-success">
                             <span>Total</span>
-                            <span>{formatCurrency(total)}</span>
+                            <AnimatedNumber value={total} prefix="₱" />
                         </div>
                     </div>
                 )}
@@ -1875,7 +1878,7 @@ export default function QuotationForm({
                                             <Button
                                                 variant="outline"
                                                 className={cn(
-                                                    "flex-1 justify-start text-left font-normal h-8 text-xs",
+                                                    "flex-1 justify-start text-left font-normal h-8 text-xs font-mono",
                                                     !authorizedDate && "text-muted-foreground",
                                                 )}
                                             >
@@ -1890,6 +1893,7 @@ export default function QuotationForm({
                                             align="start"
                                         >
                                             <Calendar
+                                                className="font-mono"
                                                 mode="single"
                                                 selected={
                                                     authorizedDate ? new Date(authorizedDate) : undefined

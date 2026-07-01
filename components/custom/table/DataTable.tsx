@@ -617,7 +617,7 @@ export function DataTable<TData, TValue>({
                     {sortingState.length > 0 && (
                         <Badge
                             variant="default"
-                            className="gap-1.5 h-7 bg-purple-500 hover:bg-purple-600"
+                            className="gap-1.5 h-7 "
                         >
                             <ArrowUpDown className="size-3" />
                             <span className="text-xs">

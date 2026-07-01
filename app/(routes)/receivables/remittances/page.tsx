@@ -4,7 +4,6 @@ import EntitySheet from "@/components/custom/shared/EntitySheet"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import { DataTable } from "@/components/custom/table/DataTable"
-import { RemittanceDetails } from "@/components/details/RemittanceDetails"
 import RemittanceForm from "@/components/forms/RemittanceForm"
 import { Button } from "@/components/ui/button"
 import { RemittanceRecord } from "@/lib/constants/interface"
@@ -16,7 +15,7 @@ import {
     useRemittancesRecordFilters,
     useRemittancesRecords,
 } from "@/lib/queries/useRemittancesRecords"
-import { cn, formatCurrency } from "@/lib/utils/helpers"
+import { cn } from "@/lib/utils/helpers"
 import {
     ArrowRightLeft,
     Banknote,
@@ -27,6 +26,7 @@ import {
 import { useMemo } from "react"
 import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { getRemittanceColumns } from "./columns"
+import { RemittanceDetails } from "@/components/details/RemittanceDetails"
 
 export default function RemittancesPage() {
     const { role, isAdmin } = useCurrentUser()
@@ -150,7 +150,7 @@ export default function RemittancesPage() {
                 title="New Remittance"
                 description="Record a new cash remittance from a stall location."
                 withCloseConfirmation
-                renderForm={({ forceClose }) => <RemittanceForm onClose={forceClose} />}
+                renderForm={({ forceClose }) => <RemittanceForm onCloseAction={forceClose} />}
             />
 
             {/* Edit Remittance Sheet */}
@@ -169,7 +169,7 @@ export default function RemittancesPage() {
                                 ...entity,
                                 stall: entity.stall,
                             }}
-                            onClose={forceClose}
+                            onCloseAction={forceClose}
                         />
                     ) : null
                 }

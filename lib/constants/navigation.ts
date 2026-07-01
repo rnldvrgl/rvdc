@@ -14,7 +14,6 @@ import {
     CreditCard,
     FileSpreadsheet,
     FileText,
-    GraduationCap,
     Hand,
     Keyboard,
     Layers,
@@ -316,12 +315,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
     icon: Keyboard,
     permission: "view_shortcuts",
   },
-  guide: {
-    name: "Guide",
-    href: "/guide",
-    icon: GraduationCap,
-    permission: "view_dashboard",
-  },
   changelog: {
     name: "Changelog",
     href: "/changelog",
@@ -414,7 +407,7 @@ export const sectionedNavigation: NavigationSection[] = [
   },
   {
     title: "Insights",
-    items: [baseNavigation.reports, baseNavigation.shortcuts, baseNavigation.guide, baseNavigation.changelog],
+    items: [baseNavigation.reports, baseNavigation.shortcuts, baseNavigation.changelog],
   },
   {
     title: "Admin",

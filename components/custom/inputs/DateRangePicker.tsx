@@ -100,7 +100,7 @@ export const DateRangePicker = ({
         >
             <PopoverTrigger asChild>
                 <Button
-                    className={cn("max-w-[300px] justify-start text-left", classNames)}
+                    className={cn("max-w-[300px] justify-start text-left font-mono tabular-nums", classNames)}
                 >
                     <CalendarIcon className="mr-2 size-4" />
                     {date.from && date.to ? (
@@ -127,7 +127,7 @@ export const DateRangePicker = ({
                             if (range?.from) setDate(range)
                         }}
                     />
-                    <div className="flex w-[150px] flex-col justify-between">
+                    <div className="flex w-[150px] flex-col justify-between font-mono">
                         <div className="space-y-2">
                             <p className="text-sm font-semibold text-muted-foreground">
                                 Presets

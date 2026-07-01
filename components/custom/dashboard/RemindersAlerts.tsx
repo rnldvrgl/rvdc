@@ -1,5 +1,7 @@
 "use client"
 
+import { EmptyState } from "@/components/custom/EmptyState"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { ListCardSkeleton } from "@/components/custom/shared/skeletons"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -74,12 +76,12 @@ export function RemindersAlerts() {
       </CardHeader>
       <CardContent className="px-4 sm:px-6">
         {totalAlerts === 0 ? (
-          <div className="flex items-center justify-center gap-3 py-4 text-center">
-            <Bell className="size-5 text-muted-foreground/50" />
-            <p className="text-sm text-muted-foreground">
-              No pending alerts or reminders
-            </p>
-          </div>
+          <EmptyState
+            title="No Reminders or Alerts"
+            description="You have no pending leave approvals, overdue services, or unpaid services at the moment."
+            icon={Bell}
+            className="py-6"
+          />
         ) : (
           <div className="space-y-2">
             {pendingLeaves && pendingLeaves.length > 0 && (
@@ -103,8 +105,7 @@ export function RemindersAlerts() {
                         .slice(0, 2)
                         .map((l) => l.employee_name)
                         .join(", ")}
-                      {pendingLeaves.length > 2 &&
-                        ` +${pendingLeaves.length - 2} more`}
+                     <AnimatedNumber value={pendingLeaves.length} prefix=" + " className="text-xs text-muted-foreground" />
                     </p>
                   </div>
                   <Badge
@@ -141,8 +142,7 @@ export function RemindersAlerts() {
                             : `#${s.id}`,
                         )
                         .join(", ")}
-                      {overdueServices.length > 2 &&
-                        ` +${overdueServices.length - 2} more`}
+                      <AnimatedNumber value={overdueServices.length} prefix=" + " className="text-xs text-muted-foreground" />
                     </p>
                   </div>
                   <Badge
@@ -179,8 +179,7 @@ export function RemindersAlerts() {
                             : `#${s.id}`,
                         )
                         .join(", ")}
-                      {unpaidServices.length > 2 &&
-                        ` +${unpaidServices.length - 2} more`}
+                      <AnimatedNumber value={unpaidServices.length} prefix=" + " className="text-xs text-muted-foreground" />
                     </p>
                   </div>
                   <Badge

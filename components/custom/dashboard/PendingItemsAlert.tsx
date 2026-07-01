@@ -1,6 +1,7 @@
 "use client"
 
 import { EmptyState } from "@/components/custom/EmptyState"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { usePendingItemsStats } from "@/lib/queries/services/usePendingItemsStats"
@@ -40,7 +41,7 @@ export function PendingItemsAlert() {
                         variant="destructive"
                         className="ml-auto text-xs shrink-0"
                     >
-                        {data.total_pending_items ?? data.total_unchecked_appliances}
+                        <AnimatedNumber value={data.total_pending_services ?? data.total_unchecked_appliances} className="text-xs" />
                     </Badge>
                 </CardTitle>
             </CardHeader>
@@ -62,7 +63,7 @@ export function PendingItemsAlert() {
                                     {svc.unchecked_appliances > 0 && (
                                         <>
                                             {" "}
-                                            · {svc.unchecked_appliances} of {svc.total_appliances} unchecked
+                                            · <AnimatedNumber value={svc.unchecked_appliances} className="text-xs text-muted-foreground" /> of <AnimatedNumber value={svc.total_appliances} className="text-xs text-muted-foreground" /> unchecked
                                         </>
                                     )}
                                     {svc.has_service_level_pending && <> · Parts pending</>}
@@ -77,7 +78,7 @@ export function PendingItemsAlert() {
                                         color: "var(--warning)",
                                     }}
                                 >
-                                    {svc.unchecked_appliances > 0 ? svc.unchecked_appliances : "!"}
+                                    <AnimatedNumber value={svc.unchecked_appliances > 0 ? svc.unchecked_appliances : 1} className="text-xs" />
                                 </Badge>
                             )}
                             <ArrowRight className="size-3.5 text-muted-foreground shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -90,7 +91,7 @@ export function PendingItemsAlert() {
                         href="/services"
                         className="group flex items-center justify-center gap-1 text-xs text-primary hover:underline pt-1"
                     >
-                        <span className="truncate">View All {data.total_pending_services} Services</span>
+                        <span className="truncate">View All <AnimatedNumber value={data.total_pending_services} className="text-xs" /> Services</span>
                         <ArrowRight className="size-3 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
                     </Link>
                 )}

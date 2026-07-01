@@ -64,7 +64,7 @@ import { usePrint } from "@/lib/hooks/usePrint"
 import { useSalesTransactionMutations } from "@/lib/mutations/useSalesTransactionMutations"
 import { useItemChoices, useStallChoices } from "@/lib/queries/useChoices"
 import { holdSale } from "@/lib/utils/heldSales"
-import { formatCurrency } from "@/lib/utils/helpers"
+import { cn, formatCurrency } from "@/lib/utils/helpers"
 
 import {
     getSaleTemplates,
@@ -95,6 +95,7 @@ import { useFieldArray, useForm } from "react-hook-form"
 import * as z from "zod"
 
 import type { HeldSale } from "@/lib/utils/heldSales"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 
 interface SalesTransactionFormProps {
     initialData?: SalesTransaction
@@ -1141,9 +1142,7 @@ export default function SalesTransactionForm({
                                     {watchedItems.length !== 1 && "s"}
                                 </span>
                                 {!isFreeTransaction && (
-                                    <span className="font-medium">
-                                        {formatCurrency(totalItemsAmount)}
-                                    </span>
+                                    <AnimatedNumber value={totalItemsAmount} prefix="₱" className="font-medium" />
                                 )}
                             </div>
                             {!isFreeTransaction && (
@@ -1151,17 +1150,13 @@ export default function SalesTransactionForm({
                                     {discountAmount > 0 && (
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Discount</span>
-                                            <span className="font-medium text-destructive">
-                                                -{formatCurrency(discountAmount)}
-                                            </span>
+                                            <AnimatedNumber value={discountAmount} className="font-medium text-destructive" prefix="-₱" />
                                         </div>
                                     )}
                                     {discountAmount > 0 && (
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Total</span>
-                                            <span className="font-semibold">
-                                                {formatCurrency(grandTotal)}
-                                            </span>
+                                            <AnimatedNumber value={grandTotal} prefix="₱" className="font-medium" />
                                         </div>
                                     )}
                                     <div className="flex justify-between text-sm">
@@ -1169,21 +1164,16 @@ export default function SalesTransactionForm({
                                             Paid · {watchedPayments.length} payment
                                             {watchedPayments.length !== 1 && "s"}
                                         </span>
-                                        <span className="font-medium text-primary">
-                                            {formatCurrency(totalPayments)}
-                                        </span>
+                                        <AnimatedNumber value={totalPayments} prefix="₱" className="font-medium text-primary" />
                                     </div>
                                     <Separator />
                                     <div className="flex justify-between items-center pt-1">
                                         <span className="text-sm font-semibold">
                                             {changeDue >= 0 ? "Change" : "Balance Due"}
                                         </span>
-                                        <span
-                                            className={`text-base font-bold ${changeDue >= 0 ? "text-success" : "text-destructive"
-                                                }`}
-                                        >
-                                            {formatCurrency(Math.abs(changeDue))}
-                                        </span>
+
+                                        <AnimatedNumber value={Math.abs(changeDue)} prefix="₱" className={cn("text-base font-bold", { "text-success": changeDue >= 0, "text-destructive": changeDue < 0 })} />
+
                                     </div>
                                 </>
                             )}
