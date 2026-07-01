@@ -1,6 +1,7 @@
 "use client"
 
 import { EmptyState } from "@/components/custom/EmptyState"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { ListCardSkeleton } from "@/components/custom/shared/skeletons"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -122,9 +123,11 @@ export function EmployeePerformanceStats() {
                                             <span>·</span>
                                             <span>{tech.completed} done</span>
                                             <span className="hidden sm:inline">·</span>
-                                            <span className="hidden sm:inline">
-                                                {formatCurrency(tech.total_revenue)}
-                                            </span>
+                                            <AnimatedNumber
+                                                value={tech.total_revenue}
+                                                className="hidden text-xs font-medium text-muted-foreground sm:inline"
+                                                format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                                            />
                                         </div>
                                     </div>
                                     <div className="text-right">
@@ -141,7 +144,11 @@ export function EmployeePerformanceStats() {
                                                     : undefined
                                             }
                                         >
-                                            {tech.completion_rate}%
+                                            <AnimatedNumber
+                                                value={tech.completion_rate}
+                                                className="text-xs font-semibold"
+                                                suffix="%"
+                                            />
                                         </Badge>
                                     </div>
                                 </div>
@@ -213,13 +220,19 @@ export function EmployeePerformanceStats() {
                                             <span>·</span>
                                             <span>{emp.total_days} total</span>
                                             <span className="hidden sm:inline">·</span>
-                                            <span className="hidden sm:inline">
-                                                {emp.total_paid_hours.toFixed(1)}h paid
-                                            </span>
+                                            <AnimatedNumber
+                                                value={emp.total_paid_hours}
+                                                className="hidden text-xs font-medium text-muted-foreground sm:inline"
+                                                suffix="h paid"
+                                            />
                                         </div>
                                     </div>
                                     <Badge variant="outline" className="text-xs tabular-nums" style={badgeStyle}>
-                                        {emp.punctuality_rate}%
+                                        <AnimatedNumber
+                                            value={emp.punctuality_rate}
+                                            className="text-xs font-semibold"
+                                            suffix="%"
+                                        />
                                     </Badge>
                                 </div>
                             )
@@ -352,7 +365,11 @@ export function EmployeePerformanceStats() {
                                                 className="text-xs tabular-nums"
                                                 style={{ borderColor: "var(--chart-2)", color: "var(--chart-2)" }}
                                             >
-                                                {type.count} jobs
+                                                <AnimatedNumber
+                                                    value={type.count}
+                                                    className="text-xs font-semibold tabular-nums"
+                                                    suffix=" jobs"
+                                                />
                                             </Badge>
                                         </div>
                                     </div>
@@ -373,9 +390,11 @@ export function EmployeePerformanceStats() {
                                             <span className="truncate">
                                                 Top tech: {type.top_technician.employee_name}
                                             </span>
-                                            <span className="shrink-0 tabular-nums">
-                                                {type.top_technician.completed_count} completed
-                                            </span>
+                                            <AnimatedNumber
+                                                value={type.top_technician.completed_count}
+                                                className="shrink-0 text-xs font-medium"
+                                                suffix=" completed"
+                                            />
                                         </div>
                                     )}
                                 </div>

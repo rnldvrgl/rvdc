@@ -10,6 +10,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { useSubStallPayable } from "@/lib/queries/useRemittancesRecords"
 import { cn, formatCurrency } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
@@ -50,9 +51,16 @@ function SettlementDetails({ subStallPayable }: { subStallPayable: SubStallPayab
                         <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                             Cash to pay
                         </p>
-                        <p className="text-2xl font-bold tracking-tight tabular-nums text-foreground sm:text-3xl">
-                            {formatCurrency(subStallPayable.cash_payable)}
-                        </p>
+                        <AnimatedNumber
+                            value={subStallPayable.cash_payable}
+                            className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl"
+                            format={{
+                                style: "currency",
+                                currency: "PHP",
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                            }}
+                        />
                         <p className="text-xs text-muted-foreground">
                             Daily settlement summary for services and payment channels.
                         </p>
@@ -66,9 +74,16 @@ function SettlementDetails({ subStallPayable }: { subStallPayable: SubStallPayab
             <div className="grid gap-2 rounded-2xl border border-border/60 bg-muted/20 p-3 sm:p-4">
                 <div className="flex items-center justify-between gap-3 rounded-lg bg-background/80 px-3 py-2 text-sm">
                     <span className="text-muted-foreground">Cash (Service Parts)</span>
-                    <span className="font-semibold tabular-nums text-foreground">
-                        {formatCurrency(subStallPayable.sales_cash)}
-                    </span>
+                    <AnimatedNumber
+                        value={subStallPayable.sales_cash}
+                        className="text-sm font-semibold text-foreground"
+                        format={{
+                            style: "currency",
+                            currency: "PHP",
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                        }}
+                    />
                 </div>
             </div>
 
@@ -100,9 +115,16 @@ function SettlementDetails({ subStallPayable }: { subStallPayable: SubStallPayab
                                 <span className="min-w-0 truncate text-muted-foreground">
                                     #{svc.service_id}{svc.client_name ? ` — ${svc.client_name}` : ""}
                                 </span>
-                                <span className="tabular-nums font-medium text-foreground">
-                                    {formatCurrency(svc.paid_today)}
-                                </span>
+                                <AnimatedNumber
+                                    value={Number(svc.paid_today)}
+                                    className="text-xs font-medium text-foreground sm:text-sm"
+                                    format={{
+                                        style: "currency",
+                                        currency: "PHP",
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    }}
+                                />
                             </div>
                         ))}
                     </div>
@@ -211,9 +233,22 @@ export function SubStallSettlement({
                                 <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
                                     Cash to pay
                                 </p>
-                                <p className="text-2xl font-bold tracking-tight tabular-nums text-foreground sm:text-[1.75rem]">
-                                    {hasSettlement ? formatCurrency(subStallPayable!.cash_payable) : "No settlement"}
-                                </p>
+                                {hasSettlement ? (
+                                    <AnimatedNumber
+                                        value={subStallPayable!.cash_payable}
+                                        className="text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]"
+                                        format={{
+                                            style: "currency",
+                                            currency: "PHP",
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        }}
+                                    />
+                                ) : (
+                                    <p className="text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
+                                        No settlement
+                                    </p>
+                                )}
                                 <p className="text-sm text-muted-foreground">
                                     Tap to review service, payment, and e-payment breakdowns.
                                 </p>

@@ -1,5 +1,6 @@
 "use client"
 
+import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils/helpers"
@@ -11,6 +12,9 @@ interface StatsCardProps {
   title: string
   value: string | number | React.ReactNode
   icon: LucideIcon
+  valueFormat?: Intl.NumberFormatOptions
+  valuePrefix?: string
+  valueSuffix?: string
   trend?: {
     value: number
     label: string
@@ -77,6 +81,9 @@ export default function StatsCard({
   title,
   value,
   icon: Icon,
+  valueFormat,
+  valuePrefix,
+  valueSuffix,
   trend,
   isLoading = false,
   variant = "default",
@@ -135,11 +142,17 @@ export default function StatsCard({
             transition={{ duration: 0.4, ease: "easeOut" }}
             key={String(value)}
           >
-            {typeof value === "string"
-              ? value
-              : typeof value === "number"
-                ? value.toLocaleString()
-                : value}
+            {typeof value === "number" ? (
+              <AnimatedNumber
+                value={value}
+                format={valueFormat}
+                prefix={valuePrefix}
+                suffix={valueSuffix}
+                className="text-3xl font-bold tracking-tight text-foreground"
+              />
+            ) : (
+              value
+            )}
           </motion.div>
           {trend && (
             <motion.div

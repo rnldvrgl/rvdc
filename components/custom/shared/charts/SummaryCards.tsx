@@ -9,7 +9,6 @@ import { ModernStatCardSkeleton } from "@/components/custom/shared/skeletons"
 import { AnalyticsSummary } from "@/lib/constants/interface"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import { useGetSummary } from "@/lib/queries/analytics/useGetAnalytics"
-import { formatCurrency, formatNumber } from "@/lib/utils/helpers"
 import {
   AlertCircle,
   CheckCircle2,
@@ -27,8 +26,10 @@ import StatsCard from "./StatsCard"
 
 interface CardConfig {
   title: string
-  value: string | React.ReactNode
+  value: string | number | React.ReactNode
   icon: LucideIcon
+  valueFormat?: Intl.NumberFormatOptions
+  valueSuffix?: string
   variant: "default" | "success" | "warning" | "danger" | "info"
   trend?: {
     value: number
@@ -69,13 +70,15 @@ function getPreviousPeriod(startDate?: string, endDate?: string) {
 
 function buildCard(
   title: string,
-  value: string | React.ReactNode,
+  value: string | number | React.ReactNode,
   icon: LucideIcon,
   variant: "default" | "success" | "warning" | "danger" | "info",
   trend?: { value: number; label: string },
   href?: string,
+  valueFormat?: Intl.NumberFormatOptions,
+  valueSuffix?: string,
 ): CardConfig {
-  return { title, value, icon, variant, trend, href }
+  return { title, value, icon, variant, trend, href, valueFormat, valueSuffix }
 }
 
 function getSummaryGroups(
@@ -94,42 +97,48 @@ function getSummaryGroups(
       cards: [
         buildCard(
           "Total Revenue",
-          formatCurrency(data.total_revenue),
+          data.total_revenue,
           DollarSign,
           "success",
           trend(data.total_revenue, prev?.total_revenue),
           "/reports",
+          { style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 },
         ),
         buildCard(
           "Net Income",
-          formatCurrency(data.net_income),
+          data.net_income,
           TrendingUp,
           data.net_income >= 0 ? "success" : "danger",
           trend(data.net_income, prev?.net_income),
           "/reports",
+          { style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 },
         ),
         buildCard(
           "Outstanding Receivables",
-          formatCurrency(data.total_outstanding),
+          data.total_outstanding,
           AlertCircle,
           data.total_outstanding > 50000 ? "warning" : "info",
           trend(data.total_outstanding, prev?.total_outstanding),
           "/receivables/payment-collection",
+          { style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 },
         ),
         buildCard(
           "Total Expenses",
-          formatCurrency(data.total_expense),
+          data.total_expense,
           Receipt,
           "danger",
           trend(data.total_expense, prev?.total_expense),
           "/expenses/manage",
+          { style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 },
         ),
         buildCard(
           "Unit Cost (Aircon)",
-          formatCurrency(data.unit_cost_deduction),
+          data.unit_cost_deduction,
           Package,
           "danger",
           trend(data.unit_cost_deduction, prev?.unit_cost_deduction),
+          undefined,
+          { style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 },
         ),
       ],
     },
@@ -138,7 +147,7 @@ function getSummaryGroups(
       cards: [
         buildCard(
           "Active Services",
-          formatNumber(data.active_services),
+          data.active_services,
           Clock,
           "info",
           trend(data.active_services, prev?.active_services),
@@ -146,19 +155,23 @@ function getSummaryGroups(
         ),
         buildCard(
           "Service Completion Rate",
-          `${data.service_completion_rate}%`,
+          data.service_completion_rate,
           CheckCircle2,
           data.service_completion_rate >= 80 ? "success" : "warning",
           trend(data.service_completion_rate, prev?.service_completion_rate),
           "/services",
+          undefined,
+          "%",
         ),
         buildCard(
           "Payment Collection Rate",
-          `${data.payment_collection_rate}%`,
+          data.payment_collection_rate,
           DollarSign,
           data.payment_collection_rate >= 80 ? "success" : "warning",
           trend(data.payment_collection_rate, prev?.payment_collection_rate),
           "/receivables/payment-collection",
+          undefined,
+          "%",
         ),
         data.top_service_technician
           ? buildCard(
@@ -179,7 +192,7 @@ function getSummaryGroups(
       cards: [
         buildCard(
           "Total Clients",
-          formatNumber(data.total_clients),
+          data.total_clients,
           Users,
           "info",
           trend(data.total_clients, prev?.total_clients),
@@ -187,7 +200,7 @@ function getSummaryGroups(
         ),
         buildCard(
           "New Clients",
-          formatNumber(data.new_clients),
+          data.new_clients,
           UserPlus,
           "success",
           trend(data.new_clients, prev?.new_clients),

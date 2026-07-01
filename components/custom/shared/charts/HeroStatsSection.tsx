@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AnimatedNumber, AnimatedNumberGroup } from "@/components/custom/shared/AnimatedNumber"
 import { useDateParamsFromForm } from "@/lib/hooks/useDateParamsFromForm"
 import {
     useGetSummary,
@@ -10,7 +11,6 @@ import {
     useUnpaidSalesStatus,
 } from "@/lib/queries/analytics/useGetAnalytics"
 import { useStalls } from "@/lib/queries/inventory/useStalls"
-import { formatCurrency } from "@/lib/utils/helpers"
 import { AnimatePresence, motion } from "framer-motion"
 import { DollarSign, ReceiptText, TrendingDown, TrendingUp, Wallet } from "lucide-react"
 import { useMemo, useState } from "react"
@@ -97,11 +97,15 @@ function MiniStat({
     label,
     value,
     loading,
+    format,
+    suffix,
 }: {
     icon: React.ElementType
     label: string
-    value: string
+    value: number
     loading: boolean
+    format?: Intl.NumberFormatOptions
+    suffix?: string
 }) {
     return (
         <div className="flex items-center gap-3 rounded-xl bg-muted/50 px-3.5 py-3 min-w-0">
@@ -113,7 +117,12 @@ function MiniStat({
                 {loading ? (
                     <Skeleton className="h-4 w-16" />
                 ) : (
-                    <p className="text-sm font-semibold text-foreground truncate">{value}</p>
+                    <AnimatedNumber
+                        value={value}
+                        format={format}
+                        suffix={suffix}
+                        className="text-sm font-semibold text-foreground truncate"
+                    />
                 )}
             </div>
         </div>
@@ -210,9 +219,11 @@ export default function HeroStatsSection() {
                                                 Period Revenue
                                             </p>
                                             <div className="flex items-baseline gap-2 flex-wrap">
-                                                <p className="text-2xl sm:text-3xl lg:text-[2.25rem] font-bold text-foreground tracking-tight leading-none">
-                                                    {formatCurrency(summary?.total_revenue ?? 0)}
-                                                </p>
+                                                <AnimatedNumber
+                                                    value={summary?.total_revenue ?? 0}
+                                                    className="text-2xl sm:text-3xl lg:text-[2.25rem] font-bold text-foreground tracking-tight leading-none"
+                                                    format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                                                />
                                                 <TrendBadge value={revenueTrend} />
                                             </div>
                                             <p className="text-xs text-muted-foreground">vs {prev_start && prev_end ? `${formatDate(prev_start, 'MMM dd, yyyy')} - ${formatDate(prev_end, 'MMM dd, yyyy')}` : "previous period"}</p>
@@ -228,29 +239,32 @@ export default function HeroStatsSection() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-5">
-                                        <MiniStat
-                                            icon={Wallet}
-                                            label="Net Income"
-                                            value={formatCurrency(summary?.net_income ?? 0)}
-                                            loading={summaryLoading}
-                                        />
-                                        <MiniStat
-                                            icon={ReceiptText}
-                                            label="Total Sales"
-                                            value={formatCurrency(summary?.total_sales ?? 0)}
-                                            loading={summaryLoading}
-                                        />
-                                        <MiniStat
-                                            icon={DollarSign}
-                                            label="Avg. / Day"
-                                            value={formatCurrency(
-                                                salesOvertime?.length
-                                                    ? (summary?.total_sales ?? 0) / salesOvertime.length
-                                                    : 0,
-                                            )}
-                                            loading={summaryLoading || salesLoading}
-                                        />
+                                    <div className="mb-5">
+                                        <AnimatedNumberGroup>
+                                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                                            <MiniStat
+                                                icon={Wallet}
+                                                label="Net Income"
+                                                value={summary?.net_income ?? 0}
+                                                loading={summaryLoading}
+                                                format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                                            />
+                                            <MiniStat
+                                                icon={ReceiptText}
+                                                label="Total Sales"
+                                                value={summary?.total_sales ?? 0}
+                                                loading={summaryLoading}
+                                                format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                                            />
+                                            <MiniStat
+                                                icon={DollarSign}
+                                                label="Avg. / Day"
+                                                value={salesOvertime?.length ? (summary?.total_sales ?? 0) / salesOvertime.length : 0}
+                                                loading={summaryLoading || salesLoading}
+                                                format={{ style: "currency", currency: "PHP", minimumFractionDigits: 2, maximumFractionDigits: 2 }}
+                                            />
+                                            </div>
+                                        </AnimatedNumberGroup>
                                     </div>
 
                                     <div className="h-44">
