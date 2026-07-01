@@ -1,6 +1,5 @@
 import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { SHOP_INFO } from "@/lib/constants/meta"
-import { formatCurrency } from "@/lib/utils/currency"
 import { Building, User } from "lucide-react"
 
 interface EmployeeInfoProps {
