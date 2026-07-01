@@ -204,7 +204,7 @@ export default function OvertimePage() {
         <Wrapper>
             <div className="space-y-4 md:space-y-6">
                 <PageHeader
-                    variant="compact"
+                    isAdminOnly
                     title="Overtime Requests"
                     description="Manage employee overtime requests and approvals"
                     icon={Clock}

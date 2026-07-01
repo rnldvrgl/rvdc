@@ -276,6 +276,7 @@ export default function TemplatesSettingsPage() {
         return (
             <Wrapper maxWidth="narrow">
                 <PageHeader
+                    icon={ShieldAlert}
                     title="Templates"
                     description="Generate and print document templates."
                     breadcrumbs={["Settings", "Templates"]}
@@ -295,6 +296,7 @@ export default function TemplatesSettingsPage() {
     return (
         <Wrapper>
             <PageHeader
+                icon={ClipboardList}
                 title="Templates"
                 description="Generate and print document templates for your business."
                 breadcrumbs={["Settings", "Templates"]}

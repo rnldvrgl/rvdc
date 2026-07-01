@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useSystemSettings } from "@/lib/queries/useSystemSettings"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
-import { Cake, Settings2, Sparkles } from "lucide-react"
+import { Cake, Settings2, Sparkles, Wrench } from "lucide-react"
 
 export default function SystemSettingsPage() {
     const { data: settings, isLoading } = useSystemSettings()
@@ -24,6 +24,8 @@ export default function SystemSettingsPage() {
     return (
         <Wrapper>
             <PageHeader
+                isAdminOnly
+                icon={Wrench}
                 title="System Settings"
                 description="Control operations, alerts, and greeting behavior from one place"
                 breadcrumbs={["Settings", "System Settings"]}

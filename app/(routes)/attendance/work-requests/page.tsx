@@ -82,7 +82,7 @@ export default function WorkRequestsPage() {
         <Wrapper>
             <div className="space-y-4 md:space-y-6">
                 <PageHeader
-                    variant="compact"
+                    isAdminOnly
                     title="Work Requests"
                     description="Manage employee requests to work on shop-closed days"
                     icon={Hand}
