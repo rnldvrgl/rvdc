@@ -30,7 +30,9 @@ import {
     Search,
     UserIcon,
 } from "lucide-react"
+import { AnimatePresence, motion } from "framer-motion"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 function SidebarToggle() {
     const { collapsed, toggle } = useSidebarCollapse()
@@ -40,20 +42,40 @@ function SidebarToggle() {
                 <button
                     type="button"
                     onClick={toggle}
-                    className="flex items-center justify-center size-9 rounded-xl text-white bg-primary/90 dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/40 transition-colors cursor-pointer shrink-0"
+                    className="flex items-center justify-center size-9 rounded-xl text-primary-foreground bg-primary/90 dark:bg-primary/20 hover:bg-primary dark:hover:bg-primary/40 transition-colors cursor-pointer shrink-0"
                     aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
                 >
-                    {collapsed ? (
-                        <PanelLeftOpen className="size-[18px]" />
-                    ) : (
-                        <PanelLeftClose className="size-[18px]" />
-                    )}
+                    <AnimatePresence mode="wait" initial={false}>
+                        {collapsed ? (
+                            <motion.span
+                                key="expand"
+                                initial={{ opacity: 0, rotate: -90 }}
+                                animate={{ opacity: 1, rotate: 0 }}
+                                exit={{ opacity: 0, rotate: 90 }}
+                                transition={{ duration: 0.15, ease: "easeOut" }}
+                                className="flex items-center justify-center"
+                            >
+                                <PanelLeftOpen className="size-[18px]" />
+                            </motion.span>
+                        ) : (
+                            <motion.span
+                                key="collapse"
+                                initial={{ opacity: 0, rotate: 90 }}
+                                animate={{ opacity: 1, rotate: 0 }}
+                                exit={{ opacity: 0, rotate: -90 }}
+                                transition={{ duration: 0.15, ease: "easeOut" }}
+                                className="flex items-center justify-center"
+                            >
+                                <PanelLeftClose className="size-[18px]" />
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
                 </button>
             </TooltipTrigger>
             <TooltipContent side="bottom">
                 {collapsed ? "Expand sidebar" : "Collapse sidebar"}
             </TooltipContent>
-        </Tooltip>
+        </Tooltip >
     )
 }
 
@@ -93,76 +115,91 @@ function UserMenu({ user }: { user: User | null }) {
     const { useLogout } = useAuthentications()
     const logout = useLogout()
 
-    if (!user) {
-        return (
-            <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
-                <Skeleton className="size-8 rounded-full" />
-                <div className="flex flex-col gap-1">
-                    <Skeleton className="h-3.5 w-24" />
-                    <Skeleton className="h-2.5 w-16" />
-                </div>
-            </div>
-        )
-    }
-
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <button
-                    type="button"
-                    className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-muted/60 transition-colors cursor-pointer"
+        <AnimatePresence mode="wait" initial={false}>
+            {!user ? (
+                <motion.div
+                    key="user-menu-skeleton"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex items-center gap-2.5 rounded-xl px-2 py-1.5"
                 >
-                    <UserAvatar user={user} displayImage={displayImage} size="sm" />
-                    <div className="hidden sm:flex flex-col items-start min-w-0">
-                        <span className="text-sm font-semibold text-foreground truncate leading-tight">
-                            {user.first_name} {user.last_name}
-                        </span>
-                        <span className="text-[11px] text-muted-foreground/60 leading-tight truncate capitalize">
-                            {user.role || "User"}
-                        </span>
+                    <Skeleton className="size-8 rounded-full" />
+                    <div className="flex flex-col gap-1">
+                        <Skeleton className="h-3.5 w-24" />
+                        <Skeleton className="h-2.5 w-16" />
                     </div>
-                    <ChevronDown className="size-3.5 text-muted-foreground/50 ml-1 shrink-0 hidden sm:block" />
-                </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 p-0">
-                <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
-                    <UserAvatar user={user} displayImage={displayImage} size="md" />
-                    <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">
-                            {user.first_name} {user.last_name}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground truncate capitalize">
-                            {user.email || user.role || "User"}
-                        </p>
-                    </div>
-                </div>
-                <div className="p-1">
-                    <DropdownModeToggle userId={user?.id} />
-                    <DropdownMenuSeparator />
-                    <DropdownMenuGroup>
-                        <DropdownMenuItem asChild>
-                            <Link href="/settings/profile" className="cursor-pointer">
-                                <UserIcon className="mr-2 size-4" />
-                                Profile
-                            </Link>
-                        </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuGroup>
-                        <DropdownMenuItem
-                            onClick={() => {
-                                if (!refresh) return
-                                logout.mutateAsync(refresh)
-                            }}
-                            className="cursor-pointer"
-                        >
-                            <LogOutIcon className="mr-2 size-4" />
-                            Sign out
-                        </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                </div>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                </motion.div>
+            ) : (
+                <motion.div
+                    key="user-menu-loaded"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                >
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button
+                                type="button"
+                                className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-muted/60 transition-colors cursor-pointer"
+                            >
+                                <UserAvatar user={user} displayImage={displayImage} size="sm" />
+                                <div className="hidden sm:flex flex-col items-start min-w-0">
+                                    <span className="text-sm font-semibold text-foreground truncate leading-tight">
+                                        {user.first_name} {user.last_name}
+                                    </span>
+                                    <span className="text-[11px] text-muted-foreground/60 leading-tight truncate capitalize">
+                                        {user.role || "User"}
+                                    </span>
+                                </div>
+                                <ChevronDown className="size-3.5 text-muted-foreground/50 ml-1 shrink-0 hidden sm:block" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-64 p-0">
+                            <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
+                                <UserAvatar user={user} displayImage={displayImage} size="md" />
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold truncate">
+                                        {user.first_name} {user.last_name}
+                                    </p>
+                                    <p className="text-[11px] text-muted-foreground truncate capitalize">
+                                        {user.email || user.role || "User"}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="p-1">
+                                <DropdownModeToggle userId={user?.id} />
+                                <DropdownMenuSeparator />
+                                <DropdownMenuGroup>
+                                    <DropdownMenuItem asChild>
+                                        <Link href="/settings/profile" className="cursor-pointer">
+                                            <UserIcon className="mr-2 size-4" />
+                                            Profile
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuGroup>
+                                    <DropdownMenuItem
+                                        onClick={() => {
+                                            if (!refresh) return
+                                            logout.mutateAsync(refresh)
+                                        }}
+                                        className="cursor-pointer"
+                                    >
+                                        <LogOutIcon className="mr-2 size-4" />
+                                        Sign out
+                                    </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                            </div>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </motion.div>
+            )}
+        </AnimatePresence>
     )
 }
 
