@@ -83,16 +83,16 @@ export default function OffensesPage() {
 
     const columns = isArchived
         ? getOffenseColumns({
-              onEdit: () => {},
-              onDelete: () => {},
-              onRestore: handleRestore,
-              isAdmin,
-          })
+            onEdit: () => { },
+            onDelete: () => { },
+            onRestore: handleRestore,
+            isAdmin,
+        })
         : getOffenseColumns({
-              onEdit: openEdit,
-              onDelete: handleDelete,
-              isAdmin,
-          })
+            onEdit: openEdit,
+            onDelete: handleDelete,
+            isAdmin,
+        })
 
     const offenseStats = statistics ?? []
     const offensesAtLimit = offenseStats.filter((item) => item.is_at_limit).length
