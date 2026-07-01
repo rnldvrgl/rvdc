@@ -36,12 +36,13 @@ export function DataTableLimitFilter() {
                 value={String(limit)}
                 onValueChange={handleLimitChange}
             >
-                <SelectTrigger className="h-9 w-[70px]">
+                <SelectTrigger className="h-9 w-[70px] font-mono">
                     <SelectValue placeholder={String(limit)} />
                 </SelectTrigger>
                 <SelectContent>
                     {LIMIT_OPTIONS.map((option) => (
                         <SelectItem
+                            className="font-mono"
                             key={option}
                             value={String(option)}
                         >

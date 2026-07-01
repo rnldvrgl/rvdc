@@ -807,7 +807,7 @@ export function DataTable<TData, TValue>({
                         <div className="flex items-center gap-4">
                             <DataTableLimitFilter />
                             <div className="text-sm font-medium text-muted-foreground">
-                                Page {page} of {pageCount}
+                                Page <AnimatedNumber value={page} /> of <AnimatedNumber value={pageCount} />
                             </div>
                         </div>
                         <DataTablePagination

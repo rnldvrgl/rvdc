@@ -287,18 +287,6 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         icon: ClipboardList,
         permission: "view_items",
       },
-      {
-        name: "Direct Requests",
-        href: "/inventory/stock-requests/direct",
-        icon: PackagePlus,
-        permission: "view_items",
-      },
-      {
-        name: "Custom Items",
-        href: "/inventory/custom-items",
-        icon: LayoutList,
-        permission: "view_items",
-      },
     ],
   },
 

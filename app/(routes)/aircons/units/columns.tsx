@@ -1,5 +1,3 @@
-"use client"
-
 import { DataTableActions } from "@/components/custom/table/components/DataTableActions"
 import { AirconUnits, GetColumnsProps } from "@/lib/constants/interface"
 import { safeCell } from "@/lib/utils/helpers"
@@ -76,29 +74,29 @@ export function getAirconUnitsColumns({
                     { bg: string; text: string; ring: string }
                 > = {
                     Installed: {
-                        bg: "bg-emerald-50",
+                        bg: "bg-success/10 dark:bg-success/15",
                         text: "text-success",
-                        ring: "ring-emerald-600/20",
+                        ring: "ring-success/30",
                     },
                     "For Installation": {
-                        bg: "bg-blue-50",
-                        text: "text-blue-700",
-                        ring: "ring-blue-700/10",
+                        bg: "bg-info/10 dark:bg-info/15",
+                        text: "text-info",
+                        ring: "ring-info/30",
                     },
                     Sold: {
-                        bg: "bg-green-50",
+                        bg: "bg-success/10 dark:bg-success/15",
                         text: "text-success",
-                        ring: "ring-green-600/20",
+                        ring: "ring-success/30",
                     },
                     Reserved: {
-                        bg: "bg-yellow-50",
-                        text: "text-yellow-800",
-                        ring: "ring-yellow-600/20",
+                        bg: "bg-warning/10 dark:bg-warning/15",
+                        text: "text-warning",
+                        ring: "ring-warning/30",
                     },
                     Available: {
-                        bg: "bg-gray-50",
-                        text: "text-gray-600",
-                        ring: "ring-gray-500/10",
+                        bg: "bg-muted/60 dark:bg-muted/30",
+                        text: "text-muted-foreground",
+                        ring: "ring-border",
                     },
                 }
 
