@@ -1,4 +1,4 @@
-import { getToken, refreshTokens, removeToken } from "@/lib/utils/tokens"
+import { getToken, refreshTokens, removeToken, isSessionOnly } from "@/lib/utils/tokens"
 import { getOrCreateDeviceId } from "@/lib/utils/device"
 import axios from "axios"
 import qs from "qs"
@@ -7,7 +7,7 @@ import { toast } from "sonner"
 const baseURL = `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8000"}/api`
 const api = axios.create({
   baseURL,
-  timeout: 30000, // 30 seconds — prevents indefinitely hanging requests
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -16,7 +16,6 @@ const api = axios.create({
   },
 })
 
-// Mutex for token refresh — prevents concurrent refresh attempts
 let isRefreshing = false
 let refreshSubscribers: Array<{
   resolve: (token: string) => void
@@ -75,8 +74,8 @@ async function handleSessionExpired() {
 
 // Request Interceptor — Attach token
 api.interceptors.request.use(
-  async (config) => {
-    const access_token = await getToken("access")
+  (config) => {
+    const access_token = getToken("access") // sync — no await needed
     const deviceId = getOrCreateDeviceId()
     if (access_token) {
       config.headers["Authorization"] = `Bearer ${access_token}`
@@ -112,13 +111,11 @@ api.interceptors.response.use(
           errData.detail.toLowerCase().includes("token not valid"))
 
       if (tokenNotValid) {
-        const refresh = getToken("refresh")
+        const refresh = getToken("refresh") // sync — no await needed
         if (!refresh) {
-          // No refresh token — force a single global logout flow.
           return handleSessionExpired()
         }
 
-        // If already refreshing, queue this request
         if (isRefreshing) {
           return new Promise<string>((resolve, reject) => {
             addRefreshSubscriber(resolve, reject)
@@ -136,10 +133,6 @@ api.interceptors.response.use(
           const latestRefresh = refreshed?.refresh || getToken("refresh")
 
           if (newAccess) {
-            // Update cookies via API route — preserve persist/session-only mode
-            // by not setting maxAge when the user chose session-only storage
-            const isSessionOnly = typeof window !== "undefined" &&
-              sessionStorage.getItem("__rvdc_so") === "1"
             try {
               await fetch("/api/set-cookie", {
                 method: "POST",
@@ -148,7 +141,7 @@ api.interceptors.response.use(
                   access: newAccess,
                   refresh: latestRefresh || undefined,
                   role: getToken("role") || undefined,
-                  rememberMe: !isSessionOnly,
+                  rememberMe: !isSessionOnly(), // shared helper, single source of truth
                 }),
                 credentials: "include",
               })
@@ -170,7 +163,6 @@ api.interceptors.response.use(
         }
       }
 
-      // Refresh failed or not applicable — clean logout
       return handleSessionExpired()
     }
 

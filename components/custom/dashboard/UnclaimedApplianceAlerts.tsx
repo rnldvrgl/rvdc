@@ -44,9 +44,9 @@ export function UnclaimedApplianceAlerts() {
     }
 
     return (
-        <Card>
+        <Card className="@container">
             <CardHeader>
-                <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+                <CardTitle className="text-sm @sm:text-base flex items-center gap-2">
                     <Building2 className="size-5 shrink-0" />
                     <span className="truncate">Unclaimed Appliances</span>
                     {totalCount > 0 && (

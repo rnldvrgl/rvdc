@@ -191,13 +191,13 @@ export default function GradientMetricCards({
     }
 
     return (
-        <StaggerGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <StaggerGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {cards.map((card, i) => (
                 <FadeUpItem key={i}>
                     <MetricCardItem card={card} />
                 </FadeUpItem>
             ))}
-            {children && <FadeUpItem className="h-full">{children}</FadeUpItem>}
+            {children && <FadeUpItem className="h-full col-span-2">{children}</FadeUpItem>}
         </StaggerGrid>
     )
 }

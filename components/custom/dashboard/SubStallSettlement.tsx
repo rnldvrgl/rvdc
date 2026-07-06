@@ -206,53 +206,40 @@ export function SubStallSettlement({
                 >
                     <Card
                         className={cn(
-                            "group h-full overflow-hidden border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md",
+                            "group h-full overflow-hidden border-border/70 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md cursor-pointer",
                             className,
                         )}
                         onClick={() => setDialogOpen(true)}
                     >
-                        <CardContent className="space-y-4 p-4 sm:p-5">
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="flex min-w-0 items-center gap-3">
-                                    <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/10 transition-colors group-hover:bg-primary/15">
-                                        <Store className="size-5" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="truncate text-sm font-semibold text-foreground sm:text-base">
-                                            {stallName}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">Daily settlement</p>
-                                    </div>
+                        <CardContent className="p-5">
+                            <div className="flex items-start justify-between mb-3">
+                                <div className="p-2.5 rounded-lg bg-primary/10">
+                                    <Store className="size-5 text-primary" />
                                 </div>
                                 <Badge variant="outline" className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium">
                                     {formatDate(today, "MMM dd")}
                                 </Badge>
                             </div>
 
-                            <div className="space-y-1.5 rounded-2xl border border-border/60 bg-muted/20 px-4 py-4">
-                                <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                                    Cash to pay
+                            {hasSettlement ? (
+                                <AnimatedNumber
+                                    value={Number(subStallPayable!.cash_payable)}
+                                    className="text-xl sm:text-2xl font-bold text-foreground tracking-tight"
+                                    format={{
+                                        style: "currency",
+                                        currency: "PHP",
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    }}
+                                />
+                            ) : (
+                                <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
+                                    No settlement
                                 </p>
-                                {hasSettlement ? (
-                                    <AnimatedNumber
-                                        value={Number(subStallPayable!.cash_payable)}
-                                        className="text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]"
-                                        format={{
-                                            style: "currency",
-                                            currency: "PHP",
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        }}
-                                    />
-                                ) : (
-                                    <p className="text-2xl font-bold tracking-tight text-foreground sm:text-[1.75rem]">
-                                        No settlement
-                                    </p>
-                                )}
-                                <p className="text-sm text-muted-foreground">
-                                    Tap to review service, payment, and e-payment breakdowns.
-                                </p>
-                            </div>
+                            )}
+                            <p className="text-sm font-medium text-muted-foreground mt-1 truncate">
+                                {stallName} — Cash to pay
+                            </p>
                         </CardContent>
                     </Card>
                 </motion.div>

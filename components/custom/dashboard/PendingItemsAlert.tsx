@@ -27,9 +27,9 @@ export function PendingItemsAlert() {
     }
 
     return (
-        <Card className="overflow-hidden">
+        <Card className="@container overflow-hidden">
             <CardHeader>
-                <CardTitle className="text-sm sm:text-base flex items-center gap-2 min-w-0">
+                <CardTitle className="text-sm @sm:text-base flex items-center gap-2 min-w-0">
                     <div
                         className="p-2 rounded-lg shrink-0"
                         style={{ backgroundColor: tint("--warning") }}
@@ -45,14 +45,14 @@ export function PendingItemsAlert() {
                     </Badge>
                 </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 px-3 sm:px-6">
+            <CardContent className="space-y-2 px-3 @sm:px-6">
                 <div className="space-y-2">
                     {data.services.slice(0, 5).map((svc) => (
                         <button
                             key={svc.service_id}
                             type="button"
                             onClick={() => router.push(`/services?view=${svc.service_id}`)}
-                            className="group flex items-center gap-2 sm:gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all w-full text-left cursor-pointer min-w-0"
+                            className="group flex items-center gap-2 @sm:gap-3 p-2.5 rounded-lg border hover:bg-muted/50 transition-all w-full text-left cursor-pointer min-w-0"
                         >
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium truncate capitalize">
@@ -72,7 +72,7 @@ export function PendingItemsAlert() {
                             {(svc.unchecked_appliances > 0 || svc.has_service_level_pending) && (
                                 <Badge
                                     variant="outline"
-                                    className="shrink-0 text-[10px] sm:text-xs px-1.5 sm:px-2"
+                                    className="shrink-0 text-[10px] @sm:text-xs px-1.5 @sm:px-2"
                                     style={{
                                         borderColor: tint("--warning", 30),
                                         color: "var(--warning)",

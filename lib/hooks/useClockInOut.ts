@@ -6,19 +6,18 @@ import { usePayrollSettings } from "@/lib/queries/usePayroll"
 import { useEffect, useState } from "react"
 
 export function useClockInOut() {
-  const [currentTime, setCurrentTime] = useState(new Date())
+  const [currentTime, setCurrentTime] = useState<Date | null>(null)
   const { data: attendanceStatus, isLoading } = useCurrentAttendanceStatus()
   const { data: settings } = usePayrollSettings()
   const { clockIn, clockOut } = useAttendanceMutations()
 
-  // Update time every minute
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 60000)
-    return () => clearInterval(timer)
-  }, [])
-
+  setCurrentTime(new Date())
+  const timer = setInterval(() => {
+    setCurrentTime(new Date())
+  }, 1000)
+  return () => clearInterval(timer)
+}, [])
   // Get shift times from settings or use defaults
   const getHourFromTime = (timeStr?: string): number => {
     if (!timeStr) return 0
@@ -53,7 +52,7 @@ export function useClockInOut() {
   // This allows employees to clock out several hours after business hours end
   const LATE_CLOCK_OUT_TOLERANCE_HOURS = 5
 
-  const currentHour = currentTime.getHours()
+  const currentHour = currentTime?.getHours() ?? 0
 
   // Clock in window: from (shift_start - allowance) until shift_end
   // Example: 7 AM - 6 PM with 60-min allowance

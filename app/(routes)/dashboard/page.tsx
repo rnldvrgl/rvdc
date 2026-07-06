@@ -6,7 +6,6 @@ import { EmployeePerformanceStats } from "@/components/custom/dashboard/Employee
 import { InventoryReorderAlerts } from "@/components/custom/dashboard/InventoryReorderAlerts"
 import { LeaveBalanceSummary } from "@/components/custom/dashboard/LeaveBalanceSummary"
 import { PendingItemsAlert } from "@/components/custom/dashboard/PendingItemsAlert"
-import { QuickClockInOut } from "@/components/custom/dashboard/QuickClockInOut"
 import { RemindersAlerts } from "@/components/custom/dashboard/RemindersAlerts"
 import { SubStallSettlement } from "../../../components/custom/dashboard/SubStallSettlement"
 import { UnclaimedApplianceAlerts } from "@/components/custom/dashboard/UnclaimedApplianceAlerts"
@@ -25,12 +24,47 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useGetSummary } from "@/lib/queries/analytics/useGetAnalytics"
 import { BarChart3 } from "lucide-react"
 import { FormProvider, useForm } from "react-hook-form"
+import { cn } from "@/lib/utils/helpers"
+import { TimetableStatsCard } from "@/components/custom/attendance/TimetableStatsCard"
+import { ClockInOut } from "@/components/custom/attendance/ClockInOut"
 
 type DashboardFormValues = {
     range?: { from?: Date | null; to?: Date | null }
     stall?: number
 }
+
 // ── Sub-sections ────────────────────────────────────────────────────────────
+function SectionLabel({ children }: { children: React.ReactNode }) {
+    return (
+        <p className="mb-4 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+            {children}
+        </p>
+    )
+}
+
+function AttentionRail() {
+    return (
+        <div className="flex flex-col">
+            <SectionLabel>Needs attention</SectionLabel>
+
+            <div className="space-y-4">
+                <WidgetErrorBoundary fallbackTitle="Reminders failed to load">
+                    <RemindersAlerts />
+                </WidgetErrorBoundary>
+                <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
+                    <PendingItemsAlert />
+                </WidgetErrorBoundary>
+                <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
+                    <InventoryReorderAlerts />
+                </WidgetErrorBoundary>
+                <WidgetErrorBoundary fallbackTitle="Unclaimed alerts failed to load">
+                    <UnclaimedApplianceAlerts />
+                </WidgetErrorBoundary>
+                <BirthdayReminders />
+            </div>
+        </div>
+    )
+}
 
 function AdminDashboard() {
     return (
@@ -39,43 +73,38 @@ function AdminDashboard() {
                 <HeroStatsSection />
             </SectionReveal>
 
-            <SectionReveal delay={0.1}>
-                <GradientMetricCards>
-                    <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
-                        <SubStallSettlement variant="summary" />
-                    </WidgetErrorBoundary>
-                </GradientMetricCards>
-            </SectionReveal>
-
-            <SectionReveal delay={0.15}>
-                <DashboardCalendar />
-            </SectionReveal>
-
-            <SectionReveal delay={0.2}>
-                <DashboardCharts />
-            </SectionReveal>
-
-            <SectionReveal delay={0.25}>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
                 <div className="space-y-6">
-                    <div className="grid gap-6 lg:grid-cols-2">
-                        <WidgetErrorBoundary fallbackTitle="Reminders failed to load">
-                            <RemindersAlerts />
-                        </WidgetErrorBoundary>
-                        <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
-                            <InventoryReorderAlerts />
-                        </WidgetErrorBoundary>
-                    </div>
+                    <SectionReveal delay={0.1}>
+                        <div>
+                            <SectionLabel>Schedule</SectionLabel>
+                            <DashboardCalendar />
+                        </div>
+                    </SectionReveal>
 
-                    <div className="grid gap-6 lg:grid-cols-3">
-                        <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
-                            <PendingItemsAlert />
-                        </WidgetErrorBoundary>
-                        <BirthdayReminders />
-                        <WidgetErrorBoundary fallbackTitle="Unclaimed alerts failed to load">
-                            <UnclaimedApplianceAlerts />
-                        </WidgetErrorBoundary>
-                    </div>
+                    <SectionReveal delay={0.15} >
+                        <GradientMetricCards>
+                            <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
+                                <SubStallSettlement />
+                            </WidgetErrorBoundary>
+                        </GradientMetricCards>
+                    </SectionReveal>
 
+                    <SectionReveal delay={0.2}>
+                        <DashboardCharts />
+                    </SectionReveal>
+                </div>
+
+                <SectionReveal delay={0.1} className="order-first lg:order-0">
+                    <div className="lg:sticky lg:top-14">
+                        <AttentionRail />
+                    </div>
+                </SectionReveal>
+            </div>
+
+            <SectionReveal delay={0.3}>
+                <div>
+                    <SectionLabel>Performance</SectionLabel>
                     <WidgetErrorBoundary fallbackTitle="Employee performance failed to load">
                         <EmployeePerformanceStats />
                     </WidgetErrorBoundary>
@@ -97,66 +126,72 @@ function EmployeeDashboard({
     const isTechnician = role === "technician"
     const showCalendarFull = isManager
     const showCalendarLimited = isTechnician || isClerk
+    const hasAttentionItems = isManager || isClerk
 
     return (
         <div className="space-y-6">
-            {payrollIncluded && (
+            {showCalendarFull && (
                 <SectionReveal delay={0.05}>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-                        <QuickClockInOut />
+                    <DashboardCalendar />
+                </SectionReveal>
+            )}
 
+            {payrollIncluded && (
+                <SectionReveal delay={0.1}>
+                    <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+                        <ClockInOut variant="compact" />
+
+                        <TimetableStatsCard />
+
+                    </div>
+                </SectionReveal>
+            )}
+
+            {payrollIncluded && (
+                <SectionReveal delay={0.12}>
+                    <LeaveBalanceSummary />
+                </SectionReveal>
+            )}
+
+            {payrollIncluded && hasAttentionItems && (
+                <SectionReveal delay={0.15}>
+                    {/* sm:grid-cols-2 lg:grid-cols-3 */}
+                    <div className={cn("grid gap-4", isManager ? "lg:grid-cols-2" : "xl:grid-cols-3")}>
                         {isClerk && (
                             <WidgetErrorBoundary fallbackTitle="Pending items failed to load">
                                 <PendingItemsAlert />
                             </WidgetErrorBoundary>
                         )}
-
-                        {(isManager || isClerk) && (
-                            <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
-                                <SubStallSettlement enableShortcut={isManager} />
-                            </WidgetErrorBoundary>
-                        )}
-
                         {isManager && (
                             <WidgetErrorBoundary fallbackTitle="Unclaimed alerts failed to load">
                                 <UnclaimedApplianceAlerts />
                             </WidgetErrorBoundary>
                         )}
-
-                        <LeaveBalanceSummary />
-
                         {isClerk && (
                             <WidgetErrorBoundary fallbackTitle="Inventory alerts failed to load">
                                 <InventoryReorderAlerts stallOnly />
                             </WidgetErrorBoundary>
                         )}
-
-                        {isTechnician && (
-                            <BirthdayReminders className="lg:col-span-2" />
-                        )}
+                        <WidgetErrorBoundary fallbackTitle="Sub stall settlement failed to load">
+                            <SubStallSettlement enableShortcut={true} />
+                        </WidgetErrorBoundary>
                     </div>
                 </SectionReveal>
             )}
 
-            {(isManager || isClerk) && (
-                <SectionReveal delay={0.1}>
+            {(isTechnician || isManager || isClerk) && (
+                <SectionReveal delay={0.2}>
                     <BirthdayReminders />
                 </SectionReveal>
             )}
 
             {showCalendarLimited && (
-                <SectionReveal delay={0.15}>
+                <SectionReveal delay={0.05}>
                     <DashboardCalendar
                         withSettings={false}
                         withRefresh={false}
                         eventTypes={NON_ADMIN_CALENDAR_EVENTS}
                     />
-                </SectionReveal>
-            )}
-
-            {showCalendarFull && (
-                <SectionReveal delay={0.15}>
-                    <DashboardCalendar />
                 </SectionReveal>
             )}
         </div>

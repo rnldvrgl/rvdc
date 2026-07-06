@@ -1,5 +1,4 @@
 "use client"
-
 import { EmptyState } from "@/components/custom/EmptyState"
 import { ListCardSkeleton } from "@/components/custom/shared/skeletons"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,17 +6,14 @@ import { useCalendarEvents } from "@/lib/queries/calendar/useCalendarEvents"
 import { cn, formatDateToYMD } from "@/lib/utils/helpers"
 import { format } from "date-fns"
 import { Cake, Sparkles } from "lucide-react"
-
 export function BirthdayReminders({ className }: { className?: string }) {
     const today = new Date()
     const nextWeek = new Date()
     nextWeek.setDate(today.getDate() + 7)
-
     const { data: events, isLoading } = useCalendarEvents({
         start: formatDateToYMD(today),
         end: formatDateToYMD(nextWeek),
     })
-
     const birthdays =
         events
             ?.filter((event) => event.extendedProps.type === "birthday")
@@ -26,11 +22,9 @@ export function BirthdayReminders({ className }: { className?: string }) {
                 const dateB = new Date(b.start).getTime()
                 return dateA - dateB
             }) || []
-
     if (isLoading) {
         return <ListCardSkeleton rows={3} />
     }
-
     if (birthdays.length === 0) {
         return (
             <EmptyState
@@ -41,11 +35,10 @@ export function BirthdayReminders({ className }: { className?: string }) {
             />
         )
     }
-
     return (
-        <Card className={cn("h-full", className)}>
+        <Card className={cn("@container h-full", className)}>
             <CardHeader>
-                <CardTitle className="text-sm sm:text-base flex items-center gap-2">
+                <CardTitle className="text-sm @sm:text-base flex items-center gap-2">
                     <div className="p-2 rounded-lg bg-pink-100 dark:bg-pink-950 shrink-0">
                         <Cake className="size-4 text-pink-600 dark:text-pink-400" />
                     </div>
@@ -56,7 +49,6 @@ export function BirthdayReminders({ className }: { className?: string }) {
                 {birthdays.map((birthday, index) => {
                     const birthdayDate = new Date(birthday.start)
                     const isToday = birthdayDate.toDateString() === today.toDateString()
-
                     return (
                         <div
                             key={index}

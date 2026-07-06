@@ -14,6 +14,7 @@ import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
 import { useDailyAttendances } from "@/lib/queries/useAttendance"
 import { convertAttendanceForCalendar } from "@/lib/utils/attendance"
 import { formatDateToYMD } from "@/lib/utils/helpers"
+import { formatDate } from "date-fns"
 import { CalendarDays, ClipboardList, Plane, Users } from "lucide-react"
 import Link from "next/link"
 import { useMemo, useState } from "react"
@@ -47,12 +48,18 @@ const AttendancePage = () => {
     // Calculate stats using custom hook
     const stats = useAttendanceStats(attendanceRecords, calendarEvents)
 
+    // Real label from the actual computed range, not a static string.
+    const rangeLabel = `${formatDate(new Date(dateRange.start_date), "MMM d")} – ${formatDate(
+        new Date(dateRange.end_date),
+        "MMM d, yyyy",
+    )}`
+
     const summaryCards = useMemo(
         () => [
             {
                 title: "Paid Hours",
                 value: stats.totalHours.toFixed(2),
-                description: "Approved and computed hours for the current month range.",
+                description: `Approved and computed hours for ${rangeLabel}.`,
             },
             {
                 title: "Pending Records",
@@ -62,11 +69,10 @@ const AttendancePage = () => {
             {
                 title: "Leave Days",
                 value: String(stats.leaveCount),
-                description:
-                    "Approved leave days visible in your attendance month view.",
+                description: `Approved leave days from ${rangeLabel}.`,
             },
         ],
-        [stats.leaveCount, stats.pendingCount, stats.totalHours],
+        [stats.leaveCount, stats.pendingCount, stats.totalHours, rangeLabel],
     )
 
     return (
@@ -76,7 +82,7 @@ const AttendancePage = () => {
                     variant="compact"
                     icon={Users}
                     title="Attendance"
-                    description="Your daily clock-in workspace, month snapshot, and recent attendance history."
+                    description={`Your daily clock-in workspace, month snapshot (${rangeLabel}), and recent attendance history.`}
                     breadcrumbs={["Attendance"]}
                     actionButton={
                         <div className="flex flex-wrap items-center gap-2">
@@ -99,7 +105,7 @@ const AttendancePage = () => {
                         yesterdayAttendance={yesterdayAttendance ?? undefined}
                     />
 
-                    <div className="space-y-4">
+                    <div className="grid space-y-4">
                         {summaryCards.map((card) => (
                             <Card
                                 key={card.title}
@@ -146,41 +152,16 @@ const AttendancePage = () => {
                     })}
                 </div>
 
-                <Card className="overflow-hidden border-border/60">
-                    <CardHeader className="border-b border-border/60 pb-4">
-                        <div className="flex items-center justify-between gap-3">
-                            <div>
-                                <CardTitle className="flex items-center gap-2 text-lg">
-                                    <CalendarDays className="h-5 w-5 text-primary" />
-                                    Monthly Calendar
-                                </CardTitle>
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    View your attendance pattern for the month, including late,
-                                    leave, and absent days.
-                                </p>
-                            </div>
-                            <Button
-                                asChild
-                                variant="outline"
-                            >
-                                <Link href="/attendance/leaves">
-                                    <ClipboardList className="mr-2 h-4 w-4" />
-                                    Request or Review Leave
-                                </Link>
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <DashboardCalendar
-                            mode="attendance"
-                            useCustomData
-                            attendanceData={calendarEvents}
-                            title="My Attendance"
-                            description=""
-                            eventTypes={["attendance"]}
-                        />
-                    </CardContent>
-                </Card>
+                <DashboardCalendar
+                    mode="attendance"
+                    useCustomData
+                    attendanceData={calendarEvents}
+                    title="My Attendance"
+                    description=""
+                    withSettings={false}
+                    withRefresh={false}
+                    eventTypes={["attendance"]}
+                />
 
                 <RecentActivitySection
                     records={attendanceRecords}
