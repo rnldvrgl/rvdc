@@ -114,6 +114,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         credit: "",
         debit: "",
         cheque: "",
+        client_fund_deposits_cash: "",
         expenses: "",
     })
 
@@ -140,6 +141,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                 credit: preview.total_sales_credit,
                 debit: preview.total_sales_debit,
                 cheque: preview.total_sales_cheque,
+                client_fund_deposits_cash: preview.client_fund_deposits_cash,
                 expenses: preview.total_expenses,
             })
         }
@@ -200,7 +202,8 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
         if (adjustSales && preview) {
             const adjustedExpected =
                 (parseFloat(salesOverrides.cash) || 0) +
-                (parseFloat(String(preview.cod_from_previous)) || 0) -
+                (parseFloat(String(preview.cod_from_previous)) || 0) +
+                (parseFloat(salesOverrides.client_fund_deposits_cash) || 0) -
                 (parseFloat(salesOverrides.expenses) || 0)
             return Math.max(0, adjustedExpected)
         }
@@ -334,12 +337,14 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
             const credit = parseFloat(salesOverrides.credit)
             const debit = parseFloat(salesOverrides.debit)
             const cheque = parseFloat(salesOverrides.cheque)
+            const clientFundCash = parseFloat(salesOverrides.client_fund_deposits_cash)
             const expenses = parseFloat(salesOverrides.expenses)
             if (!isNaN(cash)) payload.override_sales_cash = cash
             if (!isNaN(gcash)) payload.override_sales_gcash = gcash
             if (!isNaN(credit)) payload.override_sales_credit = credit
             if (!isNaN(debit)) payload.override_sales_debit = debit
             if (!isNaN(cheque)) payload.override_sales_cheque = cheque
+            if (!isNaN(clientFundCash)) payload.override_client_fund_deposits_cash = clientFundCash
             if (!isNaN(expenses)) payload.override_expenses = expenses
 
             // Non-admin: attach admin credentials if available, or prompt
@@ -532,6 +537,7 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                                     { key: "credit" as const, label: "Credit Sales" },
                                     { key: "debit" as const, label: "Debit Sales" },
                                     { key: "cheque" as const, label: "Cheque Sales" },
+                                    { key: "client_fund_deposits_cash" as const, label: "Client Fund Deposits (Cash)" },
                                     { key: "expenses" as const, label: "Expenses" },
                                 ].map(({ key, label }) => (
                                     <div
@@ -578,6 +584,56 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                                         format={currencyFormat}
                                     />
                                 </div>
+                                {Number(preview.client_fund_deposits_cash) > 0 && (
+                                    <div className="flex justify-between gap-3">
+                                        <span className="text-muted-foreground">Client Fund Deposits (Cash)</span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.client_fund_deposits_cash)) || 0}
+                                            className="font-medium tabular-nums"
+                                            format={currencyFormat}
+                                        />
+                                    </div>
+                                )}
+                                {Number(preview.client_fund_deposits_gcash) > 0 && (
+                                    <div className="flex justify-between gap-3">
+                                        <span className="text-muted-foreground">Client Fund Deposits (GCash)</span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.client_fund_deposits_gcash)) || 0}
+                                            className="font-medium tabular-nums"
+                                            format={currencyFormat}
+                                        />
+                                    </div>
+                                )}
+                                {Number(preview.client_fund_deposits_credit) > 0 && (
+                                    <div className="flex justify-between gap-3">
+                                        <span className="text-muted-foreground">Client Fund Deposits (Credit)</span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.client_fund_deposits_credit)) || 0}
+                                            className="font-medium tabular-nums"
+                                            format={currencyFormat}
+                                        />
+                                    </div>
+                                )}
+                                {Number(preview.client_fund_deposits_debit) > 0 && (
+                                    <div className="flex justify-between gap-3">
+                                        <span className="text-muted-foreground">Client Fund Deposits (Debit)</span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.client_fund_deposits_debit)) || 0}
+                                            className="font-medium tabular-nums"
+                                            format={currencyFormat}
+                                        />
+                                    </div>
+                                )}
+                                {Number(preview.client_fund_deposits_cheque) > 0 && (
+                                    <div className="flex justify-between gap-3">
+                                        <span className="text-muted-foreground">Client Fund Deposits (Cheque)</span>
+                                        <AnimatedNumber
+                                            value={parseFloat(String(preview.client_fund_deposits_cheque)) || 0}
+                                            className="font-medium tabular-nums"
+                                            format={currencyFormat}
+                                        />
+                                    </div>
+                                )}
                                 {Number(preview.total_sales_gcash) > 0 && (
                                     <div className="flex justify-between gap-3">
                                         <span className="text-muted-foreground">GCash Sales</span>
@@ -651,7 +707,8 @@ export default function RemittanceForm({ initialData, onClose }: Props) {
                                     ? Math.max(
                                         0,
                                         (parseFloat(salesOverrides.cash) || 0) +
-                                        parseFloat(String(preview.cod_from_previous) || "0") -
+                                        parseFloat(String(preview.cod_from_previous) || "0") +
+                                        (parseFloat(salesOverrides.client_fund_deposits_cash) || 0) -
                                         (parseFloat(salesOverrides.expenses) || 0),
                                     )
                                     : parseFloat(String(preview.expected_remittance)) || 0}

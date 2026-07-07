@@ -33,6 +33,12 @@ export interface RemittancePreview {
   total_expenses: string
   cod_from_previous: string
   expected_remittance: string
+  client_fund_deposits_cash: string
+  client_fund_deposits_gcash: string
+  client_fund_deposits_credit: string
+  client_fund_deposits_debit: string
+  client_fund_deposits_cheque: string
+  total_client_fund_deposits: string
 }
 
 export function useRemittancePreview({

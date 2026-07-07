@@ -159,6 +159,8 @@ export default function ClientDetailPage() {
             return
         }
 
+        console.log(clientId)
+
         addClientFundDeposit.mutate(
             {
                 id: Number(clientId),
@@ -246,9 +248,17 @@ export default function ClientDetailPage() {
                 title={client.full_name}
                 breadcrumbs={["Clients", { label: client.full_name }]}
                 actionButton={
-                    <Button variant="outline" size="sm" onClick={() => router.push("/clients")}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />Back
-                    </Button>
+                    <>
+                        <Button variant="outline" size="sm" onClick={() => router.push("/clients")}>
+                            <ArrowLeft className="mr-2 h-4 w-4" />Back
+                        </Button>
+                        {canManage && (
+                            <Button size="sm" onClick={() => setFundDialogOpen(true)}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Add Client Fund
+                            </Button>
+                        )}
+                    </>
                 }
             />
 
@@ -303,40 +313,6 @@ export default function ClientDetailPage() {
                                         {formatCurrency(parseFloat(client.fund_balance || "0"))}
                                     </p>
                                 </div>
-                            </div>
-                        </div>
-
-                        {canManage && (
-                            <Button className="w-full" size="sm" onClick={() => setFundDialogOpen(true)}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add Client Fund
-                            </Button>
-                        )}
-
-                        <div className="space-y-2">
-                            <p className="text-xs text-muted-foreground">Recent Fund Deposits</p>
-                            <div className="max-h-48 overflow-auto space-y-2 pr-1">
-                                {fundDepositsLoading ? (
-                                    <p className="text-xs text-muted-foreground">Loading deposits...</p>
-                                ) : fundDeposits.length === 0 ? (
-                                    <p className="text-xs text-muted-foreground">No fund deposits yet.</p>
-                                ) : (
-                                    fundDeposits.slice(0, 5).map((deposit) => (
-                                        <div key={deposit.id} className="rounded-md border p-2">
-                                            <div className="flex items-center justify-between gap-2 text-xs">
-                                                <span className="font-medium">
-                                                    {formatCurrency(parseFloat(deposit.amount || "0"))}
-                                                </span>
-                                                <Badge variant="outline" className="text-[10px] capitalize">
-                                                    {deposit.payment_method_display || deposit.payment_method}
-                                                </Badge>
-                                            </div>
-                                            <p className="text-[11px] text-muted-foreground mt-1">
-                                                {new Date(deposit.deposit_date).toLocaleString("en-PH")}
-                                            </p>
-                                        </div>
-                                    ))
-                                )}
                             </div>
                         </div>
                     </CardContent>

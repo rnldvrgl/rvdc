@@ -107,6 +107,7 @@ export const RemittanceRecordSchema = z.object({
   override_sales_credit: z.number().min(0).optional().nullable(),
   override_sales_debit: z.number().min(0).optional().nullable(),
   override_sales_cheque: z.number().min(0).optional().nullable(),
+  override_client_fund_deposits_cash: z.number().min(0).optional().nullable(),
   override_expenses: z.number().min(0).optional().nullable(),
 
   // Admin credentials for non-admin users to authorize overrides
