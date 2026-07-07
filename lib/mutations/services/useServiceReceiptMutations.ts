@@ -3,6 +3,7 @@
 import { ServiceReceiptPayload } from "@/lib/constants/interface"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
+import { bg } from "@/lib/utils/queryInvalidation"
 import { useQueryClient } from "@tanstack/react-query"
 
 export function useServiceReceiptMutations() {
@@ -12,7 +13,7 @@ export function useServiceReceiptMutations() {
   const addReceipt = useApiMutation({
     mutationFn: (data: ServiceReceiptPayload) => api.post(url, data),
     successMessage: "Receipt added.",
-    invalidateQueries: [{ queryKey: ["services"] }],
+    invalidateQueries: [bg(["services"])],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["service", `${variables.service}`],
@@ -29,7 +30,7 @@ export function useServiceReceiptMutations() {
       data: Partial<ServiceReceiptPayload>
     }) => api.patch(`${url}${id}/`, data),
     successMessage: "Receipt updated.",
-    invalidateQueries: [{ queryKey: ["services"] }],
+    invalidateQueries: [bg(["services"])],
     onSuccess: (_, variables) => {
       if (variables.data.service) {
         queryClient.invalidateQueries({
@@ -43,7 +44,7 @@ export function useServiceReceiptMutations() {
     mutationFn: ({ id }: { id: number; serviceId: number }) =>
       api.delete(`${url}${id}/`),
     successMessage: "Receipt removed.",
-    invalidateQueries: [{ queryKey: ["services"] }],
+    invalidateQueries: [bg(["services"])],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["service", `${variables.serviceId}`],

@@ -29,6 +29,18 @@ export function useApiMutation<TVariables, TData>({
   const queryClient = useQueryClient()
   const { handleError } = useDRFToastError()
 
+  // Shared invalidation runner — respects an optional per-key refetchType
+  // so collateral queries (analytics, other list views) can be marked
+  // stale without forcing an immediate competing refetch.
+  const runInvalidations = () => {
+    invalidateQueries.forEach(({ queryKey, refetchType }) => {
+      queryClient.invalidateQueries({
+        queryKey,
+        refetchType: refetchType ?? "active",
+      })
+    })
+  }
+
   const mutation = useMutation<TData, unknown, TVariables>({
     mutationFn,
     retry,
@@ -39,9 +51,7 @@ export function useApiMutation<TVariables, TData>({
         toast.success(successMessage)
       }
 
-      invalidateQueries.forEach(({ queryKey }) => {
-        queryClient.invalidateQueries({ queryKey })
-      })
+      runInvalidations()
 
       onSuccess?.(data, variables)
     },
@@ -59,10 +69,7 @@ export function useApiMutation<TVariables, TData>({
   const mutateWithPromise = async (variables: TVariables) => {
     if (usePromiseToast) {
       const promise = mutationFn(variables).then((data) => {
-        // Handle query invalidation
-        invalidateQueries.forEach(({ queryKey }) => {
-          queryClient.invalidateQueries({ queryKey })
-        })
+        runInvalidations()
 
         // Call onSuccess callback
         onSuccess?.(data, variables)

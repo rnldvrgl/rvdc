@@ -10,10 +10,15 @@ import { LucideIcon } from "lucide-react"
 // ---------------------
 // API Mutations & Sheets
 // ---------------------
+export interface InvalidateQuerySpec {
+  queryKey: readonly unknown[]
+  refetchType?: "active" | "inactive" | "none"
+}
+
 export interface UseApiMutationProps<TVariables, TData> {
   mutationFn: (variables: TVariables) => Promise<TData>
   successMessage?: string
-  invalidateQueries?: { queryKey: string[] }[]
+  invalidateQueries?: InvalidateQuerySpec[]
   onSuccess?: (data: TData, variables: TVariables) => void
   onError?: (error: unknown) => void
   // Toast.promise configuration

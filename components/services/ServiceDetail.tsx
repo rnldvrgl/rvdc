@@ -83,6 +83,7 @@ import {
     Info,
     Kanban,
     List,
+    Loader2,
     MapPin,
     Package,
     Pencil,
@@ -114,6 +115,11 @@ const applianceStatusLabels: Record<string, string> = {
     cancelled: "Cancelled",
 }
 
+// Small reusable inline spinner for buttons mid-mutation.
+function ButtonSpinner({ className = "mr-1.5 h-3.5 w-3.5" }: { className?: string }) {
+    return <Loader2 className={`${className} animate-spin`} />
+}
+
 export default function ServiceDetail({
     service,
     onEdit,
@@ -122,8 +128,6 @@ export default function ServiceDetail({
     const queryClient = useQueryClient()
     const { canManage, role, isAdmin } = useCurrentUser()
 
-    // Subscribe to the service detail query so mutations that invalidate
-    // ["service", id] cause this component to re-render with fresh appliance data.
     const { data: freshService } = useApiQuery<Service>({
         queryKey: ["service", `${service.id}`],
         url: `services/services/${service.id}/`,
@@ -144,9 +148,7 @@ export default function ServiceDetail({
     const [refundAmount, setRefundAmount] = useState("")
     const [refundReason, setRefundReason] = useState("")
     const [refundType, setRefundType] = useState<"full" | "partial">("partial")
-    const [refundMethod, setRefundMethod] = useState<
-        "cash" | "gcash" | "bank_transfer"
-    >("cash")
+    const [refundMethod, setRefundMethod] = useState<"cash" | "gcash" | "bank_transfer">("cash")
     const [discountValue, setDiscountValue] = useState("")
     const [discountReason, setDiscountReason] = useState("")
     const [scheduleDeliveryDialogOpen, setScheduleDeliveryDialogOpen] =
@@ -228,6 +230,31 @@ export default function ServiceDetail({
     const isUnclaimedMode = service.service_mode === "carry_in" || service.service_mode === "pull_out"
     // Block reopen/reservice when any appliance is acquired or forfeited — company asset records already exist
     const hasAnyForfeitedOrAcquired = service.is_forfeited || currentAppliances.some((a) => a.is_forfeited)
+
+    // True while ANY mutation touching this service is in flight — drives the
+    // top progress bar and disables trigger buttons so users can't double-fire
+    // actions while a network request is pending.
+    const isBusy =
+        completeService.isPending ||
+        recordPayment.isPending ||
+        editPayment.isPending ||
+        voidPayment.isPending ||
+        cancelService.isPending ||
+        refundService.isPending ||
+        updateService.isPending ||
+        reopenService.isPending ||
+        toggleServiceItemsChecked.isPending ||
+        updateAppliance.isPending ||
+        markApplianceClaimed.isPending ||
+        markApplianceForfeited.isPending ||
+        convertApplianceToAcquisition.isPending ||
+        addReceipt.isPending ||
+        updateReceipt.isPending ||
+        deleteReceipt.isPending ||
+        addExtraCharge.isPending ||
+        updateExtraCharge.isPending ||
+        deleteExtraCharge.isPending ||
+        addService.isPending
 
     // Initialize discount form with existing values
     useEffect(() => {
@@ -664,6 +691,13 @@ export default function ServiceDetail({
 
     return (
         <div className="space-y-4">
+            {/* Global busy indicator — thin progress bar pinned to viewport top */}
+            {isBusy && (
+                <div className="fixed left-0 right-0 top-0 z-50 h-0.5 overflow-hidden bg-primary/20">
+                    <div className="h-full w-1/3 animate-pulse bg-primary" />
+                </div>
+            )}
+
             {/* Header: Badges + Actions */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 {/* Status Badges — compact inline pills */}
@@ -729,6 +763,7 @@ export default function ServiceDetail({
                                     size="icon"
                                     className="h-7 w-7"
                                     onClick={onEdit}
+                                    disabled={isBusy}
                                 >
                                     <Edit className="h-3.5 w-3.5" />
                                 </Button>
@@ -746,6 +781,7 @@ export default function ServiceDetail({
                                         size="icon"
                                         className="h-7 w-7"
                                         onClick={() => setCancelDialogOpen(true)}
+                                        disabled={isBusy}
                                     >
                                         <XIcon className="h-3.5 w-3.5" />
                                     </Button>
@@ -767,6 +803,7 @@ export default function ServiceDetail({
                                             parseFloat(service.total_refunded || "0")
                                         setRefundAmount(maxRefund.toString())
                                     }}
+                                    disabled={isBusy}
                                 >
                                     <Info className="h-3.5 w-3.5" />
                                 </Button>
@@ -782,6 +819,7 @@ export default function ServiceDetail({
                                     size="sm"
                                     className="h-7 px-2.5 text-xs"
                                     onClick={() => setReceiptPrintDialogOpen(true)}
+                                    disabled={isBusy}
                                 >
                                     <Printer className="mr-1 h-3.5 w-3.5" />
                                     Print
@@ -799,7 +837,7 @@ export default function ServiceDetail({
                                         size="sm"
                                         className="h-7 px-2.5 text-xs"
                                         onClick={() => setReopenDialogOpen(true)}
-                                        disabled={hasAnyForfeitedOrAcquired}
+                                        disabled={hasAnyForfeitedOrAcquired || isBusy}
                                     >
                                         <RotateCcw className="mr-1 h-3.5 w-3.5" />
                                         Reopen
@@ -822,7 +860,7 @@ export default function ServiceDetail({
                                         size="sm"
                                         className="h-7 px-2.5 text-xs border-orange-500 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/30"
                                         onClick={() => setReServiceDialogOpen(true)}
-                                        disabled={hasAnyForfeitedOrAcquired}
+                                        disabled={hasAnyForfeitedOrAcquired || isBusy}
                                     >
                                         <Copy className="mr-1 h-3.5 w-3.5" />
                                         Re-Service
@@ -844,6 +882,7 @@ export default function ServiceDetail({
                                     variant="success"
                                     className="h-7 px-2.5 text-xs"
                                     onClick={() => setCompleteDialogOpen(true)}
+                                    disabled={isBusy}
                                 >
                                     <CheckCircle className="mr-1 h-3.5 w-3.5" />
                                     Complete
@@ -1425,6 +1464,7 @@ export default function ServiceDetail({
                                                                                 size="sm"
                                                                                 className="h-6 px-2 text-xs"
                                                                                 onClick={() => setClaimingApplianceId(appliance.id)}
+                                                                                disabled={isBusy}
                                                                             >
                                                                                 <Truck className="mr-1 h-3 w-3" />
                                                                                 Mark Claimed
@@ -1444,6 +1484,7 @@ export default function ServiceDetail({
                                                                                     setForfeitingApplianceNotes("")
                                                                                     setForfeitingApplianceId(appliance.id)
                                                                                 }}
+                                                                                disabled={isBusy}
                                                                             >
                                                                                 <AlertTriangle className="mr-1 h-3 w-3" />
                                                                                 Forfeit
@@ -1464,6 +1505,7 @@ export default function ServiceDetail({
                                                                                     setAcquiringApplianceNotes("")
                                                                                     setAcquiringApplianceId(appliance.id)
                                                                                 }}
+                                                                                disabled={isBusy}
                                                                             >
                                                                                 <Wallet className="mr-1 h-3 w-3" />
                                                                                 Acquire
@@ -1664,6 +1706,7 @@ export default function ServiceDetail({
                                                 setReceiptDraft(emptyReceiptDraft)
                                                 setShowAddReceiptForm(true)
                                             }}
+                                            disabled={isBusy}
                                         >
                                             <Plus className="h-3.5 w-3.5" />
                                             Add Receipt
@@ -1822,7 +1865,11 @@ export default function ServiceDetail({
                                                         )
                                                     }}
                                                 >
-                                                    <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                                                    {updateReceipt.isPending ? (
+                                                        <ButtonSpinner />
+                                                    ) : (
+                                                        <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                                                    )}
                                                     Save
                                                 </Button>
                                             </div>
@@ -1890,6 +1937,7 @@ export default function ServiceDetail({
                                                         setEditingReceiptId(receipt.id)
                                                         setShowAddReceiptForm(false)
                                                     }}
+                                                    disabled={isBusy}
                                                 >
                                                     <PenLine className="h-3.5 w-3.5" />
                                                 </Button>
@@ -1905,7 +1953,11 @@ export default function ServiceDetail({
                                                         )
                                                     }
                                                 >
-                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                    {deleteReceipt.isPending ? (
+                                                        <ButtonSpinner className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                    )}
                                                 </Button>
                                             </div>
                                         </div>
@@ -2048,7 +2100,11 @@ export default function ServiceDetail({
                                                     )
                                                 }}
                                             >
-                                                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                                {addReceipt.isPending ? (
+                                                    <ButtonSpinner />
+                                                ) : (
+                                                    <Plus className="mr-1.5 h-3.5 w-3.5" />
+                                                )}
                                                 Add
                                             </Button>
                                         </div>
@@ -2068,6 +2124,7 @@ export default function ServiceDetail({
                                             <button
                                                 type="button"
                                                 className="flex w-full items-center gap-2 rounded-lg border border-dashed px-3 py-2 text-sm transition-colors hover:border-primary/50 hover:bg-muted/50 cursor-pointer group"
+                                                disabled={isBusy}
                                             >
                                                 <CalendarIcon className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary shrink-0" />
                                                 {service.transaction_date ? (
@@ -2302,6 +2359,7 @@ export default function ServiceDetail({
                                                 setExtraChargeAmount("")
                                                 setShowExtraChargeForm(true)
                                             }}
+                                            disabled={isBusy}
                                         >
                                             <Plus className="h-3 w-3" />
                                             Add Charge
@@ -2338,6 +2396,9 @@ export default function ServiceDetail({
                                                         onClick={handleSaveExtraCharge}
                                                         disabled={updateExtraCharge.isPending}
                                                     >
+                                                        {updateExtraCharge.isPending && (
+                                                            <ButtonSpinner className="mr-1 h-3 w-3" />
+                                                        )}
                                                         Save
                                                     </Button>
                                                     <Button
@@ -2368,6 +2429,7 @@ export default function ServiceDetail({
                                                                     variant="ghost"
                                                                     className="h-6 w-6"
                                                                     onClick={() => handleEditExtraCharge(charge)}
+                                                                    disabled={isBusy}
                                                                 >
                                                                     <Pencil className="h-3 w-3" />
                                                                 </Button>
@@ -2378,7 +2440,11 @@ export default function ServiceDetail({
                                                                     onClick={() => handleDeleteExtraCharge(charge.id)}
                                                                     disabled={deleteExtraCharge.isPending}
                                                                 >
-                                                                    <Trash2 className="h-3 w-3" />
+                                                                    {deleteExtraCharge.isPending ? (
+                                                                        <ButtonSpinner className="h-3 w-3" />
+                                                                    ) : (
+                                                                        <Trash2 className="h-3 w-3" />
+                                                                    )}
                                                                 </Button>
                                                             </div>
                                                         )}
@@ -2439,6 +2505,9 @@ export default function ServiceDetail({
                                                         onClick={handleSaveExtraCharge}
                                                         disabled={addExtraCharge.isPending}
                                                     >
+                                                        {addExtraCharge.isPending && (
+                                                            <ButtonSpinner className="mr-1.5 h-3.5 w-3.5" />
+                                                        )}
                                                         Add
                                                     </Button>
                                                     <Button
@@ -2554,10 +2623,10 @@ export default function ServiceDetail({
                                     max={100}
                                     value={Math.max(0, Math.min(100, paidPercent))}
                                     className={`h-1.5 w-full overflow-hidden rounded-full bg-muted [&::-webkit-progress-bar]:bg-muted ${paidPercent >= 100
-                                            ? "[&::-webkit-progress-value]:bg-green-500 [&::-moz-progress-bar]:bg-green-500"
-                                            : paidPercent > 0
-                                                ? "[&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary"
-                                                : "[&::-webkit-progress-value]:bg-muted [&::-moz-progress-bar]:bg-muted"
+                                        ? "[&::-webkit-progress-value]:bg-green-500 [&::-moz-progress-bar]:bg-green-500"
+                                        : paidPercent > 0
+                                            ? "[&::-webkit-progress-value]:bg-primary [&::-moz-progress-bar]:bg-primary"
+                                            : "[&::-webkit-progress-value]:bg-muted [&::-moz-progress-bar]:bg-muted"
                                         }`}
                                 />
                                 <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -2585,7 +2654,8 @@ export default function ServiceDetail({
                                 onClick={handleAddPayment}
                                 disabled={
                                     parseFloat(service.total_revenue || "0") === 0 ||
-                                    service.payment_status === "no_charge"
+                                    service.payment_status === "no_charge" ||
+                                    isBusy
                                 }
                             >
                                 <Wallet className="mr-1.5 h-3.5 w-3.5" />
@@ -2616,6 +2686,7 @@ export default function ServiceDetail({
                                                 setRefundType("full")
                                             }
                                         }}
+                                        disabled={isBusy}
                                     >
                                         <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
                                         Process Refund
@@ -2706,14 +2777,14 @@ export default function ServiceDetail({
                                             <div
                                                 key={index}
                                                 className={`flex items-center gap-3 rounded-md border px-3 py-2 ${isRefund
-                                                        ? "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30"
-                                                        : "bg-card"
+                                                    ? "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30"
+                                                    : "bg-card"
                                                     }`}
                                             >
                                                 <div
                                                     className={`flex h-7 w-7 items-center justify-center rounded-full shrink-0 ${isRefund
-                                                            ? "bg-red-100 dark:bg-red-950"
-                                                            : "bg-green-100 dark:bg-green-950"
+                                                        ? "bg-red-100 dark:bg-red-950"
+                                                        : "bg-green-100 dark:bg-green-950"
                                                         }`}
                                                 >
                                                     {isRefund ? (
@@ -2734,8 +2805,8 @@ export default function ServiceDetail({
                                                         <Badge
                                                             variant="outline"
                                                             className={`text-[10px] h-4 px-1.5 capitalize ${isRefund
-                                                                    ? "border-red-300 text-destructive"
-                                                                    : ""
+                                                                ? "border-red-300 text-destructive"
+                                                                : ""
                                                                 }`}
                                                         >
                                                             {tx.method}
@@ -2793,6 +2864,7 @@ export default function ServiceDetail({
                                                                     )
                                                                     setEditPaymentDialogOpen(true)
                                                                 }}
+                                                                disabled={isBusy}
                                                             >
                                                                 <Pencil className="h-3 w-3" />
                                                             </Button>
@@ -2809,7 +2881,11 @@ export default function ServiceDetail({
                                                                 }}
                                                                 disabled={voidPayment.isPending}
                                                             >
-                                                                <Trash2 className="h-3 w-3" />
+                                                                {voidPayment.isPending ? (
+                                                                    <ButtonSpinner className="h-3 w-3" />
+                                                                ) : (
+                                                                    <Trash2 className="h-3 w-3" />
+                                                                )}
                                                             </Button>
                                                         </div>
                                                     )}
@@ -2881,6 +2957,7 @@ export default function ServiceDetail({
                                     className="w-full"
                                     size="sm"
                                 >
+                                    {updateService.isPending && <ButtonSpinner />}
                                     {updateService.isPending ? "Applying..." : "Apply Discount"}
                                 </Button>
                             </div>
@@ -2938,7 +3015,11 @@ export default function ServiceDetail({
                                                     }}
                                                     disabled={updateService.isPending}
                                                 >
-                                                    <XIcon className="h-3.5 w-3.5" />
+                                                    {updateService.isPending ? (
+                                                        <ButtonSpinner className="h-3.5 w-3.5" />
+                                                    ) : (
+                                                        <XIcon className="h-3.5 w-3.5" />
+                                                    )}
                                                 </Button>
                                             )}
                                     </div>
@@ -3255,7 +3336,11 @@ export default function ServiceDetail({
                                                 onClick={handleSetAppointment}
                                                 disabled={!appointmentDate || updateService.isPending}
                                             >
-                                                <Calendar className="mr-1.5 h-3.5 w-3.5" />
+                                                {updateService.isPending ? (
+                                                    <ButtonSpinner />
+                                                ) : (
+                                                    <Calendar className="mr-1.5 h-3.5 w-3.5" />
+                                                )}
                                                 Confirm Appointment
                                             </Button>
                                             <Button
@@ -3276,6 +3361,7 @@ export default function ServiceDetail({
                                         variant="outline"
                                         size="sm"
                                         onClick={() => setIsSettingAppointment(true)}
+                                        disabled={isBusy}
                                     >
                                         <Calendar className="mr-1.5 h-3.5 w-3.5" />
                                         Set Appointment
@@ -3309,6 +3395,7 @@ export default function ServiceDetail({
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setScheduleDeliveryDialogOpen(true)}
+                                disabled={isBusy}
                             >
                                 <Truck className="mr-1.5 h-3.5 w-3.5" />
                                 Schedule Delivery
@@ -3335,7 +3422,9 @@ export default function ServiceDetail({
                 confirmText={
                     hasUnfinishedAppliances || service.has_pending_items
                         ? "Close"
-                        : "Complete Service"
+                        : completeService.isPending
+                            ? "Completing..."
+                            : "Complete Service"
                 }
                 variant={hasUnfinishedAppliances || service.has_pending_items ? "warning" : "success"}
                 Icon={hasUnfinishedAppliances || service.has_pending_items ? AlertTriangle : CheckCircle}
@@ -3381,7 +3470,11 @@ export default function ServiceDetail({
                             onClick={handleReopen}
                             disabled={reopenService.isPending}
                         >
-                            <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                            {reopenService.isPending ? (
+                                <ButtonSpinner />
+                            ) : (
+                                <RotateCcw className="mr-1 h-3.5 w-3.5" />
+                            )}
                             {reopenService.isPending ? "Reopening..." : "Reopen Service"}
                         </Button>
                     </div>
@@ -3517,8 +3610,8 @@ export default function ServiceDetail({
                                 <span>Balance Due</span>
                                 <span
                                     className={`${parseFloat(service.balance_due || "0") <= 0
-                                            ? "text-success"
-                                            : "text-destructive"
+                                        ? "text-success"
+                                        : "text-destructive"
                                         }`}
                                 >
                                     {formatCurrency(parseFloat(service.balance_due || "0"))}
@@ -3537,6 +3630,7 @@ export default function ServiceDetail({
                             onClick={handlePaymentSubmit}
                             disabled={recordPayment.isPending}
                         >
+                            {recordPayment.isPending && <ButtonSpinner />}
                             {recordPayment.isPending ? "Recording..." : "Record Payment"}
                         </Button>
                     </div>
@@ -3639,6 +3733,7 @@ export default function ServiceDetail({
                                 parseFloat(editPaymentAmount) <= 0
                             }
                         >
+                            {editPayment.isPending && <ButtonSpinner />}
                             {editPayment.isPending ? "Saving..." : "Save Changes"}
                         </Button>
                     </div>
@@ -3687,6 +3782,7 @@ export default function ServiceDetail({
                             onClick={handleCancelService}
                             disabled={cancelService.isPending || !cancelReason.trim()}
                         >
+                            {cancelService.isPending && <ButtonSpinner />}
                             {cancelService.isPending
                                 ? "Cancelling..."
                                 : "Confirm Cancellation"}
@@ -3733,6 +3829,7 @@ export default function ServiceDetail({
                             onClick={handleScheduleDelivery}
                             disabled={!deliveryDate || updateService.isPending}
                         >
+                            {updateService.isPending && <ButtonSpinner />}
                             Schedule Delivery
                         </Button>
                     </div>
@@ -3866,6 +3963,7 @@ export default function ServiceDetail({
                                 refundService.isPending || !refundAmount || !refundReason.trim()
                             }
                         >
+                            {refundService.isPending && <ButtonSpinner />}
                             {refundService.isPending ? "Processing..." : "Process Refund"}
                         </Button>
                     </div>
@@ -4076,7 +4174,11 @@ export default function ServiceDetail({
                                 })
                             }}
                         >
-                            <Copy className="mr-2 h-4 w-4" />
+                            {addService.isPending ? (
+                                <ButtonSpinner className="mr-2 h-4 w-4" />
+                            ) : (
+                                <Copy className="mr-2 h-4 w-4" />
+                            )}
                             {addService.isPending ? "Creating..." : "Create Re-Service"}
                         </Button>
                     </div>
@@ -4117,7 +4219,11 @@ export default function ServiceDetail({
                                 )
                             }}
                         >
-                            <Truck className="mr-2 h-4 w-4" />
+                            {markApplianceClaimed.isPending ? (
+                                <ButtonSpinner className="mr-2 h-4 w-4" />
+                            ) : (
+                                <Truck className="mr-2 h-4 w-4" />
+                            )}
                             {markApplianceClaimed.isPending ? "Saving..." : "Confirm Claimed"}
                         </Button>
                     </div>
@@ -4180,7 +4286,11 @@ export default function ServiceDetail({
                                 )
                             }}
                         >
-                            <AlertTriangle className="mr-2 h-4 w-4" />
+                            {markApplianceForfeited.isPending ? (
+                                <ButtonSpinner className="mr-2 h-4 w-4" />
+                            ) : (
+                                <AlertTriangle className="mr-2 h-4 w-4" />
+                            )}
                             {markApplianceForfeited.isPending ? "Processing..." : "Declare Forfeited"}
                         </Button>
                     </div>
@@ -4271,7 +4381,11 @@ export default function ServiceDetail({
                                 )
                             }}
                         >
-                            <Wallet className="mr-2 h-4 w-4" />
+                            {convertApplianceToAcquisition.isPending ? (
+                                <ButtonSpinner className="mr-2 h-4 w-4" />
+                            ) : (
+                                <Wallet className="mr-2 h-4 w-4" />
+                            )}
                             {convertApplianceToAcquisition.isPending ? "Recording..." : "Record Acquisition"}
                         </Button>
                     </div>
@@ -4392,6 +4506,9 @@ function ServicePartsReview({
                                     onClick={handleSaveNotes}
                                     className="h-7 text-xs"
                                 >
+                                    {updateService.isPending && (
+                                        <ButtonSpinner className="mr-1 h-3 w-3" />
+                                    )}
                                     Save Notes
                                 </Button>
                             </div>
@@ -4469,17 +4586,14 @@ function ServicePartsReview({
                                             }}
                                             className="h-7 text-xs shrink-0"
                                         >
-                                            {service.service_items_checked ? (
-                                                <>
-                                                    <RotateCcw className="mr-1 h-3 w-3" />
-                                                    Unconfirm
-                                                </>
+                                            {toggleServiceItemsChecked.isPending ? (
+                                                <ButtonSpinner className="mr-1 h-3 w-3" />
+                                            ) : service.service_items_checked ? (
+                                                <RotateCcw className="mr-1 h-3 w-3" />
                                             ) : (
-                                                <>
-                                                    <CheckCircle className="mr-1 h-3 w-3" />
-                                                    Confirm Items
-                                                </>
+                                                <CheckCircle className="mr-1 h-3 w-3" />
                                             )}
+                                            {service.service_items_checked ? "Unconfirm" : "Confirm Items"}
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent>

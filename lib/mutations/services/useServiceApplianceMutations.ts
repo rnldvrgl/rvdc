@@ -3,6 +3,7 @@
 import { ServiceAppliancePayload } from "@/lib/constants/interface"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
+import { bg } from "@/lib/utils/queryInvalidation"
 import { useQueryClient } from "@tanstack/react-query"
 
 export function useServiceApplianceMutations() {
@@ -13,12 +14,12 @@ export function useServiceApplianceMutations() {
     mutationFn: (data: ServiceAppliancePayload) => api.post(url, data),
     successMessage: "Appliance added successfully.",
     invalidateQueries: [
-      { queryKey: ["service-appliances"] },
-      { queryKey: ["services"] },
-      { queryKey: ["sales-transactions"] },
-      { queryKey: ["remittances"] },
-      { queryKey: ["summary"] },
-      { queryKey: ["cash_flow"] },
+      bg(["service-appliances"]),
+      bg(["services"]),
+      bg(["sales-transactions"]),
+      bg(["remittances"]),
+      bg(["summary"]),
+      bg(["cash_flow"]),
     ],
     onSuccess: (_, variables) => {
       if (variables.service) {
@@ -34,15 +35,15 @@ export function useServiceApplianceMutations() {
       api.patch(`${url}${id}/`, data),
     successMessage: "Appliance updated successfully.",
     invalidateQueries: [
-      { queryKey: ["service-appliances"] },
-      { queryKey: ["services"] },
-      { queryKey: ["sales-transactions"] },
-      { queryKey: ["remittances"] },
-      { queryKey: ["summary"] },
-      { queryKey: ["cash_flow"] },
-      { queryKey: ["notifications"] },
-      { queryKey: ["unread-notification-count"] },
-      { queryKey: ["pending-items-stats"] },
+      bg(["service-appliances"]),
+      bg(["services"]),
+      bg(["sales-transactions"]),
+      bg(["remittances"]),
+      bg(["summary"]),
+      bg(["cash_flow"]),
+      bg(["notifications"]),
+      bg(["unread-notification-count"]),
+      bg(["pending-items-stats"]),
     ],
     onSuccess: (_, variables) => {
       if (variables.data.service) {
@@ -58,12 +59,12 @@ export function useServiceApplianceMutations() {
       api.delete(`${url}${id}/`),
     successMessage: "Appliance deleted successfully.",
     invalidateQueries: [
-      { queryKey: ["service-appliances"] },
-      { queryKey: ["services"] },
-      { queryKey: ["sales-transactions"] },
-      { queryKey: ["remittances"] },
-      { queryKey: ["summary"] },
-      { queryKey: ["cash_flow"] },
+      bg(["service-appliances"]),
+      bg(["services"]),
+      bg(["sales-transactions"]),
+      bg(["remittances"]),
+      bg(["summary"]),
+      bg(["cash_flow"]),
     ],
     onSuccess: (_, variables) => {
       if (variables.serviceId) {
@@ -78,11 +79,11 @@ export function useServiceApplianceMutations() {
     mutationFn: ({ id }: { id: number; serviceId?: number }) =>
       api.post(`${url}${id}/toggle-items-checked/`),
     invalidateQueries: [
-      { queryKey: ["service-appliances"] },
-      { queryKey: ["services"] },
-      { queryKey: ["pending-items-stats"] },
-      { queryKey: ["notifications"] },
-      { queryKey: ["unread-notification-count"] },
+      bg(["service-appliances"]),
+      bg(["services"]),
+      bg(["pending-items-stats"]),
+      bg(["notifications"]),
+      bg(["unread-notification-count"]),
     ],
     onSuccess: (_, variables) => {
       if (variables.serviceId) {
@@ -98,9 +99,9 @@ export function useServiceApplianceMutations() {
       api.post(`${url}${id}/mark-claimed/`, { claimed_at }),
     successMessage: "Appliance marked as claimed.",
     invalidateQueries: [
-      { queryKey: ["service-appliances"] },
-      { queryKey: ["services"] },
-      { queryKey: ["unclaimed-alerts"] },
+      bg(["service-appliances"]),
+      bg(["services"]),
+      bg(["unclaimed-alerts"]),
     ],
     onSuccess: (_, variables) => {
       if (variables.serviceId) {
@@ -116,10 +117,10 @@ export function useServiceApplianceMutations() {
       api.post(`${url}${id}/mark-forfeited/`, { forfeiture_notes }),
     successMessage: "Appliance forfeited and recorded as company asset.",
     invalidateQueries: [
-      { queryKey: ["service-appliances"] },
-      { queryKey: ["services"] },
-      { queryKey: ["company-assets"] },
-      { queryKey: ["unclaimed-alerts"] },
+      bg(["service-appliances"]),
+      bg(["services"]),
+      bg(["company-assets"]),
+      bg(["unclaimed-alerts"]),
     ],
     onSuccess: (_, variables) => {
       if (variables.serviceId) {
@@ -139,10 +140,10 @@ export function useServiceApplianceMutations() {
       api.post(`${url}${id}/convert-to-acquisition/`, { acquisition_price, notes }),
     successMessage: "Appliance converted to company acquisition.",
     invalidateQueries: [
-      { queryKey: ["service-appliances"] },
-      { queryKey: ["services"] },
-      { queryKey: ["company-assets"] },
-      { queryKey: ["unclaimed-alerts"] },
+      bg(["service-appliances"]),
+      bg(["services"]),
+      bg(["company-assets"]),
+      bg(["unclaimed-alerts"]),
     ],
     onSuccess: (_, variables) => {
       if (variables.serviceId) {

@@ -3,6 +3,7 @@
 import { LinkAirconUnitsPayload, ServicePayload } from "@/lib/constants/interface"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
+import { bg } from "@/lib/utils/queryInvalidation"
 import { useQueryClient } from "@tanstack/react-query"
 
 export function useServiceMutations() {
@@ -15,9 +16,9 @@ export function useServiceMutations() {
     mutationFn: (data: ServicePayload) => api.post(url, data),
     successMessage: "Service created successfully.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["calendar-events"] },
-      ...analyticsKeys.map((key) => ({ queryKey: key })),
+      bg(["services"]),
+      bg(["calendar-events"]),
+      ...analyticsKeys.map(bg),
     ],
   })
 
@@ -26,9 +27,9 @@ export function useServiceMutations() {
       api.patch(`${url}${id}/`, data),
     successMessage: "Service updated successfully.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["calendar-events"] },
-      ...analyticsKeys.map((key) => ({ queryKey: key })),
+      bg(["services"]),
+      bg(["calendar-events"]),
+      ...analyticsKeys.map(bg),
     ],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -41,9 +42,9 @@ export function useServiceMutations() {
     mutationFn: (id: number) => api.delete(`${url}${id}/`),
     successMessage: "Service archived successfully.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["services-archived"] },
-      ...analyticsKeys.map((key) => ({ queryKey: key })),
+      bg(["services"]),
+      bg(["services-archived"]),
+      ...analyticsKeys.map(bg),
     ],
   })
 
@@ -51,10 +52,10 @@ export function useServiceMutations() {
     mutationFn: (id: number) => api.post(`${url}${id}/complete/`),
     successMessage: "Service completed successfully.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["stocks"] },
-      { queryKey: ["sales-transactions"] },
-      ...analyticsKeys.map((key) => ({ queryKey: key })),
+      bg(["services"]),
+      bg(["stocks"]),
+      bg(["sales-transactions"]),
+      ...analyticsKeys.map(bg),
     ],
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
@@ -86,12 +87,12 @@ export function useServiceMutations() {
       }),
     successMessage: "Payment updated successfully.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["sales-transactions"] },
-      { queryKey: ["remittances"] },
-      { queryKey: ["daily-sales"] },
-      { queryKey: ["cheque-choices"] },
-      ...analyticsKeys.map((key) => ({ queryKey: key })),
+      bg(["services"]),
+      bg(["sales-transactions"]),
+      bg(["remittances"]),
+      bg(["daily-sales"]),
+      bg(["cheque-choices"]),
+      ...analyticsKeys.map(bg),
     ],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
@@ -110,12 +111,12 @@ export function useServiceMutations() {
     }) => api.post(`${url}${id}/void-payment/`, { payment_id, reason }),
     successMessage: "Payment voided successfully.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["sales-transactions"] },
-      { queryKey: ["remittances"] },
-      { queryKey: ["daily-sales"] },
-      { queryKey: ["cheque-choices"] },
-      ...analyticsKeys.map((key) => ({ queryKey: key })),
+      bg(["services"]),
+      bg(["sales-transactions"]),
+      bg(["remittances"]),
+      bg(["daily-sales"]),
+      bg(["cheque-choices"]),
+      ...analyticsKeys.map(bg),
     ],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
@@ -138,12 +139,12 @@ export function useServiceMutations() {
     }) => api.post(`${url}${id}/payments/`, data),
     successMessage: "Payment recorded successfully.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["sales-transactions"] },
-      { queryKey: ["remittances"] },
-      { queryKey: ["daily-sales"] },
-      { queryKey: ["cheque-choices"] },
-      ...analyticsKeys.map((key) => ({ queryKey: key })),
+      bg(["services"]),
+      bg(["sales-transactions"]),
+      bg(["remittances"]),
+      bg(["daily-sales"]),
+      bg(["cheque-choices"]),
+      ...analyticsKeys.map(bg),
     ],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
@@ -155,10 +156,10 @@ export function useServiceMutations() {
       api.post(`${url}${id}/cancel/`, { reason }),
     successMessage: "Service cancelled successfully.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["stocks"] },
-      { queryKey: ["sales-transactions"] },
-      ...analyticsKeys.map((key) => ({ queryKey: key })),
+      bg(["services"]),
+      bg(["stocks"]),
+      bg(["sales-transactions"]),
+      ...analyticsKeys.map(bg),
     ],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
@@ -180,10 +181,10 @@ export function useServiceMutations() {
     }) => api.post(`${url}${id}/refund/`, data),
     successMessage: "Refund processed successfully.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["sales-transactions"] },
-      { queryKey: ["cheque-choices"] },
-      ...analyticsKeys.map((key) => ({ queryKey: key })),
+      bg(["services"]),
+      bg(["sales-transactions"]),
+      bg(["cheque-choices"]),
+      ...analyticsKeys.map(bg),
     ],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
@@ -195,10 +196,10 @@ export function useServiceMutations() {
       api.post(`${url}${id}/reopen/`, { reason }),
     successMessage: "Service reopened for revision.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["stocks"] },
-      { queryKey: ["sales-transactions"] },
-      ...analyticsKeys.map((key) => ({ queryKey: key })),
+      bg(["services"]),
+      bg(["stocks"]),
+      bg(["sales-transactions"]),
+      ...analyticsKeys.map(bg),
     ],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
@@ -209,10 +210,10 @@ export function useServiceMutations() {
     mutationFn: (id: number) =>
       api.post(`${url}${id}/toggle-service-items-checked/`),
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["pending-items-stats"] },
-      { queryKey: ["notifications"] },
-      { queryKey: ["unread-notification-count"] },
+      bg(["services"]),
+      bg(["pending-items-stats"]),
+      bg(["notifications"]),
+      bg(["unread-notification-count"]),
     ],
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
@@ -223,9 +224,9 @@ export function useServiceMutations() {
     mutationFn: ({ id, data }: { id: number; data: LinkAirconUnitsPayload }) =>
       api.post(`${url}${id}/link-aircon-units/`, data),
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["aircon-units"] },
-      { queryKey: ["warranty-claims"] },
+      bg(["services"]),
+      bg(["aircon-units"]),
+      bg(["warranty-claims"]),
     ],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
@@ -236,7 +237,7 @@ export function useServiceMutations() {
     mutationFn: ({ id, claimed_at }: { id: number; claimed_at?: string }) =>
       api.post(`${url}${id}/mark-claimed/`, claimed_at ? { claimed_at } : {}),
     successMessage: "Marked as claimed / delivered.",
-    invalidateQueries: [{ queryKey: ["services"] }, { queryKey: ["unclaimed-eligible"] }],
+    invalidateQueries: [bg(["services"]), bg(["unclaimed-eligible"])],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
     },
@@ -247,9 +248,9 @@ export function useServiceMutations() {
       api.post(`${url}${id}/mark-forfeited/`, { forfeiture_notes }),
     successMessage: "Service forfeited. Appliance recorded as company asset.",
     invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["unclaimed-eligible"] },
-      { queryKey: ["company-assets"] },
+      bg(["services"]),
+      bg(["unclaimed-eligible"]),
+      bg(["company-assets"]),
     ],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
@@ -267,10 +268,7 @@ export function useServiceMutations() {
       notes?: string
     }) => api.post(`${url}${id}/convert-to-acquisition/`, { acquisition_price, notes }),
     successMessage: "Converted to company acquisition.",
-    invalidateQueries: [
-      { queryKey: ["services"] },
-      { queryKey: ["company-assets"] },
-    ],
+    invalidateQueries: [bg(["services"]), bg(["company-assets"])],
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["service", `${id}`] })
     },

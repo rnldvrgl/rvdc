@@ -3,6 +3,7 @@
 import { ServiceExtraChargePayload } from "@/lib/constants/interface"
 import { useApiMutation } from "@/lib/hooks/useApiMutation"
 import api from "@/lib/utils/api"
+import { bg } from "@/lib/utils/queryInvalidation"
 import { useQueryClient } from "@tanstack/react-query"
 
 export function useServiceExtraChargeMutations() {
@@ -12,7 +13,7 @@ export function useServiceExtraChargeMutations() {
   const addExtraCharge = useApiMutation({
     mutationFn: (data: ServiceExtraChargePayload) => api.post(url, data),
     successMessage: "Extra charge added.",
-    invalidateQueries: [{ queryKey: ["services"] }],
+    invalidateQueries: [bg(["services"])],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["service", `${variables.service}`],
@@ -32,7 +33,7 @@ export function useServiceExtraChargeMutations() {
       data: Partial<ServiceExtraChargePayload>
     }) => api.patch(`${url}${id}/`, data),
     successMessage: "Extra charge updated.",
-    invalidateQueries: [{ queryKey: ["services"] }],
+    invalidateQueries: [bg(["services"])],
     onSuccess: (_, variables) => {
       if (variables.data.service) {
         queryClient.invalidateQueries({
@@ -49,7 +50,7 @@ export function useServiceExtraChargeMutations() {
     mutationFn: ({ id }: { id: number; serviceId: number }) =>
       api.delete(`${url}${id}/`),
     successMessage: "Extra charge removed.",
-    invalidateQueries: [{ queryKey: ["services"] }],
+    invalidateQueries: [bg(["services"])],
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["service", `${variables.serviceId}`],
