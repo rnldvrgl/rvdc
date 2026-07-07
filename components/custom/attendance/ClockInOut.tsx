@@ -9,11 +9,13 @@ import { AttendanceMetricRow } from "@/components/custom/attendance/AttendanceMe
 import { ClockActionButtons } from "@/components/custom/attendance/ClockActionButtons"
 import { ClockFace } from "@/components/custom/attendance/ClockFace"
 import { ShopClosedNotice } from "@/components/custom/attendance/ShopClosedNotice"
+import { EmptyState } from "@/components/custom/EmptyState"
+import { ErrorState } from "@/components/custom/ErrorState"
 import RedirectRoute from "@/components/custom/navigation/RedirectRoute"
 import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { useClockInOut } from "@/lib/hooks/useClockInOut"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -23,7 +25,7 @@ import useCalendarEvents from "@/lib/queries/calendar/useCalendarEvents"
 import { useDailyAttendance, useDailyAttendances } from "@/lib/queries/useAttendance"
 import { usePayrollSettings } from "@/lib/queries/usePayroll"
 import { canClockInOut, formatAttendanceTime } from "@/lib/utils/attendance"
-import { formatDateToYMD, formatMinutesToHours, tint } from "@/lib/utils/helpers"
+import { cn, formatDateToYMD, formatMinutesToHours, tint } from "@/lib/utils/helpers"
 import { formatDate } from "@/lib/utils/helpers/date"
 import { AnimatePresence, motion } from "framer-motion"
 import {
@@ -31,7 +33,6 @@ import {
     CheckCircle,
     Clock,
     FileText,
-    Loader2,
     PhilippinePeso,
     User,
     XCircle,
@@ -43,11 +44,38 @@ function StatusStrip({ items }: { items: { label: string; value: ReactNode }[] }
     return (
         <div className="flex items-stretch rounded-lg border divide-x divide-border">
             {items.map((item) => (
-                <div key={item.label} className="flex-1 px-3 py-2 text-center min-w-0">
+                <div key={item.label} className="flex-1 px-3 py-2.5 text-center min-w-0">
                     <p className="text-[11px] text-muted-foreground truncate">{item.label}</p>
-                    <p className="text-sm font-medium mt-0.5 truncate">{item.value}</p>
+                    <p className="text-sm font-medium mt-0.5 truncate font-mono">{item.value}</p>
                 </div>
             ))}
+        </div>
+    )
+}
+
+// Skeleton twin of StatusStrip — same 3-column bordered/divided shape.
+function StatusStripSkeleton() {
+    return (
+        <div className="flex items-stretch rounded-lg border divide-x divide-border">
+            {[0, 1, 2].map((i) => (
+                <div key={i} className="flex-1 px-3 py-2.5 flex flex-col items-center gap-1.5">
+                    <Skeleton className="h-2.5 w-10" />
+                    <Skeleton className="h-3.5 w-14" />
+                </div>
+            ))}
+        </div>
+    )
+}
+
+// Skeleton twin of a bordered AttendanceMetricRow (icon + label/value stack).
+function MetricRowSkeleton({ className }: { className?: string }) {
+    return (
+        <div className={cn("flex items-center gap-3 rounded-lg border p-3", className)}>
+            <Skeleton className="h-8 w-8 rounded-md shrink-0" />
+            <div className="space-y-1.5 flex-1">
+                <Skeleton className="h-2.5 w-16" />
+                <Skeleton className="h-3.5 w-24" />
+            </div>
         </div>
     )
 }
@@ -64,26 +92,31 @@ type ClockInOutProps = {
 
 function ClockCardShell({
     isCompact,
+    statusAvatar,
     children,
 }: {
     isCompact: boolean
+    statusAvatar: ReactNode
     children: ReactNode
 }) {
     return (
         <Card className={isCompact ? "relative h-full" : "border-0 shadow-sm"}>
-            {isCompact && (
-                <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
+            <CardHeader className={isCompact ? undefined : "pb-0"}>
+                <CardTitle className="text-base flex items-center gap-2.5">
+                    {isCompact ? (
                         <Clock className="size-4 text-primary" />
-                        Clock In/Out
-                        <RedirectRoute href="/attendance/timetable" />
-                    </CardTitle>
-                </CardHeader>
-            )}
-            <CardContent className="space-y-4 sm:space-y-6">{children}</CardContent>
+                    ) : (
+                        statusAvatar
+                    )}
+                    Clock In/Out
+                    {isCompact && <RedirectRoute href="/attendance/timetable" />}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">{children}</CardContent>
         </Card>
     )
 }
+
 export function ClockInOut({
     variant = "full",
     date,
@@ -202,9 +235,13 @@ export function ClockInOut({
 
     if (!canClock || !user_id) {
         return (
-            <Card className="border-0 shadow-sm">
-                <CardContent className="pt-6 text-center text-sm text-muted-foreground">
-                    Please log in to clock in/out
+            <Card className="grid place-content-center p-0">
+                <CardContent>
+                    <ErrorState
+                        title="Access Denied"
+                        description="You do not have permission to clock in/out. Please contact your administrator if you believe this is an error."
+                        withoutAction
+                    />
                 </CardContent>
             </Card>
         )
@@ -212,19 +249,31 @@ export function ClockInOut({
 
     if (statusLoading) {
         return (
-            <Card className={isCompact ? "h-full" : "border-0 shadow-sm"}>
-                {isCompact && (
-                    <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Clock className="size-4 text-primary" />
-                            Clock In/Out
-                        </CardTitle>
-                    </CardHeader>
+            <ClockCardShell isCompact={isCompact} statusAvatar={<Skeleton className="h-7 w-7 rounded-lg" />}>
+                <div className="flex justify-center gap-2">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                </div>
+
+                <div className="flex flex-col items-center gap-2 py-1">
+                    <Skeleton className="h-9 sm:h-10 w-[168px] sm:w-[192px]" />
+                    <Skeleton className="h-4 w-40" />
+                </div>
+
+                {isCompact ? (
+                    <StatusStripSkeleton />
+                ) : (
+                    <div className="grid gap-3">
+                        <MetricRowSkeleton />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <MetricRowSkeleton />
+                            <MetricRowSkeleton />
+                        </div>
+                    </div>
                 )}
-                <CardContent className="flex items-center justify-center py-12">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </CardContent>
-            </Card>
+
+                <Skeleton className="h-16 sm:h-17 w-full rounded-xl" />
+            </ClockCardShell>
         )
     }
 
@@ -232,11 +281,11 @@ export function ClockInOut({
     const statusToneVar = isClockedOut ? "--success" : isClockedIn ? "--info" : null
     const StatusAvatar = (
         <div
-            className="p-2 sm:p-2.5 rounded-xl"
+            className="p-1.5 rounded-lg shrink-0"
             style={{ backgroundColor: statusToneVar ? tint(statusToneVar, 12) : "var(--muted)" }}
         >
             <Clock
-                className="h-4 w-4 sm:h-5 sm:w-5"
+                className="h-4 w-4"
                 style={{ color: statusToneVar ? `var(${statusToneVar})` : "var(--muted-foreground)" }}
             />
         </div>
@@ -246,37 +295,60 @@ export function ClockInOut({
 
     if (outsideWindow) {
         return (
-            <ClockCardShell isCompact={isCompact}>
-                {!isCompact && (
-                    <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-3 items-center justify-between">
-                        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-                            {StatusAvatar}
-                            <div className="text-center sm:text-left">
-                                <h3 className="font-semibold text-sm sm:text-base">Attendance Clock</h3>
-                                <p className="text-xs text-muted-foreground" suppressHydrationWarning>
-                                    {formatDate(new Date(), "EEEE, MMMM dd, yyyy")}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-                <ClockFace time={currentTime} size="lg" className={isCompact ? "py-2" : undefined} />
-                <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                        Clock in/out is available from 7:00 AM to 11:00 PM. Standard
-                        shift: 8:00 AM - 6:00 PM ({settings?.clock_in_allowance_minutes || 60}-minute
-                        early clock-in allowed, paid hours count from shift start).
-                    </AlertDescription>
-                </Alert>
+            <ClockCardShell isCompact={isCompact} statusAvatar={StatusAvatar}>
+                <ClockFace time={currentTime} size="lg" />
+                <AttendanceMetricRow
+                    icon={AlertCircle}
+                    wrap
+                    label="Clock In/Out Unavailable"
+                    tone="destructive"
+                    value={<div className="grid space-y-1 font-mono mt-1">
+                        <span>Clock in/out is available from 7:00 AM to 11:00 PM. </span>
+                        <span>Standard shift: 8:00 AM - 6:00 PM.</span>
+                        <span>
+                            ({settings?.clock_in_allowance_minutes || 60}-minute early clock-in allowed, paid hours count from shift start)
+                        </span>
+                    </div>}
+                />
             </ClockCardShell>
         )
     }
 
+    const lateRow = attendance?.is_late && (
+        <AttendanceMetricRow
+            icon={AlertCircle}
+            label="Late Status"
+            tone="warning"
+            value={`Late by ${formatMinutesToHours(attendance.late_minutes)}`}
+        />
+    )
+
+    const penaltyRow = attendance?.late_penalty_amount && parseFloat(attendance.late_penalty_amount) > 0 && (
+        <AttendanceMetricRow
+            icon={PhilippinePeso}
+            label="Late Penalty"
+            tone="destructive"
+            value={
+                <AnimatedNumber
+                    value={parseFloat(attendance.late_penalty_amount)}
+                    className="font-mono tabular-nums"
+                    format={{
+                        style: "currency",
+                        currency: "PHP",
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0,
+                    }}
+                />
+            }
+        />
+    )
+
+    const badgeClassName = isCompact ? "text-[11px] px-2 py-0.5 gap-1" : undefined
+
     return (
-        <ClockCardShell isCompact={isCompact}>
+        <ClockCardShell isCompact={isCompact} statusAvatar={StatusAvatar}>
             {yesterdayAttendance?.auto_closed && yesterdayAttendance.auto_close_warning_count > 0 && (
-                <div className="flex items-center justify-center p-3 sm:p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/20 border-2 border-yellow-200 dark:border-yellow-800">
+                <div className="flex items-center justify-center p-3 sm:p-4 rounded-lg bg-warning/10 border border-warning/30">
                     <AutoCloseWarningBadge
                         autoCloseWarningCount={yesterdayAttendance.auto_close_warning_count}
                         size={isCompact ? "md" : "lg"}
@@ -285,14 +357,12 @@ export function ClockInOut({
             )}
 
             {todayHoliday && (
-                <Alert variant="info">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Holiday</AlertTitle>
-                    <AlertDescription suppressHydrationWarning>
-                        Today is {todayHoliday.title}
-                        {!isCompact ? ". Enjoy your day off!" : "."}
-                    </AlertDescription>
-                </Alert>
+                <AttendanceMetricRow
+                    icon={AlertCircle}
+                    label="Holiday"
+                    tone="info"
+                    value={todayHoliday.title}
+                />
             )}
 
             {(shopClosedEvent || isShopClosed) && (
@@ -309,29 +379,20 @@ export function ClockInOut({
                 />
             )}
 
-            {!isCompact && (
-                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-3 items-center justify-between">
-                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-                        {StatusAvatar}
-                        <div className="text-center sm:text-left">
-                            <h3 className="font-semibold text-sm sm:text-base">Attendance Clock</h3>
-                            <p className="text-xs text-muted-foreground" suppressHydrationWarning>
-                                {formatDate(new Date(), "EEEE, MMMM dd, yyyy")}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                        <AttendanceStatusBadge status={!attendance?.status ? "NONE" : attendance.status} />
-                        {attendance?.attendance_type !== "PENDING" && attendance?.status !== "PENDING" && (
-                            <AttendanceTypeBadge
-                                type={!attendance?.attendance_type ? "INVALID" : attendance.attendance_type}
-                            />
-                        )}
-                    </div>
-                </div>
-            )}
+            <div className="flex flex-wrap items-center justify-center gap-2">
+                <AttendanceStatusBadge
+                    status={!attendance?.status ? "NONE" : attendance.status}
+                    className={badgeClassName}
+                />
+                {attendance?.attendance_type !== "PENDING" && attendance?.status !== "PENDING" && (
+                    <AttendanceTypeBadge
+                        type={!attendance?.attendance_type ? "INVALID" : attendance.attendance_type}
+                        className={badgeClassName}
+                    />
+                )}
+            </div>
 
-            <ClockFace time={currentTime} size="lg" className={isCompact ? "py-2" : undefined} />
+            <ClockFace time={currentTime} size="lg" className="py-1" />
 
             {isCompact ? (
                 <AnimatePresence mode="wait">
@@ -340,6 +401,7 @@ export function ClockInOut({
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.4, ease: "easeOut" }}
+                            className="space-y-3"
                         >
                             <StatusStrip
                                 items={[
@@ -353,10 +415,16 @@ export function ClockInOut({
                                     },
                                     {
                                         label: "Paid Hours",
-                                        value: attendance.paid_hours ? `${attendance.paid_hours}h` : "—",
+                                        value: attendance.paid_hours ? `${attendance.paid_hours} hour/s` : "—",
                                     },
                                 ]}
                             />
+                            {(lateRow || penaltyRow) && (
+                                <div className="space-y-2">
+                                    {lateRow}
+                                    {penaltyRow}
+                                </div>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -368,22 +436,26 @@ export function ClockInOut({
                         <AttendanceMetricRow
                             icon={Clock}
                             label="Clock In"
-                            value={attendance.clock_in ? formatAttendanceTime(attendance.clock_in) : "—"}
+                            value={
+                                <span className="font-mono">
+                                    {attendance.clock_in ? formatAttendanceTime(attendance.clock_in) : "—"}
+                                </span>
+                            }
                         />
                         <AttendanceMetricRow
                             icon={Clock}
                             label="Clock Out"
-                            value={attendance.clock_out ? formatAttendanceTime(attendance.clock_out) : "—"}
+                            value={<span className="font-mono">
+                                {attendance.clock_out ? formatAttendanceTime(attendance.clock_out) : "—"}
+                            </span>}
                         />
                     </div>
 
-                    {attendance.is_late && (
-                        <AttendanceMetricRow
-                            icon={AlertCircle}
-                            label="Late Status"
-                            tone="warning"
-                            value={`Late by ${formatMinutesToHours(attendance.late_minutes)}`}
-                        />
+                    {(lateRow || penaltyRow) && (
+                        <div className="grid gap-3">
+                            {lateRow}
+                            {penaltyRow}
+                        </div>
                     )}
 
                     {attendance.paid_hours && (
@@ -403,55 +475,15 @@ export function ClockInOut({
                         />
                     )}
 
-                    {attendance.late_penalty_amount && parseFloat(attendance.late_penalty_amount) > 0 && (
-                        <AttendanceMetricRow
-                            icon={PhilippinePeso}
-                            label="Late Penalty"
-                            tone="destructive"
-                            value={
-                                <AnimatedNumber
-                                    value={parseFloat(attendance.late_penalty_amount)}
-                                    className="font-mono tabular-nums"
-                                    format={{
-                                        style: "currency",
-                                        currency: "PHP",
-                                        minimumFractionDigits: 0,
-                                        maximumFractionDigits: 0,
-                                    }}
-                                />
-                            }
-                        />
-                    )}
-
                     {attendance.notes && (
                         <AttendanceMetricRow icon={FileText} label="Notes" wrap value={attendance.notes} />
                     )}
                 </div>
             ) : (
-                <div className="text-center py-6 sm:py-8">
-                    <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-muted mb-3">
-                        <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">No attendance record for today</p>
-                    <p className="text-xs text-muted-foreground mt-1">Click `Clock In` to start</p>
-                </div>
-            )}
-
-            {isCompact && attendance?.is_late && (
-                <AttendanceMetricRow
-                    icon={AlertCircle}
-                    label="Late Status"
-                    tone="warning"
-                    value={`Late by ${formatMinutesToHours(attendance.late_minutes)}`}
-                />
-            )}
-
-            {isCompact && attendance?.late_penalty_amount && parseFloat(attendance.late_penalty_amount) > 0 && (
-                <AttendanceMetricRow
-                    icon={PhilippinePeso}
-                    label="Late Penalty"
-                    tone="destructive"
-                    value={parseFloat(attendance.late_penalty_amount).toFixed(0)}
+                <EmptyState
+                    title="No attendance record for today"
+                    description="Click `Clock In` to start your attendance for today."
+                    icon={Clock}
                 />
             )}
 
@@ -495,23 +527,23 @@ export function ClockInOut({
             )}
 
             {leaveMessage && (
-                <Alert variant="info">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>On Leave</AlertTitle>
-                    <AlertDescription suppressHydrationWarning>{leaveMessage}</AlertDescription>
-                </Alert>
+                <AttendanceMetricRow
+                    icon={AlertCircle}
+                    label="Leave Notice"
+                    tone="warning"
+                    value={leaveMessage}
+                    wrap
+                />
             )}
 
             {isMarkedAbsent && !isShopClosedToday && (
-                <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Marked as Absent</AlertTitle>
-                    <AlertDescription>
-                        You have been marked as absent for today. Clock in/out is not
-                        available. Please contact your supervisor if you believe this is
-                        an error.
-                    </AlertDescription>
-                </Alert>
+                <AttendanceMetricRow
+                    icon={AlertCircle}
+                    label="Marked as Absent"
+                    tone="destructive"
+                    value="You have been marked as absent for today. Clock in/out is not available. Please contact your supervisor if you believe this is an error."
+                    wrap
+                />
             )}
 
             {showActions && (
@@ -526,89 +558,30 @@ export function ClockInOut({
             )}
 
             {isClockedOut && (
-                isCompact ? (
-                    <AnimatePresence>
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 8 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-                        >
-                            <Alert variant="success">
-                                <CheckCircle className="h-5 w-5 text-success shrink-0 mt-0.5" />
-                                <AlertTitle className="font-medium">Attendance Recorded</AlertTitle>
-                                <AlertDescription>
-                                    Your attendance for today has been recorded successfully.
-                                </AlertDescription>
-                            </Alert>
-                        </motion.div>
-                    </AnimatePresence>
-                ) : (
-                    <Alert variant="success">
-                        <CheckCircle className="h-5 w-5 text-success shrink-0 mt-0.5" />
-                        <AlertTitle className="font-medium">Attendance Recorded</AlertTitle>
-                        <AlertDescription>
-                            Your attendance for today has been recorded successfully.
-                        </AlertDescription>
-                    </Alert>
-                )
+                <AttendanceMetricRow
+                    icon={CheckCircle}
+                    label="Attendance Recorded"
+                    tone="success"
+                    value={attendance?.clock_out ? formatAttendanceTime(attendance.clock_out) : "—"}
+                />
             )}
 
             {clockIn.isError && (
-                isCompact ? (
-                    <AnimatePresence>
-                        <motion.div
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 8 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <Alert variant="destructive">
-                                <XCircle className="h-4 w-4" />
-                                <AlertTitle>Clock In Failed</AlertTitle>
-                                <AlertDescription>
-                                    Please try again or contact support if the issue persists
-                                </AlertDescription>
-                            </Alert>
-                        </motion.div>
-                    </AnimatePresence>
-                ) : (
-                    <Alert variant="destructive">
-                        <XCircle className="h-4 w-4" />
-                        <AlertTitle>Clock In Failed</AlertTitle>
-                        <AlertDescription>
-                            Please try again or contact support if the issue persists
-                        </AlertDescription>
-                    </Alert>
-                )
+                <AttendanceMetricRow
+                    icon={XCircle}
+                    label="Clock In Failed"
+                    tone="destructive"
+                    value="Please try again or contact support if the issue persists"
+                />
             )}
 
             {clockOut.isError && (
-                isCompact ? (
-                    <AnimatePresence>
-                        <motion.div
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 8 }}
-                            transition={{ duration: 0.3 }}
-                        >
-                            <Alert variant="destructive">
-                                <XCircle className="h-4 w-4" />
-                                <AlertTitle>Clock Out Failed</AlertTitle>
-                                <AlertDescription>
-                                    Please try again or contact support if the issue persists
-                                </AlertDescription>
-                            </Alert>
-                        </motion.div>
-                    </AnimatePresence>
-                ) : (
-                    <Alert variant="destructive">
-                        <XCircle className="h-4 w-4" />
-                        <AlertTitle>Clock Out Failed</AlertTitle>
-                        <AlertDescription>
-                            Please try again or contact support if the issue persists
-                        </AlertDescription>
-                    </Alert>
-                )
+                <AttendanceMetricRow
+                    icon={XCircle}
+                    label="Clock Out Failed"
+                    tone="destructive"
+                    value="Please try again or contact support if the issue persists"
+                />
             )}
         </ClockCardShell>
     )

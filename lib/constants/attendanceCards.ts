@@ -1,46 +1,32 @@
+import type { StatTone } from "@/components/custom/attendance/GradientStatCard"
 import { AlertTriangle, CheckCircle, Clock } from "lucide-react"
 
-export const GRADIENT_CARD_CONFIGS = [
+export const GRADIENT_CARD_CONFIGS: {
+  key: string
+  title: string
+  subtitle: string
+  icon: typeof CheckCircle
+  tone: StatTone
+}[] = [
   {
     key: "present",
     title: "Present",
     subtitle: "On-time arrivals",
     icon: CheckCircle,
-    gradientFrom: "from-emerald-50",
-    gradientTo: "to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20",
-    borderColor: "border-emerald-200 dark:border-emerald-800",
-    iconBgColor: "bg-emerald-100 dark:bg-emerald-900/30",
-    iconColor: "text-success",
-    titleColor: "text-success",
-    valueColor: "text-success",
-    subtitleColor: "text-success/70",
+    tone: "success",
   },
   {
     key: "absent",
     title: "Absent",
-    subtitle: "absences",
+    subtitle: "Absences",
     icon: AlertTriangle,
-    gradientFrom: "from-rose-50",
-    gradientTo: "to-pink-50 dark:from-rose-950/20 dark:to-pink-950/20",
-    borderColor: "border-rose-200 dark:border-rose-800",
-    iconBgColor: "bg-rose-100 dark:bg-rose-900/30",
-    iconColor: "text-rose-600 dark:text-rose-400",
-    titleColor: "text-rose-700 dark:text-rose-300",
-    valueColor: "text-rose-900 dark:text-rose-100",
-    subtitleColor: "text-rose-600/70 dark:text-rose-400/70",
+    tone: "destructive",
   },
   {
     key: "late",
     title: "Late",
-    subtitle: "late arrivals",
+    subtitle: "Late arrivals",
     icon: Clock,
-    gradientFrom: "from-amber-50",
-    gradientTo: "to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20",
-    borderColor: "border-amber-200 dark:border-amber-800",
-    iconBgColor: "bg-amber-100 dark:bg-amber-900/30",
-    iconColor: "text-warning",
-    titleColor: "text-amber-700 dark:text-amber-300",
-    valueColor: "text-amber-900 dark:text-amber-100",
-    subtitleColor: "text-amber-600/70 dark:text-amber-400/70",
+    tone: "warning",
   },
 ] as const

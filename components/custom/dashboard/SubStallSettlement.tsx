@@ -136,7 +136,7 @@ function SettlementDetails({ subStallPayable }: { subStallPayable: SubStallPayab
 
 function SettlementCardSkeleton({ compact }: { compact?: boolean }) {
     return (
-        <Card className="h-full overflow-hidden border shadow-sm">
+        <Card className="h-full overflow-hidden border shadow-sm space-y-3 px-4 pb-4 sm:space-y-4">
             <CardContent className={compact ? "p-4" : "p-0"}>
                 <div className="mb-3 flex items-start justify-between gap-3">
                     <Skeleton className="size-10 rounded-xl" />

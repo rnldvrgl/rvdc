@@ -11,7 +11,7 @@ const buttonVariants = cva(
             variant: {
                 default: "bg-primary text-primary-foreground hover:bg-primary/90",
                 destructive:
-                    "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+                    "bg-destructive/15 text-destructive hover:bg-destructive/25 focus-visible:ring-destructive/40 dark:bg-destructive/20 dark:hover:bg-destructive/30",
                 outline:
                     "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
                 secondary:
@@ -22,9 +22,9 @@ const buttonVariants = cva(
                 plain:
                     "bg-transparent border-none shadow-none p-0 m-0 hover:bg-transparent hover:shadow-none focus-visible:ring-0 focus-visible:border-none",
                 success:
-                    "bg-emerald-600 text-white shadow-xs hover:bg-emerald-700 focus-visible:ring-emerald-400/40",
+                    "bg-success/15 text-success hover:bg-success/25 focus-visible:ring-success/40 dark:bg-success/20 dark:hover:bg-success/30",
                 warning:
-                    "bg-yellow-400 text-black shadow-xs hover:bg-yellow-500 focus-visible:ring-yellow-400/20",
+                    "bg-warning/15 text-warning hover:bg-warning/25 focus-visible:ring-warning/40 dark:bg-warning/20 dark:hover:bg-warning/30",
             },
             size: {
                 default: "h-8 px-3 py-2 sm:h-9 sm:px-4 has-[>svg]:px-2.5 sm:has-[>svg]:px-3",
@@ -55,7 +55,6 @@ function Button({
         asChild?: boolean
     }) {
     const Comp = asChild ? Slot : "button"
-
     return (
         <Comp
             data-slot="button"

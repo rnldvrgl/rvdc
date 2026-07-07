@@ -4,231 +4,227 @@ import { Badge } from "@/components/ui/badge"
 import { AttendanceStatus, AttendanceType } from "@/lib/constants/types"
 import { cn, formatMinutesToHours } from "@/lib/utils/helpers"
 import {
-  AlertCircle,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  XCircle,
+    AlertCircle,
+    AlertTriangle,
+    CheckCircle,
+    Clock,
+    XCircle,
 } from "lucide-react"
 
+const tone = {
+    success: "bg-success/15 text-success dark:bg-success/20",
+    destructive: "bg-destructive/15 text-destructive dark:bg-destructive/20",
+    warning: "bg-warning/15 text-warning dark:bg-warning/20",
+    info: "bg-info/15 text-info dark:bg-info/20",
+    muted: "bg-muted text-muted-foreground",
+    primary: "bg-primary/15 text-primary dark:text-primary/80",
+} as const
+
 type AttendanceStatusBadgeProps = {
-  status: AttendanceStatus
-  className?: string
-  showIcon?: boolean
+    status: AttendanceStatus
+    className?: string
+    showIcon?: boolean
 }
 
 export function AttendanceStatusBadge({
-  status,
-  className,
-  showIcon = true,
+    status,
+    className,
+    showIcon = true,
 }: AttendanceStatusBadgeProps) {
-  const config = {
-    PENDING: {
-      icon: AlertCircle,
-      className:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-      label: "Pending",
-    },
-    APPROVED: {
-      icon: CheckCircle,
-      className:
-        "bg-green-100 text-success dark:bg-green-900",
-      label: "Approved",
-    },
-    REJECTED: {
-      icon: XCircle,
-      className: "bg-red-100 text-destructive dark:bg-red-900",
-      label: "Rejected",
-    },
-    NONE: {
-      icon: Clock,
-      className:
-        "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200",
-      label: "No Status",
-    },
-  }
+    const config = {
+        PENDING: {
+            icon: AlertCircle,
+            className: tone.warning,
+            label: "Pending",
+        },
+        APPROVED: {
+            icon: CheckCircle,
+            className: tone.success,
+            label: "Approved",
+        },
+        REJECTED: {
+            icon: XCircle,
+            className: tone.destructive,
+            label: "Rejected",
+        },
+        NONE: {
+            icon: Clock,
+            className: tone.muted,
+            label: "No Status",
+        },
+    }
 
-  const { icon: Icon, className: statusClassName, label } = config[status]
+    const { icon: Icon, className: statusClassName, label } = config[status]
 
-  return (
-    <Badge
-      className={cn(statusClassName, className)}
-      variant="outline"
-    >
-      {showIcon && <Icon className="mr-1 h-3 w-3" />}
-      {label}
-    </Badge>
-  )
+    return (
+        <Badge
+            className={cn("border-transparent font-medium", statusClassName, className)}
+            variant="outline"
+        >
+            {showIcon && <Icon className="mr-1 h-3 w-3" />}
+            {label}
+        </Badge>
+    )
 }
 
 type AttendanceTypeBadgeProps = {
-  type: AttendanceType
-  className?: string
-  showIcon?: boolean
+    type: AttendanceType
+    className?: string
+    showIcon?: boolean
 }
 
 export function AttendanceTypeBadge({
-  type,
-  className,
-  showIcon = true,
+    type,
+    className,
+    showIcon = true,
 }: AttendanceTypeBadgeProps) {
-  const config: Record<
-    AttendanceType,
-    { icon: typeof Clock; className: string; label: string }
-  > = {
-    FULL_DAY: {
-      icon: Clock,
-      className:
-        "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-      label: "Full Day",
-    },
-    HALF_DAY: {
-      icon: Clock,
-      className:
-        "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-      label: "Half Day",
-    },
-    PARTIAL: {
-      icon: AlertCircle,
-      className:
-        "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
-      label: "Partial",
-    },
-    ABSENT: {
-      icon: XCircle,
-      className: "bg-red-100 text-destructive dark:bg-red-900",
-      label: "Absent",
-    },
-    LEAVE: {
-      icon: AlertCircle,
-      className:
-        "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
-      label: "On Leave",
-    },
-    SHOP_CLOSED: {
-      icon: AlertCircle,
-      className:
-        "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200",
-      label: "Shop Closed",
-    },
-    PENDING: {
-      icon: AlertCircle,
-      className:
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-      label: "Pending",
-    },
-    INVALID: {
-      icon: AlertCircle,
-      className: "bg-red-100 text-destructive dark:bg-red-900",
-      label: "Invalid",
-    },
-  }
+    const config: Record<
+        AttendanceType,
+        { icon: typeof Clock; className: string; label: string }
+    > = {
+        FULL_DAY: {
+            icon: Clock,
+            className: tone.info,
+            label: "Full Day",
+        },
+        HALF_DAY: {
+            icon: Clock,
+            className: tone.primary,
+            label: "Half Day",
+        },
+        PARTIAL: {
+            icon: AlertCircle,
+            className: tone.warning,
+            label: "Partial",
+        },
+        ABSENT: {
+            icon: XCircle,
+            className: tone.destructive,
+            label: "Absent",
+        },
+        LEAVE: {
+            icon: AlertCircle,
+            className: tone.primary,
+            label: "On Leave",
+        },
+        SHOP_CLOSED: {
+            icon: AlertCircle,
+            className: tone.muted,
+            label: "Shop Closed",
+        },
+        PENDING: {
+            icon: AlertCircle,
+            className: tone.warning,
+            label: "Pending",
+        },
+        INVALID: {
+            icon: AlertCircle,
+            className: tone.destructive,
+            label: "Invalid",
+        },
+    }
 
-  const { icon: Icon, className: typeClassName, label } = config[type]
+    const { icon: Icon, className: typeClassName, label } = config[type]
 
-  return (
-    <Badge
-      className={cn(typeClassName, className)}
-      variant="outline"
-    >
-      {showIcon && <Icon className="mr-1 h-3 w-3" />}
-      {label}
-    </Badge>
-  )
+    return (
+        <Badge
+            className={cn("border-transparent font-medium", typeClassName, className)}
+            variant="outline"
+        >
+            {showIcon && <Icon className="mr-1 h-3 w-3" />}
+            {label}
+        </Badge>
+    )
 }
+
 type LateBadgeProps = {
-  isLate: boolean
-  lateMinutes?: number
-  className?: string
+    isLate: boolean
+    lateMinutes?: number
+    className?: string
 }
 
 export function LateBadge({
-  isLate,
-  lateMinutes = 0,
-  className,
+    isLate,
+    lateMinutes = 0,
+    className,
 }: LateBadgeProps) {
-  if (!isLate || lateMinutes === 0) {
-    return null
-  }
+    if (!isLate || lateMinutes === 0) {
+        return null
+    }
 
-  return (
-    <Badge
-      className={cn(
-        "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
-        className,
-      )}
-      variant="outline"
-    >
-      <AlertTriangle className="mr-1 h-3 w-3" />
-      Late {formatMinutesToHours(lateMinutes)}
-    </Badge>
-  )
+    return (
+        <Badge
+            className={cn("border-transparent font-medium", tone.warning, className)}
+            variant="outline"
+        >
+            <AlertTriangle className="mr-1 h-3 w-3" />
+            Late {formatMinutesToHours(lateMinutes)}
+        </Badge>
+    )
 }
 
 type AutoCloseWarningBadgeProps = {
-  autoCloseWarningCount: number
-  showIfZero?: boolean
-  className?: string
-  size?: "sm" | "md" | "lg"
+    autoCloseWarningCount: number
+    showIfZero?: boolean
+    className?: string
+    size?: "sm" | "md" | "lg"
 }
 
 export function AutoCloseWarningBadge({
-  autoCloseWarningCount,
-  showIfZero = false,
-  className,
-  size = "md",
+    autoCloseWarningCount,
+    showIfZero = false,
+    className,
+    size = "md",
 }: AutoCloseWarningBadgeProps) {
-  if (!showIfZero && autoCloseWarningCount === 0) {
-    return null
-  }
+    if (!showIfZero && autoCloseWarningCount === 0) {
+        return null
+    }
 
-  const sizeClasses = {
-    sm: "text-xs px-2 py-0.5",
-    md: "text-sm px-3 py-1",
-    lg: "text-base px-4 py-2 font-semibold",
-  }
+    const sizeClasses = {
+        sm: "text-xs px-2 py-0.5",
+        md: "text-sm px-3 py-1",
+        lg: "text-base px-4 py-2 font-semibold",
+    }
 
-  return (
-    <Badge
-      className={cn(
-        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800",
-        sizeClasses[size],
-        className,
-      )}
-      variant="outline"
-    >
-      <AlertTriangle className="mr-1.5 h-4 w-4" />
-      {autoCloseWarningCount} Auto-Close Warning
-      {autoCloseWarningCount !== 1 ? "s" : ""}
-    </Badge>
-  )
+    return (
+        <Badge
+            className={cn(
+                "border-transparent font-medium",
+                tone.warning,
+                sizeClasses[size],
+                className,
+            )}
+            variant="outline"
+        >
+            <AlertTriangle className="mr-1.5 h-4 w-4" />
+            {autoCloseWarningCount} Auto-Close Warning
+            {autoCloseWarningCount !== 1 ? "s" : ""}
+        </Badge>
+    )
 }
 
 type AwolBadgeProps = {
-  isAwol: boolean
-  consecutiveAbsences?: number
-  className?: string
+    isAwol: boolean
+    consecutiveAbsences?: number
+    className?: string
 }
 
 export function AwolBadge({
-  isAwol,
-  consecutiveAbsences = 0,
-  className,
+    isAwol,
+    consecutiveAbsences = 0,
+    className,
 }: AwolBadgeProps) {
-  if (!isAwol) {
-    return null
-  }
+    if (!isAwol) {
+        return null
+    }
 
-  return (
-    <Badge
-      className={cn(
-        "bg-red-100 text-destructive dark:bg-red-900 border-red-300 dark:border-red-700 font-semibold",
-        className,
-      )}
-      variant="outline"
-    >
-      <XCircle className="mr-1 h-3 w-3" />
-      AWOL ({consecutiveAbsences} days)
-    </Badge>
-  )
+    return (
+        <Badge
+            className={cn("border-transparent font-semibold", tone.destructive, className)}
+            variant="outline"
+        >
+            <XCircle className="mr-1 h-3 w-3" />
+            AWOL ({consecutiveAbsences} days)
+        </Badge>
+    )
 }

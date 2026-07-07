@@ -3,11 +3,11 @@
 import { ClockInOut } from "@/components/custom/attendance/ClockInOut"
 import { GradientStatCard } from "@/components/custom/attendance/GradientStatCard"
 import { RecentActivitySection } from "@/components/custom/attendance/RecentActivitySection"
+import { SummaryStatCard } from "@/components/custom/attendance/SummaryStatCard"
 import PageHeader from "@/components/custom/shared/PageHeader"
 import { Wrapper } from "@/components/custom/shared/Wrapper"
 import DashboardCalendar from "@/components/custom/shared/calendar/DashboardCalendar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { GRADIENT_CARD_CONFIGS } from "@/lib/constants/attendanceCards"
 import { useAttendanceStats } from "@/lib/hooks/useAttendanceStats"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
@@ -15,7 +15,7 @@ import { useDailyAttendances } from "@/lib/queries/useAttendance"
 import { convertAttendanceForCalendar } from "@/lib/utils/attendance"
 import { formatDateToYMD } from "@/lib/utils/helpers"
 import { formatDate } from "date-fns"
-import { Plane, Users } from "lucide-react"
+import { Clock3, Hourglass, Plane, Users } from "lucide-react"
 import Link from "next/link"
 import { useMemo, useState } from "react"
 
@@ -58,17 +58,24 @@ const AttendancePage = () => {
         () => [
             {
                 title: "Paid Hours",
-                value: stats.totalHours.toFixed(2),
+                icon: Clock3,
+                tone: "info" as const,
+                value: stats.totalHours,
+                format: { maximumFractionDigits: 2, minimumFractionDigits: 2 },
                 description: `Approved and computed hours for ${rangeLabel}.`,
             },
             {
                 title: "Pending Records",
-                value: String(stats.pendingCount),
+                icon: Hourglass,
+                tone: "warning" as const,
+                value: stats.pendingCount,
                 description: "Attendance entries still waiting for admin approval.",
             },
             {
                 title: "Leave Days",
-                value: String(stats.leaveCount),
+                icon: Plane,
+                tone: "primary" as const,
+                value: stats.leaveCount,
                 description: `Approved leave days from ${rangeLabel}.`,
             },
         ],
@@ -107,22 +114,7 @@ const AttendancePage = () => {
 
                     <div className="grid space-y-4">
                         {summaryCards.map((card) => (
-                            <Card
-                                key={card.title}
-                                className="border-border/60"
-                            >
-                                <CardContent className="p-5">
-                                    <p className="text-sm font-medium text-muted-foreground">
-                                        {card.title}
-                                    </p>
-                                    <div className="mt-2 text-3xl font-semibold">
-                                        {card.value}
-                                    </div>
-                                    <p className="mt-2 text-sm text-muted-foreground">
-                                        {card.description}
-                                    </p>
-                                </CardContent>
-                            </Card>
+                            <SummaryStatCard key={card.title} {...card} />
                         ))}
                     </div>
                 </div>
@@ -138,14 +130,7 @@ const AttendancePage = () => {
                                 value={value as number}
                                 subtitle={config.subtitle}
                                 icon={config.icon}
-                                gradientFrom={config.gradientFrom}
-                                gradientTo={config.gradientTo}
-                                borderColor={config.borderColor}
-                                iconBgColor={config.iconBgColor}
-                                iconColor={config.iconColor}
-                                titleColor={config.titleColor}
-                                valueColor={config.valueColor}
-                                subtitleColor={config.subtitleColor}
+                                tone={config.tone}
                                 isLoading={isLoading}
                             />
                         )
@@ -166,7 +151,6 @@ const AttendancePage = () => {
                 <RecentActivitySection
                     records={attendanceRecords}
                     isLoading={isLoading}
-                    showEmployeeCount={false}
                 />
             </div>
         </Wrapper>

@@ -138,7 +138,7 @@ function EmployeeDashboard({
 
             {payrollIncluded && (
                 <SectionReveal delay={0.1}>
-                    <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+                    <div className="grid gap-4 xl:grid-cols-2 xl:gap-6">
                         <ClockInOut variant="compact" />
 
                         <TimetableStatsCard />

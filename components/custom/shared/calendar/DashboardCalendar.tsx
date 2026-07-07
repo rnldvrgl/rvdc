@@ -23,6 +23,7 @@ import CalendarSettings from "./CalendarSettings"
 import { DayViewEventItem } from "./DayViewEventItem"
 import { EventIcon } from "./EventIcon"
 import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
+import { motion } from "framer-motion"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -232,16 +233,31 @@ function NavButton({ dir, onNavigate, icon }: { dir: "prev" | "next"; onNavigate
     )
 }
 
-function ViewToggle({ view, onChange, size }: { view: CalendarView; onChange: (v: CalendarView) => void; size?: "sm" }) {
+function ViewToggle({ view, onChange, size }: { view: CalendarView; onChange: (v: CalendarView) => void; size?: "sm" | "xs" }) {
+    const isCompact = size === "xs"
     return (
-        <>
+        <div className={cn("relative flex items-center rounded-lg bg-muted p-0.5", isCompact && "w-full")}>
             {(["month", "week", "day"] as const).map((v) => (
-                <Button key={v} variant={view === v ? "default" : "outline"} size={size ?? "sm"}
-                    onClick={() => onChange(v)} className="capitalize">
+                <button
+                    key={v}
+                    onClick={() => onChange(v)}
+                    className={cn(
+                        "relative z-10 rounded-md text-center font-medium capitalize transition-colors",
+                        isCompact ? "h-7 flex-1 text-xs" : "h-8 px-3 text-sm",
+                        view === v ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                >
+                    {view === v && (
+                        <motion.span
+                            layoutId={isCompact ? "view-toggle-pill-mobile" : "view-toggle-pill-desktop"}
+                            className="absolute inset-0 -z-10 rounded-md bg-background shadow-sm"
+                            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                        />
+                    )}
                     {v}
-                </Button>
+                </button>
             ))}
-        </>
+        </div>
     )
 }
 
@@ -605,8 +621,7 @@ const DashboardCalendar = ({
                                         }}
                                         aria-label={`${format(day, "EEEE, MMMM d, yyyy")}${hasEvents ? `, ${dayEvents.length} event${dayEvents.length > 1 ? "s" : ""}` : ""}`}
                                         className={cn(
-                                            "group relative min-h-[68px] sm:min-h-24 lg:min-h-28 p-1.5 sm:p-2 transition-colors overflow-hidden flex flex-col text-left w-full cursor-pointer outline-none",
-                                            "focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset focus-visible:z-10",
+                                            "group relative min-h-14 sm:min-h-24 lg:min-h-28 p-1 sm:p-2 transition-colors overflow-hidden flex flex-col text-left w-full cursor-pointer outline-none",
                                             !inMonth && "bg-muted text-muted-foreground/60",
                                             inMonth && weekend && !today && "bg-muted/30",
                                             today && "bg-primary/6",
@@ -614,9 +629,9 @@ const DashboardCalendar = ({
                                         )}
                                     >
                                         {/* Date number */}
-                                        <div className="flex items-center justify-between mb-1 shrink-0">
+                                        <div className="flex items-center justify-between mb-0.5 sm:mb-1 shrink-0">
                                             <AnimatedNumber value={Number(format(day, "d"))} className={cn(
-                                                "flex items-center justify-center size-6 rounded-full text-[10px] sm:text-xs font-mono tabular-nums font-medium leading-none transition-colors",
+                                                "flex items-center justify-center size-5 sm:size-6 rounded-full text-[9px] sm:text-xs font-mono tabular-nums font-medium leading-none transition-colors",
                                                 today && "bg-primary text-primary-foreground font-semibold shadow-sm",
                                                 !today && !inMonth && "text-muted-foreground/50",
                                             )} />
@@ -799,17 +814,17 @@ const DashboardCalendar = ({
             : LEGEND_ITEMS
 
         return (
-            <div className="flex flex-wrap gap-x-3 gap-y-1.5 px-3 py-2 bg-muted/30 rounded-lg">
+            <div className="flex sm:flex-wrap gap-x-2.5 sm:gap-x-3 gap-y-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-muted/30 rounded-lg overflow-x-auto sm:overflow-visible scrollbar-none">
                 {items.map((item, i) => (
-                    <div key={`${item.type}-${i}`} className="flex items-center gap-1.5">
-                        <div className={cn("size-2 rounded-full shrink-0", getColorClass(item.color))} />
-                        <span className="text-muted-foreground text-[11px] sm:text-xs whitespace-nowrap">{item.label}</span>
+                    <div key={`${item.type}-${i}`} className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                        <div className={cn("size-1.5 sm:size-2 rounded-full shrink-0", getColorClass(item.color))} />
+                        <span className="text-muted-foreground text-[10px] sm:text-[11px] md:text-xs whitespace-nowrap">{item.label}</span>
                     </div>
                 ))}
                 {eventTypes?.includes("attendance") && ATTENDANCE_LEGEND.map((t) => (
-                    <div key={t.value} className="flex items-center gap-1.5">
-                        <div className={cn("size-2 rounded-full shrink-0", getColorClass(EVENT_COLORS[t.value]?.bg))} />
-                        <span className="text-muted-foreground text-[11px] sm:text-xs whitespace-nowrap">{t.label}</span>
+                    <div key={t.value} className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                        <div className={cn("size-1.5 sm:size-2 rounded-full shrink-0", getColorClass(EVENT_COLORS[t.value]?.bg))} />
+                        <span className="text-muted-foreground text-[10px] sm:text-[11px] md:text-xs whitespace-nowrap">{t.label}</span>
                     </div>
                 ))}
             </div>
@@ -862,44 +877,40 @@ const DashboardCalendar = ({
 
     return (
         <>
-            <Card key={`calendar-${effectiveWeekStartsOn}-${view}`} className={className}>
-                <CardHeader className="pb-3">
-                    <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-                        <div className="space-y-0.5">
-                            <CardTitle className="flex items-center gap-2 text-base">
+            <Card key={`calendar-${effectiveWeekStartsOn}-${view}`} className={cn(className)}>
+                <CardHeader className="pb-2 sm:pb-3">
+                    <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="space-y-0">
+                            <CardTitle className="flex items-center gap-2 text-sm sm:text-base">
                                 <Calendar className="w-4 h-4" />
                                 {title ?? "Calendar"}
                             </CardTitle>
-                            <CardDescription className="text-sm">
+                            <CardDescription className="text-xs sm:text-sm">
                                 {description ?? "View birthdays, holidays, and scheduled services"}
                             </CardDescription>
                         </div>
-                        {(withSettings || withRefresh) && (
-                            <div className="flex items-center gap-2">
-                                {withSettings && <CalendarSettings />}
-                                {withRefresh && (
-                                    <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
-                                        {isLoading ? "Loading..." : "Refresh"}
-                                    </Button>
-                                )}
-                            </div>
-                        )}
                     </div>
                 </CardHeader>
 
                 <CardContent className="space-y-3 pt-0">
                     {/* Mobile controls */}
-                    <div className="flex flex-col space-y-2 sm:hidden">
-                        <h2 className="text-sm font-mono font-semibold text-center tabular-nums">{dateTitle}</h2>
-                        <div className="flex items-center justify-center gap-1.5">
-                            <ViewToggle view={view} onChange={setView} size="sm" />
+                    <div className="flex flex-col gap-2 sm:hidden">
+                        <div className="flex items-center gap-1">
+                            <NavButton dir="prev" onNavigate={navigate} icon={<ChevronLeft className="w-3.5 h-3.5" />} />
+                            <h2 className="flex-1 truncate text-center text-sm font-mono font-semibold tabular-nums">{dateTitle}</h2>
+                            <NavButton dir="next" onNavigate={navigate} icon={<ChevronRight className="w-3.5 h-3.5" />} />
                         </div>
-                        <div className="flex items-center justify-center gap-1.5">
-                            <NavButton dir="prev" onNavigate={navigate} icon={<ChevronLeft className="w-4 h-4" />} />
-                            <Button variant={isToday_ ? "default" : "outline"} size="sm" onClick={() => navigate("today")} disabled={isToday_}>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant={isToday_ ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => navigate("today")}
+                                disabled={isToday_}
+                                className="h-8 shrink-0 px-3 text-xs"
+                            >
                                 Today
                             </Button>
-                            <NavButton dir="next" onNavigate={navigate} icon={<ChevronRight className="w-4 h-4" />} />
+                            <ViewToggle view={view} onChange={setView} size="xs" />
                         </div>
                     </div>
 
@@ -912,10 +923,8 @@ const DashboardCalendar = ({
                                 Today
                             </Button>
                         </div>
-                        <h2 className="text-sm font-mono font-semibold flex-1 text-center tabular-nums">{dateTitle}</h2>
-                        <div className="flex items-center gap-1">
-                            <ViewToggle view={view} onChange={setView} />
-                        </div>
+                        <h2 className="flex-1 text-center text-sm font-mono font-semibold tabular-nums">{dateTitle}</h2>
+                        <ViewToggle view={view} onChange={setView} />
                     </div>
 
                     {renderLegend()}
