@@ -74,7 +74,7 @@ function AdminDashboard() {
             </SectionReveal>
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">
-                <div className="space-y-6">
+                <div className="min-w-0 space-y-6">
                     <SectionReveal delay={0.1}>
                         <div>
                             <SectionLabel>Schedule</SectionLabel>
@@ -95,7 +95,7 @@ function AdminDashboard() {
                     </SectionReveal>
                 </div>
 
-                <SectionReveal delay={0.1} className="order-first lg:order-0">
+                <SectionReveal delay={0.1} className="order-first lg:order-0 min-w-0">
                     <div className="lg:sticky lg:top-14">
                         <AttentionRail />
                     </div>
@@ -138,11 +138,9 @@ function EmployeeDashboard({
 
             {payrollIncluded && (
                 <SectionReveal delay={0.1}>
-                    <div className="grid gap-4 xl:grid-cols-2 xl:gap-6">
-                        <ClockInOut variant="compact" />
-
-                        <TimetableStatsCard />
-
+                    <div className="grid gap-4 xl:grid-cols-2 xl:gap-6 min-w-0">
+                        <div className="min-w-0"><ClockInOut variant="compact" /></div>
+                        <div className="min-w-0"><TimetableStatsCard /></div>
                     </div>
                 </SectionReveal>
             )}
@@ -201,7 +199,6 @@ function EmployeeDashboard({
 // ── Page ────────────────────────────────────────────────────────────────────
 
 const DashboardPage = () => {
-    const { refetch } = useGetSummary({})
     const { role, userProfile, payrollIncluded } = useCurrentUser()
 
     const stallId = userProfile?.assigned_stall?.id ?? undefined
@@ -228,7 +225,6 @@ const DashboardPage = () => {
                     title="Dashboard Overview"
                     description={ROLE_DESCRIPTIONS[role ?? "guest"]}
                     breadcrumbs={["Dashboard"]}
-                    onRefresh={isAdmin || role === "manager" ? () => refetch() : undefined}
                     variant="compact"
                     actionButton={
                         role !== "technician" ? (
