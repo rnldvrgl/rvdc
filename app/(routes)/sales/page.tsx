@@ -392,6 +392,25 @@ export default function SalesTransactionsPage() {
             : activeTab === "voided" ? voidedQuery.isLoading
                 : isLoading
 
+
+    if(isLoading){
+        return (         
+            <Wrapper>
+             <div className="space-y-6 py-8">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+      <Skeleton className="h-[500px] rounded-xl" />
+    </div>
+    </Wrapper>
+        )
+    }
+
     // ── Render ─────────────────────────────────────────────────────────────────
     return (
         <Wrapper>
