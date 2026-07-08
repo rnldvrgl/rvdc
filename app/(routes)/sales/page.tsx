@@ -47,6 +47,7 @@ import {
     Pause,
     Play,
     Plus,
+    Receipt,
     ShoppingCart,
     X,
 } from "lucide-react"
@@ -163,6 +164,33 @@ function HeldSaleRow({
     )
 }
 
+/**
+ * Compact "Today" stat pill — sits inline next to the tabs instead of as its
+ * own full-width banner, since it's contextual info for the Active tab only.
+ */
+function TodaySummaryPill({
+    count,
+    total,
+}: {
+    count: number
+    total: number
+}) {
+    return (
+        <div className="flex items-center gap-2 self-start rounded-full border bg-muted/40 px-3 py-1.5 text-xs sm:self-auto sm:text-sm">
+            <Receipt className="size-3.5 text-muted-foreground" />
+            <span className="font-medium text-muted-foreground">Today</span>
+            <span className="text-muted-foreground/40">·</span>
+            <span className="text-muted-foreground">
+                {count} sale{count !== 1 ? "s" : ""}
+            </span>
+            <span className="text-muted-foreground/40">·</span>
+            <span className="font-semibold text-primary">
+                <AnimatedNumber value={total} prefix="₱" />
+            </span>
+        </div>
+    )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function SalesTransactionsPage() {
@@ -187,7 +215,7 @@ export default function SalesTransactionsPage() {
     const searchParams = useSearchParameters({ defaultRangePreset: "Today" })
     const { page, limit, search, ordering, filter } = searchParams
 
-    const { data, isLoading, refetch } = useSalesTransactions({
+    const { data, isLoading } = useSalesTransactions({
         page, limit, search, ordering, filter,
     })
     const { filters, orderingOptions } = useSalesTransactionFilters()
@@ -359,11 +387,6 @@ export default function SalesTransactionsPage() {
             : activeTab === "voided" ? (voidedQuery.data ?? emptyData)
                 : (data ?? emptyData)
 
-    const currentRefetch =
-        activeTab === "archived" ? archivedQuery.refetch
-            : activeTab === "voided" ? voidedQuery.refetch
-                : refetch
-
     const currentLoading =
         activeTab === "archived" ? archivedQuery.isLoading
             : activeTab === "voided" ? voidedQuery.isLoading
@@ -393,30 +416,26 @@ export default function SalesTransactionsPage() {
                     activeTab === "active" ? (
                         <>
                             {/* Google Sheets links */}
-                            {(
+                            {isAdmin && (
                                 <>
-                                    {isAdmin && (
-                                        <>
-                                            <SheetLinkButton
-                                                href={mainSheetUrl}
-                                                label="Open Main Stall Sheet"
-                                                loading={googleSheetsLinksLoading}
-                                            />
-                                            <SheetLinkButton
-                                                href={subSheetUrl}
-                                                label="Open Sub Stall Sheet"
-                                                loading={googleSheetsLinksLoading}
-                                            />
-                                        </>
-                                    )}
-                                    {isManagerOrClerk && (
-                                        <SheetLinkButton
-                                            href={designatedSheetUrl}
-                                            label={designatedSheetLabel}
-                                            loading={googleSheetsLinksLoading}
-                                        />
-                                    )}
+                                    <SheetLinkButton
+                                        href={mainSheetUrl}
+                                        label="Open Main Stall Sheet"
+                                        loading={googleSheetsLinksLoading}
+                                    />
+                                    <SheetLinkButton
+                                        href={subSheetUrl}
+                                        label="Open Sub Stall Sheet"
+                                        loading={googleSheetsLinksLoading}
+                                    />
                                 </>
+                            )}
+                            {isManagerOrClerk && (
+                                <SheetLinkButton
+                                    href={designatedSheetUrl}
+                                    label={designatedSheetLabel}
+                                    loading={googleSheetsLinksLoading}
+                                />
                             )}
 
                             {/* Held sales popover */}
@@ -456,21 +475,7 @@ export default function SalesTransactionsPage() {
                         </>
                     ) : undefined
                 }
-                onRefresh={currentRefetch}
             />
-
-            {/* Daily Summary */}
-            {dailySummary && activeTab === "active" && (
-                <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-4 py-2 text-sm">
-                    <span className="font-medium">Today</span>
-                    <span className="text-muted-foreground">
-                        {dailySummary.count} sale{dailySummary.count !== 1 ? "s" : ""}
-                    </span>
-                    <span className="font-semibold text-primary">
-                        <AnimatedNumber value={dailySummary.total} prefix="₱" />
-                    </span>
-                </div>
-            )}
 
             {/* Create Transaction Sheet */}
             {activeTab === "active" && (
@@ -541,33 +546,45 @@ export default function SalesTransactionsPage() {
                 }
             />
 
-            {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
-                <TabsList>
-                    <TabsTrigger value="active" className="gap-1.5">
-                        <List className="size-3.5" />
-                        Active
-                    </TabsTrigger>
-                    <TabsTrigger value="voided" className="gap-1.5">
-                        <Ban className="size-3.5" />
-                        Voided
-                        {(voidedQuery.data?.count ?? 0) > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 rounded-full px-1.5 text-[10px]">
-                                {voidedQuery.data!.count}
-                            </Badge>
-                        )}
-                    </TabsTrigger>
-                    <TabsTrigger value="archived" className="gap-1.5">
-                        <Archive className="size-3.5" />
-                        Archived
-                        {(archivedQuery.data?.count ?? 0) > 0 && (
-                            <Badge variant="secondary" className="ml-1 h-5 min-w-5 rounded-full px-1.5 text-[10px]">
-                                {archivedQuery.data!.count}
-                            </Badge>
-                        )}
-                    </TabsTrigger>
-                </TabsList>
-            </Tabs>
+            {/* Control bar — Tabs and the "Today" summary live together since the
+                summary is contextual to the Active tab. Keeping them in one row
+                (instead of a separate full-width banner above) makes the
+                relationship between them obvious and avoids an orphaned block. */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as TabValue)}>
+                    <TabsList>
+                        <TabsTrigger value="active" className="gap-1.5">
+                            <List className="size-3.5" />
+                            Active
+                        </TabsTrigger>
+                        <TabsTrigger value="voided" className="gap-1.5">
+                            <Ban className="size-3.5" />
+                            Voided
+                            {(voidedQuery.data?.count ?? 0) > 0 && (
+                                <Badge variant="secondary" className="ml-1 h-5 min-w-5 rounded-full px-1.5 text-[10px]">
+                                    {voidedQuery.data!.count}
+                                </Badge>
+                            )}
+                        </TabsTrigger>
+                        <TabsTrigger value="archived" className="gap-1.5">
+                            <Archive className="size-3.5" />
+                            Archived
+                            {(archivedQuery.data?.count ?? 0) > 0 && (
+                                <Badge variant="secondary" className="ml-1 h-5 min-w-5 rounded-full px-1.5 text-[10px]">
+                                    {archivedQuery.data!.count}
+                                </Badge>
+                            )}
+                        </TabsTrigger>
+                    </TabsList>
+                </Tabs>
+
+                {dailySummary && activeTab === "active" && (
+                    <TodaySummaryPill
+                        count={dailySummary.count}
+                        total={dailySummary.total}
+                    />
+                )}
+            </div>
 
             {/* Data Table */}
             <DataTable
@@ -590,7 +607,6 @@ export default function SalesTransactionsPage() {
                 defaultRangePreset="Today"
                 filters={activeTab === "active" ? filters : undefined}
                 orderingOptions={activeTab === "active" ? orderingOptions : undefined}
-                onRefresh={currentRefetch}
                 emptyIcon={ShoppingCart}
                 emptyTitle={
                     activeTab === "archived" ? "No archived transactions"

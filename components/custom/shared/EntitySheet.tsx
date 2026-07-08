@@ -55,7 +55,7 @@ export default function EntitySheet<T>({
                         className,
                     )}
                 >
-                    <SheetHeader className="mb-4 border-b border-border pb-4">
+                    <SheetHeader className="border-b border-border pb-4">
                         <SheetTitle className="text-xl font-semibold">{title}</SheetTitle>
                         <SheetDescription>{description}</SheetDescription>
                     </SheetHeader>

@@ -12,6 +12,7 @@ import {
 import { RECENT_ITEMS_KEY, MAX_RECENT_ITEMS } from "@/lib/constants/general"
 import { Item, ItemEntry } from "@/lib/constants/interface"
 import { formatCurrency } from "@/lib/utils/currency"
+import { cn } from "@/lib/utils/helpers"
 import { AlertTriangle, Info, Minus, PackagePlus, Pencil, Plus, Star, X } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
@@ -232,12 +233,17 @@ export default function ItemQuantitySelector({
                             availableStock !== undefined &&
                             itm.quantity > availableStock
                         const isDuplicate = duplicateIndices.has(idx)
+                        const isMissingName = isCustom && !(itm.description ?? "").trim()
+                        const isZeroPrice =
+                            !isCustom && allowPriceChange && retail > 0 && effective === 0
 
-                        const cardStyle = isOverStock
-                            ? { borderColor: tint("--warning", 50), backgroundColor: tint("--warning", 10) }
-                            : isCustom
-                                ? { borderColor: tint("--primary", 45), backgroundColor: tint("--primary", 8) }
-                                : undefined
+                        const cardStyle = isMissingName
+                            ? { borderColor: tint("--destructive", 55), backgroundColor: tint("--destructive", 8) }
+                            : isOverStock
+                                ? { borderColor: tint("--warning", 50), backgroundColor: tint("--warning", 10) }
+                                : isCustom
+                                    ? { borderColor: tint("--primary", 45), backgroundColor: tint("--primary", 8) }
+                                    : undefined
 
                         return (
                             <div
@@ -286,10 +292,10 @@ export default function ItemQuantitySelector({
                                                 />
                                                 <div className="flex items-center gap-2">
                                                     <div className="flex items-center gap-1.5 shrink-0">
-                                                        <Pencil className="size-3.5" style={{ color: "var(--primary)" }} />
+                                                        <Pencil className="size-3.5" style={{ color: isMissingName ? "var(--destructive)" : "var(--primary)" }} />
                                                         <span
                                                             className="text-[10px] font-medium uppercase tracking-wide"
-                                                            style={{ color: "var(--primary)" }}
+                                                            style={{ color: isMissingName ? "var(--destructive)" : "var(--primary)" }}
                                                         >
                                                             Name
                                                         </span>
@@ -301,7 +307,10 @@ export default function ItemQuantitySelector({
                                                             handleUpdate(idx, "description", e.target.value)
                                                         }
                                                         disabled={disabled}
-                                                        className="h-8"
+                                                        className={cn(
+                                                            "h-8",
+                                                            isMissingName && "border-destructive focus-visible:ring-destructive/40",
+                                                        )}
                                                     />
                                                 </div>
                                             </div>
@@ -446,8 +455,12 @@ export default function ItemQuantitySelector({
                                                 onBlur={() => {
                                                     const raw = editingQty[idx]
                                                     if (raw !== undefined) {
+                                                        const min = stepAmount(itm.item)
                                                         const parsed = parseFloat(raw)
-                                                        const rounded = parsed > 0 ? Math.round(parsed * 100) / 100 : 0.01
+                                                        const rounded =
+                                                            parsed > 0
+                                                                ? Math.max(min, Math.round(parsed * 100) / 100)
+                                                                : min
                                                         handleUpdate(idx, "quantity", rounded)
                                                         setEditingQty((prev) => {
                                                             const next = { ...prev }
@@ -520,7 +533,10 @@ export default function ItemQuantitySelector({
                                                     }
                                                     onWheel={(e) => e.preventDefault()}
                                                     disabled={disabled}
-                                                    className="h-8"
+                                                    className={cn(
+                                                        "h-8",
+                                                        isZeroPrice && "border-warning focus-visible:ring-warning/40",
+                                                    )}
                                                 />
                                             </div>
 
@@ -576,8 +592,19 @@ export default function ItemQuantitySelector({
                                     isUntracked ||
                                     isDuplicate ||
                                     isOverStock ||
+                                    isMissingName ||
+                                    isZeroPrice ||
                                     allowPriceChange) && (
                                         <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground">
+                                            {isMissingName && (
+                                                <span
+                                                    className="flex items-center gap-0.5 font-medium"
+                                                    style={{ color: "var(--destructive)" }}
+                                                >
+                                                    <AlertTriangle className="size-3" />
+                                                    Name required
+                                                </span>
+                                            )}
                                             {isUntracked ? (
                                                 <span
                                                     className="font-medium"
@@ -605,6 +632,15 @@ export default function ItemQuantitySelector({
                                                 >
                                                     <AlertTriangle className="size-3" />
                                                     Exceeds stock
+                                                </span>
+                                            )}
+                                            {isZeroPrice && (
+                                                <span
+                                                    className="flex items-center gap-0.5"
+                                                    style={{ color: "var(--warning)" }}
+                                                >
+                                                    <AlertTriangle className="size-3" />
+                                                    Selling for ₱0
                                                 </span>
                                             )}
                                             {!isUntracked && availableStock !== undefined && availableStock <= 0 && onAddStock && itm.item && (

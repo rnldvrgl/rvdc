@@ -97,3 +97,5 @@ export const NON_ADMIN_CALENDAR_EVENTS: EventType[] = [
 
 export const RECENT_ITEMS_KEY = "rvdc_recent_sale_items"
 export const MAX_RECENT_ITEMS = 8
+
+export const TEMPLATE_NAME_MAX_LENGTH = 40

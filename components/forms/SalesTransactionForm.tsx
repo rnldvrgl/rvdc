@@ -20,6 +20,7 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
@@ -42,6 +43,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import {
     Tooltip,
@@ -74,6 +76,7 @@ import {
 } from "@/lib/utils/saleTemplates"
 import { playSuccessSound } from "@/lib/utils/sounds"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { AnimatePresence, motion } from "framer-motion"
 import {
     Bookmark,
     CreditCard,
@@ -96,6 +99,7 @@ import * as z from "zod"
 
 import type { HeldSale } from "@/lib/utils/heldSales"
 import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 interface SalesTransactionFormProps {
     initialData?: SalesTransaction
@@ -105,6 +109,8 @@ interface SalesTransactionFormProps {
     heldSale?: HeldSale | null
     onHeld?: () => void
 }
+
+
 
 export default function SalesTransactionForm({
     initialData,
@@ -162,6 +168,15 @@ export default function SalesTransactionForm({
                 path: ["payments"],
             })
         }
+        data.items.forEach((item, idx) => {
+            if (item.item_id === null && !(item.description ?? "").trim()) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Custom item needs a name",
+                    path: ["items", idx, "description"],
+                })
+            }
+        })
     })
 
     type FormValues = z.infer<typeof baseSchema>
@@ -240,8 +255,10 @@ export default function SalesTransactionForm({
         useState<SalesTransaction | null>(null)
     const [keepClient, setKeepClient] = useState(true)
     const [templates, setTemplates] = useState<SaleTemplate[]>([])
-    const [showSaveTemplate, setShowSaveTemplate] = useState(false)
-    const [templateName, setTemplateName] = useState("")
+    const [templateDialogOpen, setTemplateDialogOpen] = useState(false)
+    const [templateNameInput, setTemplateNameInput] = useState("")
+    const [duplicateTemplate, setDuplicateTemplate] =
+        useState<SaleTemplate | null>(null)
     const [addStockDialogStock, setAddStockDialogStock] = useState<Stock | null>(null)
 
     // Load templates on mount
@@ -260,9 +277,6 @@ export default function SalesTransactionForm({
         enabled: !!selectedStallId,
     })
 
-    // Build item_id -> available_quantity map
-    // When editing, add back the quantities from the original sale since those
-    // are already committed to this transaction and shouldn't count as "used"
     const stockMap = useMemo(() => {
         const map = new Map<number, number>()
         if (stockData?.results) {
@@ -330,6 +344,7 @@ export default function SalesTransactionForm({
     const watchedItems = form.watch("items")
     const watchedPayments = form.watch("payments")
     const transactionType = form.watch("transaction_type")
+    const watchedClientId = form.watch("client_id")
     const watchedDiscount = form.watch("order_discount") || 0
     const isFreeTransaction = transactionType !== "sale"
 
@@ -341,6 +356,39 @@ export default function SalesTransactionForm({
     const grandTotal = totalItemsAmount - discountAmount
     const totalPayments = watchedPayments.reduce((acc, p) => acc + p.amount, 0)
     const changeDue = totalPayments - grandTotal
+
+    const hasPaymentAmount =
+        isFreeTransaction || watchedPayments.some((p) => p.amount > 0)
+    const showSubmitSection = watchedItems.length > 0 && hasPaymentAmount
+
+    // Validates the current cart before it can be saved as a template —
+    // custom items need a name, and every item needs a real price/quantity,
+    // otherwise loading the template later just recreates the same gaps.
+    const itemValidationErrors = useMemo(() => {
+        if (!templateDialogOpen) return []
+        if (watchedItems.length === 0) {
+            return ["Add at least one item to the cart before saving a template."]
+        }
+
+        const errors: string[] = []
+        watchedItems.forEach((item, idx) => {
+            const label =
+                item.item_id === null
+                    ? item.description?.trim() || `Item ${idx + 1}`
+                    : `Item ${idx + 1}`
+
+            if (item.item_id === null && !item.description?.trim()) {
+                errors.push(`"${label}" needs a name before it can be saved.`)
+            }
+            if (!item.final_price_per_unit || item.final_price_per_unit <= 0) {
+                errors.push(`"${label}" needs a price greater than ₱0.`)
+            }
+            if (!item.quantity || item.quantity <= 0) {
+                errors.push(`"${label}" needs a quantity greater than 0.`)
+            }
+        })
+        return errors
+    }, [templateDialogOpen, watchedItems])
 
     const hasInitializedRef = useRef(false)
     const submitLockRef = useRef(false)
@@ -530,18 +578,133 @@ export default function SalesTransactionForm({
         return () => window.removeEventListener("keydown", handler)
     }, [])
 
+    // Quick-load a saved template into the cart in one tap
+    const applyTemplate = (t: SaleTemplate) => {
+        form.setValue("items", t.items, {
+            shouldDirty: true,
+            shouldValidate: true,
+        })
+        setItems(
+            t.items.map((i) => ({
+                item: allItems.find((a) => a.id === i.item_id) ?? null,
+                quantity: i.quantity,
+                description: i.item_id === null ? i.description : undefined,
+                final_price_per_unit: i.final_price_per_unit,
+                print_price_per_unit: i.print_price_per_unit,
+            })),
+        )
+    }
+
+    const openTemplateDialog = () => {
+        setTemplateNameInput("")
+        setDuplicateTemplate(null)
+        setTemplateDialogOpen(true)
+    }
+
+    const handleTemplateDialogOpenChange = (open: boolean) => {
+        setTemplateDialogOpen(open)
+        if (!open) {
+            setTemplateNameInput("")
+            setDuplicateTemplate(null)
+        }
+    }
+
+    // Saving is a two-step confirm when the name collides with an existing
+    // template: first press surfaces the warning, second press (button is
+    // relabeled "Overwrite Template") actually replaces it.
+    const handleSaveTemplate = () => {
+        const trimmedName = templateNameInput.trim()
+        if (!trimmedName || itemValidationErrors.length > 0) return
+
+        const existing = templates.find(
+            (t) => t.name.trim().toLowerCase() === trimmedName.toLowerCase(),
+        )
+
+        if (existing && duplicateTemplate?.id !== existing.id) {
+            setDuplicateTemplate(existing)
+            return
+        }
+
+        if (existing) {
+            removeSaleTemplate(existing.id)
+        }
+
+        saveSaleTemplate(trimmedName, form.getValues("items"))
+        setTemplates(getSaleTemplates())
+        handleTemplateDialogOpenChange(false)
+    }
+
+    // ── Loading skeleton — mirrors the real form's shape so the layout
+    // doesn't jump once content loads, and gives a sense of what's coming ──
     if (isInitialLoading) {
         return (
-            <div className="flex flex-col items-center justify-center gap-2 rounded-xl bg-background/85 backdrop-blur-sm py-16 text-center">
-                <Loader2 className="size-6 animate-spin text-primary" />
-                <div className="space-y-0.5">
-                    <p className="text-sm font-medium">
-                        {initialData ? "Loading transaction..." : "Loading sale form..."}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                        Please wait while we prepare the form.
-                    </p>
+            <div className="space-y-4 sm:space-y-5">
+                {/* Transaction Info skeleton */}
+                <div className="space-y-3">
+                    <Skeleton className="h-3 w-32" />
+                    <div className="flex gap-1.5">
+                        <Skeleton className="h-8 flex-1 rounded-md" />
+                        <Skeleton className="h-8 flex-1 rounded-md" />
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                            <Skeleton className="h-3 w-14" />
+                            <Skeleton className="h-9 w-full rounded-md" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Skeleton className="h-3 w-24" />
+                            <Skeleton className="h-9 w-full rounded-md" />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Skeleton className="h-3 w-20" />
+                            <Skeleton className="h-9 w-full rounded-md" />
+                        </div>
+                    </div>
                 </div>
+
+                <Separator />
+
+                {/* Items skeleton */}
+                <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <Skeleton className="h-3 w-14" />
+                        <Skeleton className="h-6 w-20 rounded-md" />
+                    </div>
+                    <Skeleton className="h-10 w-full rounded-md" />
+                    <div className="space-y-2">
+                        {Array.from({ length: 2 }).map((_, i) => (
+                            <div key={i} className="flex items-center gap-2 rounded-md border p-2.5">
+                                <Skeleton className="size-8 shrink-0 rounded" />
+                                <div className="flex-1 space-y-1.5">
+                                    <Skeleton className="h-3.5 w-32" />
+                                    <Skeleton className="h-3 w-16" />
+                                </div>
+                                <Skeleton className="h-6 w-14 rounded-md" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <Separator />
+
+                {/* Summary skeleton */}
+                <div className="space-y-2 rounded-lg bg-muted/50 p-3 sm:p-4">
+                    <div className="flex justify-between">
+                        <Skeleton className="h-3.5 w-24" />
+                        <Skeleton className="h-3.5 w-16" />
+                    </div>
+                    <div className="flex justify-between">
+                        <Skeleton className="h-3.5 w-20" />
+                        <Skeleton className="h-3.5 w-16" />
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between pt-1">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-5 w-20" />
+                    </div>
+                </div>
+
+                <Skeleton className="h-10 w-full rounded-md" />
             </div>
         )
     }
@@ -556,20 +719,29 @@ export default function SalesTransactionForm({
                 />
             </div>
 
-            <div className="relative">
-                {isSaving && (
-                    <div className="absolute inset-0 z-20 flex items-center justify-center rounded-md bg-background/80 backdrop-blur-sm">
-                        <div className="flex items-center gap-2 rounded-md border bg-background px-4 py-3 shadow-sm">
-                            <Loader2 className="size-4 animate-spin text-primary" />
-                            <span className="text-sm font-medium text-foreground">
-                                {initialData ? "Saving transaction..." : "Creating transaction..."}
-                            </span>
-                        </div>
-                    </div>
-                )}
+            <div className={cn("relative", isSaving && "pointer-events-none opacity-90")}>
+                {/* Ambient "working" indicator — a thin indeterminate bar instead of a
+                    full backdrop-blur overlay, so the form stays visible while saving */}
+                <AnimatePresence>
+                    {isSaving && (
+                        <motion.div
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.4, ease: "easeInOut" }}
+                            className="absolute inset-x-0 top-0 z-20 h-0.5 origin-left overflow-hidden rounded-full bg-primary/20"
+                        >
+                            <motion.div
+                                animate={{ x: ["-100%", "200%"] }}
+                                transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut" }}
+                                className="h-full w-1/3 bg-primary"
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {initialData && (
-                    <div className="flex items-center justify-between pb-4">
+                    <div className="flex flex-col gap-2 pb-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                         <div className="flex items-center gap-1.5 flex-wrap">
                             <Badge
                                 variant={isVoided ? "destructive" : "success"}
@@ -598,9 +770,10 @@ export default function SalesTransactionForm({
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className={
-                                isVoided ? "" : "text-destructive hover:text-destructive"
-                            }
+                            className={cn(
+                                "w-full shrink-0 sm:w-auto",
+                                !isVoided && "text-destructive hover:text-destructive",
+                            )}
                             onClick={() => openVoiding()}
                         >
                             {isVoided ? (
@@ -627,8 +800,23 @@ export default function SalesTransactionForm({
                                 }
                                 : form.handleSubmit(handleSubmit)
                         }
-                        className="space-y-5"
+                        className="space-y-4 sm:space-y-5"
                     >
+                        {watchedItems.length > 0 && (
+                            <Alert className="sticky flex flex-wrap items-center justify-between gap-1 px-2.5 py-1.5 top-0 z-10 text-xs sm:px-3 sm:py-2" variant="info">
+                                <AlertTitle className="text-[11px] sm:text-xs">
+                                    {watchedItems.length} item{watchedItems.length !== 1 && "s"} added
+                                </AlertTitle>
+                                {!isFreeTransaction && (
+                                    <AnimatedNumber
+                                        value={grandTotal}
+                                        prefix="₱"
+                                        className="text-xs font-semibold sm:text-sm"
+                                    />
+                                )}
+                            </Alert>
+                        )}
+
                         {/* Transaction Info */}
                         <section className="space-y-3">
                             <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
@@ -673,8 +861,8 @@ export default function SalesTransactionForm({
                                                             }
                                                         }}
                                                     >
-                                                        <opt.icon className="mr-1 size-3" />
-                                                        {opt.label}
+                                                        <opt.icon className="mr-1 size-3 shrink-0" />
+                                                        <span className="truncate">{opt.label}</span>
                                                     </Button>
                                                 ))}
                                             </div>
@@ -694,151 +882,175 @@ export default function SalesTransactionForm({
                                 </Badge>
                             )}
 
-                            <div className="grid gap-3">
-                                <FormField
-                                    name="client_id"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel required>Client</FormLabel>
-                                            <ClientCardSelect
-                                                disabled={isDisabled}
-                                                value={field.value ? Number(field.value) : null}
-                                                onChange={(val) => field.onChange(val ?? null)}
+                            {/* Required: Client — kept isolated from the optional fields
+                                below so it reads as the one thing you must set first */}
+                            <FormField
+                                name="client_id"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel required>Client</FormLabel>
+                                        <ClientCardSelect
+                                            disabled={isDisabled}
+                                            value={field.value ? Number(field.value) : null}
+                                            onChange={(val) => field.onChange(val ?? null)}
+                                        />
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* Optional details — visually demoted so it's clear these
+                                aren't blocking progress the way Client is. Two columns
+                                once there's room (sm+), single column on phones. */}
+                            <AnimatePresence>
+                                {watchedClientId && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        transition={{ type: "spring", stiffness: 400, damping: 34 }}
+                                        className="space-y-3 overflow-hidden"
+                                    >
+                                        <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
+                                            Additional details (optional)
+                                        </p>
+                                        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                                            <FormField
+                                                control={form.control}
+                                                name="manual_receipt_number"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-muted-foreground">
+                                                            {isMainStall
+                                                                ? "Official Receipt # (OR)"
+                                                                : "Sales Invoice # (SI)"}
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                disabled={isDisabled}
+                                                                {...field}
+                                                                placeholder="e.g. 001245"
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
                                             />
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
 
-                                <FormField
-                                    control={form.control}
-                                    name="manual_receipt_number"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>
-                                                {isMainStall
-                                                    ? "Official Receipt # (OR)"
-                                                    : "Sales Invoice # (SI)"}
-                                            </FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    disabled={isDisabled}
-                                                    {...field}
-                                                    placeholder="e.g. 001245"
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                <FormField
-                                    control={form.control}
-                                    name="receipt_book"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Receipt Book #</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    disabled={isDisabled}
-                                                    {...field}
-                                                    placeholder="e.g. 1"
-                                                />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-
-                                {isMainStall && (
-                                    <FormField
-                                        control={form.control}
-                                        name="with_2307"
-                                        render={({ field }) => (
-                                            <FormItem className="flex flex-row items-center gap-2 space-y-0">
-                                                <FormControl>
-                                                    <Checkbox
-                                                        checked={field.value}
-                                                        onCheckedChange={field.onChange}
-                                                        disabled={isDisabled}
-                                                    />
-                                                </FormControl>
-                                                <FormLabel className="text-sm font-normal cursor-pointer">
-                                                    With BIR Form 2307
-                                                </FormLabel>
-                                            </FormItem>
-                                        )}
-                                    />
-                                )}
-
-                                {isAdmin && (
-                                    <FormField
-                                        control={form.control}
-                                        name="transaction_date"
-                                        render={({ field }) => (
-                                            <DatePicker
-                                                field={{
-                                                    value: field.value
-                                                        ? new Date(field.value + "T12:00:00")
-                                                        : undefined,
-                                                    onChange: (date) =>
-                                                        field.onChange(
-                                                            date
-                                                                ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
-                                                                : "",
-                                                        ),
-                                                }}
-                                                label="Transaction Date"
-                                                disabled={isDisabled}
+                                            <FormField
+                                                control={form.control}
+                                                name="receipt_book"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="text-muted-foreground">
+                                                            Receipt Book #
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input
+                                                                disabled={isDisabled}
+                                                                {...field}
+                                                                placeholder="e.g. 1"
+                                                            />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
                                             />
-                                        )}
-                                    />
-                                )}
 
-                                {isFreeTransaction && (
-                                    <FormField
-                                        control={form.control}
-                                        name="note"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Replacement Reason</FormLabel>
-                                                <FormControl>
-                                                    <Textarea
-                                                        disabled={isDisabled}
-                                                        {...field}
-                                                        placeholder="e.g. Warranty replacement for defective belt"
-                                                        rows={2}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+                                            {isMainStall && (
+                                                <FormField
+                                                    control={form.control}
+                                                    name="with_2307"
+                                                    render={({ field }) => (
+                                                        <FormItem className="flex flex-row items-center gap-2 space-y-0 sm:col-span-2">
+                                                            <FormControl>
+                                                                <Checkbox
+                                                                    checked={field.value}
+                                                                    onCheckedChange={field.onChange}
+                                                                    disabled={isDisabled}
+                                                                />
+                                                            </FormControl>
+                                                            <FormLabel className="text-sm font-normal cursor-pointer">
+                                                                With BIR Form 2307
+                                                            </FormLabel>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            )}
+
+                                            {isAdmin && (
+                                                <FormField
+                                                    control={form.control}
+                                                    name="transaction_date"
+                                                    render={({ field }) => (
+                                                        <div className="sm:col-span-2">
+                                                            <DatePicker
+                                                                field={{
+                                                                    value: field.value
+                                                                        ? new Date(field.value + "T12:00:00")
+                                                                        : undefined,
+                                                                    onChange: (date) =>
+                                                                        field.onChange(
+                                                                            date
+                                                                                ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+                                                                                : "",
+                                                                        ),
+                                                                }}
+                                                                label="Transaction Date"
+                                                                disabled={isDisabled}
+                                                            />
+                                                        </div>
+                                                    )}
+                                                />
+                                            )}
+
+                                            {isFreeTransaction && (
+                                                <FormField
+                                                    control={form.control}
+                                                    name="note"
+                                                    render={({ field }) => (
+                                                        <FormItem className="sm:col-span-2">
+                                                            <FormLabel>Replacement Reason</FormLabel>
+                                                            <FormControl>
+                                                                <Textarea
+                                                                    disabled={isDisabled}
+                                                                    {...field}
+                                                                    placeholder="e.g. Warranty replacement for defective belt"
+                                                                    rows={2}
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            )}
+                                        </div>
+                                    </motion.div>
                                 )}
-                            </div>
+                            </AnimatePresence>
                         </section>
 
                         <Separator />
 
                         {/* Items */}
                         <section className="space-y-3">
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                                 <Label
                                     required
                                     className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"
                                 >
                                     <Package className="size-3" />
                                     Items
-                                </Label>
-                                <div className="flex items-center gap-1.5">
                                     {watchedItems.length > 0 && (
                                         <Badge
                                             variant="secondary"
-                                            className="text-[10px] h-5 px-1.5"
+                                            className="rounded-full"
                                         >
                                             {watchedItems.length}
                                         </Badge>
                                     )}
+                                </Label>
+
+                                <div className="flex items-center gap-1.5">
                                     {!initialData && (
                                         <Popover>
                                             <PopoverTrigger asChild>
@@ -846,14 +1058,13 @@ export default function SalesTransactionForm({
                                                     type="button"
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-6 px-2 text-[10px]"
                                                 >
                                                     <Bookmark className="size-3 mr-1" />
                                                     Templates
                                                     {templates.length > 0 && (
                                                         <Badge
                                                             variant="secondary"
-                                                            className="ml-1 h-4 min-w-4 rounded-full px-1 text-[9px]"
+                                                            className="rounded-full"
                                                         >
                                                             {templates.length}
                                                         </Badge>
@@ -861,70 +1072,21 @@ export default function SalesTransactionForm({
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent
-                                                className="w-64 p-2"
                                                 align="end"
+                                                className="w-80 max-w-[calc(100vw-2rem)]"
                                             >
                                                 <div className="space-y-2">
-                                                    {/* Save current items as template */}
                                                     {watchedItems.length > 0 && (
-                                                        <div>
-                                                            {showSaveTemplate ? (
-                                                                <div className="flex gap-1">
-                                                                    <Input
-                                                                        value={templateName}
-                                                                        onChange={(e) =>
-                                                                            setTemplateName(e.target.value)
-                                                                        }
-                                                                        placeholder="Template name"
-                                                                        className="h-7 text-xs"
-                                                                        autoFocus
-                                                                        onKeyDown={(e) => {
-                                                                            if (
-                                                                                e.key === "Enter" &&
-                                                                                templateName.trim()
-                                                                            ) {
-                                                                                e.preventDefault()
-                                                                                saveSaleTemplate(
-                                                                                    templateName.trim(),
-                                                                                    form.getValues("items"),
-                                                                                )
-                                                                                setTemplates(getSaleTemplates())
-                                                                                setTemplateName("")
-                                                                                setShowSaveTemplate(false)
-                                                                            }
-                                                                        }}
-                                                                    />
-                                                                    <Button
-                                                                        type="button"
-                                                                        size="sm"
-                                                                        className="h-7 px-2 text-xs"
-                                                                        disabled={!templateName.trim()}
-                                                                        onClick={() => {
-                                                                            saveSaleTemplate(
-                                                                                templateName.trim(),
-                                                                                form.getValues("items"),
-                                                                            )
-                                                                            setTemplates(getSaleTemplates())
-                                                                            setTemplateName("")
-                                                                            setShowSaveTemplate(false)
-                                                                        }}
-                                                                    >
-                                                                        Save
-                                                                    </Button>
-                                                                </div>
-                                                            ) : (
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    className="w-full h-7 text-xs"
-                                                                    onClick={() => setShowSaveTemplate(true)}
-                                                                >
-                                                                    <Save className="size-3 mr-1" />
-                                                                    Save current items as template
-                                                                </Button>
-                                                            )}
-                                                        </div>
+                                                        <Button
+                                                            type="button"
+                                                            variant="warning"
+                                                            size="sm"
+                                                            className="w-full"
+                                                            onClick={openTemplateDialog}
+                                                        >
+                                                            <Save className="size-3 mr-1" />
+                                                            Save current items as template
+                                                        </Button>
                                                     )}
 
                                                     {/* Template list */}
@@ -933,47 +1095,33 @@ export default function SalesTransactionForm({
                                                             {templates.map((t) => (
                                                                 <div
                                                                     key={t.id}
-                                                                    className="flex items-center justify-between rounded-md border px-2 py-1.5 text-xs"
+                                                                    className="flex items-center justify-between gap-1 rounded-md border px-2 py-1.5 text-xs"
                                                                 >
-                                                                    <button
-                                                                        type="button"
-                                                                        className="flex-1 text-left hover:underline font-medium"
-                                                                        onClick={() => {
-                                                                            // Load template items into form
-                                                                            form.setValue("items", t.items, {
-                                                                                shouldDirty: true,
-                                                                                shouldValidate: true,
-                                                                            })
-                                                                            setItems(
-                                                                                t.items.map((i) => ({
-                                                                                    item:
-                                                                                        allItems.find(
-                                                                                            (a) => a.id === i.item_id,
-                                                                                        ) ?? null,
-                                                                                    quantity: i.quantity,
-                                                                                    description:
-                                                                                        i.item_id === null
-                                                                                            ? i.description
-                                                                                            : undefined,
-                                                                                    final_price_per_unit:
-                                                                                        i.final_price_per_unit,
-                                                                                    print_price_per_unit:
-                                                                                        i.print_price_per_unit,
-                                                                                })),
-                                                                            )
-                                                                        }}
-                                                                    >
-                                                                        {t.name}
-                                                                        <span className="text-muted-foreground ml-1">
-                                                                            ({t.items.length} item
-                                                                            {t.items.length !== 1 ? "s" : ""})
-                                                                        </span>
-                                                                    </button>
+                                                                    <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="ghost"
+                                                                                size="sm"
+                                                                                className="flex-1 min-w-0 justify-start text-left hover:underline font-medium cursor-pointer"
+                                                                                onClick={() => applyTemplate(t)}
+                                                                            >
+                                                                                <span className="truncate">
+                                                                                    {t.name}
+                                                                                </span>
+                                                                                <span className="text-muted-foreground ml-1 shrink-0 font-mono">
+                                                                                    ({t.items.length} item
+                                                                                    {t.items.length !== 1 ? "s" : ""})
+                                                                                </span>
+                                                                            </Button>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent>{t.name}</TooltipContent>
+                                                                    </Tooltip>
                                                                     <Button
                                                                         type="button"
                                                                         variant="ghost"
                                                                         size="icon"
-                                                                        className="size-5 text-destructive hover:text-destructive"
+                                                                        className="size-5 shrink-0 text-destructive hover:text-destructive"
                                                                         onClick={() => {
                                                                             removeSaleTemplate(t.id)
                                                                             setTemplates(getSaleTemplates())
@@ -985,7 +1133,7 @@ export default function SalesTransactionForm({
                                                             ))}
                                                         </div>
                                                     ) : (
-                                                        <p className="text-[10px] text-muted-foreground text-center py-2">
+                                                        <p className="text-xs text-muted-foreground text-center py-2">
                                                             No templates saved yet
                                                         </p>
                                                     )}
@@ -995,6 +1143,34 @@ export default function SalesTransactionForm({
                                     )}
                                 </div>
                             </div>
+
+                            {/* Quick-add template chips — one tap to load a common sale,
+                                only shown before the cart has anything in it */}
+                            {!initialData && templates.length > 0 && watchedItems.length === 0 && (
+                                <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-muted/40 p-2">
+                                    <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground shrink-0">
+                                        <Bookmark className="size-3" />
+                                        Quick add:
+                                    </span>
+                                    {templates.slice(0, 6).map((t) => (
+                                        <Tooltip key={t.id}>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-6 max-w-[110px] px-2 text-[11px] sm:max-w-[140px]"
+                                                    onClick={() => applyTemplate(t)}
+                                                >
+                                                    <span className="truncate">{t.name}</span>
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>{t.name}</TooltipContent>
+                                        </Tooltip>
+                                    ))}
+                                </div>
+                            )}
+
                             <ItemQuantitySelector
                                 disabled={isDisabled}
                                 items={items}
@@ -1095,7 +1271,7 @@ export default function SalesTransactionForm({
                         {!isFreeTransaction && (
                             <>
                                 <section className="space-y-3">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
                                         <Label
                                             required
                                             className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5"
@@ -1133,46 +1309,46 @@ export default function SalesTransactionForm({
                             </>
                         )}
 
-                        {/* Summary */}
-                        <div className="rounded-lg bg-muted/50 p-4 space-y-2">
-                            <div className="flex justify-between text-sm">
+                        {/* Summary — the single source of truth for Change/Balance */}
+                        <div className="rounded-lg bg-muted/50 p-3 space-y-1.5 sm:p-4 sm:space-y-2">
+                            <div className="flex justify-between gap-2 text-xs sm:text-sm">
                                 <span className="text-muted-foreground">
                                     {isFreeTransaction ? "Items to deduct" : "Subtotal"} ·{" "}
                                     {watchedItems.length} item
                                     {watchedItems.length !== 1 && "s"}
                                 </span>
                                 {!isFreeTransaction && (
-                                    <AnimatedNumber value={totalItemsAmount} prefix="₱" className="font-medium" />
+                                    <AnimatedNumber value={totalItemsAmount} prefix="₱" className="font-medium shrink-0" />
                                 )}
                             </div>
                             {!isFreeTransaction && (
                                 <>
                                     {discountAmount > 0 && (
-                                        <div className="flex justify-between text-sm">
+                                        <div className="flex justify-between gap-2 text-xs sm:text-sm">
                                             <span className="text-muted-foreground">Discount</span>
-                                            <AnimatedNumber value={discountAmount} className="font-medium text-destructive" prefix="-₱" />
+                                            <AnimatedNumber value={discountAmount} className="font-medium text-destructive shrink-0" prefix="-₱" />
                                         </div>
                                     )}
                                     {discountAmount > 0 && (
-                                        <div className="flex justify-between text-sm">
+                                        <div className="flex justify-between gap-2 text-xs sm:text-sm">
                                             <span className="text-muted-foreground">Total</span>
-                                            <AnimatedNumber value={grandTotal} prefix="₱" className="font-medium" />
+                                            <AnimatedNumber value={grandTotal} prefix="₱" className="font-medium shrink-0" />
                                         </div>
                                     )}
-                                    <div className="flex justify-between text-sm">
+                                    <div className="flex justify-between gap-2 text-xs sm:text-sm">
                                         <span className="text-muted-foreground">
                                             Paid · {watchedPayments.length} payment
                                             {watchedPayments.length !== 1 && "s"}
                                         </span>
-                                        <AnimatedNumber value={totalPayments} prefix="₱" className="font-medium text-primary" />
+                                        <AnimatedNumber value={totalPayments} prefix="₱" className="font-medium text-primary shrink-0" />
                                     </div>
                                     <Separator />
-                                    <div className="flex justify-between items-center pt-1">
-                                        <span className="text-sm font-semibold">
+                                    <div className="flex justify-between items-center gap-2 pt-1">
+                                        <span className="text-xs font-semibold sm:text-sm">
                                             {changeDue >= 0 ? "Change" : "Balance Due"}
                                         </span>
 
-                                        <AnimatedNumber value={Math.abs(changeDue)} prefix="₱" className={cn("text-base font-bold", { "text-success": changeDue >= 0, "text-destructive": changeDue < 0 })} />
+                                        <AnimatedNumber value={Math.abs(changeDue)} prefix="₱" className={cn("shrink-0 text-sm font-bold sm:text-lg", { "text-success": changeDue >= 0, "text-destructive": changeDue < 0 })} />
 
                                     </div>
                                 </>
@@ -1184,81 +1360,107 @@ export default function SalesTransactionForm({
                             )}
                         </div>
 
-                        {/* Submit */}
+                        {/* Submit — static at the end of the form. Hold is available
+                            as soon as there are items (it's just a draft save), while
+                            the real submit button only appears once the sale is
+                            actually completable, so seeing it means you're done. */}
                         {!isVoided && (
-                            <div className="sticky bottom-0 z-10 -mx-2 mt-4 space-y-1 border-t bg-background/95 px-2 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
-                                <div className="grid gap-2">
-                                    {!initialData && onHeld && watchedItems.length > 0 && (
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button
-                                                    type="button"
-                                                    variant="warning"
-                                                    className="w-full sm:shrink-0"
-                                                    disabled={isSaving}
-                                                    onClick={() => {
-                                                        const values = form.getValues()
-                                                        holdSale({
-                                                            label: `${watchedItems.length} item${watchedItems.length !== 1 ? "s" : ""} · ${formatCurrency(grandTotal)}`,
-                                                            clientId: values.client_id ?? null,
-                                                            clientName: "",
-                                                            items: values.items,
-                                                            payments: values.payments.map((p) => ({
-                                                                payment_type: p.payment_type,
-                                                                amount: p.amount,
-                                                                cheque_collection: p.cheque_collection ?? null,
-                                                            })),
-                                                            transactionType: values.transaction_type,
-                                                            orderDiscount: values.order_discount || 0,
-                                                            note: values.note || "",
-                                                            manualReceiptNumber:
-                                                                values.manual_receipt_number || "",
-                                                            receiptBook: values.receipt_book || "",
-                                                            with2307: values.with_2307 || false,
-                                                        })
-                                                        onHeld()
-                                                        onClose()
-                                                    }}
-                                                >
-                                                    <Pause className="mr-1.5 size-3.5" />
-                                                    Hold
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                Save this sale as a draft to resume later
-                                            </TooltipContent>
-                                        </Tooltip>
+                            <div className="space-y-2 pt-2">
+                                {!initialData && onHeld && watchedItems.length > 0 && (
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full text-warning border-warning/30 hover:bg-warning/10 hover:text-warning"
+                                                disabled={isSaving}
+                                                onClick={() => {
+                                                    const values = form.getValues()
+                                                    holdSale({
+                                                        label: `${watchedItems.length} item${watchedItems.length !== 1 ? "s" : ""} · ${formatCurrency(grandTotal)}`,
+                                                        clientId: values.client_id ?? null,
+                                                        clientName: "",
+                                                        items: values.items,
+                                                        payments: values.payments.map((p) => ({
+                                                            payment_type: p.payment_type,
+                                                            amount: p.amount,
+                                                            cheque_collection: p.cheque_collection ?? null,
+                                                        })),
+                                                        transactionType: values.transaction_type,
+                                                        orderDiscount: values.order_discount || 0,
+                                                        note: values.note || "",
+                                                        manualReceiptNumber:
+                                                            values.manual_receipt_number || "",
+                                                        receiptBook: values.receipt_book || "",
+                                                        with2307: values.with_2307 || false,
+                                                    })
+                                                    onHeld()
+                                                    onClose()
+                                                }}
+                                            >
+                                                <Pause className="mr-1.5 size-3.5" />
+                                                Hold Sale
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            Save this sale as a draft to resume later
+                                        </TooltipContent>
+                                    </Tooltip>
+                                )}
+
+                                <AnimatePresence mode="wait">
+                                    {showSubmitSection ? (
+                                        <motion.div
+                                            key="submit-ready"
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                                            className="space-y-1"
+                                        >
+                                            <Button
+                                                type="submit"
+                                                variant="success"
+                                                className="w-full"
+                                                disabled={
+                                                    isSaving ||
+                                                    (!initialData &&
+                                                        !heldSale &&
+                                                        (!form.formState.isDirty || !form.formState.isValid))
+                                                }
+                                            >
+                                                {isSaving ? (
+                                                    <Loader2 className="mr-2 size-4 animate-spin" />
+                                                ) : (
+                                                    <Save className="mr-2 size-4" />
+                                                )}
+                                                {isSaving
+                                                    ? initialData
+                                                        ? "Updating..."
+                                                        : "Creating..."
+                                                    : initialData
+                                                        ? "Update Transaction"
+                                                        : transactionType === "replacement"
+                                                            ? "Create Replacement"
+                                                            : "Create Transaction"}
+                                            </Button>
+                                            <p className="text-[10px] text-muted-foreground text-center sm:text-xs">
+                                                Ctrl + Enter
+                                            </p>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.p
+                                            key="submit-hint"
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="py-2 text-center text-xs text-muted-foreground"
+                                        >
+                                            {watchedItems.length === 0
+                                                ? "Add at least one item to continue"
+                                                : "Enter a payment amount to continue"}
+                                        </motion.p>
                                     )}
-                                    <Button
-                                        type="submit"
-                                        variant="success"
-                                        className="w-full"
-                                        disabled={
-                                            isSaving ||
-                                            (!initialData &&
-                                                !heldSale &&
-                                                (!form.formState.isDirty || !form.formState.isValid))
-                                        }
-                                    >
-                                        {isSaving ? (
-                                            <Loader2 className="mr-2 size-4 animate-spin" />
-                                        ) : (
-                                            <Save className="mr-2 size-4" />
-                                        )}
-                                        {isSaving
-                                            ? initialData
-                                                ? "Updating..."
-                                                : "Creating..."
-                                            : initialData
-                                                ? "Update Transaction"
-                                                : transactionType === "replacement"
-                                                    ? "Create Replacement"
-                                                    : "Create Transaction"}
-                                    </Button>
-                                </div>
-                                <p className="text-[10px] text-muted-foreground text-center sm:text-xs">
-                                    Ctrl + Enter
-                                </p>
+                                </AnimatePresence>
                             </div>
                         )}
                     </form>
@@ -1273,7 +1475,7 @@ export default function SalesTransactionForm({
                     }
                 }}
             >
-                <AlertDialogContent>
+                <AlertDialogContent className="max-w-[calc(100%-2rem)] sm:max-w-lg">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Transaction Created</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -1294,6 +1496,7 @@ export default function SalesTransactionForm({
                     <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
                         <Button
                             variant="outline"
+                            className="w-full sm:w-auto"
                             onClick={() => {
                                 cancelPrint()
                                 onClose()
@@ -1304,6 +1507,7 @@ export default function SalesTransactionForm({
                         </Button>
                         <Button
                             variant="default"
+                            className="w-full sm:w-auto"
                             onClick={() => {
                                 confirmPrint()
                                 onClose()
@@ -1315,6 +1519,7 @@ export default function SalesTransactionForm({
                         {onNewSale && (
                             <Button
                                 variant="success"
+                                className="w-full sm:w-auto"
                                 onClick={() => {
                                     confirmPrint()
                                     const clientId = keepClient ? form.getValues("client_id") : undefined
@@ -1351,7 +1556,7 @@ export default function SalesTransactionForm({
                 open={!!addStockDialogStock}
                 onOpenChange={(v) => !v && setAddStockDialogStock(null)}
             >
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Add Stall Stock</DialogTitle>
                         <DialogDescription>
@@ -1364,6 +1569,98 @@ export default function SalesTransactionForm({
                             onClose={() => setAddStockDialogStock(null)}
                         />
                     )}
+                </DialogContent>
+            </Dialog>
+
+            {/* Save as Template dialog — separated from the browse popover so
+                validation errors and the duplicate-name confirmation have
+                proper room instead of being crammed into a small popover row */}
+            <Dialog
+                open={templateDialogOpen}
+                onOpenChange={handleTemplateDialogOpenChange}
+            >
+                <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Save as Template</DialogTitle>
+                        <DialogDescription>
+                            Save the {watchedItems.length} item
+                            {watchedItems.length !== 1 && "s"} in your cart for quick
+                            reuse later.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {itemValidationErrors.length > 0 ? (
+                        <Alert variant="destructive">
+                            <AlertTitle>Fix these items first</AlertTitle>
+                            <AlertDescription>
+                                <ul className="list-disc space-y-0.5 pl-4 pt-1">
+                                    {itemValidationErrors.map((err, idx) => (
+                                        <li key={idx}>{err}</li>
+                                    ))}
+                                </ul>
+                            </AlertDescription>
+                        </Alert>
+                    ) : (
+                        <div className="space-y-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="template-name">Template name</Label>
+                                <Input
+                                    id="template-name"
+                                    value={templateNameInput}
+                                    onChange={(e) => {
+                                        setTemplateNameInput(e.target.value)
+                                        setDuplicateTemplate(null)
+                                    }}
+                                    placeholder="e.g. Installation Set"
+                                    maxLength={TEMPLATE_NAME_MAX_LENGTH}
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault()
+                                            handleSaveTemplate()
+                                        }
+                                    }}
+                                />
+                                <p className="text-right text-[10px] text-muted-foreground">
+                                    {templateNameInput.length}/{TEMPLATE_NAME_MAX_LENGTH}
+                                </p>
+                            </div>
+
+                            {duplicateTemplate && (
+                                <Alert variant="warning">
+                                    <AlertTitle>Template already exists</AlertTitle>
+                                    <AlertDescription>
+                                        A template named &quot;{duplicateTemplate.name}&quot;
+                                        already exists with {duplicateTemplate.items.length} item
+                                        {duplicateTemplate.items.length !== 1 ? "s" : ""}. Saving
+                                        will overwrite it.
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+                    )}
+
+                    <DialogFooter className="flex-col gap-2 sm:flex-row">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="w-full sm:w-auto"
+                            onClick={() => handleTemplateDialogOpenChange(false)}
+                        >
+                            Cancel
+                        </Button>
+                        {itemValidationErrors.length === 0 && (
+                            <Button
+                                type="button"
+                                variant={duplicateTemplate ? "destructive" : "success"}
+                                className="w-full sm:w-auto"
+                                disabled={!templateNameInput.trim()}
+                                onClick={handleSaveTemplate}
+                            >
+                                {duplicateTemplate ? "Overwrite Template" : "Save Template"}
+                            </Button>
+                        )}
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </>
