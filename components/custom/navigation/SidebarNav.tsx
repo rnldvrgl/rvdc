@@ -39,6 +39,7 @@ import { useTheme } from "next-themes"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 type SidebarItem = {
     name: string
@@ -207,7 +208,7 @@ export default function SidebarNav({
                     </div>
 
                     {/* Nav — isolated scroll, scrollbar can't overlap icons */}
-                    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-3 scrollbar-none">
+                    <ScrollArea className="flex-1 min-h-0  overflow-x-hidden py-3 scrollbar-none">
                         <AnimatePresence mode="wait" initial={false}>
                             {collapsed ? (
                                 <motion.div
@@ -235,7 +236,7 @@ export default function SidebarNav({
                                 </motion.div>
                             )}
                         </AnimatePresence>
-                    </div>
+                    </ScrollArea>
 
                     {/* Bottom strip — always outside scroll area */}
                     <div className="shrink-0 border-t border-sidebar-border dark:border-sidebar-border/70">
@@ -362,7 +363,7 @@ export default function SidebarNav({
                         </div>
 
                         {/* Scrollable nav */}
-                        <div className="flex-1 overflow-y-auto scrollbar-none">
+                        <ScrollArea className="flex-1 ">
                             <div className="py-4 px-3">
                                 {sections.map((section, i) =>
                                     section.items.length > 0 ? (
@@ -386,7 +387,7 @@ export default function SidebarNav({
                                     ) : null,
                                 )}
                             </div>
-                        </div>
+                        </ScrollArea>
 
                         {/* Footer */}
                         <motion.div
@@ -421,7 +422,7 @@ export default function SidebarNav({
                             <button
                                 type="button"
                                 onClick={() => { setChangelogOpen(true); setMobileMenuOpen(false) }}
-                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                className="shimmer!  flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
                             >
                                 <Sparkles className="size-4 shrink-0" />
                                 What&apos;s New

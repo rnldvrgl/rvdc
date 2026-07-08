@@ -39,6 +39,7 @@ import {
     useNotifications,
     useUnreadNotificationCount,
 } from "@/lib/queries/useNotifications"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 /* ─── Type → visual config ─── */
 type NotifStyle = {
@@ -545,7 +546,7 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
                     </div>
 
                     {/* Notification list */}
-                    <div className="max-h-[480px] overflow-y-auto">
+                    <ScrollArea className="h-[280px]">
                         <AnimatePresence mode="wait" initial={false}>
                             {grouped.length > 0 ? (
                                 <motion.div
@@ -718,7 +719,7 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
                                 </motion.div>
                             )}
                         </AnimatePresence>
-                    </div>
+                    </ScrollArea>
                 </DropdownMenuContent>
             </DropdownMenu>
 

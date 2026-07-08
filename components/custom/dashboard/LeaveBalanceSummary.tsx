@@ -83,17 +83,17 @@ export function LeaveBalanceSummary() {
                 <LeaveRow
                     icon={HeartPulse}
                     label="Sick Leave"
-                    used={balance?.sick_leave_used || 0}
-                    total={balance?.sick_leave_total || 0}
-                    remaining={balance?.sick_leave_remaining || 0}
+                    used={Number(balance?.sick_leave_used) || 0}
+                    total={Number(balance?.sick_leave_total) || 0}
+                    remaining={Number(balance?.sick_leave_remaining) || 0}
                     tone="info"
                 />
                 <LeaveRow
                     icon={TriangleAlert}
                     label="Emergency Leave"
-                    used={balance?.emergency_leave_used || 0}
-                    total={balance?.emergency_leave_total || 0}
-                    remaining={balance?.emergency_leave_remaining || 0}
+                    used={Number(balance?.emergency_leave_used) || 0}
+                    total={Number(balance?.emergency_leave_total) || 0}
+                    remaining={Number(balance?.emergency_leave_remaining) || 0}
                     tone="warning"
                 />
             </CardContent>

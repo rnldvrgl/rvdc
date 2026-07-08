@@ -19,7 +19,6 @@ import {
 import { Calendar, ChevronLeft, ChevronRight, Clock, FileText, User } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { CalendarEventItem } from "./CalendarEventItem"
-import CalendarSettings from "./CalendarSettings"
 import { DayViewEventItem } from "./DayViewEventItem"
 import { EventIcon } from "./EventIcon"
 import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
@@ -467,8 +466,6 @@ const DashboardCalendar = ({
     weekStartsOn,
     onEventClick,
     onDateClick,
-    withSettings = true,
-    withRefresh = true,
     eventTypes,
 }: DashboardCalendarProps) => {
     const isMobile = useIsMobile()
@@ -514,7 +511,7 @@ const DashboardCalendar = ({
         }))
     }, [useCustomData, mode, attendanceData])
 
-    const { data: apiEvents, isLoading, error, refetch } = useCalendarEvents({
+    const { data: apiEvents, error, refetch } = useCalendarEvents({
         start: formatDateToYMD(dateRange.start),
         end: formatDateToYMD(dateRange.end),
         enabled: !useCustomData,

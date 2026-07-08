@@ -100,6 +100,7 @@ import * as z from "zod"
 import type { HeldSale } from "@/lib/utils/heldSales"
 import { AnimatedNumber } from "@/components/custom/shared/AnimatedNumber"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { TEMPLATE_NAME_MAX_LENGTH } from "@/lib/constants/general"
 
 interface SalesTransactionFormProps {
     initialData?: SalesTransaction
