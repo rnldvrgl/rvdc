@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "api-rvdcrefandaircon.duckdns.org",
+        hostname: "api.rvdc.online",
         pathname: "/media/**",
       },
     ],

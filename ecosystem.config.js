@@ -12,7 +12,7 @@ module.exports = {
 			env: {
 				NODE_ENV: "production",
 				NEXT_PUBLIC_API_BASE_URL:
-					"https://api-rvdcrefandaircon.duckdns.org",
+					"https://api.rvdc.online",
 			},
 		},
 	],
