@@ -9,6 +9,7 @@ import NextTopLoader from "nextjs-toploader"
 import Script from "next/script"
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css"
+import { NetworkStatusBanner } from "@/components/custom/shared/NetworkStatusBanner"
 
 const fontSans = Plus_Jakarta_Sans({
     subsets: ["latin"],
@@ -123,6 +124,7 @@ export default function RootLayout({
                         disableTransitionOnChange
                     >
                         <AppThemeApplier />
+                        <NetworkStatusBanner />
                         {children}
                         <ResponsiveToaster desktopPosition="bottom-right" closeButton />
                     </ThemeProvider>

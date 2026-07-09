@@ -1,7 +1,6 @@
 "use client"
 
-import { getAudioContext } from "@/lib/utils/audioContext"
-import { getSoundVolume } from "@/lib/utils/getSoundVolume"
+import { playNotificationChime } from "@/lib/sound"
 import clsx from "clsx"
 import {
     AlertTriangle,
@@ -22,7 +21,7 @@ import {
 } from "lucide-react"
 import { AnimatePresence, motion } from "framer-motion"
 import { useRouter } from "next/navigation"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useInView } from "react-intersection-observer"
 
 import NotificationSheet from "@/components/custom/shared/NotificationSheet"
@@ -273,41 +272,8 @@ const NotificationArea = ({ align }: { align: "start" | "end" | "center" }) => {
         id: number
     } | null>(null)
 
-    const playNotificationSound = useCallback(() => {
-        try {
-            const ctx = getAudioContext()
-            if (ctx.state !== "running") return
-            const now = ctx.currentTime
-            const vol = getSoundVolume()
-
-            // Two-tone "ding" chime
-            const osc1 = ctx.createOscillator()
-            const osc2 = ctx.createOscillator()
-            const gain = ctx.createGain()
-
-            osc1.type = "sine"
-            osc1.frequency.setValueAtTime(830, now)
-            osc2.type = "sine"
-            osc2.frequency.setValueAtTime(1100, now + 0.12)
-
-            gain.gain.setValueAtTime(0.55 * vol, now)
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5)
-
-            osc1.connect(gain)
-            osc2.connect(gain)
-            gain.connect(ctx.destination)
-
-            osc1.start(now)
-            osc1.stop(now + 0.12)
-            osc2.start(now + 0.12)
-            osc2.stop(now + 0.5)
-        } catch {
-            // Audio not available – silently ignore
-        }
-    }, [])
-
     useNotificationWebSocket({
-        onNotification: playNotificationSound,
+        onNotification: playNotificationChime,
     })
 
     const {
