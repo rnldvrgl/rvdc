@@ -50,7 +50,7 @@ import {
     Wrench,
     Zap,
 } from "lucide-react"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { useForm, useWatch } from "react-hook-form"
 import * as z from "zod"
 
@@ -137,6 +137,23 @@ const steps = [
     { id: 4, title: "Review", icon: ClipboardList },
 ]
 
+// ── Pure helpers — hoisted outside the component so they aren't
+// recreated on every render / every onSubmit call ──
+
+function formatDateForBackend(date: Date): string {
+    const y = date.getFullYear()
+    const m = String(date.getMonth() + 1).padStart(2, "0")
+    const d = String(date.getDate()).padStart(2, "0")
+    const h = String(date.getHours()).padStart(2, "0")
+    const mi = String(date.getMinutes()).padStart(2, "0")
+    const s = String(date.getSeconds()).padStart(2, "0")
+    return `${y}-${m}-${d}T${h}:${mi}:${s}`
+}
+
+function getAssignmentType(mode: FormValues["service_mode"]): AssignmentType {
+    return mode === "pull_out" ? "pickup" : "repair"
+}
+
 // ── Component ────────────────────────────────────────────────────────────
 
 interface ServiceFormWizardProps {
@@ -181,7 +198,7 @@ export default function ServiceFormWizard({
             received_at: new Date(),
             technicians: [],
         },
-        mode: "onChange",
+        mode: "onTouched",
     })
 
     const { clients } = useClients()
@@ -197,6 +214,10 @@ export default function ServiceFormWizard({
         name: "service_type",
     })
     const selectedClient = useWatch({ control: form.control, name: "client" })
+    const selectedTechnicianIds = useWatch({
+        control: form.control,
+        name: "technicians",
+    })
     const createReinstall = useWatch({
         control: form.control,
         name: "create_reinstall",
@@ -290,20 +311,20 @@ export default function ServiceFormWizard({
         }
     }, [selectedServicePurpose, form])
 
-    // Auto-set mode for installation / dismantle / motor_rewind
+    // Force service_mode based on service_type where only one mode is valid.
+    // Combined into a single effect (was previously two separate effects
+    // both watching selectedServiceType/selectedMode and both calling
+    // setValue — merging avoids double-firing on the same dependency change).
     useEffect(() => {
-        if (
-            (selectedServiceType === "installation" ||
-                selectedServiceType === "dismantle") &&
-            selectedMode !== "home_service"
-        ) {
-            form.setValue("service_mode", "home_service")
-        }
-    }, [selectedServiceType, selectedMode, form])
+        const forcedMode =
+            selectedServiceType === "installation" || selectedServiceType === "dismantle"
+                ? "home_service"
+                : selectedServiceType === "motor_rewind"
+                    ? "carry_in"
+                    : null
 
-    useEffect(() => {
-        if (selectedServiceType === "motor_rewind" && selectedMode !== "carry_in") {
-            form.setValue("service_mode", "carry_in")
+        if (forcedMode && selectedMode !== forcedMode) {
+            form.setValue("service_mode", forcedMode)
         }
     }, [selectedServiceType, selectedMode, form])
 
@@ -397,22 +418,9 @@ export default function ServiceFormWizard({
     }
 
     // ── Submit ─────────────────────────────────────────────────────────────
-
-    const formatDateForBackend = (date: Date): string => {
-        const y = date.getFullYear()
-        const m = String(date.getMonth() + 1).padStart(2, "0")
-        const d = String(date.getDate()).padStart(2, "0")
-        const h = String(date.getHours()).padStart(2, "0")
-        const mi = String(date.getMinutes()).padStart(2, "0")
-        const s = String(date.getSeconds()).padStart(2, "0")
-        return `${y}-${m}-${d}T${h}:${mi}:${s}`
-    }
+    const isLastStep = currentStep === visibleSteps[visibleSteps.length - 1]?.id
 
     const onSubmit = (data: FormValues) => {
-        const getAssignmentType = (): AssignmentType => {
-            return data.service_mode === "pull_out" ? "pickup" : "repair"
-        }
-
         const payload: ServicePayload = {
             client: data.client!,
             service_type: data.service_type,
@@ -460,7 +468,7 @@ export default function ServiceFormWizard({
                     : undefined,
             technician_assignments: data.technicians?.map((techId) => ({
                 technician: techId,
-                assignment_type: getAssignmentType(),
+                assignment_type: getAssignmentType(data.service_mode),
                 appliance: null,
             })),
         }
@@ -505,39 +513,44 @@ export default function ServiceFormWizard({
         })
     }
 
+    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        if (!isLastStep) {
+            e.preventDefault()
+            return
+        }
+        form.handleSubmit(onSubmit)(e)
+    }
+
     const isSubmitting =
         addService.status === "pending" || linkAirconUnits.status === "pending"
 
-    // ── Helpers for Review step ────────────────────────────────────────────
-
-    const clientName = React.useMemo(() => {
-        const c = clients.find((cl) => cl.id === form.getValues("client"))
+    const clientName = useMemo(() => {
+        const c = clients.find((cl) => cl.id === selectedClient)
         return c ? `${c.full_name} (${c.contact_number})` : "—"
-    }, [clients, form, currentStep]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [clients, selectedClient])
 
-    const technicianNames = React.useMemo(() => {
-        const ids = form.getValues("technicians") ?? []
+    const technicianNames = useMemo(() => {
+        const ids = selectedTechnicianIds ?? []
         return ids
             .map((id) => technicians.find((t) => t.id === id)?.full_name)
             .filter(Boolean)
-    }, [technicians, form, currentStep]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [technicians, selectedTechnicianIds])
 
     const typeLabel = serviceTypeOptions.find(
-        (o) => o.value === form.getValues("service_type"),
+        (o) => o.value === selectedServiceType,
     )?.label
     const purposeLabel = servicePurposeOptions.find(
-        (o) => o.value === form.getValues("service_purpose"),
+        (o) => o.value === selectedServicePurpose,
     )?.label
     const modeLabel = serviceModeOptions.find(
-        (o) => o.value === form.getValues("service_mode"),
+        (o) => o.value === selectedMode,
     )?.label
 
     // ── Render ─────────────────────────────────────────────────────────────
-
     return (
         <Form {...form}>
             <form
-                onSubmit={form.handleSubmit(onSubmit)}
+                onSubmit={handleFormSubmit}
                 className="space-y-6"
             >
                 {/* Step indicators */}
@@ -1572,21 +1585,21 @@ export default function ServiceFormWizard({
                         Back
                     </Button>
 
-                    {currentStep < steps.length - 1 ? (
+                    {!isLastStep ? (
                         <Button
                             type="button"
                             size="sm"
-                            onClick={goNext}
+                            onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                goNext()
+                            }}
                         >
                             Next
                             <ArrowRight className="size-4 ml-1.5" />
                         </Button>
                     ) : (
-                        <Button
-                            type="submit"
-                            size="sm"
-                            disabled={isSubmitting}
-                        >
+                        <Button type="submit" size="sm" disabled={isSubmitting}>
                             <Save className="size-4 mr-1.5" />
                             {isSubmitting ? "Creating…" : "Create Service"}
                         </Button>
