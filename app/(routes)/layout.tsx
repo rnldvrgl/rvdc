@@ -16,6 +16,8 @@ import { useUserProfile } from "@/lib/queries/useUserProfile"
 import useUserProfileStore from "@/lib/store/useUserProfileStore"
 import { cn } from "@/lib/utils/helpers"
 import { AnimatePresence, motion } from "framer-motion"
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import React, { useEffect } from "react"
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
@@ -39,6 +41,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
     return (
         <div className="min-h-screen isolate relative">
+            <Analytics />
+            <SpeedInsights />
             <Background />
             <AnimatePresence mode="wait">
                 {inMaintenance ? (
