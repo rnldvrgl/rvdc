@@ -50,7 +50,7 @@ import {
 } from "lucide-react"
 import { useEffect, useMemo } from "react"
 import { useCurrentUser } from "@/lib/hooks/useCurrentUser"
-import { useForm, useWatch } from "react-hook-form"
+import { Control, useForm, useWatch } from "react-hook-form"
 import * as z from "zod"
 
 const serviceTypeOptions = [
@@ -120,6 +120,242 @@ interface ServiceFormProps {
     forceClose?: () => void
 }
 
+// ── Pure helpers — no component state, hoisted out so they aren't
+// recreated on every render / every onSubmit call ──
+
+function formatDateForBackend(date: Date): string {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    const hours = String(date.getHours()).padStart(2, "0")
+    const minutes = String(date.getMinutes()).padStart(2, "0")
+    const seconds = String(date.getSeconds()).padStart(2, "0")
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+}
+
+function getAssignmentType(mode: ServiceMode): AssignmentType {
+    return mode === "pull_out" ? "pickup" : "repair"
+}
+
+function CarryInFields({ control, isSubmitting }: { control: Control<FormValues>; isSubmitting: boolean }) {
+    return (
+        <div className="space-y-4 rounded-lg border p-4">
+            <h3 className="font-medium text-sm">Carry-In Service Details</h3>
+            <FormField
+                name="received_at"
+                control={control}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Received At</FormLabel>
+                        <FormControl>
+                            <DateTimePicker
+                                value={field.value ?? undefined}
+                                onChange={field.onChange}
+                                disabled={isSubmitting}
+                                placeholder="When customer dropped off unit"
+                                disablePastDates={false}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+    )
+}
+
+function HomeServiceFields({ control, isSubmitting }: { control: Control<FormValues>; isSubmitting: boolean }) {
+    return (
+        <div className="space-y-4 rounded-lg border p-4">
+            <h3 className="font-medium text-sm">Home Service Details</h3>
+
+            <FormField
+                name="appointment_datetime"
+                control={control}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel required>Appointment Date & Time</FormLabel>
+                        <FormControl>
+                            <DateTimePicker
+                                value={field.value ?? undefined}
+                                onChange={field.onChange}
+                                disabled={isSubmitting}
+                                placeholder="Select appointment date and time"
+                                disablePastDates={true}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                name="override_address"
+                control={control}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Service Address</FormLabel>
+                        <FormControl>
+                            <Textarea
+                                {...field}
+                                placeholder="Auto-filled from client or enter custom address"
+                                disabled={isSubmitting}
+                                rows={2}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                    name="override_contact_person"
+                    control={control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Contact Person</FormLabel>
+                            <FormControl>
+                                <Input
+                                    {...field}
+                                    placeholder="Auto-filled from client"
+                                    disabled={isSubmitting}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    name="override_contact_number"
+                    control={control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Contact Number</FormLabel>
+                            <FormControl>
+                                <Input
+                                    {...field}
+                                    placeholder="Auto-filled from client"
+                                    disabled={isSubmitting}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+        </div>
+    )
+}
+
+function PullOutFields({ control, isSubmitting }: { control: Control<FormValues>; isSubmitting: boolean }) {
+    return (
+        <div className="space-y-4 rounded-lg border p-4">
+            <h3 className="font-medium text-sm">Pull-Out Service Details</h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                    name="pickup_date"
+                    control={control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel required>Pickup Date & Time</FormLabel>
+                            <FormControl>
+                                <DateTimePicker
+                                    value={field.value ?? undefined}
+                                    onChange={field.onChange}
+                                    disabled={isSubmitting}
+                                    placeholder="Select pickup date and time"
+                                    disablePastDates={true}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    name="delivery_date"
+                    control={control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Delivery Date & Time</FormLabel>
+                            <FormControl>
+                                <DateTimePicker
+                                    value={field.value ?? undefined}
+                                    onChange={field.onChange}
+                                    disabled={isSubmitting}
+                                    placeholder="Select delivery date and time"
+                                    disablePastDates={false}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+
+            <FormField
+                name="override_address"
+                control={control}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Pickup Address</FormLabel>
+                        <FormControl>
+                            <Textarea
+                                {...field}
+                                placeholder="Auto-filled from client or enter custom address"
+                                disabled={isSubmitting}
+                                rows={2}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                    name="override_contact_person"
+                    control={control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Contact Person</FormLabel>
+                            <FormControl>
+                                <Input
+                                    {...field}
+                                    placeholder="Auto-filled from client"
+                                    disabled={isSubmitting}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <FormField
+                    name="override_contact_number"
+                    control={control}
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Contact Number</FormLabel>
+                            <FormControl>
+                                <Input
+                                    {...field}
+                                    placeholder="Auto-filled from client"
+                                    disabled={isSubmitting}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+        </div>
+    )
+}
+
 export default function ServiceForm({
     initialData,
     onClose,
@@ -177,7 +413,7 @@ export default function ServiceForm({
                     ?.map((ta) => ta.technician)
                     .filter((id): id is number => id !== undefined && id !== null) ?? [],
         },
-        mode: "onChange",
+        mode: "onTouched",
     })
 
     const { clients } = useClients()
@@ -228,17 +464,6 @@ export default function ServiceForm({
 
     const availableStatusOptions = serviceStatusOptions
 
-    // Set default mode for installation / dismantle
-    useEffect(() => {
-        if (
-            (selectedServiceType === "installation" ||
-                selectedServiceType === "dismantle") &&
-            selectedMode !== "home_service"
-        ) {
-            form.setValue("service_mode", "home_service")
-        }
-    }, [selectedServiceType, selectedMode, form])
-
     // Auto-fill client address and contact when client is selected
     useEffect(() => {
         if (selectedClient && !initialData) {
@@ -258,35 +483,21 @@ export default function ServiceForm({
         }
     }, [selectedClient, clients, initialData, form])
 
-    // Auto-set carry_in mode for motor_rewind
+    // Force service_mode based on service_type where only one mode is valid
     useEffect(() => {
-        if (selectedServiceType === "motor_rewind" && selectedMode !== "carry_in") {
-            form.setValue("service_mode", "carry_in")
+        const forcedMode =
+            selectedServiceType === "installation" || selectedServiceType === "dismantle"
+                ? "home_service"
+                : selectedServiceType === "motor_rewind"
+                    ? "carry_in"
+                    : null
+
+        if (forcedMode && selectedMode !== forcedMode) {
+            form.setValue("service_mode", forcedMode, { shouldDirty: true })
         }
     }, [selectedServiceType, selectedMode, form])
 
     const onSubmit = (data: FormValues) => {
-        // Determine assignment type based on service mode
-        const getAssignmentType = (): AssignmentType => {
-            switch (data.service_mode) {
-                case "pull_out":
-                    return "pickup"
-                default:
-                    return "repair"
-            }
-        }
-
-        // Helper function to format date in local timezone (YYYY-MM-DDTHH:mm:ss)
-        const formatDateForBackend = (date: Date): string => {
-            const year = date.getFullYear()
-            const month = String(date.getMonth() + 1).padStart(2, "0")
-            const day = String(date.getDate()).padStart(2, "0")
-            const hours = String(date.getHours()).padStart(2, "0")
-            const minutes = String(date.getMinutes()).padStart(2, "0")
-            const seconds = String(date.getSeconds()).padStart(2, "0")
-            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
-        }
-
         const payload: ServicePayload = {
             client: data.client,
             service_type: data.service_type,
@@ -323,7 +534,7 @@ export default function ServiceForm({
                 : undefined,
             technician_assignments: data.technicians?.map((techId) => ({
                 technician: techId,
-                assignment_type: getAssignmentType(),
+                assignment_type: getAssignmentType(data.service_mode),
                 appliance: null,
             })),
         }
@@ -515,221 +726,9 @@ export default function ServiceForm({
                     )}
                 />
 
-                {/* Carry-In Fields */}
-                {selectedMode === "carry_in" && (
-                    <div className="space-y-4 rounded-lg border p-4">
-                        <h3 className="font-medium text-sm">Carry-In Service Details</h3>
-                        <FormField
-                            name="received_at"
-                            control={form.control}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Received At</FormLabel>
-                                    <FormControl>
-                                        <DateTimePicker
-                                            value={field.value ?? undefined}
-                                            onChange={field.onChange}
-                                            disabled={isSubmitting}
-                                            placeholder="When customer dropped off unit"
-                                            disablePastDates={false}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
-                )}
-
-                {/* Home Service Fields */}
-                {selectedMode === "home_service" && (
-                    <div className="space-y-4 rounded-lg border p-4">
-                        <h3 className="font-medium text-sm">Home Service Details</h3>
-
-                        <FormField
-                            name="appointment_datetime"
-                            control={form.control}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel required>Appointment Date & Time</FormLabel>
-                                    <FormControl>
-                                        <DateTimePicker
-                                            value={field.value ?? undefined}
-                                            onChange={field.onChange}
-                                            disabled={isSubmitting}
-                                            placeholder="Select appointment date and time"
-                                            disablePastDates={!isAdmin}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            name="override_address"
-                            control={form.control}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Service Address</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            {...field}
-                                            placeholder="Auto-filled from client or enter custom address"
-                                            disabled={isSubmitting}
-                                            rows={2}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField
-                                name="override_contact_person"
-                                control={form.control}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Contact Person</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                {...field}
-                                                placeholder="Auto-filled from client"
-                                                disabled={isSubmitting}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                name="override_contact_number"
-                                control={form.control}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Contact Number</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                {...field}
-                                                placeholder="Auto-filled from client"
-                                                disabled={isSubmitting}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {/* Pull-Out Fields */}
-                {selectedMode === "pull_out" && (
-                    <div className="space-y-4 rounded-lg border p-4">
-                        <h3 className="font-medium text-sm">Pull-Out Service Details</h3>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField
-                                name="pickup_date"
-                                control={form.control}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel required>Pickup Date & Time</FormLabel>
-                                        <FormControl>
-                                            <DateTimePicker
-                                                value={field.value ?? undefined}
-                                                onChange={field.onChange}
-                                                disabled={isSubmitting}
-                                                placeholder="Select pickup date and time"
-                                                disablePastDates={true}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                name="delivery_date"
-                                control={form.control}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Delivery Date & Time</FormLabel>
-                                        <FormControl>
-                                            <DateTimePicker
-                                                value={field.value ?? undefined}
-                                                onChange={field.onChange}
-                                                disabled={isSubmitting}
-                                                placeholder="Select delivery date and time"
-                                                disablePastDates={false}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-
-                        <FormField
-                            name="override_address"
-                            control={form.control}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Pickup Address</FormLabel>
-                                    <FormControl>
-                                        <Textarea
-                                            {...field}
-                                            placeholder="Auto-filled from client or enter custom address"
-                                            disabled={isSubmitting}
-                                            rows={2}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField
-                                name="override_contact_person"
-                                control={form.control}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Contact Person</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                {...field}
-                                                placeholder="Auto-filled from client"
-                                                disabled={isSubmitting}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
-                                name="override_contact_number"
-                                control={form.control}
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Contact Number</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                {...field}
-                                                placeholder="Auto-filled from client"
-                                                disabled={isSubmitting}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                    </div>
-                )}
+                {selectedMode === "carry_in" && <CarryInFields control={form.control} isSubmitting={isSubmitting} />}
+                {selectedMode === "home_service" && <HomeServiceFields control={form.control} isSubmitting={isSubmitting} />}
+                {selectedMode === "pull_out" && <PullOutFields control={form.control} isSubmitting={isSubmitting} />}
 
                 <div className="sticky bottom-0 z-10 -mx-1 mt-4 border-t bg-background/95 px-1 py-3 backdrop-blur sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
                     <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
