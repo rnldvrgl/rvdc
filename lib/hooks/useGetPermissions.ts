@@ -7,7 +7,7 @@ export function useGetPermissions(
 ) {
   return useMemo(() => {
     // Common permissions for all roles (Admin, Manager, Clerk, Technician)
-    const commonPermissions = ["view_settings", "view_dashboard"]
+    const commonPermissions = ["view_settings", "view_dashboard",  "manage_attendance_leaves"]
 
     // Employees Permissions (includes Manager, Clerk, and Technician)
     const commonEmployeePermissions = [
