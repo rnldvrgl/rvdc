@@ -11,6 +11,7 @@ export function useGetPermissions(role: Roles) {
       "view_settings",
       "view_sales",
       "view_services",
+      "manage_attendance_leaves"
     ]
 
     const commonFinancialPermissions = [

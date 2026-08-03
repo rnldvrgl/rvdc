@@ -137,7 +137,7 @@ export const baseNavigation: Record<string, NavigationEntry> = {
         name: "Leaves",
         href: "/attendance/leaves",
         icon: Plane,
-        permission: "manage_attendance",
+        permission: "manage_attendance_leaves",
       },
       {
         name: "Overtime Requests",
