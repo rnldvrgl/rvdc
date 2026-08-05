@@ -562,6 +562,26 @@ export interface AnalyticsSummary {
   } | null
 }
 
+export interface BusinessInsightRecommendation {
+  title: string
+  reason: string
+  action: string
+  priority: "high" | "medium" | "low"
+}
+
+export interface BusinessInsightsResponse {
+  source: "ai" | "rules"
+  headline: string
+  summary: string
+  confidence: string
+  generated_at: string
+  model?: string | null
+  recommendations: BusinessInsightRecommendation[]
+  risks: string[]
+  opportunities: string[]
+  snapshot?: unknown
+}
+
 export type TopSellingItems = {
   item: string
   quantity: number
