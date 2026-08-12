@@ -2,6 +2,7 @@
 
 import { BirthdayGreeting } from "@/components/custom/dashboard/BirthdayGreeting"
 import { BirthdayReminders } from "@/components/custom/dashboard/BirthdayReminders"
+import { BusinessInsightsCard } from "@/components/custom/dashboard/BusinessInsightsCard"
 import { EmployeePerformanceStats } from "@/components/custom/dashboard/EmployeePerformanceStats"
 import { InventoryReorderAlerts } from "@/components/custom/dashboard/InventoryReorderAlerts"
 import { LeaveBalanceSummary } from "@/components/custom/dashboard/LeaveBalanceSummary"
@@ -70,6 +71,13 @@ function AdminDashboard() {
         <div className="space-y-6">
             <SectionReveal delay={0.05}>
                 <HeroStatsSection />
+            </SectionReveal>
+
+            <SectionReveal delay={0.08}>
+                <div>
+                    <SectionLabel>AI guidance</SectionLabel>
+                    <BusinessInsightsCard />
+                </div>
             </SectionReveal>
 
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_380px]">

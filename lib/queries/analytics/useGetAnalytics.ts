@@ -1,5 +1,6 @@
 import {
   AnalyticsSummary,
+  BusinessInsightsResponse,
   CashFlow,
   ExpensesOvertime,
   SalesOvertime,
@@ -129,5 +130,14 @@ export const useEmployeePerformance = (
   useApiQuery<EmployeePerformanceData>({
     queryKey: ["employee_performance", options],
     url: `/analytics/reports/employee-performance/${buildQueryString(options)}`,
+    enabled: options.enabled,
+  })
+
+export const useBusinessInsights = (
+  options: useGetAnalyticsOptions & { enabled?: boolean },
+) =>
+  useApiQuery<BusinessInsightsResponse>({
+    queryKey: ["business_insights", options],
+    url: `/analytics/reports/business-insights/${buildQueryString(options)}`,
     enabled: options.enabled,
   })
