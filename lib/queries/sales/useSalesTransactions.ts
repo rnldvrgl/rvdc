@@ -2,12 +2,13 @@ import { SalesTransaction } from "@/lib/constants/interface"
 import type { PaginatedFilterProps } from "@/lib/constants/types"
 import { useApiQuery } from "@/lib/hooks/useApiQuery"
 import { useFilters } from "@/lib/hooks/useFilters"
+import { useCursorPaginatedQuery } from "@/lib/hooks/useCursorPaginatedQuery"
 import { usePaginatedQuery } from "@/lib/hooks/usePaginatedQuery"
 
 const salesTransactionsUrl = "/sales/transactions/"
 
 export function useSalesTransactions(props: PaginatedFilterProps = {}) {
-  return usePaginatedQuery<SalesTransaction>({
+  return useCursorPaginatedQuery<SalesTransaction>({
     ...props,
     url: salesTransactionsUrl,
     queryKeyBase: "sales-transactions",

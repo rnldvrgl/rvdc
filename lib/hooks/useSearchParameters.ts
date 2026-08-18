@@ -11,6 +11,7 @@ interface SearchParameters {
   search?: string
   ordering?: string
   filter?: Record<string, string>
+  cursor?: string
 }
 
 interface UseSearchParametersOptions {
@@ -18,7 +19,7 @@ interface UseSearchParametersOptions {
 }
 
 const ALLOWED_LIMITS = [10, 25, 50, 100, 200, 500]
-const RESERVED_KEYS = new Set(["page", "limit", "search", "ordering"])
+const RESERVED_KEYS = new Set(["page", "limit", "search", "ordering", "cursor"])
 
 const useSearchParameters = (
   options?: UseSearchParametersOptions,
@@ -48,6 +49,7 @@ const useSearchParameters = (
       search: undefined,
       ordering: undefined,
       filter,
+      cursor: undefined,
     }
   }
 
@@ -62,6 +64,7 @@ const useSearchParameters = (
   }
 
   const page = getInt("page", 1)
+  const cursor = getString("cursor")
 
   const rawLimit = getInt("limit", 10)
   const limit = ALLOWED_LIMITS.includes(rawLimit) ? rawLimit : 10
@@ -102,6 +105,7 @@ const useSearchParameters = (
     search,
     ordering,
     filter,
+    cursor,
   }
 }
 

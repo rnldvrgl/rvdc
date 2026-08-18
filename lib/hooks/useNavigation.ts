@@ -8,6 +8,7 @@ type NavigateOptions = {
   ordering?: string
   start_date?: string
   end_date?: string
+  cursor?: string
   filter?: Record<string, string | number | boolean | undefined>
 }
 
@@ -23,6 +24,7 @@ export const useNavigation = () => {
       ordering,
       start_date,
       end_date,
+      cursor,
       filter = {},
     }: NavigateOptions) => {
       if (typeof window === 'undefined') return
@@ -35,6 +37,7 @@ export const useNavigation = () => {
       if (ordering) params.set('ordering', ordering)
       if (start_date) params.set('start_date', start_date)
       if (end_date) params.set('end_date', end_date)
+      if (cursor) params.set('cursor', cursor)
 
       Object.entries(filter).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {

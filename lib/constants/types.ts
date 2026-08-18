@@ -39,6 +39,7 @@ export type PaginatedFilterProps = {
   start_date?: string
   end_date?: string
   filter?: Record<string, unknown>
+  cursor?: string
 }
 
 // Generic paginated response

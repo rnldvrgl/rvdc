@@ -16,6 +16,8 @@ interface DataTablePaginationProps {
     hasPrevPage: boolean
     count: number
     className?: string
+    next?: string | null
+    previous?: string | null
 }
 
 export function DataTablePagination({
@@ -23,6 +25,8 @@ export function DataTablePagination({
     hasPrevPage,
     count,
     className,
+    next,
+    previous,
 }: DataTablePaginationProps) {
     const {
         page = 1,
@@ -38,6 +42,8 @@ export function DataTablePagination({
     const safeCount = Number(count) || 0
     const totalPages = Math.max(1, Math.ceil(safeCount / safeLimit))
 
+    const isCursorMode = !safeCount && (Boolean(next) || Boolean(previous))
+
     const goToPage = useCallback(
         (newPage: number) => {
             const clampedPage = Math.max(1, Math.min(newPage, totalPages))
@@ -51,6 +57,32 @@ export function DataTablePagination({
             })
         },
         [push, limit, ordering, search, totalPages, filter],
+    )
+
+    const parseCursor = useCallback((url?: string | null) => {
+        if (!url) return undefined
+        try {
+            const parsed = new URL(url, window.location.origin)
+            return parsed.searchParams.get("cursor") ?? undefined
+        } catch {
+            return undefined
+        }
+    }, [])
+
+    const goToCursor = useCallback(
+        (cursorUrl?: string | null) => {
+            const cursor = parseCursor(cursorUrl)
+            const updatedFilter = { ...filter }
+            push({
+                cursor: cursor || undefined,
+                page: 1,
+                limit,
+                ordering,
+                search,
+                filter: updatedFilter,
+            })
+        },
+        [parseCursor, push, limit, ordering, search, filter],
     )
 
     const renderPageButton = useCallback(
@@ -118,45 +150,70 @@ export function DataTablePagination({
         <div className={cn("flex items-center justify-between px-2", className)}>
             <div className="flex items-center space-x-6 lg:space-x-8">
                 <div className="flex items-center space-x-2">
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="hidden lg:flex h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
-                        onClick={() => goToPage(1)}
-                        disabled={!hasPrevPage || safePage === 1}
-                    >
-                        <ChevronsLeftIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
-                        onClick={() => goToPage(safePage - 1)}
-                        disabled={!hasPrevPage}
-                    >
-                        <ChevronLeftIcon className="h-4 w-4" />
-                    </Button>
+                    {isCursorMode ? (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => goToCursor(previous)}
+                                disabled={!hasPrevPage}
+                            >
+                                <ChevronLeftIcon className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => goToCursor(next)}
+                                disabled={!hasNextPage}
+                            >
+                                <ChevronRightIcon className="h-4 w-4" />
+                            </Button>
+                        </>
+                    ) : (
+                        <>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="hidden lg:flex h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
+                                onClick={() => goToPage(1)}
+                                disabled={!hasPrevPage || safePage === 1}
+                            >
+                                <ChevronsLeftIcon className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
+                                onClick={() => goToPage(safePage - 1)}
+                                disabled={!hasPrevPage}
+                            >
+                                <ChevronLeftIcon className="h-4 w-4" />
+                            </Button>
 
-                    {pageButtons}
+                            {pageButtons}
 
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
-                        onClick={() => goToPage(safePage + 1)}
-                        disabled={!hasNextPage}
-                    >
-                        <ChevronRightIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="hidden lg:flex h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
-                        onClick={() => goToPage(totalPages)}
-                        disabled={!hasNextPage || safePage === totalPages}
-                    >
-                        <ChevronsRightIcon className="h-4 w-4" />
-                    </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
+                                onClick={() => goToPage(safePage + 1)}
+                                disabled={!hasNextPage}
+                            >
+                                <ChevronRightIcon className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="hidden lg:flex h-8 w-8 bg-white dark:bg-transparent border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-accent text-slate-900 dark:text-slate-50 disabled:opacity-50"
+                                onClick={() => goToPage(totalPages)}
+                                disabled={!hasNextPage || safePage === totalPages}
+                            >
+                                <ChevronsRightIcon className="h-4 w-4" />
+                            </Button>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

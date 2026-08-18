@@ -192,8 +192,11 @@ export function DataTable<TData, TValue>({
     const { push } = useNavigation()
     const isLocal = localData !== undefined
 
-    const totalCount = data?.count ?? 0
-    const pageCount = Math.max(1, Math.ceil(totalCount / limit))
+    const totalCount = data?.count ?? data?.results?.length ?? 0
+    const isCursorMode = Boolean(
+        data && (data.count === undefined || data.count === null) && (data.next || data.previous),
+    )
+    const pageCount = Math.max(1, Math.ceil((totalCount || 1) / limit))
     const hasNextPage = !!data?.next
     const hasPrevPage = !!data?.previous
 
@@ -493,8 +496,8 @@ export function DataTable<TData, TValue>({
         })
     }
 
-    const startIndex = (page - 1) * limit + 1
-    const endIndex = Math.min(page * limit, totalCount)
+    const startIndex = isCursorMode ? (data?.results?.length ? 1 : 0) : (page - 1) * limit + 1
+    const endIndex = isCursorMode ? (data?.results?.length ?? 0) : Math.min(page * limit, totalCount)
     const activeTotalCount = isLocal ? filteredLocalData.length : totalCount
 
     const selectedRows = table.getSelectedRowModel().rows.map((r) => r.original)
@@ -782,20 +785,24 @@ export function DataTable<TData, TValue>({
             </div>
 
             {/* Pagination */}
-            {!isLocal && totalCount > 0 && (
+            {!isLocal && (totalCount > 0 || isCursorMode) && (
                 <>
                     <Separator className="bg-border/60" />
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-1">
                         <div className="flex items-center gap-4">
                             <DataTableLimitFilter />
-                            <div className="text-sm font-medium text-muted-foreground">
-                                Page <AnimatedNumber value={page} /> of <AnimatedNumber value={pageCount} />
-                            </div>
+                            {!isCursorMode && (
+                                <div className="text-sm font-medium text-muted-foreground">
+                                    Page <AnimatedNumber value={page} /> of <AnimatedNumber value={pageCount} />
+                                </div>
+                            )}
                         </div>
                         <DataTablePagination
                             hasPrevPage={hasPrevPage}
                             hasNextPage={hasNextPage}
                             count={totalCount}
+                            next={data?.next ?? null}
+                            previous={data?.previous ?? null}
                         />
                     </div>
                 </>
