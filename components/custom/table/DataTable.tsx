@@ -192,7 +192,7 @@ export function DataTable<TData, TValue>({
     const { push } = useNavigation()
     const isLocal = localData !== undefined
 
-    const totalCount = data?.count ?? data?.results?.length ?? 0
+    const totalCount = data?.count ?? 0
     const isCursorMode = Boolean(
         data && (data.count === undefined || data.count === null) && (data.next || data.previous),
     )
@@ -496,7 +496,7 @@ export function DataTable<TData, TValue>({
         })
     }
 
-    const startIndex = isCursorMode ? (data?.results?.length ? 1 : 0) : (page - 1) * limit + 1
+    const startIndex = isCursorMode ? (data?.results && data.results.length ? 1 : 0) : (page - 1) * limit + 1
     const endIndex = isCursorMode ? (data?.results?.length ?? 0) : Math.min(page * limit, totalCount)
     const activeTotalCount = isLocal ? filteredLocalData.length : totalCount
 
@@ -657,6 +657,10 @@ export function DataTable<TData, TValue>({
                         ) : (
                             <span>No results found</span>
                         )
+                    ) : isCursorMode ? (
+                        <span>
+                            Showing <AnimatedNumber value={startIndex} /> to <AnimatedNumber value={endIndex} /> of results
+                        </span>
                     ) : totalCount > 0 ? (
                         <span>
                             Showing <AnimatedNumber value={startIndex} /> to <AnimatedNumber value={endIndex} /> of{" "}
