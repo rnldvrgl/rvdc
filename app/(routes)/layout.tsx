@@ -19,6 +19,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import React, { useEffect } from "react"
+import FloatingChat from "@/components/custom/clients/chat/FloatingChat"
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
     const { collapsed } = useSidebarCollapse()
@@ -97,6 +98,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                                 {children}
                             </main>
                         </div>
+                        <FloatingChat />
                         <ScrollToTop />
                         <PendingActions />
                     </motion.div>

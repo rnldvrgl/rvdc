@@ -45,7 +45,7 @@ export function BusinessInsightsCard() {
 
     return (
         <Card className="overflow-hidden border border-border shadow-sm bg-card">
-            <CardHeader className="border-b border-border/60 bg-linear-to-r from-primary/8 via-background to-background">
+            <CardHeader className="border-b border-border/60">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <CardTitle className="flex items-center gap-2 text-base">
                         <Sparkles className="size-4 text-primary" />
