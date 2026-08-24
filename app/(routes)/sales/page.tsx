@@ -31,6 +31,7 @@ import {
     useVoidedSalesTransactions,
 } from "@/lib/queries/sales/useSalesTransactions"
 import { useSystemSettings } from "@/lib/queries/useSystemSettings"
+import { CursorPaginatedResponse, PaginatedResult } from "@/lib/constants/types"
 import {
     getHeldSales,
     removeHeldSale,
@@ -80,6 +81,10 @@ interface SheetLinkProps {
     label: string
     loading: boolean
 }
+
+type SalesTransactionsResponse =
+    | PaginatedResult<SalesTransaction>
+    | CursorPaginatedResponse<SalesTransaction>
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -382,7 +387,7 @@ export default function SalesTransactionsPage() {
                     mode: "active",
                 })
 
-    const tableData =
+    const tableData: SalesTransactionsResponse =
         activeTab === "archived" ? (archivedQuery.data ?? emptyData)
             : activeTab === "voided" ? (voidedQuery.data ?? emptyData)
                 : (data ?? emptyData)
@@ -393,21 +398,21 @@ export default function SalesTransactionsPage() {
                 : isLoading
 
 
-    if(isLoading){
-        return (         
+    if (isLoading) {
+        return (
             <Wrapper>
-             <div className="space-y-6 py-8">
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-4 w-64" />
-      </div>
-      <div className="flex items-center gap-3">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-10 w-32" />
-      </div>
-      <Skeleton className="h-[500px] rounded-xl" />
-    </div>
-    </Wrapper>
+                <div className="space-y-6 py-8">
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-32" />
+                        <Skeleton className="h-4 w-64" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-64" />
+                        <Skeleton className="h-10 w-32" />
+                    </div>
+                    <Skeleton className="h-[500px] rounded-xl" />
+                </div>
+            </Wrapper>
         )
     }
 

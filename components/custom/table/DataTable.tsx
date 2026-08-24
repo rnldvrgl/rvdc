@@ -33,7 +33,11 @@ import {
 } from "@/components/ui/table"
 import { DATE_RANGE_PRESETS } from "@/lib/constants/general"
 import { FilterDefinition, SortOption } from "@/lib/constants/interface"
-import { DateRangePresetLabel, PaginatedResult } from "@/lib/constants/types"
+import {
+    DateRangePresetLabel,
+    CursorPaginatedResponse,
+    PaginatedResult,
+} from "@/lib/constants/types"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useNavigation } from "@/lib/hooks/useNavigation"
 import useSearchParameters from "@/lib/hooks/useSearchParameters"
@@ -127,7 +131,7 @@ function DataTableRow({
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
-    data?: PaginatedResult<TData>
+    data?: PaginatedResult<TData> | CursorPaginatedResponse<TData>
     /** Local array — enables local search/sort with no URL mutations */
     localData?: TData[]
     /** Custom filter for local mode (receives lower-cased query) */
@@ -192,9 +196,9 @@ export function DataTable<TData, TValue>({
     const { push } = useNavigation()
     const isLocal = localData !== undefined
 
-    const totalCount = data?.count ?? 0
+    const totalCount = data && "count" in data ? data.count ?? 0 : 0
     const isCursorMode = Boolean(
-        data && (data.count === undefined || data.count === null) && (data.next || data.previous),
+        data && !("count" in data) && (data.next || data.previous),
     )
     const pageCount = Math.max(1, Math.ceil((totalCount || 1) / limit))
     const hasNextPage = !!data?.next
