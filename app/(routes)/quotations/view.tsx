@@ -463,7 +463,7 @@ const QuotationPrintContent = React.forwardRef<
             {q.payments && q.payments.length > 0 && (
                 <div className="my-4 text-[11px]">
                     <h3 className="font-semibold text-[12px] mb-2">Payment Schedule</h3>
-                    <table className="w-full border-collapse border border-gray-300 text-[11px]">
+                    <table className="w-full border-collapse border border-gray-300 text-[11px] table-fixed">
                         <thead>
                             <tr className="bg-gray-100">
                                 <th className="text-left py-1.5 px-3 border border-gray-300 font-semibold w-[20%]">
@@ -505,10 +505,10 @@ const QuotationPrintContent = React.forwardRef<
                                     <td className="py-1.5 px-3 text-right border border-gray-300">
                                         {formatCurrency(Number(p.amount))}
                                     </td>
-                                    <td className="py-1.5 px-3 text-center border border-gray-300">
+                                    <td className="py-1.5 px-3 text-center border border-gray-300 break-all whitespace-normal">
                                         {p.reference_number || "—"}
                                     </td>
-                                    <td className="py-1.5 px-3 text-center border border-gray-300">
+                                    <td className="py-1.5 px-3 text-center border border-gray-300 break-all whitespace-normal">
                                         {p.si_number || "—"}
                                     </td>
                                     <td className="py-1.5 px-3 text-center border border-gray-300">

@@ -287,3 +287,222 @@
     mask-image: linear-gradient(to bottom, transparent, black 16%, black 84%, transparent);
   }
 }
+
+/* Custom Scrollbar Styles */
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+
+  /* Firefox scrollbar */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything except print content */
+  body > *:not(.quotation-print):not(.thermal-receipt-print):not(.job-order-print) {
+    display: none !important;
+  }
+
+  nav,
+  header,
+  aside,
+  footer,
+  [data-sidebar],
+  [data-topbar] {
+    display: none !important;
+  }
+
+  /* ── Quotation (A4) ── */
+  .quotation-print {
+    page: quotation-page;
+    width: 100% !important;
+    min-height: auto !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .quotation-print * {
+    color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .quotation-print table thead tr {
+    background-color: #1f2937 !important;
+    color: white !important;
+  }
+
+  .quotation-print table tbody tr:nth-child(even) {
+    background-color: #f9fafb !important;
+  }
+
+  .quotation-print table tbody tr {
+    page-break-inside: avoid;
+  }
+
+  .quotation-print > div {
+    page-break-inside: avoid;
+  }
+
+  .quotation-print .signature-section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .quotation-print .quotation-totals {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* ── Job Order (Letter Landscape, 2-up) ── */
+  .job-order-print {
+    page: job-order-page;
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .job-order-print * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    visibility: visible !important;
+  }
+
+  .job-order-print img {
+    display: inline-block !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .job-order-print svg {
+    display: inline-block !important;
+    break-inside: avoid !important;
+  }
+
+  .job-order-print .jo-page-wrapper {
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    background: white !important;
+    overflow: visible !important;
+  }
+
+  .job-order-print .jo-page-wrapper + .jo-page-wrapper {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .job-order-print .jo-page-wrapper:last-child {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  .job-order-print .jo-page {
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin: 0 !important;
+  }
+
+
+  /* ── Thermal Receipt (58mm) ── */
+  .thermal-receipt-print {
+    page: thermal-page;
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 50mm !important;
+    max-width: 50mm !important;
+    margin: 0 !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .thermal-receipt-print * {
+    visibility: visible !important;
+  }
+}
+
+@page quotation-page {
+  size: A4;
+  margin: 0.5in;
+}
+
+@page thermal-page {
+  size: 58mm auto;
+  margin: 0;
+}
+
+@page job-order-page {
+  size: letter landscape;
+  margin: 0.25in;
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(-100vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+.animate-fall {
+  animation: fall linear infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
