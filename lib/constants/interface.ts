@@ -575,6 +575,7 @@ export interface BusinessInsightsResponse {
   summary: string
   confidence: string
   generated_at: string
+  provider?: string | null
   model?: string | null
   recommendations: BusinessInsightRecommendation[]
   risks: string[]

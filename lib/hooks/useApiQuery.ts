@@ -14,6 +14,8 @@ export function useApiQuery<T>({
   staleTime,
   refetchInterval,
   enabled,
+  refetchOnWindowFocus,
+  retry
 }: {
   queryKey: readonly unknown[]
   url: string
@@ -22,6 +24,8 @@ export function useApiQuery<T>({
   staleTime?: number
   refetchInterval?: number
   enabled?: boolean
+  refetchOnWindowFocus?: boolean
+  retry?: boolean
 }): UseQueryResult<T> {
   return useQuery<T, Error, T>({
     queryKey,
@@ -31,8 +35,10 @@ export function useApiQuery<T>({
     },
     staleTime: staleTime || STALE_TIME.DEFAULT,
     refetchInterval: refetchInterval,
+    refetchOnWindowFocus: refetchOnWindowFocus ?? true,
     ...options,
     select: options?.select,
     enabled: enabled !== undefined ? enabled : options?.enabled,
+    retry: retry !== undefined ? retry : options?.retry,
   })
 }

@@ -140,4 +140,7 @@ export const useBusinessInsights = (
     queryKey: ["business_insights", options],
     url: `/analytics/reports/business-insights/${buildQueryString(options)}`,
     enabled: options.enabled,
+    staleTime: 5 * 60 * 1000, // matches the backend's 15-minute cache loosely
+    refetchOnWindowFocus: false, // tab switches shouldn't call Gemini again
+    retry: false, // a retry after a 429 just burns more free quota
   })
