@@ -569,12 +569,21 @@ export interface BusinessInsightRecommendation {
   priority: "high" | "medium" | "low"
 }
 
+export interface BusinessInsightMetrics {
+  total_revenue: number
+  net_income: number
+  collection_rate: number
+  outstanding: number
+}
+
 export interface BusinessInsightsResponse {
   source: "ai" | "rules"
   headline: string
   summary: string
   confidence: string
   generated_at: string
+  period_label?: string | null
+  metrics?: BusinessInsightMetrics | null
   provider?: string | null
   model?: string | null
   recommendations: BusinessInsightRecommendation[]
