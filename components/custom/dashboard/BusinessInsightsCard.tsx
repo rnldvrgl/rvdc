@@ -14,15 +14,6 @@ const priorityVariant = {
     low: "secondary",
 } as const
 
-// The backend also returns provider, model and generated_at. They are declared
-// here as optional so this file compiles even if your shared type doesn't list
-// them yet. Move them into your insights type when convenient.
-type InsightsMeta = {
-    provider?: string | null
-    model?: string | null
-    generated_at?: string | null
-}
-
 function formatUpdatedAt(value?: string | null) {
     if (!value) return null
     const date = new Date(value)
@@ -88,7 +79,6 @@ export function BusinessInsightsCard() {
         )
     }
 
-    const meta = data as typeof data & InsightsMeta
     const isAi = data.source === "ai"
     const updatedAt = formatUpdatedAt(data.generated_at)
     const recommendations = data.recommendations ?? []
