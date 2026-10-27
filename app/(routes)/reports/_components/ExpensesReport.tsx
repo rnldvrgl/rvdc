@@ -30,6 +30,7 @@ function displayDate(d: string | Date | null | undefined) {
 export function ExpensesReport() {
     const { start_date, end_date, stall } = useDateParamsFromForm()
     const { data: expenseData, isLoading } = useExpenses({
+        limit: 99999,
         start_date,
         end_date,
         filter: stall ? { stall: String(stall) } : undefined,
